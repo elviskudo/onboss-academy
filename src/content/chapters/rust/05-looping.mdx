@@ -1,0 +1,183 @@
+---
+title: "Perulangan"
+description: "for, while, dan loop — semuanya berbasis iterator atau kondisi"
+order: 5
+quiz:
+  - q: "Perulangan for di Rust biasanya berjalan di atas…"
+    options: ["index integer saja", "iterator/range", "struct", "pointer"]
+    answer: 1
+    explain: "for x in 0..5 memakai range, for x in daftar memakai iterator koleksi."
+  - q: "for (i, nilai) := range daftar memberi sekaligus…"
+    options: ["nilai saja", "error saja", "index dan nilai", "alamat memori"]
+    answer: 2
+    explain: "Ditulis for (i, nilai) in daftar.iter().enumerate() { }."
+  - q: "while di Rust…"
+    options: ["mengecek kondisi sebelum tiap iterasi", "mengecek setelah blok", "tanpa kondisi", "hanya untuk range"]
+    answer: 0
+    explain: "Sama seperti while pada umumnya: selama true, blok dijalankan."
+  - q: "loop tanpa batas keluar dengan…"
+    options: ["return", "break", "stop", "exit"]
+    answer: 1
+    explain: "loop { ... if syarat { break; } } adalah pola perulangan tak berujung yang aman."
+  - q: "Mengubah isi vector saat dijelajahi for memakai…"
+    options: ["iter_mut()", "mut_range", "edit()", "unsafe"]
+    answer: 0
+    explain: "iter_mut memberi akses mutable per elemen tanpa meminjam dua kali."
+example:
+  code: |
+    fn main() {
+        for i in 1..=3 {
+            println!("Perulangan ke- {}", i);
+        }
+
+        let buah = ["Apel", "Mangga", "Jeruk"];
+        for (i, b) in buah.iter().enumerate() {
+            println!("{} {}", i, b);
+        }
+
+        let mut hitung = 3;
+        while hitung > 0 {
+            println!("sisa {}", hitung);
+            hitung -= 1;
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust tidak punya perulangan berbasis index paksa. Semuanya berjalan di atas **range atau iterator**.
+
+## 3 Kata Kunci Perulangan
+
+| Kata kunci | Bentuk | Kapan dipakai |
+| --- | --- | --- |
+| `for` | `for x in iter { }` | Rentang & koleksi — paling sering |
+| `while` | `while kondisi { }` | Jumlah iterasi belum diketahui |
+| `loop` | `loop { }` + `break` | Butuh kendali penuh / nilai dari break |
+
+## for dengan Range
+
+```rust
+for i in 1..=3 {
+    println!("Perulangan ke- {}", i);
+}
+```
+
+`1..=3` berarti 1 sampai 3 termasuk. Tanpa tanda `=`, batas atas tidak ikut diambil (`1..3` berhenti di 2).
+
+## Melintasi Koleksi
+
+```rust
+let buah = ["Apel", "Mangga", "Jeruk"];
+
+for b in buah.iter() {
+    println!("{}", b);
+}
+
+for (i, b) in buah.iter().enumerate() {
+    println!("index {} = {}", i, b);
+}
+```
+
+`.iter()` meminjam tiap elemen, `.enumerate()` menambahkan index di depannya. Untuk mengubah isi saat iterasi, ganti dengan `.iter_mut()`.
+
+## while
+
+```rust
+let mut hitung = 3;
+while hitung > 0 {
+    println!("sisa {}", hitung);
+    hitung -= 1;
+}
+```
+
+Saat jumlah iterasi tidak diketahui dari awal, `while` adalah pilihan yang jelas.
+
+## loop dan break
+
+```rust
+let mut total = 0;
+loop {
+    total += 1;
+    if total >= 5 {
+        break;
+    }
+}
+println!("total = {}", total);
+```
+
+`loop` berjalan tanpa batas sampai `break` dieksekusi — cocok ketika kondisi berhenti baru diketahui di tengah perulangan.
+
+## break dengan Nilai
+
+```rust
+let mut i = 1;
+let hasil = loop {
+    i += 1;
+    if i > 10 {
+        break i * 2;
+    }
+};
+println!("hasil loop = {}", hasil);
+```
+
+`loop` bisa menghasilkan nilai lewat `break`, sesuatu yang tidak dimiliki `for` dan `while`.
+
+## 4 Pola Klasik
+
+- **Akumulasi**: `total += nilai` di dalam `for`
+- **Cari pertama**: `if ketemu { break; }` — berhenti begitu ketemu
+- **Filter → baru**: `.filter(|x| ...).collect()` menghasilkan Vec baru
+- **Hitung frekuensi**: `*peta.entry(k).or_insert(0) += 1;` pada HashMap
+
+```rust
+let angka = vec![3, 8, 3, 1, 8, 3];
+let ganjil: Vec<i32> = angka.iter().filter(|n| **n % 2 == 1).cloned().collect();
+println!("ganjil: {:?}", ganjil);
+```
+
+## Di Dunia Nyata
+
+- **Animasi game**: `loop` dengan `break` menunggu input pemain sebelum frame berikutnya
+- **Retry jaringan**: `for percobaan in 0..3 { ... }` mengulang request yang gagal
+- **Progres download**: `while sisa > 0 { unduh_chunk() }` sampai byte habis
+- **Rekap data**: `.iter().map().filter().collect()` merapikan daftar transaksi
+- **Rate limiter**: `loop` + `Instant::now()` membatasi 100 request per detik
+
+<div class="note">💡 Gunakan for untuk rentang dan koleksi, while untuk kondisi berjalan, dan loop hanya saat butuh kendali penuh. Ketiganya menutup hampir semua kebutuhan perulangan.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    for i in 1..=5 {
+        println!("Perulangan ke- {}", i);
+    }
+
+    let mut total = 0;
+    for i in 1..=100 {
+        total += i;
+    }
+    println!("Jumlah 1..100 = {}", total);
+
+    let buah = ["Apel", "Mangga", "Jeruk"];
+    for (i, b) in buah.iter().enumerate() {
+        println!("index {} = {}", i, b);
+    }
+
+    let mut hitung = 3;
+    while hitung > 0 {
+        println!("sisa {}", hitung);
+        hitung -= 1;
+    }
+
+    let mut i = 1;
+    let hasil = loop {
+        i += 1;
+        if i > 5 {
+            break i * 10;
+        }
+    };
+    println!("hasil loop = {}", hasil);
+
+    let angka = vec![3, 8, 3, 1, 8, 3];
+    let ganjil: Vec<i32> = angka.iter().filter(|n| **n % 2 == 1).cloned().collect();
+    println!("ganjil: {:?}", ganjil);
+}`} />

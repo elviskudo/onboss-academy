@@ -1,0 +1,211 @@
+---
+title: "OOP Dasar"
+description: "Class, 3 access specifier, 4 pilar OOP, constructor, dan pewarisan virtual"
+order: 7
+quiz:
+  - q: "Secara default, anggota class bersifat…"
+    options: ["public", "private", "protected", "global"]
+    answer: 1
+    explain: "C++ membuat anggota class private jika tidak dinyatakan lain — kebalikan dari struct."
+  - q: "Beda default antara struct dan class di C++ adalah…"
+    options: ["Tidak ada bedanya sama sekali", "struct tidak bisa punya method", "struct default public, class default private", "class tidak bisa diwarisi"]
+    answer: 2
+    explain: "Secara teknis sama; hanya berbeda pada access specifier awal dan nama depan."
+  - q: "Konstruktor dengan parameter sama jumlah dan tipenya dengan konstruktor lain disebut…"
+    options: ["Konstruktor saling menimpa (ill-formed)", "Overriding", "Copy constructor yang valid", "Destructor"]
+    answer: 0
+    explain: "Dua konstruktor dengan signature identik membuat kompilasi gagal — bedakan parameternya."
+  - q: "Kata kunci untuk mewarisi class di C++ adalah…"
+    options: ["extends", "inherits", "implements", ":"]
+    answer: 3
+    explain: "class Turunan : public Induk { ... } — mode public paling sering dipakai."
+  - q: "Virtual function dibutuhkan agar…"
+    options: ["Panggilan lewat pointer induk memanggil versi turunan", "Method jadi cepat", "Anggota jadi private", "Class jadi abstrak"]
+    answer: 0
+    explain: "Tanpa virtual, pointer Induk* akan memanggil versi Induk walau objeknya Turunan."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    using namespace std;
+
+    class Siswa {
+    private:
+        string nama;
+        int nilai;
+    public:
+        Siswa(string n, int v) : nama(n), nilai(v) {}
+
+        void tampil() const {
+            cout << nama << ": " << nilai << endl;
+        }
+
+        int getNilai() const { return nilai; }
+    };
+
+    int main() {
+        Siswa s("Sari", 90);
+        s.tampil();
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ memungkinkan kamu **merancang tipe data sendiri** — data dan perilaku digabung dalam satu class. Ini dasar OOP klasik C++: access specifier, pewarisan, dan dispatch virtual.
+
+## Class & Access Specifier
+
+C++ punya **3 access specifier** dan **2 kata kunci tipe** (`class` default private, `struct` default public):
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+class Rekening {
+private:                    // tidak bisa diakses dari luar
+    double saldo;
+public:                     // antarmuka yang dipakai pihak luar
+    Rekening(double setoran) {
+        saldo = setoran > 0 ? setoran : 0;
+    }
+    void setor(double jumlah) {
+        if (jumlah > 0) saldo += jumlah;
+    }
+    double lihat() const { return saldo; }   // const: tidak mengubah object
+};
+
+int main() {
+    Rekening r(100000);
+    r.setor(50000);
+    cout << "Saldo: " << r.lihat() << endl;
+    return 0;
+}
+```
+
+| Access | Dalam class | Class turunan | Luar |
+|---|---|---|---|
+| `public` | bisa | bisa | bisa |
+| `protected` | bisa | bisa | tidak |
+| `private` | bisa | tidak | tidak |
+
+`struct` berperilaku persis seperti `class` kecuali defaultnya `public` — pakai `struct` untuk data polos (POD), `class` untuk tipe dengan invarian yang dijaga.
+
+## Constructor & Destructor
+
+C++ punya **5 jenis konstruktor**: default (tanpa parameter), parameterized, copy, move, dan converting — plus **1 destructor** (`~Nama()`) yang dipanggil otomatis saat object keluar scope.
+
+```cpp
+class Titik {
+private:
+    double x, y;
+public:
+    Titik() : x(0), y(0) {}                   // default
+    Titik(double x, double y) : x(x), y(y) {} // parameterized
+    Titik(const Titik &t) : x(t.x), y(t.y) {} // copy
+    ~Titik() {}                                // destructor
+    double getX() const { return x; }
+};
+```
+
+Initializer list `: x(x), y(y)` lebih efisien daripada memberi nilai di badan konstruktor, dan satu-satunya cara yang benar untuk anggota `const` atau referensi.
+
+## 4 Pilar OOP di C++
+
+| Pilar | Status di C++ | Realisasi |
+|---|---|---|
+| Encapsulation | ✅ penuh | access specifier `private` + method publik |
+| Inheritance | ✅ penuh | `class T : [public/protected/private] B` |
+| Polymorphism | ✅ penuh | `virtual` + `override`, overload, template |
+| Abstraction | ✅ penuh | class abstrak via `virtual ... = 0` |
+
+C++ tidak punya kata kunci `interface` — antarmuka murni dibuat sebagai class dengan seluruh method `virtual = 0` dan destructor virtual.
+
+## Pewarisan & Polymorphism
+
+```cpp
+class Hewan {
+public:
+    void makan() { cout << "Makan..." << endl; }
+    virtual void bersuara() { cout << "..." << endl; }
+    virtual ~Hewan() {}                       // wajib virtual bila diwarisi
+};
+
+class Kucing : public Hewan {
+public:
+    void bersuara() override { cout << "Meong!" << endl; }
+};
+
+class Anjing : public Hewan {
+public:
+    void bersuara() override { cout << "Guk!" << endl; }
+};
+```
+
+```cpp
+Hewan *hewan[] = { new Kucing(), new Anjing() };
+for (auto h : hewan) {
+    h->bersuara();        // Meong! / Guk! — dispatch virtual
+    delete h;
+}
+```
+
+Mode warisan menentukan visibilitas: `public` (paling umum), `protected`, `private` (hampir jarang). `override` membuat kompilator memeriksa bahwa signature benar-benar cocok dengan versi induk.
+
+**3 jenis hierarki pewarisan**: single (satu induk), multiple (beberapa induk, kekuatan & kelemahan C++), dan virtual (mengatasi diamond inheritance).
+
+## Di Dunia Nyata
+
+- Game: class `Pemain`, `Musuh`, dan `Item` punya method `update()` virtual yang dipanggil dari satu loop engine.
+- Bank: class `Rekening` menyembunyikan `saldo` di balik `setor()`/`tarik()` agar tidak bisa di-set sembarang.
+- GUI: class abstrak `Widget` dengan `virtual void gambar() = 0` dipakai tombol, label, dan form.
+- Renderer: satu vektor `Shape*` berisi `Lingkaran`, `Persegi`, `Segitiga` — loop yang sama menggambar semuanya.
+- Parser: `class Node` dengan turunan `NodeAngka`, `NodeOperasi` merepresentasikan ekspresi.
+
+<div class="note">💡 Selalu tambahkan <code>virtual</code> pada destruktor class yang akan diwarisi, dan pakai <code>override</code> di method turunan — kompilator akan memperingatkan bila signature-nya salah, dan memori yang di-new turunan tetap terhapus dengan benar.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+using namespace std;
+
+class Siswa {
+private:
+    string nama;
+    int nilai;
+public:
+    Siswa(string n, int v) : nama(n), nilai(v) {}
+
+    void tampil() const {
+        cout << nama << ": " << nilai << endl;
+    }
+
+    string status() const {
+        return nilai >= 75 ? "Lulus" : "Remedial";
+    }
+};
+
+class Hewan {
+public:
+    virtual void bersuara() { cout << "..." << endl; }
+    virtual ~Hewan() {}
+};
+
+class Kucing : public Hewan {
+public:
+    void bersuara() override { cout << "Meong!" << endl; }
+};
+
+int main() {
+    Siswa s("Sari", 90);
+    Siswa b("Budi", 70);
+    s.tampil();
+    b.tampil();
+    cout << "Status Sari: " << s.status() << endl;
+    cout << "Status Budi: " << b.status() << endl;
+
+    Kucing *k = new Kucing();
+    k->bersuara();      // Meong!
+    delete k;
+    return 0;
+}`} />

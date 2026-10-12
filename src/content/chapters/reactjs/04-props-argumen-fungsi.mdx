@@ -1,0 +1,169 @@
+---
+title: "Props sebagai Argumen Fungsi"
+description: "Memahami props: data mengalir dari pemanggil ke komponen, seperti parameter fungsi"
+order: 4
+quiz:
+  - q: "Props adalah…"
+    options: ["Variabel global", "Argumen/input yang dikirim pemanggil ke komponen", "Tipe data khusus React", "State internal komponen"]
+    answer: 1
+    explain: "Props = properties = parameter fungsi komponen. Nilainya datang dari luar."
+  - q: "Sifat props di React…"
+    options: ["Read-only (tidak boleh diubah komponen)", "Bisa diubah bebas", "Hanya bisa dihapus", "Berubah otomatis setiap detik"]
+    answer: 0
+    explain: "Props bersifat satu arah dan immutable. Perubahan datang dari pemanggil, bukan dari dalam."
+  - q: "Cara mengirim data lewat JSX props…"
+    options: ["<Card judul: judul />", "<Card (judul)=judul />", "<Card judul={judul} />", "<Card #judul judul />"]
+    answer: 2
+    explain: "Atribut JSX bernilai ekspresi JavaScript di dalam kurung kurawal."
+  - q: "Callback props (mis. onKlik) berfungsi untuk…"
+    options: ["Memberi tahu pemanggil saat terjadi sesuatu di dalam komponen", "Menyimpan data di server", "Mengubah warna tombol", "Menghapus komponen"]
+    answer: 0
+    explain: "Komponen memanggil fungsi yang dikirim orang tua — pola child-to-parent communication."
+  - q: "Bila props tidak dikirim, cara memberi nilai bawaan adalah…"
+    options: ["Default parameter: function Kartu(penulis = \"anonim\")", "Menggunakan var", "Props tidak bisa punya default", "Menulis null di semua props"]
+    answer: 0
+    explain: "JSX props membawa pola default value yang sama dengan parameter fungsi biasa."
+example:
+  code: |
+    function Kartu({ judul, isi, penulis = "anonim" }) {
+      return "[" + judul + "] " + isi + " — " + penulis;
+    }
+    console.log(Kartu({ judul: "Tips", isi: "Latihan tiap hari" }));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebelum masuk sintaks React, pahami dulu idenya: **props hanyalah argumen fungsi**. Begitu ini terasa wajar, JSX props tidak akan terasa asing lagi.
+
+## Props = Parameter
+
+```js
+function Kartu(props) {
+  return props.judul + ": " + props.isi;
+}
+
+Kartu({ judul: "Halo", isi: "Belajar React" });
+```
+
+Dalam React, komponen dipanggil seperti fungsi:
+
+```jsx
+<Kartu judul="Halo" isi="Belajar React" />
+```
+
+Nilai `"Halo"` dan `"Belajar React"` tiba sebagai object props di dalam komponen. Keduanya bahkan bisa ditulis identik — hanya pembungkus JSX yang berbeda.
+
+## 5 Pola Props yang Perlu Dikuasai
+
+| Pola | Contoh di pemanggil | Fungsi |
+|------|---------------------|--------|
+| Teks biasa | `<Kartu judul="Promo" />` | Nilai literal string |
+| Ekspresi | `<Kartu judul={judulState} />` | Nilai dinamis dari JS |
+| Default | `function Kartu({ penulis = "anonim" })` | Nilai bawaan bila tidak dikirim |
+| Callback | `<Tombol onKlik={beli} />` | Anak memberi kabar ke induk |
+| children | `<Panel><p>Isi</p></Panel>` | Konten slot fleksibel |
+
+## Destructuring Props
+
+```js
+function Kartu({ judul, isi }) {
+  return judul + ": " + isi;
+}
+
+function Profil({ nama, umur = 18 }) {
+  return nama + " (" + umur + " tahun)";
+}
+```
+
+React menulisnya persis sama:
+
+```jsx
+function Kartu({ judul, isi }) {
+  return (
+    <article>
+      <h3>{judul}</h3>
+      <p>{isi}</p>
+    </article>
+  );
+}
+```
+
+## Data Mengalir Satu Arah
+
+```jsx
+const produk = { nama: "Kopi Susu", harga: 25000 };
+
+<ProdukCard item={produk} />
+//              ^ props membawa data dari pemanggil
+```
+
+Komponen tidak boleh mengubah `item` — ia hanya membaca. Bila data harus berubah, yang mengubah adalah pemilik data (biasanya lewat state). Satu arah data membuat alur aplikasi mudah dilacak: tidak ada dua tempat yang berebut kepemilikan nilai yang sama.
+
+Ini juga sebabnya React jauh dari gaya OOP klasik: komponen bukan object dengan field yang bisa di-set bebas, melainkan fungsi yang dipanggil ulang tiap render.
+
+## Callback Props
+
+Saat tombol di dalam komponen diklik, komponen tidak tahu harus melakukan apa — ia memberi tahu pemanggil:
+
+```jsx
+function Tombol({ label, onKlik }) {
+  return <button onClick={() => onKlik(label)}>{label}</button>;
+}
+
+function Halaman() {
+  const beli = (nama) => console.log("Beli:", nama);
+  return <Tombol label="Kopi" onKlik={beli} />;
+}
+```
+
+Pola ini disebut *lifting state up*: state hidup di atas, perilaku dikirim ke bawah lewat props. Sepanjang track React, inilah padanan paling umum untuk komunikasi anak → induk (di Vue namanya `$emit`, bab Vue 06).
+
+## Komposisi dengan children
+
+```jsx
+function Panel({ judul, children }) {
+  return (
+    <section>
+      <h2>{judul}</h2>
+      {children}
+    </section>
+  );
+}
+
+<Panel judul="Info">
+  <p>Konten bebas apa pun di sini.</p>
+</Panel>
+```
+
+`children` adalah props istimewa berisi apa pun yang kamu tulis di antara tag pembuka dan penutup — cara React melakukan komposisi alih-alih inheritance.
+
+## Di Dunia Nyata
+
+- **Kartu produk**: `<KartuProduk item={p} />` dipakai berulang, tiap pemanggil mengirim data berbeda.
+- **Tombol aksi**: `<Tombol label="Hapus" onKlik={hapus} />` — komponen tombol tidak tahu apa yang dihapus.
+- **Modal konfirmasi**: `<Modal judul="Yakin?" onKonfirmasi={lanjut} onBatal={batal} />`.
+- **Form login**: `<Input label="Email" nilai={email} onUbah={setEmail} value kosong → pesan bawaan` berkat default props.
+- **Layout halaman**: `<Panel judul="...">{kontenHalaman}</Panel>` — children menaruh isi bebas.
+
+<div class="note">💡 Uji pemahamanmu: kalau komponen adalah fungsi, maka props = parameter, dan pemanggilan JSX = memanggil fungsi. Sifat immutable bukan aturan basa-basi React, melainkan konsekuensi alami dari model fungsi murni.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`function Kartu(props) {
+  const penulis = props.penulis || "anonim";
+  return "[" + props.judul + "] " + props.isi + " — " + penulis;
+}
+console.log(Kartu({ judul: "Tips", isi: "Belajar tiap hari" }));
+console.log(Kartu({ judul: "Catatan", isi: "Latihan props", penulis: "Sari" }));
+
+function sapa({ nama, umur = 18 }) {
+  return nama + " berusia " + umur + " tahun";
+}
+console.log(sapa({ nama: "Budi", umur: 25 }));
+console.log(sapa({ nama: "Rina" }));
+
+function Tombol(label, onKlik) {
+  return { label: label, klik: function () { onKlik(label); } };
+}
+const btn = Tombol("Tambah", function (nama) {
+  console.log("Tombol diklik:", nama);
+});
+btn.klik();`} />

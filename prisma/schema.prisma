@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  sessions     Session[]
+  attendances  Attendance[]
+  progress     ChapterProgress[]
+  certificates Certificate[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Attendance {
+  id     String @id @default(cuid())
+  userId String
+  date   String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model ChapterProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  langId      String
+  chapterId   String
+  quizScore   Int
+  completedAt DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, langId, chapterId])
+  @@index([userId, langId])
+}
+
+model Certificate {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  userId    String
+  langId    String
+  langTitle String
+  issuedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

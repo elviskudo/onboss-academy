@@ -1,0 +1,127 @@
+---
+title: "SELECT, TOP, OFFSET FETCH"
+description: "Mengambil data dengan TOP, paginasi OFFSET FETCH, DISTINCT, dan INTO"
+order: 3
+quiz:
+  - q: "Alternatif LIMIT milik PostgreSQL/MySQL di SQL Server adalah…"
+    options: ["TAKE", "TOP atau OFFSET ... FETCH", "FIRST n ROWS", "PAGE n"]
+    answer: 1
+    explain: "TOP (n) mengambil n baris teratas; OFFSET ... FETCH memungkinkan paginasi per halaman."
+  - q: "OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY menghasilkan…"
+    options: ["5 baris pertama", "Baris ke-11 sampai ke-15", "10 baris terakhir", "Error"]
+    answer: 1
+    explain: "OFFSET melewati 10 baris pertama, lalu FETCH mengambil 5 baris berikutnya — halaman kedua berukuran 5."
+  - q: "OFFSET FETCH wajib didahului oleh…"
+    options: ["WHERE", "ORDER BY", "GROUP BY", "HAVING"]
+    answer: 1
+    explain: "Tanpa ORDER BY, urutan baris tidak terdefinisi — SQL Server menolak paginasi tanpa urutan eksplisit."
+  - q: "SELECT DISTINCT berfungsi untuk…"
+    options: ["Menghapus duplikat kombinasi hasil", "Mengurutkan data", "Menghitung total", "Menyalin tabel"]
+    answer: 0
+    explain: "SELECT DISTINCT kota FROM dbo.pelanggan mengembalikan daftar kota unik tanpa pengulangan."
+  - q: "Menyalin hasil SELECT ke tabel baru memakai…"
+    options: ["SELECT ... INTO #temp", "COPY SELECT", "MAKE TABLE SELECT", "EXTRACT SELECT"]
+    answer: 0
+    explain: "SELECT ... INTO dbo.baruatama membuat tabel baru dari hasil query — praktis untuk staging & tabel sementara."
+example:
+  code: |
+    SELECT TOP (5) nama, gaji
+    FROM dbo.karyawan
+    ORDER BY gaji DESC;
+
+    SELECT nama, gaji
+    FROM dbo.karyawan
+    ORDER BY nama
+    OFFSET 10 ROWS
+    FETCH NEXT 5 ROWS ONLY;
+---
+
+Membaca data adalah operasi paling sering di SQL Server. Dua mekanisme utamanya: **TOP** untuk ambil sebagian, dan **OFFSET FETCH** untuk paginasi.
+
+## Apa itu Pembatasan Hasil?
+
+SQL Server punya **3 bentuk utama** untuk membatasi atau membentuk hasil SELECT:
+
+| Bentuk | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `TOP (n)` | mengambil n baris pertama | `TOP (5)` | preview, top-N |
+| `TOP (n) PERCENT` | mengambil persentase baris | `TOP (10) PERCENT` | sampling sederhana |
+| `OFFSET ... FETCH` | melewati lalu mengambil baris | halaman 2 | paginasi |
+
+Semua bentuk yang bergantung pada posisi baris harus memakai ORDER BY deterministik. Tambahkan kolom unik sebagai tie-breaker (`ORDER BY gaji DESC, id`) agar dua nilai sama tidak berganti posisi antar-eksekusi.
+
+## SELECT dasar dan TOP
+
+```sql
+SELECT TOP (5) nama, gaji
+FROM dbo.karyawan
+ORDER BY gaji DESC;
+
+SELECT TOP (10) PERCENT nama, gaji
+FROM dbo.karyawan;
+```
+
+`TOP (n)` membatasi jumlah baris hasil; `PERCENT` mengambil 10% teratas. Di tabel besar, selalu padukan TOP dengan ORDER BY agar hasil deterministik.
+
+## ORDER BY yang Kaya
+
+```sql
+SELECT nama, gaji, divisi
+FROM dbo.karyawan
+ORDER BY divisi ASC, gaji DESC, nama ASC;
+```
+
+Urutan multi-kolom dibaca kiri ke kanan; arah boleh berbeda per kolom. `NULL` di SQL Server dianggap paling kecil saat ASC.
+
+## OFFSET FETCH (paginasi)
+
+```sql
+SELECT nama, gaji
+FROM dbo.karyawan
+ORDER BY nama
+OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;   -- halaman 1
+
+SELECT nama, gaji
+FROM dbo.karyawan
+ORDER BY nama
+OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY;  -- halaman 2
+```
+
+Pola halaman = `OFFSET (halaman-1) * ukuran ROWS FETCH NEXT ukuran ROWS ONLY`. Untuk halaman sangat dalam, pertimbangkan keyset pagination agar performa tetap stabil.
+
+## DISTINCT dan SELECT INTO
+
+```sql
+SELECT DISTINCT divisi
+FROM dbo.karyawan;
+
+SELECT nama, gaji
+INTO #karyawan_baru
+FROM dbo.karyawan
+WHERE gaji > 10000000;
+
+SELECT * FROM #karyawan_baru;
+```
+
+Tabel diawali `#` adalah **tempdb table** lokal — otomatis terhapus saat sesi berakhir; `##` bersifat global lintas sesi. `SELECT INTO` membuat struktur dari ekspresi hasil, tetapi tidak menyalin index, foreign key, atau constraint tabel asal.
+
+## TOP vs OFFSET-FETCH
+
+| Kebutuhan | Pilihan | Alasan |
+| --- | --- | --- |
+| 10 transaksi terbesar | TOP + ORDER BY | langsung top-N |
+| halaman 1–20 | OFFSET-FETCH | sintaks halaman jelas |
+| halaman sangat dalam | keyset (`WHERE id > @lastId`) | tidak memindai/melewati ribuan baris |
+| ambil termasuk nilai seri | TOP WITH TIES | tidak memotong skor yang sama |
+
+`TOP (5) WITH TIES` dapat mengembalikan lebih dari lima baris bila nilai ORDER BY posisi kelima seri.
+
+## Di Dunia Nyata
+
+- **Dashboard eksekutif** — TOP (10) ORDER BY omzet menampilkan pelanggan terbesar tanpa memuat seluruh tabel.
+- **Daftar pencarian** — OFFSET-FETCH menyajikan halaman awal dengan urutan nama + ID yang stabil.
+- **Infinite scroll** — keyset pagination berdasarkan ID/timestamp lebih stabil untuk jutaan baris daripada OFFSET besar.
+- **Staging laporan** — SELECT INTO #temp menyimpan hasil mahal untuk digunakan beberapa kali dalam satu sesi.
+- **Daftar kategori** — DISTINCT membentuk opsi filter unik dari baris transaksi tanpa deduplikasi aplikasi.
+
+<div class="note">💡 SELECT * nyaman saat eksplorasi, tapi berbahaya di produksi: daftar kolom eksplisit membuat query tahan terhadap perubahan struktur tabel dan lebih hemat jaringan.</div>

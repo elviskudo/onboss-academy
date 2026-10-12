@@ -1,0 +1,156 @@
+---
+title: "Subquery dan CTE"
+description: "Query di dalam query — dan cara merapikannya dengan WITH"
+order: 5
+quiz:
+  - q: "Subquery adalah…"
+    options: ["Query yang tertanam di dalam query lain", "Query yang gagal", "Query khusus untuk UPDATE", "Query tanpa WHERE"]
+    answer: 0
+    explain: "Subquery (query bersarang) berada di dalam query utama, misalnya di klausa WHERE atau FROM."
+  - q: "CTE ditulis dengan kata kunci…"
+    options: ["JOIN", "WITH", "GROUP", "SET"]
+    answer: 1
+    explain: "CTE (Common Table Expression) didefinisikan dengan WITH, misalnya WITH ringkas AS (...)."
+  - q: "Padanan 'variabel' di SQL prosedural adalah…"
+    options: ["Kolom biasa", "CTE, parameter, atau variabel sesi", "PRIMARY KEY", "Alias tabel"]
+    answer: 1
+    explain: "SQL menyimpan nilai sementara di CTE, parameter query (@nama), atau variabel sesi — bukan variabel bebas seperti di JS."
+  - q: "Padanan looping/baris-demi-baris yang setara set-based dalam SQL adalah…"
+    options: ["SELECT biasa", "Rekursi CTE", "DELETE", "DISTINCT"]
+    answer: 1
+    explain: "Rekursi CTE mengulang lewat query itu sendiri sampai kondisi berhenti — tanpa menulis perulangan manual."
+  - q: "Keunggulan CTE dibanding subquery bersarang adalah…"
+    options: ["Lebih cepat selalu", "Lebih terbaca dan bisa dipakai berulang", "Tidak butuh FROM", "Bisa menghapus tabel"]
+    answer: 1
+    explain: "CTE membuat langkah perantara bernama — query panjang jadi bertahap dan mudah dibaca."
+example:
+  code: |
+    WITH ringkas AS (
+      SELECT dept, AVG(gaji) AS rata
+      FROM karyawan
+      GROUP BY dept
+    )
+    SELECT k.nama, k.gaji, ringkas.rata
+    FROM karyawan k
+    JOIN ringkas ON k.dept = ringkas.dept
+    WHERE k.gaji > ringkas.rata;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kadang jawaban sebuah query bergantung pada **hasil query lain**. SQL membolehkannya lewat **subquery** — dan **CTE** membuatnya jauh lebih rapi, sekaligus menjadi tempat menaruh "variabel" dan "perulangan" ala SQL.
+
+## 4 Posisi Subquery
+
+| Posisi | Bentuk | Fungsi | Contoh |
+|--------|--------|--------|--------|
+| `WHERE` skalar | `(SELECT ...)` satu nilai | Membandingkan tiap baris | `gaji > (SELECT AVG(gaji) FROM karyawan)` |
+| `WHERE` + `IN` | `(SELECT ...)` banyak nilai | Cek keanggotaan daftar | `id IN (SELECT lead_id FROM proyek)` |
+| `WHERE` + `EXISTS` | ada-tidaknya baris | Filter berdasarkan tabel lain | `EXISTS (SELECT 1 FROM proyek ...)` |
+| `FROM` (derived table) | subquery sebagai tabel | Menyaring hasil agregat | `SELECT ... FROM (SELECT ...) x` |
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE gaji > (SELECT AVG(gaji) FROM karyawan);
+```
+
+Subquery di dalam kurung menghasilkan **satu nilai** (rata-rata seluruh gaji, 9.725.000). Baris karyawan dengan gaji di atas angka itu lolos filter — tanpa perlu menghitung rata-rata dulu di aplikasi.
+
+```sql
+SELECT dept, jumlah
+FROM (
+  SELECT dept, COUNT(*) AS jumlah
+  FROM karyawan
+  GROUP BY dept
+) AS per_dept
+WHERE jumlah >= 2;
+```
+
+Subquery di FROM diberi alias wajib. Ini berguna ketika kita ingin menyaring hasil agregat — sesuatu yang tidak bisa dilakukan WHERE biasa.
+
+## CTE: Menamai Langkah dengan WITH
+
+```sql
+WITH rata_dept AS (
+  SELECT dept, AVG(gaji) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.gaji, rata_dept.rata
+FROM karyawan k
+JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata;
+```
+
+`WITH` mendefinisikan tabel sementara bernama `rata_dept` yang bisa dirujuk di query utama. Hasilnya identik dengan subquery, tapi urutan logisnya jelas: *hitung rata-rata dulu, lalu bandingkan*.
+
+Beberapa blok CTE dipisah koma, dan setiap blok bisa merujuk blok sebelumnya:
+
+```sql
+WITH total AS (
+  SELECT SUM(gaji) AS semua FROM karyawan
+),
+tinggi AS (
+  SELECT SUM(gaji) AS gaji_tinggi FROM karyawan WHERE gaji >= 11000000
+)
+SELECT tinggi.gaji_tinggi * 100.0 / total.semua AS persen_dari_total
+FROM total, tinggi;
+```
+
+Hasilnya 34.500.000 × 100 / 77.800.000 ≈ **44,3%** gaji perusahaan terkonsentrasi pada 3 orang.
+
+## Padanan Variabel di SQL
+
+SQL tidak punya variabel bebas seperti `let x = ...`. Nilai sementara disimpan di 3 tempat:
+
+| Mekanisme | Ditulis di | Cocok untuk |
+|-----------|------------|-------------|
+| CTE (`WITH`) | dalam satu query | hasil perantara yang hanya dipakai sekali |
+| Parameter | `WHERE dept = ?` / `@dept` | nilai yang dikirim aplikasi ke query |
+| Variabel sesi | `SET @total = ...` (MySQL) | nilai lintas-statement dalam satu sesi |
+
+Untuk laporan satu kali, CTE adalah pilihan paling aman: nilainya hidup hanya selama query berjalan.
+
+## Looping: Rekursi CTE vs CURSOR
+
+Padanan perulangan dalam SQL datang dalam 2 bentuk:
+
+| Mekanisme | Gaya | Kapan Dipakai | Kecepatan |
+|-----------|------|---------------|-----------|
+| `WITH RECURSIVE` | set-based, seluruh baris sekaligus | hierarki, deret angka, graf | Sangat cepat |
+| `CURSOR` | baris demi baris | logika berurutan yang mustahil diset-based | Lambat |
+
+```sql
+-- deret angka 1..5: pola loop klasik tanpa perulangan manual
+WITH RECURSIVE angka(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM angka WHERE n < 5
+)
+SELECT n FROM angka;
+```
+
+Blok pertama disebut *anchor* (nilai awal), blok kedua *recursive member* (langkah pengulangan), dan `WHERE n < 5` adalah kondisi berhenti. Untuk hierarki jabatan, ganti angka dengan tabel karyawan: anchor = atasan puncak, recursive = bawahan yang `manager_id`-nya cocok.
+
+`CURSOR` tetap dipakai bila satu baris harus memicu tindakan berurutan yang tidak bisa diekspresikan sebagai SELECT — misal memanggil API per baris. Alternatif set-based yang lebih baik hampir selalu ada: ubah jadi `UPDATE ... FROM`, `CASE WHEN`, atau `JOIN` ke tabel perantara.
+
+## Di Dunia Nyata
+
+- **Laporan gaji di atas rata-rata departemen**: CTE `rata_dept` dihitung sekali lalu di-`JOIN` — bukan subquery yang dibaca ulang tiap baris.
+- **Menyusun struktur organisasi perusahaan**: `WITH RECURSIVE` menelusuri atasan → bawahan sampai lapisan terbawah.
+- **Menyiapkan parameter laporan bulanan**: aplikasi mengirim `?` parameter (periode) ke satu query yang dipakai ulang.
+- **Menandai persentase kontribusi**: dua CTE (`total` dan `tinggi`) dihitung berdampingan untuk rasio dalam satu langkah.
+
+<div class="note">💡 CTE membuat query panjang terasa seperti resep masakan: langkah 1, langkah 2, hasil akhir. Utamakan CTE ketika subquery mulai bersarang dua tingkat ke atas.</div>
+
+<TryIt lang="sql" runtime="sql" code={`WITH rata_dept AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata_dept.rata AS rata_dept
+FROM karyawan k
+JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata
+ORDER BY k.gaji DESC;`} />

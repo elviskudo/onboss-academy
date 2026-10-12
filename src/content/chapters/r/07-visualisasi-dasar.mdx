@@ -1,0 +1,168 @@
+---
+title: "Visualisasi Dasar"
+description: "Empat grafik base R: scatter, bar, histogram, boxplot, plus anatomi plot dan ekspor file"
+order: 7
+quiz:
+  - q: "Grafik untuk melihat hubungan dua variabel numerik adalah…"
+    options: ["Barplot", "Histogram", "Scatter plot", "Pie chart"]
+    answer: 2
+    explain: "plot(x, y) menampilkan pasangan observasi dan memperlihatkan arah, bentuk, serta pencilan hubungan."
+  - q: "Histogram menampilkan…"
+    options: ["Hubungan dua variabel", "Distribusi satu variabel kontinu dalam bin", "Perbandingan kategori", "Tren waktu saja"]
+    answer: 1
+    explain: "hist() membagi rentang nilai menjadi interval dan menghitung frekuensinya."
+  - q: "Boxplot berguna untuk…"
+    options: ["Membandingkan sebaran antar kelompok dan melihat pencilan", "Menggambar peta", "Menghitung mean", "Membuat tabel"]
+    answer: 0
+    explain: "Boxplot merangkum median, kuartil, whisker, dan titik pencilan."
+  - q: "Urutan yang benar untuk menyimpan grafik PNG adalah…"
+    options: ["plot(); png()", "png(); plot(); dev.off()", "save(); plot()", "plot(); dev.off(); png()"]
+    answer: 1
+    explain: "Device file dibuka dulu, plot digambar ke device itu, lalu dev.off() menutup dan menyimpan."
+  - q: "Apa fungsi par(mfrow = c(1, 2))?"
+    options: ["Membuat grafik 1 × 2 panel", "Mengubah ukuran font", "Menyimpan dua file", "Membuat dua warna"]
+    answer: 0
+    explain: "mfrow membagi device menjadi jumlah baris dan kolom panel."
+example:
+  code: |
+    set.seed(1)
+    x <- 1:10
+    y <- 2 * x + rnorm(10, sd = 1)
+    plot(x, y, main = "Hubungan X dan Y", xlab = "X", ylab = "Y")
+    abline(lm(y ~ x), col = "red")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Visualisasi mengubah pola yang sulit terlihat di tabel menjadi bentuk, posisi, dan warna. Base R menyediakan grafik lengkap tanpa package eksternal: cukup pilih grafik berdasarkan tipe variabel dan pertanyaan analisis.
+
+## Empat Grafik Inti
+
+Ada **4 grafik** yang menutup kebutuhan eksplorasi awal:
+
+| Grafik | Fungsi | Data | Kapan dipakai |
+| --- | --- | --- | --- |
+| Scatter plot | hubungan dua numerik | x dan y | korelasi, pola nonlinear, outlier |
+| Barplot | perbandingan nilai kategori | kategori + jumlah | frekuensi atau total per grup |
+| Histogram | bentuk distribusi | satu numerik kontinu | skewness, multi-puncak |
+| Boxplot | ringkasan sebaran | numerik per grup | median, IQR, pencilan |
+
+Grafik bukan dekorasi. Sebelum menggambar, tulis pertanyaan: "apakah nilai naik bersama umur?" mengarah ke scatter; "cabang mana terbesar?" mengarah ke barplot.
+
+## Anatomi Plot Base R
+
+Hampir semua fungsi plot menerima **6 argumen presentasi** yang sama:
+
+| Argumen | Fungsi |
+| --- | --- |
+| `main` | judul utama |
+| `xlab`, `ylab` | label sumbu |
+| `col` | warna |
+| `pch` | bentuk titik |
+| `lwd` | tebal garis |
+| `las` | orientasi label sumbu |
+
+Label harus menyertakan unit: `ylab = "Pendapatan (juta rupiah)"` lebih informatif daripada `ylab = "Y"`.
+
+## Scatter Plot
+
+```r
+set.seed(1)
+x <- 1:10
+y <- 2 * x + rnorm(10)
+plot(x, y,
+  main = "Hubungan X dan Y",
+  xlab = "X", ylab = "Y",
+  pch = 19, col = "steelblue"
+)
+abline(lm(y ~ x), col = "red", lwd = 2)
+```
+
+`plot(x, y)` membuat satu titik per pasangan observasi. `abline()` menambah garis model; garis tidak membuktikan sebab-akibat.
+
+## Barplot
+
+```r
+penjualan <- c(Jan = 120, Feb = 95, Mar = 140, Apr = 110)
+barplot(penjualan,
+  main = "Penjualan Bulanan",
+  ylab = "Unit", col = "steelblue",
+  las = 1
+)
+```
+
+Barplot membutuhkan tinggi yang sudah diringkas. Untuk data mentah kategori, gunakan `barplot(table(kategori))` agar frekuensi dihitung dulu.
+
+## Histogram
+
+```r
+set.seed(42)
+nilai <- rnorm(200, mean = 70, sd = 8)
+hist(nilai,
+  main = "Distribusi Nilai",
+  xlab = "Nilai", breaks = 15,
+  col = "gray80", border = "white"
+)
+```
+
+`breaks` mengubah jumlah bin. Terlalu sedikit menyembunyikan bentuk; terlalu banyak menampilkan noise. Coba beberapa nilai dan jangan menyimpulkan distribusi dari satu pilihan bin saja.
+
+## Boxplot
+
+```r
+set.seed(7)
+data <- data.frame(
+  kelompok = rep(c("A", "B", "C"), each = 30),
+  nilai = c(rnorm(30, 70, 5), rnorm(30, 75, 8), rnorm(30, 68, 3))
+)
+boxplot(nilai ~ kelompok, data = data,
+  main = "Nilai per Kelompok",
+  xlab = "Kelompok", ylab = "Nilai",
+  col = "lightblue"
+)
+```
+
+Formula `nilai ~ kelompok` memecah variabel numerik menurut kategori. Garis tengah adalah median; kotak membentang dari Q1 ke Q3.
+
+## Multi-panel dan Ekspor
+
+```r
+png("ringkasan.png", width = 1000, height = 500, res = 120)
+par(mfrow = c(1, 2))
+hist(nilai, main = "Histogram")
+boxplot(nilai, main = "Boxplot")
+dev.off()
+```
+
+`png()` membuka device file, semua plot berikutnya masuk ke sana, dan `dev.off()` menyelesaikan file. Untuk dokumen vektor gunakan `pdf()` dengan alur sama.
+
+## Tentang ggplot2
+
+`ggplot2` populer karena grammar of graphics dan tema konsisten, tetapi merupakan package eksternal. Padanan scatter minimalnya:
+
+```r
+# Membutuhkan install.packages("ggplot2") terlebih dahulu
+# ggplot2::ggplot(df, ggplot2::aes(x, y)) + ggplot2::geom_point()
+```
+
+Pelajari konsep pemilihan grafik dengan base R lebih dulu; package tidak memperbaiki pilihan grafik yang keliru.
+
+## Di Dunia Nyata
+
+1. **Diagnosa model** — scatter residual vs fitted menyingkap pola melengkung atau varians yang membesar.
+2. **Monitoring operasi** — barplot membandingkan jumlah tiket per kategori insiden minggu ini.
+3. **Quality control** — histogram diameter produk menunjukkan distribusi bergeser dari target mesin.
+4. **Eksperimen** — boxplot conversion time per varian memperlihatkan median dan outlier antar-grup.
+5. **Laporan otomatis** — `png()` di skrip terjadwal menghasilkan grafik KPI baru setiap pagi tanpa sesi interaktif.
+
+<div class="note">💡 Mulai sumbu barplot dari nol agar panjang batang tidak menipu; untuk scatter dan histogram, jangan memaksa nol jika justru menyembunyikan pola. Skala harus mengikuti jenis perbandingan, bukan satu aturan universal.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`png("visualisasi.png", width = 800, height = 400)
+par(mfrow = c(1, 2))
+penjualan <- c(Jan = 120, Feb = 95, Mar = 140, Apr = 110)
+barplot(penjualan, main = "Penjualan", ylab = "Unit", col = "steelblue")
+set.seed(42)
+nilai <- rnorm(200, mean = 70, sd = 8)
+hist(nilai, main = "Distribusi Nilai", xlab = "Nilai", col = "gray80")
+dev.off()
+cat("Grafik tersimpan; mean =", round(mean(nilai), 2), "\n")`} />

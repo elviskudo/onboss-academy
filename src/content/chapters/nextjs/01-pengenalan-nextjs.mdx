@@ -1,0 +1,113 @@
+---
+title: "Pengenalan Next.js"
+description: "Framework React untuk produksi — server rendering, routing berbasis folder, dan optimasi bawaan"
+order: 1
+quiz:
+  - q: "Next.js adalah…"
+    options: ["Bahasa pemrograman baru", "Framework berbasis React untuk aplikasi produksi", "Database", "Library CSS"]
+    answer: 1
+    explain: "Next.js dibangun di atas React dan menambahkan routing, rendering server, dan optimasi build."
+  - q: "Pembuat dan sponsor utama Next.js…"
+    options: ["Vercel", "Google", "Meta", "Adobe"]
+    answer: 0
+    explain: "Vercel — perusahaan di balik hosting Next.js — mengembangkan dan merawat framework ini."
+  - q: "Router yang dipakai Next.js versi terbaru disebut…"
+    options: ["Pages Router", "App Router", "File Router", "Dynamic Router"]
+    answer: 1
+    explain: "App Router (folder app/) adalah generasi terbaru: layout, server component, dan streaming bawaan."
+  - q: "Server-Side Rendering (SSR) berarti…"
+    options: ["Halaman dihasilkan di server lalu dikirim sebagai HTML", "Semua kode jalan di CSS", "Data disimpan di cookie", "Aplikasi hanya bisa dipakai offline"]
+    answer: 0
+    explain: "User menerima HTML yang sudah terisi data — tampil lebih cepat dan lebih baik untuk SEO."
+  - q: "Perintah untuk membuat proyek Next.js baru adalah…"
+    options: ["npx create-next-app@latest", "ng new app", "npm i angular", "cargo new web"]
+    answer: 0
+    explain: "create-next-app menyiapkan proyek lengkap dengan App Router dan TypeScript."
+example:
+  code: |
+    const halaman = {
+      url: "/",
+      render: "server",
+      router: "App Router",
+      framework: "Next.js + React",
+    };
+    console.log(halaman.url, "→", halaman.render, "(", halaman.router, ")");
+---
+
+Next.js adalah jawaban React untuk kebutuhan produksi: routing lengkap, rendering di server, dan pengiriman aset yang optimal — semuanya dengan konfigurasi minimal.
+
+## Apa yang Ditambahkan Next.js ke React?
+
+React sendiri hanya menangani tampilan. Next.js menambahkan:
+
+- **Routing berbasis folder**: struktur `app/` = struktur URL
+- **Rendering fleksibel**: server (SSR), statis (SSG), atau hybrid per halaman
+- **Data fetching bawaan**: `fetch` di server component dengan cache terkontrol
+- **Optimasi**: gambar, font, dan skrip dioptimasi otomatis
+- **API bawaan**: route handler untuk endpoint tanpa server terpisah
+
+## Server, Static, atau Client?
+
+```typescript
+// Halaman dirender di server setiap request (SSR)
+export const dynamic = "force-dynamic";
+
+// Atau dibangun sekali saat build (SSG), lalu direfresh berkala
+export const revalidate = 60;
+```
+
+Keputusan rendering bisa dibuat per halaman — bukan untuk seluruh aplikasi sekaligus.
+
+## Struktur Berbasis Folder
+
+```
+app/
+  layout.tsx     layout global
+  page.tsx       halaman beranda → /
+  produk/
+    page.tsx     /produk
+```
+
+Tidak ada file daftar rute manual. Folder dan file bernama khusus (`page`, `layout`, `route`) langsung dipetakan ke URL.
+
+## Hydration Singkat
+
+Di sisi client, React menghidupkan bagian client component melalui hydration sehingga event listener terpasang pada HTML yang sudah terlihat.
+
+## Lima Kemampuan Inti
+
+Next.js App Router menyatukan **5 kemampuan inti**.
+
+| Kemampuan | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| File-system routing | Memetakan folder ke URL | `app/produk/page.tsx` | Semua halaman |
+| Server Components | Render dan akses data di server | komponen `async` | Konten tanpa interaksi browser |
+| Client Components | Menyediakan state dan event | `useState` | Tombol, input, browser API |
+| Route Handlers | Membuat endpoint HTTP | `app/api/route.ts` | Webhook atau API publik |
+| Metadata API | Menghasilkan informasi SEO | `metadata` | Judul, deskripsi, social preview |
+
+React menyediakan model komponen; Next.js menentukan cara komponen dirutekan, dirender, mengambil data, dan dikirim. State browser tetap memakai React, misalnya `useState`, tetapi data rahasia dan query database tinggal di server.
+
+```typescript
+"use client";
+
+import { useState } from "react";
+
+export default function Counter() {
+  const [jumlah, setJumlah] = useState(0);
+  return <button onClick={() => setJumlah(jumlah + 1)}>Klik {jumlah}</button>;
+}
+```
+
+## Alur Satu Request
+
+Ada **4 tahap utama**: router mencocokkan URL, server component mengambil data, server mengirim hasil render, lalu client component di-hydrate jika perlu. Tautan internal berikutnya memakai navigasi client-side dan mempertahankan layout yang sama.
+
+## Di Dunia Nyata
+
+- Situs berita merender artikel di server agar crawler menerima isi lengkap.
+- Dashboard memakai client component kecil untuk filter interaktif.
+- Toko menghasilkan halaman produk statis dan menyegarkannya berkala.
+- SaaS menaruh webhook pembayaran di route handler tanpa server terpisah.
+
+<div class="note">💡 Prinsip Next.js: default-kan pekerjaan di server, kirim JavaScript ke browser seperlunya. Membatasi penggunaan "use client" adalah kunci performa App Router — kamu akan mempraktikkannya di bab komponen server & client.</div>

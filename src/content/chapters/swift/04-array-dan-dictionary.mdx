@@ -1,0 +1,147 @@
+---
+title: "Array & Dictionary"
+description: "Koleksi terstruktur di Swift — daftar bernomor dan pasangan kunci nilai"
+order: 4
+quiz:
+  - q: "Indeks pertama array di Swift adalah…"
+    options: ["1", "0", "-1", "sesuai panjang"]
+    answer: 1
+    explain: "Array Swift dimulai dari 0 seperti kebanyakan bahasa modern."
+  - q: "Array diakses memakai…"
+    options: ["kurung kurawal", "kurung siku dan indeks", "tanda titik dua", "panah"]
+    answer: 1
+    explain: "Contoh buah[0] mengembalikan elemen pertama."
+  - q: "Dictionary menyimpan data berupa…"
+    options: ["baris berurutan", "kunci dan nilai", "hanya angka", "tipe Character saja"]
+    answer: 1
+    explain: "Setiap kunci unik memetakan satu nilai."
+  - q: "Mengakses Dictionary dengan kunci yang tidak ada menghasilkan…"
+    options: ["Optional nil", "nilai default otomatis", "error kompilasi", "array kosong"]
+    answer: 0
+    explain: "Hasilnya bertipe opsional sehingga wajib diperiksa dulu."
+  - q: "Method menambahkan elemen ke array adalah…"
+    options: ["append", "push", "add", "insertLast"]
+    answer: 0
+    explain: "append menambahkan ke posisi terakhir."
+example:
+  code: |
+    var buah = ["apel", "mangga", "jeruk"]
+    buah.append("anggur")
+
+    print(buah[0])
+    print(buah.count)
+
+    let skor: [String: Int] = ["sari": 90, "budi": 85]
+    print(skor["sari"] ?? 0)
+    print(buah.joined(separator: ", "))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hampir setiap program menyimpan kumpulan data. Swift memberi **3 koleksi inti**: Array, Set, dan Dictionary — semuanya bertipe generik dan bisa dibuat immutable dengan `let`.
+
+| Koleksi | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `Array<T>` | berurutan, boleh duplikat | `["apel", "mangga"]` | daftar pesanan, riwayat |
+| `Set<T>` | unik, tanpa urutan | `Set(["a", "a"])` → `["a"]` | tag, email terkirim |
+| `Dictionary<K, V>` | kunci unik → nilai | `["sari": 90]` | id → pengguna, konfigurasi |
+
+Deklarasikan dengan `var` bila isinya akan bertambah, `let` bila hanya isi elemen yang bisa berubah (untuk Array, `let` masih mengizinkan `buah[0] = "x"`, tapi tidak `buah.append`).
+
+## Array
+
+```swift
+var buah = ["apel", "mangga", "jeruk"]
+
+print(buah[0])
+print(buah.count)
+print(buah.first ?? "kosong")
+```
+
+Ada **8 method Array yang paling sering dipakai**:
+
+| Method | Fungsi | Contoh |
+| --- | --- | --- |
+| `append(_:)` | tambah di akhir | `buah.append("anggur")` |
+| `insert(_:at:)` | tambah di posisi tertentu | `buah.insert("leci", at: 0)` |
+| `remove(at:)` | hapus berdasarkan indeks | `buah.remove(at: 0)` |
+| `removeLast()` | hapus elemen terakhir | `buah.removeLast()` |
+| `count` | jumlah elemen | `buah.count` |
+| `first` / `last` | elemen ujung (opsional) | `buah.first ?? "-"` |
+| `sorted()` | urutkan, hasil baru | `buah.sorted()` |
+| `enumerated()` | pasangan indeks + nilai | `for (i, b) in buah.enumerated()` |
+
+## Menambah dan Mengubah
+
+```swift
+var angka = [1, 2, 3]
+
+angka.append(4)
+angka[0] = 10
+angka.remove(at: 1)
+
+print(angka)
+```
+
+Indeks yang dihapus harus ada — Swift mengeceknya saat runtime.
+
+## Iterasi Array
+
+```swift
+let nilai = [75, 88, 90]
+
+for n in nilai {
+    print("Nilai: \(n)")
+}
+
+for (index, n) in nilai.enumerated() {
+    print("\(index): \(n)")
+}
+```
+
+`enumerated()` memberi pasangan indeks dan nilai.
+
+## Dictionary
+
+```swift
+var skor: [String: Int] = ["sari": 90, "budi": 85]
+
+skor["sari"] = 95
+skor["andi"] = 80
+
+print(skor["sari"] ?? 0)
+print(skor.count)
+```
+
+Nilai kunci selalu opsional karena kunci boleh tidak ada. Ada **5 operasi Dictionary yang perlu diingat**: akses `dict[kunci]`, `updateValue(_:forKey:)`, `removeValue(forKey:)`, `keys`, dan `values`.
+
+## Memilih Tipe yang Tepat
+
+- **Array** — data berurutan, duplikat diperbolehkan
+- **Dictionary** — data berpasangan kunci dan nilai
+- **Set** — kumpulan unik tanpa urutan
+
+## Di Dunia Nyata
+
+- **Keranjang belanja** — `var keranjang: [Produk]` bertambah saat pengguna memilih barang, berkurang lewat `remove(at:)`.
+- **Daftar tag unik** — `Set<String>` membuang duplikat otomatis ketika pengguna mengetik tag yang sama dua kali.
+- **Papan peringkat** — `let skor: [String: Int]` memetakan nama ke nilai tanpa perlu mencari berulang.
+- **Konfigurasi aplikasi** — dictionary `[String: String]` menyimpan pengaturan yang datang dari server.
+- **Mencari indeks** — `nilai.firstIndex(of: 88)` mengembalikan opsional indeks, lalu dipakai untuk menghapus atau menampilkan posisi.
+
+<div class="note">💡 Akses Dictionary selalu bersifat opsional. Gunakan ?? untuk memberi nilai bawaan atau if let untuk mengambil nilai hanya bila kunci benar-benar ada.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`var buah = ["apel", "mangga", "jeruk"]
+buah.append("anggur")
+
+print(buah[0])
+print(buah.count)
+print(buah.joined(separator: ", "))
+
+var angka = [1, 2, 3]
+angka[0] = 10
+print(angka)
+
+let skor: [String: Int] = ["sari": 90, "budi": 85]
+print(skor["sari"] ?? 0)
+print(skor["tiasa"] ?? -1)`} />

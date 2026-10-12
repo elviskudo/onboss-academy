@@ -1,0 +1,147 @@
+---
+title: "Serial Monitor dan Komunikasi Data"
+description: "Serial.begin, print, dan membaca perintah dari komputer"
+order: 5
+quiz:
+  - q: "Serial.begin(9600) menetapkan…"
+    options: ["Pin digital", "Alamat IP", "Laju komunikasi serial (baud rate)", "Resolusi LCD"]
+    answer: 2
+    explain: "9600 baud berarti 9600 simbol per detik; kedua sisi harus memakai angka yang sama."
+  - q: "Bila monitor menampilkan karakter acak, kemungkinan besar…"
+    options: ["Baud rate monitor dan program tidak sama", "LED rusak", "Tegangan terlalu rendah", "Pin salah"]
+    answer: 0
+    explain: "Ketidakcocokan baud adalah penyebab 'gibberish' paling sering di serial."
+  - q: "Serial.print() vs Serial.println() — println menambah…"
+    options: ["Kecepatan baud", "Baris baru setelah teks", "Checksum", "Garis bawah"]
+    answer: 1
+    explain: "println mengakhiri baris — praktis untuk satu data per baris."
+  - q: "Membaca input dari Serial Monitor dilakukan dengan…"
+    options: ["digitalRead()", "analogWrite()", "Serial.available() lalu Serial.read()", "EEPROM.get()"]
+    answer: 2
+    explain: "available() memberi tahu jumlah byte masuk; read() mengambilnya."
+  - q: "Komunikasi serial (TX/RX) pin 0/1 juga dipakai oleh…"
+    options: ["Koneksi USB upload — jangan dipakai untuk hal lain saat upload", "Pin power", "Antena", "Kristal eksternal"]
+    answer: 0
+    explain: "Konflik pada pin 0/1 menyebabkan upload gagal atau data kacau."
+example:
+  code: |
+    void setup() {
+      Serial.begin(9600);
+      Serial.println("Ketik angka di Serial Monitor:");
+    }
+
+    void loop() {
+      if (Serial.available() > 0) {
+        long nilai = Serial.parseInt();
+        Serial.print("Diterima x2: ");
+        Serial.println(nilai * 2);
+      }
+    }
+---
+
+Serial adalah jalur komunikasi dua arah antara board dan komputer. Ia menjadi alat utama untuk **debug, kalibrasi sensor, mencatat data, dan mengirim perintah manual** sebelum proyek punya layar atau tombol sendiri.
+
+## 5 Operasi Serial Inti
+
+| Operasi | Fungsi | Hasil/Contoh |
+| --- | --- | --- |
+| `Serial.begin(9600)` | Membuka koneksi pada baud tertentu | Wajib di `setup()` |
+| `Serial.print(x)` | Kirim tanpa baris baru | `Nilai: 42` |
+| `Serial.println(x)` | Kirim lalu newline | Satu data per baris |
+| `Serial.available()` | Jumlah byte yang menunggu | Cek sebelum membaca |
+| `Serial.read()` | Ambil satu byte/karakter | `'a'`, `'1'`, `10` |
+
+UNO memakai pin **0 (RX)** untuk menerima dan **1 (TX)** untuk mengirim. Chip USB-to-serial juga memakai dua pin itu saat upload, jadi jangan pasang modul lain ke 0/1 ketika meng-upload.
+
+## Mengirim Data Sensor Keluar
+
+```cpp
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int nilai = analogRead(A0);
+  Serial.print("Nilai analog: ");
+  Serial.println(nilai);
+  delay(500);
+}
+```
+
+Buka Serial Monitor, pilih baud **9600**. Kalau monitor menampilkan karakter acak, hampir selalu baud monitor tidak sama dengan `Serial.begin()`.
+
+## Format Angka dan Teks
+
+```cpp
+int nilai = 255;
+Serial.println(nilai);       // 255 (desimal)
+Serial.println(nilai, HEX);  // FF
+Serial.println(nilai, BIN);  // 11111111
+
+float suhu = 27.456;
+Serial.println(suhu, 2);     // 27.46 (dua desimal)
+```
+
+| Format | Pemanggilan | Kapan dipakai |
+| --- | --- | --- |
+| Desimal | `print(n, DEC)` | Data manusia biasa |
+| Heksadesimal | `print(n, HEX)` | Register, warna, alamat |
+| Biner | `print(n, BIN)` | Memeriksa bit pin |
+| Float presisi | `print(x, 2)` | Tegangan/suhu |
+
+## Membaca Perintah Masuk
+
+```cpp
+const int LED = LED_BUILTIN;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("Ketik a=nyala, b=mati");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char perintah = Serial.read();
+    if (perintah == 'a') digitalWrite(LED, HIGH);
+    if (perintah == 'b') digitalWrite(LED, LOW);
+  }
+}
+```
+
+`Serial.read()` membaca **satu byte**, jadi karakter `'1'` bernilai kode ASCII 49, bukan angka 1. Untuk angka lengkap seperti `123`, gunakan `Serial.parseInt()`; untuk teks sampai newline, gunakan `Serial.readStringUntil('\n')`.
+
+## 4 Baud Rate Umum
+
+| Baud | Kecepatan relatif | Kapan dipakai |
+| ---: | --- | --- |
+| 9.600 | Lambat, sangat stabil | Debug sederhana |
+| 19.200 | Sedang | Modul lama/GPS |
+| 57.600 | Cepat | Log menengah |
+| 115.200 | Sangat cepat | ESP32, log padat |
+
+9600 baud membawa kira-kira 960 byte/detik pada format 8N1 (10 bit per byte). Jangan mencetak ribuan karakter tiap loop tanpa delay — buffer serial 64 byte akan penuh dan program ikut melambat.
+
+## Debugging Sistematis
+
+```cpp
+void loop() {
+  Serial.println("A: sebelum baca");
+  int nilai = analogRead(A0);
+  Serial.print("B: nilai=");
+  Serial.println(nilai);
+  delay(1000);
+}
+```
+
+Pasang penanda `A`, `B`, `C` di titik mencurigakan. Penanda terakhir yang muncul menunjukkan bagian sesudahnya gagal atau macet. Setelah bug selesai, hapus/nonaktifkan log agar loop kembali cepat.
+
+## Di Dunia Nyata
+
+1. **Kalibrasi sensor tanah** — rekam nilai saat kering dan basah, lalu tetapkan ambang dari data nyata.
+2. **Panel kontrol motor** — kirim `f`, `b`, `s` dari laptop untuk maju, mundur, berhenti.
+3. **Plot suhu** — format satu angka per baris lalu buka Serial Plotter untuk grafik real-time.
+4. **Diagnosis startup** — cetak status setiap modul (`sensor OK`, `SD gagal`) sebelum loop utama.
+5. **Jembatan ke Raspberry Pi** — UNO mengirim CSV `suhu,kelembapan` lewat USB untuk disimpan Python.
+
+<div class="note">💡 Saat board kesulitan upload, cabut sementara perangkat yang memakai pin 0/1 (RX/TX). Pin yang sama dipakai bootloader selama proses upload, sehingga data eksternal bisa merusak komunikasi.</div>

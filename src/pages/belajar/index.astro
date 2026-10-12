@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import LanguageCard from '../../components/LanguageCard.astro';
+import { LANGUAGES, CATEGORIES } from '../../data/languages';
+---
+<Base title="Semua Bahasa" description="Jelajahi semua bahasa pemrograman dan teknologi yang bisa dipelajari di OnBoss Academy.">
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+    <h1 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Semua Bahasa & Teknologi</h1>
+    <p class="mt-3 max-w-2xl text-muted">{LANGUAGES.length} teknologi tersedia — pilih mana yang ingin kamu kuasai.</p>
+
+    {CATEGORIES.map((cat) => {
+      const langs = LANGUAGES.filter((l) => l.category === cat);
+      if (!langs.length) return null;
+      return (
+        <section class="mt-14">
+          <h2 class="flex items-center gap-3 text-xl font-extrabold tracking-tight">
+            {cat}
+            <span class="rounded-full bg-line/60 px-2.5 py-0.5 text-xs font-bold text-muted">{langs.length}</span>
+          </h2>
+          <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {langs.map((lang) => <LanguageCard lang={lang} />)}
+          </div>
+        </section>
+      );
+    })}
+  </div>
+</Base>

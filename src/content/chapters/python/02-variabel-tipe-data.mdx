@@ -1,0 +1,168 @@
+---
+title: "Variabel & Tipe Data"
+description: "str, int, float, bool, list, dict, tuple, set, operator & konversi"
+order: 2
+quiz:
+  - q: "Tipe data untuk menyimpan pasangan kunci-nilai adalah…"
+    options: ["list", "tuple", "dict", "set"]
+    answer: 2
+    explain: "Dictionary {} — akses cepat by key, tidak berurutan (Python 3.7+ menyimpan urutan sisipkan)."
+  - q: "list bersifat…"
+    options: ["Tidak bisa diubah (immutable)", "Bisa diubah (mutable)", "Hanya angka", "Selalu kosong"]
+    answer: 1
+    explain: "List bisa append/ubah isi. Tuple immutable — lebih cepat & aman sebagai konstanta."
+  - q: "Slicing data[1:4] mengambil elemen…"
+    options: ["Index 1 sampai sebelum 4 (1,2,3)", "Index 1 sampai 4", "4 elemen pertama", "Index 4 saja"]
+    answer: 0
+    explain: "Python slicing: batas kiri inklusif, batas kanan eksklusif."
+  - q: "Hasil dari 7 / 2 di Python adalah…"
+    options: ["3", "3.5", "TypeError", "3 dengan sisa 1"]
+    answer: 1
+    explain: "Selalu pakai // untuk bagi bulat: 7 // 2 = 3. Operator / selalu menghasilkan float."
+  - q: "Cara mengecek tipe sebuah variabel adalah…"
+    options: ["typeof x", "type(x)", "x.type()", "kindof(x)"]
+    answer: 1
+    explain: "type(x) mengembalikan kelas tipe, mis. <class 'int'>. isinstance(x, int) untuk pengecekan boolean."
+example:
+  code: |
+    nama = "Sari"
+    umur = 20
+    aktif = True
+    nilai = [85, 90, 78]
+    siswa = {"nama": "Budi", "kelas": "XII"}
+    print(nama, umur, aktif)
+    print(nilai[0], siswa["nama"])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Python menyimpan segalanya sebagai objek: kamu cukup tulis `nama = nilai` tanpa deklarasi tipe, lalu bahasa ini menebak tipenya sendiri.
+
+## Variabel
+
+```python
+nama = "Sari"       # label 'nama' menunjuk objek string
+umur = 20
+umur = "dua puluh"  # boleh — tipe mengikuti nilai terakhir
+```
+
+Aturan penamaan:
+
+- Boleh huruf, angka, dan `_`; **tidak boleh diawali angka** (`2satu = ...` → SyntaxError).
+- Case-sensitive: `nilai` ≠ `Nilai`.
+- Konvensi PEP 8: `snake_case` untuk variabel & fungsi, `UPPER_CASE` untuk konstanta.
+- Python **tidak punya kata kunci deklarasi** — beda dengan JS yang punya 3 (`var`, `let`, `const`). Cukup 1 cara: `=`.
+
+## Tipe Data
+
+Python punya **8 tipe data utama** (3 numerik + 1 teks + 1 boolean + 4 kontainer) plus `None`:
+
+| Tipe | Sifat | Contoh | Buat apa |
+|---|---|---|---|
+| `int` | bulat, tanpa batas maksimum | `42`, `-7`, `10**100` | hitungan bulat |
+| `float` | desimal (presisi ganda) | `3.14`, `1e3` | data ukuran, harga |
+| `complex` | bilangan kompleks | `2+3j` | sinyal, ilmu komputasi |
+| `str` | teks, immutable | `"Halo"`, `'''x'''` | nama, pesan, JSON |
+| `bool` | `True` / `False` | `aktif = True` | status, kondisi |
+| `list` | terurut, mutable | `[1, 2, 3]` | kumpulan yang berubah |
+| `dict` | kunci-nilai, mutable | `{"a": 1}` | pencarian cepat by key |
+| `tuple` | terurut, immutable | `(1, 2)` | pasangan tetap, koordinat |
+| `set` | unik, mutable | `{1, 2}` | hapus duplikat |
+
+- **Default value: tidak ada** — variabel wajib diisi sebelum dipakai, kalau tidak → `NameError`.
+- Nilai "kosong"/falsy: `0`, `0.0`, `""`, `[]`, `{}`, `None` dianggap `False` dalam kondisi.
+
+## Konversi Tipe
+
+```python
+int("42")     # 42   — cast eksplisit
+str(42)       # "42"
+float("3.5")  # 3.5
+bool(0)       # False; bool("kosong") = True (string tidak kosong)
+int("3.5")    # ValueError — tidak bisa setengah-setengah
+```
+
+Python melakukan *promotion* otomatis (coercion) hanya di operasi aritmatika: `2 + 3.0` → `5.0`. Untuk teks ↔ angka, konversi harus eksplisit — tidak ada `"1" + 1` yang dianggap 2.
+
+## Operator
+
+**7 operator aritmatika**: `+` `-` `*` `/` `//` `%` `**`
+
+```python
+7 / 2   # 3.5  — pembagian biasa selalu float
+7 // 2  # 3    — pembagian bulat
+7 % 2   # 1    — sisa bagi
+2 ** 10 # 1024 — pangkat
+```
+
+**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `<=`
+**3 operator logika**: `and` `or` `not` (short-circuit: `x != 0 and 10/x > 1` tidak error saat `x == 0`)
+**Operator penugasan**: `=` plus varian gabungan seperti `+=`, `-=`, `*=`, `//=`.
+**Operator keanggotaan & identitas**: `in`, `not in`, `is`, `is not`.
+
+| Kategori | Jumlah | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Aritmatika | 7 | `total + ppn` | hitung harga, rata-rata |
+| Perbandingan | 6 | `umur >= 17` | validasi, filter |
+| Logika | 3 | `aktif and saldo > 0` | gabung syarat |
+| Penugasan | 1 + gabungan | `saldo -= 50` | update nilai |
+| Keanggotaan | 2 | `"a" in kata` | cek list/teks |
+| Identitas | 2 | `x is None` | cek None/TDS |
+
+## String
+
+```python
+s = "  Belajar Python  "
+s.strip()          # hilangkan spasi tepi
+s.lower()          # huruf kecil
+s.upper()          # huruf besar
+s.replace("Python", "JS")
+"Halo".split("o")  # ['Hal', '']
+len(s)             # panjang
+s[0], s[-1]        # karakter pertama & terakhir
+"Halo {}".format("Dunia")
+f"Halo {s.strip()}!"  # f-string (favorit)
+```
+
+## List
+
+```python
+buah = ["apel", "jeruk"]
+buah.append("mangga")   # tambah akhir
+buah.insert(0, "pepaya")# sisip di awal
+buah.remove("jeruk")    # hapus by nilai
+buah.pop()              # hapus & ambil akhir
+buah[0], buah[-1], buah[1:3]
+len(buah)
+for b in buah:
+    print(b)
+```
+
+## Dict, Tuple, Set
+
+```python
+orang = {"nama": "Sari", "umur": 20}
+orang["kota"] = "Bandung"
+orang.get("telepon", "tidak ada")
+
+pasangan = (1, 2)        # tuple — immutable
+unik = {1, 2, 2, 3}      # set — {1, 2, 3}
+```
+
+## Di Dunia Nyata
+
+- Validasi form: `umur = int(input_usia)` dibungkus try/except sebelum dikirim ke server.
+- Simpan konfigurasi toko (`{"mata_uang": "IDR", "pajak": 0.11}`) supaya cepat dibaca ulang.
+- Hitung tagihan: `total = jumlah * harga; total += total * 0.11` memakai `+=` agar variabel tidak salah indeks.
+- Cek duplikat email peserta webinar dengan `set` — ribuan data jadi unik dalam satu baris.
+
+<div class="note">💡 Float di Python adalah bilangan biner: `0.1 + 0.2` menghasilkan `0.30000000000000004`. Untuk uang, simpan dalam `int` (rupiah bulat) atau bulatkan dengan `round(total, 2)`.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`kota = {"Jakarta": 10, "Bandung": 7, "Surabaya": 6}
+kota["Medan"] = 4
+print("Semua kota:", kota)
+for nama, jumlah in kota.items():
+    print(f"{nama}: {jumlah} armada")
+total = sum(kota.values())
+print("Total armada:", total)
+print("Kota terbesar:", max(kota, key=kota.get))`} />

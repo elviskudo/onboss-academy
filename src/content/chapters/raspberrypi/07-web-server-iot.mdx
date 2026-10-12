@@ -1,0 +1,152 @@
+---
+title: "Web Server IoT"
+description: "Menyajikan status sensor dan mengendalikan LED melalui Flask di jaringan lokal"
+order: 7
+quiz:
+  - q: "Apa peran route pada Flask?"
+    options: ["Memetakan URL dan metode HTTP ke fungsi", "Menaikkan tegangan GPIO", "Memformat microSD", "Mengganti alamat MAC"]
+    answer: 0
+    explain: "Route menentukan fungsi aplikasi yang menangani permintaan tertentu."
+  - q: "Metode HTTP mana yang tepat untuk mengubah status LED?"
+    options: ["GET tanpa batas", "POST", "HEAD", "TRACE"]
+    answer: 1
+    explain: "POST lebih tepat untuk operasi yang mengubah keadaan perangkat."
+  - q: "Mengapa daftar pin harus ditetapkan di server?"
+    options: ["Agar Wi-Fi lebih cepat", "Agar browser memilih resistor", "Agar pengguna tidak dapat mengendalikan pin sembarang", "Agar server menjadi analog"]
+    answer: 2
+    explain: "Allowlist membatasi aksi ke perangkat yang memang dirancang untuk dikendalikan."
+  - q: "Apa risiko menjalankan Flask debug server pada jaringan tidak tepercaya?"
+    options: ["LED menjadi redup", "GPIO berubah menjadi 5V", "CSV selalu kosong", "Debugger dan konfigurasi pengembangan dapat terekspos"]
+    answer: 3
+    explain: "Mode debug tidak dirancang untuk paparan produksi dan dapat membuka kemampuan berbahaya."
+  - q: "Respons apa yang cocok untuk endpoint status mesin?"
+    options: ["JSON terstruktur", "Tegangan 3,3V", "Kartu microSD baru", "Sinyal PWM"]
+    answer: 0
+    explain: "JSON mudah dibaca browser dan aplikasi lain serta memiliki struktur yang jelas."
+example:
+  code: |
+    from flask import Flask, jsonify
+
+    app = Flask(__name__)
+
+    @app.get("/status")
+    def status():
+        return jsonify(suhu=27.4, led="mati")
+
+    app.run(host="127.0.0.1", port=5000)
+---
+
+Web server IoT menerima permintaan HTTP, membaca atau mengubah keadaan perangkat, lalu mengirim respons. Pada Raspberry Pi, server lokal memungkinkan HP melihat suhu atau mengendalikan LED tanpa aplikasi khusus.
+
+## Bagian Arsitektur
+
+Sistem sederhana memiliki **5 bagian** yang bekerja berurutan.
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Klien | Mengirim request | Browser HP | Pengguna melihat panel |
+| Jaringan | Membawa HTTP | Wi-Fi LAN | Menghubungkan klien dan Pi |
+| Route | Memilih handler | `/status` | Memisahkan operasi |
+| Logika | Membaca atau mengubah state | `led.on()` | Menjalankan aturan aplikasi |
+| Respons | Mengirim hasil | JSON | Memberi data atau error |
+
+Alurnya: browser meminta `/status`, Flask memilih fungsi route, fungsi membaca state, lalu server mengembalikan JSON. Endpoint kendali sebaiknya memanggil fungsi perangkat yang terbatas, bukan menerima nomor pin bebas dari pengguna.
+
+## Metode dan Endpoint
+
+Gunakan **3 metode HTTP dasar** sesuai makna operasi.
+
+| Metode | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| GET | Membaca tanpa mengubah state | `GET /status` | Mengambil suhu |
+| POST | Meminta perubahan state | `POST /led/on` | Menyalakan LED |
+| DELETE | Menghapus resource | `DELETE /logs/old` | API administrasi terkontrol |
+
+Proyek ini cukup memakai GET dan POST. Hindari `GET /on?pin=17` untuk aksi karena crawler, cache, atau pratinjau tautan dapat memicu GET. Route tetap seperti `/led/on` juga menghindari akses ke pin sembarang.
+
+## Instalasi Flask dan gpiozero
+
+Buat virtual environment agar dependency aplikasi terpisah dari paket sistem:
+
+```bash
+sudo apt install python3-venv python3-gpiozero
+python3 -m venv --system-site-packages .venv
+. .venv/bin/activate
+pip install Flask
+```
+
+Flask adalah dependency pihak ketiga; gpiozero membutuhkan Raspberry Pi dan hardware GPIO untuk kendali nyata. LED pada BCM17 tetap harus memakai resistor 220–330 Ω ke GND. GPIO hanya logika **3,3V**; jangan mengendalikan relay coil, motor, atau beban besar langsung dari pin.
+
+## Server Flask dengan GPIO
+
+```python
+from flask import Flask, jsonify
+from gpiozero import LED
+
+app = Flask(__name__)
+led = LED(17)
+
+@app.get("/status")
+def status():
+    return jsonify(led="nyala" if led.is_lit else "mati")
+
+@app.post("/led/on")
+def led_on():
+    led.on()
+    return jsonify(ok=True, led="nyala")
+
+@app.post("/led/off")
+def led_off():
+    led.off()
+    return jsonify(ok=True, led="mati")
+
+app.run(host="0.0.0.0", port=5000, debug=False)
+```
+
+Jalankan dengan `.venv/bin/python app.py`, lalu dari perangkat pada LAN buka `http://alamat-pi:5000/status`. Untuk perubahan gunakan:
+
+```bash
+curl -X POST http://alamat-pi:5000/led/on
+curl -X POST http://alamat-pi:5000/led/off
+```
+
+`0.0.0.0` membuat server mendengar pada semua antarmuka, bukan berarti alamat itu diketik di browser. Gunakan IP Pi dari `hostname -I`. Server pengembangan Flask cocok untuk belajar di LAN tepercaya, bukan untuk internet atau beban produksi.
+
+## Validasi, Error, dan Keamanan
+
+Ada **5 perlindungan minimum** untuk server IoT.
+
+| Perlindungan | Fungsi | Contoh | Kapan diperlukan |
+|---|---|---|---|
+| Route tetap | Membatasi perangkat | Hanya LED BCM17 | Selalu |
+| Validasi input | Menolak nilai tak dikenal | `mode in {"on", "off"}` | Semua data klien |
+| Autentikasi | Memastikan pemanggil berizin | Reverse proxy/VPN | Lebih dari demo pribadi |
+| Batas jaringan | Mengurangi paparan | Firewall LAN | Selalu |
+| Hak minimum | Membatasi dampak proses | User service khusus | Operasi jangka panjang |
+
+Jangan mengekspos port melalui router hanya agar dapat diakses dari internet. Gunakan VPN yang dikelola atau layanan dengan TLS dan autentikasi. Jangan menaruh secret di source code atau URL. Matikan `debug`; debugger Flask tidak boleh tersedia bagi pihak lain.
+
+Tangani kegagalan hardware dengan status HTTP yang jelas. Jika sensor gagal, balas `503` dan pesan JSON, bukan angka terakhir tanpa penanda. Catat error secukupnya tanpa token atau kata sandi.
+
+## Menjalankan sebagai Layanan
+
+Gunakan systemd agar aplikasi kembali setelah reboot. Service harus menunjuk interpreter virtual environment dan direktori aplikasi. Setelah file service dibuat oleh administrator:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now monitor-web.service
+systemctl status monitor-web.service
+journalctl -u monitor-web.service
+```
+
+Untuk pemakaian serius, jalankan aplikasi Flask di WSGI server yang sesuai dan letakkan reverse proxy TLS di depan bila melintasi jaringan tidak tepercaya. Tambahkan itu ketika kebutuhan nyata muncul; server pengembangan cukup untuk eksperimen LAN.
+
+## Di Dunia Nyata
+
+- **Dashboard lemari server:** `/status` menampilkan suhu terbaru dan usia pembacaan.
+- **Lampu prototipe:** POST mengendalikan LED indikator dari tablet di jaringan lab.
+- **Monitor rumah kaca:** browser membaca suhu tanpa memasang aplikasi seluler.
+- **Panel perawatan:** teknisi melihat status sensor dan error dari jaringan internal.
+- **Gateway mesin:** API lokal meneruskan data yang telah divalidasi ke sistem pusat.
+
+<div class="note">💡 Endpoint yang menerima nomor pin dari URL mengubah bug web menjadi risiko hardware; route tetap untuk perangkat tertentu jauh lebih aman dan lebih sederhana.</div>

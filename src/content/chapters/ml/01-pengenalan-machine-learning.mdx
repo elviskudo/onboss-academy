@@ -1,0 +1,136 @@
+---
+title: "Pengenalan Machine Learning"
+description: "Apa itu ML, bagaimana mesin 'belajar', dan bedanya dengan program biasa"
+order: 1
+quiz:
+  - q: "Perbedaan utama program biasa dan machine learning adalah…"
+    options: ["ML tidak butuh komputer", "ML belajar pola dari data, bukan aturan ditulis manual", "Program biasa selalu lebih akurat", "ML hanya untuk robot"]
+    answer: 1
+    explain: "Program biasa: aturan ditulis programmer. ML: pola ditemukan dari data pelatihan."
+  - q: "Data berlabel (labeled) berarti…"
+    options: ["Data tanpa judul kolom", "Data disimpan dalam label warna", "Setiap contoh punya jawaban yang benar", "Data sudah dihapus"]
+    answer: 2
+    explain: "Contoh: foto + kucing/tidak-kucing. Label dipakai sebagai 'kunci jawaban' saat melatih model."
+  - q: "Machine learning supervised belajar dari…"
+    options: ["Data yang sudah berlabel", "Data acak tanpa makna", "Hanya teks motivasi", "Pikiran pengguna"]
+    answer: 0
+    explain: "Supervised learning memetakan input ke output yang sudah diketahui jawabannya."
+  - q: "Contoh nyata aplikasi ML yang paling umum adalah…"
+    options: ["Menghitung volume kubus", "Rekomendasi video dan deteksi spam", "Menyalin file", "Mengatur warna tema"]
+    answer: 1
+    explain: "Rekomendasi, spam filter, prediksi harga, dan deteksi wajah adalah aplikasi klasik supervised learning."
+  - q: "Tahapan umum proyek ML diurutkan paling tepat…"
+    options: ["Evaluasi -> deploy -> data -> model", "Deploy -> data -> model -> evaluasi", "Data -> model -> evaluasi -> deploy", "Model -> data -> evaluasi -> deploy"]
+    answer: 2
+    explain: "Semua bermula dari data; model baru dievaluasi, lalu dipakai (deploy) bila hasilnya memadai."
+example:
+  code: |
+    # Program biasa: aturan ditulis tangan
+    def spam(panjang):
+        return panjang > 50
+
+    # ML: pola dipelajari dari ratusan contoh pesan berlabel
+    # model.fit(pesan, label)
+    # print(model.predict("Pemenang hadiah, klik sekarang"))
+---
+
+Machine learning memberi kemampuan pada program untuk **memprediksi berdasarkan pola dari data**, tanpa aturan ditulis manual satu per satu.
+
+## Program Biasa vs Machine Learning
+
+```python
+# Program konvensional: aturan eksplisit
+def kategori_suhu(s):
+    if s < 18:
+        return "dingin"
+    elif s < 27:
+        return "nyaman"
+    else:
+        return "panas"
+
+# Machine learning: aturan dipelajari dari ribuan contoh
+# model.learn([15.0, 22.0, 30.0], ["dingin", "nyaman", "panas"])
+```
+
+| Aspek | Program biasa | Machine learning |
+|-------|---------------|------------------|
+| Aturan | ditulis programmer | dipelajari dari data |
+| Data | tidak wajib | wajib, banyak |
+| Perubahan aturan | edit kode | latih ulang model |
+| Cocok untuk | logika jelas | pola sulit dideskripsikan |
+
+Ketika aturan sulit dideskripsikan manusia (mengenali wajah, memahami suara), ML menjadi pilihan yang masuk akal.
+
+## 3 Tipe Belajar Mesin
+
+| Tipe | Data | Contoh tugas |
+|------|------|--------------|
+| Supervised | berlabel | prediksi harga, deteksi spam |
+| Unsupervised | tanpa label | segmentasi pelanggan |
+| Reinforcement | reward/penalti | bermain game, kontrol robot |
+
+2 keluarga besar yang dibahas mendalam di bab berikutnya:
+
+- **Supervised (terbimbing)** — data berlabel. Contoh: prediksi harga rumah (label: harga jual), deteksi spam (label: spam/ham).
+- **Unsupervised (tidak terbimbing)** — data tanpa label. Contoh: mengelompokkan pelanggan mirip tanpa tahu kategorinya.
+
+## Anatomi Sebuah Contoh Belajar
+
+```python
+# fitur (input) dan label (jawaban)
+fitur  = [[1500, 2], [1800, 3], [700, 1]]
+label  = ["mahal", "mahal", "murah"]
+
+# model belajar memetakan fitur -> label
+# model.train(fitur, label)
+
+# prediksi data baru yang belum pernah dilihat
+# print(model.predict([[1600, 2]]))
+```
+
+**Fitur** adalah kolom/ciri data, **label** adalah jawaban yang ingin diprediksi.
+
+## 4 Tahap Proyek ML
+
+```
+1. Data -> 2. Model -> 3. Evaluasi -> 4. Deploy
+```
+
+| Tahap | Aktivitas kunci | Pertanyaan kritis |
+|-------|-----------------|-------------------|
+| Data | kumpulkan, bersihkan, beri label | apakah datanya representatif? |
+| Model | pilih algoritma, latih | apakah baseline sudah dikalahkan? |
+| Evaluasi | ukur pada data uji | seberapa baik di data baru? |
+| Deploy | pasang + monitor | apakah performa bertahan di produksi? |
+
+## Metrik: Bagaimana Tahu Modelnya Bagus?
+
+```python
+prediksi = ["spam", "ham", "spam", "spam"]
+kunci    = ["spam", "ham", "ham", "spam"]
+
+benar = 0
+for p, k in zip(prediksi, kunci):
+    if p == k:
+        benar += 1
+
+print("Akurasi:", benar / len(kunci))   # 0.75
+```
+
+Akurasi saja tidak cukup — metrik yang tepat bergantung pada kasus (bahasanya di bab evaluasi).
+
+## Batasan yang Harus Dipahami
+
+- Model **hanya sebaik data** — data bias akan menghasilkan prediksi bias.
+- Model **bukan kebenaran mutlak**, melainkan estimasi dengan tingkat keyakinan tertentu.
+- Kasus krusial (medis, hukum) tetap membutuhkan pengawasan manusia (human-in-the-loop).
+
+## Di Dunia Nyata
+
+- **Filter spam email** — melatih model dari jutaan pesan yang sudah ditandai pengguna sebagai spam.
+- **Prediksi churn pelanggan** — pola pelanggan berhenti langganan dipelajari dari riwayat pemakaian.
+- **Rekomendasi video** — platform memetakan riwayat tontonan ke video berikutnya yang paling mungkin ditonton.
+- **Deteksi penipuan kartu kredit** — transaksi dinilai peluang wajarnya dalam hitungan milidetik.
+- **Estimasi waktu tiba ojek online** — model memetakan jarak, jam, dan cuaca ke perkiraan menit.
+
+<div class="note">💡 Mulailah dari pertanyaan bisnis, bukan dari algoritma. "Bisakah kita mengurangi churn pelanggan 5%?" lebih berguna daripada "kita harus pakai deep learning".</div>

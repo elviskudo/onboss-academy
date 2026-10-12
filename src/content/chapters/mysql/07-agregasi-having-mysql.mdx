@@ -1,0 +1,146 @@
+---
+title: "Agregasi dan HAVING di MySQL"
+description: "Laporan ringkas dengan fungsi agregat, GROUP BY, dan HAVING"
+order: 7
+quiz:
+  - q: "GROUP BY dept bersama COUNT(*) menghasilkan…"
+    options: ["Jumlah total", "Jumlah per departemen", "Nama unik", "Median"]
+    answer: 1
+    explain: "Baris dikelompokkan per dept lalu COUNT dihitung per grup."
+  - q: "HAVING menyaring…"
+    options: ["Baris sebelum grup", "Hasil grup setelah agregasi", "Struktur tabel", "Nama kolom"]
+    answer: 1
+    explain: "WHERE menyaring baris; HAVING menyaring grup."
+  - q: "Ada berapa fungsi agregat inti?"
+    options: ["3", "4", "5", "7"]
+    answer: 2
+    explain: "5 fungsi inti: COUNT, SUM, AVG, MIN, MAX."
+  - q: "COUNT(kolom) berbeda dari COUNT(*) karena…"
+    options: ["Mengabaikan NULL", "Menghapus duplikat", "Lebih lambat selalu", "Hanya untuk teks"]
+    answer: 0
+    explain: "COUNT(kolom) hanya menghitung nilai non-NULL; COUNT(*) menghitung semua baris."
+  - q: "ONLY_FULL_GROUP_BY mencegah…"
+    options: ["SUM", "Kolom SELECT nonagregat yang tidak ditentukan oleh GROUP BY", "HAVING", "ORDER BY"]
+    answer: 1
+    explain: "Mode ini mencegah hasil ambigu dari kolom yang bukan bagian grup/agregat."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah, SUM(gaji) AS total_gaji
+    FROM karyawan
+    GROUP BY dept
+    HAVING COUNT(*) >= 2;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Agregasi mengubah baris detail menjadi metrik seperti jumlah, total, dan rata-rata. `GROUP BY` menentukan kelompoknya; `HAVING` memilih kelompok yang layak tampil.
+
+## 5 Fungsi Agregat Inti
+
+| Fungsi | Arti | NULL | Hasil Data Kita |
+|--------|------|------|-----------------|
+| `COUNT(*)` | jumlah baris | tetap dihitung | 8 |
+| `SUM(gaji)` | total | diabaikan | 77.800.000 |
+| `AVG(gaji)` | rata-rata | diabaikan | 9.725.000 |
+| `MIN(gaji)` | terkecil | diabaikan | 7.000.000 |
+| `MAX(gaji)` | terbesar | diabaikan | 12.000.000 |
+
+```sql
+SELECT COUNT(*) AS jumlah,
+       SUM(gaji) AS total,
+       ROUND(AVG(gaji)) AS rata_rata,
+       MIN(gaji) AS terendah,
+       MAX(gaji) AS tertinggi
+FROM karyawan;
+```
+
+`COUNT(kolom)` berbeda dari `COUNT(*)`: nilai NULL tidak dihitung. `COUNT(DISTINCT dept)` menghitung 4 departemen unik.
+
+## GROUP BY dan ONLY_FULL_GROUP_BY
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, SUM(gaji) AS total
+FROM karyawan
+GROUP BY dept
+ORDER BY total DESC;
+```
+
+Dengan `ONLY_FULL_GROUP_BY` (default MySQL 5.7+), kolom nonagregat di SELECT harus ada di GROUP BY atau bergantung secara fungsional pada kolom grup. Aturan ini mencegah MySQL memilih nilai acak dari suatu grup.
+
+| dept | jumlah | total |
+|------|--------|-------|
+| Engineering | 4 | 38.500.000 |
+| Data | 2 | 19.800.000 |
+| Product | 1 | 12.000.000 |
+| Design | 1 | 7.500.000 |
+
+## WHERE vs HAVING
+
+| Klausa | Berjalan | Menyaring | Contoh |
+|--------|----------|-----------|--------|
+| `WHERE` | sebelum GROUP BY | baris detail | `gaji >= 8000000` |
+| `HAVING` | sesudah agregasi | grup | `COUNT(*) >= 2` |
+
+```sql
+SELECT dept, COUNT(*) AS jumlah
+FROM karyawan
+WHERE gaji >= 8000000
+GROUP BY dept
+HAVING COUNT(*) >= 2;
+```
+
+WHERE membuang Joko dan Rina lebih dulu; lalu HAVING hanya mempertahankan grup yang masih memiliki minimal 2 anggota. Taruh kondisi nonagregat di WHERE agar database mengurangi baris sejak awal.
+
+## Agregasi Kondisional
+
+```sql
+SELECT dept,
+       COUNT(*) AS semua,
+       SUM(CASE WHEN gaji >= 10000000 THEN 1 ELSE 0 END) AS gaji_tinggi,
+       ROUND(AVG(CASE WHEN gaji >= 10000000 THEN gaji END)) AS rata_tinggi
+FROM karyawan
+GROUP BY dept;
+```
+
+CASE memungkinkan beberapa metrik dihitung dalam satu scan. ELSE NULL pada AVG penting: nilai yang tidak cocok diabaikan, bukan dianggap 0.
+
+## Agregasi Setelah JOIN
+
+```sql
+SELECT k.dept,
+       COUNT(p.id) AS proyek,
+       COALESCE(SUM(p.budget), 0) AS total_budget
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+GROUP BY k.dept;
+```
+
+COUNT pada kolom tabel kanan menghindari hasil palsu 1 untuk departemen tanpa proyek. Waspadai fan-out: jika satu proyek punya banyak anggota lalu dua tabel many digabung, nilai budget bisa terhitung berulang; agregasikan tiap sisi di CTE sebelum JOIN.
+
+## ROLLUP MySQL
+
+```sql
+SELECT dept, SUM(gaji) AS total
+FROM karyawan
+GROUP BY dept WITH ROLLUP;
+```
+
+`WITH ROLLUP` menambah satu baris grand total dengan `dept` NULL. Ini fitur MySQL asli; demo SQLite tidak menjalankannya.
+
+## Di Dunia Nyata
+
+- Dashboard omzet per hari, plus grand total dengan ROLLUP.
+- Monitoring cabang yang punya minimal 10 transaksi melalui HAVING.
+- Audit email ganda memakai GROUP BY email HAVING COUNT(*) > 1.
+- Laporan proyek per departemen yang tetap menampilkan nilai 0 melalui LEFT JOIN.
+
+<div class="note">💡 Demo berjalan di SQLite untuk query standar. `WITH ROLLUP` dan detail ONLY_FULL_GROUP_BY harus diuji di server MySQL; tetap tulis GROUP BY ketat agar hasil portabel.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT dept,
+       COUNT(*) AS jumlah,
+       SUM(gaji) AS total_gaji,
+       ROUND(AVG(gaji)) AS rata_rata
+FROM karyawan
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY total_gaji DESC;`} />

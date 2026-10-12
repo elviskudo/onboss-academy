@@ -1,0 +1,107 @@
+---
+title: "Pengenalan SQL Server"
+description: "Database relasional andalan Microsoft — T-SQL, SSMS, dan tempatnya di industri"
+order: 1
+quiz:
+  - q: "SQL Server dikembangkan oleh…"
+    options: ["Oracle", "IBM", "Microsoft", "PostgreSQL Global Dev"]
+    answer: 2
+    explain: "Microsoft membangun SQL Server sejak 1989 (bersama Sybase awalnya) dan kini menjadi andalan enterprise."
+  - q: "Dialek SQL khas SQL Server disebut…"
+    options: ["PL/SQL", "T-SQL (Transact-SQL)", "PL/pgSQL", "TCL"]
+    answer: 1
+    explain: "Transact-SQL menambah variabel, IF/WHILE, TRY...CATCH, dan fungsi sistem khas Microsoft ke SQL standar."
+  - q: "Perintah GO bukan bagian dari SQL — GO adalah…"
+    options: ["Fungsi agregat", "Penanda akhir batch untuk klien seperti SSMS/sqlcmd", "Tipe data", "Hint performa"]
+    answer: 1
+    explain: "GO memberi sinyal ke SSMS: kirim semua perintah sebelumnya sebagai satu batch ke server."
+  - q: "Klien grafis resmi untuk mengelola SQL Server adalah…"
+    options: ["SSMS (SQL Server Management Studio)", "pgAdmin", "MySQL Workbench", "Mongo Compass"]
+    answer: 0
+    explain: "SSMS gratis dari Microsoft — editor query, explorer database, dan tool debugging dalam satu aplikasi."
+  - q: "Edisi gratis SQL Server untuk produksi skala kecil disebut…"
+    options: ["SQL Server Express", "SQL Server Lite", "Azure Free DB", "Community DB"]
+    answer: 0
+    explain: "Express gratis dengan batas ukuran database — cocok untuk aplikasi internal dan pembelajaran."
+example:
+  code: |
+    SELECT TOP (5)
+        nama,
+        gaji
+    FROM dbo.karyawan
+    WHERE divisi = N'Engineering'
+    ORDER BY gaji DESC;
+---
+
+**SQL Server** adalah RDBMS Microsoft yang menghidupi sistem perbankan, ERP, dan aplikasi korporasi di seluruh dunia. Query dasarnya sama dengan SQL standar; kekhasannya ada di **T-SQL** dan ekosistem Microsoft.
+
+## Apa itu SQL Server?
+
+SQL Server menyimpan data dalam tabel relasional, menjalankan SQL standar (SELECT, JOIN, WHERE), dan menambah lapisan T-SQL: variabel server-side, prosedur tersimpan, transaksi penuh, dan fungsi sistem yang kaya. Ia terintegrasi rapat dengan Windows Server, Azure, dan alat Microsoft lain.
+
+## T-SQL: SQL yang Diperluas
+
+```sql
+DECLARE @gaji DECIMAL(12, 2);
+SET @gaji = 8500000;
+
+IF @gaji > 5000000
+    PRINT N'Gaji di atas UMR';
+ELSE
+    PRINT N'Perlu peninjauan';
+```
+
+T-SQL memungkinkan logika pemrograman (variabel, percabangan, perulangan) berjalan **di dalam database** — bukan hanya deklarasi data.
+
+## Batch dan GO
+
+```sql
+CREATE DATABASE perusahaan;
+GO
+
+USE perusahaan;
+GO
+
+CREATE TABLE dbo.karyawan (
+    id INT IDENTITY(1, 1) PRIMARY KEY,
+    nama NVARCHAR(100) NOT NULL
+);
+```
+
+`GO` memisahkan batch dan dipahami SSMS/sqlcmd, bukan Database Engine. Beberapa perintah modul seperti `CREATE PROCEDURE` harus menjadi statement pertama dalam batch; `CREATE DATABASE` sendiri tidak wajib selalu dipisahkan. Driver aplikasi tidak boleh mengirim `GO` sebagai SQL.
+
+## Enam Kemampuan T-SQL
+
+| Kemampuan | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Variabel | menyimpan nilai batch | `DECLARE @id INT` | prosedur dan skrip admin |
+| Percabangan | memilih alur | `IF ... ELSE` | aturan bisnis sederhana |
+| Perulangan | mengulang statement | `WHILE` | administrasi; utamakan set-based |
+| TRY/CATCH | menangani error | `BEGIN TRY` | transaksi aman |
+| Stored procedure | menyimpan program database | `CREATE PROCEDURE` | API database terkontrol |
+| Function | menghasilkan nilai/tabel | `CREATE FUNCTION` | logika yang dapat dipakai ulang |
+
+T-SQL dapat menjadi bahasa prosedural, tetapi query *set-based* tetap pilihan pertama: satu UPDATE untuk seribu baris lebih efisien daripada WHILE seribu kali.
+
+## Ekosistem dan Edisi
+
+| Produk/alat | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| SSMS | GUI query, backup, monitoring | admin/pengembangan Windows |
+| sqlcmd | klien command line | otomasi dan CI |
+| SQL Server Express | edisi gratis terbatas | belajar/aplikasi kecil |
+| SQL Server Developer | fitur Enterprise, non-produksi | development/testing |
+| Azure SQL Database | layanan managed | produksi cloud Microsoft |
+| SQL Server Agent | penjadwalan job | backup, ETL, maintenance |
+
+Express boleh untuk produksi kecil; Developer tidak berlisensi untuk produksi. Di Linux dan container SQL Server juga tersedia, jadi tidak lagi terbatas ke Windows.
+
+## Di Dunia Nyata
+
+- **Core banking dan ledger** — transaksi, constraint, dan isolation level menjaga perpindahan saldo tetap atomik.
+- **ERP perusahaan** — stored procedure menyatukan aturan persediaan, pembelian, dan akuntansi dekat dengan data.
+- **Aplikasi .NET** — driver Microsoft dan Azure identity memberi integrasi langsung dengan ekosistem perusahaan.
+- **Business intelligence** — SQL Server Agent menjadwalkan ETL dan Query Store membantu menemukan laporan yang lambat.
+- **Aplikasi kantor kecil** — Express menyediakan mesin produksi gratis ketika batas kapasitasnya masih cukup.
+
+<div class="note">💡 Awalan `N` pada literal seperti `N'José'` memberi tipe Unicode NVARCHAR. Gunakan saat literal dapat mengandung karakter non-ASCII; tanpa `N`, konversi melalui code page VARCHAR berisiko kehilangan karakter.</div>

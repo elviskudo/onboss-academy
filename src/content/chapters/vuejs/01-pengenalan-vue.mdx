@@ -1,0 +1,150 @@
+---
+title: "Pengenalan Vue"
+description: "Framework progresif yang mudah dipelajari — data reaktif tanpa DOM manual"
+order: 1
+quiz:
+  - q: "Vue adalah…"
+    options: ["Bahasa pemrograman backend", "Library/framework UI progresif untuk membangun antarmuka", "Sistem operasi", "Database"]
+    answer: 1
+    explain: "Vue fokus pada layer tampilan: komponen, data reaktif, dan binding DOM."
+  - q: "File Single-Component Vue biasanya berekstensi…"
+    options: [".vue", ".v", ".vuejs", ".comp"]
+    answer: 0
+    explain: "Satu file .vue memuat template HTML, script JavaScript, dan style CSS sekaligus."
+  - q: "Perbedaan utama Vue dengan jQuery adalah…"
+    options: ["Vue tidak memakai JavaScript", "Vue merender ulang otomatis saat data berubah", "jQuery lebih baru", "Vue tidak bisa dipakai di browser"]
+    answer: 1
+    explain: "Di jQuery kamu memanipulasi DOM manual; di Vue cukup ubah data — tampilan menyusul sendiri."
+  - q: "Data reaktif berarti…"
+    options: ["Perubahan data otomatis diperbarui ke tampilan", "Data disimpan di database", "Data tidak bisa diubah", "Data berupa HTML"]
+    answer: 0
+    explain: "Inilah inti Vue: satu sumber kebenaran (state) yang diawasi framework."
+  - q: "Vue versi 3 direkomendasikan memakai gaya…"
+    options: ["Composition API (setup / <script setup>)", "Template HTML murni", "Java", "XML"]
+    answer: 0
+    explain: "Options API masih jalan, tetapi Composition API lebih fleksibel untuk proyek besar."
+example:
+  code: |
+    const state = { jumlah: 0 };
+    function tambah() {
+      state.jumlah++;
+      console.log("Jumlah:", state.jumlah);
+    }
+    tambah();
+    tambah();
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Vue adalah **framework UI progresif**: kamu bisa memakainya sedikit (satu komponen di halaman lama) atau penuh (SPA dengan router dan state manager).
+
+## 4 Konsep Inti Vue
+
+| Konsep | Bentuk | Fungsi | Padanan pondasi JS |
+|--------|--------|--------|--------------------|
+| State reaktif | `ref`, `reactive` | Data berubah → UI ikut berubah | Variabel/object |
+| Template | `{{ nilai }}`, directive | Mendeskripsikan tampilan | Ekspresi & percabangan |
+| Component | file `.vue` | Unit UI yang reusable | Function/module |
+| Props & emit | `defineProps`, `defineEmits` | Komunikasi induk ↔ anak | Argumen & callback |
+
+Vue juga memiliki Vue Router untuk navigasi dan Pinia untuk state global. Keduanya terpisah tetapi dirawat sebagai bagian ekosistem resmi.
+
+## Kenapa Vue?
+
+- **Belajar cepat**: sintaks HTML, JS, dan CSS yang sudah kamu kenal.
+- **Reaktif**: ubah data, tampilan ikut berubah tanpa menyentuh DOM.
+- **Komponen**: UI dipecah jadi potongan kecil yang bisa dipakai ulang.
+- Dipakai: Laravel Livewire/Volt, Nuxt, banyak startup Asia, dan antarmuka admin di seluruh dunia.
+
+## Anatomi Komponen (.vue)
+
+```html
+<template>
+  <h1>Halo, {{ nama }}!</h1>
+  <button @click="tambah">Tambah</button>
+</template>
+
+<script setup>
+import { ref } from "vue";
+
+const nama = ref("Sari");
+const jumlah = ref(0);
+
+function tambah() {
+  jumlah.value++;
+}
+</script>
+
+<style scoped>
+h1 { color: #42b883; }
+</style>
+```
+
+- `template` — tampilan (HTML yang diperluas dengan directive Vue).
+- `script setup` — logika dan state reaktif.
+- `style scoped` — CSS yang hanya berlaku untuk komponen ini.
+
+## Mounting ke Halaman
+
+```javascript
+import { createApp } from "vue";
+import App from "./App.vue";
+
+createApp(App).mount("#app");
+```
+
+## Data Reactif: ref dan reactive
+
+```javascript
+import { ref, reactive } from "vue";
+
+const jumlah = ref(0);          // primitif — akses lewat .value
+const user = reactive({         // object — akses langsung
+  nama: "Sari",
+  umur: 20,
+});
+
+jumlah.value++;
+user.umur++;
+```
+
+`ref` membungkus satu nilai (termasuk object/array) dan diakses lewat `.value` dalam script. `reactive` membuat proxy object/array yang propertinya diakses langsung. Keduanya menggantikan variabel biasa saat perubahan harus memicu render.
+
+## OOP vs Komponen
+
+Vue modern memakai **function dan closure**, bukan class component. Options API menulis object `data`, `methods`, dan `computed`; Composition API mengelompokkan state dan handler berdasarkan fitur. Class hanya relevan bila domain aplikasinya memang memakai class JavaScript — bukan untuk mendefinisikan komponen Vue.
+
+## Di Dunia Nyata
+
+- **Panel admin**: tabel, filter, dan pagination menjadi komponen dengan state reaktif.
+- **Form pendaftaran**: `v-model` mengikat input; validasi dirender segera tanpa query DOM manual.
+- **Katalog toko**: array produk di-loop menjadi kartu; stok menentukan conditional rendering tombol.
+- **Dashboard real-time**: data WebSocket memperbarui `ref`, grafik dan angka ikut berubah.
+- **Migrasi halaman lama**: satu widget Vue di-mount ke elemen tertentu tanpa menulis ulang seluruh situs.
+
+## Catatan Editor TryIt di Halaman Ini
+
+> Tombol **Jalankan** di bawah memakai runtime JavaScript murni di browser — **bukan kompilator Vue**. Karena itu, contoh TryIt pada materi Vue berisi **fundamental JavaScript** yang dipakai sehari-hari di Vue: function, object, array method, dan destructuring. Kode `<template>` dan SFC belajar lewat code fence di atas; latihan logikanya dieksekusi di TryIt.
+
+<div class="note">💡 Vue 3 dengan `<script setup>` membuat kode lebih ringkas: variabel dan fungsi yang dideklarasikan di script otomatis tersedia di template — tidak perlu daftar `data()` atau `methods`.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Fundamental JS yang dipakai di Vue
+const state = { jumlah: 0, nama: "Sari" };
+
+function tambah() {
+  state.jumlah++;
+  return state.jumlah;
+}
+
+function sapa({ nama, jumlah }) {
+  return "Halo " + nama + ", klik ke-" + jumlah;
+}
+
+console.log(tambah());
+console.log(tambah());
+console.log(sapa(state));
+
+// Object yang merepresentasikan state reaktif sederhana
+const user = { nama: "Budi", umur: 20 };
+user.umur++;
+console.log("Umur baru:", user.umur);`} />

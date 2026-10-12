@@ -1,0 +1,124 @@
+---
+title: "Fungsi String dan Angka"
+description: "Mengolah teks dan angka langsung di dalam query"
+order: 6
+quiz:
+  - q: "LENGTH('Sari') menghasilkan…"
+    options: ["Sari", "3", "4", "5"]
+    answer: 2
+    explain: "LENGTH menghitung jumlah karakter — 'Sari' punya 4 huruf."
+  - q: "Fungsi untuk menggabungkan dua string adalah…"
+    options: ["CONCAT atau operator ||", "SUM", "ROUND", "TRIM"]
+    answer: 0
+    explain: "|| menggabungkan string di kebanyakan database; CONCAT(a, b) juga umum dipakai."
+  - q: "ROUND(9725000.55, -5) akan membulatkan ke…"
+    options: ["9725000", "9700000", "9730000", "10000000"]
+    answer: 1
+    explain: "Nilai negatif membulatkan ke satuan lebih besar: -5 membulatkan ke puluhan ribu terdekat, yaitu 9.700.000."
+  - q: "CAST(gaji AS REAL) / 12 pada gaji 9.500.000 menghasilkan…"
+    options: ["791666 (dibulatkan integer)", "791666.666… (pecahan)", "Error", "Tetap 9500000"]
+    answer: 1
+    explain: "REAL membuat pembagian memakai pecahan — tanpa CAST, pembagian integer dibulatkan ke bawah."
+  - q: "Fungsi string dan angka inti seperti UPPER, LENGTH, ROUND tersedia…"
+    options: ["Hanya di MySQL", "Di hampir semua database relasional", "Khusus Oracle", "Hanya untuk tipe TEXT"]
+    answer: 1
+    explain: "Fungsi-fungsi inti mendekati standar SQL — tersedia di SQLite, MySQL, PostgreSQL, dan lainnya."
+example:
+  code: |
+    SELECT nama || ' - ' || jabatan AS profil,
+           ROUND(gaji / 1000000.0, 1) AS juta
+    FROM karyawan
+    ORDER BY juta DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Query tidak hanya mengambil data mentah — kamu bisa **mengubah dan menghitung** nilai di dalamnya, langsung di database. Ini padanan paling umum dari "fungsi" di bahasa pemrograman: satu nama, bisa dipakai ulang di mana saja dalam query.
+
+## 8 Fungsi String yang Paling Sering Dipakai
+
+| Fungsi | Fungsi/Arti | Contoh | Hasil |
+|--------|-------------|--------|-------|
+| `UPPER(t)` | kapitalkan | `UPPER('data')` | `DATA` |
+| `LOWER(t)` | huruf kecil | `LOWER('DATA')` | `data` |
+| `LENGTH(t)` | jumlah karakter | `LENGTH('Sari')` | `4` |
+| `TRIM(t)` | buang spasi ujung | `TRIM(' a ')` | `a` |
+| `SUBSTR(t, pos, n)` | ambil sebagian | `SUBSTR('Sari', 1, 3)` | `Sar` |
+| `REPLACE(t, a, b)` | ganti teks | `REPLACE('a-b','-', ' ')` | `a b` |
+| `INSTR(t, cari)` | posisi kecocokan | `INSTR('Maya','ya')` | `3` |
+| `CONCAT(a, b)` / `\|\|` | sambung teks | `'A' \|\| 'B'` | `AB` |
+
+```sql
+SELECT UPPER(nama) AS kapital,
+       LENGTH(nama) AS panjang,
+       jabatan
+FROM karyawan
+ORDER BY panjang;
+```
+
+## Menggabungkan String
+
+```sql
+SELECT nama || ' (' || jabatan || ')' AS profil
+FROM karyawan;
+```
+
+Operator `||` menyambung string. Hasilnya seperti `Sari Wijaya (Frontend Developer)`. Banyak database juga menyediakan `CONCAT(a, b)` dengan hasil sama — pilih mana yang didukung database tujuanmu.
+
+## 6 Fungsi Angka Inti
+
+| Fungsi | Fungsi/Arti | Contoh | Hasil |
+|--------|-------------|--------|-------|
+| `ROUND(x, d)` | bulatkan ke d desimal | `ROUND(9725000.55, -5)` | `9700000` |
+| `ABS(x)` | nilai mutlak | `ABS(-7500000)` | `7500000` |
+| `x % y` | sisa pembagian | `9500000 % 1000000` | `500000` |
+| `CAST(x AS t)` | ubah tipe | `CAST(9500000 AS REAL)` | `9500000.0` |
+| `CEILING(x)` | bulatkan ke atas | `CEILING(7.1)` | `8` |
+| `FLOOR(x)` | bulatkan ke bawah | `FLOOR(7.9)` | `7` |
+
+```sql
+SELECT nama,
+       ROUND(gaji / 1000000.0, 1) AS juta,
+       gaji % 1000000 AS sisa
+FROM karyawan;
+```
+
+`ROUND(x, -5)` berarti membulatkan ke satuan puluhan ribu terdekat. `%` (modulo) sering dipakai untuk mengelompokkan nilai — misal mencari gaji yang sisa bagi 1 jutanya nol.
+
+## CAST: Mengubah Tipe
+
+```sql
+SELECT nama, CAST(gaji AS REAL) / 12 AS per_bulan
+FROM karyawan
+LIMIT 3;
+```
+
+`CAST(gaji AS REAL)` mengubah integer jadi pecahan supaya pembagian tidak dibulatkan ke integer: 9.500.000 / 12 = 791.666, bukan 791.666 yang terpotong. Setiap database punya `CAST` — ini bagian dari standar SQL.
+
+Hubungannya dengan tipe kolom: fungsi angka butuh kolom bertipe numerik, dan fungsi string butuh kolom teks. Memanggil `LENGTH(gaji)` pada kolom `INT` akan gagal atau menghasilkan hasil tak terduga — kenali tipe kolomnya sebelum memakai fungsi.
+
+## Praktik: Laporan Ringkas
+
+```sql
+SELECT dept || ': ' || COUNT(*) || ' orang' AS ringkas
+FROM karyawan
+GROUP BY dept;
+```
+
+Perhatikan bagaimana fungsi agregat dan fungsi string bekerja bersama — string hasil gabungan jadi label laporan yang langsung bisa dibaca manusia.
+
+## Di Dunia Nyata
+
+- **Memformat laporan gaji**: `ROUND(gaji / 1000000.0, 1)` mengubah 9500000 jadi `9.5` (juta) agar kolom laporan mudah dipindai.
+- **Membersihkan data impor dari Excel**: `TRIM` + `UPPER` menghapus spasi tersembunyi dan menyeragamkan kapitalisasi email.
+- **Menghasilkan slug URL dari judul**: `LOWER(REPLACE(judul, ' ', '-'))` membuat potongan URL tanpa keluar dari database.
+- **Menghitung cicilan bulanan**: `CAST(total AS REAL) / 12` menghindari pembulatan integer yang membuat selisih rupiah.
+
+<div class="note">💡 Nama fungsi string sedikit berbeda antar database (misalnya SUBSTR vs SUBSTRING), tapi LENGTH, UPPER, LOWER, ROUND, dan ABS tersedia di hampir semua — termasuk editor SQLite di halaman ini.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama,
+       UPPER(nama) AS kapital,
+       nama || ' — ' || jabatan AS profil,
+       ROUND(gaji / 1000000.0, 1) AS juta
+FROM karyawan
+ORDER BY juta DESC;`} />

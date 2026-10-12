@@ -1,0 +1,124 @@
+---
+title: "Commit & Staging Area"
+description: "Menyimpan perubahan secara bertahap: add, commit, diff, log, dan amend"
+order: 2
+quiz:
+  - q: "Perintah memasukkan perubahan ke staging area adalah…"
+    options: ["git commit", "git add", "git save", "git stage-all"]
+    answer: 1
+    explain: "git add menandai perubahan (file atau direktori) siap masuk commit berikutnya."
+  - q: "Perintah membuat commit dari apa yang ada di staging area adalah…"
+    options: ["git push", "git snapshot", "git commit -m \"pesan\"", "git save"]
+    answer: 2
+    explain: "git commit -m \"pesan\" mengunci staged changes menjadi satu commit permanen."
+  - q: "git diff tanpa argumen menampilkan…"
+    options: ["Perbedaan antara working directory dan staging area", "Perbedaan antara repo dan remote", "Daftar semua file", "Riwayat commit"]
+    answer: 0
+    explain: "Diff default membandingkan file yang belum di-stage terhadap versi staging."
+  - q: "git log --oneline dipakai untuk…"
+    options: ["Menghapus commit", "Melihat riwayat commit ringkas satu baris", "Membuat tag", "Mengubah pesan commit"]
+    answer: 1
+    explain: "Setiap commit tampil satu baris: hash pendek dan pesan."
+  - q: "git commit --amend berguna untuk…"
+    options: ["Menggabungkan dua repo", "Mengubah pesan atau menambah isi commit terakhir", "Menghapus riwayat remote", "Membuat branch baru"]
+    answer: 1
+    explain: "Amend mengganti commit terakhir dengan versi baru — jangan dipakai setelah commit sudah di-push dan dipakai orang lain."
+example:
+  code: |
+    git add README.md
+    git commit -m "Tambah README awal"
+    git status
+    git log --oneline
+---
+
+Commit adalah **satuan terkecil riwayat Git**: satu snapshot berisi pesan, penulis, waktu, dan hash unik. Sebelum commit, perubahan dilewatkan staging area agar kamu bisa memilih apa yang ikut.
+
+## Menyusun Commit Pertama
+
+```bash
+echo "# Proyek Pertama" > README.md
+git add README.md
+git commit -m "Tambah README awal"
+```
+
+Cek hasilnya:
+
+```bash
+git status
+git log --oneline
+```
+
+Keluaran log kira-kira `a1b2c3d Tambah README awal` — hash itu identitas unik commit.
+
+## Menyusun Lebih dari Satu File
+
+```bash
+git add src/app.py src/util.py
+git commit -m "Tambah modul aplikasi"
+
+git add .
+git commit -m "Perbaiki typo di dokumentasi"
+```
+
+- `git add nama_file` — satu file
+- `git add folder/` — seluruh isi folder
+- `git add .` — semua perubahan di folder sekarang (hati-hati, bisa tak sengaja menyertakan file rahasia)
+
+## Melihat Perbedaan
+
+```bash
+git diff          # perubahan belum di-stage
+git diff --staged # perubahan yang sudah di-stage, siap di-commit
+```
+
+## Menulis Pesan Commit yang Baik
+
+- gunakan bahasa imperatif: `Tambah`, `Perbaiki`, `Hapus` (atau `Add`, `Fix`, `Remove`)
+- satu baris ringkas, detail di baris kedua bila perlu
+- jelaskan **mengapa**, bukan mengulang apa yang berubah di file
+
+```bash
+git commit -m "Perbaiki kalkulasi pajak untuk transaksi refunds" \
+           -m "Tarif pajak salah diterapkan sebelum diskon."
+```
+
+## Memperbaiki Commit Terakhir
+
+Lupa `git add` atau salah ketik pesan?
+
+```bash
+git add lupa.txt
+git commit --amend -m "Pesan baru yang benar"
+```
+
+## Lima Operasi Staging dan Commit
+
+| Operasi | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Stage file | Memilih seluruh perubahan file | `git add app.py` | File hanya berisi satu topik |
+| Stage interaktif | Memilih potongan perubahan | `git add -p app.py` | Satu file memuat dua topik |
+| Unstage | Mengeluarkan dari index tanpa membuang edit | `git restore --staged app.py` | File salah ikut staged |
+| Commit | Membuat snapshot dari index | `git commit -m "fix: validasi email"` | Perubahan sudah teruji |
+| Amend | Mengganti commit terakhir | `git commit --amend --no-edit` | Ada file tertinggal pada commit lokal |
+
+Periksa dua lapis diff sebelum commit: `git diff` untuk perubahan yang belum staged dan `git diff --staged` untuk isi persis calon commit. `git status --short` merangkum keduanya; `M ` berarti staged, sedangkan ` M` berarti baru di working tree.
+
+Commit yang baik bersifat **atomik**: satu tujuan logis, dapat diuji, dan dapat dibatalkan tanpa membawa perubahan tak terkait. Jangan stage `.env`, token, key, atau hasil build. Jika rahasia sudah committed, menghapus file pada commit berikutnya tidak menghapusnya dari riwayat; rotasi kredensial segera.
+
+## Di Dunia Nyata
+
+- Memakai `git add -p` untuk memisahkan perbaikan bug dari formatting dalam file yang sama.
+- Membaca `git diff --staged` saat review mandiri sebelum kode pembayaran dicatat.
+- Membuat commit migrasi database terpisah agar deployment dapat dilacak.
+- Menggunakan amend untuk menambah test yang terlupa sebelum branch dipush.
+
+<div class="note">💡 `--amend` mengubah hash commit. Setelah commit di-push dan dibaca orang lain, mengamend-nya membuat sejarah bercabang. Amend hanya untuk commit lokal yang belum dibagikan.</div>
+
+## Melihat Riwayat Lengkap
+
+```bash
+git log --oneline --graph --all
+git show HEAD
+```
+
+`HEAD` menunjuk ke commit yang sedang kamu pakai sekarang (puncak branch).

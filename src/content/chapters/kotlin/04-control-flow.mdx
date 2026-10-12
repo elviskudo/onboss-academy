@@ -1,0 +1,192 @@
+---
+title: "Control Flow"
+description: "if sebagai ekspresi, perulangan for dan while, serta range di Kotlin"
+order: 4
+quiz:
+  - q: "if di Kotlin bisa digunakan sebagai…"
+    options: ["hanya penanda komentar", "ekspresi yang menghasilkan nilai", "deklarasi class", "operator angka"]
+    answer: 1
+    explain: "if mengembalikan nilai cabang terpilih, mirip ternary di bahasa lain."
+  - q: "Perulangan for paling umum memakai…"
+    options: ["for (i in 1..5)", "for i = 1 to 5", "loop i in range", "repeat i"]
+    answer: 0
+    explain: "for (i in 1..5) mengiterasi rentang nilai."
+  - q: "Rentang 1 until 5 artinya…"
+    options: ["1 sampai 5", "0 sampai 5", "1 sampai 4", "hanya angka 1"]
+    answer: 2
+    explain: "until adalah rentang terbuka di kanan, tidak menyertakan 5."
+  - q: "Perulangan while berjalan selama kondisi…"
+    options: ["benar", "salah", "kosong", "genap"]
+    answer: 0
+    explain: "Sama seperti kebanyakan bahasa, selama kondisi bernilai true."
+  - q: "continue pada perulangan berfungsi untuk…"
+    options: ["melompat ke iterasi berikutnya", "menghentikan program", "membuat variabel", "mengulang dari awal"]
+    answer: 0
+    explain: "Sedangkan break menghentikan seluruh perulangan."
+example:
+  code: |
+    fun main() {
+        val skor = 78
+        val grade = if (skor >= 75) "Lulus" else "Tidak lulus"
+        println(grade)
+
+        for (i in 1..3) {
+            println("Perulangan ke-$i")
+        }
+
+        var hitung = 3
+        while (hitung > 0) {
+            println("Sisa $hitung")
+            hitung--
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kotlin membuat kontrol alur lebih ekspresif: kondisi bisa menghasilkan nilai dan perulangan bekerja langsung dengan range.
+
+## if sebagai Ekspresi
+
+```kotlin
+fun main() {
+    val skor = 78
+    val status = if (skor >= 75) "Lulus" else "Gagal"
+    println(status)
+}
+```
+
+Tidak perlu ternary — if dengan else sudah menghasilkan nilai. Kotlin hanya punya **1 bentuk percabangan fundamental** (`if`), ditambah `when` dari bab sebelumnya; tidak ada switch terpisah, sehingga aturannya seragam: kurung wajib, kurawal wajib untuk blok.
+
+## for dan Range
+
+Kotlin punya **4 pengendali rentang**:
+
+| Pengendali | Arti | Contoh hasil |
+| --- | --- | --- |
+| `..` | rentang tertutup (inklusif) | `1..3` → 1, 2, 3 |
+| `until` | rentang terbuka di kanan | `1 until 3` → 1, 2 |
+| `downTo` | menurun, tertutup | `3 downTo 1` → 3, 2, 1 |
+| `step` | melompati | `0 until 6 step 2` → 0, 2, 4 |
+
+```kotlin
+fun main() {
+    for (i in 1..5) {
+        print("$i ")
+    }
+    println()
+
+    for (i in 5 downTo 1) {
+        print("$i ")
+    }
+    println()
+
+    for (i in 0 until 10 step 2) {
+        print("$i ")
+    }
+    println()
+}
+```
+
+`downTo` menurun, `step` melompat, `until` menutup di kiri. Ketiganya bisa dikombinasikan selama masuk akal, misalnya `10 downTo 0 step 5`.
+
+Kotlin punya **3 bentuk perulangan**: `for` (ketika jumlah atau rentang diketahui), `while` (selama kondisi benar), dan `do while` (minimal sekali). Pilih berdasarkan kapan kondisi diperiksa:
+
+| Bentuk | Kapan berhenti | Contoh pemakaian |
+| --- | --- | --- |
+| `for (x in ...)` | rentang/ koleksi habis | iterasi daftar produk |
+| `while (kondisi)` | kondisi jadi salah | menunggu data tersedia |
+| `do { } while (kondisi)` | kondisi jadi salah, setelah minimal satu putaran | menampilkan menu sekali lalu menunggu input |
+
+## while dan do while
+
+```kotlin
+fun main() {
+    var n = 3
+    while (n > 0) {
+        println("while: $n")
+        n--
+    }
+
+    var m = 0
+    do {
+        println("do while: $m")
+        m++
+    } while (m < 3)
+}
+```
+
+`do while` selalu berjalan minimal satu kali.
+
+Untuk perulangan bersarang, `break` dan `continue` bisa diberi label agar menunjuk perulangan mana yang dimaksud:
+
+```kotlin
+fun main() {
+    val matriks = listOf(listOf(1, 2), listOf(3, 4))
+    luarnya@ for (baris in matriks) {
+        for (nilai in baris) {
+            if (nilai == 3) break@luarnya
+            print("$nilai ")
+        }
+    }
+}
+```
+
+## Iterasi Koleksi dan Index
+
+```kotlin
+fun main() {
+    val buah = listOf("apel", "mangga", "jeruk")
+
+    for ((index, nilai) in buah.withIndex()) {
+        println("$index: $nilai")
+    }
+
+    buah.forEach { println(it) }
+}
+```
+
+`it` adalah nama bawaan untuk satu parameter lambda.
+
+## Break dan Continue
+
+```kotlin
+fun main() {
+    for (i in 1..5) {
+        if (i == 3) continue
+        if (i == 5) break
+        println(i)
+    }
+}
+```
+
+## Di Dunia Nyata
+
+- **Rekap omzet 12 bulan** — `for (bulan in 1..12)` dihitung sekali, dengan `if (omzet == 0) continue` untuk melewati bulan tanpa transaksi.
+- **Polling status pesanan** — `while (status == "menunggu")` berjalan selama server belum menjawab selesai.
+- **Menu interaktif** — `do while (pilihan != "keluar")` menjamin menu tampil minimal sekali.
+- **Mencari siswa pertama yang lulus** — loop berhenti dengan `break` begitu ketemu, tanpa memeriksa sisa daftar.
+- **Menomori baris** — `for ((i, baris) in log.withIndex())` saat mencetak posisi tiap baris.
+
+<div class="note">💡 Range bersifat immutable — for (i in 1..5) tidak menyimpan daftar angka di memori. Aman dipakai untuk rentang sangat panjang sekalipun.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val skor = 78
+    val status = if (skor >= 75) "Lulus" else "Gagal"
+    println(status)
+
+    for (i in 1..3) {
+        println("Perulangan ke-" + i)
+    }
+
+    var hitung = 3
+    while (hitung > 0) {
+        println("Sisa " + hitung)
+        hitung--
+    }
+
+    val buah = listOf("apel", "mangga", "jeruk")
+    for ((index, nilai) in buah.withIndex()) {
+        println(index.toString() + ": " + nilai)
+    }
+}`} />

@@ -1,0 +1,177 @@
+---
+title: "Event & Form (v-on, v-model)"
+description: "Menangani klik, input, dan two-way binding dengan aman"
+order: 3
+quiz:
+  - q: "v-on:click (atau @click) menempelkan…"
+    options: ["Style CSS", "Event listener ke elemen", "Properti data", "Routing"]
+    answer: 1
+    explain: "Contoh: <button @click=\"tambah\"> — fungsi tambah() dipanggil saat diklik."
+  - q: "v-model pada input berfungsi…"
+    options: ["Menghubungkan dua arah: data ↔ input", "Menambah event", "Menghapus data", "Mengirim form ke server"]
+    answer: 0
+    explain: "User mengetik → data berubah; data berubah dari kode → isi input ikut berubah."
+  - q: "Modifier .prevent pada @submit.prevent melakukan…"
+    options: ["Mencegah event sama sekali", "Mencegah perilaku default (reload halaman)", "Menghapus form", "Menyembunyikan tombol"]
+    answer: 1
+    explain: "Default submit browser memuat ulang halaman — .prevent memanggil event.preventDefault()."
+  - q: "Modifier .number pada v-model…"
+    options: ["Mengonversi isi input menjadi angka bila memungkinkan", "Menambah angka otomatis", "Membatasi input hanya digit", "Menghapus titik desimal"]
+    answer: 0
+    explain: "Tanpa .number, input number tetap datang sebagai string — berbahaya untuk perhitungan."
+  - q: "Handler event di Vue biasanya ditulis sebagai…"
+    options: ["Fungsi di methods / script setup", "String SQL", "CSS selector", "Meta tag"]
+    answer: 0
+    explain: "@click=\"proses\" memanggil fungsi proses; @click=\"n++\" juga boleh untuk kasus sederhana."
+example:
+  code: |
+    const state = { teks: "", log: [] };
+    function onInput(v) {
+      state.teks = v;
+      state.log.push(v);
+    }
+    onInput("Halo");
+    console.log(state.log);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Aplikasi menjadi hidup saat user berinteraksi. Vue menyediakan `v-on` untuk menghubungkan event ke function handler dan `v-model` untuk binding form.
+
+## 4 Kelompok Interaksi
+
+| Kelompok | Sintaks | Fungsi | Contoh nyata |
+|----------|---------|--------|--------------|
+| Mouse/pointer | `@click`, `@mouseenter` | Tombol dan hover | Tambah keranjang |
+| Keyboard | `@keyup.enter`, `@keyup.esc` | Aksi tombol khusus | Kirim chat, tutup modal |
+| Form | `@submit.prevent` | Proses data tanpa reload | Login, checkout |
+| Input binding | `v-model` | Sinkronkan state ↔ input | Search, checkbox, select |
+
+Handler sebaiknya berupa fungsi bernama bila punya validasi atau lebih dari satu langkah; ekspresi inline cukup untuk perubahan sederhana seperti `jumlah++`.
+
+## v-on / @
+
+```html
+<template>
+  <button @click="tambah">Tambah</button>
+  <button v-on:click="jumlah += 1">Inline</button>
+  <input @keyup.enter="kirim" />
+</template>
+
+<script setup>
+import { ref } from "vue";
+
+const jumlah = ref(0);
+function tambah() { jumlah.value++; }
+function kirim() { console.log("Enter ditekan!"); }
+</script>
+```
+
+## Modifiers Event
+
+```html
+<template>
+  <form @submit.prevent="simpan">
+    <input @keyup.esc="bersihkan" />
+    <button type="submit">Kirim</button>
+  </form>
+</template>
+```
+
+- `.prevent` — `event.preventDefault()` (hentikan reload).
+- `.stop` — `event.stopPropagation()`.
+- `.enter`, `.esc` — hanya bereaksi pada tombol tertentu.
+
+## v-model
+
+```html
+<template>
+  <input v-model="nama" placeholder="Nama" />
+  <input v-model.number="umur" type="number" />
+  <textarea v-model="catatan"></textarea>
+  <input type="checkbox" v-model="setuju" /> Setuju
+  <p>{{ nama }} — {{ umur }} tahun</p>
+</template>
+```
+
+`v-model` = gabungan `:value` + `@input`. Untuk checkbox jadi boolean, untuk select mengambil value opsi.
+
+## Event Object & Payload
+
+```html
+<template>
+  <button @click="kirimData($event, 'ABC')">Kirim</button>
+</template>
+
+<script setup>
+function kirimData(event, kode) {
+  console.log(event.type, kode);
+}
+</script>
+```
+
+## Pola JavaScript-nya
+
+```javascript
+const state = { teks: "", log: [] };
+
+function onInput(nilai) {
+  state.teks = nilai;
+  state.log.push(nilai);
+}
+
+onInput("H");
+onInput("Ha");
+onInput("Halo");
+console.log(state.teks, state.log);
+```
+
+Setiap keystroke memperbarui `state.teks` — inilah inti two-way binding. Array/object yang reaktif juga bisa diubah handler, misalnya menambah log atau mengganti field form; Vue mendeteksi perubahan tersebut.
+
+## 3 Modifier v-model
+
+| Modifier | Efek | Kapan dipakai |
+|----------|------|---------------|
+| `.number` | Konversi input ke angka bila memungkinkan | qty, umur, harga |
+| `.trim` | Hapus spasi awal/akhir | nama, email |
+| `.lazy` | Update saat event `change`, bukan tiap input | Form yang tidak perlu live update |
+
+## Di Dunia Nyata
+
+- **Form login**: `.trim` membersihkan email dan `@submit.prevent` menjalankan validasi sebelum request.
+- **Kolom jumlah barang**: `.number` mencegah hasil `"2" + 1` menjadi `"21"`.
+- **Pencarian cepat**: `v-model` memperbarui query; computed menyaring array saat user mengetik.
+- **Modal**: `@keyup.esc` menutup dialog dan `@click.stop` mencegah klik isi dianggap klik backdrop.
+- **Todo**: handler tambah memvalidasi teks, push object ke array reaktif, lalu mengosongkan input.
+
+<div class="note">💡 Hindari logika berat langsung di template (`@click=\"berat()\"` dipanggil tiap render untuk method non-cached). Untuk perhitungan turunan mahal, pindahkan ke `computed` — materi bab berikutnya.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Meniru pola v-model + @click dengan function handler
+const state = { teks: "", jumlah: 0, log: [] };
+
+function onInput(nilai) {
+  state.teks = nilai;
+  state.log.push("input: " + nilai);
+}
+
+function tambah() {
+  state.jumlah++;
+  state.log.push("klik ke-" + state.jumlah);
+}
+
+function simpan(form) {
+  if (!form.teks.trim()) {
+    form.log.push("gagal: teks kosong");
+    return false;
+  }
+  form.log.push("tersimpan: " + form.teks.trim());
+  return true;
+}
+
+onInput("H");
+onInput("Ha");
+onInput("Halo");
+tambah();
+tambah();
+console.log(simpan(state));
+console.log(state.log.join("\\n"));`} />

@@ -1,0 +1,140 @@
+---
+title: "Pengenalan Swift"
+description: "Bahasa Apple yang modern — aman, cepat, dan terbaca seperti bahasa sehari-hari"
+order: 1
+quiz:
+  - q: "Swift dikembangkan oleh…"
+    options: ["Google", "Apple", "Meta", "Microsoft"]
+    answer: 1
+    explain: "Apple memperkenalkan Swift pada 2014 di WWDC."
+  - q: "Swift dirancang untuk menggantikan bahasa…"
+    options: ["Python", "Kotlin", "Objective-C", "Ruby"]
+    answer: 2
+    explain: "Objective-C adalah bahasa lama Apple sebelum Swift."
+  - q: "Perintah mencetak teks di Swift adalah…"
+    options: ["echo", "print", "puts", "console.log"]
+    answer: 1
+    explain: "print() menampilkan teks beserta baris baru."
+  - q: "Playground berguna untuk…"
+    options: ["Membuat database", "Mencoba kode secara interaktif", "Menulis HTML", "Mengompilasi game"]
+    answer: 1
+    explain: "Playground menampilkan hasil setiap baris tanpa menunggu program selesai."
+  - q: "Ekstensi file Swift adalah…"
+    options: [".swift", ".sw", ".s", ".swiftcode"]
+    answer: 0
+    explain: "Dijalankan lewat Xcode atau compiler swift di terminal."
+example:
+  code: |
+    let nama = "OnBoss"
+    print("Halo, \(nama)!")
+
+    var skor = 10
+    skor += 5
+    print("Skor: \(skor)")
+
+    for i in 1...3 {
+        print("Baris ke-\(i)")
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Swift adalah bahasa Apple untuk iOS, macOS, watchOS, dan tvOS — dibuat agar aman terhadap kesalahan umum sekaligus enak dibaca.
+
+## Hello World
+
+```swift
+print("Halo, Dunia!")
+```
+
+Tidak perlu titik koma, tidak perlu fungsi pembungkus, dan tidak ada baris kosong wajib antar pernyataan. Satu fungsi `print` sudah cukup untuk program terkecil sekalipun.
+
+## Fakta Singkat
+
+| Fakta | Isi |
+| --- | --- |
+| Pembuat | Apple; diperkenalkan di WWDC 2014 |
+| Status | Open source sejak 2015 (compiler & runtime Swift) |
+| Ekstensi file | `.swift` |
+| Target platform | iOS, iPadOS, macOS, watchOS, tvOS, visionOS |
+| Cara menjalankan | Xcode, `swift belajar.swift`, atau Swift Playground |
+| Kompatibilitas | Bisa memanggil API Objective-C dan C |
+
+## Kenapa Swift?
+
+- **Aman**: banyak kesalahan tertangkap saat kompilasi
+- **Cepat**: dikompilasi menjadi kode mesin sungguhan
+- **Ekspresif**: sintaksis ringkas dengan tipe yang jelas
+- **Modern**: menampilkan pesan galat yang mudah dipahami
+
+Tiga mekanisme keamanan yang paling terasa:
+
+| Mekanisme | Cara kerja | Contoh |
+| --- | --- | --- |
+| Optional | nilai bisa kosong harus dinyatakan `?` | `var nama: String?` |
+| Type inference | tipe ditebak tapi tetap dikunci compiler | `let angka = 42` → `Int` |
+| Exhaustive switch | semua cabang wajib ditangani | switch tanpa `default` pada enum |
+
+## Variabel Pertama
+
+```swift
+let kota = "Bandung"
+var skor = 10
+
+skor += 5
+print("\(kota) skor \(skor)")
+```
+
+`let` untuk nilai tetap, `var` untuk nilai yang berubah, dan `\( ... )` menyisipkan nilai ke teks. Lima istilah dasar yang muncul di sini:
+
+| Istilah | Peran | Contoh |
+| --- | --- | --- |
+| `let` | deklarasi nilai tetap | `let kota = "Bandung"` |
+| `var` | deklarasi nilai berubah | `var skor = 10` |
+| `\( ... )` | string interpolation | `"skor \(skor)"` |
+| `print(_:)` | mencetak satu baris | `print("Halo")` |
+| `for ... in ...` | perulangan for-in | `for i in 1...3` |
+
+## Menjalankan Program
+
+```bash
+swift belajar.swift
+```
+
+Atau langsung di editor OnBoss di halaman ini.
+
+## Komentar
+
+```swift
+// komentar satu baris
+/*
+ Komentar
+ multi baris
+ */
+```
+
+## Di Dunia Nyata
+
+- **Aplikasi iOS** — SwiftUI, UIKit, dan seluruh API Apple resmi ditulis Swift.
+- **App macOS** — aplikasi desktop Mac modern (Preview, Xcode itu sendiri) memakai Swift.
+- **Server-side** — framework Vapor memungkinkan Swift berjalan di Linux untuk layanan REST.
+- **Script otomasi** — file `.swift` bisa dijalankan tanpa Xcode lewat `swift script.swift`, mirip Python.
+- **Watch dan TV** — watchOS dan tvOS hanya menerima Swift modern untuk aplikasi baru.
+
+<div class="note">💡 Swift menolak program yang memakai variabel tanpa nilai. Error kompilasi yang jelas lebih baik daripada kejutan saat program berjalan — itulah filosofi keamanan Swift.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`let nama = "Dunia"
+print("Halo, \\(nama)!")
+
+var skor = 10
+skor += 5
+print("Skor: \\(skor)")
+
+for i in 1...3 {
+    print("Baris ke-\\(i)")
+}
+
+func sapa(x: String) -> String {
+    return "Halo, \\(x)!"
+}
+print(sapa(x: "OnBoss"))`} />

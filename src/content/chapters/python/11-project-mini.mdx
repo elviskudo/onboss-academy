@@ -1,0 +1,241 @@
+---
+title: "Project Mini Python"
+description: "Bangun aplikasi kasir CLI dengan fungsi, struktur data, validasi, file JSON, dan laporan"
+order: 11
+quiz:
+  - q: "Bagian terbaik untuk memisahkan aturan total belanja adalah…"
+    options: ["Fungsi hitung_total", "Blok print", "Komentar", "Nama file"]
+    answer: 0
+    explain: "Fungsi terpisah membuat aturan total mudah diuji dan dipakai ulang."
+  - q: "Mengapa data katalog disimpan sebagai dictionary?"
+    options: ["Agar hanya bisa berisi angka", "Agar produk dapat dicari berdasarkan kode", "Agar urutannya acak", "Agar tidak perlu validasi"]
+    answer: 1
+    explain: "Dictionary cocok untuk pemetaan kode produk ke data produk."
+  - q: "Mode file yang tepat untuk mengganti isi laporan adalah…"
+    options: ["r", "a", "w", "x"]
+    answer: 2
+    explain: "Mode w menulis ulang file; gunakan dengan sadar karena isi lama akan tertimpa."
+  - q: "Validasi jumlah barang harus dilakukan sebelum…"
+    options: ["Mengubah stok dan menghitung subtotal", "Menulis nama fungsi", "Membuat komentar", "Mengimpor json"]
+    answer: 0
+    explain: "Input harus valid sebelum memengaruhi stok, total, atau data tersimpan."
+  - q: "Format penyimpanan yang mudah dibaca Python dan aplikasi lain adalah…"
+    options: ["JSON", "Komentar", "Bytecode", "Traceback"]
+    answer: 0
+    explain: "JSON menyimpan struktur data umum sebagai teks yang interoperabel."
+example:
+  code: |
+    produk = {
+        "K01": {"nama": "Kopi", "harga": 18000, "stok": 10},
+        "K02": {"nama": "Roti", "harga": 12000, "stok": 8},
+    }
+
+    def hitung_total(keranjang):
+        return sum(item["harga"] * item["jumlah"] for item in keranjang)
+
+    keranjang = [
+        {"kode": "K01", "nama": "Kopi", "harga": 18000, "jumlah": 2},
+        {"kode": "K02", "nama": "Roti", "harga": 12000, "jumlah": 1},
+    ]
+    total = hitung_total(keranjang)
+    print("Total:", total)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Project mini ini menjadi penutup jalur dasar Python. Kita membangun **kasir CLI** kecil yang menggabungkan variabel, tipe data, operator, percabangan, looping, function, struktur data, error handling, dan penyimpanan JSON.
+
+## Target Aplikasi
+
+Aplikasi memiliki enam kemampuan inti:
+
+| Fitur | Konsep yang dipakai | Hasil |
+| --- | --- | --- |
+| Melihat katalog | dictionary dan looping | Daftar kode, nama, harga, stok |
+| Menambah barang | input, percabangan, validasi | Keranjang berisi item valid |
+| Mengubah jumlah | list dan function | Subtotal setiap item |
+| Menghitung total | operator dan generator expression | Total sebelum dan sesudah diskon |
+| Membayar | perbandingan dan exception | Kembalian atau pesan saldo kurang |
+| Menyimpan laporan | JSON dan file handling | Riwayat transaksi dapat dibuka kembali |
+
+## Struktur Data
+
+Katalog memakai dictionary bertingkat. Kode produk menjadi kunci agar pencarian tidak perlu memeriksa seluruh list.
+
+```python
+produk = {
+    "K01": {"nama": "Kopi", "harga": 18000, "stok": 10},
+    "K02": {"nama": "Roti", "harga": 12000, "stok": 8},
+}
+
+kode = "K01"
+if kode in produk:
+    item = produk[kode]
+    print(item["nama"], item["harga"])
+```
+
+Keranjang memakai list karena satu transaksi berisi urutan item. Setiap item adalah dictionary agar nama, harga, dan jumlah tetap berkelompok.
+
+## Pecah Menjadi Function
+
+Gunakan function berdasarkan satu tanggung jawab. Empat function inti cukup untuk versi pertama:
+
+1. `tampilkan_katalog()` menampilkan produk.
+2. `tambah_ke_keranjang()` memvalidasi kode dan jumlah.
+3. `hitung_total()` menghitung subtotal.
+4. `simpan_transaksi()` menulis riwayat ke JSON.
+
+```python
+def hitung_total(keranjang):
+    total = 0
+    for item in keranjang:
+        total += item["harga"] * item["jumlah"]
+    return total
+
+
+def hitung_diskon(total):
+    if total >= 100000:
+        return total * 0.10
+    if total >= 50000:
+        return total * 0.05
+    return 0
+```
+
+Function menerima data melalui parameter dan mengembalikan nilai dengan `return`. Jangan mencampur input, perhitungan, dan penyimpanan dalam satu function karena sulit diuji.
+
+## Validasi Input
+
+Input dari pengguna selalu berupa string. Konversi hanya setelah isi diperiksa dan tangani nilai yang tidak valid dengan `try/except`.
+
+```python
+def baca_jumlah():
+    while True:
+        try:
+            jumlah = int(input("Jumlah: "))
+            if jumlah > 0:
+                return jumlah
+            print("Jumlah harus lebih dari nol.")
+        except ValueError:
+            print("Masukkan angka bulat.")
+```
+
+Validasi bisnis berbeda dari validasi tipe. `"2"` bisa dikonversi menjadi integer, tetapi jumlah `0`, kode yang tidak ada, atau stok yang kurang tetap harus ditolak.
+
+## Alur Program
+
+Menu utama menggunakan `while` karena aplikasi berjalan sampai pengguna memilih keluar. Percabangan `if/elif` memilih aksi berdasarkan input.
+
+```python
+def tampilkan_menu():
+    print("1. Katalog")
+    print("2. Keranjang")
+    print("3. Bayar")
+    print("0. Keluar")
+
+while True:
+    tampilkan_menu()
+    pilihan = input("Pilih: ").strip()
+
+    if pilihan == "1":
+        print("Menampilkan katalog")
+    elif pilihan == "2":
+        print("Menampilkan keranjang")
+    elif pilihan == "3":
+        print("Memproses pembayaran")
+    elif pilihan == "0":
+        break
+    else:
+        print("Pilihan tidak tersedia.")
+```
+
+`break` menghentikan loop utama. Gunakan `continue` jika ingin menolak satu input lalu kembali ke awal loop.
+
+## Pembayaran dan Stok
+
+Urutan aman pembayaran adalah: hitung subtotal, hitung diskon, hitung total akhir, validasi uang, baru kurangi stok. Jangan mengurangi stok sebelum seluruh transaksi dipastikan valid.
+
+```python
+def proses_pembayaran(total, uang):
+    if uang < total:
+        raise ValueError("Uang pembayaran kurang")
+    return uang - total
+
+try:
+    kembalian = proses_pembayaran(85000, 100000)
+    print("Kembalian:", kembalian)
+except ValueError as error:
+    print("Gagal:", error)
+```
+
+Untuk program nyata, pembaruan stok dan penyimpanan transaksi sebaiknya dilakukan sebagai satu operasi yang tidak boleh setengah berhasil.
+
+## Simpan dan Baca JSON
+
+JSON cocok untuk project mini karena sederhana dan tersedia melalui standard library. `json.dump()` menulis object Python ke file, sedangkan `json.load()` membacanya kembali.
+
+```python
+import json
+from datetime import datetime
+
+transaksi = {
+    "waktu": datetime.now().isoformat(timespec="seconds"),
+    "items": keranjang,
+    "total": total,
+}
+
+with open("transaksi.json", "w", encoding="utf-8") as file:
+    json.dump(transaksi, file, indent=2, ensure_ascii=False)
+```
+
+Gunakan `with open(...)` supaya file ditutup otomatis meskipun terjadi error. Jangan menyimpan data kartu atau password dalam file JSON biasa.
+
+## Pengujian Skenario
+
+Sebelum dianggap selesai, jalankan minimal tujuh skenario:
+
+| Skenario | Ekspektasi |
+| --- | --- |
+| Kode produk valid | Item masuk keranjang |
+| Kode produk tidak ada | Pesan error, stok tidak berubah |
+| Jumlah berupa teks | Input ditolak dan diminta ulang |
+| Jumlah melebihi stok | Transaksi ditolak |
+| Total melewati batas diskon | Diskon sesuai aturan |
+| Uang kurang | Pembayaran gagal tanpa mengurangi stok |
+| File laporan belum ada | Program membuat file baru |
+
+## Di Dunia Nyata
+
+- Kasir toko kecil memakai alur yang sama untuk katalog, keranjang, pembayaran, dan laporan harian.
+- Sistem pemesanan makanan memvalidasi stok sebelum mengirim order ke dapur.
+- Aplikasi inventaris menyimpan perubahan stok dan histori pergerakan barang.
+- Script administrasi kantor memakai JSON untuk konfigurasi ringan sebelum berpindah ke database.
+- Pengujian otomatis dapat memanggil `hitung_total()` tanpa memasukkan input manual.
+
+<div class="note">💡 Pisahkan aturan bisnis dari input/output: function yang menghitung total harus bisa diuji tanpa `input()` dan tanpa mencetak ke layar.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`produk = {
+    "K01": {"nama": "Kopi", "harga": 18000, "stok": 10},
+    "K02": {"nama": "Roti", "harga": 12000, "stok": 8},
+}
+
+keranjang = []
+for kode, jumlah in [("K01", 2), ("K02", 1)]:
+    item = produk[kode]
+    keranjang.append({
+        "kode": kode,
+        "nama": item["nama"],
+        "harga": item["harga"],
+        "jumlah": jumlah,
+    })
+
+def hitung_total(items):
+    return sum(item["harga"] * item["jumlah"] for item in items)
+
+total = hitung_total(keranjang)
+diskon = total * 0.05 if total >= 50000 else 0
+print("=== STRUK ===")
+for item in keranjang:
+    subtotal = item["harga"] * item["jumlah"]
+    print(f"{item['nama']}: {item['jumlah']} x Rp{item['harga']} = Rp{subtotal}")
+print(f"Total: Rp{total - diskon:.0f}")
+print(f"Diskon: Rp{diskon:.0f}")`} />

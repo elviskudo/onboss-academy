@@ -1,0 +1,210 @@
+---
+title: "Array"
+description: "Menyimpan banyak data bertipe sama — array 1D/2D, sizeof trick, array sebagai pointer"
+order: 6
+quiz:
+  - q: "Indeks pertama array di C dimulai dari…"
+    options: ["1", "0", "-1", "Bebas"]
+    answer: 1
+    explain: "Untuk int arr[5], elemen sah adalah arr[0] sampai arr[4]."
+  - q: "Ukuran array harus…"
+    options: ["Bisa berubah saat runtime", "Selalu 100", "Konstanta atau literal saat deklarasi", "Boleh negatif"]
+    answer: 2
+    explain: "C (standar lama) menuntut ukuran tetap saat deklarasi — tidak ada ArrayList bawaan."
+  - q: "Untuk mengetahui jumlah elemen array lokal, gunakan…"
+    options: ["arr.length", "arr.count()", "sizeof(arr) / sizeof(arr[0])", "strlen(arr)"]
+    answer: 2
+    explain: "sizeof menghitung total byte array dibagi ukuran satu elemen — hanya untuk array, bukan pointer."
+  - q: "Mengakses arr[10] pada int arr[5] akan…"
+    options: ["Membaca/menulis memori di luar array (undefined behavior)", "Mengembalikan 0", "Menambah array", "Compile error selalu"]
+    answer: 0
+    explain: "C tidak memeriksa batas array — dampaknya bisa crash atau merusak data lain."
+  - q: "Array dua dimensi dideklarasikan sebagai…"
+    options: ["int m[3][4];", "int m(3,4);", "int m[3,4];", "array m = 3x4"]
+    answer: 0
+    explain: "Baris lebih dulu, lalu kolom — m[baris][kolom]."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        int nilai[4] = {80, 90, 75, 88};
+        int total = 0;
+
+        for (int i = 0; i < 4; i++) {
+            total += nilai[i];
+        }
+        printf("Rata-rata: %.1f\n", (double) total / 4);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Alih-alih membuat `nilai1`, `nilai2`, `nilai3`… C menyimpan **semua data dalam satu array** dengan indeks. Array adalah struktur data paling dasar di C — dan di baliknya selalu ada pointer.
+
+## Deklarasi & Akses
+
+```c
+int nilai[5];              // 5 slot, belum diisi (garbage!)
+int skor[4] = {80, 90, 75, 88};   // inisialisasi sekaligus
+char huruf[3] = {'A', 'B', 'C'};
+int semuaNol[5] = {0};     // trik: seluruh elemen diisi 0
+
+nilai[0] = 70;             // ubah elemen pertama
+printf("%d\n", skor[2]);   // 75
+```
+
+Ukuran array harus **konstan** saat deklarasi; jumlah nilai dalam kurung kurawal sebaiknya tidak melebihi ukurannya. Indeks valid: `0` sampai `ukuran - 1` — C **tidak memeriksa** batas, akses di luar batas = undefined behavior (bisa crash, bisa merusak data lain diam-diam).
+
+## Menelusuri Array
+
+```c
+int total = 0;
+for (int i = 0; i < 4; i++) {
+    total += skor[i];
+}
+printf("Jumlah = %d\n", total);
+
+int jumlah = sizeof(skor) / sizeof(skor[0]);  // = 4
+printf("Jumlah elemen = %d\n", jumlah);
+```
+
+`sizeof(skor) / sizeof(skor[0])` adalah cara baku menghitung panjang array **di dalam fungsi tempat array dideklarasikan**. Saat array dikirim ke function, sizeof hanya mengembalikan ukuran pointer (8 byte) — panjang harus dikirim manual.
+
+## Mencari Nilai Maksimum
+
+```c
+int data[5] = {12, 45, 7, 88, 33};
+int maks = data[0];
+for (int i = 1; i < 5; i++) {
+    if (data[i] > maks) maks = data[i];
+}
+printf("Maks = %d\n", maks);   // 88
+```
+
+Pola "asumsikan pertama, lalu bandingkan" ini dipakai hampir di semua kompetisi pemrograman.
+
+## Bubble Sort — Mengurutkan Array
+
+```c
+int a[5] = {5, 3, 8, 1, 2};
+for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4 - i; j++) {
+        if (a[j] > a[j + 1]) {        // tukar jika urutan terbalik
+            int t = a[j];
+            a[j] = a[j + 1];
+            a[j + 1] = t;
+        }
+    }
+}
+// a kini = {1, 2, 3, 5, 8}
+```
+
+Bubble sort paling sederhana untuk data kecil; untuk data besar, pakai `qsort` dari `<stdlib.h>` dengan function pointer pembanding.
+
+## Array Dua Dimensi
+
+```c
+int matriks[2][3] = {
+    {1, 2, 3},
+    {4, 5, 6}
+};
+
+for (int b = 0; b < 2; b++) {
+    for (int k = 0; k < 3; k++) {
+        printf("%d ", matriks[b][k]);
+    }
+    printf("\n");
+}
+printf("Baris: %d, Kolom: %d\n",
+       (int)(sizeof(matriks)/sizeof(matriks[0])),            // 2
+       (int)(sizeof(matriks[0])/sizeof(matriks[0][0])));    // 3
+```
+
+Cocok untuk tabel data, papan permainan, atau grid koordinat. Di memori, 2D array hanyalah blok datar berurutan baris demi baris (row-major).
+
+## Array ke Function
+
+```c
+int jumlah(int arr[], int panjang) {
+    int total = 0;
+    for (int i = 0; i < panjang; i++) total += arr[i];
+    return total;
+}
+```
+
+Array dikirim beserta **panjangnya** — di dalam fungsi, parameter `arr[]` sebenarnya hanya berupa pointer ke elemen pertama (setara `int *arr`). Karena itu fungsi bisa mengubah isi array asli tanpa pointer eksplisit.
+
+## Ringkasan Operasi Array
+
+| Operasi | Cara | Catatan |
+|---|---|---|
+| Deklarasi | `int a[5];` | ukuran konstan saat deklarasi |
+| Inisialisasi | `int a[3] = {1,2,3};` | `{0}` = semua nol |
+| Akses elemen | `a[i]` | indeks 0..n-1, tanpa cek batas |
+| Panjang | `sizeof(a)/sizeof(a[0])` | hanya berlaku di scope deklarasi |
+| 2 dimensi | `int m[2][3]` | m[baris][kolom], row-major |
+| Ke function | `f(a, n)` | dikirim sebagai pointer + panjang |
+| Dinamis | `malloc(n * sizeof(int))` | wajib `free` |
+
+## Array Dinamis (Pratinjau)
+
+```c
+#include <stdlib.h>
+
+int *data = malloc(n * sizeof(int));  // alokasikan n slot saat runtime
+if (data == NULL) return 1;
+// ... pakai data[0..n-1] ...
+free(data);                           // wajib dilepas
+```
+
+Untuk data yang ukurannya baru diketahui saat program berjalan, array statis tidak cukup — `malloc`/`free` dibahas tuntas di chapter Pointer.
+
+## Di Dunia Nyata
+
+- **Menyimpan nilai ujian 40 siswa**: satu `int nilai[40]` — rata-rata, min, maks dihitung satu loop.
+- **Papan catur 8×8**: `char papan[8][8]` menyimpan karakter bidak, dicetak dua loop bersarang.
+- **Filter data harga di bawah budget**: loop menyalin elemen lolos filter ke array baru dengan counter terpisah.
+- **Histogram huruf pada teks**: `int frek[26] = {0}` menghitung kemunculan A–Z — array jadi counter langsung.
+- **Buffer sirkular audio**: array 44100 elemen menampung sampel 1 detik, indeks berputar dengan `% n`.
+
+<div class="note">💡 Selalu sertakan variabel panjang saat mengoper array. C tidak menyimpan ukuran array di memori, sehingga membaca melewati batas tidak memunculkan error — hanya hasil yang salah atau crash yang tidak bisa ditebak. Ukuran tetap, akses cepat, nol proteksi: itulah array C.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int main(void) {
+    int nilai[5] = {80, 90, 75, 88, 92};
+    int total = 0, maks = nilai[0], min = nilai[0];
+    int n = sizeof(nilai) / sizeof(nilai[0]);
+
+    for (int i = 0; i < n; i++) {
+        total += nilai[i];
+        if (nilai[i] > maks) maks = nilai[i];
+        if (nilai[i] < min) min = nilai[i];
+    }
+    printf("Jumlah: %d\\n", total);
+    printf("Rata-rata: %.1f\\n", (double) total / n);
+    printf("Tertinggi: %d | Terendah: %d\\n", maks, min);
+
+    int urut[5] = {5, 3, 8, 1, 2};
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4 - i; j++) {
+            if (urut[j] > urut[j + 1]) {
+                int t = urut[j];
+                urut[j] = urut[j + 1];
+                urut[j + 1] = t;
+            }
+        }
+    }
+    printf("Terurut: ");
+    for (int i = 0; i < 5; i++) printf("%d ", urut[i]);
+    printf("\\n");
+
+    int matriks[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    for (int b = 0; b < 2; b++) {
+        for (int k = 0; k < 3; k++) printf("%d ", matriks[b][k]);
+        printf("\\n");
+    }
+    return 0;
+}`} />

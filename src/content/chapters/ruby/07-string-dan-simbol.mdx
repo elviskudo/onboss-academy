@@ -1,0 +1,129 @@
+---
+title: "String & Simbol"
+description: "5 cara menulis teks, 16 method string, dan kapan Symbol menggantikan String"
+order: 7
+quiz:
+  - q: "Heredoc (`<<~Teks`) di Ruby paling berguna untuk…"
+    options: ["Menulis teks panjang berbaris seperti SQL atau template", "Menghapus baris kosong", "Mengubah teks jadi angka", "Membuat string satu karakter"]
+    answer: 0
+    explain: "Heredoc mempertahankan struktur multi-baris tanpa perlu menyisipkan \\n satu per satu."
+  - q: "Kapan teks sebaiknya disimpan sebagai Symbol, bukan String?"
+    options: ["Saat teks panjang", "Saat dipakai sebagai kunci atau status yang tetap", "Saat mengandung angka", "Saat berasal dari user"]
+    answer: 1
+    explain: "Symbol diintern dan immutable — cocok untuk kunci hash dan enum, bukan untuk teks yang berubah."
+  - q: "Hasil dari \"Belajar\".sub(\"a\", \"o\") adalah…"
+    options: ["Belojor (semua a diganti)", "Belajar (tidak berubah)", "Belojar (hanya a pertama)", "Error"]
+    answer: 2
+    explain: "sub mengganti kemunculan pertama saja; gsub mengganti semua."
+  - q: "Simbol dibuat dengan…"
+    options: ["Tanda kutip", "Tanda titik dua di depan", "Tanda pagar", "Kurung siku"]
+    answer: 1
+    explain: ":aktif adalah Symbol; bisa juga dari teks dengan \"aktif\".to_sym."
+  - q: "\"  Halo  \".strip! menghasilkan…"
+    options: ["\"Halo\" dan nil bila sudah bersih", "Selalu \"Halo\"", "Selalu nil", "String asli apa adanya"]
+    answer: 0
+    explain: "Method tanda seru mengembalikan nil bila tidak ada perubahan — jangan ditugaskan sembarangan."
+example:
+  code: |
+    nama = "OnBoss"
+    puts "Halo, #{nama}!"
+    puts "Panjang: #{nama.length}"
+    puts nama.upcase
+
+    status = :aktif
+    puts status.inspect
+    puts "a,b,c".split(",").inspect
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah objek paling sering kamu sentuh di Ruby: membaca input, memformat output, sampai membangun query. Chapter ini juga membedakan kapan teks layak disimpan sebagai Symbol yang ringan dan tetap.
+
+## 5 Cara Menulis String
+
+| # | Cara | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| 1 | Kutip tunggal | `'Halo\n'` | Teks mentah, tanpa interpolasi |
+| 2 | Kutip ganda | `"Halo #{nama}"` | Interpolasi & escape `\n` |
+| 3 | `%q` / `%Q` | `%q(saya (biasa))` | Teks berisi banyak kutip |
+| 4 | Heredoc | `<<~SQL ... SQL` | Teks panjang: SQL, JSON, template |
+| 5 | Format | `format("INV-%03d", 7)` | Nomor invoice, tanggal, rata kolom |
+
+```ruby
+nama = "Sari"
+umur = 20
+
+puts "Halo, #{nama}!"          # interpolasi
+puts 'Halo, #{nama}'           # literal — tidak disubstitusi
+puts format("%s umurnya %d", nama, umur)
+```
+
+Hanya kutip ganda, `%Q`, dan heredoc yang menginterpolasi.
+
+## 16 Method String Inti
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `length` | Jumlah karakter | 9 | `start_with?` | Cek awalan |
+| 2 | `empty?` | String kosong? | 10 | `end_with?` | Cek akhiran |
+| 3 | `strip` | Buang spasi ujung | 11 | `split` | Pecah → array |
+| 4 | `upcase` | Semua huruf besar | 12 | `gsub` | Ganti semua |
+| 5 | `downcase` | Semua huruf kecil | 13 | `sub` | Ganti pertama |
+| 6 | `capitalize` | Huruf besar di awal | 14 | `chomp` | Buang akhiran baris |
+| 7 | `include?` | Cek substr | 15 | `to_i` / `to_f` | Konversi angka |
+| 8 | `index` | Posisi substr | 16 | `to_sym` | Ubah jadi Symbol |
+
+```ruby
+kata = " Belajar Ruby "
+puts kata.strip.upcase            # BELAJAR RUBY
+puts "satu dua".split(" ").inspect
+puts "abc" * 3                    # abcabcabc (operator * mengulang)
+puts "pengganti".gsub("g", "G")
+```
+
+## String vs Symbol
+
+| Sifat | String | Symbol |
+| --- | --- | --- |
+| Mutabilitas | **Bisa diubah** | Tetap (immutable) |
+| Pembuatan ulang | Tiap literal membuat objek baru | Diintern — dipakai ulang |
+| Interpolasi | Ya | Tidak (harus `to_s` dulu) |
+| Contoh | `"menunggu"` teks yang berubah | `:menunggu` status/kunci |
+| Kapan | Nama, kalimat, input user | Kunci Hash, enum, opsi API |
+
+```ruby
+status = :aktif
+puts status.inspect        # :aktif
+puts status.to_s           # aktif
+puts status.length         # 6 — Symbol punya method String lewat delegasi
+
+data = { status: :aktif, peran: :admin }
+puts data[:peran]          # admin
+```
+
+Symbol hemat karena dua kali `:aktif` di mana pun menunjuk objek yang sama, sedangkan dua `"aktif"` bisa jadi dua objek berbeda.
+
+## Di Dunia Nyata
+
+- **Membersihkan input**: `email = params[:email].strip.downcase` sebelum divalidasi dan disimpan.
+- **Merapikan nama file**: `nama_file = File.basename(path, ".*").parameterize` — tanda baca dibuang, spasi jadi tanda hubung.
+- **Temuan/replace laporan**: `laporan.gsub("NULL", "-")` mengubah sel database kosong jadi tanda terbaca.
+- **Status enum di database**: simpan `:lunas` / `:pending` sebagai Symbol di kode, kirim `to_s` ke database.
+- **Memotong pesan notifikasi**: `pesan.length > 80 ? pesan[0, 77] + "..." : pesan` menjaga judul tetap satu baris.
+
+<div class="note">💡 Method tanda seru pada String (`strip!`, `upcase!`, `gsub!`) **mengembalikan `nil` bila tidak ada yang berubah** — `"ABC".upcase!` bernilai `nil`, bukan `"ABC"`. Jangan pernah menulis `x = teks.strip!`; simpan hasilnya dari versi tanpa `!` atau pastikan operasinya benar-benar mengubah isi.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`nama = "OnBoss"
+puts "Halo, #{nama}!"
+puts "Panjang: #{nama.length}"
+puts nama.upcase
+puts nama.strip.empty?
+
+status = :aktif
+puts status.inspect
+puts "a,b,c".split(",").inspect
+puts ("ha" * 3)
+
+teks = "  Belajar Ruby  "
+puts teks.strip
+puts teks.gsub("Ruby", "Ruby 3")`} />

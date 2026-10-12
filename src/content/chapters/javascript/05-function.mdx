@@ -1,0 +1,181 @@
+---
+title: "Function"
+description: "Membuat fungsi: deklarasi, arrow, parameter, return"
+order: 5
+quiz:
+  - q: "Apa keuntungan utama membuat fungsi?"
+    options: ["Kode bisa dipakai ulang dan diuji", "Membuat kode lebih panjang", "Menghindari error", "Mempercepat browser 2×"]
+    answer: 0
+    explain: "Fungsi = abstraksi. Tulis sekali, panggil berkali-kali, mudah didebug."
+  - q: "Bentuk arrow function yang benar adalah…"
+    options: ["const tambah = (a, b) => a + b;", "const tambah = (a, b) -> a + b;", "func tambah(a,b) { return a+b }", "def tambah(a,b)"]
+    answer: 0
+    explain: "Arrow: (params) => ekspresi. Body tunggal mengembalikan nilai otomatis."
+  - q: "Keyword untuk mengembalikan hasil dari fungsi adalah…"
+    options: ["output", "return", "yield", "give"]
+    answer: 1
+    explain: "return menghentikan fungsi dan memuntahkan nilainya ke pemanggil."
+  - q: "Parameter default ditulis…"
+    options: ["function sapa(nama = \"Teman\")", "function sapa(nama?: \"Teman\")", "function sapa(nama -> \"Teman\")", "Tidak bisa"]
+    answer: 0
+    explain: "Default value: function f(x = 10) { } — aktif saat argumen tidak dikirim."
+  - q: "Hasil console.log(sapa()); untuk function sapa(){ return \"Halo\"; } adalah…"
+    options: ["undefined", "\"Halo\"", "Halo (tanpa kutip)", "Error"]
+    answer: 1
+    explain: "Nilai return berupa string — console.log menampilkannya tanpa kutip."
+example:
+  code: |
+    function sapa(nama) {
+      return "Halo, " + nama + "!";
+    }
+    const kali = (a, b) => a * b;
+    console.log(sapa("Sari"));
+    console.log(kali(6, 7));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi memecah masalah besar jadi potongan kecil yang bisa dipakai ulang, diuji, dan didebug terpisah. JavaScript punya **6 bentuk deklarasi fungsi**:
+
+| Bentuk | Sintaks | Kapan dipakai |
+|--------|---------|---------------|
+| Function declaration | `function f(a) { }` | Fungsi utama — bisa dipanggil sebelum deklarasi (hoisting) |
+| Function expression | `const f = function (a) { }` | Fungsi sebagai nilai, sering kondisional |
+| Arrow function | `const f = (a) => a` | Callback singkat — tidak punya `this` sendiri |
+| IIFE | `(function () { })()` | Kode yang jalan sekali, ruang lingkup terisolasi |
+| Async function | `async function f() { }` | Menunggu operasi async (bab tersendiri) |
+| Generator | `function* f() { yield 1; }` | Menghasilkan nilai bertahap — jarang di web biasa |
+
+## Deklarasi Fungsi
+
+```js
+function sapa(nama) {
+  return `Halo, ${nama}!`;
+}
+sapa("Budi"); // "Halo, Budi!"
+```
+
+## Arrow Function
+
+```js
+const tambah = (a, b) => a + b;
+const kuadrat = (n) => n * n;
+const sapa = (nama) => `Halo ${nama}`;  // return otomatis
+const halo = () => console.log("halo");  // tanpa parameter
+```
+
+Saat hanya satu parameter, kurung siku boleh dilepas. Saat body satu ekspresi, kurung kurawal & return boleh dilepas.
+
+## Parameter: Default, Rest, Destructuring
+
+```js
+// default — aktif saat argumen tidak dikirim
+function buatUser(nama, peran = "member") {
+  return { nama, peran };
+}
+buatUser("Sari");            // peran: "member"
+buatUser("Budi", "admin");   // peran: "admin"
+
+// rest (variadic) — kumpulkan argumen berlebih jadi array
+function jumlah(...angka) {
+  return angka.reduce((a, b) => a + b, 0);
+}
+jumlah(1, 2, 3); // 6
+
+// destructuring — langsung membongkar object/array parameternya
+function sapa({ nama, umur }) {
+  return `${nama}, ${umur} tahun`;
+}
+sapa({ nama: "Rina", umur: 20 }); // "Rina, 20 tahun"
+```
+
+Aturan urutan parameter: **wajib → default → rest**. `function f(...opsi, wajib)` akan error.
+
+## Return: Nilai vs void
+
+```js
+function lewat(a, b) {
+  a + b;        // ❌ salah — tidak ada return, hasil dibuang
+  return a + b; // ✅ nilai dikembalikan ke pemanggil
+}
+console.log(lewat(2, 3)); // 5
+
+function simpanKeLog(pesan) {
+  console.log(pesan);
+  // tanpa return → otomatis mengembalikan undefined (void)
+}
+console.log(simpanKeLog("hi")); // undefined
+```
+
+Fungsi tanpa `return` (atau `return;` kosong) disebut **void** — ia menjalankan aksi, bukan menghasilkan nilai. Nilai pertama yang di-return langsung menghentikan eksekusi fungsi.
+
+## Function Expression & IIFE
+
+```js
+const hitung = function (a, b) { return a + b; };
+
+// langsung dieksekusi sekali
+(function () {
+  console.log("Saya berjalan sendiri");
+})();
+```
+
+## Scope
+
+```js
+const global = "global";
+
+function coba() {
+  const lokal = "lokal";
+  console.log(global); // ✅ terlihat
+  console.log(lokal);  // ✅ terlihat di sini
+}
+// console.log(lokal); // ❌ Error — lokal tidak terlihat di luar
+```
+
+Fungsi bisa "melihat" variabel di luarnya (*closure*) — konsep penting yang akan muncul lagi di React & async.
+
+## Closure & Higher-Order Function
+
+```js
+// closure: fungsi internal "mengunci" variabel luar
+function buatPenghitung() {
+  let n = 0;
+  return () => ++n;
+}
+const tambah = buatPenghitung();
+tambah(); tambah(); // 1, 2 — n tetap tersimpan
+
+// higher-order: fungsi yang menerima/mengembalikan fungsi
+function ulangKali(fn, kali) {
+  return [...Array(kali)].map((_, i) => fn(i));
+}
+console.log(ulangKali((i) => i * 2, 3)); // [0, 2, 4]
+```
+
+Kapan memecah kode jadi fungsi? Saat sebuah blok **dipakai lebih dari sekali**, **bisa diberi nama yang jelas** (`hitungOngkir` bukan `blok 12`), atau **butuh diuji sendiri**.
+
+## Di Dunia Nyata
+
+- **`hitungTotal(harga, qty, pajak)`** dipanggil keranjang, checkout, dan halaman struk — satu sumber kebenaran.
+- **Debounce pencarian**: closure menyimpan timer agar API tidak dipanggil tiap ketikan user.
+- **Event handler tombol**: arrow function `(e) => …` jadi callback `addEventListener`.
+- **Formatter rupiah** `formatRp(n)` dipakai ulang di 10 tempat berbeda.
+- **Middleware filter data**: higher-order `withAuth(fn)` membungkus fungsi proteksi di backend.
+
+<div class="note">💡 Fungsi yang menerima dan mengembalikan fungsi adalah tempat lahirnya library populer — `map`, `filter`, `reduce`, `fetch().then()` semuanya higher-order. Kalau kamu paham itu, React dan Redux terasa biasa saja.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`function deret(n) {
+  let total = 0;
+  for (let i = 1; i <= n; i++) total += i;
+  return total;
+}
+const rata2 = (...angka) => angka.reduce((a, b) => a + b, 0) / angka.length;
+
+console.log("Jumlah 1..100 =", deret(100));
+console.log("Rata-rata:", rata2(80, 90, 100, 70));
+console.log("Apakah 17 prima?", (function prima(n){
+  if (n < 2) return false;
+  for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+  return true;
+})(17));`} />

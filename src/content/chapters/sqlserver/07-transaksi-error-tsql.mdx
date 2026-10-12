@@ -1,0 +1,147 @@
+---
+title: "Transaksi & Penanganan Error"
+description: "BEGIN TRANSACTION, COMMIT, ROLLBACK, TRY...CATCH, dan THROW gaya T-SQL"
+order: 7
+quiz:
+  - q: "Transaksi menjaga prinsip…"
+    options: ["ACID — Atomic, Consistent, Isolated, Durable", "CAP", "BASE", "RYSK"]
+    answer: 0
+    explain: "Atomic: semua langkah berhasil atau semua batal; konsistensi & ketahanan dijamin server."
+  - q: "Membatalkan transaksi berjalan ditulis…"
+    options: ["UNDO TRANSACTION", "ROLLBACK TRANSACTION", "ABORT", "CANCEL TRAN"]
+    answer: 1
+    explain: "ROLLBACK mengembalikan semua perubahan dalam transaksi ke keadaan sebelum BEGIN TRANSACTION."
+  - q: "Blok penangkap error dalam T-SQL adalah…"
+    options: ["BEGIN TRY ... END TRY / BEGIN CATCH ... END CATCH", "DO ... RESCUE", "TRY ... FINALLY", "EXCEPT ... HANDLE"]
+    answer: 0
+    explain: "T-SQL memakai pasangan TRY dan CATCH — mirip try/catch di bahasa aplikasi, tapi di dalam batch."
+  - q: "SET XACT_ABORT ON menyebabkan…"
+    options: ["Error diabaikan", "Error apa pun langsung menggagalkan (membatalkan) transaksi", "Transaksi jadi read-only", "Log diperbesar"]
+    answer: 1
+    explain: "Tanpa XACT_ABORT, sebagian error bisa membiarkan transaksi setengah jalan — aktifkan untuk keamanan."
+  - q: "THROW di dalam CATCH berfungsi untuk…"
+    options: ["Meneruskan ulang error ke pemanggil", "Menutup koneksi", "Commit transaksi", "Mencetak greeting"]
+    answer: 0
+    explain: "THROW melempar kembali error (atau error baru) setelah rollback — pemanggil tahu operasi gagal."
+example:
+  code: |
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.saldo SET saldo = saldo - 100000 WHERE id = 1;
+        UPDATE dbo.saldo SET saldo = saldo + 100000 WHERE id = 2;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+---
+
+Operasi finansial dan inventaris tidak boleh setengah jalan: dua UPDATE harus berhasil bersama atau gagal bersama. Di sinilah **transaksi** dan **TRY...CATCH** bekerja.
+
+## Empat Sifat ACID
+
+| Sifat | Arti | Contoh kegagalan yang dicegah |
+| --- | --- | --- |
+| Atomicity | semua langkah berhasil atau batal | saldo keluar tanpa saldo masuk |
+| Consistency | constraint selalu terpenuhi | stok menjadi negatif |
+| Isolation | transaksi bersamaan tidak saling merusak | dua pembeli mengambil stok terakhir |
+| Durability | COMMIT bertahan setelah crash | pembayaran hilang setelah restart |
+
+SQL Server menerapkan ACID melalui transaction log, locking/versioning, constraint, dan recovery. Aplikasi tetap harus mendesain batas transaksi dan menangani error dengan benar.
+
+## Transaksi Dasar
+
+```sql
+BEGIN TRANSACTION;
+
+UPDATE dbo.saldo SET saldo = saldo - 250000 WHERE id = 1;
+UPDATE dbo.saldo SET saldo = saldo + 250000 WHERE id = 2;
+
+COMMIT TRANSACTION;   -- amankan semua perubahan
+-- ROLLBACK TRANSACTION;  -- (alternatif) batalkan semua
+```
+
+Semua DML antara BEGIN dan COMMIT/ROLLBACK menjadi satu unit. `@@TRANCOUNT` menunjukkan kedalaman transaksi aktif — gunakan untuk pengecekan sebelum rollback.
+
+## TRY ... CATCH
+
+```sql
+BEGIN TRY
+    INSERT INTO dbo.pesanan (id, total) VALUES (1, 1000);  -- id ganda = error
+END TRY
+BEGIN CATCH
+    SELECT
+        ERROR_NUMBER()     AS nomor_error,
+        ERROR_MESSAGE()    AS pesan,
+        ERROR_LINE()       AS baris,
+        ERROR_PROCEDURE()  AS prosedur;
+END CATCH
+```
+
+CATCH menangkap error tingkat server (constraint, aritmetika, sintaks runtime) dan menyediakan fungsi ERROR_* untuk diagnosis yang terstruktur.
+
+## Pola Aman untuk Produksi
+
+```sql
+SET XACT_ABORT ON;
+SET NOCOUNT ON;
+
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    UPDATE dbo.stok SET qty = qty - 1 WHERE produk_id = 10 AND qty > 0;
+
+    IF @@ROWCOUNT = 0
+        THROW 50001, N'Stok tidak mencukupi.', 1;
+
+    INSERT INTO dbo.pesanan_item (produk_id, qty) VALUES (10, 1);
+
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    THROW;
+END CATCH
+```
+
+`THROW 50001, pesan, state` melempar error kustom (kode >= 50000). Kombinasi XACT_ABORT + ROLLBACK di CATCH + THROW adalah resep konsistensi yang direkomendasikan dokumentasi Microsoft.
+
+## Savepoint untuk Bagian Sebagian
+
+```sql
+BEGIN TRANSACTION;
+SAVE TRANSACTION simpan_sebelum;
+
+DELETE FROM dbo.log_aktivitas;
+
+IF EXISTS (SELECT 1 FROM dbo.log_aktivitas WHERE 1 = 0)
+    ROLLBACK TRANSACTION simpan_sebelum;  -- hanya bagian ini
+
+COMMIT TRANSACTION;
+```
+
+Savepoint memungkinkan rollback parsial di dalam transaksi besar — berguna pada prosedur panjang yang memanggil banyak langkah. Namun `ROLLBACK TRANSACTION savepoint` tidak mengurangi `@@TRANCOUNT`; transaksi luar tetap harus di-COMMIT atau di-ROLLBACK.
+
+## Empat Fungsi Diagnosis Error
+
+| Fungsi | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| ERROR_NUMBER() | kode error | klasifikasi/telemetri |
+| ERROR_MESSAGE() | pesan lengkap | log internal |
+| ERROR_LINE() | nomor baris | debugging |
+| ERROR_PROCEDURE() | nama procedure/trigger | lokasi kegagalan |
+
+Panggil fungsi ini di dalam CATCH. Setelah logging minimal, `THROW;` meneruskan error asli beserta nomor dan state ke aplikasi.
+
+## Di Dunia Nyata
+
+- **Transfer bank** — debit dan kredit di satu transaksi; kegagalan langkah kedua membatalkan langkah pertama.
+- **Checkout stok** — UPDATE dengan syarat stok lalu `@@ROWCOUNT` mencegah dua pembeli mengambil unit terakhir.
+- **Pembuatan invoice** — header dan semua item harus COMMIT bersama atau tidak ada sama sekali.
+- **Impor batch** — savepoint membatalkan kelompok tertentu tanpa membuang pekerjaan valid sebelumnya bila aturan bisnis mengizinkan.
+- **API pembayaran** — TRY/CATCH melakukan rollback dan THROW agar aplikasi tidak salah melaporkan sukses.
+
+<div class="note">💡 Transaksi yang terbuka lama menahan lock dan dapat memblokir pengguna lain. Jangan menunggu input pengguna atau memanggil layanan jaringan di tengah transaksi; jaga unit kerja sekecil dan secepat mungkin.</div>

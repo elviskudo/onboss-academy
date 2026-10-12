@@ -1,0 +1,125 @@
+---
+title: "Variabel dan Operator"
+description: "Menyimpan skor dan menghitung — data sederhana di dalam proyek"
+order: 5
+quiz:
+  - q: "Variabel dalam Scratch disebut…"
+    options: ["Konstanta tersembunyi", "Kostum cadangan", "Variabel (bisa global atau untuk sprite tertentu)", "Lapisan panggung"]
+    answer: 2
+    explain: "Variabel 'untuk semua sprite' bersifat global; 'hanya untuk sprite ini' bersifat lokal."
+  - q: "Blok 'ubah [skor] sebesar 1' dipakai untuk…"
+    options: ["Menambah nilai variabel", "Mengganti nama variabel", "Menghapus variabel", "Menampilkan variabel"]
+    answer: 0
+    explain: "Untuk mengeset nilai persis, gunakan mode 'set [skor] ke 0'."
+  - q: "Daftar (list) di Scratch berfungsi untuk…"
+    options: ["Menggabungkan sprite", "Menyimpan banyak nilai dalam satu struktur", "Mengatur volume", "Mengunci skrip"]
+    answer: 1
+    explain: "Daftar berguna untuk skor banyak pemain, riwayat, atau inventaris item."
+  - q: "Blok operator acak dari 1 sampai 10 menghasilkan…"
+    options: ["Selalu 1", "Selalu 10", "Angka acak di rentang tersebut (bisa pecahan)", "Nilai variabel"]
+    answer: 2
+    explain: "Aktifkan 'integer only' bila hanya ingin angka bulat."
+  - q: "Blok 'gabung [kamu] [baik]' menghasilkan…"
+    options: ["Teks sambung: kamu-baik", "Kesalahan", "Angka 2", "Nama variabel baru"]
+    answer: 0
+    explain: "Operator gabung (join) menyambung dua potongan teks atau angka."
+example:
+  code: |
+    // Permainan sederhana menghitung skor:
+    // [ketika bendera diklik]
+    // [set [skor] ke [0]]
+    // [ulangi 5 [
+    //    tunggu 1 detik
+    //    ubah [skor] sebesar 1
+    // ]]
+    // [ucap (gabung [Skor akhir: ] (skor)) selama 2]
+---
+
+Begitu proyek mulai dinamis, dibutuhkan tempat menyimpan nilai (**variabel** dan **daftar**) plus alat menghitung dan membandingkan (**operator**). Dua hal ini adalah pondasi yang persis ada di semua bahasa pemrograman.
+
+## Membuat Variabel dan 5 Blok Datanya
+
+Buka kategori **Data** lalu klik `buat variabel`, beri nama `skor`, dan pilih **cakupan (scope)**:
+
+| Cakupan | Nilai tersimpan di | Setara dengan | Kapan dipakai |
+| --- | --- | --- | --- |
+| Untuk semua sprite | Satu nilai bersama proyek | Variabel global | Skor, level, waktu |
+| Hanya untuk sprite ini | Tiap sprite punya salinan sendiri | Variabel instans/anggota objek | Arah, nyawa tiap musuh |
+
+Kategori Data menyediakan **5 blok inti variabel**: `set ... ke ...`, `change ... sebesar ...`, `tampilkan variabel`, `sembunyikan variabel`, dan pelapor `(skor)`. Centang kotak di samping nama variabel untuk menampilkan pelat angka di panggung.
+
+## Set vs Ubah: Dua Mode, Satu Blok
+
+```text
+[set [skor] ke [0]]        <- ke nilai tetap (reset)
+[ubah [skor] sebesar [1]]  <- tambah/kurangi bertahap
+[ubah [skor] sebesar [-1]] <- nilai negatif = pengurangan
+```
+
+`set` = penugasan (`skor = 0`), `change` = akumulasi (`skor += 1`). Kebiasaan baik: reset **semua** variabel di blok `ketika bendera diklik` — inilah alasan tiap game harus punya "tombol reset".
+
+## 18 Blok Operator
+
+Kategori Operator berisi **18 blok** yang terbagi menjadi 6 kelompok. Blok fungsi matematika dihitung satu meski dropdown-nya menawarkan 14 operasi:
+
+| Kelompok | Jumlah blok | Anggota | Fungsi |
+| --- | ---: | --- | --- |
+| Aritmatika dasar | 5 | `+`, `-`, `×`, `÷`, `acak dari .. ke ..` | Menghitung |
+| Perbandingan | 3 | `<`, `>`, `=` | Menghasilkan benar/salah |
+| Logika | 3 | `dan`, `atau`, `tidak` | Menggabung kondisi |
+| Teks | 4 | `gabung`, `huruf ke-`, `panjang`, `berisi` | Memanipulasi string |
+| Modulo & bulatkan | 2 | `mod`, `bulatkan` | Sisa bagi, pembulatan |
+| Fungsi matematika | 1 | Dropdown 14 operasi: `akar kuadrat`, `sin`, `cos`, `ln`, dll. | Hitungan lanjut |
+
+Persegi operator bisa disarangkan, misal `(tambah (x) (kalikan (2) (y)))` — bentuk sarang inilah yang menentukan urutan hitung, karena Scratch **tidak punya aturan prioritas operator** seperti bahasa teks. Itulah sebabnya `(tambah (2) (kalikan (3) (4)))` bernilai 14, dan kalau maksudmu 20, susun ulang bloknya.
+
+## Membandingkan dan Membuat Keputusan
+
+```text
+[banding [(skor) > (10)]]     -> benar / salah
+[banding [(nyawa) = (0)]]     -> benar / salah
+[banding <<menyentuh [musuh]?> dan <(level) > (3)>>]
+```
+
+Operator perbandingan selalu berpasangan dengan blok kontrol `jika` — ia menghasilkan nilai benar/salah (boolean) yang hanya punya arti sebagai syarat cabang, bukan sebagai angka yang bisa dijumlahkan.
+
+```text
+[ketika saya menerima [kena]]
+[ubah [nyawa] sebesar -1]
+[jika <(nyawa) = [0]> [
+   kirim [kalah]
+   berhenti [semua]
+]]
+```
+
+## Daftar (List): Variabel Multi-Nilai
+
+Kategori Data juga punya **11 blok daftar** untuk menyimpan banyak nilai dalam satu nama — index mulai dari 1, bukan 0:
+
+```text
+// Blok penting: tambahkan ... ke, item ke- ... dari, panjang [...],
+//                berisi ..., hapus semua dari
+[ketika bendera diklik]
+[hapus semua dari [riwayat]]
+[ulangi 3 [
+   tambahkan (acak dari 1 sampai 6) ke [riwayat]
+]]
+[ucap (gabung [Hasil lemparan: ] (item ke- 1 dari [riwayat])) selama 2]
+```
+
+| Kegunaan | Struktur | Contoh nama |
+| --- | --- | --- |
+| Banyak nilai seragam | Daftar | `riwayat`, `inventory`, `skor_pemain` |
+| Data berpasangan (kunci-nilai) | Tidak didukung langsung | Disiasati 2 daftar sejajar |
+
+Daftar membuat proyek mampu menyimpan data yang bertumbuh: skor tertinggi 10 pemain, riwayat lemparan dadu, atau daftar kata yang harus ditebak.
+
+## Di Dunia Nyata
+
+1. **Papan skor kuis** — `ubah [benar] sebesar 1` tiap jawaban tepat, `salah` untuk yang meleset.
+2. **Kalkulator sederhana** — dua variabel `a`, `b` diisi lewat kotak masukan, hasil `(tambah (a) (b))` diucapkan sprite.
+3. **Timer hitung mundur** — `ubah [sisa] sebesar -1` tiap detik sampai `(sisa) = (0)`.
+4. **Penentu level berdasarkan skor** — `jika <(skor) > (50)> ... jika tidak ...` memilih latar arena.
+5. **Bank soal acak** — daftar `soal` diacak dengan `acak dari 1 sampai (panjang [soal])`, diambil isinya dengan pelapor `item ke-`.
+
+<div class="note">💡 Variabel yang jarang dipakai jangan ditampilkan — panggung yang penuh angka mengganggu perhatian pemain. Tampilkan maksimal 2–3 pelat (skor, nyawa, waktu) dan sisanya biarkan tersembunyi.</div>

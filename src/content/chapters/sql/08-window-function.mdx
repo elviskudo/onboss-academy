@@ -1,0 +1,131 @@
+---
+title: "Window Function"
+description: "Hitung per kelompok tanpa menggabungkan baris — ROW_NUMBER, RANK, dan running total"
+order: 8
+quiz:
+  - q: "Perbedaan utama window function dengan GROUP BY adalah…"
+    options: ["Window function hanya untuk teks", "GROUP BY lebih cepat selalu", "Window function tidak menggabungkan baris — setiap baris tetap tampil", "Tidak ada bedanya"]
+    answer: 2
+    explain: "GROUP BY merangkum banyak baris jadi satu; window function menghitung di atas baris yang tetap utuh."
+  - q: "PARTITION BY pada RANK() OVER berfungsi untuk…"
+    options: ["Menghapus data", "Membagi perhitungan per kelompok", "Mengurutkan output akhir", "Membuat tabel baru"]
+    answer: 1
+    explain: "PARTITION BY menghitung terpisah per kelompok — mirip GROUP BY, tapi tanpa merangkum baris."
+  - q: "Berapa fungsi peringkat inti yang dibahas di chapter ini?"
+    options: ["2", "3", "4", "5"]
+    answer: 1
+    explain: "3 fungsi peringkat inti: ROW_NUMBER, RANK, dan DENSE_RANK."
+  - q: "RANK() vs DENSE_RANK() saat ada nilai seri…"
+    options: ["RANK melompati nomor setelah seri, DENSE_RANK tidak", "Sama persis", "DENSE_RANK menghapus baris seri", "RANK hanya untuk teks"]
+    answer: 0
+    explain: "Dua gaji sama di peringkat 2 → RANK memberi 2, 2, 4; DENSE_RANK memberi 2, 2, 3."
+  - q: "LAG(gaji) OVER (ORDER BY id) mengambil…"
+    options: ["Gaji tertinggi", "Gaji baris sebelumnya", "Total semua gaji", "Gaji baris berikutnya"]
+    answer: 1
+    explain: "LAG membaca nilai dari baris sebelumnya sesuai urutan window."
+example:
+  code: |
+    SELECT nama, dept, gaji,
+           RANK() OVER (PARTITION BY dept ORDER BY gaji DESC) AS peringkat
+    FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`GROUP BY` merangkum baris jadi satu. Kadang kita ingin **peringkat, perbandingan, atau akumulasi berjalan** tanpa kehilangan baris detail — di situlah **window function** berperan.
+
+## Anatomi OVER
+
+Window mempunyai 3 bagian:
+
+| Bagian | Fungsi | Contoh |
+|--------|--------|--------|
+| `PARTITION BY` | membagi baris ke kelompok independen | per departemen |
+| `ORDER BY` | menentukan urutan di dalam kelompok | gaji terbesar dulu |
+| frame | menentukan rentang baris di sekitar baris aktif | awal sampai baris kini |
+
+```sql
+SELECT nama, gaji,
+       RANK() OVER (ORDER BY gaji DESC) AS peringkat
+FROM karyawan;
+```
+
+Tanpa `PARTITION BY`, peringkat dihitung atas **seluruh tabel** — Dewi Lestari (12.000.000) jadi peringkat 1. ORDER BY di dalam OVER menentukan hitungan, bukan urutan tampilan akhir; tambahkan ORDER BY luar bila urutan output harus pasti.
+
+## 3 Fungsi Peringkat
+
+| Fungsi | Nilai Seri | Contoh Urutan Setelah Seri | Kapan Dipakai |
+|--------|------------|----------------------------|---------------|
+| `ROW_NUMBER()` | tetap unik | 1, 2, 3, 4 | pagination dan deduplikasi |
+| `RANK()` | nomor sama, lalu lompat | 1, 2, 2, 4 | peringkat kompetisi |
+| `DENSE_RANK()` | nomor sama, tanpa lompat | 1, 2, 2, 3 | kategori level |
+
+```sql
+SELECT nama, gaji,
+       ROW_NUMBER() OVER (ORDER BY gaji DESC) AS nomor,
+       RANK() OVER (ORDER BY gaji DESC) AS rank,
+       DENSE_RANK() OVER (ORDER BY gaji DESC) AS dense
+FROM karyawan;
+```
+
+Untuk peringkat per departemen, tambahkan `PARTITION BY dept`. Hitungan kembali dari 1 setiap kali nilai dept berganti, tetapi semua 8 baris tetap ada.
+
+## 4 Agregat sebagai Window
+
+`SUM`, `AVG`, `COUNT`, dan `MAX` dapat menjadi window function dengan menambahkan OVER.
+
+```sql
+SELECT nama, dept, gaji,
+       SUM(gaji) OVER (ORDER BY id) AS kumulatif,
+       AVG(gaji) OVER (PARTITION BY dept) AS rata_dept
+FROM karyawan
+ORDER BY id;
+```
+
+`SUM` menghasilkan total berjalan; `AVG` mengulang rata-rata departemen pada setiap karyawan. Berbeda dari GROUP BY, detail nama dan gaji tidak hilang.
+
+## Frame: Baris Mana yang Dihitung
+
+```sql
+SELECT nama, gaji,
+       AVG(gaji) OVER (
+         ORDER BY id
+         ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+       ) AS rata_3_baris
+FROM karyawan;
+```
+
+Frame ini menghitung rata-rata bergerak maksimum 3 baris: dua sebelum + baris aktif. Tiga batas umum adalah `UNBOUNDED PRECEDING` (sejak awal), `CURRENT ROW`, dan `UNBOUNDED FOLLOWING` (sampai akhir).
+
+## 4 Fungsi Navigasi
+
+| Fungsi | Membaca | Use Case |
+|--------|---------|----------|
+| `LAG` | baris sebelumnya | perubahan bulan ke bulan |
+| `LEAD` | baris berikutnya | jadwal aktivitas selanjutnya |
+| `FIRST_VALUE` | baris pertama window | baseline kelompok |
+| `LAST_VALUE` | baris terakhir frame | nilai penutup periode |
+
+```sql
+SELECT nama, gaji,
+       LAG(gaji) OVER (ORDER BY id) AS sebelumnya,
+       gaji - LAG(gaji) OVER (ORDER BY id) AS selisih
+FROM karyawan;
+```
+
+Baris pertama mendapat NULL karena tidak punya pendahulu. Bungkus dengan `COALESCE(..., 0)` hanya jika secara bisnis NULL memang harus dianggap nol.
+
+## Di Dunia Nyata
+
+- **Leaderboard penjualan per cabang**: RANK dengan PARTITION BY cabang mempertahankan detail semua sales.
+- **Pertumbuhan omzet harian**: `nilai - LAG(nilai)` menghasilkan delta tanpa self JOIN.
+- **Saldo kumulatif rekening**: `SUM(mutasi) OVER (ORDER BY waktu)` menghitung saldo setelah setiap transaksi.
+- **Deduplikasi kontak**: ROW_NUMBER per email, lalu ambil nomor 1 untuk menyimpan data terbaru.
+
+<div class="note">💡 Window function butuh SQLite 3.25+ (2018), MySQL 8.0+, atau PostgreSQL modern. Di editor OnBoss, window function langsung jalan di SQLite bawaan.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama, dept, gaji,
+       RANK() OVER (PARTITION BY dept ORDER BY gaji DESC) AS peringkat_dept,
+       SUM(gaji) OVER (ORDER BY id) AS gaji_kumulatif
+FROM karyawan
+ORDER BY dept, peringkat_dept;`} />

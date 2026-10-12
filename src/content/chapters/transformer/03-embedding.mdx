@@ -1,0 +1,127 @@
+---
+title: "Embedding"
+description: "Mengubah token menjadi vektor — representasi bermakna dalam ruang vektor"
+order: 3
+quiz:
+  - q: "Embedding adalah…"
+    options: ["Fungsi loss", "Jenis tokenizer", "Representasi token berupa vektor angka", "Nama layer akhir"]
+    answer: 2
+    explain: "Setiap token dipetakan ke vektor berdimensi ratusan yang menangkap makna kontekstual."
+  - q: "Sifat khas embedding adalah…"
+    options: ["Setiap vektor selalu nol", "Token serupa berada berdekatan dalam ruang vektor", "Dimensi selalu 2", "Urutan token diabaikan total"]
+    answer: 1
+    explain: "Kedekatan geometris mencerminkan kesamaan makna dan fungsi linguistik."
+  - q: "Hubungan vektor raja - pria + wanita paling dekat dengan…"
+    options: ["Ratu", "Pohon", "Mobil", "Nomor 5"]
+    answer: 0
+    explain: "Operasi aritmetika vektor menangkap pola analogi — hasil klasik word2vec."
+  - q: "Embedding kontekstual berbeda dari word2vec karena…"
+    options: ["Tidak butuh data latih", "Selalu memakai dimensi 8", "Kata yang sama bisa punya vektor berbeda sesuai kalimat", "Hanya untuk angka"]
+    answer: 2
+    explain: "\"bank\" di kalimat sungai dan bank punya embedding berbeda pada model kontekstual."
+  - q: "Dimensi embedding yang umum pada model modern adalah…"
+    options: ["2", "Ratusan hingga ribuan", "10", "Hanya 1"]
+    answer: 1
+    explain: "Misal 768, 1024, atau 4096 dimensi — lebih banyak dimensi = kapasitas representasi lebih kaya."
+example:
+  code: |
+    # Sketsa embedding mini: tiap token punya vektor
+    embedding = {
+        "kucing": [0.9, 0.1, 0.2],
+        "anjing": [0.85, 0.15, 0.25],
+        "pelajaran": [0.1, 0.9, 0.8],
+    }
+    print(embedding["kucing"])
+---
+
+**Embedding** adalah jembatan dari token (ID diskret) ke ruang vektor kontinu tempat makna "hidup".
+
+## Dari ID ke Vektor
+
+```python
+# 1. Tokenisasi -> ID
+vocab = {"kucing": 0, "anjing": 1, "belajar": 2}
+
+# 2. Tabel embedding: ID -> vektor
+tabel = {
+    0: [0.9, 0.1, 0.2],
+    1: [0.85, 0.15, 0.25],
+    2: [0.1, 0.9, 0.8],
+}
+
+vektor = tabel[vocab["kucing"]]
+print(vektor)
+```
+
+Tabel ini pada awalnya acak, lalu **dipelajari** selama training berdasarkan konteks pemakaian kata.
+
+## Geometri Makna
+
+```python
+# Kedekatan = selisih kecil antar vektor
+a = [0.9, 0.1, 0.2]    # kucing
+b = [0.85, 0.15, 0.25] # anjing
+c = [0.1, 0.9, 0.8]    # belajar
+
+def jarak(u, v):
+    return sum((x - y) ** 2 for x, y in zip(u, v)) ** 0.5
+
+print("kucing-anjing :", round(jarak(a, b), 3))
+print("kucing-belajar:", round(jarak(a, c), 3))
+```
+
+Token yang sering muncul di konteks mirip cenderung berdekatan.
+
+## Analogi Vektor
+
+```python
+# raja - pria + wanita ~ ratu (ilustri konsep)
+raja   = [1.0, 0.8, 0.1]
+pria   = [0.9, 0.2, 0.0]
+wanita = [0.1, 0.8, 0.9]
+
+hasil = [r - p + w for r, p, w in zip(raja, pria, wanita)]
+print(hasil)   # arah yang sama dengan vektor 'ratu'
+```
+
+Aritmetika vektor menangkap relasi seperti gender dan bentuk jamak.
+
+## Embedding Kontekstual
+
+Pada Transformer, embedding awal digabungkan dengan **posisi** dan diperbarui tiap lapisan attention. Hasilnya: "bank" di "bank sungai" dan "bank uang" akhirnya punya vektor berbeda.
+
+## 3 Jenis Representasi
+
+| Jenis | Satu vektor untuk | Cocok untuk |
+|-------|-------------------|-------------|
+| Token embedding | setiap token | masukan Transformer |
+| Contextual embedding | token + konteks kalimat | NER, memahami arti kata |
+| Sentence/document embedding | seluruh teks | pencarian semantik, RAG |
+
+Analogi sederhananya: embedding adalah **peta kota makna**. Alamat yang dekat bukan berarti tulisannya mirip, melainkan sering punya fungsi/konteks serupa. Kata “dokter” dapat dekat dengan “rumah sakit”, sementara embedding kalimat “cara mengurus SIM” dekat dengan dokumen prosedur SIM.
+
+## Mengukur Kedekatan
+
+Cosine similarity membandingkan arah dua vektor:
+
+```
+cosine(a, b) = dot(a, b) / (panjang(a) * panjang(b))
+```
+
+Nilai mendekati 1 berarti arah sangat mirip, 0 tidak berkorelasi, dan -1 berlawanan. Jarak Euclidean mengukur jarak fisik; cosine sering dipilih untuk pencarian teks karena lebih fokus pada arah daripada besar vektor.
+
+## Layer Lain di Atas Embedding
+
+- **Positional encoding** — menambah informasi urutan (bab berikutnya).
+- **Token type embedding** — membedakan segmen (pertanyaan vs dokumen).
+- **Layer attention** — memperbarui vektor sesuai konteks kalimat.
+
+## Di Dunia Nyata
+
+- **Pencarian semantik** — query “biaya balik nama” menemukan dokumen “tarif perubahan kepemilikan” walau katanya berbeda.
+- **Rekomendasi produk** — produk dengan pola interaksi serupa ditempatkan berdekatan lalu direkomendasikan.
+- **RAG** — embedding pertanyaan dibandingkan dengan potongan dokumen untuk memilih konteks.
+- **Deteksi duplikat tiket** — dua laporan error dengan redaksi berbeda ditandai bila vektornya dekat.
+- **Clustering ulasan** — embedding kalimat mengelompokkan keluhan pengiriman, harga, dan kualitas.
+
+<div class="note">💡 Embedding bukan sekadar "kode rahasia" per kata. Ia adalah representasi yang dipelajari dari data — kualitasnya mengikuti kualitas korpus pelatihan.</div>

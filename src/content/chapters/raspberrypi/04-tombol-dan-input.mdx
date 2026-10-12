@@ -1,0 +1,149 @@
+---
+title: "Tombol dan Input GPIO"
+description: "Membaca tombol dengan pull-up, debounce, polling, dan event gpiozero"
+order: 4
+quiz:
+  - q: "Mengapa input GPIO tidak boleh dibiarkan floating?"
+    options: ["Nilainya dapat berubah acak akibat derau", "RAM akan penuh", "SSH berhenti", "Tegangan menjadi 12V"]
+    answer: 0
+    explain: "Pull-up atau pull-down memberi level default yang pasti ketika tombol terbuka."
+  - q: "Dengan pull-up dan tombol ke GND, keadaan saat ditekan adalah…"
+    options: ["HIGH", "LOW", "Analog", "Tidak memiliki nilai"]
+    answer: 1
+    explain: "Tombol menghubungkan input ke GND sehingga level aktifnya LOW."
+  - q: "Apa tujuan debounce?"
+    options: ["Menaikkan tegangan", "Menambah jumlah GPIO", "Menyaring beberapa transisi akibat pantulan kontak", "Membuat tombol menjadi output"]
+    answer: 2
+    explain: "Kontak mekanis memantul singkat dan dapat terbaca sebagai beberapa penekanan."
+  - q: "Pendekatan mana yang tidak memakai loop polling rapat?"
+    options: ["Membaca pin tanpa jeda", "Menambah 5V", "Menghapus GND", "Callback when_pressed"]
+    answer: 3
+    explain: "Callback dijalankan saat event terdeteksi sehingga program tidak perlu terus memeriksa pin."
+  - q: "Bagaimana tombol aman dipasang pada contoh pull-up?"
+    options: ["Antara GPIO dan GND", "Antara GPIO dan 5V", "Antara dua pin 5V", "Langsung ke HDMI"]
+    answer: 0
+    explain: "Tombol ke GND menjaga input tetap dalam batas logika GPIO 3,3V."
+example:
+  code: |
+    from gpiozero import Button
+    from signal import pause
+
+    tombol = Button(27, pull_up=True, bounce_time=0.05)
+    tombol.when_pressed = lambda: print("Tombol ditekan")
+    pause()
+---
+
+Input GPIO memungkinkan program mengetahui keadaan dunia fisik. Tombol adalah input digital paling sederhana, tetapi pembacaan yang andal memerlukan level default, rangkaian 3,3V yang aman, dan penanganan pantulan kontak.
+
+## Jenis Input Digital
+
+Ada **3 konsep input utama** yang digunakan pada tombol.
+
+| Konsep | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Floating | Tidak memiliki level default | Kabel terbuka | Harus dihindari |
+| Pull-up | Menahan input HIGH | Tombol menghubungkan ke GND | Pola tombol paling umum |
+| Pull-down | Menahan input LOW | Tombol menghubungkan ke 3,3V | Saat logika aktif-HIGH diinginkan |
+
+Input floating bertindak seperti antena dan dapat berubah antara HIGH dan LOW karena derau. Resistor pull-up atau pull-down memberi jalur lemah ke level default, sementara tombol memberi jalur kuat ke level lawannya. Raspberry Pi menyediakan resistor internal sehingga tombol dasar tidak memerlukan resistor pull eksternal.
+
+Ada **2 keadaan logika** pada tombol pull-up: dilepas = HIGH dan ditekan = LOW. gpiozero menyembunyikan pembalikan itu: properti `is_pressed` tetap bernilai benar saat tombol ditekan.
+
+## Rangkaian Aman
+
+Untuk konfigurasi pull-up, pasang tombol di antara BCM27 dan GND:
+
+```text
+BCM27 (fisik 13) ── tombol ── GND (fisik 14)
+          │
+     pull-up internal ke 3,3V
+```
+
+Matikan dan lepas daya sebelum mengubah kabel. Jangan menghubungkan tombol ke pin 5V; GPIO hanya toleran **3,3V**. Pada push button empat kaki, dua kaki pada sisi yang sama biasanya sudah terhubung. Periksa dengan datasheet atau multimeter agar tombol tidak terpasang pada dua kaki yang selalu tersambung.
+
+Untuk kabel panjang atau lingkungan berderau, resistor eksternal, kapasitor debounce, kabel twisted pair, atau isolasi mungkin diperlukan. Tombol panel yang jauh dari Pi tidak boleh langsung dipasang tanpa mempertimbangkan surge dan interferensi.
+
+## Polling dan Event
+
+Ada **2 cara membaca tombol**: polling dan event/callback.
+
+| Cara | Fungsi | Kelebihan | Kapan dipakai |
+|---|---|---|---|
+| Polling | Memeriksa status berulang | Alur mudah dipahami | Loop kontrol yang memang berjalan |
+| Event | Menjalankan callback saat perubahan | Hemat CPU dan responsif | Antarmuka berbasis kejadian |
+
+Polling dengan gpiozero:
+
+```python
+from gpiozero import Button
+from time import sleep
+
+button = Button(27, pull_up=True, bounce_time=0.05)
+
+while True:
+    if button.is_pressed:
+        print("Ditekan")
+    else:
+        print("Dilepas")
+    sleep(0.1)
+```
+
+Program memerlukan `python3-gpiozero` dan tombol fisik. Jeda mencegah loop menghabiskan CPU, tetapi pesan masih dicetak berulang selama tombol ditahan. Polling cocok jika program juga membaca sensor pada interval tetap.
+
+Event hanya bereaksi pada transisi:
+
+```python
+from gpiozero import Button
+from signal import pause
+
+button = Button(27, pull_up=True, bounce_time=0.05)
+button.when_pressed = lambda: print("Tekan")
+button.when_released = lambda: print("Lepas")
+pause()
+```
+
+`when_pressed` dan `when_released` adalah **2 event penting**. Callback harus singkat. Pekerjaan lambat seperti request jaringan sebaiknya diteruskan ke antrean agar event berikutnya tidak tertahan.
+
+## Debounce dan Jenis Interaksi
+
+Kontak mekanis dapat membuka-menutup beberapa kali selama beberapa milidetik. `bounce_time=0.05` mengabaikan transisi tambahan selama 50 ms. Angka terlalu kecil masih menghasilkan klik ganda; angka terlalu besar dapat mengabaikan tekanan cepat yang sah. Ukur perilaku tombol nyata sebelum menentukan nilai.
+
+Aplikasi biasanya membedakan **3 interaksi**: tekan, lepas, dan tahan. gpiozero dapat menanganinya:
+
+```python
+from gpiozero import Button
+from signal import pause
+
+button = Button(27, hold_time=1.0, bounce_time=0.05)
+button.when_pressed = lambda: print("tekan")
+button.when_released = lambda: print("lepas")
+button.when_held = lambda: print("tahan satu detik")
+pause()
+```
+
+Pemisahan interaksi memungkinkan satu tombol melakukan aksi singkat dan aksi konfirmasi. Jangan memakai tahan untuk fungsi darurat yang harus selalu langsung merespons.
+
+## Menggabungkan Tombol dan LED
+
+```python
+from gpiozero import Button, LED
+from signal import pause
+
+button = Button(27, pull_up=True, bounce_time=0.05)
+led = LED(17)
+button.when_pressed = led.on
+button.when_released = led.off
+pause()
+```
+
+LED tetap memerlukan resistor 220–330 Ω pada BCM17. Program ini memakai input untuk menentukan output tanpa loop eksplisit. Jika logika terbalik, periksa rangkaian dan nilai `pull_up`, bukan langsung membalik banyak kondisi dalam kode.
+
+## Di Dunia Nyata
+
+- **Tombol bel meja:** satu tekanan menyalakan indikator dan mencatat waktu permintaan.
+- **Panel mesin:** callback mengubah mode hanya setelah debounce memastikan satu aksi.
+- **Tombol reset konfigurasi:** tahan lima detik mencegah penghapusan pengaturan secara tidak sengaja.
+- **Sensor pintu reed switch:** input mencatat transisi buka dan tutup seperti tombol.
+- **Emergency stop monitor:** input terisolasi melaporkan status, sedangkan pemutusan daya tetap ditangani rangkaian keselamatan khusus.
+
+<div class="note">💡 Software debounce memperbaiki pantulan kontak, tetapi tidak memperbaiki kabel panjang yang menangkap derau; masalah listrik tetap harus diselesaikan pada rangkaian.</div>

@@ -1,0 +1,131 @@
+---
+title: "Variabel & Tipe Data"
+description: "5 jenis variabel Ruby, 10 class inti, konversi tipe, dan jebakan tanpa coercion"
+order: 2
+quiz:
+  - q: "Ruby punya 5 jenis variabel. Yang manakah termasuk variabel global?"
+    options: ["@total", "$total", "TOTAL", "@@total"]
+    answer: 1
+    explain: "Global memakai awalan $ dan bisa diakses dari mana saja di program."
+  - q: "Berapa jumlah tipe data primitif non-objek di Ruby?"
+    options: ["8", "5", "10", "0 — semua nilai adalah objek"]
+    answer: 3
+    explain: "Ruby murni OOP: bahkan 42, true, dan nil adalah objek dari sebuah class."
+  - q: "Apa hasil dari (\"12abc\").to_i ?"
+    options: ["12abc", "12", "0", "error"]
+    answer: 1
+    explain: "to_i membaca angka di awal lalu membuang sisanya; Integer(\"12abc\") justru error."
+  - q: "Ekspresi \"10\" + 1 di Ruby akan…"
+    options: ["Menghasilkan \"101\"", "Menghasilkan 11", "Menghasilkan error NoMethodError", "Menghasilkan 10"]
+    answer: 2
+    explain: "Ruby tidak mengonversi otomatis — panggil to_i dulu: \"10\".to_i + 1."
+  - q: "Variabel instance yang belum pernah diisi bernilai…"
+    options: ["0", "false", "undefined", "nil"]
+    answer: 3
+    explain: "Instance variable @x yang belum diisi diam-diam bernilai nil, bukan error."
+example:
+  code: |
+    usia = "25"
+    puts usia.to_i + 1          # 26
+
+    daftar = ["apel", "mangga"]
+    daftar << "jeruk"
+    puts daftar.length          # 3
+
+    data = { kota: "Bandung", umur: 20 }
+    puts "#{data[:kota]}, #{data[:umur]} tahun"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby dinamis: kamu tidak pernah menulis tipe saat membuat variabel, tetapi tipe tetap ada di balik layar. Chapter ini memetakan 5 jenis variabel dan 10 class inti yang menutup hampir seluruh kebutuhan kode sehari-hari.
+
+## 1 Kata Kunci, 5 Jenis Variabel
+
+Ruby hanya punya satu tanda penugasan, `=`. Yang membedakan jenis variabel adalah **awalan dan cakupannya**:
+
+| Jenis | Bentuk | Cakupan | Kapan dipakai |
+| --- | --- | --- | --- |
+| Local | `nama = "Sari"` | block/method tempat didefinisikan | Sebagian besar kode harian |
+| Instance | `@nama` | satu objek (satu instance) | Menyimpan status di dalam class |
+| Class | `@@jumlah` | class induk + seluruh turunan | Menghitung berapa objek dibuat |
+| Global | `$program_dir` | seluruh program | Konstanta aplikasi yang jarang berubah |
+| Konstanta | `PPN = 0.11` | namespace tempat didefinisikan | Nilai tetap: konfigurasi, enum, pi |
+
+Ciri tiap jenis: local baru ada setelah ditugaskan (membacanya terlalu awal = `NameError`), instance variable yang belum diisi diam-diam `nil`, class variable yang belum ada = `NameError`, dan mengubah konstanta hanya memunculkan peringatan — bukan error keras.
+
+## Aturan Penamaan
+
+- Variabel, method, dan file: `snake_case` → `harga_total`, `hitung_pajak`
+- Class dan module: `CamelCase` → `KeranjangBelanja`
+- Konstanta: `HURUF_BESAR` → `MAKS_KERANJANG`
+- Method boolean diakhiri `?` → `lulus?`, `kosong?`
+- Method berbahaya (mutasi/memecah) diakhiri `!` → `save!`, `sort!`
+
+## 10 Class Inti Tipe Data
+
+Ruby **tidak punya satu pun tipe primitif non-objek** — `42.class` menampilkan `Integer`, `nil.class` menampilkan `NilClass`. Sepuluh class inti berikut menutup 90% kebutuhan:
+
+| Class | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Integer | Bilangan bulat, presisi bebas | `42`, `-7`, `1_000_000` | Hitungan, indeks, uang (rupiah bulat) |
+| Float | Desimal, presisi ganda | `3.14`, `1e3` | Rata-rata, suhu, perbandingan |
+| String | Teks, **mutable** | `"Halo"` | Input, output, nama file |
+| Symbol | Label tetap, ringan | `:aktif` | Kunci hash, status, opsi |
+| TrueClass / FalseClass | Nilai kebenaran (2 class) | `true`, `false` | Hasil perbandingan |
+| NilClass | Ketiadaan | `nil` | "tidak ada nilai" |
+| Array | Daftar urut, mutable | `[1, 2, 3]` | Koleksi berurutan |
+| Hash | Kunci → nilai, mutable | `{ a: 1 }` | Data berpasangan |
+| Range | Rentang nilai | `1..5`, `'a'..'z'` | Perulangan, validasi rentang |
+
+**Mutabilitas**: String, Array, Hash, dan instance variable bisa diubah isinya; Integer, Float, dan Symbol tidak bisa diubah — operasi menghasilkan objek baru (`n + 1` tidak mengubah `n`).
+
+## Konversi Tipe
+
+6 metode konversi yang paling sering dipakai:
+
+| Metode | Dari → ke | Contoh | Hasil |
+| --- | --- | --- | --- |
+| `to_i` | teks → Integer | `"12abc".to_i` | `12` |
+| `to_f` | teks → Float | `"3.5".to_f` | `3.5` |
+| `to_s` | apa saja → String | `42.to_s` | `"42"` |
+| `to_sym` | teks → Symbol | `"aktif".to_sym` | `:aktif` |
+| `to_a` | ke Array | `(1..3).to_a` | `[1, 2, 3]` |
+| `to_h` | ke Hash | `[[:a, 1]].to_h` | `{ a: 1 }` |
+
+Versi "pemaksaan" yang lebih ketat: `Integer("12abc")` langsung `ArgumentError`, sedangkan `Integer("12")` aman. Pakai versi ketat saat data berasal dari user.
+
+## Jebakan yang Sering Membuat Bug
+
+- `"10" + 1` → **error** `NoMethodError`. Ruby tidak mengonversi otomatis; tulis `"10".to_i + 1`.
+- `10 / 3` → `3` (pembagian Integer membuang desimal). Tulis `10.0 / 3` untuk `3.333`.
+- `0.1 + 0.2 == 0.3` → `false`. Bandingkan selisihnya, jangan persis sama.
+- `"abc".to_i` → `0`, bukan error — angka 0 palsu bisa lolos validasi.
+- `nil` tidak bisa dijumlahkan (`nil + 1` error) padahal `nil.to_i` aman bernilai `0`.
+
+## Di Dunia Nyata
+
+- **Menerima input form**: `umur = params[:umur].to_i` lalu cek `umur.between?(1, 120)` sebelum disimpan.
+- **Konstanta pajak**: `PPN = 0.11` di satu file, dipakai seluruh aplikasi tanpa risiko salah ketik nilai.
+- **Instance variable untuk status**: `@keranjang = []` di dalam class `Toko` — tiap sesi user punya keranjang sendiri.
+- **Symbol sebagai enum**: `status = :menunggu` hemat memori dan jadi kunci hash yang stabil saat data diserialisasi.
+- **Validasi harga**: `harga = harga_kirim.to_f` lalu `harga.positive?` — menangkap string kosong sebelum jadi harga nol.
+
+<div class="note">💡 Di Ruby, tipe mengikuti objeknya, bukan variabelnya — sebuah variabel bisa berisi Integer di baris pertama dan String di baris berikutnya. Konsekuensinya: selalu konversi tepat di batas data tak terpercaya (input user), bukan di dalam logika bisnis yang sudah mengasumsikan tipe benar.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`umur = "20"
+puts umur.to_i + 1
+
+buah = ["apel", "mangga", "jeruk"]
+buah.push("anggur")
+puts buah[0]
+puts buah.length
+
+usia = { "sari" => 20, "budi" => 25 }
+usia["budi"] = 26
+puts usia["budi"]
+
+puts 3.99.round
+puts nil.inspect
+puts 42.class
+puts "12abc".to_i`} />

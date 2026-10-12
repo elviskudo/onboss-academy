@@ -1,0 +1,131 @@
+---
+title: "Agregat, GROUP BY & Fungsi T-SQL"
+description: "GROUP BY, HAVING, STRING_AGG, FORMAT, dan fungsi tanggal khas SQL Server"
+order: 5
+quiz:
+  - q: "Syarat untuk kolom non-agregat di SELECT saat memakai GROUP BY adalah…"
+    options: ["Harus ikut dalam GROUP BY atau dibungkus fungsi agregat", "Boleh apa saja", "Wajib bernilai NOT NULL", "Harus berupa PRIMARY KEY"]
+    answer: 0
+    explain: "SQL standar menuntut kolom SELECT non-agregat tercakup GROUP BY — inilah aturan dasar grouping."
+  - q: "Memfilter hasil grup memakai…"
+    options: ["WHERE", "HAVING", "FILTER BY", "GROUP WHERE"]
+    answer: 1
+    explain: "WHERE menyaring baris sebelum dikelompokkan; HAVING menyaring grup setelah agregasi."
+  - q: "Menggabungkan nilai string per grup dalam satu baris di SQL Server memakai…"
+    options: ["GROUP_CONCAT", "STRING_AGG(..., ', ') WITHIN GROUP (ORDER BY ...)", "LISTAGG", "WM_CONCAT"]
+    answer: 1
+    explain: "STRING_AGG adalah fungsi modern SQL Server; GROUP_CONCAT/LISTAGG adalah milik MySQL/Oracle."
+  - q: "Fungsi untuk menambah bulan pada tanggal adalah…"
+    options: ["DATEADD(month, 3, tanggal)", "ADD_MONTHS(tanggal, 3)", "DATE_PLUS(tanggal, 3)", "PERIOD_ADD(tanggal, 3)"]
+    answer: 0
+    explain: "DATEADD(part, n, date) — part bisa day, month, year, dst. ADD_MONTHS adalah sintaks Oracle."
+  - q: "Menghitung selisih dua tanggal dalam hari memakai…"
+    options: ["DATEDIFF(day, d1, d2)", "DATE_DIFF(d1, d2)", "SUBDATE(d1, d2)", "TIMEDIFF(d1, d2)"]
+    answer: 0
+    explain: "DATEDIFF(part, start, end) menghitung selisih sesuai part — day, month, year, hour, dst."
+example:
+  code: |
+    SELECT
+        d.nama AS divisi,
+        COUNT(*) AS jumlah,
+        AVG(k.gaji) AS rata_gaji
+    FROM dbo.karyawan AS k
+    INNER JOIN dbo.divisi AS d ON d.id = k.divisi_id
+    GROUP BY d.nama
+    HAVING COUNT(*) >= 3
+    ORDER BY rata_gaji DESC;
+---
+
+Data baru bermakna saat diringkas. **GROUP BY** mengelompokkan baris; fungsi agregat dan fungsi T-SQL mengubahnya menjadi informasi.
+
+## Lima Agregat Dasar
+
+| Fungsi | Hasil | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| COUNT | jumlah baris/nilai | `COUNT(*)` | volume transaksi |
+| SUM | total | `SUM(total)` | omzet |
+| AVG | rata-rata | `AVG(gaji)` | rata gaji/skor |
+| MIN | nilai minimum | `MIN(tanggal)` | transaksi pertama |
+| MAX | nilai maksimum | `MAX(total)` | transaksi terbesar |
+
+Kelima fungsi mengabaikan NULL pada ekspresi kolom; hanya COUNT(*) menghitung setiap baris. Gunakan ISNULL dengan sadar bila NULL secara bisnis memang berarti nol.
+
+## Agregat Dasar
+
+```sql
+SELECT
+    COUNT(*)              AS jumlah_baris,
+    COUNT(DISTINCT kota)  AS jumlah_kota,
+    SUM(total)            AS total_transaksi,
+    AVG(total)            AS rata_transaksi,
+    MIN(total)            AS terkecil,
+    MAX(total)            AS terbesar
+FROM dbo.pesanan;
+```
+
+`COUNT(*)` menghitung baris termasuk NULL; `COUNT(kolom)` mengabaikan NULL. AVG melewatkan NULL — bedakan dengan `AVG(ISNULL(total, 0))` bila NULL dianggap nol.
+
+## GROUP BY dan HAVING
+
+```sql
+SELECT kota, COUNT(*) AS jumlah, SUM(total) AS omzet
+FROM dbo.pesanan
+GROUP BY kota
+HAVING SUM(total) > 10000000
+ORDER BY omzet DESC;
+```
+
+Alur eksekusi: WHERE (saring baris) -> GROUP BY -> agregat -> HAVING (saring grup) -> ORDER BY. Ingat urutan ini untuk membaca error "column invalid in GROUP BY".
+
+## STRING_AGG dan FORMAT
+
+```sql
+SELECT
+    divisi,
+    STRING_AGG(nama, ', ') WITHIN GROUP (ORDER BY nama) AS anggota
+FROM dbo.karyawan
+GROUP BY divisi;
+
+SELECT FORMAT(total, 'C', 'id-ID') AS rupiah
+FROM dbo.pesanan;
+```
+
+`STRING_AGG` merangkai banyak baris jadi satu string per grup — daftar email, daftar produk, dst. `FORMAT` memformat angka/tanggal sesuai locale (di sini Rupiah gaya Indonesia).
+
+## Fungsi Tanggal
+
+```sql
+SELECT
+    GETDATE()                              AS sekarang,
+    SYSDATETIME()                          AS presisi_tinggi,
+    EOMONTH(GETDATE())                     AS akhir_bulan,
+    DATEADD(month, -3, GETDATE())          AS tiga_bulan_lalu,
+    DATEDIFF(day, tanggal_daftar, GETDATE()) AS umur_hari,
+    DATENAME(weekday, GETDATE())           AS nama_hari,
+    FORMAT(GETDATE(), 'dd MMMM yyyy', 'id-ID') AS tanggal_id
+```
+
+`GETDATE()` mengembalikan datetime, sedangkan `SYSDATETIME()` mengembalikan datetime2 dengan presisi lebih tinggi. Untuk aplikasi multi-region simpan waktu UTC (`SYSUTCDATETIME()`) atau gunakan DATETIMEOFFSET bila offset sumber diperlukan.
+
+## Enam Fungsi T-SQL Berguna
+
+| Fungsi | Fungsi singkat | Kapan dipakai |
+| --- | --- | --- |
+| STRING_AGG | merangkai string per grup | daftar anggota |
+| DATEADD | menambah interval | jatuh tempo |
+| DATEDIFF | selisih boundary waktu | umur hari/bulan |
+| EOMONTH | akhir bulan | tutup buku |
+| ISNULL | mengganti NULL | nilai default dua argumen |
+| FORMAT | format locale .NET | tampilan ad-hoc, bukan query masif |
+
+FORMAT nyaman tetapi relatif mahal; aplikasi umumnya lebih tepat memformat mata uang/tanggal di lapisan presentasi.
+
+## Di Dunia Nyata
+
+- **Omzet per cabang** — SUM + GROUP BY cabang dan HAVING menyaring cabang di atas target.
+- **Daftar penerima email** — STRING_AGG merangkai alamat per tim untuk laporan internal.
+- **Aging invoice** — DATEDIFF menghitung berapa hari tagihan melewati jatuh tempo.
+- **Tutup buku bulanan** — EOMONTH menentukan batas laporan tanpa hard-code jumlah hari.
+- **Kualitas data** — COUNT(*) dibanding COUNT(email) mengungkap berapa baris kehilangan email.
+
+<div class="note">💡 WHERE dan HAVING punya urutan tetap: WHERE mengurus baris mentah sebelum grup terbentuk, HAVING mengurus hasil agregat. Memindahkan syarat agregat ke WHERE akan error — belum ada grup saat WHERE dijalankan.</div>

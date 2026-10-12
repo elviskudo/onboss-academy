@@ -1,0 +1,207 @@
+---
+title: "Function"
+description: "Fungsi dengan nilai balik, multi return, dan error sebagai nilai biasa"
+order: 5
+quiz:
+  - q: "Nilai balik fungsi ditulis setelah…"
+    options: ["kata func", "kurung parameter", "nama package", "koma terakhir"]
+    answer: 1
+    explain: "Contoh: func Jumlah(a, b int) int { return a + b } — tipe return ada setelah parameter."
+  - q: "Go bisa mengembalikan lebih dari satu nilai sekaligus…"
+    options: ["tidak bisa sama sekali", "hanya untuk string", "bisa, misalnya (int, error)", "maksimal 100 nilai"]
+    answer: 2
+    explain: "Multi return sangat khas Go, dipakai untuk hasil sekaligus error."
+  - q: "Parameter dengan tipe sama bisa ditulis…"
+    options: ["a, b int", "int a, int b hanya", "a int dan b", "a; b int"]
+    answer: 0
+    explain: "func Tambah(a, b int) int mempersingkat deklarasi parameter bertipe sama."
+  - q: "Fungsi tanpa nilai balik menyatakan…"
+    options: ["tidak ada tipe setelah kurung", "void", "nil", "none"]
+    answer: 0
+    explain: "Go tidak punya kata void — cukup kosongkan bagian return."
+  - q: "Variadic function memakai notasi…"
+    options: ["args ...int", "args []int...", "args int[]", "args ...[]int"]
+    answer: 0
+    explain: "Titik tiga menjumlahkan argumen menjadi slice di dalam fungsi."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func Jumlah(a, b int) int {
+        return a + b
+    }
+
+    func Bagi(a, b int) (int, error) {
+        if b == 0 {
+            return 0, fmt.Errorf("pembagi nol")
+        }
+        return a / b, nil
+    }
+
+    func main() {
+        fmt.Println("3 + 4 =", Jumlah(3, 4))
+        hasil, err := Bagi(10, 2)
+        fmt.Println("10 / 2 =", hasil, err)
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Di Go, fungsi adalah **warga kelas satu**: bisa jadi variabel, nilai balik, dan cara utama menangani error.
+
+## Mendefinisikan dan Memanggil
+
+```go
+func Sapa(nama string) {
+    fmt.Println("Halo,", nama)
+}
+
+func Jumlah(a, b int) int {
+    return a + b
+}
+
+func main() {
+    Sapa("Budi")
+    fmt.Println(Jumlah(3, 4))
+}
+```
+
+Tipe parameter ditulis setelah namanya, dan tipe return ditaruh setelah kurung parameter. Hanya ada **satu sintaks deklarasi** — tidak ada `function`, `def`, atau `fn`: semuanya `func`.
+
+## 5 Bentuk Parameter
+
+| Bentuk | Sintaks | Contoh pemakaian |
+| --- | --- | --- |
+| Biasa | `(a, b int)` | Pemanggilan wajib sesuai urutan |
+| Variadic | `(angka ...int)` | Jumlah argumen bebas — jadi slice lokal |
+| Named return | `(hasil int)` | Bisa diisi langsung, `return` polos mengembalikannya |
+| Tanpa parameter | `()` | `func main()` |
+| Parameter tipe berbeda | `(teks string, n int)` | Tipe ditulis per kelompok |
+
+Go **tidak punya parameter default, named argument, atau destructuring**. Kejatuhan yang sering: lupa bahwa `nilai` (int) dan `nilai2` (float64) adalah parameter terpisah — tulis ulang tipenya.
+
+## Multi Return
+
+```go
+func Bagi(a, b int) (int, int) {
+    hasil := a / b
+    sisa := a % b
+    return hasil, sisa
+}
+
+func main() {
+    h, s := Bagi(17, 5)
+    fmt.Println("17 / 5 =", h, "sisa", s)
+}
+```
+
+Satu fungsi bisa mengirim beberapa sekaligus — sangat praktis untuk hasil dan sisa bagi.
+
+## Menangani Error
+
+```go
+func Bagi(a, b int) (int, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("pembagi tidak boleh nol")
+    }
+    return a / b, nil
+}
+
+func main() {
+    hasil, err := Bagi(10, 0)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Println(hasil)
+}
+```
+
+Error bukan exception yang meledak, melainkan **nilai biasa** yang dicek dengan `if err != nil`.
+
+## Variadic
+
+```go
+func Total(angka ...int) int {
+    jumlah := 0
+    for _, n := range angka {
+        jumlah += n
+    }
+    return jumlah
+}
+
+fmt.Println(Total(1, 2, 3, 4))
+```
+
+Parameter bertanda `...` menerima argumen sebanyak apa pun, dan di dalam fungsi berbentuk slice.
+
+## Fungsi sebagai Nilai (Closure & Higher-Order)
+
+```go
+func Kali(f func(int, int) int, a, b int) int {
+    return f(a, b)
+}
+
+func main() {
+    tambah := func(a, b int) int { return a + b }
+    fmt.Println(Kali(tambah, 3, 4)) // 7
+}
+```
+
+Fungsi bisa disimpan di variabel, dilewatkan sebagai argumen, dan menutup variabel dari cakupan sekitarnya (closure). Aturan memecah kode: satu fungsi **satu pekerjaan**; jika fungsi utama sudah lebih dari ~30 baris atau ada blok yang bisa diberi nama, waktunya dipecah.
+
+## Di Dunia Nyata
+
+- **Kalkulator layanan**: fungsi murni `Hitung(op, a, b)` dipakai ulang oleh API dan CLI
+- **Validator**: `ValidasiEmail(s) bool` dipanggil dari banyak form sekaligus
+- **Formatter harga**: `Rupiah(n int) string` mengubah angka jadi "Rp15.000" di 20 tempat berbeda
+- **Middleware HTTP**: fungsi menerima handler dan mengembalikan handler berbentuk baru (higher-order)
+- **Worker goroutine**: closure menjalankan tugas `for _, job := range jobs` per goroutine
+
+<div class="note">💡 Selalu cek nilai error sebelum memakai hasilnya. Mengabaikan err (menulis _ di tempatnya) menyembunyikan kegagalan dan menyulitkan debugging nanti.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+func Jumlah(a, b int) int {
+    return a + b
+}
+
+func Bagi(a, b int) (int, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("pembagi tidak boleh nol")
+    }
+    return a / b, nil
+}
+
+func Total(angka ...int) int {
+    jumlah := 0
+    for _, n := range angka {
+        jumlah += n
+    }
+    return jumlah
+}
+
+func main() {
+    fmt.Println("3 + 4 =", Jumlah(3, 4))
+
+    hasil, err := Bagi(10, 2)
+    if err != nil {
+        fmt.Println("Error:", err)
+    } else {
+        fmt.Println("10 / 2 =", hasil)
+    }
+
+    _, err = Bagi(10, 0)
+    if err != nil {
+        fmt.Println("Error tertangkap:", err)
+    }
+
+    fmt.Println("Total:", Total(1, 2, 3, 4))
+
+    tambah := func(a, b int) int { return a + b }
+    fmt.Println("Closure:", tambah(5, 7))
+}`} />

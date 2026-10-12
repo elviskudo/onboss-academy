@@ -1,0 +1,175 @@
+---
+title: "Error Handling & Proyek Mini"
+description: "try/catch, tips debug, dan rangkum semuanya jadi kalkulator"
+order: 10
+quiz:
+  - q: "Blok catch dieksekusi saat…"
+    options: ["Terjadi error (throw) di dalam try", "Kode try selesai sukses", "Variabel dideklarasikan", "Loop berakhir"]
+    answer: 0
+    explain: "Error di try (atau reject await) melompat ke catch."
+  - q: "throw new Error(\"Gagal\") berfungsi untuk…"
+    options: ["Mencetak ke console", "Menghapus variabel", "Menghentikan browser", "Melempar error sendiri ke catch"]
+    answer: 3
+    explain: "throw memicu error programmu — bungkus dengan try/catch agar tertangkap."
+  - q: "finally dieksekuali…"
+    options: ["Hanya saat error", "Hanya saat sukses", "Selalu, suka atau gagal", "Jarang"]
+    answer: 2
+    explain: "finally untuk cleanup (tutup loading, tutup koneksi) yang harus selalu jalan."
+  - q: "Alat debug utama programmer JS di browser adalah…"
+    options: ["Task Manager", "Paint", "DevTools (F12): Console, Sources, Breakpoints", "File Explorer"]
+    answer: 2
+    explain: "Console.log + breakpoint di Sources adalah senjata harian."
+  - q: "Praktik terbaik menangani error di production…"
+    options: ["Tampilkan pesan ramah ke user, log detail ke developer", "Abaikan error", "Tampilkan stack trace ke user", "Hapus semua console.log lalu publish"]
+    answer: 0
+    explain: "User tidak perlu melihat stack trace — tapi tim dev HARUS bisa melihatnya di sistem log."
+example:
+  code: |
+    try {
+      JSON.parse("{tidak valid}");
+    } catch (e) {
+      console.log("Tertangkap:", e.message);
+    } finally {
+      console.log("Blok finally tetap jalan");
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## 7 Tipe Error Bawaan
+
+| Tipe error | Penyebab umum | Contoh situasi |
+|------------|---------------|----------------|
+| `Error` | Error umum buatanmu | `throw new Error("Gagal simpan")` |
+| `TypeError` | Tipe salah | Memanggil fungsi pada `undefined` |
+| `ReferenceError` | Variabel tak dikenal | `console.log(nama)` tanpa deklarasi |
+| `SyntaxError` | Salah sintaks | Kurung `{` tidak ditutup |
+| `RangeError` | Nilai di luar rentang | `Array(-1)` |
+| `URIError` | `decodeURIComponent` salah | String `%ZZ` tidak valid |
+| `EvalError` | Pemakaian `eval` tak benar | Jarang muncul modern |
+
+Semua bisa di-catch lewat `catch (e)`; `e.name` memberi tipe-nya, `e.message` memberi isi pesan, dan `e.stack` memberi lokasi baris.
+
+## try / catch / finally
+
+```js
+function bagi(a, b) {
+  if (b === 0) throw new Error("Pembagian dengan nol!");
+  return a / b;
+}
+
+try {
+  console.log(bagi(10, 2)); // 5
+  console.log(bagi(10, 0)); // lempar error
+} catch (e) {
+  console.error("Gagal:", e.message);
+} finally {
+  console.log("Selesai menghitung");
+}
+```
+
+## Error Custom
+
+```js
+class ValidationError extends Error {
+  constructor(field) {
+    super(`Field ${field} wajib diisi`);
+    this.name = "ValidationError";
+  }
+}
+
+if (!email) throw new ValidationError("email");
+```
+
+## Melempar vs Menangkap vs Mengembalikan
+
+```js
+// 1. Lempar — saat pemanggil HARUS tahu dan boleh gagal
+if (b === 0) throw new Error("Pembagian dengan nol");
+
+// 2. Tangkap — saat kamu bisa memulihkan situasi
+try {
+  JSON.parse(userInput);
+} catch (e) {
+  data = {};           // pulihkan dengan nilai aman
+}
+
+// 3. Return error — pola ringkas tanpa exception (ALTO/Go style)
+function bagi(a, b) {
+  if (b === 0) return { ok: false, error: "nol" };
+  return { ok: true, value: a / b };
+}
+```
+
+Aturan praktis: error **tak terduga** → `throw`; error **yang memang bagian dari alur** (login gagal, data tidak ada) → nilai kembalian. Jangan sampai `catch {}` kosong — error hilang tanpa jejak.
+
+## Tips Debugging
+
+1. `console.log`, `console.table`, `console.dir` di mana perlu
+2. **Breakpoint** di DevTools → Sources → klik nomor baris
+3. `debugger;` di kode → eksekusi berhenti otomatis saat DevTools terbuka
+4. Baca pesan error dari bawah ke atas — baris pertama di stack-mu biasalah biang keladinya
+
+```js
+console.table([
+  { produk: "Kopi", stok: 5 },
+  { produk: "Teh", stok: 0 },
+]);
+```
+
+`console.table` menampilkan array object sebagai tabel — jauh lebih cepat dipindai daripada baris log panjang.
+
+## Di Dunia Nyata
+
+- **Checkout toko online**: `try { prosesBayar() } catch` menampilkan "Pembayaran gagal, coba lagi" alih-alih layar putih.
+- **Parsing data API** yang formatnya tidak dijamin: `JSON.parse` dibungkus try/catch.
+- **Validasi input user** dibuang ke `ValidationError` custom supaya bisa ditampilkan per-field.
+- **Cleanup loading spinner** ditaruh di `finally` — muncul sukses maupun gagal.
+- **Kalkulator / form kalkulasi** menampilkan `Error` di UI saat hasil `NaN` atau `Infinity`.
+
+## Proyek Akhir: Kalkulator Mini
+
+Rangkum fungsi, event, DOM, dan error handling jadi kalkulator bekerja sungguhan. Langkah membangun: (1) susun tampilan dengan `createElement`, (2) simpan state ekspresi dalam `let expr`, (3) evaluasi dengan pembungkus `Function` + `try/catch`, (4) tampilkan `Error` rapi saat hasil tidak valid. Kembangkan: riwayat perhitungan, keyboard support, pembagian dengan nol.
+
+<div class="note">💡 Error menakuti pemula, tapi menakuti programmer senior adalah error yang *tidak pernah muncul* — jangan pernah menelan exception dengan blok `catch` kosong. Tangkap, catat, lalu beri tahu user dengan pesan yang manusiawi.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const wrap = document.createElement("div");
+wrap.style.cssText = "max-width:240px;display:grid;gap:8px";
+const display = document.createElement("input");
+display.readOnly = true;
+display.value = "0";
+display.style.cssText = "padding:12px;font-size:1.3rem;text-align:right;border:1px solid #ccc;border-radius:8px";
+const grid = document.createElement("div");
+grid.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:6px";
+wrap.append(display, grid);
+document.body.prepend(wrap);
+let expr = "";
+const tombol = ["7","8","9","÷","4","5","6","×","1","2","3","−","0","C","=","+"];
+for (const t of tombol) {
+  const b = document.createElement("button");
+  b.textContent = t;
+  b.style.cssText = "padding:14px;border:1px solid #E8E5DF;border-radius:8px;background:white;font-weight:700;cursor:pointer;font-size:1rem";
+  b.onclick = () => {
+    try {
+      if (t === "C") { expr = ""; display.value = "0"; return; }
+      if (t === "=") {
+        const js = expr.replaceAll("÷","/").replaceAll("×","*").replaceAll("−","-");
+        if (!js) return;
+        const hasil = Function(\`"use strict"; return (\${js})\`)();
+        if (!Number.isFinite(hasil)) throw new Error("Tidak valid");
+        display.value = hasil;
+        expr = String(hasil);
+        console.log("Hasil:", hasil);
+        return;
+      }
+      expr += t;
+      display.value = expr;
+    } catch (e) {
+      display.value = "Error";
+      console.error("Kalkulator:", e.message);
+      expr = "";
+    }
+  };
+  grid.append(b);
+}
+console.log("Kalkulator siap — coba klik angka dan operator.");`} />

@@ -1,0 +1,172 @@
+---
+title: "Component & Props"
+description: "Memecah UI jadi komponen dan mengirim data lewat props"
+order: 5
+quiz:
+  - q: "Props pada komponen Vue adalah…"
+    options: ["Variabel global", "Cara induk mengirim data ke anak", "CSS class", "Event handler"]
+    answer: 1
+    explain: "Anak menerima data lewat props; induk menentukan nilainya saat memakai tag komponen."
+  - q: "Anak dilarang mengubah nilai props miliknya sendiri karena…"
+    options: ["Props dimiliki induk — pola satu arah data", "Props hanya untuk teks", "Mengubah props melambatkan browser", "Vue tidak menyimpan props"]
+    answer: 0
+    explain: "Perubahan harus terjadi di induk lalu turun kembali — mencegah state kembar yang sulit dilacak."
+  - q: "Cara mendeklarasikan props di <script setup>…"
+    options: ["export props", "defineProps({ judul: String })", "this.props", "new Props()"]
+    answer: 1
+    explain: "defineProps mengembalikan objek props yang bisa langsung dipakai di template."
+  - q: "Nama file komponen anak diimpor induk dengan…"
+    options: ["import Kartu from './Kartu.vue'", "require CSS saja", "load Kartu.html", "fetch Kartu.js"]
+    answer: 0
+    explain: "SFC diimpor seperti modul JS, lalu dipakai sebagai <Kartu /> di template induk."
+  - q: "Props bertipe number pada template yang dikirim string=\"5\" akan…"
+    options: ["Berubah bentuk (casting) sesuai deklarasi tipe", "Tetap string apa adanya", "Error runtime selalu", "Menghapus props"]
+    answer: 0
+    explain: "Vue meng-cast berdasarkan deklarasi — namun tetap lebih baik mengirim :jumlah=\"5\" (binding)."
+example:
+  code: |
+    function Kartu({ judul, isi }) {
+      return { judul, isi, render: judul + ": " + isi };
+    }
+    console.log(Kartu({ judul: "Info", isi: "Halo" }).render);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Komponen adalah **fungsi yang mengembalikan tampilan**. Besar kecil layar aplikasi modern semuanya dipecah jadi komponen, bukan class OOP.
+
+## 4 Bagian Kontrak Komponen
+
+| Bagian | Arah | Fungsi | Contoh |
+|--------|------|--------|--------|
+| Props | Induk → anak | Mengirim data read-only | `:item="produk"` |
+| Emit | Anak → induk | Mengirim event/payload | `emit("hapus", id)` |
+| Slot | Induk → area anak | Mengirim fragmen template | `<template #header>` |
+| State lokal | Internal anak | Menyimpan data milik anak | status panel terbuka |
+
+Bab ini fokus pada props. Emit dan slot dibahas berikutnya. Pembagian kontrak mencegah anak mengubah state induk secara diam-diam.
+
+## Mengimpor & Memakai Komponen
+
+```html
+<!-- App.vue -->
+<template>
+  <Kartu judul="Selamat datang" isi="Belajar Vue" />
+  <Kartu judul="Tips" isi="Pecah UI jadi bagian kecil" />
+</template>
+
+<script setup>
+import Kartu from "./Kartu.vue";
+</script>
+```
+
+Nama file menjadi nama tag — `Kartu.vue` → `<Kartu />`.
+
+## Mendeklarasikan Props
+
+```html
+<!-- Kartu.vue -->
+<template>
+  <article class="kartu">
+    <h3>{{ judul }}</h3>
+    <p>{{ isi }}</p>
+    <small v-if="penulis">oleh {{ penulis }}</small>
+  </article>
+</template>
+
+<script setup>
+defineProps({
+  judul: { type: String, required: true },
+  isi: { type: String, default: "" },
+  penulis: { type: String, default: "Anonim" },
+});
+</script>
+```
+
+Props bersifat **satu arah**: induk → anak. Anak hanya membaca.
+
+## Props dengan Tipe Sederhana
+
+```html
+<script setup>
+// Singkat: hanya menyatakan tipe
+const props = defineProps(["judul", "isi"]);
+console.log(props.judul);
+</script>
+```
+
+## Mengirim Data Dinamis
+
+```html
+<template>
+  <!-- string biasa -->
+  <Kartu judul="Promo" />
+
+  <!-- binding ke data -->
+  <Kartu :judul="judulAktif" :isi="isiAktif" />
+</template>
+```
+
+Tanpa `:`, nilai dibaca sebagai teks literal.
+
+## Pola JavaScript-nya
+
+```javascript
+// Komponen pada dasarnya function yang memproses props
+function Kartu(props) {
+  const judul = props.judul ?? "Tanpa judul";
+  const isi = props.isi ?? "";
+  return { render: judul + ": " + isi };
+}
+
+console.log(Kartu({ judul: "Info", isi: "Halo Vue" }).render);
+```
+
+## Komponen dan List Rendering
+
+```html
+<Kartu
+  v-for="produk in daftar"
+  :key="produk.id"
+  :judul="produk.nama"
+  :isi="'Rp' + produk.harga"
+/>
+```
+
+`v-for` adalah looping, sementara props adalah argumen untuk setiap "pemanggilan" komponen. Jika produk habis, anak bisa memakai `v-if` untuk conditional rendering tombol.
+
+## Di Dunia Nyata
+
+- **Katalog**: satu `KartuProduk` menerima object produk untuk ratusan item.
+- **Dashboard**: `KartuStatistik` menerima label, nilai, dan tren yang berbeda.
+- **Form reusable**: `InputField` menerima label, type, error, dan disabled.
+- **Navigasi**: `MenuItem` menerima URL dan status aktif dari router.
+- **Tabel data**: induk loop baris; tiap `BarisPengguna` hanya membaca props user.
+
+<div class="note">💡 Jangan mengubah `props.x` di dalam komponen anak — Vue akan memperingatkan. Kirim event ke induk (`$emit`) agar induk yang memperbarui datanya; materi bab berikutnya.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Props = function parameter yang divalidasi
+function Kartu({ judul, isi, penulis = "Anonim" }) {
+  if (!judul) throw new Error("judul wajib diisi");
+  return {
+    render: judul + ": " + isi,
+    kredit: "oleh " + penulis,
+  };
+}
+
+const kartu1 = Kartu({ judul: "Selamat datang", isi: "Belajar Vue" });
+const kartu2 = Kartu({ judul: "Tips", isi: "Pecah UI jadi bagian kecil", penulis: "Sari" });
+
+console.log(kartu1.render, "|", kartu1.kredit);
+console.log(kartu2.render, "|", kartu2.kredit);
+
+// Validasi tipe sederhana ala defineProps
+function defineProps(shape, data) {
+  for (const k in shape) {
+    if (shape[k].required && data[k] === undefined) {
+      throw new Error("Props wajib: " + k);
+    }
+  }
+  return data;
+}
+console.log(defineProps({ judul: { required: true } }, { judul: "OK" }));`} />

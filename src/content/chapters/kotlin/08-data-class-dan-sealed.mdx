@@ -1,0 +1,176 @@
+---
+title: "Data Class & Sealed"
+description: "Membawa data tanpa boilerplate dengan data class, dan memodelkan pilihan dengan sealed class"
+order: 8
+quiz:
+  - q: "data class otomatis menghasilkan method…"
+    options: ["main", "toString, equals, hashCode", "start", "compile"]
+    answer: 1
+    explain: "Empat method plus copy dibuat otomatis oleh compiler."
+  - q: "copy() pada data class berguna untuk…"
+    options: ["membuat salinan dengan sebagian nilai berubah", "menghapus objek", "mengompilasi ulang", "mengubah tipe data"]
+    answer: 0
+    explain: "Pola immutable copy sangat umum pada data class."
+  - q: "sealed class membatasi…"
+    options: ["panjang nama class", "jumlah subclass di file yang sama", "kecepatan program", "jumlah properti"]
+    answer: 1
+    explain: "Semua subclass harus dideklarasikan dalam file yang sama."
+  - q: "when terhadap sealed class sebaiknya selalu memiliki…"
+    options: ["semua cabang atau else", "hanya satu cabang", "tidak perlu cabang", "komentar"]
+    answer: 0
+    explain: "Karena daftar subtype diketahui, when bisa dicek ketuntasannya."
+  - q: "Hasil operasi sukses atau gagal sering dimodelkan dengan…"
+    options: ["array", "sealed class", "while", "extension"]
+    answer: 1
+    explain: "sealed cocok untuk hasil yang terbatas pada beberapa kemungkinan."
+example:
+  code: |
+    data class Produk(val nama: String, var harga: Int)
+
+    sealed class Hasil {
+        class Sukses(val data: String) : Hasil()
+        class Gagal(val pesan: String) : Hasil()
+    }
+
+    fun proses(hasil: Hasil): String = when (hasil) {
+        is Hasil.Sukses -> "Berhasil: " + hasil.data
+        is Hasil.Gagal -> "Gagal: " + hasil.pesan
+    }
+
+    fun main() {
+        val p = Produk("Kopi", 25000)
+        println(p)
+        println(p.copy(harga = 30000))
+
+        println(proses(Hasil.Sukses("data")))
+        println(proses(Hasil.Gagal("koneksi")))
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua fitur ini menghapus boilerplate paling membosankan: menulis data murni dan memodelkan pilihan terbatas.
+
+## Data Class
+
+Satu kata kunci `data` menghapus boilerplate: compiler menghasilkan **5 method otomatis**:
+
+| Method | Fungsi | Contoh |
+| --- | --- | --- |
+| `toString()` | cetak terbaca | `Siswa(nama=Sari, nilai=88)` |
+| `equals()` | bandingkan per isi | `a == b` → `true` bila properti sama |
+| `hashCode()` | kunci hash untuk Set/Map | aman dipakai sebagai elemen koleksi unik |
+| `copy()` | salinan dengan sebagian diganti | `s.copy(nilai = 90)` |
+| `componentN()` | destrukturisasi | `val (nama, nilai) = s` |
+
+Syaratnya cuma satu: minimal satu properti `val`/`var` di constructor utama, dan constructor itu tidak boleh `private` (sejak Kotlin 1.9).
+
+```kotlin
+data class Siswa(val nama: String, val nilai: Int)
+
+fun main() {
+    val s = Siswa("Sari", 88)
+    println(s)              // Siswa(nama=Sari, nilai=88)
+
+    val (nama, nilai) = s   // destrukturisasi lewat componentN
+    println("$nama: $nilai")
+}
+```
+
+Tanpa data class, kamu harus menulis toString sendiri agar hasil cetak terbaca.
+
+## equals dan Perbandingan
+
+```kotlin
+data class Siswa(val nama: String, val nilai: Int)
+
+fun main() {
+    val a = Siswa("Sari", 88)
+    val b = Siswa("Sari", 88)
+
+    println(a == b)   // true, dibandingkan per properti
+    println(a === b)  // false, objek berbeda
+}
+```
+
+## Method copy
+
+```kotlin
+data class Produk(val nama: String, val harga: Int)
+
+fun main() {
+    val asli = Produk("Kopi", 25000)
+    val diskon = asli.copy(harga = 20000)
+
+    println(asli)
+    println(diskon)
+}
+```
+
+`copy` membuat salinan dengan sebagian properti diganti — tanpa mengubah aslinya.
+
+## Sealed Class
+
+```kotlin
+sealed class Hasil {
+    class Sukses(val data: String) : Hasil()
+    class Gagal(val pesan: String) : Hasil()
+}
+
+fun proses(hasil: Hasil): String = when (hasil) {
+    is Hasil.Sukses -> "Berhasil: " + hasil.data
+    is Hasil.Gagal -> "Gagal: " + hasil.pesan
+}
+
+fun main() {
+    println(proses(Hasil.Sukses("data")))
+    println(proses(Hasil.Gagal("koneksi")))
+}
+```
+
+Setelah `is Hasil.Sukses`, compiler tahu tipe datanya dan membuka akses ke `data`. Kotlin 1.5+ juga mengizinkan `sealed interface` yang bekerja sama persis — pilih interface bila varian tidak butuh state bersama.
+
+Ketika semua subtype tercakup, `when` sebagai ekspresi tidak perlu `else`. Bila ada satu subtype yang terlupa, kompilasi gagal — compiler menagih janji sealed.
+
+## Kapan Memakai Apa
+
+- **data class**: kumpulan properti yang nilainya dibandingkan per isi
+- **sealed class**: hasil atau status yang terbatas pada beberapa kemungkinan
+- **enum**: daftar nilai tetap seperti warna dan status pilihan
+
+| Tipe | Jumlah varian | Membandingkan | Contoh kasus |
+| --- | --- | --- | --- |
+| `enum` | tetap, tanpa data tambahan | per konstanta | `MINGGU`, `SENIN` |
+| `data class` | bebas | per isi properti | `Produk("Kopi", 25000)` |
+| `sealed class/interface` | terbatas, boleh beda properti | per varian + isi | `Sukses(data)`, `Gagal(pesan)` |
+
+## Di Dunia Nyata
+
+- **State layar aplikasi** — `Loading`, `Sukses(data)`, `Gagal(pesan)` memaksa setiap layar menangani ketiga kondisi lewat `when`.
+- **DTO API** — respons server dibungkus `data class` agar bisa dibandingkan per isi dan dicetak jelas di log.
+- **Update profil dengan salinan aman** — `val baru = profil.copy(nama = "Nama Baru")` mengubah satu field tanpa merusak data lama.
+- **Hasil pembayaran** — `Diterima(ref)`, `Ditolak(alasan)`, `Menunggu` adalah pilihan terbatas yang cocok untuk sealed.
+- **Elemen koleksi unik** — `hashCode` otomatis membuat data class aman dipakai di `setOf(...)`.
+
+<div class="note">💡 when terhadap sealed class membuat compiler jadi rekan code review: bila kamu menambah varian baru, seluruh when yang belum menanganinya langsung menandai error.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`data class Produk(val nama: String, var harga: Int)
+
+sealed class Hasil {
+    class Sukses(val data: String) : Hasil()
+    class Gagal(val pesan: String) : Hasil()
+}
+
+fun proses(hasil: Hasil): String = when (hasil) {
+    is Hasil.Sukses -> "Berhasil: " + hasil.data
+    is Hasil.Gagal -> "Gagal: " + hasil.pesan
+}
+
+fun main() {
+    val p = Produk("Kopi", 25000)
+    println(p)
+    println(p.copy(harga = 30000))
+
+    println(proses(Hasil.Sukses("data")))
+    println(proses(Hasil.Gagal("koneksi")))
+}`} />

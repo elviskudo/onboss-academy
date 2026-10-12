@@ -1,0 +1,188 @@
+---
+title: "Module & Mixin"
+description: "Alternatif pewarisan Ruby — 3 cara memasukkan module, 2 peran, dan method lookup"
+order: 9
+quiz:
+  - q: "Ruby mengizinkan pewarisan class sebanyak…"
+    options: ["Tak terbatas", "2 (multi inheritance)", "1 — lebih dari itu memakai module", "0"]
+    answer: 2
+    explain: "Pewarisan tunggal via <, sedangkan perilaku tambahan dicampur lewat include/prepend module."
+  - q: "Membuat instance dari module akan…"
+    options: ["Berhasil seperti class", "Error — module tidak bisa diinstansiasi", "Menghasilkan objek kosong", "Membuat class baru"]
+    answer: 1
+    explain: "Module.new membuat instance module (bukan objek domain) dan ModulBiasa.new itu error."
+  - q: "Metode standar Ruby Enumerable dipasang ke Array melalui…"
+    options: ["Pewarisan class Array", "include Enumerable (mixin)", "Global function", "require khusus"]
+    answer: 1
+    explain: "map, select, reduce datang dari Enumerable yang di-include ke Array, Hash, dan Range."
+  - q: "prepend berbeda dari include karena…"
+    options: ["Method module ditempatkan SEBELUM method class di rantai pencarian", "Hanya membawa konstanta", "Menghapus method class", "Tidak boleh dipakai"]
+    answer: 0
+    explain: "Dengan prepend, method module dipanggil lebih dulu dan dapat memanggil super ke method class."
+  - q: "Tanda :: dipakai untuk…"
+    options: ["Mengakses isi module sebagai namespace", "Komentar", "Menjumlahkan angka", "Membuat blok"]
+    answer: 0
+    explain: "Hitung::Geometri.lingkaran(7) menavigasi module dan menghindari tabrakan nama."
+example:
+  code: |
+    module Sapa
+      def halo
+        "Halo dari #{self.class}!"
+      end
+    end
+
+    class Manusia
+      include Sapa
+    end
+
+    class Robot
+      include Sapa
+    end
+
+    puts Manusia.new.halo
+    puts Robot.new.halo
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby hanya mengizinkan **satu class induk**. Untuk berbagi perilaku ke banyak class tanpa duplikat, Ruby mengandalkan module — inilah alternatif pewarisan yang justru lebih sering dipakai daripada inheritance itu sendiri.
+
+## 2 Peran Module
+
+| Peran | Fungsi | Contoh |
+| --- | --- | --- |
+| **Mixin** — memasukkan method ke class | Berbagi perilaku lintas class | `include Lacak` |
+| **Namespace** — wadah konstanta & method | Menghindari tabrakan nama antar library | `Hitung::Geometri` |
+
+```ruby
+module Util
+  def self.kali(a, b)
+    a * b
+  end
+end
+
+puts Util.kali(6, 7)   # 42
+```
+
+Module **tidak bisa dibuat instance** sebagai objek bisnis (`Modul.new` error untuk module murni) — ia hanya wadah method, konstanta, dan atribut class.
+
+## 3 Cara Memasukkan Module
+
+```ruby
+module Sapa
+  def halo
+    "Halo, saya #{self.class}"
+  end
+end
+
+class Manusia
+  include Sapa     # 1. instance method — method module jadi milik objek
+end
+
+class Robot
+  prepend Sapa     # 2. method module diutamakan sebelum method class
+end
+
+class Admin
+  def self.profil   # 3. extend — method module jadi class method
+    "admin panel"
+  end
+  extend Sapa
+end
+```
+
+| Cara | Method masuk sebagai | Urutan vs method class |
+| --- | --- | --- |
+| `include` | Instance method | Method class menang bila nama sama |
+| `prepend` | Instance method | Module menang, lalu `super` ke class |
+| `extend` | Class method | Dipanggil lewat class, bukan objek |
+
+Satu class boleh `include` **banyak module tanpa batas** — inilah keunggulan utama dibanding pewarisan yang cuma boleh satu.
+
+## Mixin Bawaan Ruby: Enumerable & Comparable
+
+Ruby sendiri memakai pola ini: `Array`, `Hash`, dan `Range` sama-sama `include Enumerable`, sehingga mereka otomatis mendapat `map`, `select`, `reduce`, `sort_by`, dan puluhan method lain dari satu definisi. `Comparable` melakukan hal yang sama untuk `+`, `<=>`, `min`, `max` pada Integer, String, dan Time.
+
+## Instance Method dari Module
+
+```ruby
+module Area
+  def luas
+    panjang * lebar
+  end
+end
+
+class PersegiPanjang
+  include Area
+  attr_reader :panjang, :lebar
+
+  def initialize(panjang, lebar)
+    @panjang = panjang
+    @lebar = lebar
+  end
+end
+
+puts PersegiPanjang.new(4, 6).luas   # 24
+```
+
+## Namespace dengan ::
+
+```ruby
+module Hitung
+  module Geometri
+    def self.lingkaran(r)
+      3.14 * r * r
+    end
+  end
+end
+
+puts Hitung::Geometri.lingkaran(7)   # 153.86
+```
+
+Tanda `::` menavigasi isi module — dua library boleh punya method `hitung` asal modulenya berbeda.
+
+## Class, Mixin, atau Namespace?
+
+| Situasi | Pilih | Alasan |
+| --- | --- | --- |
+| Data + perilaku khusus satu objek | Class | Ada state yang berubah per objek |
+| Perilaku bisa dipakai class mana pun | Module (mixin) | Tanpa hubungan pewarisan |
+| Mengelompokkan fungsi/util | Module (namespace) | Nama tidak menyebar ke mana-mana |
+| Menambah perilaku ke method class yang sudah ada | `prepend` | Bisa mengubah perilaku tanpa menyentuh kode asli |
+
+## Di Dunia Nyata
+
+- **Pencatatan waktu**: module `DicatatWaktu` menambah `created_at`/`updated_at` ke model `Artikel`, `Komentar`, dan `Pengguna` sekaligus.
+- **Hak akses role**: `include BerhakAkses` memberi method `boleh_hapus?` ke seluruh controller tanpa menulis ulang.
+- **Validasi format**: module `FormatRupiah` menyediakan `rupiah` di view helper, mailer, dan API serializer.
+- **Log debugging**: `prepend CetakLog` memanggil method asli lalu mencatat durasinya — semua class yang include langsung ter-log.
+- **Library pihak ketiga**: `Money`, `Geocoder`, dan `Pagy` dipakai sebagai namespace/`include` tanpa mewarisi class kamu.
+
+<div class="note">💡 Pertanyaan praktisnya sederhana: kalau perilaku itu milik satu objek dan butuh state-nya, taruh di class. Kalau bisa dipakai class mana pun tanpa hubungan pewarisan, taruh di module. Dan bila hanya mengelompokkan fungsi tanpa instance sama sekali, module murni dengan `def self.` adalah jawabannya.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`module Sapa
+  def halo
+    "Halo dari #{self.class}!"
+  end
+end
+
+class Manusia
+  include Sapa
+end
+
+class Robot
+  include Sapa
+end
+
+puts Manusia.new.halo
+puts Robot.new.halo
+
+module Hitung
+  def self.kali(a, b)
+    a * b
+  end
+end
+puts Hitung.kali(6, 7)
+
+puts [3, 1, 2].map { |n| n * 10 }.inspect
+puts Enumerable.instance_methods.include?(:reduce)`} />

@@ -1,0 +1,132 @@
+---
+title: "Agregasi dan Fungsi di PostgreSQL"
+description: "GROUP BY, HAVING, dan ekspresi data lengkap dengan FILTER khas Postgres"
+order: 5
+quiz:
+  - q: "COUNT(*) FILTER (WHERE gaji >= 11000000) pada PostgreSQL menghitung…"
+    options: ["Semua baris tanpa syarat", "Jumlah kolom", "Hanya baris yang memenuhi syarat WHERE di dalam FILTER", "Baris NULL saja"]
+    answer: 2
+    explain: "FILTER menyaring cakupan agregat — hanya baris lolos syarat yang dihitung, per grup."
+  - q: "Klausa HAVING pada query agregat berfungsi untuk…"
+    options: ["Menyaring baris mentah", "Menyaring hasil grup setelah agregasi", "Mengurutkan kolom", "Membuat index"]
+    answer: 1
+    explain: "WHERE menyaring baris sebelum dikelompokkan; HAVING menyaring grup setelah fungsi agregat dihitung."
+  - q: "GROUP BY dept, COUNT(*) pada data kita menghasilkan…"
+    options: ["4 baris — satu per departemen", "8 baris", "1 baris", "Tidak valid"]
+    answer: 0
+    explain: "Ada 4 nilai unik dept (Data, Design, Engineering, Product) → 4 baris hasil."
+  - q: "ROUND(AVG(gaji), -5) membulatkan rata-rata ke…"
+    options: ["Desimal 5", "Satuan", "Ke atas semua", "Puluhan ribu terdekat"]
+    answer: 3
+    explain: "Nilai negatif pada digit pembulatan berarti membesar ke satuan lebih besar — -5 = puluhan ribu."
+  - q: "Aturan kolom non-agregat dalam SELECT bersama GROUP BY adalah…"
+    options: ["Harus ikut di GROUP BY", "Boleh apa saja", "Wajib di WHERE", "Dilarang ada"]
+    answer: 0
+    explain: "Kolom di SELECT tanpa fungsi agregat harus tampil di GROUP BY — nilai per grup tidak ambigu."
+example:
+  code: |
+    SELECT dept,
+           COUNT(*) AS jumlah,
+           ROUND(AVG(gaji)) AS rata_rata
+    FROM karyawan
+    GROUP BY dept
+    HAVING COUNT(*) >= 1
+    ORDER BY rata_rata DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL menghitung ringkasan data dengan `GROUP BY` yang taat standar — plus ekstensi `FILTER` yang membuat laporan kondisional jauh lebih bersih.
+
+## Apa itu Agregasi?
+
+Fungsi agregat merangkak banyak baris menjadi **satu nilai**: total, hitungan, rata-rata, terbesar, terkecil. `GROUP BY` memecah proses itu per kelompok, sehingga dari 8 baris karyawan kamu bisa langsung mendapat ringkasan 4 departemen.
+
+Lima fungsi agregat dasar yang dipakai di hampir setiap laporan:
+
+| Fungsi | Menghasilkan | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| COUNT(*) | jumlah baris | COUNT(*) AS jumlah | hitungan entri, record |
+| SUM(kolom) | total nilai | SUM(gaji) AS total | omzet, total biaya |
+| AVG(kolom) | rata-rata | ROUND(AVG(gaji)) | standar gaji, skor |
+| MIN(kolom) | nilai terendah | MIN(gaji) | harga termurah |
+| MAX(kolom) | nilai tertinggi | MAX(gaji) | gaji tertinggi |
+
+## Fungsi Agregat Dasar
+
+```sql
+SELECT COUNT(*) AS jumlah,
+       SUM(gaji) AS total,
+       ROUND(AVG(gaji)) AS rata_rata,
+       MIN(gaji) AS terendah,
+       MAX(gaji) AS tertinggi
+FROM karyawan;
+```
+
+Postgres menghitung AVG sebagai NUMERIC presisi — tidak ada kejutan pembulatan integer seperti pada beberapa database. `ROUND()` mengembalikan ke tipe yang kita inginkan.
+
+## GROUP BY per Departemen
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, SUM(gaji) AS total
+FROM karyawan
+GROUP BY dept
+ORDER BY total DESC;
+```
+
+Postgres ketat: kolom non-agregat di SELECT wajib di GROUP BY. Keangkuhan ini menjaga query tetap logis dan portabel.
+
+## HAVING: Filter Grup
+
+```sql
+SELECT dept, COUNT(*) AS jumlah
+FROM karyawan
+GROUP BY dept
+HAVING SUM(gaji) >= 10000000;
+```
+
+Syarat pada agregat harus di HAVING, bukan WHERE — WHERE berlaku sebelum pengelompokan dan belum tahu nilai grup. Urutan eksekusinya selalu tetap: WHERE → GROUP BY → agregat → HAVING.
+
+## FILTER: Agregat Kondisional Khas Postgres
+
+```sql
+SELECT dept,
+       COUNT(*) AS jumlah,
+       COUNT(*) FILTER (WHERE gaji >= 11000000) AS gaji_tinggi,
+       SUM(gaji) FILTER (WHERE dept = 'Engineering') AS gaji_engineering
+FROM karyawan
+GROUP BY dept;
+```
+
+`FILTER (WHERE ...)` menyaring cakupan fungsi agregat — setara dengan `COUNT(CASE WHEN ... THEN 1 END)` tapi lebih ringkas dan terbaca. Ekspresi SQL standar tetap berlaku: SQLite modern juga mendukung FILTER, jadi demo ini bisa langsung dicoba di editor.
+
+## Fungsi Lain yang Berguna
+
+```sql
+SELECT DISTINCT dept,
+       ROUND(AVG(gaji) / 1000000.0, 1) AS juta
+FROM karyawan
+GROUP BY dept
+ORDER BY juta DESC;
+```
+
+Gabungan DISTINCT, GROUP BY, dan ekspresi aritmetika menunjukkan bagaimana Postgres merangkai fungsi-fungsi kecil jadi laporan siap saji.
+
+## Di Dunia Nyata
+
+- **Rekap omzet harian** — `SUM(total) GROUP BY DATE(terbit)` memberi angka penjualan per hari untuk dasbor penjualan.
+- **Departemen dengan gaji besar** — `HAVING SUM(gaji) >= 10000000` menyaring grup yang bebannya di atas ambang, bukan baris individual.
+- **Dashboard gaji** — COUNT, AVG, MIN, MAX per departemen tampil dalam satu query, tanpa dihitung di sisi aplikasi.
+- **Statistik kondisional** — `COUNT(*) FILTER (WHERE gaji >= 11000000)` menghitung karyawan bergaji tinggi tanpa subquery terpisah.
+- **Kualitas data** — `COUNT(*) FILTER (WHERE email IS NULL)` mengungkap sebaran data yang belum lengkap per departemen.
+
+<div class="note">💡 FILTER adalah rute terbersih untuk angka statistik per kondisi di dashboard. Kalau targetmu juga SQLite/MySQL lama, siapkan padanan CASE WHEN — hasilnya sama, sintaksnya lebih tua.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT dept,
+       COUNT(*) AS jumlah,
+       SUM(gaji) AS total,
+       ROUND(AVG(gaji)) AS rata_rata,
+       SUM(CASE WHEN gaji >= 11000000 THEN 1 ELSE 0 END) AS gaji_tinggi
+FROM karyawan
+GROUP BY dept
+ORDER BY rata_rata DESC;`} />

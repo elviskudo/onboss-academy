@@ -1,0 +1,155 @@
+---
+title: "Proyek Mini: Landing Page"
+description: "Rangkum semua: buat landing page sederhana dengan HTML"
+order: 10
+quiz:
+  - q: "Struktur dasar mana yang benar?"
+    options: [
+      "head → body → html",
+      "html → head → body",
+      "body → html → head",
+      "Cukup body saja",
+    ]
+    answer: 1
+    explain: "html membungkus head (info) lalu body (konten tampil)."
+  - q: "Elemen mana yang hanya boleh satu per halaman dan memuat konten utama?"
+    options: ["<main>", "<div>", "<section>", "<article>"]
+    answer: 0
+    explain: "<main> unik per halaman — praktik aksesibilitas terbaik."
+  - q: "Untuk navigasi di <header>, elemen yang paling tepat adalah…"
+    options: ["<nav>", "<menu>", "<links>", "<buttons>"]
+    answer: 0
+    explain: "<nav> adalah elemen semantik untuk navigasi."
+  - q: "Atribut wajib pada <img> agar aksesibel adalah…"
+    options: ["alt", "title", "src", "width"]
+    answer: 0
+    explain: "alt wajib diisi (kosongkan hanya jika gambar murni dekoratif)."
+  - q: "Elemen <button type=\"submit\" di dalam <form> berfungsi untuk…"
+    options: ["Mengirim data form", "Menghapus form", "Menambah field", "Tutup halaman"]
+    answer: 0
+    explain: "type=\"submit\" mengirim isi form ke action yang ditentukan."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>KelasCoding — Belajar Coding Gratis</title>
+    </head>
+    <body style="font-family:sans-serif;margin:0">
+      <header style="background:#4F46E5;color:white;padding:20px;text-align:center">
+        <h1> KelasCoding</h1>
+        <nav><a href="#" style="color:white">Beranda</a> · <a href="#" style="color:white">Kursus</a></nav>
+      </header>
+      <main style="padding:40px;text-align:center">
+        <h2>Jago Coding dalam 30 Hari</h2>
+        <p>HTML, CSS, JavaScript — gratis, tanpa video, langsung praktik.</p>
+        <img src="https://placehold.co/480x200/EEF0FF/4F46E5?text=Ilustrasi+Kelas" alt="Ilustrasi kelas coding" width="480">
+        <p><button style="background:#16A34A;color:white;border:none;padding:12px 24px;border-radius:8px;font-weight:bold">Daftar Sekarang</button></p>
+      </main>
+      <footer style="background:#17181D;color:white;padding:16px;text-align:center">&copy; 2026 KelasCoding</footer>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sampai di sini kamu sudah menguasai dasar HTML. Saatnya merangkum semuanya jadi satu halaman utuh!
+
+## Kerangka Landing Page
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nama Produk — Tagline</title>
+    <meta name="description" content="Deskripsi singkat produk.">
+  </head>
+  <body>
+    <header>
+      <h1>Nama Produk</h1>
+      <nav>…</nav>
+    </header>
+
+    <main>
+      <section id="hero">…</section>
+      <section id="fitur">…</section>
+      <section id="harga">…</section>
+    </main>
+
+    <footer>…</footer>
+  </body>
+</html>
+```
+
+Landing page minimal punya **5 bagian**: header/navigasi, hero, manfaat/fitur, ajakan bertindak (CTA), dan footer. Susunan ini membawa pengunjung dari mengenal produk hingga melakukan aksi.
+
+| Bagian | Fungsi | Elemen utama | Ukuran keberhasilan |
+|--------|--------|--------------|---------------------|
+| Header | Identitas & navigasi | `<header>`, `<nav>` | Pengunjung menemukan bagian |
+| Hero | Janji utama produk | `<h1>`, `<p>`, `<a>` | Pesan dipahami cepat |
+| Fitur | Bukti manfaat | `<section>`, `<ul>` | Nilai produk jelas |
+| CTA | Menghasilkan aksi | `<form>`/`<a>` | Klik atau pendaftaran |
+| Footer | Info legal/kontak | `<footer>` | Kepercayaan & kontak |
+
+## Checklist Sebelum Publik
+
+- ✅ `lang="id"` di `<html>`
+- ✅ `meta viewport` agar tampil bagus di HP
+- ✅ `title` unik + `meta description`
+- ✅ Semua `<img>` punya `alt`
+- ✅ Formulir punya `<label>`
+- ✅ Struktur semantik: header/nav/main/section/footer
+
+## Di Dunia Nyata
+
+- **Peluncuran kursus** — CTA mengarah ke form email untuk mengukur calon peserta
+- **Restoran lokal** — hero menampilkan menu unggulan dan tombol telepon langsung
+- **Aplikasi SaaS** — daftar fitur menjawab keberatan sebelum tombol uji coba
+- **Portofolio freelancer** — landing page menuntun perekrut dari karya ke form kontak
+
+<div class="note">💡 Landing page bukan kumpulan semua informasi bisnis. Satu halaman sebaiknya punya satu tujuan utama dan satu CTA yang diulang secara konsisten; terlalu banyak pilihan menurunkan peluang pengunjung bertindak.</div>
+
+## Latihan Akhir
+
+Buat landing page milikmu sendiri di editor di bawah. Isinya minimal:
+
+1. Header dengan nav
+2. Hero (judul + tombol CTA + gambar)
+3. Daftar fitur (pakai `<ul>`)
+4. Formulir pendaftaran sederhana
+5. Footer dengan `&copy;`
+
+Setelah yakin, lanjut ke kuis — kalau lulus, bab HTML selesai dan sertifikatmu menunggu! 🎓
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warung Sate Pak Kumis</title>
+</head>
+<body style="font-family:sans-serif;margin:0;text-align:center">
+  <header style="background:#DC2626;color:white;padding:24px">
+    <h1>Warung Sate Pak Kumis</h1>
+    <p>Sejak 1985 di Jalan Merdeka</p>
+  </header>
+  <main style="padding:32px">
+    <h2>Sate Ayam Legendaris</h2>
+    <ul style="display:inline-block;text-align:left">
+      <li>100% ayam kampung</li>
+      <li>Bumbu kacang rahasia</li>
+      <li>Buka 09.00 – 22.00</li>
+    </ul>
+    <p><img src="https://placehold.co/400x160/F59E0B/white?text=Sate+%F0%9F%8D%BA" alt="Ilustrasi sate" width="400"></p>
+    <form>
+      <label>Pesan antar: <input type="tel" placeholder="08xx xxxx xxxx"></label>
+      <button type="submit">Pesan Sekarang</button>
+    </form>
+  </main>
+  <footer style="background:#17181D;color:white;padding:12px">&copy; 2026 Warung Sate Pak Kumis</footer>
+</body>
+</html>`} />

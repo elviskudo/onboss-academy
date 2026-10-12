@@ -1,0 +1,202 @@
+---
+title: "Variabel & Tipe Data"
+description: "int, double, char, sizeof, format specifier, storage class — memahami memori di C"
+order: 2
+quiz:
+  - q: "Tipe data untuk bilangan bulat di C adalah…"
+    options: ["real", "int", "number", "float64"]
+    answer: 1
+    explain: "int (biasanya 4 byte) untuk bilangan bulat; double untuk desimal; char untuk satu karakter."
+  - q: "Format specifier untuk mencetak string (char array) adalah…"
+    options: ["%d", "%c", "%s", "%f"]
+    answer: 2
+    explain: "%s untuk teks, %d untuk int, %c untuk char, %f untuk desimal."
+  - q: "Karakter akhir sebuah string dalam C adalah…"
+    options: ["Karakter nol '\\0'", "Tanda titik koma", "Karakter newline", "Tidak ada penanda"]
+    answer: 0
+    explain: "String C adalah char array yang ditutup '\\0' — tanpa penanda ini, strlen akan terus membaca."
+  - q: "Ukuran memori char berapa byte?"
+    options: ["1 byte", "4 byte", "8 byte", "2 byte"]
+    answer: 0
+    explain: "char selalu 1 byte; int umumnya 4 byte; double umumnya 8 byte."
+  - q: "Nilai awal variabel lokal yang belum diisi disebut…"
+    options: ["Undefined/garbage value", "Selalu 0", "Selalu null", "Selalu -1"]
+    answer: 0
+    explain: "C tidak mengisi variabel lokal otomatis — isi selalu dengan nilai awal saat deklarasi."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        int umur = 20;
+        double tinggi = 1.65;
+        char grade = 'A';
+        const double PI = 3.14159;
+
+        printf("Umur: %d\n", umur);
+        printf("Tinggi: %.2f\n", tinggi);
+        printf("Grade: %c, PI: %.4f\n", grade, PI);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C menuntut kamu **tahu tipe setiap data** — ukuran memori dan perilaku operasi bergantung padanya. Tidak ada autoboxing, tidak ada tipe dinamis: apa yang kamu tulis, itulah yang masuk memori.
+
+## 5 Tipe Dasar + Modifikatornya
+
+C punya **5 tipe dasar** (`int`, `char`, `float`, `double`, `void`) yang diperluas oleh modifikator `short`, `long`, `long long`, `unsigned`, dan `signed` menjadi kumpulan tipe berikut:
+
+```c
+int    umur = 20;          // bilangan bulat (±2 miliar)
+short  kecil = 100;        // bilangan pendek
+long   besar = 10000000000L;
+long long sangatBesar = 9000000000000000000LL;
+double tinggi = 1.65;      // desimal presisi ganda
+float  rating = 4.5f;      // desimal presisi tunggal
+char   huruf = 'A';        // satu karakter, kutip tunggal
+unsigned int positif = 50; // hanya ≥ 0, rentang dua kali lipat
+```
+
+| Tipe | Ukuran umum | Rentang/Sifat | Kapan dipakai |
+|---|---|---|---|
+| `char` | 1 byte | -128..127 (atau 0..255) | karakter, flag, byte mentah |
+| `short` | 2 byte | -32.768..32.767 | hemat memori, counter kecil |
+| `int` | 4 byte | ±2,1 miliar | hitungan umum — default bilangan bulat |
+| `long` | 4/8 byte | platform-dependent | timestamp, id besar |
+| `long long` | 8 byte | ±9,2 × 10¹⁸ | id unik, perhitungan besar |
+| `float` | 4 byte | ±3,4×10³⁸ (~7 desimal) | grafis, data besar presisi rendah |
+| `double` | 8 byte | ±1,8×10³⁰⁸ (~15 desimal) | default desimal — ilmu/keuangan |
+| `unsigned int` | 4 byte | 0..4.294.967.295 | hitungan pasti positif |
+
+`void` bukan tipe data untuk menyimpan nilai — tanda "tidak ada" pada return function dan parameter kosong.
+
+```c
+printf("sizeof int    = %zu byte\n", sizeof(int));    // 4
+printf("sizeof double = %zu byte\n", sizeof(double)); // 8
+```
+
+`sizeof` mengembalikan ukuran memori suatu tipe/variabel dalam byte — tool paling andal untuk memastikan asumsimu benar di platform berjalan.
+
+## Format Specifier
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int a = 42;
+    double b = 3.14159;
+    char c = 'X';
+    char nama[] = "OnBoss";
+
+    printf("%d\n", a);        // 42
+    printf("%5d|\n", a);      //   42| — lebar 5 karakter
+    printf("%.2f\n", b);      // 3.14 — 2 angka desimal
+    printf("%c %s\n", c, nama); // X OnBoss
+    printf("%ld %lld\n", 100L, 100LL);  // tipe panjang
+    printf("%u\n", 300u);             // unsigned
+    printf("%x\n", 255);              // ff (hexadesimal)
+    return 0;
+}
+```
+
+Sepuluh specifier paling dipakai: `%d` (int), `%ld`/`%lld` (long/long long), `%u` (unsigned), `%f` (double), `%.Nf` (N desimal), `%c` (char), `%s` (string), `%p` (pointer), `%x` (hex), `%zu` (sizeof). `%.2f` membatasi desimal, `%5d` menambah spasi — keduanya sering dipakai untuk output rapi.
+
+## Deklarasi, Konstanta & Casting
+
+```c
+int a = 10, b = 20;        // dua variabel sekaligus
+const double PI = 3.14159; // const: tidak boleh diubah (konstanta kompilator)
+int hasil = (int) 3.99;    // casting: hasil = 3 (dipotong, TIDAK dibulatkan)
+
+double rata = (double) a / b;  // cast dulu → 0.5
+```
+
+Tanpa cast, `a / b` dengan dua `int` akan membuang bagian desimal (pembagian integer). Casting ekplisit memakai `(tipe) nilai`.
+
+## Konversi Implisit (Integer Promotion)
+
+Saat operand beda tipe, C menaikkan tipe yang lebih kecil otomatis:
+
+```c
+int i = 7;
+double d = 2.5;
+printf("%f\n", i + d);      // i → 7.0, hasil 9.5 — promotion ke double
+char c = 'A';
+printf("%d\n", c + 1);      // c → 65, hasil 66 — promotion ke int
+```
+
+Kejatuhan umum: `char` diperlakukan sebagai angka saat dihitung, dan pembagian dua `int` selalu membuang desimal sampai salah satunya di-cast.
+
+## 4 Storage Class
+
+C mengenal **4 storage class** yang menentukan *di mana* dan *berapa lama* variabel hidup:
+
+| Storage | Lifetime | Scope | Contoh |
+|---|---|---|---|
+| `auto` (default) | blok/function selesai | lokal | `auto int x = 1;` |
+| `static` lokal | selama program berjalan | tetap lokal | counter yang tidak di-reset |
+| `extern` | selama program berjalan | global (lintas file) | `extern int config;` |
+| `register` | sama seperti `auto` | lokal | hint ke compiler (hampir tak dipakai manual) |
+
+```c
+void hitungPanggilan(void) {
+    static int hitung = 0;   // static: bertahan antar pemanggilan
+    hitung++;
+    printf("Dipanggil %d kali\n", hitung);
+}
+```
+
+## Scope Variabel
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int luar = 10;
+    if (luar > 5) {
+        int dalam = 3;      // hanya terlihat di blok ini
+        printf("%d\n", dalam);
+    }
+    // printf("%d", dalam); // ERROR: dalam tidak dikenal
+    return 0;
+}
+```
+
+Variabel lokal hidup di dalam blok `{ ... }` tempat ia dideklarasikan. Variabel **global** (di luar semua function) terlihat dari mana saja dalam file — tapi penggunaannya hemat karena menyulitkan debugging.
+
+## Di Dunia Nyata
+
+- **Konfigurasi baud rate modem embedded**: `const int BAUD = 9600;` — konstanta yang dijaga kompilator.
+- **Sensor suhu IoT**: `float` cukup untuk pembacaan sensor (±0.1°C) tanpa membuang RAM mikrokontroler.
+- **Timer hardware**: `unsigned int` mencegah bug negatif saat counter berputar dari batas maksimum.
+- **Sistem billing telekomunikasi**: `long long` menghitung pulsa dalam satuan terkecil agar tidak overflow.
+- **Pemetaan memori jaringan**: `char` sebagai buffer mentah untuk protokol paket — 1 byte = 1 oktet.
+
+<div class="note">💡 Selalu beri nilai awal saat deklarasi (<code>int total = 0;</code>). Variabel lokal tanpa inisialisasi berisi nilai acak dari memori — sumber bug yang paling sulit ditebak. Kompilator C tidak memperingatkan ini secara bawaan, jadi kebiasaan inisialisasi adalah tameng pertamamu.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int main(void) {
+    int umur = 20;
+    double tinggi = 1.65;
+    char grade = 'A';
+    const double PI = 3.14159;
+
+    printf("Umur: %d tahun\\n", umur);
+    printf("Tinggi: %.2f m\\n", tinggi);
+    printf("Grade: %c | PI: %.4f\\n", grade, PI);
+    printf("sizeof int = %zu, double = %zu, char = %zu\\n",
+           sizeof(int), sizeof(double), sizeof(char));
+
+    int a = 7, b = 2;
+    printf("Pembagian int: %d\\n", a / b);
+    printf("Dengan cast: %.1f\\n", (double) a / b);
+    printf("Sisa bagi: %d\\n", a % b);
+
+    int i = 7;
+    double d = 2.5;
+    printf("int + double = %.1f\\n", i + d);
+    return 0;
+}`} />

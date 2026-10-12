@@ -1,0 +1,160 @@
+---
+title: "Optional"
+description: "Menangani nilai yang mungkin kosong — if let, guard, dan nil coalescing"
+order: 7
+quiz:
+  - q: "Tipe String? pada Swift artinya…"
+    options: ["wajib nil", "boleh berisi nil", "string kosong", "string panjang"]
+    answer: 1
+    explain: "Tanda tanya menandai tipe opsional yang bisa menerima nil."
+  - q: "if let digunakan untuk…"
+    options: ["mengeluarkan nilai opsional dengan aman", "menghapus variabel", "membuat array", "mengompilasi ulang"]
+    answer: 0
+    explain: "Nilai di dalam hanya dipakai bila tidak nil."
+  - q: "Nil coalescing ditulis dengan…"
+    options: ["?:", "?.", "??", "!!"]
+    answer: 2
+    explain: "x ?? y mengembalikan x bila ada, kalau tidak y."
+  - q: "Force unwrap dengan ! berbahaya bila…"
+    options: ["nilai string", "nilai ternyata nil", "nilai 0", "dipakai bersama print"]
+    answer: 1
+    explain: "Bila nil, program langsung berhenti dengan crash."
+  - q: "guard let berfungsi untuk…"
+    options: ["mengulang perulangan", "keluar lebih dulu bila nil", "membuat class", "menyimpan file"]
+    answer: 1
+    explain: "guard menjaga kondisi di awal fungsi dan keluar bila gagal."
+example:
+  code: |
+    func panjang(_ teks: String?) -> Int {
+        guard let teks = teks else { return 0 }
+        return teks.count
+    }
+
+    let nama: String? = "Swift"
+    let fallback = nama ?? "tanpa nama"
+
+    print(fallback)
+    print("Panjang: \(panjang(nama))")
+    print("Panjang kosong: \(panjang(nil))")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Nil pada Swift adalah hal yang harus dinyatakan eksplisit — dan dia selalu ditangani dengan cara yang aman.
+
+## Tipe Opsional
+
+```swift
+var aman: String = "Halo"
+// aman = nil   // error kompilasi
+
+var rawan: String? = "Halo"
+rawan = nil     // diperbolehkan
+print(rawan ?? "kosong")
+```
+
+Tanpa tanda tanya, nil tidak akan pernah masuk. Swift punya **5 cara menangani opsional**:
+
+| Cara | Contoh | Perilaku | Kapan dipakai |
+| --- | --- | --- | --- |
+| `if let` | `if let isi = nama { }` | buka nilai dalam blok | satu pengecekan |
+| `guard let` | `guard let isi = nama else { return }` | keluar lebih dulu | validasi di awal fungsi |
+| Optional chaining `?.` | `nama?.count` | lanjut bila ada, hasil opsional | rantai akses |
+| Nil coalescing `??` | `nama ?? "default"` | nilai pengganti bila nil | beri default |
+| Force unwrap `!` | `nama!.count` | paksa; bila nil → crash | hanya bila pasti ada |
+
+## if let
+
+```swift
+let nama: String? = "Sari"
+
+if let isi = nama {
+    print("Panjang: \(isi.count)")
+} else {
+    print("Kosong")
+}
+```
+
+Blok di dalam hanya dijalankan bila nilai tidak nil.
+
+## guard let
+
+```swift
+func cetakPanjang(_ teks: String?) {
+    guard let isi = teks else {
+        print("Teks kosong")
+        return
+    }
+    print("Panjang: \(isi.count)")
+}
+
+cetakPanjang("Halo")
+cetakPanjang(nil)
+```
+
+`guard` menyimpan kondisi di awal dan mengeluarkan fungsi bila gagal.
+
+## Nil Coalescing dan Safe Call
+
+```swift
+let pilihan: String? = nil
+let akhir = pilihan ?? "default"
+
+let panjang = pilihan?.count
+print(akhir)
+print(panjang ?? -1)
+```
+
+`?.` menghasilkan opsional, `??` mengubahnya jadi nilai biasa. Optional chaining bisa dirantai sepanjang yang diperlukan — bila salah satu mata rantai nil, seluruh ekspresi langsung menjadi nil:
+
+```swift
+struct Alamat { var kota: String? }
+struct Pengguna { var alamat: Alamat? }
+
+let user: Pengguna? = Pengguna(alamat: Alamat(kota: "Bandung"))
+let kota = user?.alamat?.kota?.uppercased()   // "BANDUNG"
+let hilang = user?.alamat?.kota?.count        // nil bila salah satu kosong
+```
+
+Tanpa `?.`, rantai seperti itu akan crash pada langkah pertama yang nil. Hasil optional chaining sudah di-flatten oleh Swift: `user?.alamat?.kota` bertipe `String?` — bukan `String??` — jadi cukup ditangani satu kali dengan `??` atau `if let`.
+
+## Ketika Force Unpack Diperbolehkan
+
+```swift
+let wajib: String = "siap"
+print(wajib.count)
+```
+
+`!` sebaiknya hanya dipakai bila tipe itu memang tidak pernah nil.
+
+## Di Dunia Nyata
+
+- **Profil pengguna dari server** — `user?.alamat?.kota ?? "Belum diisi"` menampilkan teks aman walau field tidak lengkap.
+- **Mengambil dari dictionary** — `skor["sari"] ?? 0` mengembalikan nol saat kunci tidak ada, tanpa cabang if.
+- **Validasi di awal fungsi** — `guard let token = authToken else { return }` mengeluarkan fungsi sebelum logika utama, menghindari nesting.
+- **Merangkai data opsional** — `alamat?.kota?.uppercased()` menggantikan tiga if bertingkat.
+- **Konfigurasi opsional** — nilai pengaturan yang boleh hilang dibiarkan `String?`, lalu diberi default saat dipakai.
+
+<div class="note">💡 Utamakan guard let di awal fungsi agar alur utama tetap sedikit bersarang. Bila kamu menumpuk if let bertingkat, pertimbangkan mengembalikan opsional dan membiarkannya ditangani di satu tempat.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`func panjang(_ teks: String?) -> Int {
+    guard let isi = teks else { return 0 }
+    return isi.count
+}
+
+func sapa(_ nama: String?) {
+    if let isi = nama {
+        print("Halo, \\(isi)")
+    } else {
+        print("Namanya kosong")
+    }
+}
+
+let pilihan: String? = "Swift"
+let kosong: String? = nil
+print(pilihan ?? "default")
+print(kosong ?? "tanpa nama")
+sapa(pilihan)
+sapa(nil)
+print("Panjang: \\(panjang(pilihan))")
+print("Panjang kosong: \\(panjang(nil))")`} />

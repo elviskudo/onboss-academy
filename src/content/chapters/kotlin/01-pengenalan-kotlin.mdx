@@ -1,0 +1,136 @@
+---
+title: "Pengenalan Kotlin"
+description: "Bahasa resmi Android yang modern — ringkas, aman, dan berjalan di JVM"
+order: 1
+quiz:
+  - q: "Bahasa resmi pengembangan Android modern adalah…"
+    options: ["Java", "Kotlin", "C++", "Swift"]
+    answer: 1
+    explain: "Google menetapkan Kotlin sebagai bahasa resmi Android pada 2019."
+  - q: "Kotlin dikembangkan oleh…"
+    options: ["Google", "Oracle", "JetBrains", "Apple"]
+    answer: 2
+    explain: "JetBrains, pembuat IDE IntelliJ, merilis Kotlin pada 2011."
+  - q: "Titik masuk program Kotlin adalah…"
+    options: ["fun main", "start", "init function", "begin"]
+    answer: 0
+    explain: "Program dieksekusi dari fun main(), biasanya di dalam kurung."
+  - q: "Kotlin berjalan di atas…"
+    options: ["Node", "JVM", "Python VM", "PHP"]
+    answer: 1
+    explain: "Kotlin dikompilasi ke bytecode JVM sehingga bisa memakai library Java."
+  - q: "Perintah mencetak satu baris di Kotlin adalah…"
+    options: ["echo", "puts", "println", "console"]
+    answer: 2
+    explain: "println() mencetak teks lalu memberi baris baru."
+example:
+  code: |
+    fun main() {
+        val nama = "OnBoss"
+        println("Halo, $nama!")
+
+        val angka = listOf(1, 2, 3)
+        for (n in angka) {
+            println("Angka ke-$n: ${n * n}")
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kotlin adalah bahasa statis yang dirancang agar ringkas tanpa kehilangan keamanan tipe — dan sepenuhnya kompatibel dengan ekosistem Java.
+
+## Hello World
+
+```kotlin
+fun main() {
+    println("Halo, Dunia!")
+}
+```
+
+Kurung kurawal menandai blok, titik koma opsional, dan `fun` menandai deklarasi function. Lima istilah yang baru saja kamu lihat:
+
+| Istilah | Peran | Contoh |
+| --- | --- | --- |
+| `fun` | penanda deklarasi function | `fun main()` |
+| `main` | titik masuk program | dipanggil otomatis saat program mulai |
+| `val` | variabel baca-saja | `val nama = "OnBoss"` |
+| `println` | mencetak satu baris | `println("Halo")` |
+| `$nama` | string template | menyisipkan nilai ke teks |
+
+## Kenapa Kotlin?
+
+- **Ringkas**: banyak pola Java berkurang separuh di Kotlin
+- **Aman terhadap null**: tipe nullable dinyatakan eksplisit
+- **Interop**: memanggil library Java tanpa wrapper
+- **Modern**: default parameter, data class, extension
+
+## Fakta Singkat
+
+| Fakta | Isi |
+| --- | --- |
+| Pembuat | JetBrains (dirilis 2011); resmi untuk Android sejak 2019 |
+| Sifat bahasa | Statis, null-safe, ringkas |
+| Target kompilasi | JVM bytecode, JavaScript, dan Kotlin/Native |
+| Ekstensi file | `.kt` untuk sumber, `.kts` untuk script |
+| Kompatibilitas | Library Java bisa dipanggil langsung tanpa wrapper |
+
+## Perbandingan Singkat dengan Java
+
+```kotlin
+// Java: deklarasi variabel panjang
+// String nama = "Sari";
+
+// Kotlin: satu baris, tipe ditebak
+val nama = "Sari"
+println(nama)
+```
+
+| Java | Kotlin | Catatan |
+| --- | --- | --- |
+| `String nama = "Sari";` | `val nama = "Sari"` | tipe ditebak otomatis |
+| `public static void main(String[] a)` | `fun main()` | argumen boleh dihilangkan |
+| getter/setter manual | properti `val`/`var` | pembaca-penulis dibuat compiler |
+| `equals()` manual | `data class` menghasilkan `equals` | perbandingan per isi, bukan per referensi |
+
+## Menjalankan Program
+
+```bash
+kotlin belajar.kt
+```
+
+Atau langsung di editor OnBoss di halaman ini — cukup tekan tombol jalankan.
+
+## fun main dengan Argumen
+
+```kotlin
+fun main(args: Array<String>) {
+    println("Jumlah argumen: " + args.size)
+}
+```
+
+`args` berisi parameter baris perintah bila program dipanggil dengan opsi.
+
+## Di Dunia Nyata
+
+- **Aplikasi Android baru** — Android Studio membuat proyek Kotlin secara bawaan; hampir semua contoh resmi Google sekarang ditulis Kotlin.
+- **Layanan backend** — framework Ktor dibangun sepenuhnya di Kotlin, dan Spring mendukung Kotlin sebagai bahasa pertama.
+- **Migrasi bertahap** — tim dengan basis kode Java besar memindahkan file satu per satu; keduanya berjalan di JVM yang sama sehingga bisa bercampur.
+- **Konfigurasi build** — Gradle Kotlin DSL menulis script build memakai Kotlin alih-alih Groovy.
+- **Script otomasi** — file `.kts` berjalan tanpa struktur proyek, cocok untuk tugas kecil seperti konversi data.
+
+<div class="note">💡 Kotlin membedakan val (tidak bisa diubah) dan var (bisa diubah). Mulailah dengan val — variabel yang tidak bisa diubah menghilangkan banyak bug sejak awal.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val nama = "Dunia"
+    println("Halo, $nama!")
+
+    val angka = listOf(1, 2, 3)
+    for (n in angka) {
+        println("Angka ke-" + n + ": " + n * n)
+    }
+
+    var skor = 10
+    skor += 5
+    println("Skor akhir: " + skor)
+}`} />

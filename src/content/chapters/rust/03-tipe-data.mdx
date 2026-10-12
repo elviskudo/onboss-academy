@@ -1,0 +1,143 @@
+---
+title: "Tipe Data"
+description: "i32, f64, bool, char, dan String — tipe yang eksplisit dan aman"
+order: 3
+quiz:
+  - q: "Tipe bilangan bulat bawaan Rust adalah…"
+    options: ["int", "i32", "integer", "long"]
+    answer: 1
+    explain: "i32 adalah default; ada juga i8 sampai i128 dan varian tanpa tanda u8, u32, dan seterusnya."
+  - q: "Tipe pecahan bawaan Rust adalah…"
+    options: ["double", "float", "f64", "decimal"]
+    answer: 2
+    explain: "f64 (presisi ganda) dipakai sebagai default untuk semua perhitungan pecahan."
+  - q: "Tipe char mewakili…"
+    options: ["satu byte ASCII", "satu string", "satu bit", "satu karakter Unicode (4 byte)"]
+    answer: 3
+    explain: "Char ditulis dengan kutip tunggal, contoh: 'A' atau '🚀'."
+  - q: "Konversi antar tipe angka memakai…"
+    options: ["as", "cast()", "convert", "to()"]
+    answer: 0
+    explain: "Contoh: let b = 3.99 as i32; hasilnya 3 (dipotong ke bawah)."
+  - q: "Variabel string yang dimodifikasi memakai tipe…"
+    options: ["&str", "str", "char[]", "String"]
+    answer: 3
+    explain: "String dimiliki dan bisa bertambah; &str hanya meminjam teks."
+example:
+  code: |
+    fn main() {
+        let bulat: i32 = 25;
+        let pecahan: f64 = 95.5;
+        let benar: bool = true;
+        let huruf: char = 'A';
+        let teks: String = String::from("Rust");
+
+        let hasil = bulat as f64 + pecahan;
+        println!("{} {} {} {} {}", bulat, pecahan, benar, huruf, teks);
+        println!("hasil = {}", hasil);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust **tidak menebak-nebak tipe**: setiap nilai jelas sejak awal, dan konversi harus kamu tulis sendiri.
+
+## 14 Tipe Primitif
+
+Rust punya tepat **14 tipe primitif**: 12 tipe bilangan, `bool`, dan `char` (plus tipe komposit: tuple dan array).
+
+### 12 Tipe Bilangan
+
+| Kelompok | Tipe | Rentang | Contoh pemakaian |
+| --- | --- | --- | --- |
+| Tanpa tanda kecil | `u8` | 0 – 255 | Byte, warna RGB |
+| Tanpa tanda | `u16`, `u32`, `u64`, `u128` | 0 – 65.535 s/d 2¹²⁸−1 | ID, ukuran file |
+| Tanpa tanda platform | `usize` | 32/64 bit sesuai OS | Panjang collection, indexing |
+| Bertanda kecil | `i8` | −128 – 127 | Suhu, offset |
+| Bertanda | `i16`, `i32`, `i64`, `i128` | −2ⁿ−¹ – 2ⁿ−¹−1 | Hitungan umum (`i32` default) |
+| Bertanda platform | `isize` | 32/64 bit sesuai OS | Pointer difference |
+| Pecahan | `f32`, `f64` | ±3.4×10³⁸ / ±1.8×10³⁰⁸ | Semua desimal (`f64` default) |
+
+Garis bawah pada angka (`1_000_000`) hanya pemisah visual. `u8` cocok untuk nilai 0 sampai 255 seperti warna dan byte.
+
+## Boolean dan Char
+
+```rust
+let benar: bool = true;
+let salah: bool = false;
+let huruf: char = 'A';
+let emoji: char = '🚀';
+```
+
+`bool` hanya `true`/`false` — tidak ada angka 0/1 yang menyamar. `char` selalu 4 byte karena menyimpan satu karakter Unicode utuh, bukan sekadar byte.
+
+## String Dasar
+
+```rust
+let pendek: &str = "teks tetap";
+let dimiliki: String = String::from("bisa diubah");
+
+println!("{} dan {}", pendek, dimiliki);
+```
+
+`&str` adalah pinjaman teks, `String` adalah teks milik sendiri yang bisa ditambah isi.
+
+## Konversi Tipe
+
+```rust
+let a: i32 = 7;
+let b: f64 = a as f64;
+let c: i32 = 3.99 as i32;      // 3, dipotong
+
+println!("{} {} {}", a, b, c);
+```
+
+Rust tidak mengonversi diam-diam. `as` menulis konversi secara eksplisit sehingga kehilangan presisi tidak pernah terjadi tanpa disadari. **Kejatuhan**: konversi yang melebihi rentang target **panic di debug** dan membungkus (wrap) di release — `255u8 as u8 + 1` tidak pernah jadi 256 pada `u8`.
+
+## Parsing Teks ke Angka
+
+```rust
+let teks = "42";
+let angka: i32 = teks.parse().unwrap();
+println!("{} + 1 = {}", angka, angka + 1);
+```
+
+`parse` menghasilkan `Result`; `unwrap` mengambil nilai atau membuat program panic jika teks bukan angka.
+
+## Default Value
+
+Rust **tidak punya nilai nol bawaan** — setiap variabel wajib diisi saat deklarasi. Keadaan "kosong" dinyatakan eksplisit lewat `Option<T>` (`Some`/`None`), jadi tidak ada kejutan `null`.
+
+## Di Dunia Nyata
+
+- **Sensor suhu**: `i8` cukup untuk rentang −128 sampai 127 derajat, hemat memori
+- **Transaksi bank**: `i64` menyimpan rupiah dalam satuan terkecil (sen) tanpa error pembulatan
+- **Pixel gambar**: `u8` untuk tiap kanal RGB (0–255)
+- **Timestamp**: `u64` epoch millis — muat miliaran tahun ke depan
+- **Input form**: `"25".parse::<i32>()` mengubah teks input jadi angka untuk validasi umur
+
+<div class="note">💡 Angka bulat default i32 sudah cukup untuk hampir semua keperluan. Pakai tipe lebih besar hanya saat datanya memang butuh, bukan hanya untuk berjaga-jaga.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let bulat: i32 = 25;
+    let pecahan: f64 = 95.5;
+    let benar: bool = true;
+    let huruf: char = 'A';
+    let teks: String = String::from("Rust");
+
+    println!("{} {} {} {} {}", bulat, pecahan, benar, huruf, teks);
+
+    let a: i32 = 7;
+    let b: f64 = a as f64;
+    let c: i32 = 3.99 as i32;
+    println!("a = {}, b = {}, c = {}", a, b, c);
+
+    let teks_angka = "42";
+    let angka: i32 = teks_angka.parse().unwrap();
+    println!("{} + 1 = {}", angka, angka + 1);
+
+    let u: u8 = 255;
+    println!("u8 maks = {}", u);
+    let bmp: u8 = 0xFF;
+    println!("hex = {}", bmp);
+}`} />

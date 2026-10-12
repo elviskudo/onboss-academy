@@ -1,0 +1,155 @@
+---
+title: "Stack & Queue: LIFO dan FIFO"
+description: "Dua struktur data urutan paling dasar dan implementasinya di Python"
+order: 3
+quiz:
+  - q: "Stack bekerja dengan prinsip…"
+    options: ["FIFO (first in first out)", "LIFO (last in first out)", "Acarak acak", "Urut besar ke kecil"]
+    answer: 1
+    explain: "Elemen terakhir yang masuk adalah yang pertama keluar — seperti tumpukan piring."
+  - q: "Queue bekerja dengan prinsip…"
+    options: ["FIFO", "LIFO", "Prioritas selalu tetap", "Tanpa urutan"]
+    answer: 0
+    explain: "Elemen pertama yang masuk adalah yang pertama keluar — seperti antrean kasir."
+  - q: "Operasi menambah elemen ke stack disebut…"
+    options: ["enqueue", "push", "append-front", "shift"]
+    answer: 1
+    explain: "push menambah ke puncak; pop mengambil dari puncak yang sama."
+  - q: "Untuk queue yang efisien di Python disarankan memakai…"
+    options: ["list dengan pop(0)", "collections.deque", "tuple", "set"]
+    answer: 1
+    explain: "deque memberi O(1) di kedua ujung; list.pop(0) adalah O(n) karena geser elemen."
+  - q: "Contoh penggunaan stack dalam pemrograman adalah…"
+    options: ["Undo pada editor", "Antrean print", "Mengurutkan nama", "Menghitung rata-rata"]
+    answer: 0
+    explain: "Undo mengambil kembali aksi terakhir — sifat khas LIFO."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Stack dan queue adalah **struktur data urutan** paling sederhana — bedanya hanya di sisi mana elemen masuk dan keluar.
+
+## Stack (LIFO)
+
+```python
+tumpukan = []
+tumpukan.append("a")     # push
+tumpukan.append("b")
+tumpukan.append("c")
+
+print(tumpukan.pop())    # pop -> c
+print(tumpukan[-1])      # peek -> b (tanpa menghapus)
+```
+
+Semua operasi di ujung akhir list: O(1). Kasus pakai: undo/redo, backtracking (maze, tebak kata), evaluasi ekspresi, rekursi sistem.
+
+## Queue (FIFO)
+
+```python
+from collections import deque
+
+antre = deque(["andi", "budi"])
+antre.append("citra")        # masuk antrean
+print(antre.popleft())       # keluar -> andi
+```
+
+`deque` (double-ended queue) memberi O(1) untuk `append` dan `popleft` di kedua ujung — bandingkan dengan `list.pop(0)` yang O(n).
+
+## Simulasi Antrean Tugas
+
+```python
+from collections import deque
+
+antre = deque(["backup db", "deploy staging", "review PR", "kirim laporan"])
+
+while antre:
+    tugas = antre.popleft()
+    print(f"Menjalankan: {tugas} | sisa antrean: {len(antre)}")
+```
+
+Output menunjukkan urutan keluar persis urutan masuk — ciri FIFO.
+
+## Membalik Urutan dengan Stack
+
+```python
+kata = "onboss"
+tumpukan = list(kata)
+terbalik = ""
+while tumpukan:
+    terbalik += tumpukan.pop()
+print(terbalik)  # ssobno
+```
+
+## Perbandingan
+
+| Aspek | Stack | Queue |
+|-------|-------|-------|
+| Prinsip | LIFO | FIFO |
+| Tambah | `append` (push) | `deque.append` (enqueue) |
+| Ambil | `pop` | `deque.popleft` |
+| Peek | `[-1]` | `[0]` |
+| Struktur Python | `list` | `collections.deque` |
+
+## Empat Operasi Inti
+
+Ada **4 operasi konseptual**: push dan pop pada stack, enqueue dan dequeue pada queue. Peek membaca elemen berikut tanpa menghapus. Semua operasi ujung tersebut O(1) dengan struktur Python yang tepat. Operasi pada struktur kosong harus ditangani: `list.pop()` dan `deque.popleft()` melempar `IndexError`, sehingga cek kondisi atau tangkap error sesuai kontrak aplikasi.
+
+| Struktur | Masuk | Keluar | Kompleksitas | Kapan dipakai |
+|---|---|---|---|---|
+| Stack `list` | `append` | `pop` | O(1) amortized / O(1) | undo dan backtracking |
+| Queue `deque` | `append` | `popleft` | O(1) / O(1) | antrean kerja FIFO |
+| Deque | `appendleft/right` | `popleft/pop` | O(1) | sliding window |
+| Priority queue `heapq` | `heappush` | `heappop` | O(log n) | tugas berdasarkan prioritas |
+
+Queue biasa mempertahankan urutan kedatangan; priority queue tidak. Bila dua prioritas sama, masukkan counter tambahan agar urutan stabil dan Python tidak mencoba membandingkan objek tugas yang tidak kompatibel.
+
+## Di Dunia Nyata
+
+- Stack menyimpan histori navigasi dan aksi undo editor.
+- Queue mendistribusikan email atau resize gambar sesuai urutan masuk.
+- Deque menjaga maksimum pada jendela metrik beberapa menit terakhir.
+- Priority queue memilih request paling mendesak atau simpul termurah pada Dijkstra.
+
+<div class="note">💡 Sederhana tapi krusial: `list.pop(0)` pada 100.000 elemen memindahkan hampir seluruh memori. Untuk antrean sungguhan, selalu gunakan `collections.deque`.</div>
+
+## Ekspresi Berimbang dengan Stack
+
+```python
+def berimbang(s):
+    pasangan = {")": "(", "]": "[", "}": "{"}
+    tumpukan = []
+    for c in s:
+        if c in "([{":
+            tumpukan.append(c)
+        elif c in pasangan:
+            if not tumpukan or tumpukan.pop() != pasangan[c]:
+                return False
+    return not tumpukan
+
+print(berimbang("([{}])"))  # True
+print(berimbang("([)]"))    # False
+```
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from collections import deque
+
+# --- Stack: LIFO ---
+tumpukan = []
+tumpukan.append("a")
+tumpukan.append("b")
+tumpukan.append("c")
+print("pop stack:", tumpukan.pop())   # c
+print("peek stack:", tumpukan[-1])    # b
+
+# --- Queue: FIFO ---
+antre = deque(["andi", "budi", "citra"])
+print("dequeue:", antre.popleft())    # andi
+antre.append("dewi")
+print("antrean sekarang:", list(antre))
+
+# --- Contoh kecil: membalik string dengan stack ---
+kata = "onboss"
+tumpukan = list(kata)
+hasil = ""
+while tumpukan:
+    hasil += tumpukan.pop()
+print("terbalik:", hasil)`} />

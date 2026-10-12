@@ -1,0 +1,149 @@
+---
+title: "List dan Tuple untuk Data"
+description: "Menambah, menyaring, memotong, dan mengurutkan data — toolbox harian analis"
+order: 2
+quiz:
+  - q: "Perbedaan utama tuple dan list adalah…"
+    options: ["Tuple hanya untuk angka", "Tuple tidak bisa diubah setelah dibuat", "Tuple selalu lebih cepat dari semua list", "List tidak bisa menyimpan teks"]
+    answer: 1
+    explain: "Tuple bersifat immutable — cocok untuk data referensi seperti pasangan (nama, angka) yang tidak boleh salah ubah."
+  - q: "data[1:3] pada list panjang 5 mengembalikan…"
+    options: ["Semua elemen", "Elemen indeks 1 sampai 3", "Hanya elemen indeks 3", "Elemen indeks 1 dan 2"]
+    answer: 3
+    explain: "Slice [1:3] mengambil indeks 1 dan 2 — batas akhir tidak ikut diambil."
+  - q: "Metode untuk menambahkan satu elemen di akhir list adalah…"
+    options: ["push()", "insertTo()", "append()", "concat()"]
+    answer: 2
+    explain: "append() menambahkan satu elemen ke posisi terakhir list."
+  - q: "Mengurutkan list angka dari kecil ke besar dilakukan dengan…"
+    options: ["list.sort()", "list.up()", "list.low()", "sort.list()"]
+    answer: 0
+    explain: "sort() mengurutkan list di tempat (in place); sorted(list) mengembalikan list baru."
+  - q: "Untuk menyalin list agar tidak ikut berubah saat diubah, gunakan…"
+    options: ["list.clone()", "list.copy()", "list.dup()", "list.same()"]
+    answer: 1
+    explain: "copy() membuat list baru berisi elemen yang sama — perubahan salinan tidak memengaruhi aslinya."
+example:
+  code: |
+    nilai = [78, 92, 65, 88, 71]
+    nilai.append(95)
+    nilai.sort()
+    print("Tertinggi:", nilai[-1])
+    print("Tiga teratas:", nilai[-3:])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+List dan tuple adalah dua wadah data paling sering dipakai. Keduanya menyimpan **urutan elemen**, tetapi punya sifat berbeda.
+
+## List vs Tuple
+
+| Aspek | List `[]` | Tuple `()` |
+|-------|-----------|------------|
+| Bisa diubah | ya (mutable) | tidak (immutable) |
+| Sintaks | `[10, 20]` | `(10, 20)` |
+| Kegunaan | data yang bertambah/kurang | data tetap, kunci dict |
+| Penulisan ulang | `data[0] = 99` boleh | `data[0] = 99` → `TypeError` |
+
+## Membuat dan Mengakses
+
+```python
+harga = [15000, 20000, 12500]
+print(harga[0])     # pertama
+print(harga[-1])    # terakhir
+print(len(harga))   # jumlah elemen
+```
+
+Indeks negatif menghitung dari belakang, jadi `harga[-1]` selalu elemen terakhir tanpa perlu tahu panjang list.
+
+## Metode List yang Paling Sering Dipakai
+
+Python punya **11 method list** untuk manipulasi data:
+
+| Method | Fungsi | Contoh hasil |
+|--------|--------|--------------|
+| `append(x)` | tambah satu di akhir | `[1, 2] + [3]` → `[1, 2, 3]` |
+| `extend(iter)` | gabung banyak elemen | `[1] + [2, 3]` → `[1, 2, 3]` |
+| `insert(i, x)` | sisip pada indeks i | `[1, 3]` insert `2` di 1 → `[1, 2, 3]` |
+| `remove(x)` | hapus nilai pertama yang cocok | `[1, 2]` remove `1` → `[2]` |
+| `pop(i)` | hapus dan kembalikan elemen | `[1, 2]` pop() → `2` |
+| `clear()` | kosongkan list | `[1, 2]` → `[]` |
+| `index(x)` | posisi pertama nilai x | `[5, 7]` index `7` → `1` |
+| `count(x)` | berapa kali x muncul | `[1, 1, 2]` count `1` → `2` |
+| `sort()` | urutkan di tempat | `[3, 1]` → `[1, 3]` |
+| `reverse()` | balik urutan | `[1, 2]` → `[2, 1]` |
+| `copy()` | salinan dangkal | list baru, independen |
+
+## Menambah dan Mengubah
+
+```python
+harga.append(17500)      # tambah di akhir
+harga[0] = 16000         # ubah elemen pertama
+harga.extend([9000, 11000])  # gabung banyak elemen
+```
+
+Hati-hati: `a = b` tidak menyalin list, hanya menunjuk ke list yang sama. Gunakan `b.copy()` bila ingin salinan bebas.
+
+## Slice: Memotong Data
+
+```python
+angka = [10, 20, 30, 40, 50, 60]
+print(angka[1:4])   # [20, 30, 40]
+print(angka[:3])    # tiga pertama
+print(angka[-2:])   # dua terakhir
+```
+
+Slice sangat berguna untuk mengambil periode data, misalnya lima entri terakhir dari log penjualan.
+
+## Mengurutkan dan Mencari
+
+```python
+nilai = [78, 92, 65, 88, 71]
+nilai.sort()
+print(nilai)              # [65, 71, 78, 88, 92]
+print(nilai[0], nilai[-1])
+print(88 in nilai)        # True
+print(nilai.index(92))    # 4
+```
+
+`in` dan `index()` menjawab pertanyaan paling dasar: apakah nilai ini ada, dan ada di posisi berapa?
+
+Ada 2 cara mengurutkan:
+
+- `nilai.sort()` — mengubah list asli (in place).
+- `sorted(nilai)` — menghasilkan list baru, list asli tetap.
+
+## Tuple: Data yang Tidak Boleh Berubah
+
+```python
+pasangan = ("pendapatan", 7500000)
+nama, jumlah = pasangan     # unpacking
+print(nama, jumlah)
+```
+
+Tuple dipakai sebagai **kunci dict** dan untuk data tetap seperti koordinat atau pasangan label-nilai. Kunci dict harus hashable, dan list tidak — tuple bisa, list tidak.
+
+## Di Dunia Nyata
+
+- **Koordinat titik** — `(latitude, longitude)` tidak boleh tertukar atau salah ubah.
+- **Baris penjualan tetap** — `(tanggal, produk, jumlah)` sebagai catatan yang tidak diedit ulang.
+- **Riwayat harga** — `harga.append(harga_baru)` tiap kali ada perubahan harga dari supplier.
+- **Top 5 produk terlaris** — `sorted(total, reverse=True)[:5]` untuk laporan mingguan.
+- **Data konfigurasi** — `(host, port)` sebagai pasangan yang dipakai ulang tanpa berubah.
+
+<div class="note">💡 Pilih list untuk data yang akan berubah (tambah, hapus, urutkan), tuple untuk data yang harus tetap. Sebagian besar dataset kecil di Python murni berbentuk list of tuple.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`nilai = [78, 92, 65, 88, 71, 92]
+nilai.append(95)
+
+urut = sorted(nilai)
+print("Urut:", urut)
+print("Tertinggi:", urut[-1])
+print("Tiga teratas:", urut[-3:])
+print("Jumlah data:", len(urut))
+print("Ada nilai 65?", 65 in nilai)
+
+total = 0
+for n in nilai:
+    total = total + n
+print("Rata-rata:", total / len(nilai))`} />

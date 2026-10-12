@@ -1,0 +1,137 @@
+---
+title: "Permission: chmod, chown, & umask"
+description: "Memahami rwx, angka permission, dan kepemilikan file di Linux"
+order: 3
+quiz:
+  - q: "Tiga basis permission Linux adalah…"
+    options: ["read, write, execute", "open, close, save", "allow, deny, maybe", "user, admin, guest"]
+    answer: 0
+    explain: "rwx — baca, tulis, jalankan — diterapkan terpisah untuk user, group, dan other."
+  - q: "chmod 755 artinya…"
+    options: ["user rwx, group r-x, other r-x", "semua hanya baca", "semua tanpa akses", "user tulis saja"]
+    answer: 0
+    explain: "7=rwx, 5=r-x, 5=r-x — pemilik penuh, sisanya baca+jalankan."
+  - q: "Perintah mengganti pemilik file adalah…"
+    options: ["chmod", "chown", "chgrp", "chuser"]
+    answer: 1
+    explain: "chown user:group file — biasanya butuh sudo."
+  - q: "Permission file executable ditandai huruf…"
+    options: ["r", "w", "x", "e"]
+    answer: 2
+    explain: "x = execute — tanpa x, file script/biner tidak bisa dijalankan."
+  - q: "Direktori tanpa permission x (execute) berarti…"
+    options: ["Tidak bisa masuk/mengakses isinya", "Tidak bisa menghapus", "Tidak bisa membaca", "Tidak ada efek"]
+    answer: 0
+    explain: "Pada direktori, x berarti 'boleh cd/masuk ke dalam' — tanpa itu, isinya tak terjangkau."
+---
+
+Setiap file dan direktori di Linux membawa **permission** dan **kepemilikan**. Inilah sistem yang menjaga server tetap aman.
+
+## Membaca ls -l
+
+```bash
+ls -l skrip.sh
+# -rw-r--r-- 1 sari sari 120 Okt 12 10:00 skrip.sh
+#  ^^^ ^^^ ^^^   ^user ^grp        hak akses
+```
+
+10 karakter pertama:
+
+```
+-  rw-  r--  r--
+|   |    |    |
+|   |    |    other (dunia)
+|   |    group (kelompok)
+|   user (pemilik)
+tipe file (- file, d direktori, l link)
+```
+
+- **r** (read) — baca: 4
+- **w** (write) — tulis: 2
+- **x** (execute) — jalankan: 1
+
+## chmod: Mengubah Hak Akses
+
+Mode simbolis:
+
+```bash
+chmod u+x skrip.sh     # pemilik dapat execute
+chmod g-w file.txt     # group kehilangan tulis
+chmod o=r file.txt     # other hanya baca
+chmod a+r publik.html  # semua boleh baca
+```
+
+Mode numerik (oktal):
+
+```bash
+chmod 755 skrip.sh    # rwx r-x r-x
+chmod 644 dokumen.txt # rw- r-- r--
+chmod 600 kunci.pem   # rw- ----- -----  (hanya pemilik)
+```
+
+| Angka | Arti | Hasil |
+|-------|------|-------|
+| 7 | rwx | 4+2+1 |
+| 6 | rw- | 4+2 |
+| 5 | r-x | 4+1 |
+| 4 | r-- | 4 |
+| 0 | --- | tidak ada akses |
+
+`-R` menerapkan rekursif ke seluruh isi folder:
+
+```bash
+chmod -R 755 folder-web/
+```
+
+## chown: Mengubah Pemilik
+
+```bash
+sudo chown sari:tim file.txt          # user sari, group tim
+sudo chown -R www-data:www-data /var/www/app   # rekursif
+```
+
+Format: `chown user:group file`. Sering dipakai saat menyerahkan folder ke user service (mis. `www-data` untuk web server).
+
+## Direktori: x Berarti Masuk
+
+```bash
+mkdir rahasia
+echo "isi" > rahasia/rahasia.txt
+chmod 700 rahasia     # hanya pemilik boleh masuk & mengelola
+```
+
+Pada direktori: `r` = boleh lihat daftar nama file, `w` = boleh tambah/hapus file, `x` = boleh masuk dan akses file di dalamnya.
+
+## umask: Default Permission Baru
+
+```bash
+umask             # contoh output: 0022
+```
+
+Umumnya menghasilkan file **644** dan direktori **755** — cukup aman sebagai default.
+
+## Tiga Subjek, Tiga Hak, dan Tiga Bit Khusus
+
+Mode klasik memiliki **3 subjek** (`user`, `group`, `other`) dan **3 hak dasar** (`read`, `write`, `execute`). Ada pula **3 bit khusus**.
+
+| Bit/hak | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `r` | Membaca file/daftar nama | `chmod u+r file` | Memberi akses baca |
+| `w` | Mengubah file/entri direktori | `chmod g+w dir` | Folder kerja grup |
+| `x` | Menjalankan/menelusuri direktori | `chmod u+x script` | Script atau akses folder |
+| setuid | Menjalankan dengan effective owner | `chmod u+s program` | Binary sistem tertentu, sangat terbatas |
+| setgid | Effective group/warisan grup direktori | `chmod g+s proyek` | Folder kolaborasi |
+| sticky | Hanya pemilik dapat menghapus entrinya | `chmod +t bersama` | Direktori tulis bersama seperti `/tmp` |
+
+Permission direktori berbeda dari file: `w` memungkinkan membuat atau menghapus entri, bahkan bila file di dalamnya bukan milik pelaku, selama `x` juga tersedia. Karena itu jangan memberi `777` sebagai jalan pintas. Untuk folder web statis umumnya gunakan direktori `755`, file `644`, lalu kepemilikan grup yang tepat.
+
+Periksa setiap komponen path dengan `namei -l /path/file`. Gunakan `chmod -R` dan `chown -R` hanya setelah memastikan target absolut; salah target dapat membuka secret atau membuat sistem gagal boot. ACL (`getfacl`/`setfacl`) cocok bila permission user-group-other tidak cukup.
+
+## Di Dunia Nyata
+
+- Private key SSH memakai `600` agar hanya pemilik dapat membaca.
+- Folder upload service dimiliki user service, bukan dibuat `777`.
+- Setgid pada folder project membuat file baru mewarisi grup tim.
+- Sticky bit pada folder bersama mencegah user menghapus file milik user lain.
+
+<div class="note">💡 File rahasia seperti SSH private key dan `.env` sebaiknya `600`; `644` membuat semua user lokal dapat membacanya.</div>

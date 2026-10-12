@@ -1,0 +1,137 @@
+---
+title: "Pengenalan PHP"
+description: "Bahasa backend yang menggerakkan jutaan situs — 3 tag, 3 cara menjalankan, 4 fungsi output"
+order: 1
+quiz:
+  - q: "Kepanjangan nama PHP adalah…"
+    options: ["Personal Home Page only", "PHP: Hypertext Preprocessor", "Program High Power", "Private HTML Processor"]
+    answer: 1
+    explain: "Nama aslinya Personal Home Page, lalu diplesetkan jadi rekursif: PHP: Hypertext Preprocessor."
+  - q: "Berapa bentuk tag PHP yang perlu kamu ketahui?"
+    options: ["Satu: <?php", "Dua: <?php dan <?", "Tiga: <?php, <?=, dan <?", "Empat"]
+    answer: 2
+    explain: "<?php wajib, <?= (echo singkat) selalu aktif, <? (short tag) nonaktif di konfigurasi modern."
+  - q: "Blok kode PHP dibuka dengan…"
+    options: ["<?php", "<script>", "<%php", "< ?"]
+    answer: 0
+    explain: "Selalu gunakan <?php — tag pendek <? tidak bisa diandalkan."
+  - q: "Perintah untuk menjalankan file PHP dari terminal adalah…"
+    options: ["php-server file.php", "run-php file.php", "node file.php", "php file.php"]
+    answer: 3
+    explain: "CLI PHP: php namafile.php — tanpa web server sekalipun skrip bisa jalan."
+  - q: "Di mana kode PHP dieksekusi?"
+    options: ["Di browser pengunjung", "Di server (backend), hasil HTML-nya dikirim ke browser", "Di database", "Di DNS"]
+    answer: 1
+    explain: "Browser tidak pernah melihat kode PHP — yang tiba di sana adalah hasil render HTML-nya."
+example:
+  code: |
+    <?php
+    $nama = "Sari";
+    $umur = 20;
+    echo "Halo, $nama!\n";
+    echo "Umur: $umur tahun\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP adalah bahasa **backend** paling mapan di web: WordPress, Laravel, dan Wikipedia memakainya — sekitar sepertiga situs di internet diproses PHP. Chapter ini memetakan wajah dasarnya sebelum masuk ke tipe data dan OOP.
+
+## Hello World
+
+```php
+<?php
+echo "Halo, Dunia!";
+```
+
+Tag `<?php ... ?>` menandai bagian yang diproses server. Di luar tag itu, teks dikirim mentah ke browser sebagai HTML — jadi satu file boleh mencampur HTML dan PHP.
+
+## 3 Tag PHP
+
+| Tag | Fungsi | Status |
+| --- | --- | --- |
+| `<?php ... ?>` | Blok kode standar | **Wajib — pakai ini** |
+| `<?= ekspresi ?>` | Singkatan dari `echo` | Selalu aktif, aman dipakai |
+| `<? ... ?>` | Short tag | Nonaktif di konfigurasi modern — hindari |
+
+## 3 Bentuk Komentar
+
+```php
+<?php
+// satu baris
+# juga satu baris (gaya lama)
+/* komentar
+   multi baris */
+```
+
+## 3 Fungsi Output
+
+| Fungsi | Perilaku | Kapan dipakai |
+| --- | --- | --- |
+| `echo "teks"` | Cetak, boleh banyak argumen, tanpa nilai kembalian | Output normal ke halaman |
+| `print "teks"` | Sama seperti echo, selalu mengembalikan `1` | Jarang — echo lebih umum |
+| `var_dump($x)` | Tampilkan tipe + nilai + panjang | Debugging |
+
+```php
+<?php
+$nama = "Sari";
+$umur = 20;
+$aktif = true;
+
+echo "Halo $nama, umurmu $umur tahun", "\n";
+echo "Status: ", ($aktif ? "aktif" : "nonaktif"), "\n";
+var_dump($umur);        // int(20)
+```
+
+## Variabel dan Tipe
+
+```php
+<?php
+$nama = "Sari";    // semua variabel diawali $
+$umur = 20;
+$aktif = true;
+
+echo "Halo $nama, umurmu $umur tahun";
+```
+
+PHP bersifat **loosely typed**: tipe mengikuti nilai dan bisa berubah di tengah jalan. Sejak PHP 7 kamu bisa menambahkan `declare(strict_types=1);` plus type declaration agar kesalahan tipe langsung jadi fatal error — akan dibahas di chapter Function.
+
+## 3 Cara Menjalankan PHP
+
+```bash
+php namafile.php            # 1. CLI — skrip biasa
+php -S localhost:8000       # 2. web server bawaan untuk belajar
+# 3. Apache/Nginx + PHP-FPM di server produksi
+```
+
+Yang kamu lakukan di editor OnBoss setara opsi 1. Di produksi, PHP dijalankan server web yang merespons request HTTP, lalu hasil HTML dikirim ke browser.
+
+## Kenapa PHP Populer?
+
+- **Hosting murah dan tersedia di mana-mana** — hampir semua shared hosting siap pakai.
+- **Framework matang**: Laravel, Symfony, CodeIgniter.
+- **Ekosistem CMS**: WordPress menguasai pasar CMS dunia.
+- **API & backend**: dipadukan database MySQL/PostgreSQL dengan ORM seperti Eloquent.
+
+## Di Dunia Nyata
+
+- **Halaman profil kampus** — HTML statis plus `<?= $siswa['nama'] ?>` untuk menampilkan data dari database.
+- **Endpoint API belanja** — file `api/produk.php` mengembalikan JSON daftar produk untuk aplikasi mobile.
+- **Form pendaftaran sekolah** — data POST divalidasi PHP lalu disimpan ke MySQL.
+- **Blog WordPress** — seluruh instalasi adalah PHP: tema, plugin, dan admin panelnya.
+- **Skrip cron laporan** — `php laporan.php` dijadwalkan tiap malam mengirim ringkasan penjualan ke email.
+
+<div class="note">💡 Setiap file PHP yang berisi kode harus dibuka dengan `<?php`. Lupa tag ini membuat seluruh isi file dikirim sebagai teks biasa dan browser menampilkannya mentah — termasuk kredensial database yang ada di dalamnya. Kalau yakin butuh singkatan, `<?= ... ?>` tetap aman walau short tag dimatikan.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$nama = "Sari";
+$umur = 20;
+$aktif = true;
+
+echo "Halo, $nama!\\n";
+echo "Umur: $umur tahun\\n";
+echo "Status: " . ($aktif ? "aktif" : "nonaktif") . "\\n";
+echo "2 + 2 = " . (2 + 2) . "\\n";
+
+for ($i = 1; $i <= 3; $i++) {
+    echo "Perulangan ke-$i\\n";
+}`} />

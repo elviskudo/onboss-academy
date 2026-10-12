@@ -1,0 +1,131 @@
+---
+title: "Pengenalan Git & Inisialisasi"
+description: "Apa itu version control, kenapa Git mendunia, dan langkah pertama membuat repo"
+order: 1
+quiz:
+  - q: "Git adalah…"
+    options: ["Sistem version control distribusi", "Bahasa pemrograman", "Server hosting", "Database file"]
+    answer: 0
+    explain: "Git mencatat perubahan file dan bisa bekerja penuh secara lokal di setiap clone."
+  - q: "Perintah untuk membuat repository baru di folder sekarang adalah…"
+    options: ["git start", "git init", "git new", "git create"]
+    answer: 1
+    explain: "git init membuat folder tersembunyi .git yang menyimpan seluruh riwayat."
+  - q: "Folder .git berfungsi untuk…"
+    options: ["Menyimpan gambar project", "Menyimpan dependency", "Menyimpan riwayat dan konfigurasi repo", "Menyimpan file temporary"]
+    answer: 2
+    explain: "Seluruh commit, branch, dan setting repo hidup di dalam .git — hapus folder ini dan riwayat ikut hilang."
+  - q: "Perintah melihat status working directory adalah…"
+    options: ["git status", "git info", "git show", "git who"]
+    answer: 0
+    explain: "git status menampilkan file yang berubah, yang sudah di-stage, dan branch sekarang."
+  - q: "Identitas commit (nama & email) diatur lewat…"
+    options: ["git login", "git config --global user.name", "git identity set", "git me"]
+    answer: 1
+    explain: "git config --global user.name dan user.email dipakai pada setiap commit yang kamu buat."
+example:
+  code: |
+    mkdir proyek-pertama
+    cd proyek-pertama
+    git init
+    git config --global user.name "Nama Kamu"
+    git config --global user.email "kamu@email.com"
+    echo "# Proyek Pertama" > README.md
+    git status
+---
+
+Git adalah **sistem version control** yang dipakai hampir semua developer di dunia: setiap perubahan kode tercatat, bisa dilihat ulang, dan bisa dikembalikan. Berbeda dari folder backup manual, Git bekerja di dalam project lewat folder tersembunyi `.git`.
+
+## Kenapa Version Control Penting
+
+Tanpa Git, kejadian seperti ini familiar:
+
+- file bernama `skrip_v2_FINAL_fix2.sh`
+- perubahan penting tidak sengaja terhapus tanpa jejak
+- dua orang saling menimpa kerjaan di file yang sama
+
+Git menyelesaikan semuanya: setiap versi punya commit ID, setiap orang punya salinan penuh repo (distribusi), dan perubahan bisa digabung secara terkendali.
+
+## Inisialisasi Repository
+
+```bash
+mkdir proyek-pertama
+cd proyek-pertama
+git init
+```
+
+Output kira-kira: `Initialized empty Git repository in .../proyek-pertama/.git/`. Sejak saat itu, folder ini adalah repo Git.
+
+## Mengatur Identitas
+
+Setiap commit menyimpan penulis. Atur sekali di awal:
+
+```bash
+git config --global user.name "Nama Kamu"
+git config --global user.email "kamu@email.com"
+git config --global init.defaultBranch main
+```
+
+`--global` berlaku untuk semua repo di komputer kamu. Tanpa `--global`, setting hanya untuk repo sekarang.
+
+## Membaca Status
+
+```bash
+echo "# Proyek Pertama" > README.md
+git status
+```
+
+Keluaran penting:
+
+```
+Untracked files:
+  README.md
+```
+
+**Untracked** = file baru yang belum pernah dicatat Git. Belum ada yang hilang — Git hanya memberi tahu.
+
+## Alur Dasar Git
+
+```
+working directory  --git add-->  staging area  --git commit-->  repository (.git)
+```
+
+- **working directory** — file yang kamu edit di editor
+- **staging area (index)** — daftar perubahan yang siap di-commit
+- **repository** — riwayat permanen berupa rantai commit
+
+## Tiga Area Inti Git
+
+Git memindahkan perubahan melalui **3 area**. Memahami batasnya mencegah anggapan bahwa file yang sudah disimpan editor otomatis masuk riwayat.
+
+| Area | Fungsi | Contoh pemeriksaan | Kapan dipakai |
+|---|---|---|---|
+| Working tree | Menampung file yang sedang diedit | `git diff` | Saat menulis dan menguji perubahan |
+| Index (staging area) | Menyusun isi snapshot berikutnya | `git diff --staged` | Saat memilih perubahan untuk satu commit |
+| Repository `.git` | Menyimpan commit, branch, tag, dan konfigurasi | `git log --oneline` | Saat menelusuri atau memulihkan versi |
+
+`git add` menyalin keadaan perubahan ke index, bukan memindahkan file fisik. `git commit` lalu membuat snapshot dari index ke repository. Karena itu satu file dapat sekaligus memiliki versi committed, staged, dan perubahan baru di working tree.
+
+## Fungsi Perintah Awal
+
+Ada **6 perintah inti** untuk orientasi repo baru.
+
+| Perintah | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `git init` | Membuat metadata repo lokal | `git init` | Memulai project yang belum memakai Git |
+| `git status` | Menjelaskan keadaan tiga area | `git status --short` | Sebelum add, commit, atau operasi berisiko |
+| `git config` | Mengatur identitas dan perilaku | `git config --list --show-origin` | Saat setup mesin atau audit konfigurasi |
+| `git add` | Memasukkan perubahan ke index | `git add README.md` | Menyiapkan snapshot |
+| `git commit` | Menyimpan snapshot | `git commit -m "Tambah README"` | Setelah satu unit kerja selesai |
+| `git log` | Membaca riwayat | `git log --oneline` | Memeriksa hasil commit |
+
+Jangan menjalankan `git init` di home directory tanpa sengaja: Git akan menganggap seluruh turunannya sebagai working tree. Periksa `pwd`, lalu hapus hanya `.git` yang baru dibuat jika memang salah lokasi; menghapus `.git` pada repo nyata menghilangkan riwayat lokal.
+
+## Di Dunia Nyata
+
+- Memulai aplikasi internal dan memastikan konfigurasi editor tidak ikut tercatat lewat `.gitignore`.
+- Memeriksa `git status` sebelum commit agar `.env`, private key, dan dump database tidak bocor.
+- Menelusuri konfigurasi identitas ketika commit CI memakai email yang salah.
+- Menggunakan repo lokal tanpa internet saat mengembangkan prototipe di perjalanan.
+
+<div class="note">💡 `git init` tidak butuh server atau internet. Semua operasi Git berjalan lokal; remote seperti GitHub baru ditambahkan di bab remote.</div>

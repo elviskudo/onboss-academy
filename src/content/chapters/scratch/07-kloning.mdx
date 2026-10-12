@@ -1,0 +1,159 @@
+---
+title: "Kloning"
+description: "Membuat salinan sprite saat berjalan — dasar peluru, musuh, dan partikel"
+order: 7
+quiz:
+  - q: "Kloning adalah…"
+    options: ["Menduplikasi file proyek", "Membuat salinan sprite yang hidup sementara saat proyek berjalan", "Menyalin blok ke sprite lain", "Membuat screenshot"]
+    answer: 1
+    explain: "Klon berperilaku seperti sprite asli — punya skrip 'saat ini menjadi klon'."
+  - q: "Blok 'buat klon dari [diri sendiri]' berada di kategori…"
+    options: ["Kontrol", "Gerak", "Tampilan", "Suara"]
+    answer: 0
+    explain: "Sama seperti 'hapus klon ini' yang menghentikan klon setelah tugasnya selesai."
+  - q: "Agar klon tidak menumpuk tak terbatas, biasanya…"
+    options: ["Klon tetap selamanya", "Sprite disembunyikan", "Klon menghapus dirinya sendiri saat menyentuh tepi", "Proyek di-reset"]
+    answer: 2
+    explain: "Jumlah klon dibatasi Scratch (sekitar 300) — biarkan klon mengakhiri diri dengan rapi."
+  - q: "Klon dibuat pada posisi…"
+    options: ["Selalu (0,0)", "Sesuai posisi sprite induk saat klon dibuat", "Acak otomatis", "Pojok kiri atas"]
+    answer: 1
+    explain: "Untuk spawn di lokasi berbeda, ubah posisi klon lewat blok 'saat ini menjadi klon'."
+  - q: "Blok yang hanya berjalan pada klon disebut…"
+    options: ["[saat ini menjadi klon]", "[ketika bendera diklik]", "[ketika saya menerima]", "[ulangi 10]"]
+    answer: 0
+    explain: "Kepala skrip khusus yang memulai logika tiap klon baru."
+example:
+  code: |
+    // Meriam sederhana menembak klon peluru:
+    // Sprite [Peluru] (awalnya tersembunyi):
+    //
+    // [ketika bendera diklik]
+    // [sembunyi]
+    //
+    // [ketika tombol [spasi] ditekan]
+    // [tunjuk ke [Pemain]]
+    // [bergeser [50] langkah]
+    // [buat klon dari [diri sendiri]]
+    //
+    // [saat ini menjadi klon]
+    // [tampil]
+    // [ulangi sampai <menyentuh tepi?> [
+    //    [gerak 10 langkah]
+    // ]]
+    // [hapus klon ini]
+---
+
+Kloning menyelesaikan masalah klasik: membuat **banyak objek serupa** (peluru, musuh, koin) tanpa menggambar puluhan sprite. Ini juga perkenalan pertama pada konsep **objek**: satu definisi, banyak instansi.
+
+## 3 Blok Kloning + 1 Variabel Wajib
+
+| Blok / Variabel | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| `buat klon dari [diri sendiri]` | Melahirkan satu salinan | Tiap kali menembak/spawn |
+| `saat ini menjadi klon` | Kepala skrip khusus klon | Logika tiap salinan |
+| `hapus klon ini` | Mengakhiri salinan ini | Setelah tugas selesai |
+| variabel `jumlah_klon` | Menghitung klon hidup | Membatasi spawn |
+
+Scratch tidak punya blok penghitung klon bawaan — jumlahnya dilacak sendiri lewat variabel yang `+1` saat membuat dan `-1` saat menghapus.
+
+Skrip induk (sprite asli) **tetap satu** dan biasanya disembunyikan; semua aksi dijalankan oleh klon yang lahir dari `buat klon`.
+
+## Siklus Hidup Klon
+
+```text
+Induk [sembunyi]                       <- sprite asli tidak tampil
+   |
+[buat klon dari [diri sendiri]]        <- 1. lahir, posisi = posisi induk
+   |
+[saat ini menjadi klon]                <- 2. kepala skrip klon menyala
+[tampil] / [ke x y] / [ubah ukuran]    <- 3. inisialisasi (state awal)
+[ulangi sampai <syarat> [gerak]]       <- 4. perilaku
+[jika <kena> [kirim [skor + 1]]]       <- 5. interaksi
+[hapus klon ini]                       <- 6. mati, memori dilepas
+```
+
+Urutan ini identik dengan pola `spawn → init → update → destroy` pada game engine sungguhan (Unity, Godot).
+
+## Meriam Peluru
+
+```text
+// Induk (tersembunyi):
+[ketika bendera diklik]
+[sembunyi]
+
+[ketika tombol [spasi] ditekan]
+[tunjuk ke [Pemain]]
+[bergeser [50] langkah]
+[buat klon dari [diri sendiri]]
+
+// Kepala skrip klon:
+[saat ini menjadi klon]
+[tampil]
+[ulangi sampai <menyentuh tepi?> [
+   [gerak 10 langkah]
+]]
+[hapus klon ini]
+```
+
+Setiap tekan spasi, induk membuat satu klon baru yang terbang maju lalu hilang di tepi. Klon dibuat pada **posisi sprite induk saat itu** — karena itu `tunjuk ke` + `bergeser` dijalankan sebelum `buat klon`, bukan sesudahnya.
+
+## Mengatur Awal Muncul Klon
+
+```text
+[saat ini menjadi klon]
+[ke x: (acak dari -200 ke 200) y: 180]   <- spawn acak di atas
+[arah ke (acak dari -180 ke 180)]           <- arah jatuh bervariasi
+[ubah ukuran sebesar -20]
+```
+
+Klon mewarisi tampilan induk — kostum, ukuran, dan efek warna disalin saat lahir. Yang **tidak** diwarisi: skrip `ketika bendera diklik` tidak ikut berjalan ulang untuk klon; hanya skrip `saat ini menjadi klon` yang menyala.
+
+## Interaksi dan Penghapusan
+
+```text
+[saat ini menjadi klon]
+[ulangi sampai <menyentuh [Musuh]?> [
+   [gerak 8 langkah]
+]]
+[jika <menyentuh [Musuh]?> [
+   [kirim [kena musuh]]
+   [ubah [skor] sebesar 1]
+]]
+[hapus klon ini]
+```
+
+Klon yang mengenai sasaran memberi sinyal lewat pesan, lalu menghapus diri. Aturan emas: **setiap jalur keluar dari skrip klon harus berakhir dengan `hapus klon ini`**. Klon yang lupa dihapus (yatim) tetap menumpuk memperlambat proyek sampai batas.
+
+## Menghitung dan Membatasi Klon
+
+```text
+// Induk — sebelum membuat klon:
+[jika <(jumlah_klon) > [30]> [
+   [berhenti [skrip ini]]        <- tolak spawn berikutnya
+]]
+[ubah [jumlah_klon] sebesar 1]
+[buat klon dari [diri sendiri]]
+
+// Klon — tepat sebelum menghapus diri:
+[ubah [jumlah_klon] sebesar -1]
+[hapus klon ini]
+```
+
+Scratch membatasi jumlah klon (sekitar 300 per proyek); melebihi itu, `buat klon` berikutnya diam-diam gagal. Variabel `jumlah_klon` yang direset ke 0 pada `ketika bendera diklik` membuat kuota itu eksplisit dan mudah disetel.
+
+| Taktik | Cocok untuk | Catatan |
+| --- | --- | --- |
+| Klon + `hapus` rutin | Peluru, musuh, koin | Paling umum |
+| Kuota lewat variabel | Tembakan beruntun | Cegah spawn liar |
+| Daftar + 1 sprite | Ribuan partikel | Klon tak sanggup |
+
+## Di Dunia Nyata
+
+1. **Tembakan peluru beruntun** — tombol tahan spasi + kuota klon menghasilkan efek machine gun.
+2. **Hujan bintang** — klon dibuat acak di sisi atas, jatuh, dan dihapus di bawah.
+3. **Kolam katak menangkap lalat** — lalat sebagai klon yang berpindah acak tiap 0,5 detik.
+4. **Dinding bata yang bisa dipecahkan** — 24 klon disusun grid; kena peluru → `hapus klon ini`.
+5. **Efek ledakan partikel** — 10 klon kecil keluar dari titik ledakan dengan arah acak, hidup 1 detik.
+
+<div class="note">💡 Pola klon meniru pola objek (object) di bahasa teks: satu definisi, banyak instansi dengan keadaan masing-masing. Kebiasaan "selalu bersihkan setelah pakai" ini juga yang mencegah memory leak di program nyata.</div>

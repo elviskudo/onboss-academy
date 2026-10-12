@@ -1,0 +1,114 @@
+---
+title: "Dokumen & Tipe Data BSON"
+description: "Struktur dokumen, tipe BSON, subdokumen, array, dan pola embed vs reference"
+order: 2
+quiz:
+  - q: "Field wajib yang dimiliki setiap dokumen MongoDB adalah…"
+    options: ["id", "_id", "key", "doc_id"]
+    answer: 1
+    explain: "_id adalah pengenal unik tiap dokumen; dibuat otomatis bila tidak kamu tentukan."
+  - q: "Subdokumen pada dokumen ditulis sebagai…"
+    options: ["Tabel terpisah", "Objek bersarang", "Array of strings", "Komentar BSON"]
+    answer: 1
+    explain: "Field boleh bernilai objek — mis. alamat: { kota: ..., kodepos: ... } disimpan bersarang."
+  - q: "Tipe data BSON untuk tanggal dan waktu adalah…"
+    options: ["string", "date", "ISODate", "timestamp"]
+    answer: 2
+    explain: "ISODate(...) ( BSON type date ) menyimpan waktu presisi — bisa dikurangi dan dibandingkan."
+  - q: "Array pada dokumen MongoDB…"
+    options: ["Wajib berisi dokumen saja", "Boleh berisi nilai apa pun, termasuk objek", "Harus sepanjang sama", "Tidak didukung"]
+    answer: 1
+    explain: "tags: [\"sale\", \"baru\"] atau items: [{...}, {...}] — keduanya valid."
+  - q: "Pola menyimpan data terkait di dalam satu dokumen disebut…"
+    options: ["Normalization", "Embedding (denormalisasi)", "Sharding", "Tuning"]
+    answer: 1
+    explain: "Embedding menggabungkan data yang sering dibaca bersama; reference menaruhnya di koleksi lain + ObjectId."
+example:
+  code: |
+    {
+      _id: ObjectId(),
+      judul: "Belajar MongoDB",
+      penulis: { nama: "Sari", email: "sari@contoh.com" },
+      tags: ["nosql", "database"],
+      terbit: ISODate("2026-01-15T00:00:00Z"),
+      stok: 25
+    }
+---
+
+Dokumen adalah atomnya MongoDB. Bab ini membongkar anatomi dokumen dan pilihan desain paling penting: **embed atau reference**.
+
+## Anatomi Dokumen
+
+```javascript
+{
+  _id: ObjectId("6512ab34cd77aa0012345678"),
+  judul: "Belajar MongoDB",
+  penulis: { nama: "Sari", email: "sari@contoh.com" },
+  tags: ["nosql", "database"],
+  terbit: ISODate("2026-01-15T00:00:00Z"),
+  stok: 25,
+  diskon: null
+}
+```
+
+Kunci dan nilai mengikuti gaya JSON, plus tipe BSON kaya: ObjectId, ISODate, angka bulat/desimal, boolean, null, array, dan objek bersarang.
+
+## Tujuh Tipe BSON Pondasi
+
+BSON secara penuh memiliki tipe tambahan (binary, regex, timestamp, MinKey/MaxKey). Untuk memodelkan aplikasi harian, kuasai **7 tipe pondasi** berikut; angka (`int32`, `int64`, `double`, `decimal128`) dikelompokkan sebagai satu keluarga numerik.
+
+| Tipe pondasi | Representasi mongosh | Fungsi | Kapan dipakai |
+| --- | --- | --- | --- |
+| String | `"teks"` | teks UTF-8 | nama, status, deskripsi |
+| Number | `42`, `NumberLong()`, `Decimal128()` | angka dalam 4 subtype | hitungan, uang, metrik |
+| Boolean | `true` / `false` | kondisi dua nilai | aktif, lunas, terbit |
+| Date | `ISODate("2026-01-15")` | waktu UTC milidetik | createdAt, jadwal |
+| ObjectId | `ObjectId()` | ID unik 12-byte | `_id`, reference |
+| Array | `["a", "b"]` | daftar terurut | tags, item pesanan |
+| Embedded document | `{ k: "v" }` | objek bersarang | alamat, profil |
+
+`null` adalah nilai BSON khusus untuk data yang sengaja kosong, bukan tipe pondasi untuk memodelkan isi. Untuk uang gunakan Decimal128 — double bisa kehilangan presisi karena representasi biner. Untuk counter biasa gunakan int32; int64 untuk nilai di luar ±2,1 miliar.
+
+## Subdokumen dan Array
+
+```javascript
+db.pesanan.insertOne({
+  nomor: "P-001",
+  pelanggan: { nama: "Budi", kota: "Bandung" },
+  item: [
+    { sku: "KB-01", qty: 1, harga: 350000 },
+    { sku: "MS-02", qty: 2, harga: 150000 }
+  ]
+})
+```
+
+Array berisi objek memungkinkan satu dokumen mewakili satu entitas utuh (satu pesanan berisi banyak item) — baca sekali, tampil lengkap.
+
+## Embed vs Reference
+
+```javascript
+// Embed — cocok saat data dibaca bersama dan relatif kecil
+{ nama: "Budi", alamat: { kota: "Bandung", jalan: "Merdeka 1" } }
+
+// Reference — cocok saat data besar, sering berubah, atau dipakai banyak dokumen
+{ nama: "Budi", alamatId: ObjectId("6512...") }
+```
+
+Aturan praktis: **data yang selalu dibaca bersama → embed; data yang di-update terpusat atau melampaui batas dokumen 16MB → reference**.
+
+| Pertanyaan desain | Embed | Reference |
+| --- | --- | --- |
+| Dibaca bersama induk? | ya | jarang |
+| Berubah sendiri-sendiri? | jarang | sering |
+| Ukuran terus bertumbuh? | terbatas | tidak terbatas |
+| Konsistensi satu update? | atomik satu dokumen | mungkin perlu transaksi |
+
+## Di Dunia Nyata
+
+- **Pesanan e-commerce** — embed snapshot nama dan harga item agar invoice lama tidak berubah saat katalog diperbarui.
+- **Alamat pelanggan** — embed bila hanya milik satu pelanggan; reference bila alamat kantor dipakai ribuan pegawai.
+- **Transaksi keuangan** — Decimal128 menjaga nilai uang eksak; jangan gunakan double untuk saldo.
+- **Timeline media sosial** — reference posting ke author karena profil author sering berubah dan dipakai banyak posting.
+- **Tag artikel** — array string kecil ideal di-embed dan dapat dicari langsung dengan index multikey.
+
+<div class="note">💡 Dokumen MongoDB dibatasi 16 MB. Embedding cerdas tetap perlu: daftar item ratusan ribu sebaiknya dipecah ke koleksi sendiri, bukan ditumpuk dalam satu dokumen induk.</div>

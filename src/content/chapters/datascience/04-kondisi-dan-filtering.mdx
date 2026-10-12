@@ -1,0 +1,165 @@
+---
+title: "Kondisi dan Filtering"
+description: "Menyaring baris data dengan if, elif, dan list comprehension"
+order: 4
+quiz:
+  - q: "Tujuan utama filtering dalam analisis data adalah…"
+    options: ["Mengambil hanya baris yang memenuhi syarat tertentu", "Menghapus semua data", "Mengubah warna latar", "Menambah kolom kosong"]
+    answer: 0
+    explain: "Filter menyisihkan data yang tidak relevan, misal hanya pelanggan aktif atau nilai di atas rata-rata."
+  - q: "Ekspresi [n for n in angka if n > 80] disebut…"
+    options: ["List comprehension", "Dictionary merge", "Recursive call", "Lambda loop"]
+    answer: 0
+    explain: "List comprehension menulis loop + filter dalam satu baris dan menghasilkan list baru."
+  - q: "Kelompok cabang setelah if yang masih bersifat 'selain itu' adalah…"
+    options: ["elif", "else", "then", "default"]
+    answer: 1
+    explain: "else menangkap semua kasus yang tidak terpenuhi if maupun elif sebelumnya."
+  - q: "Operator untuk membandingkan 'lebih besar atau sama dengan' adalah…"
+    options: [">", ">=", "==", "!="]
+    answer: 1
+    explain: ">= berarti lebih besar atau sama dengan; == untuk membandingkan kesamaan nilai."
+  - q: "Agar data lolos filter harus bernilai…"
+    options: ["True", "False", "0 saja", "None"]
+    answer: 0
+    explain: "Kondisi pada if dan filter harus bernilai True agar baris ikut diproses."
+example:
+  code: |
+    nilai = [78, 92, 65, 88, 71]
+    lulus = [n for n in nilai if n >= 75]
+    print("Lulus:", lulus)
+    print("Tidak lulus:", [n for n in nilai if n < 75])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Begitu data masuk, hampir selalu ada yang harus **disederhanakan**: sisihkan baris yang tidak relevan, kelompokkan berdasarkan kategori, lalu hitung.
+
+## Operator Perbandingan
+
+Python punya **6 operator perbandingan**:
+
+| Operator | Arti | Contoh | Hasil |
+|----------|------|--------|-------|
+| `==` | sama dengan | `78 == 78` | `True` |
+| `!=` | tidak sama | `78 != 90` | `True` |
+| `>` | lebih besar | `90 > 80` | `True` |
+| `<` | lebih kecil | `70 < 75` | `True` |
+| `>=` | lebih besar/sama | `75 >= 75` | `True` |
+| `<=` | lebih kecil/sama | `70 <= 75` | `True` |
+
+Digabung dengan **3 operator logika** — `and`, `or`, `not` — semua syarat filter bisa dirangkai.
+
+## Percabangan Dasar
+
+```python
+nilai = 78
+
+if nilai >= 90:
+    label = "A"
+elif nilai >= 80:
+    label = "B"
+elif nilai >= 70:
+    label = "C"
+else:
+    label = "D"
+
+print(label)
+```
+
+Urutan cabang penting: uji dari syarat paling ketat ke paling longgar agar tidak ada nilai yang salah masuk kategori.
+
+## Filter Baris dengan Loop
+
+```python
+penjualan = [
+    {"kota": "Bandung", "unit": 45},
+    {"kota": "Jakarta", "unit": 120},
+    {"kota": "Medan", "unit": 30},
+]
+
+besar = []
+for baris in penjualan:
+    if baris["unit"] >= 40:
+        besar.append(baris)
+
+print(besar)
+```
+
+Pola "loop + if + append" adalah filter manual yang paling mudah dibaca saat baru belajar.
+
+## 3 Cara Memfilter Data
+
+| Cara | Bentuk | Kapan dipakai |
+|------|--------|---------------|
+| Loop + `if` | `for ... if ... append` | syarat panjang, butuh logika |
+| List comprehension | `[x for x in data if ...]` | filter ringkas, satu baris |
+| `filter()` | `filter(lambda x: ..., data)` | syarat sudah berupa fungsi |
+
+```python
+# 1. comprehension
+besar = [b for b in penjualan if b["unit"] >= 40]
+nama_kota = [b["kota"] for b in penjualan]
+
+# 2. filter()
+genap = list(filter(lambda n: n % 2 == 0, [70, 75, 81, 90]))
+print(genap)
+```
+
+Comprehension menggantikan empat baris menjadi satu. Gunakan untuk filter sederhana; bila syaratnya panjang, kembalikan ke loop biasa agar tetap terbaca.
+
+## Beberapa Syarat Sekaligus
+
+```python
+syarat = [b for b in penjualan if b["unit"] >= 40 and b["kota"] != "Medan"]
+print(syarat)
+```
+
+`and`, `or`, dan `not` menggabungkan kondisi. Untuk syarat yang sangat panjang, simpan dulu ke variabel:
+
+```python
+aktif = True
+minimum = 40
+lolos = [b for b in penjualan if aktif and b["unit"] >= minimum]
+```
+
+## Menghitung Hasil Filter
+
+```python
+nilai = [78, 92, 65, 88, 71]
+rata = sum(nilai) / len(nilai)
+
+di_atas = [n for n in nilai if n > rata]
+persen = len(di_atas) / len(nilai) * 100
+print(f"{len(di_atas)}/{len(nilai)} = {persen:.0f}% di atas rata-rata")
+```
+
+## Di Dunia Nyata
+
+- **Kupon khusus pelanggan VIP** — filter transaksi dengan `total >= 1_000_000` sebelum kirim promo.
+- **Dashboard absensi** — tampilkan hanya baris dengan `status == "hadir"` dan tanggal hari ini.
+- **Validasi input form** — `if umur < 17:` sebelum data dikirim ke server.
+- **Saring error log** — komprehension `[b for b in log if b["level"] == "ERROR"]` sebelum dilaporkan ke tim.
+- **Daftar siswa remedial** — `[s for s in siswa if s["nilai"] < 75]` sebagai antrean bimbingan.
+
+<div class="note">💡 Saat menyaring data, hitung juga berapa baris yang tersisa. Filter yang terlalu ketat bisa menyisakan nol baris dan membuat rata-rata jadi membagi nol.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`nilai = [78, 92, 65, 88, 71, 95, 60, 84]
+
+lulus = [n for n in nilai if n >= 75]
+tidak = [n for n in nilai if n < 75]
+atas_90 = [n for n in nilai if n >= 90]
+
+print("Total data:", len(nilai))
+print("Lulus:", lulus)
+print("Tidak lulus:", tidak)
+print("Nilai >= 90:", atas_90)
+
+if len(lulus) > len(tidak):
+    print("Mayoritas lulus")
+else:
+    print("Mayoritas belum lulus")
+
+rata = sum(nilai) / len(nilai)
+print("Rata-rata:", round(rata, 2))
+print("Di atas rata-rata:", [n for n in nilai if n > rata])`} />

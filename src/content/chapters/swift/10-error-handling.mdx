@@ -1,0 +1,182 @@
+---
+title: "Error Handling"
+description: "Melempar dan menangkap galat dengan throw, do-catch, dan guard di Swift"
+order: 10
+quiz:
+  - q: "Protokol yang mewakili tipe galat di Swift adalah…"
+    options: ["Exception", "Error", "Throwable", "Result only"]
+    answer: 1
+    explain: "Enum atau struct cukup mengadopsi protokol Error."
+  - q: "Melempar galat memakai kata kunci…"
+    options: ["raise", "panic", "throw", "emit"]
+    answer: 2
+    explain: "throw dipakai bersama fungsi bertanda throws."
+  - q: "Menangkap galat dilakukan dengan blok…"
+    options: ["try-catch only", "do-catch", "if-error", "catch-do"]
+    answer: 1
+    explain: "Blok do berisi kode berisiko, catch menangkap galat."
+  - q: "Fungsi yang bisa melempar galat harus dideklarasikan dengan…"
+    options: ["throws", "async", "static", "lazy"]
+    answer: 0
+    explain: "Pemanggil wajib menanganinya dengan try."
+  - q: "guard digunakan untuk…"
+    options: ["mengulang perulangan", "keluar dari fungsi bila kondisi gagal", "membuat protokol", "menyimpan berkas"]
+    answer: 1
+    explain: "Cocok memvalidasi input di awal fungsi."
+example:
+  code: |
+    enum GalatKalkulator: Error {
+        case pembagiNol
+    }
+
+    func bagi(_ a: Int, _ b: Int) throws -> Int {
+        if b == 0 {
+            throw GalatKalkulator.pembagiNol
+        }
+        return a / b
+    }
+
+    do {
+        print(try bagi(10, 2))
+        print(try bagi(10, 0))
+    } catch {
+        print("Galat: \(error)")
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang baik tidak berhenti diam-diam saat data buruk datang. Swift menyediakan mekanisme galat yang tegas.
+
+## Mendeklarasikan Galat
+
+```swift
+enum GalatInput: Error {
+    case kosong
+    case terlaluPanjang
+}
+```
+
+Mengadopsi protokol `Error` sudah cukup untuk dijadikan galat. Swift punya **4 mekanisme** penanganan galat:
+
+| Mekanisme | Contoh | Perilaku | Kapan dipakai |
+| --- | --- | --- | --- |
+| `throw` + `throws` | `func bagi(...) throws` | melempar ke pemanggil | operasi yang bisa gagal |
+| `do-catch` | `do { try bagi(10, 0) } catch { }` | menangkap dan menangani | saat galat harus ditindak |
+| `try?` | `let hasil = try? bagi(4, 2)` | galat → `nil` | galat boleh diabaikan |
+| `try!` | `let hasil = try! bagi(4, 2)` | paksa; crash bila gagal | bila yakin tidak akan gagal |
+
+Ada juga `enum Result<Success, Failure>` yang mengembalikan sukses atau galat sebagai nilai — dipakai ketika penanganan galat dilakukan nanti, bukan di tempat pemanggilan.
+
+## Melempar Galat
+
+```swift
+func periksa(_ teks: String) throws {
+    if teks.isEmpty {
+        throw GalatInput.kosong
+    }
+    if teks.count > 20 {
+        throw GalatInput.terlaluPanjang
+    }
+    print("Valid: \(teks)")
+}
+```
+
+Tanda `throws` pada fungsi memberi tahu pemanggil bahwa bisa terjadi galat.
+
+## Menangkap dengan do-catch
+
+```swift
+do {
+    try periksa("Belajar Swift")
+    try periksa("")
+} catch GalatInput.kosong {
+    print("Isi teks tidak boleh kosong")
+} catch {
+    print("Galat lain: \(error)")
+}
+```
+
+Blok `catch` terakhir tanpa pola menangkap semua galat.
+
+## try? dan try!
+
+```swift
+let sukses = try? periksa("Halo")
+let wajib = try! periksa("Halo")
+```
+
+- `try?` mengubah galat menjadi opsional nil
+- `try!` menganggap tidak akan pernah gagal — gunakan hati-hati
+
+## guard untuk Validasi Dini
+
+```swift
+func tampilkan(_ teks: String?) throws {
+    guard let isi = teks, !isi.isEmpty else {
+        throw GalatInput.kosong
+    }
+    print(isi)
+}
+```
+
+Validasi di awal membuat sisa fungsi bebas dari pengecekan bertumpuk. Perbandingan `guard` dengan `if`:
+
+- `if let` membuka nilai hanya **di dalam bloknya**.
+- `guard let` membuka nilai untuk **seluruh sisa fungsi** — karena itu lebih cocok untuk validasi di awal.
+- `guard` wajib keluar (`return`, `throw`, `break`) di blok `else`.
+
+## Di Dunia Nyata
+
+- **Membagi angka transaksi** — membagi total dengan jumlah item wajib menolak nol, bukan menghasilkan infinity diam-diam.
+- **Mengirim form pendaftaran** — validasi email dan password melempar `GalatInput` sebelum request keluar, menghemat round-trip server.
+- **Memanggil API** — fungsi `unduh()` bertanda `throws` mengirim kegagalan jaringan ke pemanggil lewat do-catch.
+- **Membuka berkas pengaturan** — file yang tidak ada ditangani dengan pesan "menggunakan pengaturan bawaan", bukan crash.
+- **Rantai operasi** — `try? unduh().flatMap { ... }` menggabungkan langkah yang mungkin gagal tanpa do-catch di setiap baris.
+
+## Program Lengkap
+
+```swift
+enum GalatKalkulator: Error {
+    case pembagiNol
+}
+
+func bagi(_ a: Int, _ b: Int) throws -> Int {
+    if b == 0 { throw GalatKalkulator.pembagiNol }
+    return a / b
+}
+
+do {
+    print(try bagi(10, 2))
+    print(try bagi(10, 0))
+} catch {
+    print("Galat: \(error)")
+}
+```
+
+<div class="note">💡 Galat dipakai untuk kondisi yang benar-benar menggagalkan operasi. Untuk hasil normal berupa nilai kecil, kembalikan tipe opsional saja — lebih ringan dan tetap aman.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`enum GalatKalkulator: Error {
+    case pembagiNol
+}
+
+func bagi(_ a: Int, _ b: Int) throws -> Int {
+    if b == 0 {
+        throw GalatKalkulator.pembagiNol
+    }
+    return a / b
+}
+
+do {
+    print("10 / 2 = \\(try bagi(10, 2))")
+    print("10 / 0 = \\(try bagi(10, 0))")
+} catch {
+    print("Galat: \\(error)")
+}
+
+func periksa(_ teks: String) throws {
+    guard !teks.isEmpty else { throw GalatKalkulator.pembagiNol }
+    print("Valid: \\(teks)")
+}
+
+try? periksa("Belajar Swift")`} />

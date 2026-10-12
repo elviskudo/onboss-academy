@@ -1,0 +1,146 @@
+---
+title: "Tipe Data dan Psql"
+description: "SERIAL, TEXT, TIMESTAMPTZ — dan tur psql untuk menjelajahi database"
+order: 2
+quiz:
+  - q: "Tipe SERIAL pada PostgreSQL berfungsi untuk…"
+    options: ["Teks pendek", "Kolom integer penomoran otomatis, biasanya untuk primary key", "Boolean", "Data biner"]
+    answer: 1
+    explain: "SERIAL = INTEGER + sequence otomatis — mirip AUTO_INCREMENT di MySQL."
+  - q: "TEXT di PostgreSQL…"
+    options: ["Lebih disukai dari VARCHAR karena tidak perlu batas panjang dan tetap efisien", "Selalu lebih lambat dari CHAR", "Dilarang di tabel produksi", "Hanya 255 karakter"]
+    answer: 0
+    explain: "Postgres menangani TEXT seefisien VARCHAR — banyak praktisi memilih TEXT saja tanpa batas."
+  - q: "TIMESTAMPTZ menyimpan…"
+    options: ["Hanya tanggal", "Waktu dengan zona — aman untuk aplikasi multi-zona", "Waktu tanpa zona sama sekali", "Durasi"]
+    answer: 1
+    explain: "TIMESTAMPTZ menyimpan UTC dan menampilkan sesuai zona klien — pilihan tepat untuk created_at."
+  - q: "Meta-command psql untuk melihat struktur tabel adalah…"
+    options: ["\\d nama_tabel", "SHOW nama_tabel", "\\t", "DESC nama_tabel"]
+    answer: 0
+    explain: "\\d nama_tabel menampilkan kolom, tipe, index, dan constraint — \\dt khusus daftar tabel."
+  - q: "Perbedaan TIMESTAMP dan TIMESTAMPTZ adalah…"
+    options: ["TIMESTAMP lebih akurat selalu", "Sama persis", "TIMESTAMP tanpa zona, TIMESTAMPTZ membawa zona waktu", "TIMESTAMPTZ hanya untuk tanggal"]
+    answer: 2
+    explain: "TIMESTAMP murni 'angka kalender' tanpa zona — berbahaya untuk data lintas zona; TIMESTAMPTZ aman."
+example:
+  code: |
+    SELECT nama,
+           gaji,
+           gaji / 1000000.0 AS juta,
+           dept
+    FROM karyawan
+    ORDER BY gaji DESC
+    LIMIT 4;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL punya **galeri tipe data yang kaya**. Memilihnya tepat membuat data konsisten, hemat, dan mudah dikueri.
+
+## Apa itu Tipe Data Kolom?
+
+Tipe data kolom adalah kontrak: kolom hanya menerima nilai yang kompatibel, dan database yang menegakkannya — bukan aplikasi. Di Postgres ketegangan ini terasa langsung: mencampur teks ke kolom angka langsung ditolak dengan error yang jelas.
+
+Secara garis besar, tipe data Postgres jatuh ke **5 kelompok** yang paling sering dipakai: angka, teks, tanggal/waktu, boolean, dan tipe khas Postgres (array, JSONB).
+
+## Tipe Angka (6 tipe utama)
+
+```sql
+CREATE TABLE transaksi (
+  id        SERIAL PRIMARY KEY,
+  jumlah    NUMERIC(15, 2) NOT NULL,
+  poin      INTEGER DEFAULT 0
+);
+```
+
+| Tipe | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| SMALLINT | bulat, −32.768 sampai 32.767 | status_kode | rentang kecil, hemat storage |
+| INTEGER | bulat, ±2,1 miliar | poin, hitungan | default untuk bilangan bulat |
+| BIGINT | bulat, sangat besar | id transaksi global | ID berskala raksasa |
+| NUMERIC(p, s) | presisi desimal eksak | NUMERIC(15, 2) | uang, nilai presisi |
+| REAL | floating cepat, ~7 digit | rata-rata sains | analitik, toleransi pembulatan |
+| DOUBLE PRECISION | floating ganda, ~15 digit | metrik besar | perhitungan saintifik |
+
+Tiga bilangan bulat (SMALLINT, INTEGER, BIGINT), dua floating (REAL, DOUBLE PRECISION), satu presisi (NUMERIC — alias DECIMAL). Untuk uang, selalu NUMERIC: floating biner membuat 0.1 + 0.2 tidak pernah persis 0.3.
+
+## Tipe Teks (3 tipe) dan Boolean
+
+```sql
+CREATE TABLE artikel_pg (
+  id      SERIAL PRIMARY KEY,
+  judul   TEXT NOT NULL,
+  slug    TEXT UNIQUE,
+  terbit  TIMESTAMPTZ DEFAULT now(),
+  publik  BOOLEAN DEFAULT false
+);
+```
+
+- `CHAR(n)` — teks panjang tetap, dipangkas otomatis; jarang perlu di Postgres
+- `VARCHAR(n)` — teks hingga n karakter
+- `TEXT` — teks panjang apa pun; tidak perlu memilih panjang
+
+`BOOLEAN` asli (bukan 0/1) dan menerima `true`/`false`/`t`/`f`/`1`/`0` — query jauh lebih terbaca daripada kolom integer terselubung.
+
+## Tanggal dan Waktu (5 tipe)
+
+```sql
+SELECT now() AS saat_ini,
+       CURRENT_DATE AS hari_ini,
+       CURRENT_DATE + 7 AS seminggu_lagi;
+```
+
+| Tipe | Isi | Contoh pakai |
+| --- | --- | --- |
+| DATE | tanggal saja | tanggal_lahir, hari_raya |
+| TIME | waktu saja | jam_buka_toko |
+| TIMESTAMP | tanggal + waktu tanpa zona | log lama yang tidak lintas zona |
+| TIMESTAMPTZ | tanggal + waktu dengan zona | created_at aplikasi modern |
+| INTERVAL | durasi | umur, jadwal berulang |
+
+Fungsi `now()`, `CURRENT_DATE`, dan aritmetika `+ INTERVAL` langsung tersedia di query.
+
+## ARRAY dan JSONB Khas Postgres
+
+```sql
+-- ARRAY (Postgres asli; SQLite tidak mendukung)
+SELECT ARRAY[1, 2, 3] AS angka;
+
+-- JSONB
+SELECT '{"nama": "Sari", "dept": "Engineering"}'::jsonb ->> 'dept' AS dept;
+```
+
+`ARRAY` dan `JSONB` adalah keunggulan Postgres — keduanya terindeks dan bisa dikueri dengan operator khas (`@>`, `->>`, `?`). Demo di editor kita memakai SQLite, jadi ekspresi ini dijelaskan di teks, bukan dijalankan.
+
+## Meta-command psql
+
+```text
+\l                 daftar database
+\c nama_db         pindah database
+\dt                daftar tabel
+\d karyawan        struktur tabel karyawan
+\x                 tampilan geser (expanded) untuk baris lebar
+\q                 keluar
+```
+
+Enam meta-command di atas cukup untuk menjelajahi database mana pun dari terminal. Meta-command backslash hanya dipahami psql — bukan SQL standar. Di aplikasi, hubungan lewat driver (libpq, JDBC, psycopg) tidak mengenalnya.
+
+## Di Dunia Nyata
+
+- **Tabel pembayaran** — `NUMERIC(15, 2)` menjamin rupiah tidak pernah kehilangan sen akibat pembulatan floating.
+- **Kolom created_at** — `TIMESTAMPTZ DEFAULT now()` membuat catatan waktu tetap benar meski server dan pengguna berada di zona berbeda.
+- **Profil pengguna** — `TEXT` untuk bio, alamat, dan komentar: tidak perlu menebak batas panjang sejak awal.
+- **Status dan bendera** — `BOOLEAN` menggantikan kolom `is_aktif` bernilai 0/1 yang rawan salah baca.
+- **Menjelajahi skema produksi** — `\d nama_tabel` menunjukkan kolom, tipe, index, dan constraint dalam satu layar sebelum kamu menyentuh data.
+
+<div class="note">💡 Kebiasaan Postgres: TEXT untuk semua teks, NUMERIC untuk uang, TIMESTAMPTZ untuk waktu. Tiga pilihan ini menyelesaikan 90% kebingungan tipe data di proyek nyata.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT nama,
+       jabatan,
+       gaji,
+       gaji / 1000000.0 AS juta,
+       dept
+FROM karyawan
+ORDER BY gaji DESC
+LIMIT 4;`} />

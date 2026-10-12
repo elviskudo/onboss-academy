@@ -1,0 +1,172 @@
+---
+title: "Proyek: Game Tangkap Sederhana"
+description: "Merangkai semua — variabel skor, klon, kondisi, dan akhir permainan"
+order: 8
+quiz:
+  - q: "Inti gameplay game tangkap adalah…"
+    options: ["Menyusun puzzle teka-teki", "Merancang jadwal", "Pemain menangkap objek jatuh sebanyak mungkin", "Mengedit video"]
+    answer: 2
+    explain: "Objek jatuh dari atas, pemain menggerakkan wadah untuk menangkapnya."
+  - q: "Variabel 'skor' bertambah saat…"
+    options: ["Saat bendera diklik", "Wadah menyentuh objek yang jatuh", "Saat game over", "Saat kostum berganti"]
+    answer: 1
+    explain: "Kondisi sentuh + perubahan variabel adalah pola skor universal di Scratch."
+  - q: "Game over dipicu ketika…"
+    options: ["Nyawa habis atau objek jatuh tak tertangkap (sesuai aturan main)", "Skor mencapai 1", "Sprite ditambah", "Klon dibuat"]
+    answer: 0
+    explain: "Kirim pesan [kalah] lalu semua sprite merespons dengan layar akhir."
+  - q: "Menyusun skrip game sebaiknya dimulai dari…"
+    options: ["Layar menu dulu", "Musik dulu", "Alur inti: gerak pemain + spawn objek + deteksi sentuh", "Sistem pengaturan dulu"]
+    answer: 2
+    explain: "Gameplay inti dulu — tampilan dan fitur menyusul setelah seru dimainkan."
+  - q: "Fitur lanjutan yang wajar ditambahkan setelah game utama berjalan…"
+    options: ["Menghapus seluruh kode", "Level naik, kecepatan bertambah, high score", "Menambah 50 sprite baru sekaligus", "Mengubah nama proyek"]
+    answer: 1
+    explain: "Iterasi kecil membuat game berkembang tanpa merusak yang sudah bekerja."
+example:
+  code: |
+    // Kerangka game tangkap (blok):
+    //
+    // Pemain:
+    //   [ketika bendera diklik] [set [skor] ke 0] [set [nyawa] ke 3]
+    //   [selamanya [jika <tombol [panah kanan] ditekan> [gerak 8 langkah]]]
+    //   [selamanya [jika <menyentuh [objek]?> [ubah [skor] sebesar 1]]]
+    //
+    // Objek (klon):
+    //   [selamanya [tunggu (acak dari 0.5 ke 1.5)  buat klon diri sendiri]]
+    //   [saat ini menjadi klon] [ke y: 180] [ulangi sampai <y < -180> [bergeser y sebesar -5]]
+    //   [jika <tidak menyentuh [pemain]?> [ubah [nyawa] sebesar -1]]
+    //   [hapus klon ini]
+---
+
+Kulminasi Scratch: membangun **game tangkap (catcher)** yang memakai hampir semua konsep dari tujuh bab sebelumnya — kejadian, variabel, operator, kondisi, perulangan, klon, dan pesan.
+
+## Desain Game
+
+```text
+Objek jatuh dari atas secara acak
+Pemain (wadah) digerakkan panah kiri/kanan
+Menyentuh objek -> skor + 1
+Objek jatuh lewat -> nyawa - 1
+Nyawa 0 -> layar "Kalah", tampilkan skor
+```
+
+Sebelum menulis satu blok pun, tetapkan dulu aturan mainnya dalam tabel — ini pengganti "desain dokumen" di proyek nyata:
+
+| Kejadian | Efek ke variabel | Syarat berakhir |
+| --- | --- | --- |
+| Wadah menyentuh objek | `skor + 1` | — |
+| Objek mencapai dasar | `nyawa - 1` | `nyawa = 0` |
+| Objek bonus (bintang) disentuh | `skor + 3` | — |
+| Nyawa mencapai 0 | kirim pesan `[kalah]` | Seluruh skrip berhenti |
+
+## Daftar Sprite dan Tugasnya
+
+| Sprite | Jumlah | Tugas | Kepala skrip utama |
+| --- | --- | --- | --- |
+| Pemain | 1 | Bergerak kiri-kanan, deteksi tangkap | `ketika bendera diklik` + `selamanya` |
+| Objek | 1 induk + klon | Melepas klon acak, klon jatuh | `selamanya` + `saat ini menjadi klon` |
+| Pusat/Pengawas | 1 | Memantau nyawa, memicu game over | `selamanya` + `jika (nyawa) = 0` |
+| Layar Akhir | 1 (atau latar) | Menampilkan skor akhir | `ketika saya menerima [kalah]` |
+
+## Langkah 1: Gerak Pemain
+
+```text
+[ketika bendera diklik]
+[set [skor] ke [0]]
+[set [nyawa] ke [3]]
+[set [kecepatan] ke [5]]
+[selamanya [
+   [jika <tombol [panah kanan] ditekan> [geser x sebesar (kecepatan)]]
+   [jika <tombol [panah kiri] ditekan>  [geser x sebesar (0 - (kecepatan))]]
+]]
+```
+
+`selamanya` membuat pengecekan tombol berjalan terus — respons terasa instan. Variabel `kecepatan` disimpan terpisah agar nanti bisa dinaikkan tanpa mengubah isi loop.
+
+## Langkah 2: Spawn Objek dengan Klon
+
+```text
+// Sprite [Objek], tersembunyi di awal
+[ketika bendera diklik]
+[sembunyi]
+[selamanya [
+   [tunggu (acak dari 0.5 ke 1.5)]
+   [ubah [jumlah_klon] sebesar 1]
+   [buat klon dari [diri sendiri]]
+]]
+
+[saat ini menjadi klon]
+[tampil]
+[ke x: (acak dari -200 ke 200) y: 180]
+[ulangi sampai <(posisi y) < [-180]> [
+   [geser y sebesar -5]
+   [jika <menyentuh [Pemain]?> [
+      [ubah [skor] sebesar 1]
+      [ubah [jumlah_klon] sebesar -1]
+      [hapus klon ini]
+   ]]
+]]
+[ubah [nyawa] sebesar -1]
+[ubah [jumlah_klon] sebesar -1]
+[hapus klon ini]
+```
+
+Perhatikan dua `hapus klon ini` pada jalur berbeda — inilah penyebab bug "skor terus naik" bila salah satu jalur lupa mengubah variabel.
+
+## Langkah 3: Akhir Permainan
+
+```text
+// Sprite [Pusat]:
+[ketika bendera diklik]
+[selamanya [
+   [jika <(nyawa) < [1]> [
+      [kirim [kalah] dan tunggu]
+   ]]
+]]
+
+// Sprite lain:
+[ketika saya menerima [kalah]]
+[berhenti [semua]]
+```
+
+Pesan `[kalah]` menyinkronkan layar akhir di semua sprite sekaligus. Blok `berhenti [semua]` adalah satu-satunya cara mengakhiri seluruh skrip — setara `exit()` pada program.
+
+## Langkah 4: Layar Kemenangan dan Ulang
+
+```text
+[ketika saya menerima [kalah]]
+[berganti latar ke [game-over]]
+[ucap (gabung [Skor kamu: ] (skor)) selama 3]
+[berhenti [semua]]
+// pemain mengulang dengan mengklik bendera hijau -> semua variabel direset
+```
+
+## Urutan Pengujian
+
+```text
+1. Uji gerak pemain saja (tanpa objek)      -> pastikan halus, tidak nyangkut tepi
+2. Tambahkan spawn klon tanpa skor          -> pastikan klon terhapus semua
+3. Aktifkan deteksi sentuh + skor           -> cek skor naik tepat 1 per objek
+4. Tambahkan nyawa + game over              -> cek pesan [kalah] berhenti semua
+5. Baru rapikan tampilan, suara, latar
+```
+
+## Menyempurnakan
+
+```text
+- Naikkan kecepatan jatuh tiap 5 skor (level) lewat variabel [kecepatan]
+- Tambahkan objek "bintang" bonus (+3) dengan kostum berbeda
+- Simpan skor tertinggi pada variabel, tampilkan di menu awal
+- Uji: apakah game tetap adil saat tombol keyboard ditahan?
+```
+
+## Di Dunia Nyata
+
+1. **Kuis "tangkap jawaban benar"** — klon berisi teks jawaban; pemain menangkap yang benar, menghindari yang salah.
+2. **Simulasi menabung** — koin jatuh masuk ke celengan, `skor` merepresentasikan saldo.
+3. **Latihan refleks** — objek jatuh makin cepat, hasil waktu reaksi dicatat ke daftar.
+4. **Tugas akhir kelas** — 3 aturan utama game ditulis sebagai tabel desain, dikumpulkan bersama proyeknya.
+5. **Prototipe sebelum engine** — ide yang seru di Scratch layak dikembangkan ke Godot/Unity.
+
+<div class="note">💡 Sebelum menambah fitur baru, mainkan dulu versi sekarang 10 kali. Gameplay yang belum menyenangkan tidak akan diselamatkan oleh banyak fitur — perbaiki ritmenya (kecepatan jatuh, jeda spawn, ukuran wadah) dulu.</div>

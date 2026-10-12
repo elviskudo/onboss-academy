@@ -1,0 +1,150 @@
+---
+title: "Daftar (List)"
+description: "Tiga jenis daftar HTML: ul, ol, dl — termasuk atribut dan daftar bersarang"
+order: 4
+quiz:
+  - q: "Elemen untuk daftar berurutan (1, 2, 3…) adalah…"
+    options: ["<ul>", "<ol>", "<dl>", "<li>"]
+    answer: 1
+    explain: "<ol> = ordered list (berurutan). <ul> = unordered (bullet)."
+  - q: "Elemen <li> berfungsi untuk…"
+    options: ["Membuat daftar", "Menulis item di dalam daftar", "Membuat tabel", "Membuat link"]
+    answer: 1
+    explain: "<li> (list item) adalah tiap baris item di dalam <ul>/<ol>."
+  - q: "Daftar deskripsi biasanya dibungkus dengan…"
+    options: ["<dl>", "<ul>", "<ol>", "<dd>"]
+    answer: 0
+    explain: "<dl> (description list) berisi <dt> (istilah) dan <dd> (deskripsi)."
+  - q: "Atribut reversed pada <ol> berfungsi untuk…"
+    options: ["Membalik urutan bullet", "Menghitung daftar dari atas ke bawah", "Menghitung daftar mundur (mis. 3, 2, 1)", "Menghapus nomor"]
+    answer: 2
+    explain: "<ol reversed> memulai penomoran dari akhir — berguna untuk ranking mundur."
+  - q: "Bolehkah daftar bersarang (list di dalam list)?"
+    options: ["Tidak boleh", "Boleh, cukup taruh <ul>/<ol> lagi di dalam <li>", "Hanya boleh 1 level", "Hanya di <dl>"]
+    answer: 1
+    explain: "Daftar bersarang sangat boleh — letakkan <ul>/<ol> di dalam elemen <li>."
+example:
+  code: |
+    <h2>Belajar Web</h2>
+    <ol>
+      <li>HTML</li>
+      <li>CSS</li>
+      <li>JavaScript</li>
+    </ol>
+
+    <h2>Bahan Masak</h2>
+    <ul>
+      <li>Beras</li>
+      <li>Telur</li>
+      <li>Bumbu</li>
+    </ul>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Daftar adalah cara paling alami menyajikan kumpulan item — HTML menyediakan **tepat 3 jenis daftar**: `<ul>`, `<ol>`, dan `<dl>`. Hampir semua situs besar memakainya, dari menu navigasi sampai hasil pencarian Google (bahkan Google membungkus hasilnya dengan `<ul>`).
+
+| Jenis | Elemen | Urutan bermakna? | Contoh penggunaan |
+|-------|--------|------------------|-------------------|
+| Tak berurutan | `<ul>` + `<li>` | Tidak | Menu, fitur, bahan |
+| Berurutan | `<ol>` + `<li>` | Ya | Langkah, ranking |
+| Deskripsi | `<dl>` + `<dt>`/`<dd>` | Pasangan istilah-arti | Glosarium, metadata |
+
+## Daftar Tak Berurutan (`<ul>`)
+
+Cocok untuk poin-poin yang urutannya tidak penting:
+
+```html
+<ul>
+  <li>HTML</li>
+  <li>CSS</li>
+  <li>JavaScript</li>
+</ul>
+```
+
+Secara default ditandai bullet (•). Daftar `<ul>` juga paling umum dipakai untuk **menu navigasi**.
+
+## Daftar Berurutan (`<ol>`)
+
+Untuk langkah-langkah atau peringkat:
+
+```html
+<ol>
+  <li>Panaskan minyak</li>
+  <li>Tumis bumbu</li>
+  <li>Masukkan nasi</li>
+</ol>
+```
+
+`<ol>` punya **3 atribut** yang sering dipakai:
+
+```html
+<ol type="a">      <!-- penomoran: a, b, c -->
+<ol start="5">     <!-- mulai dari nomor 5 -->
+<ol reversed>      <!-- hitung mundur: 3, 2, 1 -->
+```
+
+Nilai `type` yang didukung: `1` (default, angka), `a`, `A`, `i`, `I` (romawi kecil/kapital).
+
+## Daftar Deskripsi (`<dl>`)
+
+Untuk kumpulan istilah beserta penjelasannya — `<dl>` berisi pasangan `<dt>` (*description term*) dan `<dd>` (*description details*):
+
+```html
+<dl>
+  <dt>HTML</dt>
+  <dd>Struktur halaman web</dd>
+  <dt>CSS</dt>
+  <dd>Tampilan halaman web</dd>
+</dl>
+```
+
+Satu `<dt>` boleh punya banyak `<dd>` (misalnya satu istilah dengan dua arti).
+
+## Daftar Bersarang
+
+```html
+<ol>
+  <li>Belajar:
+    <ul>
+      <li>Teori</li>
+      <li>Praktik</li>
+    </ul>
+  </li>
+  <li>Praktik proyek</li>
+</ol>
+```
+
+Kuncinya: daftar bersarang diletakkan **di dalam `<li>`**, bukan langsung di `<ol>`/`<ul>` — supaya struktur valid dan pembaca layar tidak bingung.
+
+## Aturan Praktis
+
+- Hanya `<li>` yang boleh jadi anak langsung `<ul>`/`<ol>`
+- Setiap `<li>` wajib berada di dalam daftar — tidak ada `<li>` "tanpa induk"
+- Untuk checklist tampilan (☐), pakai `<ul>` biasa lalu styling dengan CSS
+
+## Di Dunia Nyata
+
+- **Menu navbar situs kampus** — `<ul>` berisi link Beranda, Tentang, Kontak; CSS menghapus bullet-nya
+- **Resep masakan** — langkah memasak wajib `<ol type="1">` karena urutan menentukan hasil
+- **Glosarium istilah teknis** — `<dl>` memasangkan "API" dengan definisinya, mirip kamus
+- **Ranking turnamen** — `<ol reversed>` menampilkan juara 3-2-1 di posisi teratas
+
+<div class="note">💡 Jangan pernah memakai daftar hanya karena "ingin ada bullet". Kalau isinya benar-benar item setara → `<ul>`; ada urutan maknanya → `<ol>`; istilah + penjelasan → `<dl>`. Bullet bisa dibuat CSS, tetapi makna yang salah tidak bisa diperbaiki stylesheet.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<h2>Framework JavaScript</h2>
+<ol>
+  <li>Frontend
+    <ul>
+      <li>React</li>
+      <li>Vue</li>
+      <li>Angular</li>
+    </ul>
+  </li>
+  <li>Backend
+    <ul>
+      <li>Node.js</li>
+      <li>Deno</li>
+    </ul>
+  </li>
+</ol>`} />

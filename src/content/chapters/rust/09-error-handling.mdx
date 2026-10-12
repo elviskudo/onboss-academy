@@ -1,0 +1,188 @@
+---
+title: "Error Handling"
+description: "Result dan Option — kegagalan sebagai nilai, bukan kejutan"
+order: 9
+quiz:
+  - q: "Tipe yang mewakili hasil sukses atau gagal adalah…"
+    options: ["Try", "Result", "Outcome", "Status"]
+    answer: 1
+    explain: "Result<T, E> berbentuk Ok(isi) atau Err(alasan)."
+  - q: "Err(...) pada Result menandakan…"
+    options: ["program selesai", "nilai kosong", "operasi gagal", "tipe tidak dikenal"]
+    answer: 2
+    explain: "Err membawa penjelasan kegagalan yang harus ditangani pemanggil."
+  - q: "unwrap() pada Result…"
+    options: ["mengambil nilai atau panic jika Err", "selalu aman", "mengembalikan nol", "mengabaikan error"]
+    answer: 0
+    explain: "Praktis saat belajar, berisiko di produksi — lebih baik match atau expect."
+  - q: "Nilai kosong (mis. hasil pencarian yang tidak ketemu) memakai…"
+    options: ["null", "undefined", "Option: Some atau None", "Err"]
+    answer: 2
+    explain: "Option<T> hanya punya dua kemungkinan: Some(nilai) atau None."
+  - q: "Operator ? pada fungsi Result…"
+    options: ["mengulang perhitungan", "mencetak error", "menghapus error", "meneruskan Err lebih cepat ke pemanggil"]
+    answer: 3
+    explain: "Jika Err, fungsi langsung berhenti dan mengembalikan error tersebut; jika Ok, lanjut dengan nilainya."
+example:
+  code: |
+    fn bagi(a: i32, b: i32) -> Result<i32, String> {
+        if b == 0 {
+            return Err(String::from("pembagi tidak boleh nol"));
+        }
+        Ok(a / b)
+    }
+
+    fn main() {
+        match bagi(10, 2) {
+            Ok(h) => println!("hasil = {}", h),
+            Err(e) => println!("gagal: {}", e),
+        }
+
+        let h = bagi(10, 0).unwrap_or(0);
+        println!("cadangan = {}", h);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust **tidak punya exception**. Kegagalan dikembalikan sebagai nilai dan wajib ditangani — itu sebabnya bug serupa jarang lolos ke produksi.
+
+## 2 Tipe Kegagalan
+
+| Tipe | Varian | Untuk apa |
+| --- | --- | --- |
+| `Result<T, E>` | `Ok(T)` / `Err(E)` | Operasi yang bisa gagal |
+| `Option<T>` | `Some(T)` / `None` | Nilai yang mungkin tidak ada (pengganti null) |
+
+## Result
+
+```rust
+fn bagi(a: i32, b: i32) -> Result<i32, String> {
+    if b == 0 {
+        return Err(String::from("pembagi tidak boleh nol"));
+    }
+    Ok(a / b)
+}
+
+fn main() {
+    match bagi(10, 2) {
+        Ok(hasil) => println!("hasil = {}", hasil),
+        Err(pesan) => println!("gagal: {}", pesan),
+    }
+}
+```
+
+`Ok` dan `Err` adalah dua varian `Result`. `match` memaksa kamu menangani keduanya.
+
+## 4 Cara Menangani Result
+
+```rust
+let aman = bagi(10, 2).unwrap();               // panik jika Err
+let pesan = bagi(10, 0).expect("harusnya jalan"); // panik dengan pesan
+let cadangan = bagi(10, 0).unwrap_or(0);         // nilai cadangan, tidak pernah panik
+let opsional = bagi(10, 0).ok();                 // jadi Option
+```
+
+`unwrap_or` memberi nilai cadangan sehingga program tetap berjalan saat terjadi kegagalan. `unwrap` hanya aman bila kamu benar-benar yakin tidak akan `Err`.
+
+## Option untuk Hasil yang Bisa Kosong
+
+```rust
+fn cari(nama: &str) -> Option<i32> {
+    if nama == "Sari" {
+        Some(90)
+    } else {
+        None
+    }
+}
+
+match cari("Sari") {
+    Some(s) => println!("skor = {}", s),
+    None => println!("tidak ditemukan"),
+}
+```
+
+`Option<T>` menggantikan null. Tidak ada kejutan "null pointer" di Rust.
+
+## Operator ?
+
+```rust
+fn tambah_satu(teks: &str) -> Result<i32, std::num::ParseIntError> {
+    let angka: i32 = teks.parse()?;
+    Ok(angka + 1)
+}
+
+fn main() {
+    match tambah_satu("41") {
+        Ok(h) => println!("hasil = {}", h),
+        Err(e) => println!("gagal: {}", e),
+    }
+}
+```
+
+`?` meneruskan `Err` ke pemanggil secara otomatis dan melanjutkan bila hasilnya `Ok` — jauh lebih ringkas daripada menulis match berlapis.
+
+## panic: Kegagalan Fatal
+
+```rust
+let vektor = vec![1, 2, 3];
+let nilai = vektor[5]; // panic jika panjang <= 5
+println!("{}", nilai);
+```
+
+`panic` menghentikan program — dipakai untuk keadaan yang tidak bisa dipulihkan (bug programmer), bukan kegagalan harian. Bedakan: `Result` = "bisa saja gagal, pemanggil memutuskan"; `panic` = "ini tidak boleh terjadi".
+
+## Di Dunia Nyata
+
+- **Baca file konfigurasi**: `fs::read_to_string(...).expect("config wajib ada")` — berhenti dengan pesan jelas
+- **Parse input form**: `?` meneruskan error angka invalid ke handler API
+- **Cari data**: `Option` untuk `map.get("kunci")` — None bila belum terdaftar
+- **Transaksi**: `Result` memastikan saldo cukup sebelum debit, kalau tidak cukup `Err` naik ke UI
+- **Koneksi DB**: `match conn { Ok(k) => ..., Err(e) => retry }` dengan batas percobaan
+
+<div class="note">💡 unwrap() aman untuk belajar dan untuk nilai yang sudah pasti. Di kode produksi, lebih suka match, expect dengan pesan jelas, atau ? di fungsi yang mengembalikan Result.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn bagi(a: i32, b: i32) -> Result<i32, String> {
+    if b == 0 {
+        return Err(String::from("pembagi tidak boleh nol"));
+    }
+    Ok(a / b)
+}
+
+fn cari(nama: &str) -> Option<i32> {
+    if nama == "Sari" {
+        Some(90)
+    } else {
+        None
+    }
+}
+
+fn tambah_satu(teks: &str) -> Result<i32, std::num::ParseIntError> {
+    let angka: i32 = teks.parse()?;
+    Ok(angka + 1)
+}
+
+fn main() {
+    match bagi(10, 2) {
+        Ok(h) => println!("10 / 2 = {}", h),
+        Err(e) => println!("gagal: {}", e),
+    }
+
+    let cadangan = bagi(10, 0).unwrap_or(0);
+    println!("cadangan = {}", cadangan);
+
+    match cari("Sari") {
+        Some(s) => println!("skor = {}", s),
+        None => println!("tidak ditemukan"),
+    }
+
+    match tambah_satu("41") {
+        Ok(h) => println!("41 + 1 = {}", h),
+        Err(e) => println!("gagal parse: {}", e),
+    }
+
+    match tambah_satu("abc") {
+        Ok(h) => println!("hasil = {}", h),
+        Err(e) => println!("input rusak: {}", e),
+    }
+}`} />

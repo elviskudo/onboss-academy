@@ -1,0 +1,133 @@
+---
+title: "Pengenalan Java"
+description: "Bahasa 'write once, run anywhere' — dari sejarah, paradigma OOP, sampai cara JVM mengeksekusi bytecode"
+order: 1
+quiz:
+  - q: "Siapa pencipta Java?"
+    options: ["James Gosling (Sun Microsystems)", "Guido van Rossum", "Bjarne Stroustrup", "Dennis Ritchie"]
+    answer: 0
+    explain: "James Gosling beserta tim Sun Microsystems membuat Java pada awal 1990-an."
+  - q: "Program Java dijalankan melalui…"
+    options: ["Diterjemahkan langsung ke CPU tanpa tahap kompilasi", "Dikompilasi ke bytecode .class lalu dijalankan JVM", "Hanya bisa berjalan di browser", "Tidak butuh Java Development Kit"]
+    answer: 1
+    explain: "javac mengubah .java menjadi bytecode .class, lalu JVM mengeksekusinya di mesin mana pun."
+  - q: "Perintah mengompilasi file Main.java adalah…"
+    options: ["java Main.java", "javac Main.java", "gcc Main.java", "build Main"]
+    answer: 1
+    explain: "javac untuk kompilasi, java untuk menjalankan: java Main (tanpa ekstensi)."
+  - q: "Titik masuk program Java harus berupa…"
+    options: ["method main dengan signature public static void main(String[] args)", "method start()", "file index.html", "constructor class Main"]
+    answer: 0
+    explain: "Tanpa method main dengan signature baku itu, JVM tidak tahu dari mana program dimulai."
+  - q: "Urutan yang benar dalam rantai tooling Java adalah…"
+    options: ["JVM → JRE → JDK", "JDK → JRE → JVM", "JRE → JDK → JVM", "JVM → JDK → JRE"]
+    answer: 1
+    explain: "JDK berisi JRE, dan JRE berisi JVM — lingkupnya makin kecil dari kiri ke kanan."
+example:
+  code: |
+    public class Main {
+        public static void main(String[] args) {
+            String nama = "Dunia";
+            System.out.println("Halo, " + nama + "!");
+            System.out.println("Total: " + (2 + 3));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Java adalah bahasa berorientasi objek yang berjalan di **JVM**: satu kode dikompilasi sekali, dijalankan di sistem operasi mana pun. Chapter ini memetakan anatomi bahasa sebelum kamu menyentuh tipe data, operator, dan OOP di bab-bab berikutnya.
+
+## Sekilas Sejarah
+
+Java lahir tahun 1991 di Sun Microsystems (tim Green Project, dipimpin James Gosling), dirilis publik pada 1995. Filosofi awalnya sederhana: perangkat konsumen berbeda-beda, tapi kodenya harus bisa jalan di mana saja. Prinsip itulah yang melahirkan slogan **Write Once, Run Anywhere (WORA)**. Oracle mengakuisisi Sun pada 2010; hari ini Java dipakai di server-side, aplikasi Android, sistem bank, dan big data (Apache Hadoop, Elasticsearch).
+
+## Hello World
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Halo, Dunia!");
+    }
+}
+```
+
+Nama file **wajib sama** dengan nama class publik: `Main.java`. `println` mencetak lalu ganti baris, `print` berhenti di akhir teks.
+
+## Kompilasi & Eksekusi
+
+```bash
+javac Main.java
+java Main
+```
+
+Langkah pertama menghasilkan `Main.class` (bytecode), langkah kedua menjalankannya lewat JVM. Beda dengan bahasa yang dikompilasi langsung ke kode mesin (C/C++) atau diinterpretasi baris demi baris (Python), Java menempatkan JVM di tengah sebagai lapisan portabilitas.
+
+## Anatomi Program
+
+```java
+public class Main {                      // satu class publik per file
+    public static void main(String[] args) {   // titik masuk program
+        int umur = 20;                    // deklarasi + nilai awal
+        System.out.println("Umur: " + umur);
+    }
+}
+```
+
+Lima kata kunci yang wajib kamu pahami di sini:
+
+| Kata Kunci | Arti | Fungsi |
+|---|---|---|
+| `public` | akses terbuka | class/method bisa dipakai dari package lain |
+| `class` | wadah objek | tempat field dan method didefinisikan |
+| `static` | milik class | bisa dipanggil tanpa membuat object |
+| `void` | tanpa kembalian | method tidak mengembalikan nilai |
+| `String[] args` | argumen CLI | parameter yang dikirim dari baris perintah |
+
+## Paradigma & Sifat Bahasa
+
+Java adalah bahasa **berorientasi objek penuh**: hampir semua kode harus berada di dalam class (kecuali static initializer). Ia juga **statis tipenya** — tipe dicek saat kompilasi, bukan saat runtime, sehingga banyak bug tertangkap sebelum program dijalankan. Java punya **garbage collector** yang membuang object yang tak terpakai secara otomatis, dan **membuang pointer aritmetika** ala C demi keamanan memori.
+
+## Komentar
+
+```java
+// komentar satu baris
+/* komentar
+   multi baris */
+/** dokumentasi Javadoc */
+```
+
+## JVM: Write Once, Run Anywhere
+
+Java tidak mem-pesan langsung ke CPU. Ia mengompilasi ke **bytecode** yang dijalankan JVM, sehingga file `.class` yang sama jalan di Windows, macOS, dan Linux.
+
+| Komponen | Isi | Kapan dipakai |
+|---|---|---|
+| **JDK** | javac, debugger, JRE, tool library | saat menulis & mengompilasi kode |
+| **JRE** | library standar + JVM | saat hanya menjalankan aplikasi |
+| **JVM** | mesin bytecode, garbage collector | ada di dalam JDK dan JRE |
+
+Alur lengkapnya: `.java` → **javac** → `.class` (bytecode) → **JVM** → kode mesin CPU.
+
+## Di Dunia Nyata
+
+- **Backend perbankan**: core system bank (misalnya untuk transfer dan mutasi rekening) umum ditulis Java karena tipenya ketat dan ada mekanisme exception yang rapi.
+- **Aplikasi Android**: sejak Android Studio resmi, bahasa utama pengembangan Android adalah Java (dan Kotlin) yang berjalan di mesin virtual (ART, turunan konsep JVM).
+- **Server REST API**: framework seperti Spring Boot menjadi tulang punggung ribuan layanan mikroservis e-commerce dan logistik.
+- **Big data & search**: Elasticsearch dan Hadoop berbasis JVM sehingga bisa memproses terabyte data lintas platform.
+- **Desktop enterprise**: aplikasi point-of-sale dan sistem gudang sering dibangun dengan Java Swing/JavaFX yang dibundel bersama JVM-nya sendiri.
+
+<div class="note">💡 Bedakan: <b>JDK</b> (tool kompilasi + runtime, dipasang saat belajar), <b>JRE</b> (hanya runtime), <b>JVM</b> (mesin bytecode di dalam keduanya). Menulis kode butuh JDK; jalankan <code>java -version</code> untuk memastikan terpasang sebelum latihan pertama.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    public static void main(String[] args) {
+        System.out.println("Halo dari OnBoss Academy!");
+        int a = 7, b = 5;
+        System.out.println(a + " + " + b + " = " + (a + b));
+        for (int i = 1; i <= 3; i++) {
+            System.out.println("Perulangan ke-" + i);
+        }
+        String nama = "Dunia";
+        System.out.println("Selamat tinggal, " + nama + "!");
+    }
+}`} />

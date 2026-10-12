@@ -1,0 +1,122 @@
+---
+title: "Event dan Kostum"
+description: "Merancang animasi — kejadian, pesan antar sprite, dan pergantian kostum"
+order: 4
+quiz:
+  - q: "Blok 'ketika tombol [spasi] ditekan' adalah contoh…"
+    options: ["Blok gerak", "Blok kejadian (event)", "Blok operator", "Blok data"]
+    answer: 1
+    explain: "Blok kejadian menjadi kepala skrip — program mulai berjalan saat kejadian terjadi."
+  - q: "Blok 'kirim [pesan-a]' berguna untuk…"
+    options: ["Menghapus proyek", "Menambah skor", "Memberi tahu sprite lain memulai skripnya", "Mengubah latar panggung"]
+    answer: 2
+    explain: "Kombinasi 'kirim' + 'ketika saya menerima [pesan-a]' menyinkronkan banyak sprite."
+  - q: "Agar animasi berjalan, pergantian kostum biasanya dibungkus…"
+    options: ["Blok 'ulangi' dengan 'tunggu' singkat", "Blok 'berhenti semua'", "Blok 'kirim pesan'", "Blok 'siapkan variabel'"]
+    answer: 0
+    explain: "Ulangi + jeda pendek menghasilkan frame-per-second ala kartun."
+  - q: "Blok 'tunggu 0.1 detik' yang terlalu besar membuat animasi terasa…"
+    options: ["Lebih halus", "Patah-patah (tersendat)", "Cepat sekali", "Tidak terlihat"]
+    answer: 1
+    explain: "Jeda terlalu besar menurunkan frame rate animasi."
+  - q: "Blok 'berhenti [semua]' akan…"
+    options: ["Hanya menghentikan satu blok", "Menghapus sprite", "Menghentikan seluruh skrip yang sedang berjalan", "Mereset panggung saja"]
+    answer: 2
+    explain: "Cocok sebagai tombol 'Game Over' atau reset penuh."
+example:
+  code: |
+    // Dua sprite berdialog lewat pesan:
+    // Sprite A:
+    //   [ketika bendera diklik]
+    //   [ucap [Halo B!] selama 1 detik]
+    //   [kirim [balas]]
+    // Sprite B:
+    //   [ketika saya menerima [balas]]
+    //   [ucap [Halo A!] selama 1 detik]
+---
+
+Blok **kejadian** menentukan kapan program hidup. Dipadukan dengan **kostum**, hasilnya adalah animasi dan permainan yang responsif.
+
+## 6 Kepala Skrip Kejadian
+
+Kategori Kejadian berisi 8 blok: **6 di antaranya kepala skrip (hat)** yang bisa memulai program, dan 2 blok siaran (`kirim pesan`, `kirim pesan dan tunggu`). Karena tiap kepala menjalankan skripnya sendiri, satu sprite bisa punya banyak skrip yang berjalan **bersamaan** (paralel).
+
+| Blok kejadian | Dipicu oleh | Kapan dipakai |
+| --- | --- | --- |
+| `ketika bendera diklik` | Klik tombol hijau | Mulai/reset program |
+| `ketika tombol [spasi] ditekan` | Tekan tombol keyboard | Kontrol pemain |
+| `ketika sprite ini diklik` | Klik pada sprite | Tombol menu |
+| `ketika latar berganti ke [...]` | Perubahan latar | Transisi babak |
+| `ketika [suara] > 10` | Loudness mikrofon | Interaksi suara |
+| `ketika saya menerima [...]` | Pesan dari sprite lain | Sinkronisasi |
+
+Prinsipnya: satu kejadian = satu skrip yang hidup. Dua kejadian yang sama (misal dua `ketika bendera diklik`) juga berjalan berbarengan — inilah cara Scratch meniru konsep multithreading tanpa siswa perlu tahu istilah itu.
+
+## Animasi dengan Kostum
+
+```text
+[ketika bendera diklik]
+[ulangi 8 [
+   ganti kostum ke [kostum-a]
+   tunggu 0.1 detik
+   ganti kostum ke [kostum-b]
+   tunggu 0.1 detik
+]]
+```
+
+Berganti-ganti dua kostum dengan jeda 0.1 detik menghasilkan animasi berjalan. Rumus frame rate-nya sederhana: **jumlah frame dibagi total jeda**. Dua kostum dengan jeda 0.1 detik = 5 frame per detik; turunkan ke 0.05 detik = 10 fps, masih terasa patah. Untuk halus, siapkan 4–6 kostum atau gabungkan pergeseran posisi dengan ganti kostum.
+
+| Jeda `tunggu` | FPS (2 kostum) | Kesan visual |
+| --- | --- | --- |
+| 0.5 detik | 1 | Pergantian lambat, bukan animasi |
+| 0.1 detik | 5 | Patah-patah, terasa seperti slide |
+| 0.05 detik | 10 | Cukup untuk gerakan kasar |
+| 0.02 detik | 25 | Mendekati halus (batas nyaman) |
+
+## Berdialog Antar Sprite
+
+```text
+// Sprite A                                // Sprite B
+[ketika bendera diklik]                    [ketika saya menerima [sapa]]
+[ucap [Halo B!] selama 1]                  [ucap [Halo A!] selama 1]
+[kirim [sapa]]
+[kirim [sapa] dan tunggu]   <- versi sinkron
+```
+
+Ada 2 mode pengiriman pesan:
+
+- **`kirim [x]`** — asinkron: pengirim langsung lanjut, penerima jalan paralel.
+- **`kirim [x] dan tunggu`** — sinkron: pengirim menunggu semua penerima selesai, persis seperti `await` pada promise di JavaScript.
+
+Koordinasi tanpa sprite harus tahu detail skrip satu sama lain — pola yang sama dipakai di arsitektur event-driven (DOM event, message queue).
+
+## Kostum sebagai Status
+
+```text
+// Sprite karakter: kostum [senang], [sedih], [kaget]
+[ketika saya menerima [kalah]]
+[ganti kostum ke [sedih]]
+[ucap [Yah, kalah...] selama 2]
+```
+
+Status emosi karakter diekspresikan lewat pergantian kostum. Pola ini setara dengan mengubah properti `state` pada komponen UI: tampilan adalah fungsi dari keadaan.
+
+## Berhenti dan Mengatur Ulang
+
+```text
+[berhenti [semua]]          <- matikan seluruh skrip, game over
+[berhenti [skrip ini]]      <- hanya skrip berjalan ini
+[berhenti [skrip lain di sprite]]   <- sinkronkan ulang
+```
+
+Blok berhenti dalam 3 varian. Varian kedua dipakai ketika satu skrip perlu mengakhiri dirinya sendiri (misal setelah klon selesai) tanpa mematikan proyek.
+
+## Di Dunia Nyata
+
+1. **Slide interaktif** — klik sprite "lanjut" mengirim pesan ke sprite "isi" untuk berganti konten.
+2. **Animasi mulut bicara** — 3 kostum mulut bergantian selama `ucap` berjalan, meniru kartun.
+3. **Karakter reaktif terhadap suara** — `ketika [suara] > 30` membuat sprite kaget saat siswa bersorak.
+4. **Anti-lelah pada game** — dua skrip `ketika tombol ditekan` berjalan paralel: satu untuk gerak, satu untuk menembak.
+5. **Transisi latar permainan** — `ketika latar berganti ke [arena-2]` otomatis memunculkan musuh level 2.
+
+<div class="note">💡 Satu sprite bisa punya banyak skrip kejadian yang berjalan berbarengan. Pisahkan logika (gerak) dan presentasi (kostum/suara) ke skrip berbeda agar mudah dirawat — dan ingat: menambah kepala skrip baru jauh lebih aman daripada menumpuk semuanya dalam satu rantai blok.</div>

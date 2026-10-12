@@ -1,0 +1,117 @@
+---
+import Base from '../../layouts/Base.astro';
+import { db } from '../../lib/db';
+
+const { code } = Astro.params;
+const cert = code ? await db.certificate.findUnique({ where: { code } }) : null;
+if (!cert) {
+  return new Response(
+    `<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Sertifikat tidak ditemukan</title></head>
+     <body style="font-family:system-ui;display:grid;place-items:center;min-height:100vh;background:#FBFAF8;color:#17181D">
+       <div style="text-align:center"><h1 style="font-size:2rem">🔍 Sertifikat tidak ditemukan</h1>
+       <p style="color:#6B7280;margin-top:8px">Kode <strong>${code}</strong> tidak valid. Periksa lagi linknya.</p>
+       <a href="/" style="color:#4F46E5;font-weight:700;margin-top:16px;display:inline-block">← Kembali ke beranda</a></div>
+     </body></html>`,
+    { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+  );
+}
+
+const isOwner = Astro.locals.user?.id === cert.userId;
+const issuer = await db.user.findUnique({ where: { id: cert.userId }, select: { name: true } });
+const issued = cert.issuedAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+<Base title={`Sertifikat ${cert.langTitle} — ${code}`} description={`Sertifikat penyelesaian ${cert.langTitle} di OnBoss Academy.`}>
+  <div class="mx-auto max-w-4xl px-4 py-14 sm:px-6">
+    <div class="rounded-3xl border border-line bg-surface p-2.5 shadow-xl shadow-primary/5">
+      <div id="cert-doc" class="relative overflow-hidden rounded-[1.25rem] border-2 border-primary/20 bg-gradient-to-br from-bg via-surface to-primary-soft/40 px-8 py-14 text-center sm:px-16">
+        <div class="pointer-events-none absolute inset-4 rounded-2xl border border-primary/20"></div>
+        <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-warn/10 blur-3xl"></div>
+        <p class="relative text-sm font-bold uppercase tracking-[0.3em] text-primary">OnBoss Academy</p>
+        <h1 class="relative mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Sertifikat Penyelesaian</h1>
+        <p class="relative mt-3 text-muted">Dengan ini menyatakan bahwa</p>
+        <p class="relative mt-4 text-2xl font-extrabold sm:text-3xl" data-name>{issuer?.name || 'Peserta'}</p>
+        <p class="relative mt-3 text-muted">telah menyelesaikan seluruh bab dan kuis</p>
+        <p class="relative mt-2 text-xl font-extrabold text-primary" data-lang>{cert.langTitle}</p>
+        <div class="relative mt-10 flex flex-wrap items-end justify-center gap-10 text-sm">
+          <div>
+            <p class="font-bold" data-issued>{issued}</p>
+            <p class="text-xs text-muted">Tanggal Terbit</p>
+          </div>
+          <div>
+            <p class="font-mono font-bold tracking-wider" data-code>{cert.code}</p>
+            <p class="text-xs text-muted">Kode Verifikasi</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+      <button id="dl-pdf" type="button" class="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm shadow-primary/30 hover:bg-primary-dark">⬇ Download PDF</button>
+      <a href="/dashboard" class="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-bold text-ink hover:border-ink/30">← Dashboard</a>
+      {isOwner && <a href="/belajar" class="rounded-xl border border-line bg-surface px-6 py-3 text-sm font-bold text-ink hover:border-ink/30">Belajar bahasa lain</a>}
+    </div>
+    <p class="mt-4 text-center text-xs text-muted">Halaman ini bisa dibagikan sebagai bukti verifikasi sertifikat.</p>
+  </div>
+
+  <script define:vars={{ certCode: cert.code, certLang: cert.langTitle, certIssued: issued }}>
+    document.getElementById('dl-pdf')?.addEventListener('click', async () => {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+
+      doc.setFillColor(251, 250, 248);
+      doc.rect(0, 0, W, H, 'F');
+      doc.setDrawColor(79, 70, 229);
+      doc.setLineWidth(1.2);
+      doc.roundedRect(8, 8, W - 16, H - 16, 4, 4);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(11, 11, W - 22, H - 22, 3, 3);
+
+      doc.setTextColor(79, 70, 229);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('ONBOSS ACADEMY', W / 2, 28);
+
+      doc.setTextColor(23, 24, 29);
+      doc.setFontSize(28);
+      doc.text('Sertifikat Penyelesaian', W / 2, 44);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.setTextColor(107, 114, 128);
+      doc.text('Dengan ini menyatakan bahwa', W / 2, 58);
+
+      const name = document.querySelector('[data-name]')?.textContent || 'Peserta';
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(24);
+      doc.setTextColor(23, 24, 29);
+      doc.text(name, W / 2, 70);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(12);
+      doc.setTextColor(107, 114, 128);
+      doc.text('telah menyelesaikan seluruh bab dan kuis', W / 2, 82);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(79, 70, 229);
+      doc.text(certLang, W / 2, 94);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(23, 24, 29);
+      doc.text(certIssued, W / 2 - 40, H - 30);
+      doc.text(certCode, W / 2 + 40, H - 30);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
+      doc.text('Tanggal Terbit', W / 2 - 40, H - 25);
+      doc.text('Kode Verifikasi', W / 2 + 40, H - 25);
+
+      doc.save(`sertifikat-${certCode}.pdf`);
+    });
+  </script>
+</Base>

@@ -1,0 +1,127 @@
+---
+title: "UNION dan Operator Set"
+description: "Menyatukan hasil query: UNION, UNION ALL, INTERSECT, dan EXCEPT"
+order: 9
+quiz:
+  - q: "UNION dan UNION ALL bedanya…"
+    options: ["UNION ALL lebih lambat selalu", "UNION menghapus duplikat, UNION ALL mempertahankannya", "UNION hanya untuk angka", "Tidak ada bedanya"]
+    answer: 1
+    explain: "UNION menyaring duplikat antar hasil; UNION ALL menggabungkan apa adanya — biasanya lebih cepat."
+  - q: "Berapa operator set utama di SQL?"
+    options: ["2", "3", "4", "5"]
+    answer: 2
+    explain: "4 operator: UNION, UNION ALL, INTERSECT, dan EXCEPT."
+  - q: "INTERSECT mengembalikan…"
+    options: ["Baris yang ada di kedua hasil query", "Baris kiri saja", "Baris kanan saja", "Semua baris tanpa syarat"]
+    answer: 0
+    explain: "INTERSECT = irisan — hanya baris yang muncul di kedua sisi."
+  - q: "Syarat wajib UNION adalah…"
+    options: ["Kedua query harus punya WHERE", "Jumlah dan tipe kolom kedua query harus cocok", "Harus dari tabel sama", "Wajib pakai ORDER BY"]
+    answer: 1
+    explain: "Kedua sisi UNION harus sejajar: jumlah kolom sama, tipe data kompatibel."
+  - q: "Kapan UNION ALL lebih dipilih daripada UNION?"
+    options: ["Ketika duplikat tidak masalah dan ingin lebih cepat", "Ketika ingin data unik", "Ketika query gagal", "Ketika tabel kosong"]
+    answer: 0
+    explain: "UNION harus memeriksa duplikat; UNION ALL lebih hemat jika duplikat tidak berpengaruh."
+example:
+  code: |
+    SELECT nama AS item, gaji AS nilai FROM karyawan WHERE gaji >= 11000000
+    UNION ALL
+    SELECT nama, budget FROM proyek WHERE budget >= 20000000;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operator set menyatukan hasil beberapa query menjadi satu kumpulan. Berbeda dengan JOIN yang **menambah kolom secara horizontal**, operator set **menambah baris secara vertikal**.
+
+## 4 Operator Set
+
+| Operator | Baris Duplikat | Arti | Kapan Dipakai |
+|----------|----------------|------|---------------|
+| `UNION` | dibuang | gabungan unik | daftar penerima dari dua sumber |
+| `UNION ALL` | dipertahankan | gabungan apa adanya | log/transaksi yang semuanya penting |
+| `INTERSECT` | hanya yang ada di keduanya | irisan | anggota dua kelompok sekaligus |
+| `EXCEPT` | kiri yang tak ada di kanan | selisih | data yang belum diproses |
+
+Secara konsep, operator ini adalah padanan operasi array/set (`concat`, irisan, selisih) di bahasa pemrograman — tetapi database dapat menjalankannya dekat dengan data.
+
+## UNION dan UNION ALL
+
+```sql
+SELECT nama FROM karyawan WHERE dept = 'Engineering'
+UNION
+SELECT nama FROM karyawan WHERE gaji >= 11000000;
+```
+
+`UNION` menggabungkan kedua hasil lalu **membuang baris yang sama persis**. Karyawan Engineering bergaji tinggi, Rizky, hanya muncul sekali.
+
+```sql
+SELECT nama, 'Karyawan' AS sumber FROM karyawan
+UNION ALL
+SELECT nama, 'Proyek' AS sumber FROM proyek;
+```
+
+`UNION ALL` tidak memeriksa duplikat — lebih cepat dan mempertahankan semua 11 baris (8 karyawan + 3 proyek). Ini pilihan default bila tiap baris mewakili kejadian yang berbeda.
+
+## 3 Syarat Kompatibilitas
+
+Kedua query harus memenuhi 3 syarat:
+
+1. jumlah kolom sama;
+2. posisi kolom punya tipe data kompatibel;
+3. arti kolom pada posisi yang sama sebaiknya sama.
+
+Nama kolom hasil diambil dari query pertama. Kalau satu sisi menyimpan angka dan sisi lain teks, gunakan `CAST` agar tipe eksplisit dan hasil tidak berubah antar-database.
+
+## INTERSECT dan EXCEPT
+
+```sql
+SELECT id FROM karyawan WHERE gaji >= 10000000
+INTERSECT
+SELECT lead_id FROM proyek;
+```
+
+Hasilnya id 4, 5, 7 — karyawan bergaji ≥10 juta **sekaligus** memimpin proyek.
+
+```sql
+SELECT id FROM karyawan
+EXCEPT
+SELECT lead_id FROM proyek;
+```
+
+Hasilnya id 1, 2, 3, 6, 8 — karyawan yang tidak memimpin proyek. MySQL tidak mendukung INTERSECT/EXCEPT sebelum versi 8.0.31; padanannya adalah INNER JOIN/EXISTS dan LEFT JOIN/NOT EXISTS.
+
+## Prioritas dan ORDER BY
+
+```sql
+SELECT 'Karyawan: ' || nama AS daftar FROM karyawan
+UNION ALL
+SELECT 'Proyek: ' || nama FROM proyek
+ORDER BY daftar;
+```
+
+`ORDER BY` hanya ditulis sekali di paling akhir dan mengurutkan **seluruh hasil gabungan**. Bila mencampur lebih dari dua operator, pakai kurung atau CTE untuk membuat prioritas eksplisit; pembaca tidak perlu menghafal urutan evaluasi vendor database.
+
+## Set Operator vs JOIN
+
+| Kebutuhan | Pilihan |
+|-----------|---------|
+| Tambah baris dengan struktur kolom sama | Set operator |
+| Tambah kolom dari tabel terkait | JOIN |
+| Cek keanggotaan tanpa menampilkan kolom lain | EXISTS / IN |
+| Cari baris tanpa pasangan | EXCEPT / NOT EXISTS |
+
+## Di Dunia Nyata
+
+- **Menggabungkan histori transaksi aktif dan arsip**: UNION ALL menjaga seluruh kejadian tanpa biaya deduplikasi.
+- **Daftar email penerima kampanye unik**: UNION menyatukan pelanggan toko dan newsletter sambil membuang email ganda.
+- **Mencari peserta yang lulus teori sekaligus praktik**: INTERSECT atas dua daftar id peserta.
+- **Audit order belum dikirim**: EXCEPT membandingkan id tabel pesanan dengan id tabel pengiriman.
+
+<div class="note">💡 UNION ALL hampir selalu lebih cepat dari UNION karena tidak perlu membuang duplikat. Pakai ALL sebagai default, dan UNION biasa hanya ketika duplikat memang harus hilang.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama AS nama, gaji AS nilai, 'Gaji tinggi' AS keterangan
+FROM karyawan WHERE gaji >= 11000000
+UNION ALL
+SELECT nama, budget, 'Proyek besar' FROM proyek WHERE budget >= 20000000
+ORDER BY nilai DESC;`} />

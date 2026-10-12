@@ -1,0 +1,138 @@
+---
+title: "File Handling"
+description: "Membaca & menulis file teks, mode open(), JSON dan praktik aman"
+order: 8
+quiz:
+  - q: "Cara paling aman membuka file di Python adalah…"
+    options: ["f = open(...) tanpa with", "with open(...) as f:", "file.read()", "import file"]
+    answer: 1
+    explain: "with menutup file otomatis walau terjadi error di tengah blok."
+  - q: "Mode \"w\" pada open() berarti…"
+    options: ["Baca", "Append di akhir", "Tulis (menimpa file lama)", "Hapus file"]
+    answer: 2
+    explain: "r=baca (default), w=tulis-timpa, a=append, x=create-exist-error."
+  - q: "f.readlines() mengembalikan…"
+    options: ["List berisi tiap baris", "Satu string gabungan", "Jumlah baris", "Dictionary"]
+    answer: 0
+    explain: "readlines → list; read() → satu string besar; iterate f → hemat memori."
+  - q: "encoding=\"utf-8\" saat open() berfungsi untuk…"
+    options: ["Mempercepat membaca", "Mengompres file", "Mengenkripsi", "Mendukung karakter non-ASCII (emoji, aksara lokal)"]
+    answer: 3
+    explain: "Selalu set utf-8 — nama Indonesia & emoji tidak akan error Unicode."
+  - q: "Fungsi dari modul json untuk menulis dict ke file adalah…"
+    options: ["json.dump(data, f)", "json.write(data, f)", "json.dumps(f, data)", "json.save(data)"]
+    answer: 0
+    explain: "dump = ke file, dumps = ke string, load = baca file, loads = dari string."
+example:
+  code: |
+    with open("catatan.txt", "w", encoding="utf-8") as f:
+        f.write("Baris pertama\n")
+        f.write("Baris kedua\n")
+
+    with open("catatan.txt", "r", encoding="utf-8") as f:
+        for baris in f:
+            print(baris.rstrip())
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+File handling membuat program menyimpan data di luar RAM. Ada **6 mode utama** `open()` dan 4 fungsi JSON — sisanya soal kebiasaan aman: `with`, `encoding`, dan penanganan error.
+
+## Mode open()
+
+| Mode | Arti | Kapan dipakai |
+|---|---|---|
+| `r` | read, baca (default) | membaca konfigurasi |
+| `w` | write, **timpa** file lama | tulis laporan baru |
+| `a` | append, tambah di akhir | log harian, riwayat |
+| `x` | create, error kalau sudah ada | bikin file unik |
+| `r+` | baca + tulis | ubah sebagian isi |
+| `a+` | append + baca | tambah sekaligus cek |
+
+Tambahkan `b` (`rb`, `wb`) untuk mode biner (gambar, zip) — teks tidak dipakai di situ.
+
+## Menulis File
+
+```python
+with open("data.txt", "w", encoding="utf-8") as f:
+    f.write("Halo Dunia\n")
+    f.writelines(["baris1\n", "baris2\n"])
+```
+
+Mode `w` **menimpa** file lama! Untuk menambah di akhir, pakai `a` (append). `write()` tidak menambah `\n` otomatis — tulis sendiri.
+
+## Membaca File
+
+```python
+# per baris (hemat memori — disarankan untuk file besar)
+with open("data.txt", "r", encoding="utf-8") as f:
+    for baris in f:
+        print(baris.rstrip())
+```
+
+```python
+with open("data.txt") as f:
+    isi = f.read()          # semua jadi satu string
+    f.seek(0)               # kembali ke awal
+    semua = f.readlines()   # list per baris
+```
+
+Tiga cara baca: **iterasi per baris** (paling hemat), `read()` (file kecil), `readlines()` (butuh semua baris sebagai list).
+
+## JSON
+
+```python
+import json
+
+data = {"nama": "Sari", "nilai": [90, 85]}
+
+with open("user.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2, ensure_ascii=False)
+
+with open("user.json", encoding="utf-8") as f:
+    baca = json.load(f)
+    print(baca["nama"])
+```
+
+4 fungsi inti: `dump` (dict → file), `dumps` (dict → string), `load` (file → dict), `loads` (string → dict). Untuk tabel sederhana, modul `csv` (`csv.writer`/`csv.reader`) lebih ringkas daripada menulis CSV manual.
+
+## Praktik Aman
+
+```python
+# selalu gunakan with + encoding utf-8
+# tangani error dengan try/except FileNotFoundError
+try:
+    with open("hilang.txt") as f:
+        print(f.read())
+except FileNotFoundError:
+    print("File tidak ditemukan")
+```
+
+Kebiasaan aman: (1) selalu `with` supaya file tertutup otomatis, (2) tulis `encoding="utf-8"` eksplisit, (3) pakai `pathlib.Path("data.txt").read_text(encoding="utf-8")` untuk cara singkat, (4) tangani `FileNotFoundError` — file hilang itu normal, bukan bug.
+
+## Di Dunia Nyata
+
+- Backup otomatis: salin `data.json` ke `data-backup.json` tiap aplikasi ditutup.
+- Log server: `open("app.log", "a")` menambah satu baris timestamp tiap request tanpa menimpa log lama.
+- Export laporan bulanan 5.000 baris → `csv`/`txt` yang bisa dibuka Excel.
+- Konfigurasi aplikasi: simpan `{"tema": "gelap", "bahasa": "id"}` sebagai JSON, muat saat program start.
+
+<div class="note">💡 Mode `w` langsung mengosongkan file begitu dipanggil — walaupun `write()` belum dieksekusi. Untuk menambah data lama, selalu `a`; untuk membaca-then-menulis, cek dulu keberadaan file dengan mode `x` atau `pathlib.exists()`.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import json
+
+data = [
+    {"nama": "Sari", "nilai": 90},
+    {"nama": "Budi", "nilai": 85},
+]
+
+with open("nilai.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+with open("nilai.json", encoding="utf-8") as f:
+    baca = json.load(f)
+
+rata = sum(s["nilai"] for s in baca) / len(baca)
+print("Rata-rata kelas:", rata)
+for s in sorted(baca, key=lambda x: x["nilai"], reverse=True):
+    print(f"{s['nama']}: {s['nilai']}")`} />

@@ -1,0 +1,212 @@
+---
+title: "Error Handling"
+description: "Hirarki Throwable, checked vs unchecked, try-catch-finally, try-with-resources, throw/throws — program yang tidak mati mendadak"
+order: 9
+quiz:
+  - q: "Blok yang menangani exception disebut…"
+    options: ["throw only", "catch", "finally saja", "import"]
+    answer: 1
+    explain: "try memblokir kode berisiko, catch menangkap error, finally selalu dijalankan."
+  - q: "NullPointerException terjadi saat…"
+    options: ["Variabel belum dideklarasikan", "File tidak ditemukan", "Object yang direferensikan bernilai null diakses", "Loop tak berhenti"]
+    answer: 2
+    explain: "Misalnya String s = null; s.length(); — Java menolak memanggil method pada null."
+  - q: "Blok finally…"
+    options: ["Hanya jalan jika error", "Hanya jalan jika tidak ada error", "Selalu dijalankan, walau terjadi exception atau tidak", "Menggantikan return"]
+    answer: 2
+    explain: "Tempat ideal untuk menutup resource: koneksi, file, atau buffer."
+  - q: "Checked exception adalah exception yang…"
+    options: ["Wajib ditangani atau dideklarasikan throws", "Selalu terjadi di runtime", "Tidak bisa ditangkap", "Hanya muncul saat kompilasi C++"]
+    answer: 0
+    explain: "Contoh: IOException dan NumberFormatException — kompilator memaksa kamu menanganinya."
+  - q: "Untuk error yang tidak bisa ditangani secara spesifik, gunakan…"
+    options: ["catch (Exception e)", "catch (void e)", "hapus try-cash", "ignor e"]
+    answer: 0
+    explain: "catch generik menangkap semua jenis Exception — baik sebagai jaring pengaman terakhir."
+example:
+  code: |
+    try {
+        int hasil = 100 / 0;
+    } catch (ArithmeticException e) {
+        System.out.println("Gagal: " + e.getMessage());
+    } finally {
+        System.out.println("Blok finally tetap dijalankan");
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Error bukan sesuatu yang harus dihindari — yang harus dihindari adalah **program mati mendadak** tanpa pesan yang jelas. Java punya sistem penanganan error terstruktur berbasis `Exception`.
+
+## Hirarki Throwable
+
+Java punya **2 cabang besar** di bawah `Throwable`:
+
+| Kelas | Arti | Contoh | Ditangani? |
+|---|---|---|---|
+| `Error` | kegagalan sistem JVM — jangan ditangani | `OutOfMemoryError`, `StackOverflowError` | biarkan crash |
+| `Exception` | masalah yang bisa (dan harus) diprediksi | `IOException`, `NullPointerException` | tangkap/antisipasi |
+
+`Exception` terbelah lagi menjadi **2 jenis**:
+
+| Jenis | Sifat | Contoh | Kewajiban kompilator |
+|---|---|---|---|
+| **Checked** | diprediksi, "normal" terjadi | `IOException`, `SQLException`, `ParseException` | **wajib** ditangani (`catch`) atau dideklarasikan `throws` |
+| **Unchecked** | bug programmer | `NullPointerException`, `ArithmeticException`, `ArrayIndexOutOfBoundsException` | bebas ditangani |
+
+## 4 Exception Unchecked Paling Umum
+
+```java
+try {
+    int[] data = {1, 2, 3};
+    System.out.println(data[5]);          // ArrayIndexOutOfBoundsException
+} catch (ArrayIndexOutOfBoundsException e) {
+    System.out.println("Indeks di luar batas");
+}
+
+try {
+    int n = Integer.parseInt("abc");      // NumberFormatException
+} catch (NumberFormatException e) {
+    System.out.println("Input bukan angka");
+}
+
+try {
+    String s = null;
+    System.out.println(s.length());       // NullPointerException
+} catch (NullPointerException e) {
+    System.out.println("Referensi null");
+}
+
+try {
+    int hasil = 100 / 0;                  // ArithmeticException
+} catch (ArithmeticException e) {
+    System.out.println("Bagi nol!");
+}
+```
+
+## try-catch-finally
+
+```java
+try {
+    int hasil = 100 / 0;                  // risiko terjadi di sini
+    System.out.println(hasil);
+} catch (ArithmeticException e) {
+    System.out.println("Tidak bisa dibagi nol!");
+} finally {
+    System.out.println("Selesai diproses");
+}
+```
+
+Urutan kerjanya: `try` dijalankan → jika exception, lompat ke `catch` yang cocok → `finally` tetap dijalankan di akhir (baik error maupun tidak). `finally` juga tetap jalan walau ada `return` di `try` — itulah tempat menutup resource klasik.
+
+## Multi-catch & Catch Generik
+
+```java
+try {
+    // kode berisiko
+} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
+    System.out.println("Input tidak valid: " + e.getMessage());
+}
+
+try {
+    // ...
+} catch (Exception e) {                 // jaring pengaman terakhir
+    System.out.println("Gagal: " + e.getMessage());
+}
+```
+
+Urutan catch penting: yang **spesifik dulu**, generik di akhir — sebaliknya = error kompilasi (catch tak terjangkau).
+
+## throw & throws
+
+```java
+static int bagi(int a, int b) throws ArithmeticException {
+    if (b == 0) throw new ArithmeticException("Pembagi nol");
+    return a / b;
+}
+
+// memanggilnya wajib ditangani:
+try {
+    System.out.println(bagi(10, 0));
+} catch (ArithmeticException e) {
+    System.out.println(e.getMessage());
+}
+```
+
+`throw` = **melempar** exception dari dalam method; `throws` = **mendeklarasikan** di signature bahwa method bisa melempar exception tertentu (panggilan wajib ditangani).
+
+## try-with-resources (Java 7+)
+
+```java
+try (var br = new java.io.BufferedReader(new java.io.FileReader("data.txt"))) {
+    System.out.println(br.readLine());
+} catch (Exception e) {
+    System.out.println("Gagal baca: " + e.getMessage());
+}
+// br ditutup OTOMATIS — tanpa finally manual
+```
+
+Resource yang di-declare di dalam kurung `try` otomatis di-close setelah blok selesai, even saat exception. Ini cara modern menutup file, koneksi, dan stream.
+
+## Custom Exception
+
+```java
+class SaldoKurangException extends Exception {
+    SaldoKurangException(String pesan) { super(pesan); }
+}
+
+static void tarik(double saldo, double jumlah) throws SaldoKurangException {
+    if (jumlah > saldo) throw new SaldoKurangException("Saldo kurang " + (jumlah - saldo));
+}
+```
+
+Membuat exception sendiri membuat kode bisnis terbaca: `catch (SaldoKurangException e)` jauh lebih jelas daripada membaca pesan string.
+
+## Di Dunia Nyata
+
+- **Transfer bank**: saldo tidak cukup → `SaldoKurangException` ditangkap, user melihat pesan ramah, bukan stack trace merah.
+- **Upload foto profil**: format bukan JPG/PNG → `IllegalArgumentException` dicek sebelum file dikirim ke server.
+- **Koneksi database down**: `try-with-resources` menutup koneksi otomatis; catch mencatat log dan fallback ke cache.
+- **Parser konfigurasi YAML/JSON**: `NumberFormatException` saat nilai port bukan angka → program memberi tahu baris bermasalah.
+- **Retry API pembayaran**: catch exception jaringan, hitung mundur 3 detik, coba lagi maksimal 3× — pola circuit breaker sederhana.
+
+<div class="note">💡 Jangan menangkap exception lalu diam tanpa tindakan — minimal cetak pesannya atau tulis ke log. Error yang disembunyikan jauh lebih sulit didebug daripada error yang terlihat; <code>catch (Exception e) {}</code> kosong adalah anti-pattern nomor satu di code review.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    static int bagi(int a, int b) throws ArithmeticException {
+        if (b == 0) throw new ArithmeticException("Pembagi nol");
+        return a / b;
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.out.println("100 / 4 = " + (100 / 4));
+            System.out.println("100 / 0 = " + (100 / 0));
+        } catch (ArithmeticException e) {
+            System.out.println("Gagal: " + e.getMessage());
+        } finally {
+            System.out.println("Blok finally tetap dijalankan");
+        }
+
+        try {
+            int[] data = {1, 2, 3};
+            System.out.println(data[5]);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Indeks di luar batas");
+        }
+
+        try {
+            String s = null;
+            System.out.println(s.length());
+        } catch (NullPointerException e) {
+            System.out.println("Null terdeteksi");
+        }
+
+        try {
+            System.out.println(bagi(20, 5));
+            System.out.println(bagi(20, 0));
+        } catch (ArithmeticException e) {
+            System.out.println("Exception lempar: " + e.getMessage());
+        }
+    }
+}`} />

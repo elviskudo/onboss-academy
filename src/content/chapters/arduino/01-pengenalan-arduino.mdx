@@ -1,0 +1,126 @@
+---
+title: "Pengenalan Arduino"
+description: "Mikrokontroler untuk pemula — board, IDE, dan siklus upload program"
+order: 1
+quiz:
+  - q: "Arduino pada dasarnya adalah…"
+    options: ["Sistem operasi", "Mikrokontroler + lingkungan pengembangan sederhana", "Bahasa pemrograman baru", "Jenis sensor"]
+    answer: 1
+    explain: "Board Arduino memakai chip ATmega/similar dengan pin digital dan analog siap dipakai."
+  - q: "Keunggulan Arduino untuk pemula adalah…"
+    options: ["Sintaksis ringkas, ekosistem pustaka luas, dan upload sekali klik", "Harganya paling mahal", "Tidak butuh komputer", "Hanya untuk industri"]
+    answer: 0
+    explain: "Banyak contoh siap pakai membuat hasil pertama bisa dicapai dalam hitungan menit."
+  - q: "IDE Arduino berfungsi untuk…"
+    options: ["Menggambar skema rangkaian", "Membuat website", "Menulis, mengompilasi, dan meng-upload program ke board", "Mengelola database"]
+    answer: 2
+    explain: "Satu aplikasi mencakup editor, kompilator, dan pengunggah program (via USB serial)."
+  - q: "Fungsi yang wajib ada di setiap sketch Arduino adalah…"
+    options: ["main() dan end()", "setup() dan loop()", "start() dan stop()", "init() dan run()"]
+    answer: 1
+    explain: "setup() dijalankan sekali saat boot; loop() berulang terus-menerus."
+  - q: "Board Uno bekerja pada tegangan logika…"
+    options: ["5 volt", "12 volt", "24 volt", "3 volt saja"]
+    answer: 0
+    explain: "Uno memakai 5V; banyak board modern (32-bit) memakai 3.3V — perhatikan saat memilih sensor."
+example:
+  code: |
+    void setup() {
+      pinMode(LED_BUILTIN, OUTPUT);
+      Serial.begin(9600);
+    }
+
+    void loop() {
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(500);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(500);
+    }
+---
+
+Arduino adalah gerbang paling ramah ke dunia **mikrokontroler**: satu chip kecil yang menjalankan programmu berulang-ulang sambil membaca dan menggerakkan pin secara real-time, tanpa sistem operasi dan tanpa file sistem.
+
+## Anatomi Board UNO
+
+| Bagian | Spesifikasi UNO | Fungsi |
+| --- | --- | --- |
+| Mikrokontroler | ATmega328P, 16 MHz | Menjalankan sketch |
+| Memori | 32 KB flash, 2 KB SRAM, 1 KB EEPROM | Kode, variabel, simpan permanen |
+| Pin digital | 14 pin (0–13) | Membaca/menulis HIGH–LOW |
+| Pin analog | 6 pin (A0–A5) | Membaca tegangan via ADC |
+| Pin PWM | 6 pin (3, 5, 6, 9, 10, 11), ditanda `~` | mensimulasikan tegangan analog |
+| Tegangan logika | 5 V | Dasar hitung HIGH/LOW |
+| Catu daya | 7–12 V via barrel, atau 5 V via USB | Mensuplai board dan sensor |
+
+```text
+Digital 0-13 : output/input + 6 pin PWM (ditanda ~)
+Analog A0-A5 : pembacaan tegangan (ADC 10-bit)
+5V / 3.3V / GND : pasokan daya untuk sensor
+Vin / barrel : masukan daya luar
+USB : upload program + listrik + serial monitor
+```
+
+## 3 Langkah Siklus Kerja Arduino
+
+```text
+1. Tulis sketch (.ino)  ->  2. Kompilasi C++ ke biner  ->  3. Upload via USB
+        ^                                                     |
+        +------- 4. Board menjalankan, pantau Serial ---------+
+```
+
+Tidak ada sistem operasi: begitu di-upload, program berjalan langsung di chip dari listrik pertama — `setup()` sekali, lalu `loop()` selamanya tanpa jeda. Inilah bedanya dengan Raspberry Pi yang menjalankan Linux: Arduino boot dalam hitungan milidetik dan tidak ada yang bisa "crash" selain programmu sendiri.
+
+## Struktur Sketch: 2 Fungsi Wajib
+
+```cpp
+void setup() {                 // dijalankan SATU KALI saat board menyala/reset
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {                  // dijalankan TERUS-MENERUS sampai daya lepas
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);                  // tahan 500 ms
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+}
+```
+
+LED bawaan (dekat pin 13) menyala 0,5 detik nyala / 0,5 detik mati tanpa rangkaian tambahan. Kalau kamu menulis `main()`, Arduino tetap menyuntikkan `setup()` dan `loop()` di belakang layar lewat preprocessor — dua fungsi itulah satu-satunya yang kamu perlukan.
+
+## Serial Monitor: Jendela ke Dalam Board
+
+```cpp
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Halo dari Arduino");
+}
+
+void loop() {
+  Serial.println(millis());    // ms sejak board dinyalakan
+  delay(1000);
+}
+```
+
+Buka **Tools > Serial Monitor** dengan baud yang sama (9600) untuk membaca output. Ini alat debugging utama: `Serial.println()` setara `print()` pada bahasa lain.
+
+## Memilih Board dan Pustaka
+
+| Board | Kekuatan | Cocok untuk |
+| --- | --- | --- |
+| UNO | Simpel, murah, dokumentasi terbanyak | Belajar, proyek dasar |
+| Nano | UNO versi mungil, bisa dicolok breadboard | Rangkaian tetap kecil |
+| Mega 2560 | 54 pin digital, 16 analog | Robotika kompleks |
+| ESP32 | 32-bit, Wi-Fi & Bluetooth bawaan | Proyek IoT |
+
+Pustaka (**Library > Include Library > Manage Libraries**) menghemat waktu: servo, LCD, display, sensor tinggal dipanggil API-nya tanpa mengurus protokol mentah.
+
+## Di Dunia Nyata
+
+1. **Otomatisasi kipas ruangan** — sensor suhu membaca kondisi, `if (suhu > 28)` menyalakan kipas lewat relay.
+2. **Sistem irigasi tetes** — timer berbasis `millis()` membuka solenoid 5 menit tiap pagi.
+3. **Papan nama LED berjalan** — modul LED maks7219 dikendalikan lewat pustaka berorientasi objek.
+4. **Data logger keuang listrik** — nilai `analogRead` dihitung rata-rata lalu dikirim ke serial tiap detik.
+5. **Kontroler etalase** — jadwal lampu display mengikuti jam RTC, dengan backup EEPROM.
+
+<div class="note">💡 Jangan mencabut kabel power saat proses upload berjalan. Bila upload gagal berulang, tekan tombol reset tepat saat upload dimulai (khususnya pada board tanpa auto-reset).</div>

@@ -1,0 +1,168 @@
+---
+title: "Perulangan"
+description: "Mengulang tugas dengan 4 bentuk loop Bash, break/continue, dan pola pemrosesan file yang aman"
+order: 7
+quiz:
+  - q: "Perulangan for dalam Bash ditutup dengan…"
+    options: ["end", "done", "close", "loop"]
+    answer: 1
+    explain: "for ... do ... done — done adalah penutup semua blok perulangan Bash."
+  - q: "for i in 1 2 3 akan mengiterasi…"
+    options: ["Tiga kali dengan nilai 1, 2, 3", "Tiga kali tanpa nilai", "Hanya sekali", "Error karena tidak ada range"]
+    answer: 0
+    explain: "in diikuti daftar item; loop berjalan sebanyak jumlah item."
+  - q: "Loop mana yang selalu menjalankan blok setidaknya sekali?"
+    options: ["for", "while", "until", "Tidak ada bentuk do-while bawaan di Bash"]
+    answer: 3
+    explain: "Bash tidak punya do-while; for, while, dan until semuanya bisa tidak berjalan sama sekali."
+  - q: "Perintah untuk langsung ke iterasi berikutnya adalah…"
+    options: ["break", "exit", "continue", "return"]
+    answer: 2
+    explain: "continue melewati sisa badan loop; break keluar dari loop terdekat."
+  - q: "Cara aman membaca file baris demi baris adalah…"
+    options: ["for baris in $(cat file)", "while IFS= read -r baris", "loop file", "readall file"]
+    answer: 1
+    explain: "read -r menjaga backslash dan IFS= menjaga whitespace awal/akhir setiap baris."
+example:
+  code: |
+    #!/usr/bin/env bash
+    for buah in apel jeruk mangga; do
+      echo "Buah: $buah"
+    done
+
+    i=1
+    while [ "$i" -le 3 ]; do
+      echo "Iterasi ke-$i"
+      i=$((i + 1))
+    done
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perulangan mengubah puluhan baris perintah yang sama menjadi satu blok yang dapat memproses daftar file, menunggu service sehat, atau mengulangi tugas sampai kondisi terpenuhi.
+
+## Empat Bentuk Loop Bash
+
+Bash punya **4 bentuk loop utama**:
+
+| Bentuk | Berjalan berdasarkan | Kapan dipakai |
+| --- | --- | --- |
+| `for item in daftar` | setiap item | daftar file, nama, argumen |
+| `for ((awal; tes; langkah))` | penghitung numerik | jumlah iterasi pasti |
+| `while kondisi` | selama kondisi sukses | jumlah iterasi belum diketahui |
+| `until kondisi` | sampai kondisi sukses | retry/menunggu keadaan tercapai |
+
+Bash tidak punya `do-while` bawaan. Jika blok harus berjalan minimal sekali, gunakan `while true` lalu `break` setelah badan.
+
+## for dengan Daftar
+
+```bash
+for buah in apel jeruk mangga; do
+  echo "Buah: $buah"
+done
+
+for arg in "$@"; do
+  echo "Argumen utuh: $arg"
+done
+```
+
+Loop berjalan sebanyak jumlah item setelah `in`. Bentuk `"$@"` sangat penting: setiap argumen tetap utuh meskipun mengandung spasi.
+
+## for Numerik dan Brace Expansion
+
+```bash
+for i in {1..5}; do
+  echo "$i"
+done
+
+for ((i = 0; i < 5; i++)); do
+  echo "Indeks: $i"
+done
+```
+
+`{1..5}` diekspansi shell sebelum loop mulai; bentuk C-style cocok jika langkah atau kondisi lebih rumit. Untuk nilai dinamis, gunakan C-style — `{1..$n}` tidak bekerja karena brace expansion terjadi sebelum ekspansi variabel.
+
+## while dan until
+
+```bash
+i=1
+while [ "$i" -le 3 ]; do
+  echo "Iterasi ke-$i"
+  i=$((i + 1))
+done
+
+percobaan=0
+until [ "$percobaan" -ge 3 ]; do
+  echo "Percobaan $percobaan"
+  percobaan=$((percobaan + 1))
+done
+```
+
+`while` berjalan selama kondisi benar (exit 0). `until` kebalikannya: berjalan selama kondisi masih salah dan berhenti begitu sukses.
+
+## Membaca File dengan Aman
+
+Jangan pakai `for user in $(cat pengguna.txt)`: command substitution memecah setiap spasi, jadi nama `Budi Santoso` berubah menjadi dua iterasi. Pola yang benar:
+
+```bash
+while IFS= read -r baris; do
+  echo "Baris utuh: $baris"
+done < pengguna.txt
+```
+
+`IFS=` menjaga spasi awal/akhir; `-r` mencegah backslash dianggap escape.
+
+## break, continue, dan Pola Loop
+
+```bash
+for n in 1 2 3 4 5; do
+  [ "$n" = "3" ] && continue  # lewati 3
+  [ "$n" = "5" ] && break     # selesai sebelum 5
+  echo "$n"
+done
+```
+
+Ada 4 pola yang sering dipakai:
+
+| Pola | Cara | Contoh |
+| --- | --- | --- |
+| Akumulasi | tambah ke variabel tiap iterasi | total ukuran file |
+| Cari pertama | kondisi + `break` | service pertama yang gagal |
+| Filter | kondisi + `continue` | abaikan file tersembunyi |
+| Retry | `until` + penghitung batas | tunggu API maksimal 5 kali |
+
+## Glob File yang Aman
+
+```bash
+for file in *.txt; do
+  [ -e "$file" ] || continue
+  echo "Memproses: $file"
+done
+```
+
+Jika tidak ada file `.txt`, glob tetap menjadi string literal `*.txt`. Pengecekan `-e` mencegah loop memproses nama palsu itu.
+
+## Di Dunia Nyata
+
+1. **Konversi batch gambar** — `for file in *.png` menjalankan kompresi pada ratusan file tanpa mengetik satu per satu.
+2. **Health-check deployment** — `until curl -fsS localhost:8080/health; do sleep 2; done` menunggu aplikasi benar-benar siap sebelum test dimulai.
+3. **Memproses CSV baris demi baris** — `while IFS=, read -r id nama email` memisahkan tiga kolom sederhana dengan aman.
+4. **Retry upload terbatas** — loop C-style mencoba unggah maksimal 3 kali dan `break` begitu curl sukses.
+5. **Audit semua argumen** — `for arg in "$@"` memvalidasi setiap file input tanpa merusak nama yang mengandung spasi.
+
+<div class="note">💡 Hindari `for x in $(cat file)`. Pola itu memecah baris pada setiap spasi dan menghapus whitespace. Untuk input baris-per-baris, selalu gunakan `while IFS= read -r x`.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+for i in 1 2 3; do
+  echo "Perulangan ke-$i"
+done
+
+n=1
+while [ "$n" -le 3 ]; do
+  echo "while ke-$n"
+  n=$((n + 1))
+done
+
+for ((i = 0; i < 3; i++)); do
+  echo "C-style $i"
+done`} />

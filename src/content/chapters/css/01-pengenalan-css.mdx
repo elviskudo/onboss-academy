@@ -1,0 +1,143 @@
+---
+title: "Pengenalan CSS"
+description: "Apa itu CSS dan tiga cara memasangnya"
+order: 1
+quiz:
+  - q: "Apa kepanjangan CSS?"
+    options: ["Computer Style Sheets", "Cascading Style Sheets", "Creative Style System", "Colorful Style Sheets"]
+    answer: 1
+    explain: "CSS = Cascading Style Sheets — lembaran gaya berjenjang."
+  - q: "Fungsi CSS terhadap HTML adalah…"
+    options: ["Menyusun struktur halaman", "Mengatur tampilan: warna, font, layout", "Mengelola database", "Menjalankan logika"]
+    answer: 1
+    explain: "HTML = struktur, CSS = tampilan, JavaScript = perilaku."
+  - q: "Selector mana yang memilih elemen berdasarkan class?"
+    options: ["#menu", ".menu", "menu", "*menu"]
+    answer: 1
+    explain: "Titik (.) untuk class. pagar (#) untuk id. Nama polos untuk tag."
+  - q: "Cara memasang CSS paling direkomendasikan untuk halaman utuh adalah…"
+    options: ["Atribut style di setiap tag", "Tag <style> di <head>", "File .css terpisah yang di-link", "Semua sama saja"]
+    answer: 2
+    explain: "File terpisah (external) paling mudah dirawat dan di-cache browser."
+  - q: "Perintah CSS yang mengubah warna teks menjadi merah adalah…"
+    options: ["text-color: red;", "font: red;", "color: red;", "paint: red;"]
+    answer: 2
+    explain: "color: red; adalah properti bawaan CSS untuk mengatur warna teks."
+example:
+  code: |
+    <h1 class="judul">Halo, CSS!</h1>
+    <p class="paragraf">Paragraf ini sudah di-styling.</p>
+    <style>
+      .judul { color: #4F46E5; font-family: sans-serif; }
+      .paragraf { color: #6B7280; line-height: 1.7; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+CSS (*Cascading Style Sheets*) adalah bahasa yang mengatur **tampilan** halaman: warna, font, jarak, layout, animasi.
+
+## Tiga Cara Memasang CSS
+
+**1. Inline** (di elemen — praktis tapi sulit dirawat):
+
+```html
+<p style="color: red;">Merah</p>
+```
+
+**2. Internal** (tag `<style>` di `<head>`):
+
+```html
+<style>
+  p { color: blue; }
+</style>
+```
+
+**3. Eksternal** (file terpisah — paling direkomendasikan):
+
+```html
+<link rel="stylesheet" href="style.css">
+```
+
+```css
+/* style.css */
+p {
+  color: blue;
+}
+```
+
+| Cara | Scope | Kelebihan | Kapan dipakai |
+|------|-------|-----------|---------------|
+| Inline | Satu elemen | Cepat untuk nilai dinamis | Email HTML / eksperimen |
+| Internal | Satu dokumen | Satu file mudah dicoba | Prototipe kecil |
+| External | Banyak halaman | Cache dan mudah dirawat | Hampir semua proyek nyata |
+
+CSS memiliki **lebih dari 500 properti standar/eksperimental**, tetapi sekitar **30–50 properti inti** sudah cukup untuk mayoritas antarmuka. Setiap aturan tersusun dari selector dan satu atau lebih deklarasi `property: value`.
+
+## Anatomi Rule CSS
+
+```css
+selector {
+  property: value;
+}
+```
+
+Contoh nyata:
+
+```css
+h1 {
+  color: #4F46E5;
+  font-size: 32px;
+  margin-top: 20px;
+}
+```
+
+- **Selector** — elemen mana yang kena gaya
+- **Property** — aspek yang diatur (`color`, `font-size`, …)
+- **Value** — nilainya
+
+## Cara Memilih Elemen
+
+```css
+p            { }  /* semua <p> */
+.judul       { }  /* class="judul" */
+#header      { }  /* id="header" */
+p.judul      { }  /* <p> yang punya class judul */
+a:hover      { }  /* link saat disorot kursor */
+```
+
+## Cascade: Urutan Kekuatan
+
+1. `!important` (hindari jika bisa)
+2. Inline style
+3. ID selector
+4. Class selector
+5. Tag selector
+
+Kalau dua aturan berebut elemen yang sama, yang **lebih spesifik** menang.
+
+## Di Dunia Nyata
+
+- **Design system** — file eksternal menjaga warna tombol konsisten di ratusan halaman
+- **Dashboard admin** — selector class membedakan kartu sukses, peringatan, dan gagal
+- **Artikel media** — cascade memberi tipografi dasar lalu tema rubrik menimpanya
+- **Email promosi** — inline CSS dipakai karena dukungan stylesheet klien email terbatas
+
+<div class="note">💡 Cascade bukan sekadar "yang terakhir menang": browser menilai origin, importance, specificity, lalu source order. Gunakan class dengan specificity rendah agar aturan mudah ditimpa tanpa `!important`.</div>
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`.judul {
+  color: #4F46E5;
+  font-family: Georgia, serif;
+  letter-spacing: -0.5px;
+}
+p {
+  color: #555;
+  line-height: 1.8;
+}
+.btn {
+  background: #4F46E5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+}`} />

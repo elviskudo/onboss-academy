@@ -1,0 +1,170 @@
+---
+title: "Interface & Type Alias"
+description: "Cara memberi nama pada bentuk data — kontrak yang bisa dipakai ulang"
+order: 5
+quiz:
+  - q: "Interface dipakai untuk…"
+    options: ["Membuat variabel", "Mendeskripsikan bentuk object", "Mengimpor file", "Menghitung angka"]
+    answer: 1
+    explain: "Interface adalah kontrak properti dan method — object yang memakainya wajib patuh."
+  - q: "Perbedaan utama interface dan type untuk object…"
+    options: ["Interface bisa di-extends & declaration merging", "Type tidak bisa punya method", "Interface hanya untuk array", "Tidak ada perbedaan sama sekali"]
+    answer: 0
+    explain: "Untuk object, keduanya hampir sama; interface unggul di extends, implements, dan deklarasi ganda."
+  - q: "implements pada class berarti…"
+    options: ["Class menghapus interface", "Class wajib mengisi properti/method dari interface", "Class menyalin file", "Interface mewarisi class"]
+    answer: 1
+    explain: "interface kewajiban; class yang implements harus memenuhi kontrak itu."
+  - q: "readonly pada properti interface…"
+    options: ["Mencegah perubahan setelah inisialisasi", "Membuat properti jadi method", "Menghapus properti", "Mengubah tipe jadi any"]
+    answer: 0
+    explain: "Properti readonly hanya boleh diisi sekali — berguna untuk ID dan konfigurasi."
+  - q: "Menambahkan deklarasi interface dengan nama yang sama akan…"
+    options: ["Error selalu", "Menghapus yang lama", "Digabung otomatis oleh TypeScript (merging)", "Membuat file baru"]
+    answer: 2
+    explain: "Declaration merging: dua interface bernama sama menyatu — trik umum untuk memperluas library."
+example:
+  code: |
+    interface Produk {
+      nama: string;
+      harga: number;
+    }
+    const kopi: Produk = { nama: "Kopi", harga: 25000 };
+    console.log(kopi.nama);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sering kali bentuk data dipakai berkali-kali. Interface dan type alias memberinya **nama**, supaya definisi tidak ditulis ulang dan tidak mudah menyimpang.
+
+## Interface vs Type Alias
+
+| Kemampuan | `interface` | `type` |
+|-----------|-------------|--------|
+| Bentuk object | ✔ | ✔ |
+| Di-`extends` | ✔ (banyak) | ✔ (`&` intersection) |
+| Di-`implements` class | ✔ | ✔ |
+| Declaration merging | ✔ (deklarasi ganda menyatu) | ✖ (nama sama = error) |
+| Union `A \| B` | ✖ | ✔ |
+| Tuple `[string, number]` | ✖ | ✔ |
+| Alias primitif `type ID = string` | ✖ | ✔ |
+| Dihapus saat runtime | ✔ | ✔ |
+
+Aturan praktik tim: **object/API payload → interface**, sisanya (union, tuple, primitif, utilitas) → `type`.
+
+## Dasar Interface
+
+```typescript
+interface Produk {
+  nama: string;
+  harga: number;
+  diskon?: number; // opsional
+}
+
+const kopi: Produk = { nama: "Kopi susu", harga: 25000 };
+const teh: Produk = { nama: "Teh", harga: 15000, diskon: 10 };
+
+console.log(kopi.nama, teh.diskon ?? 0);
+```
+
+## Method dalam Interface
+
+```typescript
+interface Hitung {
+  tambah(a: number, b: number): number;
+}
+
+const kalkulator: Hitung = {
+  tambah(a, b) {
+    return a + b;
+  },
+};
+
+console.log(kalkulator.tambah(2, 3)); // 5
+```
+
+## Extends & implements
+
+```typescript
+interface Manusia {
+  nama: string;
+}
+
+interface Karyawan extends Manusia {
+  nip: string;
+}
+
+class Programmer implements Karyawan {
+  constructor(public nama: string, public nip: string) {}
+}
+
+console.log(new Programmer("Sari", "E001").nip);
+```
+
+## Type Alias
+
+```typescript
+type ID = string | number;
+type Point = { x: number; y: number };
+
+const id: ID = "ABC-1"; // boleh teks
+const titik: Point = { x: 10, y: 20 };
+```
+
+Type alias bisa mewakili **union, tuple, atau primitive** — sedangkan interface khusus bentuk seperti object/function.
+
+## Intersection & Index Signature
+
+```typescript
+// & — gabungkan dua tipe jadi satu (semua properti wajib ada)
+type Basis = { id: number; nama: string };
+type Timestamp = { dibuatPada: string };
+type Entitas = Basis & Timestamp;
+
+// index signature — object dengan banyak kunci seragam
+type Peta = { [kunci: string]: number };
+const stok: Peta = { kopi: 5, teh: 2 };
+
+// atau tulis dengan Record
+const stok2: Record<string, number> = { kopi: 5, teh: 2 };
+```
+
+Intersection memaksa *semua* sisi terpenuhi — berguna untuk menggabungkan mixin kecil. Index signature mewakili object berisi banyak kunci bertipe sama (hitung stok per nama produk, dsb.).
+
+## Kapan pakai mana?
+
+- Object/API payload, kontrak class: **interface**
+- Union, tuple, alias primitif, tipe kompleks: **type**
+
+## Di Dunia Nyata
+
+- **Payload request POST** (`interface CreateUserDto`) dibagikan ke seluruh frontend & backend dari satu definisi.
+- **Kontrak pagination** `interface Halaman<T> { data: T[]; total: number }` dipakai untuk produk, user, dan pesanan.
+- **Declaration merging** memperkaya tipe library luar tanpa menyentuh node_modules.
+- **Type `ID = string | number`** menerima ID lama (angka) dan baru (UUID) selama masa migrasi.
+- **Tipe gabungan** `type Entity = Auditable & SoftDeletable` mencegah duplikasi properti `dibuatPada`, `dihapusPada` di 20 model.
+
+<div class="note">💡 Interface tidak ada saat runtime — tsc menghapusnya sepenuhnya. Jangan mencoba `instanceof Produk` pada interface, karena tidak ada object bernama Produk yang dibuat.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Produk {
+  nama: string;
+  harga: number;
+  diskon?: number;
+}
+
+function hargaAkhir(p: Produk): number {
+  return p.harga - (p.harga * (p.diskon ?? 0)) / 100;
+}
+
+const keranjang: Produk[] = [
+  { nama: "Kopi susu", harga: 25000, diskon: 10 },
+  { nama: "Croissant", harga: 30000 },
+  { nama: "Teh melati", harga: 15000, diskon: 20 },
+];
+
+for (const item of keranjang) {
+  console.log(item.nama, "->", hargaAkhir(item));
+}
+
+const total = keranjang.reduce((sum, p) => sum + hargaAkhir(p), 0);
+console.log("Total:", total);`} />

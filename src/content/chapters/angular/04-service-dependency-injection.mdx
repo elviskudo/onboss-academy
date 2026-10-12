@@ -1,0 +1,185 @@
+---
+title: "Service & Dependency Injection"
+description: "Memisahkan logika dari komponen dengan service, lalu menyuntiknya lewat DI Angular"
+order: 4
+quiz:
+  - q: "Service Angular umumnya diberi decorator…"
+    options: ["@Component", "@Injectable", "@Directive", "@Pipe"]
+    answer: 1
+    explain: "@Injectable menandai kelas sebagai layanan yang bisa disuntikkan ke komponen lain."
+  - q: "Dependency Injection berfungsi untuk…"
+    options: ["Membuat instance dependensi otomatis dan membagikannya lewat kontainer Angular", "Menghapus file service", "Mengompilasi CSS", "Mengatur warna tema"]
+    answer: 0
+    explain: "Kamu tidak new service secara manual — Angular yang menyediakan instance-nya saat diminta."
+  - q: "provideIn: 'root' pada service artinya…"
+    options: ["Service hanya dipakai di root module", "Service tersedia sebagai singleton di seluruh aplikasi", "Service tidak bisa di-inject", "Service harus dibuat tiap komponen"]
+    answer: 1
+    explain: "Satu instance dipakai bersama di mana pun service diminta — hemat dan konsisten."
+  - q: "Cara modern menyuntikkan service di dalam komponen…"
+    options: ["private produkService = inject(ProdukService)", "const s = new ProdukService()", "this.s = require('service')", "import service from './service'"]
+    answer: 0
+    explain: "Fungsi inject() dipanggil di top-level class — menggantikan constructor injection lama."
+  - q: "Mengapa logika pengambilan data dipindah ke service?"
+    options: ["Agar bisa dipakai ulang oleh banyak komponen dan mudah diuji", "Supaya file lebih banyak", "Karena komponen dilarang punya method", "Agar Angular cepat compile"]
+    answer: 0
+    explain: "Komponen fokus tampilan; service fokus logika/data — tanggung jawab lebih jelas."
+example:
+  code: |
+    class ProdukService {
+      constructor() {
+        this.items = ["Kopi Susu", "Roti Bakar", "Teh Tarik"];
+      }
+      semua() {
+        return this.items.slice();
+      }
+      tambah(nama) {
+        this.items.push(nama);
+      }
+    }
+    const service = new ProdukService();
+    service.tambah("Es Krim");
+    console.log("Daftar produk:", service.semua().join(", "));
+---
+
+Komponen yang berisi semua logika cepat berantakan. Angular memecahnya: **komponen untuk tampilan, service untuk logika dan data**.
+
+## Membuat Service
+
+```typescript
+import { Injectable } from "@angular/core";
+
+@Injectable({ providedIn: "root" })
+export class ProdukService {
+  private produk = [
+    { id: 1, nama: "Kopi Susu", harga: 25000 },
+    { id: 2, nama: "Roti Bakar", harga: 18000 },
+  ];
+
+  semua() {
+    return this.produk;
+  }
+
+  cari(kata: string) {
+    const k = kata.toLowerCase();
+    return this.produk.filter((p) => p.nama.toLowerCase().includes(k));
+  }
+
+  tambah(nama: string, harga: number) {
+    this.produk.push({ id: Date.now(), nama, harga });
+  }
+}
+```
+
+`providedIn: "root"` menjadikan service ini singleton: satu instance dipakai seluruh aplikasi, tanpa pendaftaran manual.
+
+## Menyuntikkan ke Komponen
+
+```typescript
+import { Component, inject } from "@angular/core";
+import { ProdukService } from "./produk.service";
+
+@Component({
+  selector: "app-produk",
+  standalone: true,
+  template: `
+    <ul>
+      @for (p of daftar; track p.id) {
+        <li>{{ p.nama }} — Rp{{ p.harga }}</li>
+      }
+    </ul>
+  `,
+})
+export class ProdukComponent {
+  private service = inject(ProdukService);
+  daftar = this.service.semua();
+}
+```
+
+Pola `inject()` di top-level class adalah cara Angular modern — singkat, aman untuk DI, dan mudah dites.
+
+## Membuat Instance yang Terisolasi (untuk Demo/Testing)
+
+```typescript
+@Component({
+  selector: "app-produk",
+  standalone: true,
+  providers: [ProdukService], // instance khusus komponen ini
+  template: `...`,
+})
+export class ProdukComponent {
+  private service = inject(ProdukService);
+}
+```
+
+`providers` di level komponen membuat instance baru yang hanya dipakai komponen tersebut — berguna saat menguji tampilan tanpa memengaruhi global.
+
+## Service yang Butuh Service Lain
+
+```typescript
+@Injectable({ providedIn: "root" })
+export class KeranjangService {
+  private produkService = inject(ProdukService);
+  private items: number[] = [];
+
+  tambah(id: number) {
+    this.items.push(id);
+  }
+
+  totalHarga() {
+    const semua = this.produkService.semua();
+    return this.items.reduce((acc, id) => {
+      const p = semua.find((x) => x.id === id);
+      return acc + (p ? p.harga : 0);
+    }, 0);
+  }
+}
+```
+
+Service bisa saling menyuntik — kontainer Angular yang merangkai rantai dependensinya.
+
+## Aturan Praktis
+
+- Simpan akses API, state bersama, dan utilitas di service
+- Komponen cukup `inject()` service yang dibutuhkan
+- Jangan new class manual di komponen — itu melewati kontainer DI
+
+## Tiga Cakupan Provider
+
+Angular memiliki **3 cakupan provider yang umum**.
+
+| Lokasi provider | Umur instance | Fungsi | Kapan dipakai |
+|---|---|---|---|
+| Root | sepanjang aplikasi | singleton global | API client, sesi, keranjang |
+| Route | selama cabang rute aktif | state satu fitur | wizard atau area admin |
+| Component | selama subtree komponen hidup | instance terisolasi | editor atau widget berulang |
+
+Token injeksi tidak harus class. `InjectionToken` cocok untuk konfigurasi atau implementasi yang dapat diganti.
+
+```typescript
+import { InjectionToken, inject } from "@angular/core";
+
+export const API_URL = new InjectionToken<string>("API_URL");
+
+export const appConfig = {
+  providers: [{ provide: API_URL, useValue: "https://api.example.id" }],
+};
+
+@Injectable({ providedIn: "root" })
+export class ProdukService {
+  private apiUrl = inject(API_URL);
+  semua() {
+    return inject(HttpClient).get<Produk[]>(`${this.apiUrl}/produk`);
+  }
+}
+```
+
+DI memisahkan kontrak pemakai dari cara dependensi dibuat. Dalam test, provider asli dapat diganti dengan object palsu tanpa mengubah komponen. Hindari service global untuk state yang hanya dibutuhkan satu komponen karena instance akan hidup lebih lama dari kebutuhan.
+
+## Di Dunia Nyata
+
+- API client root membagikan base URL dan autentikasi ke seluruh fitur.
+- Route checkout menyediakan state keranjang sementara hanya selama proses bayar.
+- Dua editor pada halaman mendapat service component-level yang tidak saling bocor.
+- Unit test mengganti layanan pembayaran dengan provider palsu tanpa transaksi nyata.
+
+<div class="note">💡 Dependency injection adalah salah satu alasan Angular enak untuk tim besar: dependensi terlihat jelas di deklarasi kelas, mudah ditukar saat testing, dan satu service bisa dipakai puluhan komponen tanpa duplikasi kode.</div>

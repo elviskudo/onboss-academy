@@ -1,0 +1,148 @@
+---
+title: "Pengenalan Go"
+description: "Bahasa sederhana dari Google — package main, func main, dan fmt"
+order: 1
+quiz:
+  - q: "Siapa yang mengembangkan bahasa Go?"
+    options: ["Meta", "Google", "Amazon", "Oracle"]
+    answer: 1
+    explain: "Go dibuat di Google oleh Robert Griesemer, Rob Pike, dan Ken Thompson, dirilis 2009."
+  - q: "Setiap program Go harus menyatakan…"
+    options: ["class Main", "module root", "package main", "namespace Go"]
+    answer: 2
+    explain: "Program yang bisa dijalankan selalu berada di package main."
+  - q: "Package untuk mencetak teks ke layar adalah…"
+    options: ["print", "fmt", "io", "console"]
+    answer: 1
+    explain: "fmt menyediakan Println, Printf, dan Sprint untuk format output."
+  - q: "Titik masuk program Go adalah…"
+    options: ["func main()", "method Start()", "init program()", "run()"]
+    answer: 0
+    explain: "func main() di package main adalah awal eksekusi — tanpa parameter dan tanpa nilai return."
+  - q: "Ekstensi file Go adalah…"
+    options: [".golang", ".g", ".gt", ".go"]
+    answer: 3
+    explain: "File Go memakai ekstensi .go dan dikompilasi dengan perintah go build atau go run."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func main() {
+        nama := "OnBoss"
+        fmt.Println("Halo, " + nama + "!")
+        fmt.Println("2 + 2 =", 2+2)
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go (Golang) dirancang untuk **sederhana, cepat, dan mudah dibaca**: sedikit kata kunci, kompilasi kilat, dan standar bawaan yang lengkap.
+
+## Hello World
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Halo, Dunia!")
+}
+```
+
+Tiga syarat wajib: `package main` untuk program yang bisa dijalankan, `import "fmt"` untuk output, dan `func main()` sebagai titik masuk.
+
+## Anatomi Program
+
+```go
+package main
+
+import "fmt"
+
+func Hitung() int {
+    return 10 + 5
+}
+
+func main() {
+    hasil := Hitung()
+    fmt.Println("Hasil:", hasil)
+}
+```
+
+| Bagian | Fungsi | Contoh |
+| --- | --- | --- |
+| `package` | Menamai kumpulan file; `main` berarti bisa dieksekusi | `package main` |
+| `import` | Memuat fungsi dari package lain | `import "fmt"` |
+| `func` | Mendeklarasikan fungsi; `main` adalah wajib | `func Hitung() int` |
+| `return` | Mengirim nilai balik ke pemanggil | `return 10 + 5` |
+
+Go punya **25 kata kunci** total — jauh lebih sedikit dari kebanyakan bahasa modern. Semua fungsi didefinisikan di luar `main`, lalu dipanggil di dalamnya. Kurawal `{` harus berada di baris yang sama dengan pernyataan pembukanya.
+
+## Komentar
+
+```go
+// komentar satu baris
+
+/*
+Komentar
+multi baris.
+*/
+```
+
+Dua bentuk saja: `//` untuk satu baris dan `/* */` untuk blok. Untuk dokumentasi pakai `//` di atas fungsi — nanti bisa dibaca `go doc`.
+
+## Menjalankan Program
+
+Enam perintah inti yang paling sering dipakai:
+
+| Perintah | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| `go run file.go` | Kompilasi sekaligus jalan | Saat mengembangkan |
+| `go build file.go` | Hasilkan file binari | Sebelum distribusi |
+| `go test ./...` | Jalankan unit test | Setiap kali ubah kode |
+| `go vet ./...` | Periksa pola mencurigakan | Sebelum commit |
+| `gofmt -w .` | Format kode otomatis | Wajib, standar gaya Go |
+| `go mod init nama` | Buat modul baru | Awal proyek baru |
+
+`go run` cocok untuk eksperimen; `go build` menghasilkan binari tunggal yang bisa dijalankan tanpa interpreter — inilah cara Docker dan Kubernetes didistribusikan.
+
+## Paradigma: Prosedural, Tanpa Class
+
+Go adalah bahasa **prosedural yang berorientasi objek sebagian**. Go **tidak punya kata kunci `class`** dan tidak punya inheritance. Yang dipakai:
+
+- **struct** → wadah data (pengganti class berisi field)
+- **method** → fungsi dengan receiver, menempel pada struct
+- **interface** → kontrak perilaku, dipenuhi secara otomatis tanpa kata kunci `implements`
+
+Jadi kalau kamu terbiasa dengan `class Kucing extends Hewan` di bahasa lain, di Go tulis komposisi: struct yang memuat struct lain, plus interface untuk perilaku bersama.
+
+## Kenapa Belajar Go?
+
+- **Kompilasi cepat**: proyek besar selesai dalam hitungan detik
+- **Concurrency**: goroutine memproses ribuan tugas bersamaan
+- **Standar lengkap**: HTTP server, file, JSON — tanpa instalasi tambahan
+- **Dipakai di infrastruktur**: Docker, Kubernetes, dan GitHub dibangun dengan Go
+
+## Di Dunia Nyata
+
+- **REST API**: server HTTP dengan `net/http` bawaan — satu binari, langsung jalan di server
+- **CLI pengolah log**: membaca file log GB-an memakai goroutine, selesai dalam hitungan menit
+- **Worker pool**: antrean job (kirim email, resize gambar) dengan kanal `chan`
+- **Service DevOps**: pengganti tool kecil berbasis Python — startup instan, binari statis
+- **Prototipe microservice**: tim memvalidasi ide dalam seminggu sebelum diproduksi ulang
+
+<div class="note">💡 Go tidak punya perulangan for versi lain (tidak ada while), exception, atau class. Sedikitnya konsep ini bukan kekurangan — setiap fitur punya tepat satu cara pakai, sehingga kode Go tim mana pun terlihat seragam.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+func main() {
+    nama := "OnBoss Academy"
+    tahun := 2026
+    fmt.Println("Halo dari", nama)
+    fmt.Println("Tahun:", tahun)
+    fmt.Println("2 + 2 =", 2+2)
+}`} />

@@ -1,0 +1,210 @@
+---
+title: "Perulangan (Looping)"
+description: "3 bentuk loop C, break/continue, infinite loop for(;;), dan pola klasik perhitungan"
+order: 4
+quiz:
+  - q: "Loop do-while mengeksekusi isi loop…"
+    options: ["Nol kali jika kondisi false", "Minimal sekali", "Tepat 5 kali", "Hanya saat variabel nol"]
+    answer: 1
+    explain: "Kondisi dicek setelah isi loop, sehingga isi selalu berjalan minimal satu kali."
+  - q: "Pada for (int i = 0; i < 5; i++), nilai i saat loop berhenti adalah…"
+    options: ["5", "4", "6", "0"]
+    answer: 0
+    explain: "Loop berhenti ketika i sudah tidak memenuhi i < 5, sehingga i = 5."
+  - q: "continue pada loop berfungsi untuk…"
+    options: ["Menghentikan seluruh loop", "Melompati sisa iterasi dan lanjut ke iterasi berikutnya", "Mengulang dari awal", "Menghapus variabel"]
+    answer: 1
+    explain: "continue lanjut ke iterasi berikutnya; break menghentikan loop sepenuhnya."
+  - q: "Loop tanpa perubahan kondisi menyebabkan…"
+    options: ["Infinite loop — program tak pernah berhenti", "Compile error", "Loop berjalan 2 kali", "Memori bertambah otomatis"]
+    answer: 0
+    explain: "Pastikan ada update yang membuat kondisi menuju false, misalnya i++ atau n--."
+  - q: "Perulangan while mengecek kondisi…"
+    options: ["Setelah isi loop", "Hanya sekali di awal program", "Sebelum isi loop dijalankan", "Tidak pernah mengecek"]
+    answer: 2
+    explain: "while dicek di awal (bisa 0 kali); do-while dicek di akhir (minimal 1 kali)."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        int total = 0;
+        for (int i = 1; i <= 5; i++) {
+            total += i;
+            printf("i = %d, total = %d\n", i, total);
+        }
+        printf("Jumlah 1..5 = %d\n", total);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perulangan adalah cara C mengerjakan **ribuan operasi dengan beberapa baris kode**. C mendukung **3 bentuk perulangan**: `for`, `while`, dan `do-while` — semuanya memakai kondisi `int` (non-zero = lanjut).
+
+## Loop for
+
+```c
+for (int i = 1; i <= 5; i++) {
+    printf("Perulangan ke-%d\n", i);
+}
+```
+
+Tiga bagian `inisialisasi; kondisi; update` bisa dikosongkan — misal `for (;;)` untuk loop tanpa batas yang harus dihentikan `break`. Pakai `for` saat jumlah iterasi diketahui dari counter atau indeks array.
+
+```c
+int angka[] = {10, 20, 30};
+int n = sizeof(angka) / sizeof(angka[0]);
+for (int i = 0; i < n; i++) {         // pola for berbasis indeks
+    printf("%d\n", angka[i]);
+}
+```
+
+## while & do-while
+
+```c
+int saldo = 100;
+while (saldo > 0) {            // dicek SEBELUM isi loop — bisa 0 kali
+    printf("Sisa: %d\n", saldo);
+    saldo -= 30;
+}
+
+int coba = 0;                  // do-while: isi jalan dulu
+do {
+    coba++;
+    printf("Percobaan %d\n", coba);
+} while (coba < 3);
+```
+
+| Bentuk | Kapan dicek | Minimal jalan | Contoh use case |
+|---|---|---|---|
+| `for` | tiap awal iterasi | 0 kali | telusuri array 0..n-1 |
+| `while` | sebelum isi | 0 kali | baca data sampai penanda berhenti |
+| `do-while` | sesudah isi | **1 kali** | menu interaktif yang pasti tampil |
+
+```c
+for (;;) {                    // infinite loop eksplisit
+    // ... kerja ...
+    if (selesai) break;       // satu-satunya jalan keluar
+}
+```
+
+## Break & Continue
+
+```c
+for (int i = 1; i <= 10; i++) {
+    if (i == 4) continue;      // lewati angka 4
+    if (i > 6) break;          // berhenti setelah 6
+    printf("%d ", i);
+}
+printf("\n");                  // cetak: 1 2 3 5 6
+```
+
+`break` keluar dari loop terdekat; `continue` melewati sisa iterasi lalu lanjut. Dalam loop bersarang, `break`/`continue` hanya memengaruhi **satu** level loop tempatnya berada (tidak ada label seperti Java).
+
+## Perulangan Bersarang
+
+```c
+for (int b = 1; b <= 3; b++) {
+    for (int k = 1; k <= 3; k++) {
+        printf("*");
+    }
+    printf("\n");
+}
+```
+
+Menghasilkan pola bintang 3×3. Variabel loop luar dan dalam harus memakai nama berbeda agar tidak saling menimpa.
+
+## 4 Pola Klasik
+
+```c
+// 1. Akumulasi
+int total = 0;
+for (int i = 0; i < n; i++) total += data[i];
+
+// 2. Cari pertama (dengan flag + break)
+int pertama = -1;
+for (int i = 0; i < n; i++) {
+    if (data[i] < 0) { pertama = data[i]; break; }
+}
+
+// 3. Filter → array baru (butuh counter terpisah)
+int hasil[100], m = 0;
+for (int i = 0; i < n; i++) {
+    if (data[i] >= 75) hasil[m++] = data[i];
+}
+
+// 4. Hitung frekuensi
+int ganjil = 0;
+for (int i = 0; i < n; i++) {
+    if (data[i] % 2 != 0) ganjil++;
+}
+```
+
+Off-by-one adalah bug paling umum: gunakan `< n`, bukan `<= n`, ketika indeks berbasis 0.
+
+## Menghitung dengan Loop
+
+```c
+int n = 10, faktorial = 1;
+for (int i = 1; i <= n; i++) {
+    faktorial *= i;
+}
+printf("%d! = %d\n", n, faktorial);  // 10! = 3628800
+```
+
+## Di Dunia Nyata
+
+- **Menampilkan daftar harga produk**: loop for menelusuri array harga, mencetak nomor urut + nama + harga rapi.
+- **Validasi input PIN**: do-while meminta input ulang sampai PIN benar atau percobaan habis.
+- **Menghitung bunga majemuk 12 bulan**: while mengulang `saldo = saldo * (1 + bunga)` dengan counter bulan.
+- **Mencari baris data log yang cocok**: for + `continue` melewati baris yang tidak mengandung kata kunci error.
+- **Fibonacci untuk prediksi populasi**: dua variabel ditukar tiap iterasi sampai mencapai batas tertentu.
+
+<div class="note">💡 Perhatikan overflow: <code>int</code> berhenti di sekitar 2,1 miliar. Faktorial cepat melampaui batas itu — gunakan <code>long long</code> untuk hasil besar, dan pastikan selalu ada update yang membuat kondisi loop menuju 0 (false) agar tidak infinite loop.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int main(void) {
+    int total = 0;
+    for (int i = 1; i <= 5; i++) {
+        total += i;
+    }
+    printf("Jumlah 1..5 = %d\\n", total);
+
+    int n = 5;
+    while (n > 0) {
+        printf("%d ", n);
+        n--;
+    }
+    printf("\\n");
+
+    int coba = 0;
+    do {
+        coba++;
+    } while (coba < 0);
+    printf("Do-while jalan %d kali\\n", coba);
+
+    for (int i = 1; i <= 7; i++) {
+        if (i == 4) continue;
+        if (i > 6) break;
+        printf("%d ", i);
+    }
+    printf("\\n");
+
+    long long fib_a = 0, fib_b = 1;
+    printf("Fibonacci: ");
+    for (int i = 0; i < 10; i++) {
+        printf("%lld ", fib_a);
+        long long next = fib_a + fib_b;
+        fib_a = fib_b;
+        fib_b = next;
+    }
+    printf("\\n");
+
+    for (int b = 1; b <= 3; b++) {
+        for (int k = 1; k <= 3; k++) printf("*");
+        printf("\\n");
+    }
+    return 0;
+}`} />

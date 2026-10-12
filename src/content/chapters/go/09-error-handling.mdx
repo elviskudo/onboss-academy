@@ -1,0 +1,204 @@
+---
+title: "Error Handling"
+description: "Error adalah nilai di Go — dicek, bukan dilempar"
+order: 9
+quiz:
+  - q: "Di Go, error ditangani dengan…"
+    options: ["blok try-catch", "mengecek if err != nil", "throw exception", "annotasi @throws"]
+    answer: 1
+    explain: "Error dikembalikan sebagai nilai lalu diperiksa langsung setelah pemanggilan."
+  - q: "Nilai error kosong (tidak ada error) ditulis…"
+    options: ["null", "false", "nil", "0"]
+    answer: 2
+    explain: "err == nil berarti pemanggilan berhasil."
+  - q: "Untuk membuat error sendiri dipakai…"
+    options: ["newError()", "raise", "errors.New atau fmt.Errorf", "panic()"]
+    answer: 2
+    explain: "fmt.Errorf mendukung format seperti fmt.Sprintf sekaligus menghasilkan error."
+  - q: "Kata kunci untuk menghentikan program dengan pesan adalah…"
+    options: ["panic", "throw", "abort", "fatal"]
+    answer: 0
+    explain: "panic menghentikan eksekusi — dipakai untuk kegagulan yang tidak bisa dipulihkan."
+  - q: "Fungsi os.Open mengembalikan dua nilai berupa…"
+    options: ["(string, int)", "(bool, error)", "(byte, error)", "(*os.File, error)"]
+    answer: 3
+    explain: "Pola dua nilai (hasil, error) adalah konvensi standar di seluruh pustaka Go."
+example:
+  code: |
+    package main
+
+    import (
+        "errors"
+        "fmt"
+    )
+
+    func Bagi(a, b int) (int, error) {
+        if b == 0 {
+            return 0, errors.New("pembagi nol")
+        }
+        return a / b, nil
+    }
+
+    func main() {
+        if _, err := Bagi(5, 0); err != nil {
+            fmt.Println("Gagal:", err)
+            return
+        }
+        fmt.Println("Selesai")
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Di Go, error adalah **nilai biasa yang dikembalikan**, bukan exception yang meledak di tengah program.
+
+## Pola Dasar
+
+```go
+func Bagi(a, b int) (int, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("pembagi tidak boleh nol")
+    }
+    return a / b, nil
+}
+
+func main() {
+    hasil, err := Bagi(10, 2)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Println("Hasil:", hasil)
+}
+```
+
+Selalu cek `err` sebelum memakai hasil. Inilah bentuk paling umum dalam kode Go di mana pun.
+
+## 4 Cara Menangani Error
+
+| Cara | Sintaks | Kapan dipakai |
+| --- | --- | --- |
+| Cek manual | `if err != nil { return err }` | Standar 90% kode Go |
+| Bungkus konteks | `fmt.Errorf("...: %w", err)` | Tambah lapisan info tanpa hilangkan penyebab |
+| Tangkap di defer | `recover()` dalam `defer func()` | Selamatkan goroutine dari panic |
+| Hentikan program | `log.Fatal(err)` | Gagal total di awal (config hilang, port terpakai) |
+
+**Tanpa try-catch, tanpa exception** — alur pembacaan kode lurus dari atas ke bawah.
+
+## Membuat Error Sendiri
+
+```go
+import "errors"
+
+func Validasi(umur int) error {
+    if umur < 0 {
+        return errors.New("umur tidak boleh negatif")
+    }
+    return nil
+}
+
+if err := Validasi(-5); err != nil {
+    fmt.Println("Validasi gagal:", err)
+}
+```
+
+`fmt.Errorf` dipakai jika pesannya butuh format, `errors.New` untuk pesan tetap. Untuk error dengan kode/struktur, buat tipe sendiri:
+
+```go
+type ErrorAPI struct {
+    Kode  int
+    Pesan string
+}
+
+func (e *ErrorAPI) Error() string {
+    return fmt.Sprintf("kode %d: %s", e.Kode, e.Pesan)
+}
+```
+
+Cukup mengimplementasikan satu method `Error() string`, tipe kamu sudah memenuhi interface `error`.
+
+## Menggabungkan Konteks
+
+```go
+func Proses() error {
+    _, err := Bagi(10, 0)
+    if err != nil {
+        return fmt.Errorf("proses gagal: %w", err)
+    }
+    return nil
+}
+```
+
+Tanda `%w` membungkus error asli sehingga penyebab awal tetap bisa dilacak dengan `errors.Is` atau `errors.As`.
+
+## panic dan recover
+
+```go
+func Aman() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Tertangkap:", r)
+        }
+    }()
+    panic("kegagalan fatal")
+}
+```
+
+`panic` menghentikan program; `recover` di dalam `defer` bisa menyelamatkannya. Ini cadangan, bukan mekanisme error harian — pemakaian wajar hanya di kelas library (mis. goroutine yang tidak boleh menjatuhkan seluruh server).
+
+## Di Dunia Nyata
+
+- **Baca file konfigurasi**: `os.ReadFile` gagal → server berhenti dengan pesan jelas, bukan jalan dengan config kosong
+- **Request database**: kemas error `sql.ErrNoRows` jadi "user tidak ditemukan" untuk respons 404
+- **Retry HTTP**: cek `err != nil` lalu ulangi maksimal 3 kali sebelum menyerah
+- **Parsing JSON**: `json.Unmarshal` gagal → laporkan field mana yang rusak
+- **CLI argumen**: `flag.Parse` + `log.Fatal` saat parameter wajib hilang
+
+<div class="note">💡 Jangan mengembalikan error lalu tetap memakai hasilnya seolah-olah tidak terjadi apa-apa. Begitu err tidak nil, berhenti atau bungkus dengan konteks baru.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import (
+    "errors"
+    "fmt"
+)
+
+type ErrorAPI struct {
+    Kode  int
+    Pesan string
+}
+
+func (e *ErrorAPI) Error() string {
+    return fmt.Sprintf("kode %d: %s", e.Kode, e.Pesan)
+}
+
+func Bagi(a, b int) (int, error) {
+    if b == 0 {
+        return 0, errors.New("pembagi tidak boleh nol")
+    }
+    return a / b, nil
+}
+
+func main() {
+    hasil, err := Bagi(10, 2)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+    fmt.Println("10 / 2 =", hasil)
+
+    _, err = Bagi(10, 0)
+    if err != nil {
+        fmt.Println("Tertangkap:", err)
+    }
+
+    _, err = Bagi(1, 0)
+    if err != nil {
+        fmt.Println("Dibungkus:", fmt.Errorf("modul utama: %w", err))
+    }
+
+    api := &ErrorAPI{Kode: 404, Pesan: "user tidak ditemukan"}
+    fmt.Println("Error kustom:", api)
+
+    fmt.Println("Program tetap jalan")
+}`} />

@@ -1,0 +1,110 @@
+---
+title: "Pengenalan SQL"
+description: "Bahasa standar untuk berbicara dengan database relasional"
+order: 1
+quiz:
+  - q: "Apa kepanjangan SQL?"
+    options: ["Structured Query Language", "Simple Query Language", "Sequential Query Logic", "Standard Question Language"]
+    answer: 0
+    explain: "SQL adalah singkatan dari Structured Query Language — bahasa standar query database relasional."
+  - q: "Klausa yang wajib ada saat mengambil data dari tabel adalah…"
+    options: ["ORDER BY", "SELECT dan FROM", "GROUP BY", "HAVING"]
+    answer: 1
+    explain: "Untuk membaca data minimal butuh SELECT (kolom apa) dan FROM (tabel mana)."
+  - q: "SQL tergolong bahasa deklaratif karena…"
+    options: ["Kita menulis langkah eksekusi satu per satu", "Kita menyatakan hasil yang diinginkan, bukan caranya", "Tidak butuh klien database", "Hanya bisa membaca, tidak bisa menulis"]
+    answer: 1
+    explain: "Deklaratif = kita menyatakan apa yang diinginkan; database yang memutuskan langkah pemrosesannya."
+  - q: "Perintah yang termasuk kelompok DDL adalah…"
+    options: ["SELECT", "CREATE TABLE", "GRANT", "COMMIT"]
+    answer: 1
+    explain: "DDL (Data Definition Language) mengubah struktur: CREATE, ALTER, DROP, TRUNCATE."
+  - q: "Perintah SELECT * pada tabel karyawan berarti…"
+    options: ["Menghapus semua kolom", "Mengambil semua baris dan kolom", "Mengurutkan data", "Menyalin tabel"]
+    answer: 1
+    explain: "Tanda * berarti semua kolom, dan tanpa WHERE semua baris ikut terambil."
+example:
+  code: |
+    SELECT nama, jabatan, gaji
+    FROM karyawan
+    ORDER BY gaji DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SQL adalah **bahasa standar untuk database relasional**. Hampir semua database — MySQL, PostgreSQL, SQLite, SQL Server — memakai SQL sebagai bahasa utamanya, jadi sekali paham SQL kamu bisa langsung kerja di mana pun.
+
+## Apa itu Database Relasional?
+
+Database relasional menyimpan data dalam **tabel** berisi baris dan kolom, mirip spreadsheet. Yang membuatnya istimewa: tabel-tabel bisa **saling dihubungkan** (relasi) lewat kunci, sehingga satu fakta cukup disimpan sekali — tidak duplikat di banyak tempat.
+
+Di editor OnBoss kamu berlatih dengan dua tabel:
+
+- `karyawan(id, nama, jabatan, gaji, dept)` — 8 baris, 5 kolom
+- `proyek(id, nama, lead_id, budget)` — 3 baris, `lead_id` menunjuk `karyawan.id`
+
+Pola ini disebut **pemodelan relasional**: padanan dunia OOP di database. Kalau di OOP kamu punya objek `Karyawan` dengan properti, di sini properti itu menjadi **kolom**, dan satu objek menjadi satu **baris**. Relasi antar objek (misal "karyawan memimpin proyek") tidak disimpan sebagai list di dalam objek, melainkan sebagai **kolom penunjuk** seperti `lead_id` yang di-`JOIN` saat dibaca.
+
+## Empat Kelompok Perintah SQL
+
+SQL membagi perintahnya ke 4 kelompok besar:
+
+| Kelompok | Perintah Inti | Fungsi |
+|----------|---------------|--------|
+| DDL | `CREATE`, `ALTER`, `DROP`, `TRUNCATE` | Membuat dan mengubah struktur tabel |
+| DML | `SELECT`, `INSERT`, `UPDATE`, `DELETE` | Mengelola isi tabel (baris) |
+| DCL | `GRANT`, `REVOKE` | Memberi dan mencabut hak akses |
+| TCL | `BEGIN`, `COMMIT`, `ROLLBACK` | Mengelompokkan perubahan jadi transaksi |
+
+Sehari-hari kamu paling sering memakai 4 perintah DML. DDL dipakai saat merancang skema, DCL oleh admin database, dan TCL setiap kali ada perubahan yang tidak boleh setengah jadi.
+
+## Anatomi Query Pertama
+
+```sql
+SELECT nama, jabatan, gaji
+FROM karyawan;
+```
+
+Urutan membacanya: *ambil kolom `nama`, `jabatan`, `gaji` dari tabel `karyawan`*. SQL tidak peduli huruf besar-kecil pada keyword, tapi menulisnya kapital membuat query gampang dibaca.
+
+Enam bagian query yang akan kamu jumpai berulang:
+
+| Bagian | Fungsi | Contoh | Wajib? |
+|--------|--------|--------|--------|
+| `SELECT` | Kolom apa yang diambil | `SELECT nama, gaji` | Ya (untuk membaca) |
+| `FROM` | Tabel mana | `FROM karyawan` | Ya (untuk membaca) |
+| `WHERE` | Saring baris | `WHERE gaji > 9000000` | Tidak |
+| `GROUP BY` | Kelompokkan baris | `GROUP BY dept` | Tidak |
+| `ORDER BY` | Urutkan hasil | `ORDER BY gaji DESC` | Tidak |
+| `LIMIT` | Batasi jumlah baris | `LIMIT 5` | Tidak |
+
+## Memilih dan Menamai Kolom
+
+```sql
+SELECT nama AS karyawan, gaji * 12 AS gaji_tahunan
+FROM karyawan;
+```
+
+`AS` memberi alias — baik untuk kolom hasil hitungan maupun untuk mempersingkat nama. Kamu juga bisa menghitung di dalam query: `gaji * 12` langsung menghasilkan kolom baru tanpa perlu menyimpannya.
+
+## Komentar dalam Query
+
+```sql
+-- ini komentar satu baris
+SELECT nama FROM karyawan; -- komentar di akhir baris
+```
+
+Tanda `--` memberi komentar satu baris. Gunakan komentar untuk menjelaskan tujuan query yang rumit — rekan kerja (dan kamu sendiri tiga bulan lagi) akan berterima kasih.
+
+## Di Dunia Nyata
+
+- **Laporan gaji bulanan HR**: `SELECT nama, gaji FROM karyawan ORDER BY gaji DESC` — daftar siapa bergaji berapa, tertinggi di atas.
+- **Cek siapa memimpin proyek sebelum rapat**: ambil `nama` dan `jabatan` dari tabel `karyawan` berdasarkan `id` yang tercatat di `proyek.lead_id`.
+- **Menyiapkan daftar email kantor**: pilih hanya kolom `nama` dan `jabatan` saja (bukan `SELECT *`) supaya transfer data hemat kuota.
+- **Audit struktur tabel warisan**: pakai perintah DDL `SHOW CREATE TABLE`/`DESCRIBE` untuk memeriksa kolom sebelum menyentuh data produksi.
+
+<div class="note">💡 SQL tidak mengharuskan titik koma di akhir query tunggal, tapi banyak klien (termasuk editor OnBoss) memakai titik koma sebagai pemisah antar-perintah. Biasakan menulisnya.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama AS karyawan, jabatan, gaji, dept
+FROM karyawan
+ORDER BY gaji DESC;`} />

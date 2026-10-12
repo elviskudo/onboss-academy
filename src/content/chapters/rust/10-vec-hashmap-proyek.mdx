@@ -1,0 +1,175 @@
+---
+title: "Vec, HashMap & Proyek"
+description: "Koleksi data dan proyek kecil: rekap skor dengan Vec dan HashMap"
+order: 10
+quiz:
+  - q: "Vec menyimpan data berupa…"
+    options: ["kunci dan nilai", "elemen bertipe sama dengan panjang dinamis", "teks tetap", "karakter saja"]
+    answer: 1
+    explain: "Vec<T> bertambah dan berkurang memakai push dan pop."
+  - q: "Menambah elemen ke Vec memakai…"
+    options: ["add", "append", "push", "insert_end"]
+    answer: 2
+    explain: "vec.push(nilai) menambahkan di posisi terakhir."
+  - q: "HashMap diimpor dari…"
+    options: ["std::map::HashMap", "core::hash", "std::collections::HashMap", "collections::Dict"]
+    answer: 2
+    explain: "Tidak termasuk prelude, jadi perlu use std::collections::HashMap;."
+  - q: "Membaca nilai HashMap yang tidak berisi kunci akan menghasilkan…"
+    options: ["Option: None", "panic", "error kompilasi", "0 selalu"]
+    answer: 0
+    explain: "Peta.get(k) mengembalikan Option<&V> — Some bila ada, None bila tidak."
+  - q: "Menghitung total seluruh elemen Vec memakai…"
+    options: ["total()", "sum[]", "count()", "iter().sum()"]
+    answer: 3
+    explain: "Contoh: let total: i32 = data.iter().sum(); — tipe hasil ditulis eksplisit."
+example:
+  code: |
+    use std::collections::HashMap;
+
+    fn main() {
+        let mut skor: Vec<i32> = vec![80, 90, 70];
+        skor.push(85);
+        let total: i32 = skor.iter().sum();
+        println!("total = {}, rata = {}", total, total as f64 / skor.len() as f64);
+
+        let mut peta = HashMap::new();
+        peta.insert("Sari", 90);
+        peta.insert("Budi", 85);
+        println!("skor Sari: {}", peta.get("Sari").unwrap());
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Materi terakhir menyatukan semuanya: **koleksi data lalu diolah** menjadi informasi.
+
+## 2 Koleksi Utama
+
+| Koleksi | Isi | Akses | Kapan dipakai |
+| --- | --- | --- | --- |
+| `Vec<T>` | Elemen bertipe sama, panjang dinamis | Index numerik `v[0]` | Daftar berurutan |
+| `HashMap<K, V>` | Pasangan kunci–nilai | Kunci `m.get("a")` | Cari/ubah by nama |
+
+## Vec
+
+```rust
+let mut angka: Vec<i32> = vec![10, 20, 30];
+angka.push(40);
+
+println!("{:?}", angka);   // [10, 20, 30, 40]
+println!("panjang = {}", angka.len());
+println!("pertama = {}", angka[0]);
+```
+
+Makro `vec!` membuat Vec dari daftar nilai. `{:?}` mencetak format debug, cocok untuk struktur data.
+
+## Mengolah Vec dengan Iterator
+
+```rust
+let skor = vec![80, 90, 70, 85];
+
+let total: i32 = skor.iter().sum();
+let rata = total as f64 / skor.len() as f64;
+let tertinggi = skor.iter().max().unwrap();
+let lolos: Vec<&i32> = skor.iter().filter(|s| **s >= 80).collect();
+
+println!("total = {}", total);
+println!("rata-rata = {:.1}", rata);
+println!("tertinggi = {}", tertinggi);
+println!(">= 80: {:?}", lolos);
+```
+
+Lima iterator paling berguna: `sum`, `max`/`min`, `filter`, `map`, `count` — semuanya menggantikan perulangan manual.
+
+## HashMap
+
+```rust
+use std::collections::HashMap;
+
+let mut skor = HashMap::new();
+skor.insert("Sari", 90);
+skor.insert("Budi", 85);
+
+if let Some(nilai) = skor.get("Sari") {
+    println!("Sari = {}", nilai);
+}
+
+match skor.get("Zoe") {
+    Some(v) => println!("Zoe = {}", v),
+    None => println!("Zoe belum terdaftar"),
+}
+```
+
+`get` mengembalikan `Option`, sehingga kunci yang hilang tidak pernah membuat program panic. HashMap tidak berurutan dan butuh `use std::collections::HashMap;`.
+
+## Proyek: Rekap Skor
+
+```rust
+use std::collections::HashMap;
+
+fn main() {
+    let mut daftar: Vec<(String, i32)> = Vec::new();
+    daftar.push((String::from("Sari"), 90));
+    daftar.push((String::from("Budi"), 85));
+
+    let mut total = 0;
+    for (_, nilai) in &daftar {
+        total += nilai;
+    }
+
+    let rata = total as f64 / daftar.len() as f64;
+    println!("jumlah siswa = {}", daftar.len());
+    println!("rata-rata = {:.1}", rata);
+
+    let mut peta = HashMap::new();
+    for (nama, nilai) in daftar {
+        peta.insert(nama, nilai);
+    }
+    println!("isi peta = {:?}", peta);
+}
+```
+
+Alurnya khas Rust: kumpulkan data, olah dengan iterator, simpan ke koleksi yang tepat — semuanya diperiksa compiler sebelum program berjalan. Satu peringatan borrow checker muncul di sini: `for (nama, nilai) in daftar` memindahkan `daftar` (bukan `&daftar`), jadi setelah loop itu `daftar` tidak boleh dipakai lagi.
+
+## Di Dunia Nyata
+
+- **Keranjang belanja**: `Vec<Produk>` bertambah saat user memilih barang
+- **Hitung frekuensi kata**: `HashMap<&str, i32>` menghitung berapa kali kata muncul di artikel
+- **Cache sederhana**: `HashMap<String, String>` menyimpan hasil query yang baru saja diambil
+- **Leaderboard game**: Vec diurutkan dengan `sort_by_key` lalu 10 teratas dicetak
+- **Session login**: `HashMap<String, Pengguna>` memetakan token → akun aktif
+
+<div class="note">💡 Pilih Vec untuk daftar berurutan, HashMap untuk pencarian berdasarkan kunci. Keduanya tumbuh sesuai kebutuhan dan otomatis dibersihkan saat keluar dari cakupan.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::collections::HashMap;
+
+fn main() {
+    let mut skor: Vec<i32> = vec![80, 90, 70];
+    skor.push(85);
+
+    let total: i32 = skor.iter().sum();
+    let rata = total as f64 / skor.len() as f64;
+    let tertinggi = skor.iter().max().unwrap();
+    let lolos: Vec<&i32> = skor.iter().filter(|s| **s >= 80).collect();
+
+    println!("skor = {:?}", skor);
+    println!("total = {}", total);
+    println!("rata-rata = {:.1}", rata);
+    println!("tertinggi = {}", tertinggi);
+    println!("lolos >= 80 = {:?}", lolos);
+
+    let mut peta = HashMap::new();
+    peta.insert("Sari", 90);
+    peta.insert("Budi", 85);
+
+    if let Some(nilai) = peta.get("Sari") {
+        println!("Sari = {}", nilai);
+    }
+
+    match peta.get("Zoe") {
+        Some(v) => println!("Zoe = {}", v),
+        None => println!("Zoe belum terdaftar"),
+    }
+    println!("jumlah siswa = {}", peta.len());
+}`} />

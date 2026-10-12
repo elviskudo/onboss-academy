@@ -1,0 +1,189 @@
+---
+title: "Variabel & Tipe Data"
+description: "8 tipe primitif, wrapper, casting, scope & aturan penamaan — fondasi data yang ketat di Java"
+order: 2
+quiz:
+  - q: "Java termasuk bahasa yang…"
+    options: ["Statically typed — tipe dicek saat kompilasi", "Dynamically typed — tipe bebas berubah", "Tanpa tipe data sama sekali", "Hanya menerima teks"]
+    answer: 0
+    explain: "Variabel Java wajib dideklarasikan bertipe; salah tipe = error kompilasi, bukan error runtime."
+  - q: "Tipe untuk menyimpan bilangan desimal adalah…"
+    options: ["int", "double", "boolean", "char"]
+    answer: 1
+    explain: "double (presisi ganda) dan float untuk desimal; int hanya bilangan bulat."
+  - q: "Nilai default variabel instance bertipe boolean adalah…"
+    options: ["true", "null", "0", "false"]
+    answer: 3
+    explain: "Java mengisi field object dengan default: false, 0, null, atau 0.0 tergantung tipe."
+  - q: "Perbedaan == dan equals() pada String adalah…"
+    options: ["Keduanya selalu sama hasilnya", "== membandingkan referensi, equals() membandingkan isi", "equals() hanya untuk angka", "== hanya bekerja di int"]
+    answer: 1
+    explain: "Dua String literal yang sama bisa berbeda referensi — selalu pakai equals() untuk teks."
+  - q: "Variabel yang nilainya boleh disimpulkan kompilator (Java 10+) memakai…"
+    options: ["var", "let", "auto", "val"]
+    answer: 0
+    explain: "var hanya untuk local variable: var nama = \"Sari\"; tetap statis tipe, bukan dinamis."
+example:
+  code: |
+    int umur = 20;
+    double tinggi = 1.65;
+    boolean aktif = true;
+    char grade = 'A';
+    String nama = "Sari";
+    final int BATAS = 100;
+    System.out.println(nama + " (" + umur + ") grade " + grade);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Variabel adalah **wadah bernama untuk menyimpan data**. Java menuntut setiap variabel bertipe sejak awal — inilah yang membuat banyak bug tertangkap sebelum program dijalankan.
+
+## Deklarasi & Kata Kunci
+
+Java hanya punya **2 kata kunci deklarasi eksplisit** untuk variabel: tulis tipe lalu nama, dan opsional `var` untuk local variable (Java 10+). Berbeda dengan JavaScript yang punya `var`/`let`/`const` (3 kata kunci), Java memakai kombinasi tipe + modifier:
+
+```java
+int umur = 20;              // deklarasi bertipe eksplisit
+var nama = "Sari";          // local var: tipe disimpulkan (String)
+final double PI = 3.14159;  // konstanta — tak boleh diganti
+int a, b, c;                // satu baris, tiga variabel
+int x = 1, y = 2;           // deklarasi + isi sekaligus
+```
+
+| Kata Kunci | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| (tipe eksplisit) | deklarasi wajib bertipe | `int x = 5;` | 99% kode, termasuk seluruh field |
+| `var` | tipe disimpulkan kompilator | `var x = 5;` | local variable saat tipe jelas dari kanan |
+| `final` | cegah perubahan nilai | `final int MAX = 100;` | konstanta, parameter yang tak boleh ditimpa |
+
+`var` bukan tipe dinamis — `var x = 5; x = "teks";` = error kompilasi. Ia hanya memangkas penulisan tipe di sisi kiri.
+
+## 8 Tipe Primitif
+
+Java punya **8 tipe data primitif**:
+
+```java
+byte    usia8   = 127;      // -128 .. 127
+short   usia16  = 30000;
+int     usia    = 20;       // paling sering dipakai
+long    besar   = 10000000000L;
+float   rating  = 4.5f;
+double  harga   = 19999.99; // default untuk desimal
+boolean aktif   = true;     // true / false
+char    huruf   = 'A';      // satu karakter, pakai kutip tunggal
+```
+
+| Tipe | Ukuran | Rentang/Sifat | Kapan dipakai |
+|---|---|---|---|
+| `byte` | 1 byte | -128..127 | hemat memori, data mentah/gambar |
+| `short` | 2 byte | -32.768..32.767 | nilai menengah, header jaringan |
+| `int` | 4 byte | ±2,1 miliar | hitungan umum — default bilangan bulat |
+| `long` | 8 byte | ±9,2 × 10¹⁸ | id unik, timestamp milidetik |
+| `float` | 4 byte | ~7 digit desimal | grafis 3D, data besar presisi rendah |
+| `double` | 8 byte | ~15 digit desimal | default desimal — ilmu keuangan/sains |
+| `boolean` | 1 byte | `true`/`false` | status: aktif, lulus, valid |
+| `char` | 2 byte | 0..65.535 (Unicode) | satu karakter, emoji, huruf CJK |
+
+Sisanya bukan primitif melainkan **tipe referensi**: String, array, class, interface, enum, record. Di luar 8 primitif itu, semua variable menyimpan *alamat*, bukan nilainya langsung.
+
+## Mutabilitas & Scope
+
+Variabel lokal bersifat **mutable** (boleh diganti) kecuali diberi `final`. Scope di Java ada **4 tingkat**:
+
+| Scope | Dideklarasi di | Hidup sampai | Default |
+|---|---|---|---|
+| Local | dalam method/blok `{ }` | blok selesai | tidak ada — wajib diisi |
+| Instance (field) | dalam class, tanpa `static` | selama object hidup | 0 / false / null |
+| Class (static) | dalam class dengan `static` | selama program berjalan | 0 / false / null |
+| Global | **tidak ada** di Java | — | akses via public static |
+
+```java
+int luar = 10;               // local di main
+if (luar > 5) {
+    int dalam = 3;           // local di blok if — hilang di luar if
+    System.out.println(dalam);
+}
+// System.out.println(dalam); // ERROR kompilasi: dalam tidak terlihat
+```
+
+## Aturan Penamaan
+
+- Boleh: huruf, angka, `_`, `$`; **tidak boleh** diawali angka atau berisi spasi.
+- Case-sensitive: `nama` ≠ `Nama` ≠ `NAMA`.
+- Konvensi: `camelCase` untuk variabel dan method, `UPPER_SNAKE_CASE` untuk konstanta static final.
+- Dilarang memakai kata kunci (`class`, `int`, `public`, ...).
+
+## Konversi Tipe
+
+```java
+int a = 7, b = 2;
+double hasil = (double) a / b;   // 3.5 — cast dulu sebelum dibagi
+int bulat = (int) 3.99;          // 3 — desimal dipotong, TIDAK dibulatkan
+long l = 100;                    // int → long: pelebaran otomatis (widening)
+int n = (int) l;                 // long → int: penyusutan wajib eksplisit (narrowing)
+```
+
+Pelebaran otomatis aman; penyusutan harus eksplisit karena berisiko kehilangan data. Untuk teks ↔ angka: `Integer.parseInt("42")`, `String.valueOf(42)`.
+
+## Wrapper & Autoboxing
+
+Setiap primitif punya **1 pasang wrapper class**: `byte→Byte`, `short→Short`, `int→Integer`, `long→Long`, `float→Float`, `double→Double`, `boolean→Boolean`, `char→Character`. Collection (ArrayList, HashMap) hanya menerima object, jadi Java menyediakan **autoboxing** otomatis:
+
+```java
+int x = 42;
+Integer w = x;          // boxing otomatis
+int balik = w;          // unboxing otomatis
+```
+
+## Kejatuhan Umum
+
+```java
+System.out.println("1" + 1);        // "11" — string, bukan 2!
+System.out.println(0.1 + 0.2);      // 0.30000000000000004 — float tidak presisi sempurna
+long big = 9_000_000_000L;          // suffix L wajib untuk angka > rentang int
+```
+
+Floating point (float/double) menyimpan pecahan biner — 0.1 tidak representabel presisi. Untuk uang, pakai `int` (rupiah bulat) atau `BigDecimal`.
+
+## String Singkat
+
+```java
+String nama = "Sari";
+String sapa = "Halo, " + nama;      // konkatenasi
+int panjang = nama.length();        // 4
+boolean sama = nama.equals("Sari"); // true — == hanya cek referensi
+```
+
+String adalah object, jadi pakai `equals()` untuk membandingkan isi. Detail lengkap di chapter String Lanjutan.
+
+## Di Dunia Nyata
+
+- **Validasi form registrasi**: umur disimpan `int`, status setuju memakai `boolean`, nama memakai `String` — konversi `Integer.parseInt` gagal saat user mengetik huruf.
+- **Perhitungan bunga deposito**: `double` untuk simulasi cepat, tapi bank produksi memakai `BigDecimal` karena `0.1 + 0.2 ≠ 0.3` presisi.
+- **ID pesanan e-commerce**: `long` untuk orderId berbasis timestamp — `int` akan overflow di angka triliunan.
+- **Konfigurasi aplikasi**: `final static double PAJAK = 0.11;` mencegah pajak berubah tidak sengaja di tengah program.
+- **Penyimpanan hemat memori**: gambar bitmap memakai ribuan `byte` (0–255) alih-alih `int`.
+
+<div class="note">💡 Java punya <b>autoboxing</b>: int ↔ Integer, boolean ↔ Boolean. Berguna di collection (ArrayList hanya menerima object, bukan tipe primitif) — tapi waspadai <code>Integer == Integer</code> di luar range -128..127 yang bisa bernilai false walau angkanya sama.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    public static void main(String[] args) {
+        int umur = 20;
+        double tinggi = 1.65;
+        boolean aktif = true;
+        char grade = 'A';
+        String nama = "Sari";
+        final int BATAS = 100;
+        var tahun = 2026;            // tipe disimpulkan: int
+
+        System.out.println(nama + ", umur " + umur + ", tinggi " + tinggi);
+        System.out.println("Grade " + grade + " | aktif " + aktif);
+        System.out.println("Nilai di bawah batas: " + (umur < BATAS));
+        System.out.println("Tahun: " + tahun);
+
+        double rata = (double) (80 + 90) / 2;
+        System.out.println("Rata-rata: " + rata);
+        System.out.println("Panjang nama: " + nama.length());
+        System.out.println("Konkatenasi aneh: " + "1" + 1);
+    }
+}`} />

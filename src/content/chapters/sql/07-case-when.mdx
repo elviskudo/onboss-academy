@@ -1,0 +1,133 @@
+---
+title: "CASE WHEN: Logika di dalam Query"
+description: "Membuat kolom kategori dan kondisi tanpa meninggalkan SQL"
+order: 7
+quiz:
+  - q: "CASE WHEN dalam SQL berfungsi untuk…"
+    options: ["Menambah kolom baru secara fisik", "Menerapkan logika if-else di dalam query", "Menghapus data", "Mengganti WHERE"]
+    answer: 1
+    explain: "CASE WHEN adalah ekspresi kondisional — seperti if/else yang hasilnya menjadi nilai kolom."
+  - q: "Ada berapa bentuk CASE di SQL?"
+    options: ["1", "2", "3", "4"]
+    answer: 1
+    explain: "Ada 2: searched CASE dengan kondisi bebas, dan simple CASE yang membandingkan satu nilai."
+  - q: "ELSE pada blok CASE bersifat…"
+    options: ["Wajib", "Opsional — tanpa kecocokan hasilnya NULL", "Hanya untuk angka", "Error kalau dipakai"]
+    answer: 1
+    explain: "ELSE opsional; tanpa ELSE dan tanpa kondisi cocok, hasilnya NULL."
+  - q: "COALESCE(a, b) mengembalikan…"
+    options: ["Selalu a", "Nilai pertama yang bukan NULL", "Selalu b", "Jumlah a dan b"]
+    answer: 1
+    explain: "COALESCE mengembalikan nilai pertama dari daftar argumen yang tidak NULL."
+  - q: "CASE WHEN di dalam SUM bisa dipakai untuk…"
+    options: ["Menghitung baris yang memenuhi kondisi", "Menghapus grup", "Mengganti GROUP BY", "Mengurutkan tabel"]
+    answer: 0
+    explain: "SUM(CASE WHEN kondisi THEN 1 ELSE 0 END) menghitung baris yang memenuhi syarat."
+example:
+  code: |
+    SELECT nama, gaji,
+           CASE
+             WHEN gaji >= 11000000 THEN 'Senior'
+             WHEN gaji >= 9000000 THEN 'Mid'
+             ELSE 'Junior'
+           END AS level
+    FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kadang sebuah nilai harus **dihitung berdasarkan kondisi**. SQL menyediakan `CASE WHEN` — padanan if/else yang menghasilkan nilai tanpa mengubah data sumber.
+
+## 2 Bentuk CASE
+
+| Bentuk | Cara Kerja | Cocok untuk | Contoh |
+|--------|------------|-------------|--------|
+| Searched CASE | mengevaluasi kondisi bebas berurutan | rentang dan kondisi gabungan | `WHEN gaji >= 11000000` |
+| Simple CASE | membandingkan satu ekspresi dengan nilai | pemetaan nilai diskret | `CASE dept WHEN 'Data'` |
+
+```sql
+SELECT nama, gaji,
+       CASE
+         WHEN gaji >= 11000000 THEN 'Tinggi'
+         WHEN gaji >= 9000000 THEN 'Sedang'
+         ELSE 'Dasar'
+       END AS kategori_gaji
+FROM karyawan
+ORDER BY gaji DESC;
+```
+
+Kondisi dibaca dari atas ke bawah — **yang pertama cocok yang menang**. Karena itu rentang paling spesifik/tinggi harus di atas. Jika `gaji >= 9000000` ditaruh pertama, nilai 12 juta berhenti di kategori Sedang.
+
+```sql
+SELECT nama, dept,
+       CASE dept WHEN 'Engineering' THEN 'Teknik'
+                 WHEN 'Data' THEN 'Data'
+                 ELSE 'Lainnya'
+       END AS kelompok
+FROM karyawan;
+```
+
+Simple CASE lebih ringkas bila semua cabang membandingkan kolom yang sama. `ELSE` opsional, tetapi tanpa ELSE baris yang tidak cocok menghasilkan NULL.
+
+## 4 Tempat Memakai CASE
+
+| Tempat | Fungsi | Contoh |
+|--------|--------|--------|
+| `SELECT` | membuat kolom kategori | level gaji |
+| `ORDER BY` | membuat prioritas khusus | Engineering tampil dulu |
+| `WHERE` | syarat berbeda per kelompok | batas gaji per dept |
+| Agregasi | hitung beberapa kondisi sekali jalan | jumlah senior per dept |
+
+```sql
+SELECT dept,
+       COUNT(*) AS jumlah,
+       SUM(CASE WHEN gaji >= 11000000 THEN 1 ELSE 0 END) AS gaji_tinggi
+FROM karyawan
+GROUP BY dept;
+```
+
+Pola agregasi kondisional ini menghasilkan banyak metrik dalam satu query. Database membaca tabel sekali, lalu setiap CASE mengisi hitungannya sendiri.
+
+## CASE pada ORDER BY dan UPDATE
+
+```sql
+SELECT nama, dept, gaji
+FROM karyawan
+ORDER BY CASE WHEN dept = 'Engineering' THEN 0 ELSE 1 END,
+         gaji DESC;
+```
+
+Engineering mendapat bobot 0 sehingga tampil dahulu, lalu tiap kelompok diurutkan menurut gaji. CASE juga boleh di `UPDATE`, tetapi selalu uji ekspresinya lewat SELECT dahulu agar tidak salah mengubah semua baris.
+
+## COALESCE dan NULLIF
+
+| Fungsi | Arti | Contoh | Hasil |
+|--------|------|--------|-------|
+| `COALESCE(a,b,...)` | nilai pertama non-NULL | `COALESCE(NULL,'Data')` | `Data` |
+| `NULLIF(a,b)` | NULL bila a = b | `NULLIF('', '')` | NULL |
+
+```sql
+SELECT nama, COALESCE(NULLIF(dept, ''), 'Belum diisi') AS dept_bersih
+FROM karyawan;
+```
+
+Keduanya menangani data kosong tanpa CASE panjang. `NULLIF` mengubah string kosong jadi NULL, lalu `COALESCE` memberi label yang siap tampil.
+
+## Di Dunia Nyata
+
+- **Segmentasi pelanggan**: belanja ≥10 juta = Gold, ≥5 juta = Silver, sisanya Bronze.
+- **SLA tiket dukungan**: CASE memberi prioritas 1 untuk tiket kritis agar `ORDER BY` mendahulukannya.
+- **Dashboard HR**: satu GROUP BY menghitung jumlah junior, mid, dan senior lewat tiga agregasi kondisional.
+- **Membersihkan ekspor CSV**: COALESCE mengganti nomor telepon NULL dengan `'-'` supaya kolom tidak kosong.
+
+<div class="note">💡 CASE berhenti di kondisi pertama yang benar. Urutkan batas dari paling ketat ke paling longgar; urutan terbalik menghasilkan kategori salah tanpa error.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama, gaji, dept,
+       CASE
+         WHEN gaji >= 11000000 THEN 'Senior'
+         WHEN gaji >= 9000000 THEN 'Mid'
+         ELSE 'Junior'
+       END AS level,
+       COALESCE(dept, '-') AS departemen
+FROM karyawan
+ORDER BY gaji DESC;`} />

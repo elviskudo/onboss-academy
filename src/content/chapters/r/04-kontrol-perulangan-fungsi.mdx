@@ -1,0 +1,169 @@
+---
+title: "Kontrol, Perulangan & Fungsi"
+description: "Vektorisasi-first: 3 bentuk kontrol, 3 loop, keluarga apply, dan fungsi dengan parameter default"
+order: 4
+quiz:
+  - q: "Untuk memberi label LULUS/REMEDI pada seluruh vektor nilai, pilihan paling langsung adalah…"
+    options: ["if", "while", "ifelse()", "switch()"]
+    answer: 2
+    explain: "if hanya membaca kondisi panjang satu; ifelse() bekerja elemen demi elemen pada seluruh vektor."
+  - q: "Perulangan for di R paling alami digunakan untuk…"
+    options: ["Membaca file", "Mengiterasi elemen vektor atau daftar", "Mendefinisikan fungsi", "Membuat grafik otomatis tanpa blok"]
+    answer: 1
+    explain: "for (item in vektor) menjalankan blok untuk setiap elemen."
+  - q: "Fungsi di R dibuat dengan…"
+    options: ["func hitung()", "function()", "def hitung():", "fn hitung()"]
+    answer: 1
+    explain: "function adalah keyword bawaan; objek fungsi biasanya disimpan dengan nama <- function(...)."
+  - q: "Nilai default yang dikembalikan fungsi adalah…"
+    options: ["Ekspresi terakhir yang dievaluasi", "Selalu wajib return()", "TRUE", "Tidak pernah ada"]
+    answer: 0
+    explain: "return() opsional — R mengembalikan hasil ekspresi terakhir secara otomatis."
+  - q: "sapply() berbeda dari lapply() karena…"
+    options: ["sapply hanya menerima angka", "sapply mencoba menyederhanakan list hasil menjadi vektor/matrix", "lapply lebih cepat selalu", "sapply menggunakan loop paralel"]
+    answer: 1
+    explain: "lapply selalu mengembalikan list; sapply menyederhanakan bila bentuk hasil konsisten."
+example:
+  code: |
+    nilai <- c(85, 60, 92, 45)
+    status <- function(x) {
+      ifelse(x >= 75, "LULUS", "REMEDI")
+    }
+    status(nilai)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kontrol alur menentukan cabang yang dijalankan dan kapan operasi diulang. Di R, urutannya penting: gunakan operasi vektor dulu, keluarga apply untuk transformasi objek, lalu loop eksplisit saat alurnya memang stateful.
+
+## Tiga Bentuk Kondisional
+
+R menyediakan **3 bentuk utama**:
+
+| Bentuk | Input | Hasil terbaik untuk |
+| --- | --- | --- |
+| `if / else if / else` | satu kondisi TRUE/FALSE | keputusan alur program |
+| `ifelse()` | vektor logical | label per elemen |
+| `switch()` | satu nama/angka | memilih satu alternatif |
+
+```r
+nilai <- 80
+if (nilai >= 75) {
+  status <- "LULUS"
+} else {
+  status <- "REMEDI"
+}
+
+nilai_semua <- c(80, 60, 90)
+ifelse(nilai_semua >= 75, "LULUS", "REMEDI")
+```
+
+`if` bukan vektor: kondisi panjang lebih dari satu adalah error di R modern. Untuk seluruh kolom, gunakan `ifelse()` atau index logis.
+
+## Tiga Bentuk Loop
+
+R punya **3 loop eksplisit**:
+
+| Bentuk | Kapan berhenti | Kapan dipakai |
+| --- | --- | --- |
+| `for (x in objek)` | semua elemen selesai | iterasi koleksi |
+| `while (kondisi)` | kondisi menjadi FALSE | jumlah iterasi tak diketahui |
+| `repeat` | bertemu `break` | algoritma konvergensi/retry |
+
+```r
+for (kota in c("Jakarta", "Bandung")) {
+  cat(kota, "\n")
+}
+
+n <- 1
+while (n < 10) {
+  n <- n * 2
+}
+
+repeat {
+  n <- n - 1
+  if (n <= 0) break
+}
+```
+
+`next` melompat ke iterasi berikutnya; `break` keluar dari loop terdekat.
+
+## Vektorisasi First
+
+Sebelum menulis loop, cek apakah operasi sudah menerima vektor:
+
+```r
+nilai <- c(85, 60, 92, 45)
+nilai + 5
+nilai[nilai >= 75]
+ifelse(nilai >= 75, "LULUS", "REMEDI")
+sum(nilai)
+```
+
+Kode vektor menyatakan tujuan langsung dan mengurangi pengelolaan index. Alasannya bukan sekadar "loop lambat": operasi vektor adalah model data utama R dan biasanya lebih mudah diverifikasi.
+
+## Keluarga Apply
+
+Ada **4 anggota inti** untuk menerapkan fungsi:
+
+| Fungsi | Input | Output | Contoh guna |
+| --- | --- | --- | --- |
+| `lapply()` | list/vector | list | hasil tiap elemen bentuk campur |
+| `sapply()` | list/vector | disederhanakan | satu angka per elemen |
+| `vapply()` | list/vector | tipe ditentukan | kode produksi yang ketat |
+| `apply()` | matrix/array | vector/array | operasi per baris/kolom matrix |
+
+```r
+data <- list(a = 1:3, b = 4:8)
+sapply(data, mean)
+vapply(data, mean, numeric(1))
+```
+
+Untuk data frame, fungsi khusus seperti `colMeans()` biasanya lebih jelas daripada `apply()` karena menjaga tipe numerik tanpa coercion tak sengaja.
+
+## Membuat Fungsi
+
+```r
+rata <- function(x, na.rm = TRUE) {
+  if (!is.numeric(x)) stop("x harus numerik")
+  if (length(x) == 0) return(NA_real_)
+  mean(x, na.rm = na.rm)
+}
+
+rata(c(10, 20, NA))
+```
+
+Fungsi punya parameter posisi, parameter bernama, nilai default, dan `...` untuk meneruskan argumen tambahan. Ekspresi terakhir otomatis menjadi hasil; `return()` berguna untuk keluar lebih awal pada edge case.
+
+## Scope dan Fungsi sebagai Objek
+
+```r
+pengali <- function(k) {
+  function(x) x * k
+}
+dua_kali <- pengali(2)
+dua_kali(c(1, 2, 3))
+```
+
+R memakai lexical scoping: fungsi dalam dapat melihat `k` dari lingkungan pembuatnya. Karena fungsi adalah objek, ia bisa disimpan di variabel, dikirim ke `lapply()`, dan dikembalikan fungsi lain.
+
+## Di Dunia Nyata
+
+1. **Klasifikasi risiko** — `ifelse(skor >= 80, "tinggi", "normal")` memberi label ke seluruh kolom pasien sekaligus.
+2. **Ringkasan banyak kolom** — `vapply(df[numerik], mean, numeric(1), na.rm = TRUE)` memastikan setiap hasil benar-benar satu angka.
+3. **Membaca banyak CSV** — `lapply(files, read.csv)` menghasilkan list data frame tanpa loop dan index manual.
+4. **Optimisasi berulang** — `repeat` menjalankan pembaruan sampai perubahan parameter di bawah toleransi, lalu `break`.
+5. **Validasi reusable** — fungsi `validasi_umur()` memusatkan aturan agar impor, form, dan laporan memakai batas sama.
+
+<div class="note">💡 "Vektorisasi-first" bukan larangan memakai loop. Pilih vektor saat operasi berlaku independen ke seluruh elemen; pilih loop saat langkah berikutnya bergantung pada state langkah sebelumnya atau membutuhkan efek samping.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`nilai <- c(85, 60, 92, 45, 77)
+status <- ifelse(nilai >= 75, "LULUS", "REMEDI")
+print(status)
+print(nilai + 5)
+rata <- function(x, na.rm = TRUE) {
+  if (!is.numeric(x)) stop("x harus numerik")
+  mean(x, na.rm = na.rm)
+}
+print(rata(c(10, 20, NA)))
+print(vapply(list(a = 1:3, b = 4:6), mean, numeric(1)))`} />

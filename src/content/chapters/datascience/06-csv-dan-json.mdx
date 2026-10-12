@@ -1,0 +1,172 @@
+---
+title: "Membaca Data CSV dan JSON"
+description: "Dua format paling umum — dibaca dengan modul bawaan Python"
+order: 6
+quiz:
+  - q: "CSV adalah kependekan dari…"
+    options: ["Computed Sheet Volume", "Comma Separated Values", "Central Server Vault", "Code String Variable"]
+    answer: 1
+    explain: "Nilai dipisah koma (atau titik koma/tab) — format tabular paling sederhana."
+  - q: "Modul bawaan Python untuk membaca CSV adalah…"
+    options: ["csv", "excel", "sheet", "table"]
+    answer: 0
+    explain: "Modul csv sudah satu paket dengan Python — tidak perlu instalasi tambahan."
+  - q: "json.loads() dipakai untuk…"
+    options: ["Menghapus data JSON", "Menulis JSON ke file", "Mengubah string JSON menjadi objek Python", "Mengompres JSON"]
+    answer: 2
+    explain: "loads = load string; sedangkan dump/digunakan untuk mengubah objek menjadi teks JSON."
+  - q: "Pada file CSV, baris pertama biasanya berisi…"
+    options: ["Rata-rata data", "Header nama kolom", "Komentar penulis", "Kunci API"]
+    answer: 1
+    explain: "Header menjadi nama kolom saat dibaca dengan DictReader."
+  - q: "Tipe data hasil json.load() yang berupa daftar adalah…"
+    options: ["list", "tuple", "set", "frozenset"]
+    answer: 0
+    explain: "Array JSON berubah menjadi list, objek JSON menjadi dict."
+example:
+  code: |
+    import csv
+    import io
+
+    teks = "nama,nilai\nAndi,80\nBia,90\n"
+    baris = csv.DictReader(io.StringIO(teks))
+    for row in baris:
+        print(row["nama"], row["nilai"])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dataset nyata hampir selalu datang sebagai **CSV** atau **JSON**. Python menyediakan modul keduanya secara bawaan (standard library) — cukup `import`.
+
+## Dua Format, Dua Bentuk
+
+| Aspek | CSV | JSON |
+|-------|-----|------|
+| Bentuk | tabel datar (baris & kolom) | bersarang (object/array) |
+| Ekstensi | `.csv` | `.json` |
+| Header | baris pertama | nama properti tiap objek |
+| Untuk apa | data tabular, ekspor spreadsheet | respons API, konfigurasi |
+| Modul | `csv` | `json` |
+
+## Anatomi CSV
+
+```csv
+nama,kelas,nilai
+Andi,A,80
+Bia,A,90
+Citra,B,75
+```
+
+Baris pertama adalah **header** (nama kolom), sisanya data. Untuk contoh latihan di TryIt kita baca CSV dari string, tanpa file eksternal.
+
+## Membaca CSV dengan csv.DictReader
+
+```python
+import csv
+import io
+
+teks = "nama,nilai\nAndi,80\nBia,90\n"
+pembaca = csv.DictReader(io.StringIO(teks))
+
+for row in pembaca:
+    print(row["nama"], "->", row["nilai"])
+```
+
+`io.StringIO` membuat string terasa seperti file. Catatan: hasil DictReader selalu **string**, jadi konversi ke angka diperlukan bila mau dihitung.
+
+## Menghitung dari CSV
+
+```python
+total = 0
+jumlah = 0
+for row in csv.DictReader(io.StringIO(teks)):
+    total += int(row["nilai"])
+    jumlah += 1
+
+print("Rata-rata:", total / jumlah)
+```
+
+Pola "baca -> konversi -> akumulasi" ini dipakai untuk hampir semua laporan ringkas.
+
+## 4 Fungsi Utama Modul csv
+
+| Fungsi | Arah | Kapan dipakai |
+|--------|------|---------------|
+| `csv.reader` | baca | data tanpa header, akses indeks |
+| `csv.DictReader` | baca | akses kolom lewat nama |
+| `csv.writer` | tulis | ekspor ke `.csv` sederhana |
+| `csv.DictWriter` | tulis | ekspor dengan nama header |
+
+## JSON: Data Bersarang
+
+```python
+import json
+
+teks = '{"kota": "Bandung", "penduduk": 2500, "daftar": [1, 2, 3]}'
+objek = json.loads(teks)
+
+print(objek["kota"])
+print(objek["penduduk"])
+print(objek["daftar"][0])
+```
+
+JSON mendukung objek bersarang — cocok untuk respons API.
+
+## 4 Fungsi Utama Modul json
+
+| Fungsi | Input -> Output | Contoh |
+|--------|-----------------|--------|
+| `json.loads(teks)` | string -> objek Python | parse respons API |
+| `json.dumps(objek)` | objek -> string | kirim data ke server |
+| `json.load(fp)` | file -> objek Python | baca `config.json` |
+| `json.dump(objek, fp)` | objek -> file | simpan hasil analisis |
+
+## Menulis Kembali
+
+```python
+laporan = {"rata_rata": 81.5, "jumlah": 3}
+teks_baru = json.dumps(laporan, indent=2)
+print(teks_baru)
+```
+
+Gunakan `indent=2` agar hasil JSON mudah dibaca manusia saat disimpan atau dikirim.
+
+## Di Dunia Nyata
+
+- **Ekspor data penjualan** — `csv.DictWriter` membuat laporan bulanan yang bisa dibuka Excel tanpa kustomisasi.
+- **Konfigurasi aplikasi** — `json.load(open("config.json"))` membaca pengaturan saat program start.
+- **Konsumsi API cuaca** — `json.loads(responses.text)` mengubah respons HTTP menjadi dict yang bisa difilter.
+- **Migrasi data lama** — CSV tahun lalu dibaca ulang lalu ditulis sebagai JSON untuk layanan baru.
+- **Laporan otomatis** — hasil hitung disimpan `json.dump` supaya dashboard web tinggal membangunkannya.
+
+<div class="note">💡 Selalu konversi kolom angka dengan int() atau float() sesaat setelah dibaca. Menjumlahkan string angka ("80" + "90") akan menggabungkan teks, bukan menjumlahkan.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import csv
+import io
+import json
+
+csv_teks = """nama,kelas,nilai
+Andi,A,80
+Bia,A,90
+Citra,B,75
+Damar,B,88
+"""
+
+total = 0
+jumlah = 0
+nilai_semua = []
+for row in csv.DictReader(io.StringIO(csv_teks)):
+    n = int(row["nilai"])
+    total = total + n
+    jumlah = jumlah + 1
+    nilai_semua.append(n)
+
+print("Jumlah baris:", jumlah)
+print("Rata-rata   :", total / jumlah)
+print("Tertinggi   :", max(nilai_semua))
+
+json_teks = '{"kota": "Bandung", "penduduk": 2500, "kuliner": ["batagor", "seblak"]}'
+objek = json.loads(json_teks)
+print("Kota:", objek["kota"])
+print("Penduduk:", objek["penduduk"])
+print("Kuliner:", ", ".join(objek["kuliner"]))`} />

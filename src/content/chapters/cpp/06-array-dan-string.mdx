@@ -1,0 +1,191 @@
+---
+title: "Array & String"
+description: "Array statis, std::array, std::string lanjutan, dan array dua dimensi"
+order: 6
+quiz:
+  - q: "Keunggulan std::string dibanding char array adalah…"
+    options: ["Lebih cepat selalu", "Panjang otomatis, aman dari overflow, operator + untuk gabung", "Tidak perlu include", "Bisa menyimpan angka saja"]
+    answer: 1
+    explain: "std::string mengurus memori sendiri — tidak perlu strlen atau khawatir lupa null terminator."
+  - q: "Untuk mencari posisi substring dalam string, gunakan…"
+    options: ["search()", "locate()", "find()", "index()"]
+    answer: 2
+    explain: "s.find(\"kata\") mengembalikan indeks awal, atau string::npos jika tidak ditemukan."
+  - q: "Nilai kembalian substr(pos, n) adalah…"
+    options: ["Seluruh string", "Karakter sebelum pos", "Tidak ada kembalian", "n karakter mulai dari indeks pos"]
+    answer: 3
+    explain: "Jika n melebihi sisa panjang, potongan diambil sampai akhir string."
+  - q: "Ukungan std::array<int, 5> memungkinkan…"
+    options: ["Panjang dicek kompilasi dan tetap", "Bertambah saat runtime", "Menyimpan tipe campuran", "Tanpa include"]
+    answer: 0
+    explain: "Container modern C++ memberi keamanan ekstra di atas array C yang mentah."
+  - q: "Mengubah \"42\" menjadi int dilakukan dengan…"
+    options: ["toInt(\"42\")", "cast (int)\"42\"", "stoi(\"42\")", "parse_teks"]
+    answer: 2
+    explain: "Keluarga std::stoi/stol/stof/stod mengubah string menjadi angka dan melempar exception bila formatnya salah."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    using namespace std;
+
+    int main() {
+        int nilai[4] = {80, 90, 75, 88};
+        string nama = "OnBoss Academy";
+
+        cout << nama.substr(0, 6) << endl;
+        cout << "Posisi Academy: " << nama.find("Academy") << endl;
+
+        for (int n : nilai) cout << n << " ";
+        cout << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ menyediakan **array ala C untuk performa** dan `std::string` untuk kenyamanan. Bab ini memetakan 3 pilihan struktur data statis dan seluruh method string yang paling sering dipakai.
+
+## 3 Pilihan Penyimpanan Statis
+
+| Struktur | Ukuran | Aman? | Contoh |
+|---|---|---|---|
+| Array C `T t[n]` | tetap, harus konstan | tidak ada pengecekan batas | `int nilai[4]` |
+| `std::array<T, N>` | tetap, diketahui kompilasi | `at()` mengecek batas | `array<int, 5>` |
+| `std::vector<T>` | bertambah saat runtime | `at()` mengecek batas | `vector<int>` |
+
+```cpp
+int nilai[4] = {80, 90, 75, 88};
+int kosong[5] = {};               // semua elemen 0
+nilai[0] = 85;                    // ubah elemen pertama
+
+int jumlah = sizeof(nilai) / sizeof(nilai[0]);   // 4
+for (int i = 0; i < jumlah; i++) {
+    cout << nilai[i] << " ";
+}
+cout << endl;
+```
+
+Ukuran array **tetap** dan harus konstan — `nilai[10]` di array berisi 4 elemen tidak dicek compiler dan menyebabkan perilaku tak terdefinisi. Index dimulai dari **0** sampai `N-1`.
+
+## std::string
+
+```cpp
+#include <string>
+
+string teks = "Belajar C++ di OnBoss";
+cout << teks.length() << endl;              // 21
+cout << teks[0] << endl;                    // B
+teks += " Sekarang!";                       // append
+string salinan = teks;                      // salinan penuh
+```
+
+String bersifat **mutable** (bisa diubah di tempat) tetapi setiap operasi `+` menghasilkan salinan baru. **10 method std::string** yang paling sering dipakai:
+
+| Method | Fungsi | Contoh hasil |
+|---|---|---|
+| `length()` / `size()` | panjang karakter | `21` |
+| `substr(p, n)` | potong n karakter dari pos p | `"Belajar"` |
+| `find(t)` | posisi awal substring, `npos` bila tak ada | `14` |
+| `rfind(t)` | cari dari belakang | posisi terakhir |
+| `replace(p, n, t)` | ganti bagian | teks baru |
+| `append(t)` / `+=` | tambah di belakang | teks + t |
+| `insert(p, t)` | sisip di posisi p | teks + t |
+| `erase(p, n)` | hapus n karakter | teks pendek |
+| `compare(t)` | `< 0`, `0`, `> 0` | -1 / 0 / 1 |
+| `find_first_of(t)` | posisi karakter pertama dari set | indeks |
+
+```cpp
+string teks = "Belajar C++ di OnBoss";
+cout << teks.substr(0, 7) << endl;          // Belajar
+cout << teks.find("OnBoss") << endl;        // 14
+cout << teks.find("Python") << endl;        // npos (tidak ada)
+
+teks.replace(0, 7, "Kuasai");
+cout << teks << endl;
+```
+
+`string::npos` adalah penanda "tidak ditemukan" — selalu periksa sebelum dipakai sebagai indeks.
+
+## Konversi String ↔ Angka
+
+C++ punya keluarga fungsi konversi string → angka: `stoi`, `stol`, `stoll`, `stof`, `stod`, `stold` (plus varian `unsigned`-nya), dan `to_string` untuk arah sebaliknya (overload untuk semua tipe angka).
+
+```cpp
+int n = stoi("42");        // 42
+double d = stod("3.5");    // 3.5
+string s = to_string(95);  // "95"
+// stoi("abc");            // dilempar invalid_argument
+```
+
+## Split Sederhana
+
+```cpp
+#include <sstream>
+
+string data = "Sari,Budi,Rina";
+stringstream ss(data);
+string nama;
+while (getline(ss, nama, ',')) {   // pisahkan berdasarkan koma
+    cout << nama << endl;
+}
+```
+
+`stringstream` mengubah string menjadi stream — cara baku memecah teks di C++ sebelum ada library pemotong lain.
+
+## Array Dua Dimensi
+
+```cpp
+int matriks[2][3] = {
+    {1, 2, 3},
+    {4, 5, 6}
+};
+
+for (int b = 0; b < 2; b++) {
+    for (int k = 0; k < 3; k++) {
+        cout << matriks[b][k] << " ";
+    }
+    cout << endl;
+}
+cout << "Total elemen: " << 2 * 3 << endl;
+```
+
+Akses selalu `m[baris][kolom]`. Jika kolomnya dinamis, gunakan `vector<vector<int>>` atau `vector<int>` berukuran `baris * kolom` dengan indeks `b * kolom + k`.
+
+## Di Dunia Nyata
+
+- Menyimpan 4 nilai ujian siswa: `int nilai[4]` — ukurannya memang mati.
+- Memproses tanggal `"2026-10-12"`: `substr(0, 4)` untuk tahun, `substr(5, 2)` untuk bulan.
+- Membersihkan input pengguna: `nama.erase(remove(nama.begin(), nama.end(), ' '), nama.end());` membuang semua spasi.
+- Parsing baris CSV dari file: `stringstream` + `getline` menghasilkan kolom demi kolom.
+- Validasi nomor telepon: `if (no.find_first_not_of("0123456789") != string::npos) → bukan angka`.
+
+<div class="note">💡 Untuk data dinamis yang panjangnya berubah, gunakan <code>std::vector</code> (materi berikutnya). Array statis hanya untuk ukuran yang benar-benar tetap, seperti koordinat, hari dalam minggu, atau konfigurasi hardcoded.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+#include <sstream>
+using namespace std;
+
+int main() {
+    int nilai[4] = {80, 90, 75, 88};
+    int jumlah = sizeof(nilai) / sizeof(nilai[0]);
+    int total = 0;
+    for (int i = 0; i < jumlah; i++) total += nilai[i];
+    cout << "Rata-rata: " << (double) total / jumlah << endl;
+
+    string teks = "Belajar C++ di OnBoss";
+    cout << "Panjang: " << teks.length() << endl;
+    cout << "Awal: " << teks.substr(0, 7) << endl;
+    cout << "Posisi OnBoss: " << teks.find("OnBoss") << endl;
+    cout << "Angka dari teks: " << stoi("42") << endl;
+    cout << "Teks dari angka: " << to_string(95) << endl;
+
+    string data = "Sari,Budi,Rina";
+    stringstream ss(data);
+    string nama;
+    cout << "Nama: ";
+    while (getline(ss, nama, ',')) cout << nama << " ";
+    cout << endl;
+    return 0;
+}`} />

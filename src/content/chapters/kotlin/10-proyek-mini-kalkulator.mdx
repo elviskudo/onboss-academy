@@ -1,0 +1,160 @@
+---
+title: "Proyek Mini Kalkulator"
+description: "Memadukan class, when, dan function untuk membangun kalkulator teks lengkap"
+order: 10
+quiz:
+  - q: "when paling cocok untuk menyeleksi…"
+    options: ["operator aritmatika dari input", "warna layar", "versi Kotlin", "lokasi file"]
+    answer: 0
+    explain: "Setiap simbol operator bisa jadi satu cabang when."
+  - q: "Pembagian dengan nol sebaiknya ditangani dengan…"
+    options: ["dibiarkan", "if dan pesan kesalahan", "catch error global", "mengganti nol dengan satu"]
+    answer: 1
+    explain: "Cek eksplisit memberi pesan yang jelas ke pengguna."
+  - q: "Fungsi kalkulator sebaiknya mengembalikan…"
+    options: ["selalu println", "variabel global", "tipe data hasil atau pesan galat", "objek file"]
+    answer: 2
+    explain: "Memisahkan perhitungan dari cetak membuat kode mudah diuji."
+  - q: "data class dipakai untuk menyimpan…"
+    options: ["nama file", "pasangan dua bilangan dan operasinya", "log server", "daftar import"]
+    answer: 1
+    explain: "Menggabungkan input dalam satu objek membuat parameter rapi."
+  - q: "Tempat paling tepat menulis fungsi hitung adalah…"
+    options: ["function terpisah di luar main", "di dalam string", "pada komentar", "di file database"]
+    answer: 0
+    explain: "Function terpisah bisa dipakai ulang dan diuji."
+example:
+  code: |
+    fun hitung(a: Double, op: String, b: Double): String = when (op) {
+        "+" -> (a + b).toString()
+        "-" -> (a - b).toString()
+        "*" -> (a * b).toString()
+        "/" -> if (b == 0.0) "Galat: pembagi nol" else (a / b).toString()
+        else -> "Galat: operator tidak dikenal"
+    }
+
+    fun main() {
+        println(hitung(10.0, "/", 4.0))
+        println(hitung(10.0, "/", 0.0))
+        println(hitung(10.0, "%", 3.0))
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sekarang seluruh materi dipakai bersama: memecah masalah, menyusun model kecil, lalu menuliskannya dalam Kotlin yang ringkas.
+
+## Merancang Dulu
+
+```kotlin
+// input  : dua bilangan dan satu operator
+// proses : pilih operasi sesuai operator
+// output : hasil atau pesan galat
+//
+// pemisahan perhitungan dan tampilan membuat
+// fungsi hitung bisa diuji tanpa mencetak apa pun.
+```
+
+Menyusun alur di atas kertas sebelum menulis kode menghemat waktu perbaikan.
+
+## Fungsi Hitung
+
+```kotlin
+fun hitung(a: Double, op: String, b: Double): String = when (op) {
+    "+" -> (a + b).toString()
+    "-" -> (a - b).toString()
+    "*" -> (a * b).toString()
+    "/" -> if (b == 0.0) "Galat: pembagi nol" else (a / b).toString()
+    else -> "Galat: operator tidak dikenal"
+}
+```
+
+Kembalian berupa String agar hasil dan pesan galat bisa ditangani di satu tempat. `when` menangani **5 cabang**: 4 operator yang didukung (`+`, `-`, `*`, `/`) plus `else` untuk operator asing.
+
+| Operator | Cabang when | Catatan khusus |
+| --- | --- | --- |
+| `+` | `"+" -> ...` | penjumlahan biasa |
+| `-` | `"-" -> ...` | pengurangan biasa |
+| `*` | `"*" -> ...` | perkalian biasa |
+| `/` | `"/" -> if (b == 0.0) ...` | satu-satunya yang punya cek galat |
+| lainnya | `else -> ...` | tolak input tidak dikenal |
+
+## Membungkus dengan Data Class
+
+```kotlin
+data class Perintah(val a: Double, val op: String, val b: Double)
+
+fun jalankan(p: Perintah): String = hitung(p.a, p.op, p.b)
+
+fun main() {
+    val p = Perintah(10.0, "+", 5.0)
+    println("${p.a} ${p.op} ${p.b} = ${jalankan(p)}")
+}
+```
+
+Tiga input yang selalu berpasangan lebih aman dibawa sebagai satu objek.
+
+## Menguji Beberapa Kasus
+
+```kotlin
+fun main() {
+    val kasus = listOf(
+        Perintah(10.0, "/", 4.0),
+        Perintah(10.0, "/", 0.0),
+        Perintah(10.0, "%", 3.0)
+    )
+
+    kasus.forEach {
+        println("${it.a} ${it.op} ${it.b} -> ${jalankan(it)}")
+    }
+}
+```
+
+Daftar kasus seperti ini disebut tabel uji — jalankan tiap kali kode berubah. Perakitan akhirnya sederhana karena tiap potongan punya satu tugas:
+
+| Potongan | Tugas | Materi yang dipakai |
+| --- | --- | --- |
+| `data class Perintah` | membawa input yang saling terkait | data class (bab 8) |
+| `fun hitung(...)` | memilih operasi sesuai simbol | `when` (bab 3) |
+| `kasus.forEach { }` | menjalankan seluruh tabel uji | collection & lambda (bab 5) |
+| `fun main` | merangkai dan mencetak | function (bab 3) |
+
+## Di Dunia Nyata
+
+- **Kalkulator diskon toko** — logika `when` yang sama dipakai untuk menghitung harga akhir dari persentase promo.
+- **Validator form** — pola "fungsi murni + pesan galat" berlaku sama untuk memvalidasi email, telepon, dan password.
+- **Layanan perhitungan di server** — fungsi `hitung` yang murni bisa dipanggil dari banyak endpoint tanpa menyentuh tampilan.
+- **Riwayat transaksi** — `MutableList<Perintah>` menyimpan setiap operasi agar bisa dicetak ulang di akhir sesi.
+- **Uji regresi otomatis** — daftar `kasus` seperti di atas bisa diubah menjadi unit test sungguhan saat proyek membesar.
+
+## Langkah Lanjutan
+
+- Menambah operator pangkat dan akar
+- Menghitung banyak operasi berantai
+- Menerima input dari pengguna dengan readlnOrNull
+- Menyimpan riwayat perhitungan dalam MutableList
+
+<div class="note">💡 Pola yang kamu latih di kalkulator ini berlaku di proyek nyata: pisahkan fungsi murni dari tampilan, bungkus data yang saling terkait dalam data class, dan uji kasus galat lebih dulu sebelum kasus normal.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`data class Perintah(val a: Double, val op: String, val b: Double)
+
+fun hitung(a: Double, op: String, b: Double): String = when (op) {
+    "+" -> (a + b).toString()
+    "-" -> (a - b).toString()
+    "*" -> (a * b).toString()
+    "/" -> if (b == 0.0) "Galat: pembagi nol" else (a / b).toString()
+    else -> "Galat: operator tidak dikenal"
+}
+
+fun main() {
+    val kasus = listOf(
+        Perintah(10.0, "/", 4.0),
+        Perintah(10.0, "/", 0.0),
+        Perintah(10.0, "*", 3.0),
+        Perintah(10.0, "%", 3.0)
+    )
+
+    kasus.forEach {
+        println(it.a.toString() + " " + it.op + " " + it.b + " -> " + hitung(it.a, it.op, it.b))
+    }
+}`} />

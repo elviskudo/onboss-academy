@@ -1,0 +1,124 @@
+---
+title: "Reset, Revert, Rebase, dan Stash"
+description: "Empat alat perbaikan riwayat: kapan pakai reset, revert, rebase, dan stash"
+order: 6
+quiz:
+  - q: "git reset --soft HEAD~1 berfungsi untuk…"
+    options: ["Menghapus commit dan file kerja", "Membatalkan commit tapi perubahan tetap di staging area", "Menghapus seluruh repo", "Memaksa push"]
+    answer: 1
+    explain: "--soft membatalkan commit saja; --mixed (default) juga melepas staging; --hard menghapus perubahan."
+  - q: "git revert berbeda dari reset karena…"
+    options: ["Lebih cepat", "Membuat commit baru yang membatalkan perubahan — riwayat tetap utuh", "Bekerja offline saja", "Hanya untuk file terhapus"]
+    answer: 1
+    explain: "Revert aman untuk branch bersama karena tidak menghapus riwayat; reset menghapus commit."
+  - q: "git stash berguna ketika…"
+    options: ["Ingin menyimpan perubahan sementara tanpa commit untuk berpindah topik", "Ingin menghapus remote", "Ingin membuat tag", "Ingin melihat file tersembunyi"]
+    answer: 0
+    explain: "Stash menaruh perubahan ke rak sementara; git stash pop mengembalikannya."
+  - q: "Rebase dipakai untuk…"
+    options: ["Mengganti history dengan commit baru di atas base terbaru", "Menghapus file", "Mengubah nama remote", "Mengompres ukuran repo"]
+    answer: 0
+    explain: "Rebase memindahkan ulang commit kita di atas puncak branch lain — riwayat jadi linear dan bersih."
+  - q: "Aturan emas rebase di tim adalah…"
+    options: ["Rebase kapan saja", "Jangan rebase commit yang sudah di-push dan dipakai orang lain", "Rebase harus dilakukan server", "Rebase otomatis saat push"]
+    answer: 1
+    explain: "Rebase membuat hash baru; memakainya di branch bersama memutus riwayat rekan kerja."
+example:
+  code: |
+    git reset --soft HEAD~1   # batalkan commit, perubahan tetap staged
+    git stash                 # simpan perubahan ke rak
+    git stash pop             # ambil lagi
+    git revert a1b2c3d        # buat commit pembatalan
+    git rebase main           # pindahkan commit di atas main terbaru
+---
+
+Riwayat terlanjur salah? Empat alat berikut menyelesaikannya — dengan tingkat risiko berbeda.
+
+## Reset: Menggeser Pointer
+
+```bash
+git log --oneline
+# 9f8e7d6 Perbaiki bug login
+# 5c4b3a2 Tambah form login
+# 1a2b3c4 commit awal
+
+git reset --soft HEAD~1   # batalkan commit terakhir, perubahan tetap staged
+git status
+```
+
+Tiga mode `reset`:
+
+| Opsi | Commit dibatalkan | Staging | Working file |
+|------|-------------------|---------|--------------|
+| `--soft` | ya | tetap | tetap |
+| `--mixed` (default) | ya | dilepas | tetap |
+| `--hard` | ya | dilepas | dihapus |
+
+```bash
+git reset --hard HEAD     # DANGER: buang semua perubahan lokal
+```
+
+## Revert: Membatalkan Secara Aman
+
+```bash
+git log --oneline
+# 9f8e7d6 Perbaiki bug login (ternyata merusak)
+
+git revert 9f8e7d6
+```
+
+Git membuat **commit baru** yang isinya kebalikan commit itu. Riwayat tetap lengkap — inilah cara aman "membatalkan" di branch bersama.
+
+## Stash: Rak Sementara
+
+```bash
+git stash push -m "WIP: eksperimen algoritma"
+git switch main
+# ... kerja darurat di main ...
+git switch fitur/algoritma
+git stash pop
+```
+
+Perintah penting: `git stash` (simpan), `git stash pop` (ambil + hapus dari rak), `git stash list` (lihat rak), `git stash apply` (ambil tanpa menghapus).
+
+## Rebase: Merapikan Riwayat
+
+```bash
+git switch fitur/algoritma
+git rebase main
+```
+
+Commit di `fitur/algoritma` dibangun ulang di atas `main` terbaru — riwayat jadi lurus tanpa merge commit temporer.
+
+```bash
+git rebase -i HEAD~3   # edit, reword, squash 3 commit terakhir
+```
+
+## Memilih Empat Alat
+
+| Alat | Fungsi | Mengubah riwayat? | Kapan dipakai |
+|---|---|---|---|
+| Reset | Memindahkan branch/HEAD | Ya | Membatalkan commit lokal |
+| Revert | Membuat commit kebalikan | Tidak | Membatalkan perubahan yang sudah dibagikan |
+| Rebase | Memutar ulang commit pada base baru | Ya | Merapikan branch pribadi |
+| Stash | Menyimpan perubahan belum commit | Tidak pada branch | Beralih tugas sementara |
+
+Tentukan dahulu apakah commit sudah dibagikan. Untuk branch bersama, `git revert <hash>` menjaga jejak audit. Untuk commit lokal, `reset --soft` mempertahankan staging dan `reset --mixed` mempertahankan file kerja. `reset --hard` membuang perubahan tracked pada index dan working tree; buat branch pengaman atau catat hash sebelum menjalankannya.
+
+Stash default tidak menyimpan file untracked; gunakan `git stash push -u -m "WIP"` jika memang perlu, lalu cek `git stash show --stat`. `stash pop` dapat konflik dan baru menghapus entri jika penerapan sukses. Rebase juga dapat konflik per commit: selesaikan, `git add`, lalu `git rebase --continue`, atau pulang dengan `git rebase --abort`.
+
+## Di Dunia Nyata
+
+- Revert deployment rusak di `main` tanpa mengubah riwayat yang sudah ditarik tim.
+- Soft reset commit lokal untuk memecahnya menjadi dua commit atomik.
+- Rebase branch fitur di atas `main` terbaru sebelum PR, sesuai kebijakan tim.
+- Stash edit sementara ketika diminta memeriksa hotfix mendesak.
+
+<div class="note">💡 Aturan main: reset --hard hanya untuk branch lokal pribadi; revert untuk branch bersama; rebase hanya untuk commit milikmu sendiri. Stash aman untuk jeda singkat, tetapi tetap periksa isi stash.</div>
+
+## Salah Rebase? Jangan Panik
+
+```bash
+git reflog              # catatan semua pergerakan HEAD
+git reset --hard <hash> # kembali ke kondisi sebelum rebase
+```

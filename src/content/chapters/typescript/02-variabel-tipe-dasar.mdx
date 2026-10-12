@@ -1,0 +1,179 @@
+---
+title: "Variabel & Tipe Dasar"
+description: "const/let, primitif, any vs unknown, void, dan type assertion"
+order: 2
+quiz:
+  - q: "Deklarasi mana yang tidak boleh diubah nilainya?"
+    options: ["let skor = 0;", "const skor = 0;", "var skor = 0;", "skor = 0;"]
+    answer: 1
+    explain: "const hanya bisa ditulis sekali. Untuk nilai yang berubah pakai let."
+  - q: "Tipe number di TypeScript mencakup…"
+    options: ["Hanya bilangan bulat", "Bulat dan desimal, termasuk NaN", "Hanya desimal", "Teks berupa angka"]
+    answer: 1
+    explain: "Satu tipe number untuk integer, floating point, Infinity, maupun NaN."
+  - q: "Perbedaan utama any dan unknown adalah…"
+    options: ["unknown tidak boleh dipakai tanpa dicek dulu", "any lebih cepat", "unknown hanya untuk angka", "any tidak bisa diberi nilai"]
+    answer: 0
+    explain: "unknown wajib diverifikasi (narrowing) sebelum dipakai — inilah alasan unknown lebih aman dari any."
+  - q: "Apa tipe nilai yang tidak pernah dikembalikan fungsi?"
+    options: ["void", "null", "never", "undefined"]
+    answer: 2
+    explain: "never = fungsi selalu throw, exit, atau loop tanpa ujung; void = tidak mengembalikan nilai."
+  - q: "const x = 10 as string; menghasilkan…"
+    options: ["Nilai berubah jadi teks", "Error kompilasi karena tipe bertabrakan", "x jadi unknown", "Tidak ada efek apa pun"]
+    answer: 1
+    explain: "Type assertion bukan casting runtime — tsc menolak as yang bertentangan dengan tipe aslinya."
+example:
+  code: |
+    const PPN = 0.11;
+    let total: number = 100000;
+    total = total + total * PPN;
+    console.log(total);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebelum masuk ke struktur data, kuasai dulu aturan variabel dan tipe primitif TypeScript — semua materi berikutnya berdiri di atas ini.
+
+## 3 Kata Kunci Deklarasi
+
+TypeScript mewarisi **3 kata kunci** variabel dari JavaScript:
+
+| Kata kunci | Bisa di-assign ulang? | Scope | Kapan dipakai |
+|------------|----------------------|-------|---------------|
+| `const` | Tidak | Blok `{ }` | Default — nilai tidak berubah |
+| `let` | Ya | Blok `{ }` | Nilai berubah: skor, index, state |
+| `var` | Ya | Function (hoisting) | Usang — jangan dipakai lagi |
+
+```typescript
+const PPN = 0.11;      // sekali tulis, selamanya sama
+let skor = 0;          // boleh berubah
+
+skor += 10;
+PPN = 0.2;             // ✖ Cannot assign to 'PPN'
+```
+
+Aturan praktis: **mulai dari const**, ganti ke let hanya saat nilai benar-benar berubah. `var` sudah usang — jangan dipakai lagi.
+
+**4 tingkat scope**: global, function (`var`), block (`let`/`const`), dan module (file `.ts` dengan `export`/`import`). **Penamaan**: camelCase (`totalHarga`), konstanta `SCREAMING_CASE` (`API_URL`), hindari kata kunci (`class`, `return`, `type`).
+
+## Tipe: 7 Primitif + 4 Tipe Khusus TS
+
+| Tipe | Kategori | Contoh | Buat apa |
+|------|----------|--------|----------|
+| `string` | primitif | `"Halo"` | Teks, ID |
+| `number` | primitif | `42`, `3.14` | Angka bulat & desimal sekaligus |
+| `boolean` | primitif | `true` | Flag, status |
+| `bigint` | primitif | `10n` | Angka di luar batas `number` |
+| `symbol` | primitif | `Symbol("id")` | Kunci unik |
+| `null` | primitif | `null` | Kosong eksplisit |
+| `undefined` | primitif | `undefined` | Belum diisi |
+| `any` | khusus TS | `let x: any` | Lolos semua cek — hindari |
+| `unknown` | khusus TS | `let x: unknown` | Aman: wajib dicek dulu |
+| `void` | khusus TS | `function f(): void` | Tidak mengembalikan nilai |
+| `never` | khusus TS | `function f(): never` | Tidak pernah selesai (throw/loop) |
+| `object` | referensi | `{}`, `[]` | Struktur data berpasangan |
+
+7 primitif warisan JavaScript + `any`, `unknown`, `void`, `never` adalah penambahan khusus TypeScript yang membuat sistem tipe-nya bisa mengatakan "saya tidak tahu, tapi aman" (`unknown`) dan "nilai ini tidak akan pernah ada" (`never`).
+
+## Tipe Primitif (Contoh Lengkap)
+
+```typescript
+const teks: string = "OnBoss";
+const angka: number = 99.5;
+const benar: boolean = false;
+const besar: bigint = 9007199254740993n; // angka di luar batas number
+const simbol: symbol = Symbol("id");     // kunci object unik
+```
+
+Tipe primitif disimpan sebagai nilai, bukan object — menyalin berarti menyalin datanya.
+
+## 5 Kategori Operator
+
+| Kategori | Jumlah | Anggota | Contoh hasil |
+|----------|--------|---------|--------------|
+| Aritmatika | 8 | `+ - * / % ** ++ --` | `7 / 2` → `3.5` (TS juga punya `number`, bukan int terpisah) |
+| Perbandingan | 8 | `== != === !== > < >= <=` | Pakai `===` — TS menolak perbandingan beda tipe |
+| Logika | 3 | `&&` `\|\|` `!` | `x > 0 && x < 10` |
+| Assignment | 13 | `=` `+=` `-=` `*=` `/=` … `>>>=` | `total += harga` |
+| Ternary | 1 | `? :` | `usia >= 17 ? "dewasa" : "anak"` |
+
+Ditambah **3 operator khusus TypeScript**: `as` (type assertion, termasuk bentuk `as const`), `!` (non-null assertion), dan `satisfies` (cek bentuk tanpa mengubah tipe).
+
+```typescript
+const ID = "ABC-1" as const;        // tipe: "ABC-1", bukan string
+const teks = data as string;        // yakinkan kompilator
+const panjang = input!.length;      // "saya yakin bukan null"
+const cfg = { port: 8080 } satisfies { port: number };
+```
+
+## Konversi Tipe & Kejatuhan
+
+| Kasus | Hasil | Keterangan |
+|-------|-------|------------|
+| `"1" + 1` | `"11"` | `+` diawali teks → string menang |
+| `"1" - 1` | `0` | Aritmatika memaksa angka |
+| `Number("12")` | `12` | Konversi eksplisit yang benar |
+| `0.1 + 0.2` | `0.30000000000000004` | Floating point IEEE 754 |
+| `let n: number = "5"` | ✖ error | Anotasi tipe dicek kompilator |
+| `"5" as number` | ✖ error | Assertion bertabrakan tipe aslinya |
+
+## any vs unknown
+
+```typescript
+let bebas: any = "teks";
+bebas = 100;
+bebas.tipuSaya();   // lolos kompilasi, gagal saat runtime ❌
+
+let aman: unknown = "teks";
+if (typeof aman === "string") {
+  aman.toUpperCase(); // baru boleh dipakai setelah dicek ✔
+}
+```
+
+`any` mematikan pemeriksaan tipe. `unknown` tetap menerima nilai apa pun, tetapi **wajib dicek** dulu.
+
+## void dan never
+
+```typescript
+function sapa(): void {
+  console.log("Halo");   // tidak ada nilai kembalian
+}
+
+function gagal(): never {
+  throw new Error("selalu melempar error");
+}
+```
+
+## Type Assertion
+
+```typescript
+const input = document.getElementById("nama") as HTMLInputElement;
+const panjang = (data as string).length;
+```
+
+Assertion hanya **meyakinkan kompilator** — ia tidak mengubah nilai saat runtime.
+
+## Di Dunia Nyata
+
+- **Konstanta tarif pajak** `const PPN = 0.11` — salah ketik jadi `PPN = 1.1` langsung merah sebelum publish.
+- **Respons API** yang isinya bisa string/angka disimpan sebagai `unknown`, lalu diverifikasi per field.
+- **Form pendaftaran**: `let email = ""` di-reset tiap kali user membuka halaman.
+- **Nilai ID transaksi raksasa** memakai `bigint` supaya presisi tidak hilang.
+- **Fungsi logout** diberi return `void` — kalau ada yang mencoba memakai hasilnya, `tsc` langsung komplain.
+
+<div class="note">💡 Anotasi tipe bersifat statis: `let n: number = "5"` gagal kompilasi, tetapi `Number("5")` di runtime tetap menghasilkan angka. TypeScript tidak pernah mengubah cara JavaScript bekerja.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const PPN = 0.11;
+let total: number = 100000;
+total = total + total * PPN;
+console.log("Total setelah PPN:", total);
+
+function cekNilai(v: unknown): string {
+  if (typeof v === "number") return "Angka: " + v;
+  if (typeof v === "string") return "Teks: " + v.toUpperCase();
+  return "Tipe lain";
+}
+console.log(cekNilai(42));
+console.log(cekNilai("onboss"));
+console.log(cekNilai(true));`} />

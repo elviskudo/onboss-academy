@@ -1,0 +1,181 @@
+---
+title: "File & Error Handling"
+description: "14 method file, 4 blok try/catch/finally/throw, dan pesan error yang aman bagi user"
+order: 8
+quiz:
+  - q: "Fungsi membaca seluruh isi file jadi string adalah…"
+    options: ["file_put_contents()", "file_get_contents()", "read_to_string()", "load()"]
+    answer: 1
+    explain: "file_get_contents($path) mengembalikan isi sebagai string, atau false bila gagal."
+  - q: "Blok penanganan error ala PHP adalah…"
+    options: ["begin / rescue (Ruby)", "open / close", "try / catch / finally", "trap / handle"]
+    answer: 2
+    explain: "Kode rawan gagal di try, penanganan di catch, pembersihan yang selalu jalan di finally."
+  - q: "PHP 7+ memisahkan error jadi dua cabang utama di bawah Throwable, yaitu…"
+    options: ["Exception dan Error", "Warning dan Notice", "Fatal dan Parse", "Try dan Catch"]
+    answer: 0
+    explain: "Exception untuk kegagalan yang bisa ditangani aplikasi; Error untuk masalah coding (TypeError, DivisionByZeroError)."
+  - q: "Kenapa detail error tidak boleh ditampilkan ke user di produksi?"
+    options: ["Membuat layar penuh", "Membocorkan struktur server, path, dan variabel ke penyerang", "Melambatkan koneksi", "Tidak ada alasan"]
+    answer: 1
+    explain: "Tampilkan pesan ramah ke user, catat detail lengkap di log server."
+  - q: "Flag FILE_APPEND pada file_put_contents berfungsi…"
+    options: ["Menimpa isi lama", "Membuka file baca-saja", "Menambah di akhir file", "Membuat file baru selalu"]
+    answer: 2
+    explain: "Tanpa flag ini file ditimpa; dengan FILE_APPEND data lama tetap aman."
+example:
+  code: |
+    <?php
+    function bagi($a, $b): float {
+        if ($b == 0) {
+            throw new InvalidArgumentException("Pembagi tidak boleh nol");
+        }
+        return $a / $b;
+    }
+
+    try {
+        echo bagi(10, 2);
+        echo bagi(10, 0);
+    } catch (InvalidArgumentException $e) {
+        echo "Error: " . $e->getMessage();
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Aplikasi nyata membaca konfigurasi, menyimpan log, dan menghadapi kegagalan. PHP menyediakan API file yang sederhana dan mekanisme exception ala Java.
+
+## 14 Method File
+
+**Membaca (7)**
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `file_get_contents` | Seluruh isi → string | 5 | `scandir` | Daftar isi folder |
+| 2 | `file` | Seluruh isi → array per baris | 6 | `glob` | Cari pola nama file |
+| 3 | `readfile` | Cetak isi langsung ke output | 7 | `file_exists` | Cek keberadaan |
+| 4 | `fgets` | Baca satu baris dari handle | | | |
+
+**Menulis & mengelola (7)**
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 8 | `file_put_contents` | Tulis/timpa satu langkah | 12 | `rename` | Ganti nama / pindah |
+| 9 | `fwrite` | Tulis dari handle `fopen` | 13 | `copy` | Salin file |
+| 10 | `unlink` | Hapus file | 14 | `mkdir` | Buat folder |
+| 11 | `filesize` | Ukuran byte | | | |
+
+```php
+<?php
+file_put_contents("catatan.txt", "Baris pertama\nBaris kedua\n");
+
+$isi = file_get_contents("catatan.txt");
+echo $isi;
+
+// menambah tanpa menimpa — perlu FILE_APPEND
+file_put_contents("catatan.txt", "Baris ketiga\n", FILE_APPEND);
+
+foreach (file("catatan.txt") as $i => $b) {
+    echo ($i + 1) . ": " . trim($b) . "\n";
+}
+```
+
+Selalu periksa hasil `file_get_contents()` — ia mengembalikan `false` saat file tidak ada, bukan exception.
+
+## 4 Blok Penanganan Error
+
+```php
+<?php
+function bagi($a, $b): float {
+    if ($b == 0) {
+        throw new InvalidArgumentException("Pembagi tidak boleh nol");
+    }
+    return $a / $b;
+}
+
+try {
+    echo bagi(10, 2);
+    echo bagi(10, 0);
+} catch (InvalidArgumentException $e) {
+    echo "Terjebak: " . $e->getMessage();
+} finally {
+    echo "Selesai diproses";
+}
+```
+
+| Blok | Fungsi |
+| --- | --- |
+| `throw` | Melempar error — eksekusi berhenti dan mencari `catch` terdekat |
+| `try` | Kode yang rawan gagal |
+| `catch` | Menangkap; boleh ditumpuk untuk banyak tipe (yang generik di akhir) |
+| `finally` | Selalu berjalan — tempat menutup file/koneksi |
+
+PHP 7 memecah `Throwable` jadi **2 cabang**: `Exception` (kegagalan bisnis: data tidak valid, file tidak ada) dan `Error` (kesalahan coding: `TypeError`, `DivisionByZeroError`). Menangkap `Throwable` mencakup keduanya.
+
+## Pesan Error yang Aman
+
+```php
+<?php
+try {
+    $data = file_get_contents("config.json");
+    if ($data === false) {
+        throw new RuntimeException("Gagal memuat config");
+    }
+} catch (RuntimeException $e) {
+    error_log($e->getMessage());               // 1. detail → log server
+    echo "Terjadi kesalahan. Silakan coba lagi."; // 2. pesan ramah → user
+}
+```
+
+3 aturan: pesan umum ke user, detail ke `error_log`, dan `display_errors = Off` di produksi.
+
+## Cek Berkas dan Folder
+
+```php
+<?php
+var_dump(file_exists("data.txt"));   // bool
+var_dump(is_file("data.txt"));
+var_dump(is_dir("folder"));
+var_dump(is_writable("folder"));     // penting sebelum menulis
+```
+
+## Di Dunia Nyata
+
+- **Menyimpan unggahan**: cek `is_uploaded_file()` + `move_uploaded_file()` ke luar folder publik.
+- **Log aplikasi harian**: `file_put_contents("log/app-" . date("Y-m-d") . ".log", $pesan, FILE_APPEND | LOCK_EX)`.
+- **Membaca konfigurasi**: `file_get_contents` + `json_decode` saat boot; gagal → `RuntimeException` yang menghentikan aplikasi jelas, bukan error aneh di tengah.
+- **Rotasi backup**: `copy("db.sqlite", "backup/db-" . date("Ymd") . ".sqlite")` lalu `unlink` file lama.
+- **Ekspor laporan CSV**: `fopen` mode `w`, `fputcsv` per baris, `fclose` di `finally`.
+
+<div class="note">💡 Jangan pernah menampilkan `getMessage()` mentah dari error sistem ke user di produksi. Path file dan stack trace adalah peta bagi penyerang — catat detail lengkap ke log (`error_log`) dan tampilkan hanya pesan ramah. Error yang detailnya disembunyikan dari user tetap harus terlihat jelas olehmu di log.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$path = "catatan.txt";
+
+file_put_contents($path, "Baris pertama\\nBaris kedua\\n");
+file_put_contents($path, "Baris ketiga\\n", FILE_APPEND);
+
+$isi = file_get_contents($path);
+echo "--- Isi file ---\\n";
+echo $isi;
+
+$baris = file($path);
+echo "Jumlah baris: " . count($baris) . "\\n";
+
+function bagi($a, $b): float {
+    if ($b == 0) {
+        throw new InvalidArgumentException("Pembagi tidak boleh nol");
+    }
+    return $a / $b;
+}
+
+try {
+    echo "10 / 2 = " . bagi(10, 2) . "\\n";
+    echo "10 / 0 = " . bagi(10, 0) . "\\n";
+} catch (InvalidArgumentException $e) {
+    echo "Terjebak: " . $e->getMessage() . "\\n";
+} finally {
+    echo "Bersih-bersih selesai\\n";
+}
+
+echo "File ada? " . (file_exists($path) ? "ya" : "tidak") . "\\n";`} />

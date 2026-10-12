@@ -1,0 +1,177 @@
+---
+title: "Perulangan"
+description: "for adalah satu-satunya perulangan di Go — tiga bentuk, satu konsep"
+order: 4
+quiz:
+  - q: "Perulangan bawaan di Go hanya…"
+    options: ["while", "for", "foreach", "do-while"]
+    answer: 1
+    explain: "Go tidak punya while; for dipakai untuk semua gaya perulangan."
+  - q: "for tanpa kondisi akan…"
+    options: ["error kompilasi", "jalan sekali", "berjalan terus sampai break", "langsung berhenti"]
+    answer: 2
+    explain: "for { } adalah loop tak berujung — keluarlah dengan break."
+  - q: "for dengan dua titik koma dipakai untuk…"
+    options: ["inisialisasi, kondisi, dan penambahan", "deklarasi package", "impor library", "definisi struct"]
+    answer: 0
+    explain: "for i := 0; i < 3; i++ { } mirip for di C/C++."
+  - q: "Untuk mengulang isi slice paling tepat memakai…"
+    options: ["range", "each", "iterate", "walk"]
+    answer: 0
+    explain: "for index, nilai := range data { } memberi index sekaligus nilai tiap elemen."
+  - q: "continue pada perulangan Go…"
+    options: ["menghentikan program", "keluar dari fungsi", "lanjut ke iterasi berikutnya", "mengulang dari awal"]
+    answer: 2
+    explain: "Sisa blok dilewati, lalu iterasi berikutnya langsung berjalan."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func main() {
+        for i := 1; i <= 3; i++ {
+            fmt.Println("Perulangan ke-", i)
+        }
+
+        buah := []string{"Apel", "Mangga", "Jeruk"}
+        for idx, b := range buah {
+            fmt.Println(idx, b)
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Satu kata kunci, tiga bentuk. Setelah memahami `for`, kamu sudah bisa semua perulangan di Go.
+
+## 3 Bentuk for
+
+| Bentuk | Sintaks | Mirip dengan | Kapan dipakai |
+| --- | --- | --- | --- |
+| Klasik | `for i := 0; i < n; i++ {}` | for C/Java | Jumlah iterasi diketahui |
+| Kondisi saja | `for kondisi {}` | while | Berhenti saat syarat terpenuhi |
+| Tanpa kondisi | `for {}` + `break` | loop forever | Syarat baru diketahui di tengah jalan |
+
+```go
+for i := 1; i <= 3; i++ {
+    fmt.Println("Perulangan ke-", i)
+}
+
+hitung := 3
+for hitung > 0 {
+    fmt.Println("Sisa", hitung)
+    hitung--
+}
+```
+
+## for Tanpa Kondisi
+
+```go
+total := 0
+i := 1
+for {
+    if i > 100 {
+        break
+    }
+    total += i
+    i++
+}
+fmt.Println("Jumlah 1..100 =", total)
+```
+
+Loop tak berujung yang keluar lewat `break`. Wajib ada syarat keluar agar program tidak menggantung.
+
+## range untuk Koleksi
+
+```go
+buah := []string{"Apel", "Mangga", "Jeruk"}
+
+for i, b := range buah {
+    fmt.Println(i, b)
+}
+
+for _, b := range buah {
+    fmt.Println("Buah:", b)
+}
+```
+
+Tanda `_` menampung index yang tidak dipakai — tanda ini wajib karena Go melarang variabel tak terpakai. `range` juga bekerja pada map, string, dan channel.
+
+## break dan continue
+
+```go
+for i := 1; i <= 10; i++ {
+    if i == 4 {
+        continue // lewati 4
+    }
+    if i > 6 {
+        break // berhenti total
+    }
+    fmt.Println(i) // 1 2 3 5 6
+}
+```
+
+`break` keluar dari perulangan terdekat; `continue` langsung ke iterasi berikutnya. Label (`outer:`) bisa ditambahkan bila perlu memutus perulangan bersarang dari dalam.
+
+## 4 Pola Klasik
+
+- **Akumulasi**: `total += nilai` di dalam loop
+- **Cari pertama**: `if ketemu { break }` — berhenti begitu ketemu
+- **Filter → baru**: kumpulkan yang lolos syarat ke slice baru lewat `append`
+- **Hitung frekuensi**: `map[string]int` — tiap kemunculan `hitung[k]++`
+
+```go
+angka := []int{3, 8, 3, 1, 8, 3}
+frek := map[int]int{}
+for _, n := range angka {
+    frek[n]++
+}
+fmt.Println(frek) // map[1:1 3:3 8:2]
+```
+
+## Di Dunia Nyata
+
+- **Retry API**: `for i := 0; i < 3; i++ { ... }` dengan `time.Sleep` antar percobaan
+- **Batch proses**: `for _, user := range users` mengirim email ke 1000 penerima
+- **Menghitung faktorial**: akumulasi `hasil *= i` dari 1 sampai n
+- **Scan sampai EOF**: `for { b, err := reader.Read(...); ... }` membaca stream tanpa tahu panjangnya
+- **Agregasi penjualan**: frekuensi produk terjual dari daftar transaksi memakai map
+
+<div class="note">💡 for i := range n (Go 1.22+) membuat i berjalan dari 0 sampai n-1. Versi lama menulis for i := 0; i < n; i++ — keduanya benar tergantung versi Go yang dipakai.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+func main() {
+    for i := 1; i <= 5; i++ {
+        fmt.Println("Perulangan ke-", i)
+    }
+
+    total := 0
+    i := 1
+    for i <= 100 {
+        total += i
+        i++
+    }
+    fmt.Println("Jumlah 1..100 =", total)
+
+    buah := []string{"Apel", "Mangga", "Jeruk"}
+    for idx, b := range buah {
+        fmt.Println(idx, b)
+    }
+
+    hitung := 3
+    for hitung > 0 {
+        fmt.Println("Sisa", hitung)
+        hitung--
+    }
+
+    angka := []int{3, 8, 3, 1, 8, 3}
+    frek := map[int]int{}
+    for _, n := range angka {
+        frek[n]++
+    }
+    fmt.Println("Frekuensi:", frek)
+}`} />

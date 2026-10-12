@@ -1,0 +1,161 @@
+---
+title: "Pengenalan C++"
+description: "Bahasa multiparadigma berperforma tinggi — anatomi program, kompilasi, dan OOP"
+order: 1
+quiz:
+  - q: "Siapa pencipta bahasa C++?"
+    options: ["Bjarne Stroustrup", "Dennis Ritchie", "James Gosling", "Guido van Rossum"]
+    answer: 0
+    explain: "Bjarne Stroustrup membuat C++ (awalnya bernama C with Classes) pada awal 1980-an di Bell Labs."
+  - q: "C++ dikenal sebagai…"
+    options: ["Bahasa styling halaman web", "Bahasa berorientasi objek berperforma tinggi yang dikompilasi ke kode mesin", "Bahasa kueri database", "Interpreter murni tanpa kompilasi"]
+    answer: 1
+    explain: "C++ mengompilasi langsung ke kode mesin — karena itu dipakai untuk game, engine, dan sistem."
+  - q: "Header yang menyediakan cout dan cin adalah…"
+    options: ["<stdio.h>", "<vector>", "<string>", "<iostream>"]
+    answer: 3
+    explain: "<iostream> (input/output stream) berisi cout, cin, dan endl."
+  - q: "Paradigma yang didukung C++ adalah…"
+    options: ["Hanya prosedural", "Hanya OOP", "Prosedural, OOP, dan generik lewat template", "Hanya fungsional"]
+    answer: 2
+    explain: "C++ multiparadigma: gaya C, class/object, template, hingga gaya fungsional modern."
+  - q: "Urutan tahap kompilasi yang benar adalah…"
+    options: [
+      "link → compile → preprocess",
+      "preprocess → compile → assemble → link",
+      "compile → run → link",
+      "interpret → compile → link",
+    ]
+    answer: 1
+    explain: "Header diproses dulu, kode dijadikan assembly, assembly jadi object, lalu semua object di-link jadi satu executable."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    using namespace std;
+
+    int main() {
+        string nama = "Dunia";
+        cout << "Halo, " << nama << "!" << endl;
+        cout << "2 + 2 = " << 2 + 2 << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ adalah **C dengan object-oriented programming, STL, dan modern C++** — dipakai di game, browser, database, dan sistem tempat performa menentukan. Bab ini membedah anatomi program, cara kompilasinya, dan apa yang C++ tambahkan ke C.
+
+## Hello World
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Halo, Dunia!" << endl;
+    return 0;
+}
+```
+
+- `#include <iostream>` — memasukkan stream input/output
+- `using namespace std;` — memakai namespace `std` tanpa awalan (praktis saat belajar, hindari di file besar)
+- `cout <<` — mencetak ke layar; `endl` — ganti baris + flush buffer
+
+## Anatomi Program
+
+| Bagian | Fungsi | Contoh |
+|---|---|---|
+| `#include <header>` | menyertakan library | `#include <string>` |
+| `int main()` | titik masuk program — **wajib tepat satu** | `int main() { ... }` |
+| `return 0;` | keluar dengan kode 0 = sukses | `return 0;` |
+| `std::cout` | tulis ke layar | `cout << nilai;` |
+| `std::cin` | baca dari keyboard | `cin >> umur;` |
+| `//` dan `/* */` | komentar 1 baris / multi-baris | `// catatan` |
+| `;` | penutup pernyataan — wajib | `int a = 1;` |
+
+Satu-satunya aturan mutlak: **setiap file yang bisa dijalankan harus punya `main`**. Tanpa `main`, kompilator hanya bisa menghasilkan file object, bukan program.
+
+## Input & Output
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string nama;
+    int umur;
+    cout << "Nama: ";
+    getline(cin, nama);      // baca satu baris teks (spasi aman)
+    cout << "Umur: ";
+    cin >> umur;             // baca angka, berhenti di spasi
+    cout << nama << " berumur " << umur << endl;
+    return 0;
+}
+```
+
+`<<` mengalirkan data ke `cout`, `>>` menarik data dari `cin` — operator yang sama bisa dipakai berulang sehingga lebih fleksibel daripada `printf`.
+
+## Kompilasi & Eksekusi
+
+Kode C++ harus **dikompilasi dulu** — tidak ada interpreter yang membaca file `.cpp` langsung. Kompilasi melewati 4 tahap:
+
+1. **Preprocess** — `#include`, `#define`, dan `#ifdef` dikerjakan teks-teks.
+2. **Compile** — kode diterjemahkan ke assembly untuk arsitektur target.
+3. **Assemble** — assembly diubah jadi file object (`.o`).
+4. **Link** — semua file object digabung dengan library menjadi satu executable.
+
+```bash
+g++ halaman.cpp -o halaman     # kompilasi + link sekaligus
+./halaman                      # jalankan
+
+g++ -std=c++17 -Wall halaman.cpp -o halaman   # flag modern: standar & peringatan
+```
+
+Satu file besar bisa dipecah jadi banyak `.cpp` lalu digabung: `g++ satu.cpp dua.cpp -o program` — tiap file dikompilasi terpisah, baru di-link.
+
+## Apa yang Ditambahkan C++ ke C?
+
+C++ punya **3 paradigma utama** yang bisa dicampur dalam satu program:
+
+| Penambahan | Contoh | Manfaat |
+|---|---|---|
+| OOP | `class`, `virtual`, inheritance | data + perilaku jadi satu unit, mudah diwariskan |
+| STL | `vector`, `map`, `sort` | struktur data & algoritma siap pakai, sudah diuji jutaan orang |
+| Referensi & RAII | `int &x`, smart pointer | memori dilepas otomatis saat keluar scope |
+| Template | `vector<int>`, `max<T>()` | kode generik, satu fungsi untuk banyak tipe |
+| Exception | `try` / `catch` | penanganan error terpisah dari logika utama |
+
+ Hampir semua kode C valid di C++ (superset praktis), tetapi C++ menambahkan jalan yang lebih aman: `std::string` alih-alih `char*`, `std::vector` alih-alih array mentah, dan referensi alih-alih pointer telanjang.
+
+## Di Dunia Nyata
+
+- Mesin game (Unreal Engine, Godot) menghitung tabrakan dan render 60 kali per detik — hanya C++ yang cukup cepat untuk itu.
+- Klien browser seperti Chrome dan Safari menulis inti mesinnya dalam C++ agar halaman berat tetap responsif.
+- Database populer (MySQL, PostgreSQL, MongoDB) memproses jutaan query per detik dengan C++.
+- Sistem embedded: firmware AC, router, dan ECU mobil memakai C++ karena ukuran kodenya kecil dan tidak butuh runtime berat.
+- Aplikasi desktop berat (Adobe Photoshop, Microsoft Office) memakai C++ untuk manipulasi gambar dan dokumen besar.
+
+<div class="note">💡 C++ mengompilasi ke kode mesin, bukan ke bytecode. Karena itu program C++ tidak butuh interpreter apa pun di komputer tujuan — cukup executable-nya. Tukar dengan kecepatan: satu kesalahan pointer bisa langsung membuat program crash tanpa pesan ramah.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    string nama = "OnBoss Academy";
+    cout << "Halo dari " << nama << "!\\n";
+
+    int a = 7, b = 5;
+    cout << a << " + " << b << " = " << a + b << endl;
+
+    for (int i = 1; i <= 3; i++) {
+        cout << "Perulangan ke-" << i << endl;
+    }
+
+    vector<int> data = {10, 20, 30};
+    cout << "Jumlah elemen: " << data.size() << endl;
+    return 0;
+}`} />

@@ -1,0 +1,115 @@
+---
+title: "Pengenalan MongoDB"
+description: "Database NoSQL dokumen — model data fleksibel untuk aplikasi modern"
+order: 1
+quiz:
+  - q: "MongoDB menyimpan data dalam bentuk…"
+    options: ["Baris pada tabel", "Dokumen (mirip JSON) di koleksi", "Graf berhubungan", "Kunci-nilai mentah"]
+    answer: 1
+    explain: "Unit terkecil MongoDB adalah dokumen BSON, dikelompokkan ke dalam koleksi."
+  - q: "Format dokumen MongoDB disebut…"
+    options: ["XML", "BSON (Binary JSON)", "CSV", "YAML"]
+    answer: 1
+    explain: "BSON adalah representasi biner JSON — mendukung tipe data kaya seperti tanggal dan ObjectId."
+  - q: "Koleksi pada MongoDB setara dengan…"
+    options: ["Database", "Tabel pada RDBMS", "Baris", "Index"]
+    answer: 1
+    explain: "Koleksi = kumpulan dokumen; setara konseptual tabel, tanpa skema wajib yang kaku."
+  - q: "Klien baris perintah resmi MongoDB disebut…"
+    options: ["mongosh", "mongo-cli", "myshell", "psql"]
+    answer: 0
+    explain: "mongosh (MongoDB Shell) adalah klien interaktif resmi untuk menjalankan perintah database."
+  - q: "Alasan utama memilih MongoDB adalah…"
+    options: ["Wajib ACID lintas dokumen", "Skema fleksibel & skala horizontal", "Hanya jalan di Windows", "Tidak mendukung relasi"]
+    answer: 1
+    explain: "Dokumen yang lentur plus sharding (penyebaran data banyak server) adalah kekuatan utamanya."
+example:
+  code: |
+    use toko
+    db.produk.insertOne({ nama: "Keyboard", harga: 350000, stok: 12 })
+    db.produk.find()
+---
+
+MongoDB adalah database **NoSQL berbasis dokumen** yang paling banyak dipakai di dunia. Ia populer di startup maupun enterprise karena skemanya yang fleksibel dan skalanya yang mudah dinaikkan.
+
+## Apa itu Database Dokumen?
+
+Alih-alih tabel dengan kolom tetap, MongoDB menyimpan **dokumen** — objek mirip JSON yang boleh berbeda struktur antar dokumen dalam koleksi yang sama. Field baru bisa ditambahkan tanpa ALTER TABLE.
+
+```javascript
+{
+  _id: ObjectId("6512ab34cd77aa0012345678"),
+  nama: "Sari",
+  email: "sari@contoh.com",
+  alamat: { kota: "Jakarta", kodepos: "10110" }
+}
+```
+
+Field `alamat` berupa subdokumen — struktur bersarang natural di dokumen, bukan hasil JOIN.
+
+## Dokumen, Koleksi, dan Database
+
+```javascript
+// database: toko
+//   koleksi: produk
+//     dokumen: { nama: "Keyboard", harga: 350000, stok: 12 }
+use toko
+show collections
+db.produk.find().pretty()
+```
+
+Satu database memuat banyak koleksi; satu koleksi memuat banyak dokumen. `use toko` berpindah database, `db koleksi.find()` menampilkan isinya.
+
+## BSON dan ObjectId
+
+```javascript
+ObjectId("6512ab34cd77aa0012345678").getTimestamp()
+typeof ObjectId()
+```
+
+Setiap dokumen otomatis diberi `_id` berupa ObjectId — unik, berurutan waktu, dan dihasilkan otomatis tanpa konfigurasi apa pun.
+
+## Empat Komponen Inti
+
+| Komponen | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Database | ruang nama kumpulan koleksi | `toko` | memisahkan aplikasi/lingkungan |
+| Collection | kelompok dokumen sejenis | `produk` | padanan longgar tabel SQL |
+| Document | satu entitas BSON | `{ nama: "Mouse" }` | unit baca/tulis atomik |
+| Field | atribut bernama di dokumen | `harga: 150000` | menyimpan nilai yang dicari |
+
+Alurnya: klien memilih database, mengakses collection, lalu membaca atau mengubah document berdasarkan field. MongoDB tidak mewajibkan semua dokumen satu collection punya field sama, tetapi aplikasi produksi biasanya memakai schema validation agar fleksibilitas tidak berubah menjadi data liar.
+
+## Ekosistem dan Driver
+
+Ada **3 jalur akses utama**:
+
+| Alat | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| mongosh | shell interaktif resmi | belajar, eksplorasi, administrasi |
+| Driver resmi | API Node.js, Python, Java, Go, dll. | akses dari aplikasi |
+| MongoDB Atlas | layanan managed MongoDB | produksi tanpa mengelola server |
+
+MongoDB juga dapat dijalankan sendiri sebagai proses `mongod`. Dalam produksi, **replica set** menyediakan salinan data dan failover; **sharding** membagi data ke beberapa server ketika volume dan throughput satu mesin tidak cukup.
+
+## MongoDB vs Database Relasional
+
+| Kebutuhan | MongoDB | SQL relasional |
+| --- | --- | --- |
+| Struktur atribut sering berubah | sangat natural | perlu migrasi kolom |
+| Data bersarang dibaca sekaligus | embed satu dokumen | beberapa tabel + JOIN |
+| Foreign key ketat lintas entitas | dijaga aplikasi | constraint bawaan |
+| JOIN kompleks dan laporan ad-hoc | aggregation `$lookup` | JOIN SQL lebih natural |
+| Skala horizontal | sharding bawaan | bergantung produk/arsitektur |
+
+MongoDB tetap mendukung transaksi ACID multi-dokumen. Namun desain yang baik berusaha menjaga satu operasi bisnis dalam satu dokumen karena perubahan satu dokumen selalu atomik dan lebih murah.
+
+## Di Dunia Nyata
+
+- **Katalog marketplace** — laptop punya RAM dan GPU, pakaian punya ukuran dan bahan; dokumen produk boleh mempunyai atribut berbeda tanpa puluhan kolom kosong.
+- **Keranjang belanja** — item di-embed dalam satu dokumen sehingga satu baca mengembalikan seluruh keranjang dan satu update atomik mengubah kuantitas.
+- **Content management** — blok artikel, gambar, dan metadata bersarang mengikuti struktur halaman yang terus berkembang.
+- **Telemetri perangkat** — sharding membagi jutaan event berdasarkan perangkat atau waktu ketika satu server tidak lagi cukup.
+- **Profil pengguna** — preferensi, alamat, dan pengaturan yang dibaca bersama tersimpan sebagai subdokumen tanpa JOIN.
+
+<div class="note">💡 MongoDB bukan pengganti relasional secara mutlak. Data yang saling berelasi kuat dengan aturan integritas ketat lebih natural di SQL; data dokumen yang beragam dan berkembang cepat lebih natural di MongoDB.</div>

@@ -1,0 +1,135 @@
+---
+title: "Menjalankan Sistem dan SSH"
+description: "Memasang Raspberry Pi OS, mengakses terminal jarak jauh, dan mengelola sistem dengan aman"
+order: 2
+quiz:
+  - q: "Apa manfaat utama SSH pada Raspberry Pi headless?"
+    options: ["Memberi akses shell terenkripsi melalui jaringan", "Mengubah GPIO menjadi analog", "Mem-flash microSD dari Pi", "Menaikkan tegangan adaptor"]
+    answer: 0
+    explain: "SSH memungkinkan administrasi terminal tanpa monitor dan keyboard pada Pi."
+  - q: "Apa pilihan login SSH yang lebih aman daripada kata sandi?"
+    options: ["Hostname kosong", "Kunci publik dan privat", "Port HDMI", "File CSV"]
+    answer: 1
+    explain: "Autentikasi kunci menghindari pengiriman dan penebakan kata sandi berulang."
+  - q: "Perintah mana yang memperbarui indeks paket sebelum upgrade?"
+    options: ["sudo reboot", "hostname -I", "sudo apt update", "scp file pi:"]
+    answer: 2
+    explain: "apt update mengambil daftar paket terbaru sebelum paket terpasang ditingkatkan."
+  - q: "Jika raspberrypi.local tidak ditemukan, tindakan paling tepat adalah…"
+    options: ["Memberi 5V ke GPIO", "Menghapus OS", "Mengganti monitor", "Mencari alamat IP Pi di router"]
+    answer: 3
+    explain: "Alamat IP dapat dipakai langsung ketika resolusi nama mDNS tidak tersedia."
+  - q: "Mengapa Pi harus dimatikan dengan shutdown?"
+    options: ["Agar Wi-Fi lebih cepat", "Agar filesystem selesai menulis data", "Agar RAM bertambah", "Agar SSH memakai port baru"]
+    answer: 1
+    explain: "Shutdown menghentikan proses dan menyinkronkan data sehingga risiko korupsi microSD berkurang."
+example:
+  code: |
+    # Jalankan dari komputer pada jaringan yang sama
+    # ssh pengguna@raspberrypi.local
+    print("SSH menyediakan terminal jarak jauh terenkripsi")
+---
+
+Raspberry Pi OS adalah sistem Linux resmi yang mengubah papan menjadi komputer siap pakai. SSH atau **Secure Shell** menyediakan terminal terenkripsi dari komputer lain, sehingga Pi dapat dijalankan tanpa monitor, keyboard, dan mouse.
+
+## Tahap Menyiapkan Sistem
+
+Ada **6 tahap utama** dari microSD kosong sampai shell jarak jauh siap digunakan.
+
+| Tahap | Fungsi | Alat/Contoh | Kapan dilakukan |
+|---|---|---|---|
+| Pilih OS | Menentukan paket dan antarmuka | Raspberry Pi OS Lite 64-bit | Sebelum flashing |
+| Tulis image | Membuat media boot | Raspberry Pi Imager | Sekali per instalasi |
+| Atur identitas | Membuat hostname dan pengguna | `ruang-pi` | Saat kustomisasi image |
+| Atur jaringan | Menyimpan Wi-Fi dan negara | SSID lokal | Sebelum boot headless |
+| Aktifkan SSH | Membuka layanan shell | Opsi Imager | Sebelum koneksi pertama |
+| Boot dan uji | Memastikan OS aktif | `ssh user@ruang-pi.local` | Setelah kartu dipasang |
+
+OS Lite cocok untuk server dan IoT karena tidak memasang desktop. Versi Desktop berguna jika Pi juga memakai layar. Pilih image yang didukung model dan gunakan microSD yang sehat; proses flashing akan menghapus isi kartu tujuan.
+
+## Koneksi SSH Pertama
+
+Komputer klien dan Pi harus berada pada jaringan yang dapat saling menjangkau. Gunakan nama pengguna yang dibuat di Imager, bukan mengasumsikan pengguna lama `pi` tersedia.
+
+```bash
+ssh pengguna@ruang-pi.local
+```
+
+Saat koneksi pertama, SSH menampilkan fingerprint host. Cocokkan bila lingkungan sensitif, lalu terima untuk menyimpannya di `~/.ssh/known_hosts`. Jika mDNS `.local` tidak bekerja, cari IP pada daftar perangkat router lalu gunakan:
+
+```bash
+ssh pengguna@192.168.1.50
+```
+
+Ada **3 komponen identitas SSH**: akun pengguna, alamat host, dan bukti autentikasi. Host menentukan mesin tujuan; pengguna menentukan izin; kata sandi atau kunci membuktikan identitas.
+
+## Autentikasi Kunci
+
+Kunci SSH terdiri dari **2 bagian**: private key yang tetap di komputer klien dan public key yang disalin ke Pi. Jangan membagikan private key.
+
+```bash
+ssh-keygen -t ed25519
+ssh-copy-id pengguna@ruang-pi.local
+ssh pengguna@ruang-pi.local
+```
+
+Setelah login kunci berhasil, kata sandi dapat dinonaktifkan melalui konfigurasi SSH bila diperlukan. Uji sesi baru sebelum menutup sesi lama agar salah konfigurasi tidak mengunci akses. Jangan membuka port SSH langsung ke internet; gunakan VPN atau gateway yang dikelola bila akses luar rumah diperlukan.
+
+## Perintah Pengelolaan Sistem
+
+Ada **7 perintah inti** untuk pemeriksaan dan pemeliharaan harian.
+
+| Perintah | Fungsi | Contoh hasil | Kapan dipakai |
+|---|---|---|---|
+| `hostname -I` | Menampilkan alamat IP | `192.168.1.50` | Mencari alamat Pi |
+| `uptime` | Menampilkan lama hidup dan load | `load average` | Memeriksa beban |
+| `df -h` | Menampilkan ruang disk | Persentase microSD | Mencegah disk penuh |
+| `free -h` | Menampilkan penggunaan RAM | Memori tersedia | Mendiagnosis aplikasi |
+| `systemctl` | Mengelola service | Status `ssh` | Menjaga layanan |
+| `journalctl` | Membaca log systemd | Pesan error | Troubleshooting |
+| `shutdown` | Mematikan dengan aman | Sistem berhenti | Sebelum mencabut daya |
+
+Contoh pemeliharaan:
+
+```bash
+sudo apt update
+sudo apt full-upgrade
+systemctl status ssh
+journalctl -u ssh --since today
+sudo shutdown now
+```
+
+`apt update` hanya memperbarui katalog; `full-upgrade` memasang pembaruan dan menangani perubahan dependency. Baca perubahan pada sistem penting sebelum menyetujui upgrade. Perintah `sudo` memberi hak administratif sementara, jadi jangan menjalankan skrip asing dengan `sudo`.
+
+## Transfer File dan Layanan
+
+Gunakan `scp` untuk transfer sederhana melalui SSH:
+
+```bash
+scp server.py pengguna@ruang-pi.local:~/server.py
+scp pengguna@ruang-pi.local:~/suhu.csv ./suhu.csv
+```
+
+Untuk proses yang harus kembali setelah reboot, gunakan systemd, bukan terminal SSH yang dibiarkan terbuka. Tiga tindakan service paling umum adalah `start`, `stop`, dan `restart`; `enable` mengatur startup saat boot.
+
+```bash
+sudo systemctl restart nama-layanan
+sudo systemctl enable nama-layanan
+systemctl status nama-layanan
+```
+
+## Troubleshooting Terarah
+
+Pisahkan gangguan menjadi **4 lapisan**: daya, boot, jaringan, dan SSH. Jika LED daya tidak stabil, periksa adaptor. Jika Pi tidak boot, periksa image dan microSD. Jika tidak mendapat IP, periksa SSID, kata sandi, negara Wi-Fi, dan router. Jika IP merespons tetapi SSH ditolak, periksa status service, pengguna, firewall, dan metode autentikasi.
+
+Kesalahan `REMOTE HOST IDENTIFICATION HAS CHANGED` dapat berarti OS baru dipasang atau ada risiko penyamaran host. Pastikan penyebabnya sebelum menghapus entri lama. Jangan menonaktifkan pemeriksaan host sekadar agar pesan hilang.
+
+## Di Dunia Nyata
+
+- **Sensor loteng headless:** teknisi memperbarui program dari laptop tanpa membawa monitor.
+- **Server kelas:** pengajar menyalin latihan dengan `scp` dan melihat log melalui `journalctl`.
+- **Kiosk toko:** systemd menjalankan tampilan otomatis setelah listrik kembali.
+- **Gateway kebun:** operator memeriksa disk dan suhu sistem sebelum log berhenti karena storage penuh.
+- **Pemeliharaan jarak jauh:** VPN memberi jalur privat untuk SSH tanpa mengekspos port ke internet.
+
+<div class="note">💡 Sebelum menonaktifkan login kata sandi, buka sesi kedua dan buktikan login dengan kunci berhasil; langkah kecil ini mencegah Pi terkunci dari jarak jauh.</div>

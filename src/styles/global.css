@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #FBFAF8;
+  --color-surface: #FFFFFF;
+  --color-ink: #17181D;
+  --color-muted: #6B7280;
+  --color-line: #E8E5DF;
+  --color-primary: #4F46E5;
+  --color-primary-dark: #4338CA;
+  --color-primary-soft: #EEF0FF;
+  --color-success: #16A34A;
+  --color-success-soft: #ECFDF3;
+  --color-warn: #D97706;
+  --color-warn-soft: #FFFBEB;
+  --color-danger: #DC2626;
+  --color-danger-soft: #FEF2F2;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+}
+
+/* ——— Tipografi konten MDX ——— */
+.prose-tutorial {
+  @apply text-[16px] leading-7 text-ink/90;
+}
+.prose-tutorial h2 {
+  @apply mt-10 mb-3 text-2xl font-bold tracking-tight text-ink;
+}
+.prose-tutorial h3 {
+  @apply mt-8 mb-2 text-xl font-bold text-ink;
+}
+.prose-tutorial p {
+  @apply my-4;
+}
+.prose-tutorial ul,
+.prose-tutorial ol {
+  @apply my-4 ml-6 space-y-1.5;
+}
+.prose-tutorial ul {
+  @apply list-disc;
+}
+.prose-tutorial ol {
+  @apply list-decimal;
+}
+.prose-tutorial a {
+  @apply text-primary font-medium underline decoration-primary/30 underline-offset-2 hover:decoration-primary;
+}
+.prose-tutorial strong {
+  @apply font-bold text-ink;
+}
+.prose-tutorial code:not(pre code) {
+  @apply rounded-md bg-primary-soft px-1.5 py-0.5 font-mono text-[0.85em] text-primary-dark;
+}
+.prose-tutorial pre {
+  @apply my-5 overflow-x-auto rounded-xl border border-line bg-[#1E1E2E] p-4 text-[13.5px] leading-6 text-[#E2E8F0];
+}
+.prose-tutorial pre code {
+  @apply font-mono bg-transparent p-0 text-inherit;
+}
+.prose-tutorial blockquote {
+  @apply my-5 border-l-4 border-primary/40 bg-primary-soft/60 px-4 py-3 text-ink/80;
+}
+.prose-tutorial table {
+  @apply my-5 w-full border-collapse text-sm;
+}
+.prose-tutorial th,
+.prose-tutorial td {
+  @apply border border-line px-3 py-2 text-left;
+}
+.prose-tutorial th {
+  @apply bg-primary-soft font-semibold;
+}
+
+/* Catatan khusus tutorial */
+.prose-tutorial .note {
+  @apply my-5 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-[15px];
+}

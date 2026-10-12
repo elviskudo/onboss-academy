@@ -1,0 +1,156 @@
+---
+title: "Sensor Ultrasonik dan Jarak"
+description: "HC-SR04 — mengukur jarak dengan trigger, echo, dan kecepatan suara"
+order: 6
+quiz:
+  - q: "HC-SR04 mengukur jarak dengan…"
+    options: ["Sinyal GPS", "Pantulan gelombang suara (time of flight)", "Cahaya laser", "Tekanan udara"]
+    answer: 1
+    explain: "Sensor mengirim pulsa ultrasonik lalu mengukur waktu pantulnya kembali."
+  - q: "Pin TRIG pada HC-SR04 berfungsi untuk…"
+    options: ["Menerima pantulan", "Memicu pengiriman pulsa suara", "Menyalakan LED", "Mengatur baud"]
+    answer: 1
+    explain: "Berikan pulsa HIGH minimal 10 mikrodetik untuk memulai pengukuran."
+  - q: "Pin ECHO mengembalikan…"
+    options: ["Tegangan analog suhu", "Data serial", "Pulsa HIGH selama durasi perjalanan suara", "Nilai PWM"]
+    answer: 2
+    explain: "Durasi HIGH ECHO sebanding dengan jarak objek."
+  - q: "Rumus jarak dari waktu pulsa memakai kecepatan suara…"
+    options: ["±340 meter per detik", "300.000 km/s", "9,8 m/s^2", "340 km per jam"]
+    answer: 0
+    explain: "Jarak = (durasi x 340) / 2 — dibagi dua karena perjalanan pulsa pulang-pergi."
+  - q: "Bidang permukaan yang sulit dideteksi ultrasonik adalah…"
+    options: ["Dinding keras", "Kain lembut menyerap suara", "Kardus", "Papan kayu"]
+    answer: 1
+    explain: "Permukaan menyerap atau memantulkan suara ke arah lain — pembacaan jadi tidak stabil."
+example:
+  code: |
+    const int TRIG = 9;
+    const int ECHO = 10;
+
+    void setup() {
+      pinMode(TRIG, OUTPUT);
+      pinMode(ECHO, INPUT);
+      Serial.begin(9600);
+    }
+
+    void loop() {
+      digitalWrite(TRIG, LOW); delayMicroseconds(2);
+      digitalWrite(TRIG, HIGH); delayMicroseconds(10);
+      digitalWrite(TRIG, LOW);
+
+      unsigned long durasi = pulseIn(ECHO, HIGH, 25000);
+      float cm = durasi == 0 ? -1 : durasi * 0.0343 / 2;
+      Serial.println(cm);
+      delay(100);
+    }
+---
+
+Sensor HC-SR04 memberi "mata" berbasis suara pada Arduino. Ia mengukur **time of flight**: waktu gelombang ultrasonik 40 kHz pergi ke objek dan memantul kembali.
+
+## 4 Pin HC-SR04
+
+| Pin sensor | Sambungkan ke UNO | Fungsi |
+| --- | --- | --- |
+| VCC | 5 V | Daya sensor |
+| TRIG | Digital 9 (OUTPUT) | Menerima pulsa pemicu 10 µs |
+| ECHO | Digital 10 (INPUT) | HIGH selama suara pulang-pergi |
+| GND | GND | Referensi tegangan bersama |
+
+HC-SR04 mengeluarkan ECHO 5 V. Untuk board 3,3 V seperti ESP32, pasang pembagi tegangan pada ECHO; UNO bisa menerima langsung.
+
+## 4 Langkah Satu Pengukuran
+
+```text
+1. Pastikan TRIG LOW selama 2 µs (pulsa bersih)
+2. Kirim HIGH 10 µs -> sensor memancarkan 8 siklus suara 40 kHz
+3. ECHO HIGH selama pantulan belum kembali
+4. Ukur durasi HIGH -> konversi ke jarak, dibagi 2 (pergi + pulang)
+```
+
+Kecepatan suara pada 20 °C sekitar **343 m/s = 0,0343 cm/µs**. Rumusnya:
+
+```text
+jarak_cm = durasi_mikrodetik × 0,0343 / 2
+contoh: 1.166 µs × 0,0343 / 2 ≈ 20 cm
+```
+
+## Sketch Pengukur dengan Timeout
+
+```cpp
+const int TRIG = 9;
+const int ECHO = 10;
+
+void setup() {
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  Serial.begin(9600);
+}
+
+float ukurJarakCm() {
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+
+  unsigned long durasi = pulseIn(ECHO, HIGH, 25000);
+  if (durasi == 0) return -1;
+  return durasi * 0.0343 / 2;
+}
+
+void loop() {
+  float cm = ukurJarakCm();
+  if (cm < 0) {
+    Serial.println("Tidak ada pantulan");
+  } else {
+    Serial.print("Jarak: ");
+    Serial.print(cm, 1);
+    Serial.println(" cm");
+  }
+  delay(100);
+}
+```
+
+Timeout 25.000 µs setara perjalanan sekitar 429 cm. Tanpa timeout, `pulseIn()` bisa menahan loop lama ketika sensor tidak mendapat pantulan.
+
+## Tiga Zona Keputusan
+
+```cpp
+float cm = ukurJarakCm();
+
+if (cm < 0) {
+  digitalWrite(LED_BUILTIN, LOW);   // gagal baca, jangan alarm palsu
+} else if (cm < 20) {
+  digitalWrite(LED_BUILTIN, HIGH);  // bahaya/dekat
+} else {
+  digitalWrite(LED_BUILTIN, LOW);   // aman
+}
+```
+
+Cek `cm < 0` **sebelum** `cm < 20`; nilai gagal `-1` juga lebih kecil dari 20 dan akan memicu alarm palsu bila urutan dibalik.
+
+## Rentang dan Batas Fisik
+
+| Faktor | Nilai praktis | Dampak |
+| --- | --- | --- |
+| Rentang | sekitar 2–400 cm | Di luar ini tidak andal |
+| Sudut deteksi | sekitar 15° | Objek kecil mudah lolos |
+| Jeda antarukur | minimal 60 ms | Mencegah echo lama terbaca ulang |
+| Permukaan keras datar | Pantulan kuat | Hasil stabil |
+| Kain/busa atau permukaan miring | Pantulan lemah/menyimpang | Nilai hilang/lompat |
+| Suhu udara | Mengubah kecepatan suara | Galat beberapa persen |
+
+## Stabilisasi Pembacaan
+
+Ambil **3 atau 5 sampel**, buang nilai `-1`, lalu gunakan median. Median lebih tahan satu pencilan daripada rata-rata — jika bacaan `20, 21, 300`, median 21 sedangkan rata-rata 113,7.
+
+## Di Dunia Nyata
+
+1. **Sensor parkir meja** — buzzer makin cepat saat tangan mendekati 50, 30, lalu 15 cm.
+2. **Robot penghindar halangan** — berhenti dan berbelok ketika jarak depan < 25 cm.
+3. **Pengukur tinggi air tanpa kontak** — sensor di atas tangki mengukur ruang kosong, level = tinggi tangki − jarak.
+4. **Dispenser otomatis** — tangan pada 8–15 cm memicu pompa selama 300 ms.
+5. **Penghitung benda di konveyor** — perubahan jarak cepat melewati ambang dihitung sebagai satu produk.
+
+<div class="note">💡 Beri jeda minimal 60 ms antar pengukuran. Ultrasonik yang masih bergema dari pengukuran sebelumnya membuat nilai lompat-lompat, terutama di ruang sempit dengan banyak permukaan keras.</div>

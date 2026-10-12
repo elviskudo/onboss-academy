@@ -1,0 +1,107 @@
+---
+title: "Query & Filter MongoDB"
+description: "Menyaring dokumen dengan operator query, projection, sorting, dan regex"
+order: 4
+quiz:
+  - q: "filter { umur: { $gt: 20 } } berarti…"
+    options: ["umur lebih besar dari 20", "umur kurang dari 20", "umur sama dengan 20", "umur bukan 20"]
+    answer: 0
+    explain: "$gt berarti greater than (lebih besar); pasangannya $gte, $lt, dan $lte — semuanya huruf kecil."
+  - q: "Projection dipakai untuk…"
+    options: ["Mengurutkan data", "Memilih field mana yang tampil", "Menghapus dokumen", "Membuat index"]
+    answer: 1
+    explain: "find({}, { nama: 1, harga: 1 }) hanya mengembalikan field yang ditandai 1 (plus _id)."
+  - q: "Menggabungkan beberapa syarat dengan logis AND ditulis…"
+    options: ["$and: [ {...}, {...} ]", "$both: [...]", "$with: [...]", "$match: [...]"]
+    answer: 0
+    explain: "Meski $and opsional bila syarat ditulis dalam satu objek, $and dipakai bila kunci sama muncul dua kali."
+  - q: "Menampilkan 5 dokumen teratas setelah diurutkan menurun memakai…"
+    options: ["sort().limit()", "top().order()", "first(5)", "slice(5)"]
+    answer: 0
+    explain: "db.k.find().sort({ harga: -1 }).limit(5) — -1 menurun, 1 menaik."
+  - q: "Mencocokkan nilai field string mengandung kata \"sale\" memakai…"
+    options: ["$eq", "regex: /sale/i", "$like", "$contains"]
+    answer: 1
+    explain: "find({ nama: /sale/i }) — pola regex JS; /i membuatnya case-insensitive."
+example:
+  code: |
+    db.produk.find(
+      { harga: { $gte: 100000, $lt: 1000000 }, stok: { $gt: 0 } },
+      { nama: 1, harga: 1, _id: 0 }
+    ).sort({ harga: 1 }).limit(5)
+---
+
+Query MongoDB terasa seperti objek JavaScript biasa — makin kamu paham operatornya, makin sedikit kode yang perlu ditulis.
+
+## Apa itu Filter Query?
+
+Filter adalah dokumen yang mendeskripsikan syarat, bukan kode yang mengulang dokumen satu per satu. MongoDB menyediakan **14 operator query inti** dalam 4 kategori berikut:
+
+| Kategori | Jumlah | Operator | Fungsi |
+| --- | ---: | --- | --- |
+| Perbandingan | 8 | `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin` | membandingkan nilai/daftar |
+| Logika | 4 | `$and`, `$or`, `$nor`, `$not` | menggabungkan atau membalik syarat |
+| Elemen | 2 | `$exists`, `$type` | memeriksa field dan tipe |
+| Array | 3 | `$all`, `$elemMatch`, `$size` | memeriksa isi array |
+
+Jumlah kategori sengaja dipisah: 14 operator umum untuk nilai/logika/elemen, ditambah 3 operator khusus array. Regex dapat ditulis sebagai `/pola/i` atau operator `$regex`.
+
+## Dasar find dan Operator Perbandingan
+
+```javascript
+db.produk.find({ nama: "Keyboard" })
+db.produk.find({ harga: { $gt: 300000 } })
+db.produk.find({ stok: { $gte: 5, $lte: 50 } })
+db.produk.find({ kategori: { $in: ["Aksesoris", "Monitor"] } })
+db.produk.find({ diskon: { $ne: null } })
+```
+
+`$gt/$gte/$lt/$lte` membandingkan angka dan tanggal; `$in` memeriksa keanggotaan daftar; `$ne` mengecualikan nilai.
+
+## Logika AND / OR
+
+```javascript
+db.produk.find({ harga: { $lt: 500000 }, stok: { $gt: 0 } })
+
+db.produk.find({
+  $or: [{ kategori: "Monitor" }, { harga: { $gt: 2000000 } }]
+})
+
+db.produk.find({
+  $and: [{ harga: { $gt: 100000 } }, { harga: { $lt: 400000 } }]
+})
+```
+
+Objek dengan banyak kunci = AND implisit. `$and` eksplisit diperlukan bila kunci yang sama dibandingkan dua kali — persis seperti `$and` di atas.
+
+## Projection, Sort, Limit, Skip
+
+```javascript
+db.produk.find(
+  { stok: { $gt: 0 } },
+  { nama: 1, harga: 1, _id: 0 }
+).sort({ harga: -1 }).skip(0).limit(10)
+```
+
+Projection `1` menyertakan field, `0` menyembunyikan. `skip + limit` adalah paginasi dasar. Untuk halaman dalam, gunakan *range pagination* berdasarkan `_id` atau field terindeks (`{ _id: { $gt: idTerakhir } }`) agar server tidak perlu melewati ribuan dokumen.
+
+## Regex dan Array
+
+```javascript
+db.produk.find({ nama: /mouse/i })
+db.produk.find({ tags: "sale" })
+db.produk.find({ tags: { $all: ["sale", "baru"] } })
+db.produk.find({ "item.sku": "KB-01" })
+```
+
+Menyaring array cukup dengan nilai tunggal; `$all` menuntut semua nilai hadir; titik (`item.sku`) menembus subdokumen dan array dokumen. Gunakan `$elemMatch` bila beberapa syarat harus dipenuhi oleh elemen array yang sama.
+
+## Di Dunia Nyata
+
+- **Filter marketplace** — `$in` memilih beberapa kategori sekaligus, sedangkan `$gte/$lte` membatasi rentang harga.
+- **Pencarian nama** — regex berawalan (`/^key/i`) bisa memanfaatkan index lebih baik daripada pola yang diawali wildcard.
+- **Pencarian stok** — gabungan `stok: { $gt: 0 }` dan projection mengirim hanya nama/harga yang dibutuhkan kartu produk.
+- **Pesanan dengan item tertentu** — dot notation `"item.sku"` mencari SKU di subdokumen array tanpa membongkar array di aplikasi.
+- **Paginasi feed** — filter `_id > idTerakhir`, sort, limit menjaga waktu query stabil saat halaman makin dalam.
+
+<div class="note">💡 Lebih baik membatasi hasil dengan limit() daripada memuat semua lalu memotong di aplikasi — penghematan memori dan jaringan terjadi di sisi server.</div>

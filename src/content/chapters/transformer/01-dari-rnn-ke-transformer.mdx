@@ -1,0 +1,117 @@
+---
+title: "Dari RNN ke Transformer"
+description: "Latar belakang arsitektur yang mengubah NLP — sejarah singkat dan mengapa Transformer menang"
+order: 1
+quiz:
+  - q: "Kelemahan utama RNN dalam memproses teks panjang adalah…"
+    options: ["Informasi di awal kalimat mudah hilang", "Tidak bisa memproses teks sama sekali", "Hanya bekerja untuk bahasa Inggris", "Membutuhkan GPU mahal"]
+    answer: 0
+    explain: "RNN memproses berurutan sehingga konteks jauh memudar — dikenal sebagai masalah vanishing gradient."
+  - q: "Transformer memproses seluruh token secara…"
+    options: ["Satu per satu berurutan", "Paralel sekaligus", "Hanya token pertama", "Tanpa urutan sama sekali"]
+    answer: 1
+    explain: "Self-attention memungkinkan semua posisi saling melihat sekaligus — melatih jadi jauh lebih cepat."
+  - q: "Paper berjudul 'Attention Is All You Need' memperkenalkan…"
+    options: ["Sistem operasi Linux", "Bahasa Python", "Arsitektur Transformer", "Format CSV"]
+    answer: 2
+    explain: "Dipublikasikan Google pada 2017 — dasar bagi BERT, GPT, dan LLM modern."
+  - q: "Mekanisme inti pengganti step-by-step RNN pada Transformer adalah…"
+    options: ["Attention", "Hashing", "Kompresi ZIP", "Regresi linear"]
+    answer: 0
+    explain: "Attention menimbang hubungan antar token tanpa memprosesnya berurutan."
+  - q: "Dampak paralelisasi Transformer terhadap pelatihan model besar adalah…"
+    options: ["Pelatihan menjadi lebih lambat", "Pelatihan menjadi praktis pada skala raksasa", "Pelatihan tidak butuh data", "Pelatihan tidak butuh komputer"]
+    answer: 1
+    explain: "Paralelisme tinggi membuat pelatihan model miliaran parameter menjadi mungkin secara ekonomi."
+example:
+  code: |
+    kalimat = "Kucing di atap tidur karena panas"
+
+    # RNN: harus melihat kata 1, lalu 2, lalu 3 ... berurutan
+    # Transformer: semua kata langsung saling berhubungan lewat attention
+    token = kalimat.split()
+    print(token)
+---
+
+Transformer adalah arsitektur di balik hampir semua **large language model (LLM)** masa kini. Bab ini membangun intuisinya dari sejarah singkat.
+
+## Masalah yang Dijawab
+
+Teks adalah data sekuensial: makna kata "bank" bergantung pada konteksnya. Model harus bisa menghubungkan kata pertama dengan kata terakhir dalam satu kalimat panjang.
+
+## Batasan RNN dan LSTM
+
+```python
+# RNN memproses berurutan
+token = "Kucing di atap tidur".split()
+state = None
+for k in token:
+    # state = f(state, k) -- informasi lama perlahan memudar
+    state = (state or 0) + len(k)
+print(state)
+```
+
+Semakin panjang sekuens, semakin lemah ingatan akan token awal. LSTM memperbaiki sebagian, tetapi tetap berurutan dan sulit diparalelkan.
+
+## Kekuatan Attention
+
+Attention memberi setiap token "perhatian" terhadap token lain yang relevan:
+
+```python
+kalimat = "Pria itu membawa koper karena dia akan pergi"
+# "dia" perlu melihat "Pria" untuk tahu rujukannya
+# attention menghitung bobot hubungan antar semua pasang token
+```
+
+Bobot hubungan dihitung dari kesamaan representasi — bukan dari jarak berurutan.
+
+## 3 Arsitektur Sekuens
+
+| Aspek | RNN | LSTM | Transformer |
+|-------|-----|------|-------------|
+| Pemrosesan | berurutan | berurutan | paralel saat training |
+| Konteks jauh | mudah memudar | lebih terjaga | hubungan langsung lewat attention |
+| Unit inti | recurrent state | gate memori | self-attention |
+| Skalabilitas GPU | rendah | rendah | tinggi |
+| Biaya konteks | linear per langkah | linear per langkah | attention standar kuadratik terhadap panjang |
+
+RNN membawa satu state maju langkah demi langkah. LSTM menambahkan gate untuk memilih apa yang disimpan dan dilupakan. Transformer membuang recurrence: setiap token dapat mengakses token lain melalui bobot attention.
+
+## Paralelisme dan Biayanya
+
+Paralel tidak berarti gratis. Saat training, semua token dapat dihitung serentak, tetapi self-attention standar membentuk matriks hubungan berukuran `n x n`. Jika panjang konteks dua kali lipat, jumlah pasangan token kira-kira menjadi empat kali lipat. Karena itu model konteks panjang memakai optimasi attention, cache, atau pola sparse.
+
+## Perjalanan Singkat
+
+- **2017** — paper "Attention Is All You Need".
+- **2018** — BERT (encoder, untuk pemahaman teks).
+- **2018+** — seri GPT (decoder, untuk menghasilkan teks).
+- **Sekarang** — LLM multiguna: percakapan, koding, multimodal.
+
+## Anatomi Umum
+
+Pipeline generasi teks punya **5 tahap**:
+
+```
+Teks -> Tokenisasi -> Embedding -> Blok Transformer x N -> Probabilitas token berikutnya
+```
+
+| Tahap | Fungsi |
+|-------|--------|
+| Tokenisasi | memecah teks menjadi unit dan ID |
+| Embedding | mengubah ID menjadi vektor |
+| Attention | mencampur informasi dari konteks |
+| Feed-forward | mentransformasi tiap representasi |
+| Output | memberi probabilitas token selanjutnya |
+
+Setiap tahap dibahas pada bab-bab berikutnya, dari tokenisasi sampai LLM.
+
+## Di Dunia Nyata
+
+- **Terjemahan mesin** — encoder-decoder menghubungkan seluruh kalimat sumber saat menulis bahasa tujuan.
+- **Asisten penulis** — decoder melanjutkan dokumen token demi token berdasarkan konteks sebelumnya.
+- **Pencarian semantik** — encoder membuat representasi query dan dokumen agar makna serupa bertemu.
+- **Ringkasan rapat panjang** — attention menghubungkan keputusan di akhir dengan pembahasan jauh di awal.
+- **Pelengkap kode** — model memanfaatkan fungsi dan variabel sebelumnya untuk menebak baris berikutnya.
+
+<div class="note">💡 Transformer tidak "mengerti" bahasa seperti manusia. Ia memprediksi token berikutnya dari pola statistik dalam data pelatihan — kecerdasannya berasal dari skala data dan parameter.</div>

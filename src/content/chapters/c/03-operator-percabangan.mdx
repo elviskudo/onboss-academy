@@ -1,0 +1,196 @@
+---
+title: "Operator & Percabangan"
+description: "6 kategori operator termasuk bitwise, truthiness non-zero, if-else & switch dalam bahasa C"
+order: 3
+quiz:
+  - q: "Hasil dari 17 % 5 adalah…"
+    options: ["3", "2", "5", "0"]
+    answer: 1
+    explain: "17 dibagi 5 = 3 sisa 2 — operator % mengambil sisa bagi."
+  - q: "Pada kondisi if, ekspresi dianggap benar jika nilainya…"
+    options: ["Tepat 1", "Tepat true", "Bukan nol (non-zero)", "Bukan -1"]
+    answer: 2
+    explain: "Di C, 0 = salah dan semua nilai selain 0 = benar, termasuk angka negatif."
+  - q: "Perbedaan && dan & adalah…"
+    options: ["Keduanya identik", "& hanya untuk pointer", "&& mengevaluasi short-circuit, & mengevaluasi kedua sisi", "&& tidak bisa dipakai di if"]
+    answer: 2
+    explain: "&& berhenti begitu hasil sudah pasti; & selalu mengevaluasi kedua operand."
+  - q: "Setiap cabang switch wajib diakhiri dengan…"
+    options: ["break", "return", "continue", "goto"]
+    answer: 0
+    explain: "Tanpa break akan terjadi fall-through — eksekusi jatuh ke cabang berikutnya."
+  - q: "Operator untuk mengambil alamat variabel adalah…"
+    options: ["& (alamat)", "* (dereference)", "->", "&&"]
+    answer: 0
+    explain: "& mengambil alamat, * membaca isi alamat — pasangan ini dipakai di materi pointer."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        int nilai = 85;
+        if (nilai >= 90) {
+            printf("A\n");
+        } else if (nilai >= 80) {
+            printf("B\n");
+        } else {
+            printf("C atau di bawah\n");
+        }
+        printf("%s\n", nilai >= 75 ? "Lulus" : "Remedial");
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Percabangan membuat program **mengambil keputusan** berdasarkan data — nilai, status, atau hasil perhitungan. Bab ini memetakan seluruh operator C (termasuk bitwise yang menjadi kekuatan bahasa ini) lalu semua bentuk percabangannya.
+
+## Operator Aritmetika & Perbandingan
+
+```c
+int a = 10, b = 3;
+printf("%d\n", a + b);   // 13
+printf("%d\n", a - b);   // 7
+printf("%d\n", a * b);   // 30
+printf("%d\n", a / b);   // 3 (pembagian int — desimal dibuang)
+printf("%d\n", a % b);   // 1 (sisa)
+printf("%d\n", a > b);   // 1 (benar = 1)
+printf("%d\n", a == b);  // 0 (salah = 0)
+```
+
+C **tidak punya tipe boolean** — perbandingan bernilai `int` 1 (benar) atau 0 (salah). Perhatikan: perbandingan memakai `==` (dua tanda), bukan `=` yang berarti penugasan. Enam operator perbandingan: `==`, `!=`, `<`, `>`, `<=`, `>=`.
+
+## Truthiness: 0 = Salah, Sisanya Benar
+
+```c
+int x = -5;
+if (x) printf("x benar (karena bukan 0)\n");  // jalan
+if (-1) printf("juga benar\n");                // jalan
+if (0)  printf("tidak akan pernah jalan\n");
+```
+
+Aturan ini berlaku di seluruh percabangan C dan **penyebab bug klasik**: `if (x = 5)` menugaskan 5 ke `x` (hasil non-zero = selalu benar), bukan membandingkan. Selalu pakai `==`, atau kompilasi dengan `-Wall` agar peringatan muncul.
+
+## Operator Logika (3 buah) — Short-Circuit
+
+```c
+int usia = 20, punyaTiket = 1;
+int boleh = (usia >= 17) && (punyaTiket == 1); // AND
+int gratis = (usia < 5) || (usia > 60);        // OR
+int batal = !boleh;                            // NOT
+```
+
+`&&` dan `||` bersifat **short-circuit**: jika hasil sudah pasti dari sisi kiri, sisi kanan tidak dievaluasi. Pola penjaga: `p != NULL && p->nilai > 0` — `p->nilai` tidak akan dibaca saat `p` NULL.
+
+## Operator Bitwise (6 buah) — Kekuatan Khas C
+
+```c
+unsigned char a = 12, b = 10;   // 1100 dan 1010 dalam biner
+printf("%d\n", a & b);   // 8  — AND bit: 1000
+printf("%d\n", a | b);   // 14 — OR bit: 1110
+printf("%d\n", a ^ b);   // 6  — XOR: 0110
+printf("%d\n", ~a);      // bitwise NOT
+printf("%d\n", a << 2);  // 48 — geser kiri (x4)
+printf("%d\n", b >> 1);  // 5  — geser kanan (x/2)
+```
+
+Bitwise dipakai untuk mask flag (`flags & FLAG_AKTIF`), cek ganjil cepat (`n & 1`), dan protokol jaringan. Beda dari operator logika: `&`/`|` **selalu** mengevaluasi kedua sisi.
+
+## Kategori Lengkap Operator C
+
+| Kategori | Jumlah | Contoh | Fungsi |
+|---|---|---|---|
+| Aritmatika | 5 (+ 2 unary) | `+ - * / %`, `++ --` | hitung angka |
+| Perbandingan | 6 | `== != < > <= >=` | hasil 0/1 |
+| Logika | 3 | `&& \|\| !` | gabung kondisi, short-circuit |
+| Bitwise | 6 | `& \| ^ ~ << >>` | manipulasi bit — spesialisasi C |
+| Assignment | 11 | `= += -= *= /= %= &= \|= ^= <<= >>=` | tugaskan nilai |
+| Ternary | 1 | `? :` | if-else singkat bernilai |
+| Pointer | 3 | `& * ->` | alamat & dereference |
+| Lainnya | 3 | `sizeof , (koma)` | ukur tipe, gabung ekspresi |
+
+## if-else
+
+```c
+int hari = 6;
+if (hari == 1) {
+    printf("Senin\n");
+} else if (hari == 6 || hari == 7) {
+    printf("Akhir pekan\n");
+} else {
+    printf("Hari kerja\n");
+}
+```
+
+Cabang dievaluasi dari atas ke bawah — cabang pertama bernilai benar yang dijalankan. Untuk menghindari nesting dalam, pakai pola guard: `if (syarat) { ... return; }` di awal function.
+
+## Switch
+
+```c
+int pilihan = 2;
+switch (pilihan) {
+    case 1:
+        printf("Pilihan satu\n");
+        break;
+    case 2:
+    case 3:
+        printf("Pilihan dua atau tiga\n");   // fall-through disengaja
+        break;
+    default:
+        printf("Tidak valid\n");
+}
+```
+
+Penerima switch: `int`, `char`, `enum`, dan tipe turunannya (C tidak mendukung String). **`break` wajib** di tiap cabang — tanpa itu eksekusi jatuh ke cabang berikutnya (fall-through). `default` menjadi cabang pengaman, taruh di mana saja (konvensi: di akhir).
+
+## Ternary & goto
+
+```c
+int nilai = 72;
+const char *status = (nilai >= 75) ? "Lulus" : "Remedial";
+printf("%s\n", status);
+```
+
+`goto label;` masih ada di C untuk melompat ke penanda `label:` dalam function yang sama — berguna keluar dari nesting ganda, tapi disarankan hemat karena membuat alur sulit diikuti.
+
+## Di Dunia Nyata
+
+- **Menentukan hak akses user**: `if (level & HAK_ADMIN)` mengecek satu flag di antara banyak bit permission.
+- **Parser perintah terminal**: switch pada karakter pertama input (`'q'`, `'h'`, `'d'`) memilih aksi program CLI.
+- **Kalkulator kalkulator**: `switch (op)` pada operator `+ - * /` mengarahkan ke fungsi hitung yang sesuai.
+- **Sensor GPIO Raspberry Pi**: bitwise menyalakan/mematikan pin tertentu tanpa mengganggu pin lain (`pin |= MASK; pin &= ~MASK;`).
+- **Deteksi tahun kabisat**: `if ((tahun % 4 == 0 && tahun % 100 != 0) || tahun % 400 == 0)` — perpaduan logika dan perbandingan.
+
+<div class="note">💡 Jebakan klasik: <code>if (nilai = 5)</code> menugaskan 5 ke <code>nilai</code> (hasil selalu benar), bukan membandingkan. Gunakan <code>==</code>, atau aktifkan <code>-Wall -Wextra</code> saat kompilasi agar kompilator memperingatkan penugasan tak sengaja di kondisi.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int main(void) {
+    int nilai = 85;
+    if (nilai >= 90) {
+        printf("Grade A\\n");
+    } else if (nilai >= 80) {
+        printf("Grade B\\n");
+    } else {
+        printf("Grade C atau di bawah\\n");
+    }
+
+    printf("%s\\n", nilai >= 75 ? "Lulus" : "Remedial");
+
+    int hari = 3;
+    switch (hari) {
+        case 1: printf("Senin\\n"); break;
+        case 3: printf("Rabu\\n"); break;
+        default: printf("Hari lain\\n");
+    }
+
+    unsigned char a = 12, b = 10;
+    printf("a & b = %u, a | b = %u, a << 2 = %u\\n",
+           a & b, a | b, a << 2);
+
+    int x = -5;
+    printf("x=%d non-zero(dipandang benar)? %d\\n", x, x != 0);
+    printf("17 %% 5 = %d\\n", 17 % 5);
+    printf("Genap? %d\\n", (10 % 2 == 0));
+    return 0;
+}`} />

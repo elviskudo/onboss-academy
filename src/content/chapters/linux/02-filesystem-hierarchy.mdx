@@ -1,0 +1,118 @@
+---
+title: "Filesystem Hierarchy"
+description: "Peta folder root Linux: di mana konfigurasi, log, dan binary tinggal"
+order: 2
+quiz:
+  - q: "Folder tempat konfigurasi sistem umumnya berada adalah…"
+    options: ["/home", "/etc", "/var", "/opt"]
+    answer: 1
+    explain: " /etc berisi file teks konfigurasi: sshd_config, fstab, nginx, dsb."
+  - q: "Directory home user biasanya terletak di…"
+    options: ["/root semua user", "/home/username", "/usr/home", "/var/home"]
+    answer: 1
+    explain: "Kecuali root, tiap user punya /home/<username> sebagai wilayah pribadi."
+  - q: "Log sistem (syslog, journald) umumnya di…"
+    options: ["/etc", "/opt", "/var/log", "/tmp"]
+    answer: 2
+    explain: "/var berisi data yang berubah sering: log, cache, mail, print spool."
+  - q: "File binary program yang bisa dijalankan user ada di…"
+    options: ["/bin atau /usr/bin", "/etc/bin", "/home/bin", "/var/bin"]
+    answer: 0
+    explain: "PATH default mencakup /bin, /usr/bin, /sbin — di sinilah perintah harian berada."
+  - q: "Apa arti direktori root (/)?"
+    options: ["Folder home root user", "Titik awal seluruh filesystem — semua bercabang dari sini", "Folder sementara", "Folder kernel"]
+    answer: 1
+    explain: "Tidak ada drive huruf seperti C: — semua partisi dan device di-mount di bawah satu pohon /."
+---
+
+Linux memakai **satu pohon filesystem tunggal** — tidak ada drive C:/D:. Semua partisi, disk, dan device di-*mount* di bawah `/`.
+
+## Peta Folder Utama
+
+```
+/                 <- root, akar segalanya
+├── bin, /usr/bin -> binary perintah harian (ls, cp, python3)
+├── sbin, /usr/sbin -> binary administrasi (iptables, fdisk)
+├── etc           -> file konfigurasi sistem
+├── home          -> data pribadi per user (/home/sari)
+├── root          -> home user root
+├── var           -> data dinamis: log, cache, mail (/var/log)
+├── tmp           -> file sementara (dibersihkan saat reboot)
+├── opt           -> software pihak ketiga manual
+├── usr           -> program & library user-level
+├── dev           -> device (dev/sda, null, random)
+├── proc          -> info proses & kernel (virtual)
+└── mnt, /media   -> titik mount sementara
+```
+
+## Menjelajah dengan Aman
+
+```bash
+pwd                  # posisi sekarang
+ls /etc              # daftar konfigurasi sistem
+cat /etc/os-release  # identitas distro
+ls /var/log          # log sistem
+echo $PATH           # daftar folder tempat cari perintah
+which python3        # lokasi binary tertentu
+```
+
+## Membaca Konfigurasi Nyata
+
+```bash
+cat /etc/hosts              # peta hostname lokal
+cat /etc/fstab              # partisi yang di-mount saat boot
+cat /etc/passwd | head      # daftar user sistem
+```
+
+`/etc` hampir selalu berisi file teks — edit dengan editor (nano/vim), bukan tool GUI.
+
+## Direktori Sementara vs Permanen
+
+| Lokasi | Sifat | Contoh |
+|--------|-------|--------|
+| `/tmp` | sementara, bisa hilang | file upload proses |
+| `/var/tmp` | sementara, bertahan reboot | cache instalasi |
+| `/home/user` | permanen milik user | dokumen, kode |
+| `/opt` | permanen, manual | app vendor |
+
+## Dua Belas Lokasi Inti FHS
+
+Filesystem Hierarchy Standard memberi arti konsisten pada setidaknya **12 lokasi inti** berikut.
+
+| Lokasi | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `/` | Akar seluruh pohon | `/etc/hosts` | Navigasi absolut |
+| `/etc` | Konfigurasi host | `/etc/ssh/sshd_config` | Mengatur layanan |
+| `/home` | Data user biasa | `/home/sari` | Kerja pribadi |
+| `/root` | Home root | `/root/.ssh` | Administrasi root |
+| `/var` | Data yang berubah | `/var/log` | Log, cache, antrean |
+| `/tmp` | Data sementara | `/tmp/upload` | Scratch jangka pendek |
+| `/usr` | Program dan data read-only | `/usr/bin/git` | Binary dari distro |
+| `/bin` | Perintah esensial | `/bin/sh` | Boot dan operasi dasar |
+| `/sbin` | Administrasi esensial | `/sbin/fsck` | Pemeliharaan sistem |
+| `/opt` | Aplikasi vendor mandiri | `/opt/vendor` | Instalasi pihak ketiga |
+| `/dev` | Representasi perangkat | `/dev/null` | I/O perangkat |
+| `/proc` | Data virtual kernel/proses | `/proc/123/status` | Diagnosis runtime |
+
+Pada distro modern, `/bin` dan `/sbin` sering berupa symlink ke `/usr/bin` dan `/usr/sbin`. `/proc` dan `/dev` bukan penyimpanan biasa. Mount menghubungkan filesystem lain pada sebuah direktori; cek dengan `findmnt` sebelum menganggap folder berada di disk root.
+
+Gunakan path absolut dalam otomasi. Jangan menaruh data aplikasi di `/usr`, secret world-readable di `/tmp`, atau menghapus file `/var/lib` hanya demi ruang kosong. Cari pemakai ruang dengan `du` dan pahami pemilik datanya terlebih dahulu.
+
+## Di Dunia Nyata
+
+- Memeriksa `/var/log/nginx` ketika request produksi gagal.
+- Menaruh konfigurasi service di `/etc`, bukan di home developer.
+- Memasang aplikasi vendor terisolasi di `/opt/vendor`.
+- Memeriksa `/proc/<PID>/limits` ketika proses kehabisan file descriptor.
+
+<div class="note">💡 `/root` bukan home semua user — itu home khusus user root. Home user biasa berada di `/home/username`; keduanya memiliki batas permission berbeda.</div>
+
+## Praktik Aman untuk Pemula
+
+```bash
+du -sh /var/*    # lihat ukuran folder besar
+df -h            # sisa space tiap partisi
+free -h          # pemakaian RAM
+```
+
+Jangan menghapus isi `/etc`, `/usr`, atau `/var` tanpa tahu persis apa yang dihapus — di Linux, tidak ada tempat sampah untuk perintah `rm -rf /`.

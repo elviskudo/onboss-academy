@@ -1,0 +1,128 @@
+---
+title: "Pengenalan HTML"
+description: "Apa itu HTML, anatomi dokumen, elemen, atribut, dan nesting"
+order: 1
+quiz:
+  - q: "Apa kepanjangan HTML?"
+    options: ["High Transfer Modern Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink Text Machine Language"]
+    answer: 1
+    explain: "HTML = HyperText Markup Language, bahasa penanda untuk membangun struktur halaman web."
+  - q: "Apa fungsi utama HTML?"
+    options: ["Membuat database", "Membuat logika perhitungan", "Menyusun struktur dan konten halaman web", "Mengatur warna halaman"]
+    answer: 2
+    explain: "HTML adalah kerangka/struktur halaman. Styling oleh CSS, logika oleh JavaScript."
+  - q: "Tag mana yang menjadi akar sebuah dokumen HTML?"
+    options: ["<html>", "<head>", "<body>", "<meta>"]
+    answer: 0
+    explain: "<html> adalah elemen akar yang membungkus seluruh konten dokumen."
+  - q: "Di mana teks yang terlihat oleh pengguna biasanya ditulis?"
+    options: ["<head>", "<body>", "<meta>", "<title>"]
+    answer: 1
+    explain: "Isi <body> adalah yang dirender dan terlihat oleh pengunjung halaman."
+  - q: "Elemen yang TIDAK butuh tag penutup disebut…"
+    options: ["void element", "block element", "inline element", "semantic element"]
+    answer: 0
+    explain: "Void element (seperti <img>, <br>, <hr>) tidak punya tag penutup."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <title>Halaman Pertamaku</title>
+    </head>
+    <body>
+      <h1>Halo, Dunia!</h1>
+      <p>Ini halaman web pertamaku.</p>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTML (*HyperText Markup Language*) adalah **bahasa penanda** (*markup*) yang menjadi tulang punggung setiap halaman web. Browser seperti Chrome membaca file HTML lalu menampilkannya sebagai halaman yang bisa kamu lihat — tanpa HTML, tidak ada satupun website di dunia ini.
+
+## Sejarah Singkat & Status Standar
+
+HTML lahir pada 1991 (Tim Berners-Lee) dan terus berkembang. **HTML5** adalah versi utama sejak 2014, dan sekarang dikembangkan oleh WHATWG sebagai *HTML Living Standard* — artinya spesifikasinya diperbarui berkala tanpa penomoran versi lagi. Saat ini HTML punya **lebih dari 100 elemen** siap pakai, dan **sekitar 20 atribut global** yang boleh dipasang di hampir semua elemen (seperti `class`, `id`, `style`, `title`, `lang`, `hidden`, `tabindex`, serta `data-*` dan `aria-*`).
+
+## Anatomi Dokumen HTML
+
+Setiap halaman HTML punya kerangka dasar yang selalu sama:
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8">
+    <title>Judul Halaman</title>
+  </head>
+  <body>
+    <h1>Halo, Dunia!</h1>
+    <p>Ini halaman web pertamaku.</p>
+  </body>
+</html>
+```
+
+| Bagian | Fungsi |
+|--------|--------|
+| `<!DOCTYPE html>` | Memberi tahu browser ini dokumen HTML5 modern |
+| `<html lang="id">` | Akar dokumen; `lang` membantu pembaca layar & SEO |
+| `<head>` | Info tersembunyi: charset, judul tab, stylesheet |
+| `<body>` | Semua konten yang terlihat: teks, gambar, tombol |
+
+## Elemen, Tag, dan Atribut
+
+HTML terdiri dari **elemen** yang ditulis dengan tanda kurung sudut. Elemen pembuka `<p>` selalu ditutup dengan `</p>`:
+
+```html
+<p>Ini paragraf.</p>
+```
+
+- **Tag pembuka** `<p>` dan **tag penutup** `</p>` membungkus **konten**
+- Beberapa elemen bersifat **void** (tidak butuh penutup): `<img>`, `<br>`, `<hr>`, `<meta>`, `<input>`
+- **Atribut** menambah informasi pada elemen: `<img src="foto.jpg" alt="Foto">` — `src` dan `alt` adalah atribut, nilainya ditulis dalam tanda kutip
+
+## Nesting (Bersarang) yang Benar
+
+Elemen boleh bersarang, asalkan **ditutup berurutan terbalik** seperti onion:
+
+```html
+<!-- ✔ benar -->
+<div><p>Teks <strong>penting</strong>.</p></div>
+
+<!-- ✗ salah: <p> ditutup sebelum <strong> -->
+<div><p>Teks <strong>penting.</p></strong></div>
+```
+
+Nesting salah membuat browser "menebak" struktur dan hasilnya bisa tidak terduga.
+
+## Peran HTML vs CSS vs JavaScript
+
+| Bahasa | Peran | Contoh |
+|--------|-------|--------|
+| HTML | Struktur & makna konten | Judul, paragraf, gambar, tombol |
+| CSS | Tampilan | Warna, font, layout |
+| JavaScript | Perilaku | Klik, animasi, ambil data |
+
+## Di Dunia Nyata
+
+- **Artikel blog** — `<h1>` judul, `<p>` paragraf, `<img>` ilustrasi, semua terbaca mesin pencari sebagai konten
+- **Halaman profil toko online** — struktur HTML menentukan urutan info: foto produk → nama → harga → tombol beli
+- **Formulir pendaftaran event** — input nama & email ditulis dengan elemen HTML, server menerima datanya
+- **CV online** — markup yang rapi membuat Google bisa mengindeks nama dan keahlianmu saat perekrut mencari
+
+<div class="note">💡 HTML bukan bahasa pemrograman — ia tidak menghitung atau mengambil data. Pikirkan HTML sebagai rangka tulang: CSS adalah kulit & pakaian, JavaScript adalah otot yang menggerakkannya.</div>
+
+## Praktik
+
+Coba jalankan contoh di bawah, lalu ubah teksnya sesukamu!
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body>
+  <h1>Halo, namaku OnBoss!</h1>
+  <p>Aku sedang belajar HTML.</p>
+  <p>Ini sangat seru! 🎉</p>
+</body>
+</html>`} />

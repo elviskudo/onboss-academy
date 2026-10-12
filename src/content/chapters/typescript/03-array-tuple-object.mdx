@@ -1,0 +1,156 @@
+---
+title: "Array, Tuple & Object"
+description: "Menyusun data terstruktur dengan tipe yang jelas"
+order: 3
+quiz:
+  - q: "Deklarasi number[] artinya…"
+    options: ["Array bercampur", "Array berisi hanya angka", "Tuple dua elemen", "Object bernilai angka"]
+    answer: 1
+    explain: "Sintaks T[] adalah singkatan dari Array<T> — semua isinya wajib number."
+  - q: "Tuple seperti [string, number] membatasi…"
+    options: ["Panjang array dan tipe tiap posisi", "Nama variabel", "Jumlah file", "Nilai maksimum"]
+    answer: 0
+    explain: "Posisi pertama wajib string, kedua wajib number, dan panjangnya tetap dua."
+  - q: "readonly pada array bertujuan…"
+    options: ["Membuat array jadi object", "Mencegah push/splice yang mengubah isi", "Mengurutkan otomatis", "Mengubah tipe jadi string"]
+    answer: 1
+    explain: "T[ ] readonly menolak semua mutasi — data hanya bisa dibaca."
+  - q: "Menambah properti baru ke objek bertipe { nama: string } akan…"
+    options: ["Error: properti tidak dikenal", "Selalu diperbolehkan", "Mengubah tipe jadi any", "Menghapus nama"]
+    answer: 1
+    explain: "Structural typing mengizinkan objek punya properti tambahan, asalkan properti wajibnya lengkap."
+  - q: "Untuk mengambil nilai umur dari orang: { nama: \"Sari\", umur: 20 }…"
+    options: ["orang.umur", "orang->umur", "orang(umur)", "orang[\"nama\"] saja"]
+    answer: 0
+    explain: "Akses properti object di TS/JS memakai titik: orang.umur."
+example:
+  code: |
+    const skor: number[] = [90, 85, 78];
+    const total = skor.reduce((a, b) => a + b, 0);
+    console.log(total / skor.length);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data nyata selalu berupa kumpulan nilai. TypeScript memberi tipe untuk array, tuple, dan object supaya strukturnya tidak berantakan.
+
+## 4 Struktur Data & Kapan Dipakai
+
+| Struktur | Sintaks | Kapan dipakai | Contoh |
+|----------|---------|---------------|--------|
+| Array | `T[]` / `Array<T>` | Daftar berurutan, isinya seragam | `number[]`, `Produk[]` |
+| Tuple | `[T1, T2]` | Bentuk & urutan tetap | `[string, number]` |
+| Object | `{ k: T }` | Entri bernama | `{ nama: string }` |
+| Map | `Map<K, V>` | Kunci dinamis, akses cepat | `Map<string, Produk>` |
+
+Karakter kunci: array & tuple **mutable** (kecuali `readonly`), object TS juga menerima properti tambahan (*structural typing*), dan `Map` unggul saat kunci berjumlah ribuan karena lookup O(1).
+
+## Array
+
+```typescript
+const nama: string[] = ["Sari", "Budi", "Rina"];
+const skor: number[] = [90, 85, 78];
+const campur: (string | number)[] = ["Sari", 90]; // boleh dua tipe
+
+nama.push("Andi");
+skor.forEach((n) => console.log(n));
+```
+
+Cara alternatif yang setara: `Array<string>`.
+
+## Tuple
+
+```typescript
+const pasangan: [string, number] = ["Kopi", 25000];
+const [item, harga] = pasangan;
+
+const titik: [number, number, number] = [10, 20, 30];
+titik[0] = 99;   // ✔
+titik[0] = "x";  // ✖ error
+```
+
+Tuple cocok untuk data berposisi tetap seperti koordinat, hasil fungsi ganda, atau baris tabel.
+
+## Object Type
+
+```typescript
+const produk: { nama: string; harga: number; diskon?: number } = {
+  nama: "Kopi susu",
+  harga: 25000,
+};
+```
+
+Tanda `?` menandai properti **opsional**. Struktur wajib harus ada; properti lain boleh ditambahkan (structural typing).
+
+## Object Array
+
+```typescript
+const keranjang: { nama: string; harga: number; qty: number }[] = [
+  { nama: "Kopi", harga: 25000, qty: 2 },
+  { nama: "Roti", harga: 15000, qty: 1 },
+];
+
+const total = keranjang.reduce((sum, item) => sum + item.harga * item.qty, 0);
+console.log(total);
+```
+
+## Readonly
+
+```typescript
+const konstanta: readonly number[] = [1, 2, 3];
+konstanta.push(4); // ✖ Property 'push' does not exist on type 'readonly number[]'
+```
+
+## 5 Kategori Method Array (30+ total)
+
+| Kategori | Anggota inti | Fungsi |
+|----------|--------------|--------|
+| Mutasi | `push pop shift unshift splice` | Mengubah array asli |
+| Pencarian | `indexOf includes find findIndex` | Cari nilai/posisi |
+| Iterasi | `forEach map filter reduce some every` | Telusuri & transformasi |
+| Transformasi | `slice concat join flat` | Menghasilkan array baru |
+| Lain-lain | `length flatMap toSorted` | Panjang, map+rata, salinan terurut |
+
+## Looping di TypeScript
+
+```typescript
+const skor: number[] = [80, 90, 100];
+
+for (let i = 0; i < skor.length; i++) console.log(skor[i]); // index
+for (const s of skor) console.log(s);                       // nilai — paling umum
+skor.forEach((s) => console.log(s));                        // alternatif ringkas
+
+let total = 0;
+let i = 0;
+while (i < skor.length) { total += skor[i]; i++; }           // akumulasi
+```
+
+4 bentuk loop yang didukung: `for`, `while`, `do...while`, dan `for...of` (+ `forEach` sebagai metode array). Tipe elemen otomatis diketahui: `s` pasti `number`, jadi salah `s.panggil()` langsung merah.
+
+<div class="note">💡 Tuple dibaca dari kiri ke kanan: `[string, number]` ≠ `[number, string]`. Simpan data yang tipe dan urutannya tetap (koordinat, pair) sebagai tuple; data beragam sebaiknya pakai object agar lebih terbaca.</div>
+
+## Di Dunia Nyata
+
+- **Koordinat GPS** `[latitude, longitude]` — dua angka dengan urutan yang tidak boleh tertukar.
+- **Baris keranjang** `{ nama, harga, qty }[]` — `reduce` menghitung total belanja dengan tipe aman.
+- **Header API** disimpan sebagai `Map<string, string>` lalu di-loop dengan `for...of`.
+- **Daftar nilai ujian** `readonly number[]` — boleh dibaca semua pihak, tak boleh diubah oleh kode manapun.
+- **Hasil fungsi ganda** `Promise<[Error | null, User | null]>` (pola Go) ditulis sebagai tuple TS.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const keranjang: { nama: string; harga: number; qty: number }[] = [
+  { nama: "Kopi", harga: 25000, qty: 2 },
+  { nama: "Roti", harga: 15000, qty: 1 },
+  { nama: "Jus", harga: 20000, qty: 3 },
+];
+
+const total = keranjang.reduce((sum, item) => sum + item.harga * item.qty, 0);
+const daftar = keranjang.map((item) => item.nama + " x" + item.qty);
+const mahal = keranjang.filter((item) => item.harga >= 20000);
+
+console.log("Baris:", keranjang.length);
+console.log("Total:", total);
+console.log("Item:", daftar.join(", "));
+console.log("Minimal 20rb:", mahal.map((i) => i.nama).join(", "));
+
+const pasangan: [string, number] = ["Kopi", 25000];
+console.log("Tuple:", pasangan[0], "-", pasangan[1]);`} />

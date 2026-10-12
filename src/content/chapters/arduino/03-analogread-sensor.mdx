@@ -1,0 +1,142 @@
+---
+title: "analogRead dan Sensor Analog"
+description: "Membaca potensio, LDR, dan sinyal analog lain lewat ADC 10-bit"
+order: 3
+quiz:
+  - q: "analogRead() mengembalikan nilai dalam rentang…"
+    options: ["0 sampai 1023", "0 sampai 255", "0 sampai 1", "-512 sampai 512"]
+    answer: 0
+    explain: "ADC 10-bit memberi 1024 tingkat resolusi untuk tegangan 0..Vref."
+  - q: "Pada UNO, pin analog yang tersedia adalah…"
+    options: ["D0 saja", "A0 sampai A15", "A0 sampai A5", "Hanya A9"]
+    answer: 2
+    explain: "Board UNO punya enam kanal ADC (A0-A5)."
+  - q: "Potensio digunakan untuk…"
+    options: ["Menyimpan program", "Mengubah tegangan masukan secara mekanis (mis. lampu dimmer)", "Mengirim Wi-Fi", "Mengukur suhu ruangan tanpa sensor"]
+    answer: 1
+    explain: "Sumbu putar potensio membagi tegangan — cocok untuk latihan analogRead."
+  - q: "Nilai 0 pada analogRead berarti…"
+    options: ["Tegangan di pin mendekati 0V", "Sensor rusak pasti", "Tegangan 5V", "Pin tidak terhubung listrik"]
+    answer: 0
+    explain: "0 = tanah (GND); 1023 = tegangan referensi (5V di UNO)."
+  - q: "Meratakan pembacaan liar (noise) biasanya dilakukan dengan…"
+    options: ["Menaikkan tegangan ke 12V", "Memotong kabel GND", "Mengambil rata-rata beberapa sampel", "Menghapus delay"]
+    answer: 2
+    explain: "Rata-rata N sampel menekan fluktuasi acak pada pembacaan."
+example:
+  code: |
+    const int POT = A0;
+
+    void setup() {
+      Serial.begin(9600);
+    }
+
+    void loop() {
+      int nilai = analogRead(POT);
+      float tegangan = nilai * (5.0 / 1023.0);
+      Serial.print("Nilai: ");
+      Serial.print(nilai);
+      Serial.print("  Tegangan: ");
+      Serial.println(tegangan);
+      delay(200);
+    }
+---
+
+Pin digital hanya mengenal HIGH/LOW, sedangkan **6 pin analog UNO (A0–A5)** membaca rentang tegangan. Di dalam chip, ADC 10-bit mengubah tegangan kontinu menjadi salah satu dari **1.024 tingkat digital (0–1023)**.
+
+## Konsep ADC 10-bit
+
+| Tegangan (Vref 5 V) | Nilai ADC | Persentase |
+| --- | ---: | ---: |
+| 0 V | 0 | 0% |
+| 1,25 V | sekitar 256 | 25% |
+| 2,5 V | sekitar 512 | 50% |
+| 3,75 V | sekitar 767 | 75% |
+| 5 V | 1023 | 100% |
+
+Resolusi satu langkah = `5 V / 1023 ≈ 4,89 mV`. Nilai bukan "tegangan" langsung; rumus konversinya `tegangan = nilai × Vref / 1023.0`. Angka `5.0` memakai floating point — kalau ditulis `5 / 1023`, C++ melakukan pembagian integer dan hasilnya 0.
+
+## Membaca Potensiometer
+
+Rangkaian potensio punya **3 kaki**: kedua kaki luar ke 5 V dan GND, kaki tengah (wiper) ke A0.
+
+```cpp
+const int POT = A0;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int nilai = analogRead(POT);
+  float tegangan = nilai * (5.0 / 1023.0);
+  Serial.print("ADC=");
+  Serial.print(nilai);
+  Serial.print(" V=");
+  Serial.println(tegangan, 2);
+  delay(200);
+}
+```
+
+Putar potensio dari kiri ke kanan: serial seharusnya bergerak mulus dari sekitar 0 sampai 1023. Nilai tidak harus tepat di ujung karena toleransi komponen dan Vref USB.
+
+## 4 Sensor Analog Populer
+
+| Sensor | Besaran | Keluaran | Rangkaian tambahan |
+| --- | --- | --- | --- |
+| Potensiometer | Posisi putar | Pembagi 0–5 V | Tidak ada |
+| LDR | Intensitas cahaya | Resistansi berubah | Resistor pembagi tegangan |
+| LM35 | Suhu | 10 mV per °C | Kapasitor opsional |
+| Mikrofon modul | Amplitudo suara | Gelombang AC berbias | Modul penguat |
+
+LDR tidak menghasilkan tegangan sendiri; ia harus dipasangkan dengan resistor tetap sebagai pembagi tegangan. Membalik posisi LDR dan resistor juga membalik arah nilai (terang = tinggi atau terang = rendah).
+
+## Memetakan ke Skala yang Berguna
+
+```cpp
+int mentah = analogRead(A0);          // 0..1023
+int persen = map(mentah, 0, 1023, 0, 100);
+int pwm = map(mentah, 0, 1023, 0, 255);
+```
+
+`map()` memakai bilangan bulat; untuk suhu/desimal, gunakan rumus `float`. Batasi hasil dengan `constrain(nilai, min, max)` jika sensor berpotensi keluar rentang kalibrasi.
+
+## Meredam Noise dengan Rata-rata
+
+```cpp
+const int JUMLAH_SAMPEL = 10;
+long total = 0;
+
+for (int i = 0; i < JUMLAH_SAMPEL; i++) {
+  total += analogRead(A0);
+  delay(5);
+}
+int rata = total / JUMLAH_SAMPEL;
+```
+
+Sepuluh sampel mengurangi noise acak tetapi membutuhkan 50 ms. Makin banyak sampel, hasil makin tenang namun respons makin lambat — kompromi antara stabilitas dan latency.
+
+## Kalibrasi Ambang
+
+```cpp
+const int AMBANG_GELAP = 350;
+int cahaya = analogRead(A0);
+
+if (cahaya < AMBANG_GELAP) {
+  digitalWrite(LED_BUILTIN, HIGH);
+} else {
+  digitalWrite(LED_BUILTIN, LOW);
+}
+```
+
+Jangan menebak 350. Cetak nilai serial selama kondisi paling gelap dan terang, lalu pilih titik tengah. Kalibrasi membuat kode cocok dengan komponen dan ruangan nyata.
+
+## Di Dunia Nyata
+
+1. **Lampu malam otomatis** — LDR di bawah ambang menyalakan LED setelah matahari turun.
+2. **Termometer kelas** — LM35 dibaca ADC, dikonversi `V × 100` menjadi °C.
+3. **Kontrol volume fisik** — posisi potensio 0–1023 dipetakan ke volume 0–100%.
+4. **Detektor tepuk** — puncak modul mikrofon melewati ambang memicu relay.
+5. **Pemantau kelembapan tanah** — sensor dikalibrasi kering/basah lalu mengendalikan pompa.
+
+<div class="note">💡 Jangan menaruh tegangan di atas Vref board ke pin analog — di UNO artinya di atas 5 V. Hal ini bisa membakar ADC atau seluruh chip. Untuk tegangan lebih tinggi, gunakan pembagi tegangan dan verifikasi dulu dengan multimeter.</div>

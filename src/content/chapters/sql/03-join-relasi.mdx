@@ -1,0 +1,128 @@
+---
+title: "JOIN: Menggabungkan Tabel"
+description: "Menghubungkan karyawan dengan proyek lewat INNER JOIN dan LEFT JOIN"
+order: 3
+quiz:
+  - q: "Fungsi utama JOIN dalam SQL adalah…"
+    options: ["Menyatukan baris dari dua tabel berdasarkan kondisi", "Menghapus tabel", "Mengurutkan tabel", "Membuat backup"]
+    answer: 0
+    explain: "JOIN menggabungkan baris dari dua (atau lebih) tabel lewat kunci penghubung."
+  - q: "Ada berapa jenis JOIN utama dalam SQL standar?"
+    options: ["2", "3", "4", "6"]
+    answer: 2
+    explain: "4 jenis utama: INNER, LEFT, RIGHT, dan FULL — ditambah variasi CROSS dan SELF JOIN."
+  - q: "INNER JOIN menampilkan…"
+    options: ["Semua baris kiri meski tidak cocok", "Hanya baris yang cocok di kedua tabel", "Semua baris kanan", "Tanpa baris apa pun"]
+    answer: 1
+    explain: "INNER JOIN hanya mengeluarkan baris yang punya pasangan di kedua tabel."
+  - q: "LEFT JOIN mempertahankan…"
+    options: ["Hanya baris tabel kanan", "Semua baris tabel kiri", "Semua baris kedua tabel tanpa syarat", "Baris yang sudah diurutkan"]
+    answer: 1
+    explain: "LEFT JOIN menampilkan semua baris tabel kiri; yang tidak punya pasangan diisi NULL."
+  - q: "Cara paling tepat mencari karyawan yang TIDAK memimpin proyek apa pun adalah…"
+    options: ["INNER JOIN", "LEFT JOIN ... WHERE proyek.id IS NULL", "CROSS JOIN", "ORDER BY"]
+    answer: 1
+    explain: "Pasangkan LEFT JOIN dengan IS NULL pada kolom tabel kanan — baris tanpa pasangan itulah yang dicari."
+example:
+  code: |
+    SELECT k.nama, p.nama AS proyek, p.budget
+    FROM proyek p
+    INNER JOIN karyawan k ON p.lead_id = k.id;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data yang tersebar di banyak tabel baru berguna setelah **digabungkan**. Di basis data relasional, itulah pekerjaan `JOIN` — mekanisme yang menggantikan cara lama menyimpan daftar bersarang di dalam satu objek.
+
+## Pemodelan Relasi: Padanan Dunia OOP
+
+Kalau di pemrograman berbasis objek kamu punya `class Karyawan` dengan list `proyek`, di dunia relasional list itu justru **tidak disimpan di dalam baris**. Sebagai gantinya dibuat relasi:
+
+| Jenis Relasi | Arti | Contoh di Data Kita |
+|--------------|------|---------------------|
+| One-to-one | Satu baris berpasangan dengan satu baris | Satu karyawan punya satu baris di tabel profil |
+| One-to-many | Satu baris punya banyak baris di tabel lain | 1 karyawan bisa memimpin banyak proyek |
+| Many-to-many | Dua sisi sama-sama banyak | Karyawan ↔ tugas (perlu tabel penghubung) |
+
+Data kita memakai pola **one-to-many**: `proyek.lead_id` menunjuk `karyawan.id`. Misal *Redesign App* dipimpin `lead_id = 4`, yaitu Andi Pratama.
+
+## 4 Jenis JOIN Utama
+
+| Jenis | Baris yang Keluar | Kapan Dipakai |
+|-------|-------------------|---------------|
+| `INNER JOIN` | Hanya yang cocok di kedua tabel | Laporan yang butuh data lengkap |
+| `LEFT JOIN` | Semua tabel kiri + yang cocok (kanan bisa NULL) | Hitung yang belum punya pasangan |
+| `RIGHT JOIN` | Semua tabel kanan + yang cocok | Kebalikan LEFT; jarang dipakai |
+| `FULL JOIN` | Semua baris kedua tabel, NULL bila tak cocok | Audit kelengkapan dua sisi |
+
+Dua variasi yang sering muncul: `CROSS JOIN` (semua kombinasi baris, tanpa `ON`) dan `SELF JOIN` (tabel digabung dengan dirinya sendiri, misal mencari atasan).
+
+## INNER JOIN
+
+```sql
+SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+FROM proyek p
+INNER JOIN karyawan k ON p.lead_id = k.id;
+```
+
+`ON` menyatakan syarat kecocokan: `p.lead_id = k.id`. Alias `p` dan `k` membuat query ringkas. Hasilnya 3 baris — satu per proyek, lengkap dengan nama ketua dan budget.
+
+## LEFT JOIN: Tabel Kiri Wajib Tampil
+
+```sql
+SELECT k.nama, p.nama AS proyek
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id;
+```
+
+Semua 8 karyawan tampil. Lima yang tidak memimpin proyek apa pun (Sari, Budi, Rina, Joko, Rizky) akan bernilai NULL pada kolom proyek — inilah bedanya dengan INNER JOIN yang menyembunyikan mereka. Balik syaratnya jadi `WHERE p.id IS NULL` dan kamu dapat daftar karyawan yang belum memimpin proyek.
+
+## EXISTS vs IN: Padanan "Cek ke Daftar"
+
+Di bahasa berbasis objek, mengecek "apakah id ini ada di array" ditulis `array.includes(id)`. SQL punya 2 padanan utama:
+
+```sql
+-- gaya IN: daftar hasil subquery
+SELECT nama, jabatan
+FROM karyawan
+WHERE id IN (SELECT lead_id FROM proyek);
+
+-- gaya EXISTS: berhenti begitu menemukan satu kecocokan
+SELECT nama, jabatan
+FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+```
+
+`IN` cocok untuk daftar kecil dan mudah dibaca; `EXISTS` sering lebih cepat karena berhenti sejak kecocokan pertama. Hasilnya identik: karyawan yang menjadi ketua minimal satu proyek.
+
+## Menghitung dengan Hasil JOIN
+
+```sql
+SELECT k.nama, p.budget
+FROM karyawan k
+INNER JOIN proyek p ON k.id = p.lead_id
+WHERE p.budget >= 20000000
+ORDER BY p.budget DESC;
+```
+
+Kamu bisa memakai `WHERE`, `ORDER BY`, dan fungsi agregat di atas hasil JOIN — misalnya menghitung total budget per departemen.
+
+## Kesalahan Umum
+
+- Lupa `ON` → hasilnya kombinasi semua baris (cross join) yang bisa raksasa
+- Menaruh syarat tabel kanan di `WHERE` saat pakai LEFT JOIN → artinya berubah jadi INNER JOIN
+- JOIN tanpa indeks pada kolom penghubung → tiap baris kiri memicu pencarian penuh di tabel kanan
+
+## Di Dunia Nyata
+
+- **Daftar pesanan dan pelanggan**: INNER JOIN menampilkan identitas pembeli untuk setiap transaksi yang valid.
+- **Audit pelanggan tanpa pesanan**: LEFT JOIN + `WHERE pesanan.id IS NULL` menemukan akun yang belum pernah checkout.
+- **Katalog produk berkategori banyak**: tabel penghubung dan dua JOIN menggantikan penyimpanan id kategori sebagai array.
+- **Struktur organisasi**: SELF JOIN menghubungkan `karyawan.manager_id` kembali ke `karyawan.id` untuk menampilkan nama atasan.
+
+<div class="note">💡 Ingat urutan: JOIN menggabungkan baris dulu, baru WHERE menyaring hasilnya. Posisi syarat (di ON vs di WHERE) menentukan arti query pada LEFT JOIN.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT k.nama AS ketua, k.jabatan, p.nama AS proyek, p.budget
+FROM proyek p
+INNER JOIN karyawan k ON p.lead_id = k.id
+ORDER BY p.budget DESC;`} />

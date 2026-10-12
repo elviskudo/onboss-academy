@@ -1,0 +1,203 @@
+---
+title: "Class & Object (OOP)"
+description: "4 pilar OOP, property modern, 5 access modifier, dan constructor di C#"
+order: 8
+quiz:
+  - q: "Class dalam OOP berperan sebagai…"
+    options: ["file database", "blueprint/cetakan objek", "komentar kode", "tipe data primitif"]
+    answer: 1
+    explain: "Class mendefinisikan struktur dan perilaku; objek adalah hasil cetakannya."
+  - q: "Objek dibuat dari class dengan kata kunci…"
+    options: ["create", "make", "new", "this"]
+    answer: 2
+    explain: "new memanggil konstruktor lalu mengembalikan instance baru."
+  - q: "Properti otomatis paling sederhana di C# ditulis…"
+    options: ["public string Nama { get; set; }", "prop string Nama;", "string Nama :: get set", "def Nama"]
+    answer: 0
+    explain: "Get dan set diapit kurung kurawal langsung menyimpan nilai di balik layar."
+  - q: "Method yang dijalankan otomatis saat objek dibuat disebut…"
+    options: ["destruktor", "setter", "getter", "konstruktor"]
+    answer: 3
+    explain: "Konstruktor punya nama sama dengan class dan tidak punya tipe return."
+  - q: "C# mewarisi lebih dari satu interface, tetapi hanya…"
+    options: ["dua class dasar", "satu class dasar", "tiga class dasar", "tanpa batas class dasar"]
+    answer: 1
+    explain: "Inheritance ganda pada class tidak didukung — multifungsi dicapai lewat banyak interface."
+example:
+  code: |
+    using System;
+
+    class Siswa
+    {
+        public string Nama { get; set; }
+        public int Umur { get; set; }
+
+        public void Perkenalkan()
+        {
+            Console.WriteLine("Halo, saya " + Nama + ", umur " + Umur);
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            Siswa s = new Siswa();
+            s.Nama = "Sari";
+            s.Umur = 20;
+            s.Perkenalkan();
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+OOP memecah masalah besar jadi **objek-objek kecil yang punya data dan perilaku sendiri**. Di C#, semua kode hidup di dalam class, dan gaya modernnya menekankan *property* ketimbang field telanjang.
+
+## Class, Field, dan Property
+
+```csharp
+class Siswa
+{
+    private int umur;                            // field: disembunyikan
+    public string Nama { get; set; }             // property otomatis
+
+    public int Umur                              // property dengan validasi
+    {
+        get { return umur; }
+        set { umur = (value >= 0) ? value : 0; }
+    }
+}
+```
+
+| Konsep | Peran | Contoh |
+|---|---|---|
+| Field | penyimpan data mentah, biasanya `private` | `private int umur;` |
+| Property | gerbang baca/tulis (`get`/`set`) | `public int Umur { get; set; }` |
+| Method | perilaku objek | `Perkenalkan()` |
+
+**5 modifier akses** yang paling dipakai: `public` (semua orang), `private` (dalam class), `protected` (class turunan), `internal` (satu assembly), `protected internal` (campuran keduanya). Property menutup field di balik akses `get`/`set` — inilah **enkapsulasi** khas C#: kapan pun aturan berubah, cukup sentuh property, bukan ratusan pemanggil.
+
+## Membuat Objek
+
+```csharp
+Siswa s = new Siswa();
+s.Nama = "Sari";
+s.Umur = 20;
+s.Perkenalkan();
+```
+
+`new Siswa()` memanggil konstruktor dan menghasilkan objek baru. Setiap objek punya salinan data masing-masing — dua `Siswa` tidak saling menimpa.
+
+## Konstruktor
+
+```csharp
+class Titik
+{
+    public int X { get; set; }
+    public int Y { get; set; }
+
+    public Titik() { X = 0; Y = 0; }              // default
+    public Titik(int x, int y) { X = x; Y = y; }  // parameterized
+    static Titik() { Console.WriteLine("Titik siap"); } // static (sekali)
+}
+
+Titik p = new Titik(3, 4);
+Console.WriteLine(p.X + ", " + p.Y);
+```
+
+C# punya **3 jenis konstruktor** utama: default (tanpa parameter), parameterized, dan static (dijalankan sekali oleh runtime sebelum objek pertama dibuat). Konstruktor membuat objek langsung terisi data, tanpa lupa mengisi satu per satu.
+
+## 4 Pilar OOP di C#
+
+| Pilar | Status di C# | Realisasi |
+|---|---|---|
+| Encapsulation | ✅ penuh | access modifier + property + validasi |
+| Inheritance | ✅ (single base) | `class Turunan : Induk` |
+| Polymorphism | ✅ penuh | `virtual` / `override` / interface |
+| Abstraction | ✅ penuh | `abstract class` + `interface` |
+
+```csharp
+class Hewan
+{
+    public virtual void Bersuara() { Console.WriteLine("..."); }
+}
+
+class Kucing : Hewan
+{
+    public override void Bersuara() { Console.WriteLine("Meong!"); }
+}
+
+Hewan h = new Kucing();
+h.Bersuara();      // Meong! — polymorphism
+```
+
+C# **tidak mendukung inheritance ganda pada class** — satu class dasar saja. Untuk memenuhi banyak kontrak, gunakan interface: satu class boleh mengimplementasikan **banyak interface** sekaligus.
+
+| `abstract class` | `interface` |
+|---|---|
+| boleh punya field & kode | hanya tanda tangan (C# 8+ boleh default impl.) |
+| satu induk saja | banyak sekaligus |
+| untuk hubungan "adalah" | untuk hubungan "bisa" |
+
+## Di Dunia Nyata
+
+- Class `AkunBank` menyembunyikan `saldo` di balik `Setor()`/`Tarik()` agar tidak bisa di-set negatif.
+- Model data `Produk` dengan property `Harga { get; private set; }` mencegah harga diubah dari luar.
+- Hierarki `Pegawai` : `Manajer` : `Direktur` memakai `virtual` untuk bonus yang berbeda tiap level.
+- Interface `IPrintable` dipakai kelas, invoice, dan sertifikat tanpa peduli asal-usulnya.
+- Class `Pengguna` dengan konstruktor parameterized dipakai saat seeding database awal.
+
+<div class="note">💡 Mulailah dari <code>private</code> lalu buka ke public seperlunya. Property bukan sekadar gaya: ia adalah tempat kamu menaruh validasi dan logika kelak tanpa mengubah satu pun kode pemanggil.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Siswa
+{
+    private int umur;
+
+    public string Nama { get; set; }
+
+    public int Umur
+    {
+        get { return umur; }
+        set { umur = (value >= 0) ? value : 0; }
+    }
+
+    public Siswa(string nama, int umurBaru)
+    {
+        Nama = nama;
+        Umur = umurBaru;
+    }
+
+    public void Perkenalkan()
+    {
+        Console.WriteLine("Halo, saya " + Nama + ", umur " + Umur + " tahun");
+    }
+}
+
+class Hewan
+{
+    public virtual void Bersuara() { Console.WriteLine("..."); }
+}
+
+class Kucing : Hewan
+{
+    public override void Bersuara() { Console.WriteLine("Meong!"); }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Siswa s = new Siswa("Sari", 20);
+        s.Perkenalkan();
+
+        Siswa t = new Siswa("Budi", -5);
+        t.Perkenalkan();
+
+        Hewan h = new Kucing();
+        h.Bersuara();
+    }
+}
+`} />

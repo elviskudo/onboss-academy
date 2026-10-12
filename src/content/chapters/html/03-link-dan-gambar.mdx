@@ -1,0 +1,115 @@
+---
+title: "Link dan Gambar"
+description: "Membuat tautan (internal, eksternal, mailto) dan menyisipkan gambar"
+order: 3
+quiz:
+  - q: "Atribut untuk menentukan tujuan link adalah…"
+    options: ["src", "href", "link", "to"]
+    answer: 1
+    explain: "href (hypertext reference) menentukan ke mana link mengarah."
+  - q: "Atribut alt pada <img> berfungsi untuk…"
+    options: ["Menambah efek gambar", "Teks alternatif jika gambar gagal tampil", "Mengatur ukuran gambar", "Menambah animasi"]
+    answer: 1
+    explain: "alt penting untuk aksesibilitas (pembaca layar) dan SEO."
+  - q: "Bagaimana membuka link di tab baru?"
+    options: ["target=\"_blank\"", "open=\"new\"", "new=\"tab\"", "style=\"new\""]
+    answer: 0
+    explain: "target=\"_blank\" membuka link di tab/jendela baru."
+  - q: "Link ke halaman lain di situs yang sama disebut…"
+    options: ["Link eksternal", "Link internal", "Anchor", "Mailto"]
+    answer: 1
+    explain: "Link internal memakai path relatif (mis. /tentang.html) ke halaman dalam situs yang sama."
+  - q: "Tag untuk menyisipkan gambar adalah…"
+    options: ["<pic>", "<image>", "<img>", "<src>"]
+    answer: 2
+    explain: "<img> adalah tag gambar (void, tidak butuh penutup)."
+example:
+  code: |
+    <h1>Galeri Sederhana</h1>
+    <img src="https://placehold.co/400x200/4F46E5/white?text=Belajar+HTML" alt="Ilustrasi belajar HTML" width="400">
+    <p>Kunjungi <a href="https://developer.mozilla.org" target="_blank" rel="noopener noreferrer">MDN Web Docs</a> untuk referensi lengkap.</p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tautan (*link*) dan gambar adalah dua elemen paling sering dipakai di web — keduanya yang membuat web menjadi "hypermedia": dokumen saling terhubung dan kaya media.
+
+## Membuat Link dengan `<a>`
+
+```html
+<a href="https://www.google.com">Kunjungi Google</a>
+```
+
+Elemen `<a>` (*anchor*) punya dua bagian: atribut `href` (tujuan) dan teks yang bisa diklik (juga boleh berisi gambar).
+
+### Link Internal vs Eksternal
+
+```html
+<a href="https://www.detik.com">Eksternal (URL penuh)</a>
+<a href="/tentang.html">Internal (path absolut dari root)</a>
+<a href="kontak.html">Internal (path relatif)</a>
+```
+
+- **Eksternal** — diawali `https://`, mengarah ke situs lain
+- **Internal** — path relatif menghitung dari halaman saat ini; path absolut dari awal domain. Untuk `<img>`, keduanya juga berlaku sama
+
+### Atribut Penting `<a>`
+
+```html
+<a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer">YouTube</a>
+<a href="mailto:halo@kampusku.id">Kirim Email</a>
+<a href="tel:+6281234567890">Telepon</a>
+<a href="dokumen.pdf" download>Unduh CV</a>
+<a href="#bagian-2">Ke Bagian 2</a>
+```
+
+| Atribut | Fungsi | Kapan dipakai |
+|---------|--------|---------------|
+| `href` | Tujuan tautan | Selalu, pada `<a>` |
+| `target="_blank"` | Buka di tab baru | Referensi eksternal |
+| `rel="noopener noreferrer"` | Cegah tab baru mengakses `window.opener` | Selalu bersama `target="_blank"` |
+| `mailto:` / `tel:` | Buka aplikasi email/telepon | Kontak |
+| `download` | Unduh file, bukan buka | File PDF, gambar, template |
+| `#id` | Lompat ke elemen dengan `id` tertentu | Daftar isi, "kembali ke atas" |
+
+## Menyisipkan Gambar dengan `<img>`
+
+```html
+<img src="kucing.jpg" alt="Seekor kucing lucu" width="300">
+```
+
+`<img>` adalah **void element** — tidak butuh tag penutup.
+
+| Atribut | Fungsi | Kapan dipakai |
+|---------|--------|---------------|
+| `src` | Lokasi file/URL gambar | Selalu |
+| `alt` | Deskripsi alternatif | Selalu (kecuali gambar murni dekoratif, isi `alt=""`) |
+| `width`/`height` | Ukuran piksel | Mencegah layout "loncat" saat gambar dimuat |
+| `loading="lazy"` | Muat gambar saat mendekat viewport | Halaman dengan banyak gambar |
+
+`alt` wajib diisi karena tiga alasan: gambar gagal dimuat, pembaca layar membacanya, dan Google membaca teks `alt` untuk memahami gambar.
+
+## Figure dan Caption
+
+```html
+<figure>
+  <img src="gunung.jpg" alt="Pemandangan gunung" width="500">
+  <figcaption>Gunung saat matahari terbit</figcaption>
+</figure>
+```
+
+`<figure>` + `<figcaption>` mengikat gambar dengan keterangannya secara semantik — caption tidak lagi "ngambang" bebas di dekat gambar.
+
+## Di Dunia Nyata
+
+- **Artikel berita online** — tiap foto pakai `alt` deskriptif; Google Gambar menjadi sumber trafik tambahan
+- **Halaman produk** — `width`/`height` ditulis agar tabel harga tidak melompat saat foto belum termuat
+- **CV digital** — tombol "Unduh PDF" memakai `<a download href="cv.pdf">`
+- **Situs dokumentasi** — link internal relatif (`../css/flexbox.html`) menghubungkan bab-bab tutorial
+
+<div class="note">💡 Saat memakai `target="_blank"`, selalu tambahkan `rel="noopener noreferrer"` — tanpa itu, halaman yang dibuka bisa mengakses `window.opener` milikmu dan menimpa halaman pengguna lewat *tabnabbing*).</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<h1>Wisata Bandung</h1>
+<img src="https://placehold.co/500x220/16A34A/white?text=Kawah+Putih" alt="Ilustrasi Kawah Putih" width="500">
+<figcaption>Foto Kawah Putih (placeholder)</figcaption>
+<p>Baca juga: <a href="/belajar/html">Tutorial HTML</a></p>`} />

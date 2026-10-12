@@ -1,0 +1,151 @@
+---
+title: "String & Interpolasi"
+description: "Menyusun teks di Swift — interpolasi, property, dan operasi bawaan String"
+order: 3
+quiz:
+  - q: "Cara menyisipkan variabel ke string di Swift adalah…"
+    options: ["\\(variabel)", "#{}", "$variabel saja", "f-string"]
+    answer: 0
+    explain: "Backslash lalu kurung, contoh Halo \\(nama)."
+  - q: "Property untuk panjang string adalah…"
+    options: ["length", "size", "count", "len"]
+    answer: 2
+    explain: "String di Swift memakai count, bukan length."
+  - q: "Method untuk mengubah huruf besar adalah…"
+    options: ["toUpper()", "uppercased()", "upcase()", "big()"]
+    answer: 1
+    explain: "Swift memakai uppercased() dan lowercased() yang mengembalikan string baru."
+  - q: "String di Swift bersifat…"
+    options: ["selalu berubah", "hanya angka", "nilai tetap bila dibuat dengan let", "harus kosong"]
+    answer: 2
+    explain: "Pada dasarnya String adalah nilai, bukan referensi yang bisa dimodifikasi diam-diam."
+  - q: "Method memecah string menjadi array adalah…"
+    options: ["split(separator:)", "cut()", "divide()", "chop()"]
+    answer: 0
+    explain: "split(separator: \",\") menghasilkan [Substring]."
+example:
+  code: |
+    let nama = "onboss academy"
+    let sapa = "Halo, \(nama)!"
+
+    print(sapa)
+    print("Panjang: \(nama.count)")
+    print(nama.uppercased())
+    print("Kata pertama: \(nama.split(separator: " ").first ?? "")")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah tipe yang paling sering kamu sentuh: memformat pesan, memvalidasi input, sampai menampilkan data.
+
+## Membuat String
+
+```swift
+let satu = "kutip tunggal"
+let dua = "kutip ganda"
+let kosong = ""
+
+print("\(satu) / \(dua) panjangnya \(dua.count)")
+```
+
+Swift membedakan kutip tunggal untuk Character dan kutip ganda untuk String.
+
+## Interpolasi
+
+```swift
+let nama = "Sari"
+let umur = 20
+
+print("Halo, \(nama)!")
+print("Umur: \(umur) tahun")
+print("Tahun lahir: \(2026 - umur)")
+```
+
+Ekspresi apa pun bisa diletakkan di dalam kurung — aritmetika, pemanggilan function, bahkan percabangan singkat:
+
+```swift
+let umur = 20
+let status = umur >= 17 ? "dewasa" : "anak"
+print("Tahun lahir: \(2026 - umur)")
+print("Status: \(status)")
+
+func sapa(_ nama: String) -> String { "Halo, \(nama)" }
+print(sapa("Swift"))          // hasil function ikut disisipkan
+```
+
+Untuk menyisipkan tanda `\` atau `"` di dalam string, tulis `\\` dan `\"`.
+
+## Property dan Method Penting
+
+Ada **9 anggota String yang paling sering dipakai** — semuanya dari standard library, tanpa library tambahan:
+
+| Anggota | Fungsi | Contoh hasil |
+| --- | --- | --- |
+| `count` | jumlah karakter | `"Halo".count` → `4` |
+| `isEmpty` | cek string kosong | `"".isEmpty` → `true` |
+| `uppercased()` | huruf besar semua | `"halo".uppercased()` → `"HALO"` |
+| `lowercased()` | huruf kecil semua | `"HALO".lowercased()` → `"halo"` |
+| `hasPrefix` | cek awalan | `"Halo".hasPrefix("Ha")` → `true` |
+| `hasSuffix` | cek akhiran | `"Halo".hasSuffix("lo")` → `true` |
+| `contains` | cek kemunculan | `"a@b.id".contains("@")` → `true` |
+| `split(separator:)` | pecah jadi potongan | `"a b".split(separator: " ")` → `["a", "b"]` |
+| `joined(separator:)` | rangkai potongan | `["a","b"].joined(separator: ", ")` → `"a, b"` |
+
+```swift
+let teks = " Belajar Swift "
+
+print(teks.count)                    // 14, spasi ikut dihitung
+print(teks.hasPrefix(" Belajar"))    // true
+print(teks.uppercased())
+print(teks.dropFirst().count)        // 13 — membuang 1 karakter di depan
+```
+
+`String(repeating: "*", count: 4)` juga standard library — berguna menyembunyikan password saat menampilkan mask.
+
+## Memecah dan Menggabungkan
+
+```swift
+let kalimat = "satu dua tiga"
+let kata = kalimat.split(separator: " ")
+
+print(kata)
+print(kata.joined(separator: ", "))
+```
+
+`split` menghasilkan potongan teks, `joined` menyatukannya kembali dengan pemisah.
+
+## Memeriksa Isi
+
+```swift
+let email = "belajar@onboss.id"
+
+print(email.contains("@"))
+print(email.isEmpty)
+```
+
+Keduanya sangat berguna saat memvalidasi input sebelum dikirim.
+
+## Di Dunia Nyata
+
+- **Memvalidasi email** — `email.contains("@") && !email.isEmpty` menjadi pemeriksaan pertama sebelum form dikirim ke server.
+- **Menampilkan nama lengkap** — `"\(depan) \(belakang)"` menyusun tampilan tanpa operator konkatenasi.
+- **Membuat mask password** — `String(repeating: "*", count: input.count)` menyembunyikan isi sambil menunjukkan panjangnya.
+- **Memecah data CSV** — `baris.split(separator: ",")` mengubah satu baris berkas data jadi potongan kolom.
+- **Menentukan label status** — `status.hasPrefix("2")` mengenali respons sukses dari kode HTTP dua digit pertama.
+
+<div class="note">💡 String di Swift menyimpan karakter Unicode dengan aman — emoji, aksen, dan gabungan huruf tetap dihitung benar. Gunakan count, jangan menghitung panjang secara manual.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`let nama = "onboss academy"
+let sapa = "Halo, \\(nama)!"
+
+print(sapa)
+print("Panjang: \\(nama.count)")
+print(nama.uppercased())
+print(nama.hasPrefix("onboss"))
+
+let kalimat = "satu dua tiga"
+let kata = kalimat.split(separator: " ")
+print(kata.joined(separator: ", "))
+
+let email = "belajar@onboss.id"
+print(email.contains("@"))`} />

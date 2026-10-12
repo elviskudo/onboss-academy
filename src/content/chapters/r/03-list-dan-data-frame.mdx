@@ -1,0 +1,152 @@
+---
+title: "List & Data Frame"
+description: "Struktur heterogen R: list, matrix, data.frame, tibble, indexing, tidy data, dan merge"
+order: 3
+quiz:
+  - q: "Perbedaan utama list dan vektor atomik adalah…"
+    options: ["List lebih cepat", "List boleh berisi elemen bertipe campur", "List hanya untuk angka", "List tidak punya panjang"]
+    answer: 1
+    explain: "List bersifat heterogen — satu list bisa memuat vektor, fungsi, bahkan data frame lain."
+  - q: "Data frame pada dasarnya adalah…"
+    options: ["Vektor dua dimensi", "List dengan kolom sama panjang", "Matriks berhuruf", "Array database"]
+    answer: 1
+    explain: "Data frame adalah list vektor kolom sama panjang; tiap kolom boleh berbeda tipe."
+  - q: "Apa beda df[\"nilai\"] dan df[[\"nilai\"]]?"
+    options: ["Tidak ada", "Yang pertama data frame satu kolom, yang kedua vektor kolom", "Yang pertama vektor, yang kedua list", "Keduanya matrix"]
+    answer: 1
+    explain: "[ mempertahankan wadah; [[ mengekstrak isi satu elemen/kolom."
+  - q: "Fungsi base R untuk menggabungkan dua tabel berdasarkan kunci adalah…"
+    options: ["c()", "paste()", "merge()", "bind()"]
+    answer: 2
+    explain: "merge(x, y, by = \"id\") mencocokkan baris seperti JOIN SQL."
+  - q: "Dalam tidy data, satu observasi ditempatkan pada…"
+    options: ["Satu file", "Satu sheet", "Satu baris", "Satu database"]
+    answer: 2
+    explain: "Aturan tidy: satu variabel per kolom, satu observasi per baris, satu nilai per sel."
+example:
+  code: |
+    df <- data.frame(
+      nama = c("Adi", "Budi", "Citra"),
+      nilai = c(85, 90, 78),
+      lulus = c(TRUE, TRUE, FALSE)
+    )
+    df[df$nilai >= 80, ]
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setelah vektor, R punya wadah untuk data bertingkat dan berbentuk tabel. List menyimpan objek campur; data frame menyusun vektor sama panjang menjadi kolom yang bisa dianalisis bersama.
+
+## Empat Struktur Data Utama
+
+Ada **4 struktur komposit** yang sering dipakai:
+
+| Struktur | Dimensi | Tipe elemen | Kapan dipakai |
+| --- | --- | --- | --- |
+| matrix | 2 | homogen | aljabar linier |
+| array | n | homogen | citra atau tensor sederhana |
+| list | 1/bertingkat | heterogen | hasil model, metadata |
+| data.frame | 2 | per kolom homogen | data observasi berbentuk tabel |
+
+Tibble adalah varian data frame dari package eksternal `tibble`: aturan printing dan subsetting lebih konsisten, tetapi bukan tipe wajib untuk belajar analisis R. Semua contoh berikut memakai base `data.frame`.
+
+## List: Wadah Heterogen
+
+```r
+mahasiswa <- list(
+  nama = "Sari",
+  nilai = c(85, 90, 78),
+  aktif = TRUE
+)
+mahasiswa$nama
+mahasiswa[["nilai"]]
+mahasiswa["nilai"]
+```
+
+Tiga operator ekstraksi list:
+
+| Operator | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| `$nama` | isi elemen bernama | nama kolom literal |
+| `[[nama]]` | isi satu elemen | nama disimpan variabel |
+| `[nama]` | list kecil | ingin mempertahankan wadah |
+
+Beda `[` dan `[[` adalah sumber kebingungan umum: `[ ]` memilih wadah, `[[ ]]` membuka wadah.
+
+## Membuat Data Frame
+
+```r
+df <- data.frame(
+  nama = c("Adi", "Budi", "Citra"),
+  nilai = c(85, 90, 78),
+  lulus = c(TRUE, TRUE, TRUE)
+)
+dim(df)
+names(df)
+str(df)
+```
+
+Data frame adalah list khusus: setiap kolom berupa vektor dengan panjang sama. Karena itu kolom `nama` boleh character, `nilai` double, dan `lulus` logical pada tabel yang sama.
+
+## Akses Baris dan Kolom
+
+```r
+df[1, ]                 # baris pertama, semua kolom
+df[, "nilai"]          # kolom menjadi vektor
+df["nilai"]            # tetap data frame satu kolom
+df$nama                 # vektor nama
+df[df$nilai > 80, ]     # filter baris
+```
+
+Notasi dua dimensi selalu `df[baris, kolom]`. Kosongkan sisi setelah koma untuk semua kolom; kosongkan sisi sebelum koma untuk semua baris.
+
+## Tidy Data
+
+Tabel yang rapi mengikuti **3 aturan**:
+
+1. Satu variabel menempati satu kolom.
+2. Satu observasi menempati satu baris.
+3. Satu nilai menempati satu sel.
+
+Contoh: tabel penjualan sebaiknya memiliki kolom `tanggal`, `produk`, dan `jumlah`, bukan kolom terpisah `Senin`, `Selasa`, `Rabu`. Bentuk panjang ini langsung cocok dengan fungsi ringkasan, grafik, dan model.
+
+## Membaca dan Menulis CSV
+
+```r
+# data <- read.csv("penjualan.csv", stringsAsFactors = FALSE)
+# write.csv(df, "keluaran.csv", row.names = FALSE)
+```
+
+`read.csv()` menghasilkan data frame. Setelah membaca data asing, selalu jalankan tiga pemeriksaan: `dim(data)`, `str(data)`, dan `head(data)`. Jangan percaya tipe hasil impor sebelum memeriksanya.
+
+## Menggabungkan Data
+
+```r
+siswa <- data.frame(id = 1:3, nama = c("Adi", "Budi", "Citra"))
+nilai <- data.frame(id = c(1, 3), nilai = c(85, 92))
+merge(siswa, nilai, by = "id")
+merge(siswa, nilai, by = "id", all.x = TRUE)
+```
+
+`merge()` default menghasilkan inner join; `all.x = TRUE` menghasilkan left join. Kolom kunci harus mewakili identitas yang sama di kedua tabel.
+
+## Di Dunia Nyata
+
+1. **Data transaksi** — data frame menyimpan satu pembelian per baris dengan kolom waktu, pelanggan, produk, dan nominal.
+2. **Hasil model** — objek `lm()` berupa list kompleks berisi coefficients, residuals, fitted values, dan metadata panggilan.
+3. **Gabung profil dan aktivitas** — `merge(profil, transaksi, by = "user_id")` menghubungkan dua sumber melalui identitas pelanggan.
+4. **Impor laporan bulanan** — kumpulan CSV dibaca menjadi data frame lalu digabung dengan `rbind()` bila skema kolom sama.
+5. **Tibble di proyek modern** — package tidyverse sering mengembalikan tibble; fungsi base seperti `mean(df$nilai)` tetap bekerja karena tibble mewarisi data.frame.
+
+<div class="note">💡 Struktur tidy bukan soal estetika. Jika satu variabel tersebar di beberapa kolom, setiap filter, ringkasan, grafik, dan model membutuhkan transformasi khusus. Rapikan sekali di awal agar analisis berikutnya tetap sederhana.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`df <- data.frame(
+  nama = c("Adi", "Budi", "Citra", "Dewi"),
+  nilai = c(85, 90, 78, 95),
+  lulus = c(TRUE, TRUE, TRUE, TRUE)
+)
+print(dim(df))
+str(df)
+print(df[df$nilai >= 85, ])
+print(mean(df$nilai))
+print(df[order(-df$nilai), ])`} />

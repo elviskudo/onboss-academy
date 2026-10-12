@@ -1,0 +1,245 @@
+---
+title: "Function"
+description: "Definisi, prototype, pass by value & pointer, static lokal, rekursi, function pointer — unit dasar program C"
+order: 5
+quiz:
+  - q: "Function yang tidak mengembalikan nilai memakai tipe…"
+    options: ["int", "void", "char", "null"]
+    answer: 1
+    explain: "void berarti tidak ada nilai kembalian; jika ada, tulis tipe datanya di depan nama fungsi."
+  - q: "Function prototype berfungsi untuk…"
+    options: ["Menjalankan fungsi", "Menghapus fungsi", "Memberi tahu kompilator signature fungsi sebelum dipakai", "Menggabung dua file"]
+    answer: 2
+    explain: "Prototype di atas main() membuat kompilator mengenali fungsi yang definisinya ada di bawah."
+  - q: "Pada fungsi, nilai argument disalin ke…"
+    options: ["Memori global", "Stack sistem operasi", "Parameter (pass by value)", "Tidak disalin sama sekali"]
+    answer: 2
+    explain: "C selalu pass by value — mengubah parameter tidak memengaruhi variabel asli di pemanggil."
+  - q: "Fungsi yang memanggil dirinya sendiri disebut…"
+    options: ["Rekursi", "Overloading", "Callback", "Pointer"]
+    answer: 0
+    explain: "Rekursi wajib punya kondisi berhenti (basis) agar tidak stack overflow."
+  - q: "Cara menyalin fungsi sebagai data (callback) di C adalah…"
+    options: ["Function pointer: void (*f)(int)", "Keyword delegate", "Lambda resmi", "Tidak bisa"]
+    answer: 0
+    explain: "C tidak punya lambda/delegate — function pointer adalah mekanisme callback resmi bahasa ini."
+example:
+  code: |
+    #include <stdio.h>
+
+    int tambah(int a, int b) {
+        return a + b;
+    }
+
+    void sapa(char nama[]) {
+        printf("Halo, %s!\n", nama);
+    }
+
+    int main(void) {
+        sapa("Sari");
+        printf("Hasil: %d\n", tambah(4, 6));
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Function memecah program menjadi **bagian-bagian kecil yang fokus pada satu tugas** — lebih mudah diuji dan dipakai ulang. Di C, function adalah satu-satunya unit eksekusi: tidak ada method, tidak ada class.
+
+## Mendefinisikan & Memanggil
+
+```c
+#include <stdio.h>
+
+int luasPersegi(int sisi) {     // definisi
+    return sisi * sisi;
+}
+
+void tampilkan(int nilai) {     // tanpa nilai kembalian
+    printf("Nilai: %d\n", nilai);
+}
+
+int main(void) {
+    printf("Luas: %d\n", luasPersegi(5));  // pemanggilan
+    tampilkan(90);
+    return 0;
+}
+```
+
+Struktur: `<tipe_kembalian> <nama>(<parameter>) { ... }`. Parameter boleh 0 — tulis `(void)` agar eksplisit kosong: `int main(void)`. C **tidak punya** parameter default, named parameter, maupun overloading — beda nama function untuk beda keperluan.
+
+## Prototype
+
+```c
+int hitung(int a, int b);       // prototype di bagian atas file
+
+int main(void) {
+    printf("%d\n", hitung(3, 4));
+    return 0;
+}
+
+int hitung(int a, int b) {      // definisi boleh di bawah
+    return a * 2 + b;
+}
+```
+
+Prototype memungkinkan function saling memanggil tanpa peduli urutan definisinya — dan menjadi dasar pemisahan `.c` + `.h` di proyek multi-file.
+
+## Pass by Value
+
+```c
+void gagalUbah(int x) {
+    x = 999;              // hanya mengubah salinan
+}
+
+int main(void) {
+    int a = 1;
+    gagalUbah(a);
+    printf("%d\n", a);     // tetap 1
+    return 0;
+}
+```
+
+Untuk benar-benar mengubah data asli, kirim **alamatnya** dengan pointer:
+
+```c
+void berhasilUbah(int *x) {
+    *x = 999;             // menulis lewat alamat — variabel asli berubah
+}
+// pemanggilan: berhasilUbah(&a);
+```
+
+Pola "output parameter" ini standar di C, menggantikan kemampuan mengembalikan banyak nilai.
+
+## Array sebagai Parameter
+
+```c
+int jumlah(int arr[], int panjang) {
+    int total = 0;
+    for (int i = 0; i < panjang; i++) total += arr[i];
+    return total;
+}
+```
+
+Saat array dikirim ke function, yang dikirim sebenarnya **pointer ke elemen pertama** — tidak ada salinan isi, dan ukuran array tidak ikut. Karena itu panjang selalu dikirim terpisah sebagai parameter kedua.
+
+## Static Lokal & Variabel Global
+
+```c
+void hitungPanggilan(void) {
+    static int hitung = 0;   // static: bertahan antar pemanggilan
+    hitung++;
+    printf("Dipanggil %d kali\n", hitung);
+}
+// pemanggilan 3x: 1, 2, 3
+```
+
+`static` lokal menyimpan state antar pemanggilan tanpa membuka akses ke seluruh program. Variabel **global** (di luar semua function) terlihat dari mana saja — gunakan hemat karena menyulitkan debugging: siapa pun bisa mengubahnya diam-diam.
+
+## Rekursi
+
+```c
+long long faktorial(int n) {
+    if (n <= 1) return 1;          // basis: titik berhenti
+    return n * faktorial(n - 1);   // panggil diri sendiri
+}
+// faktorial(5) = 5 * 4 * 3 * 2 * 1 = 120
+```
+
+Rekursi tanpa basis = crash (stack overflow). C memanggil lewat stack — setiap level memakan memori. Untuk perhitungan linear, loop biasanya lebih hemat; rekursi dipakai untuk tree traversal dan divide-and-conquer.
+
+## Function Pointer — Polimorfisme ala C
+
+C **tidak punya OOP**, tapi punya **function pointer**: variabel yang menyimpan alamat function, bisa dipanggil lewat pointer dan ditukar saat runtime. Inilah mekanisme pengganti method override di bahasa prosedural:
+
+```c
+#include <stdio.h>
+
+int tambah(int a, int b) { return a + b; }
+int kurang(int a, int b) { return a - b; }
+
+int hitung(int (*op)(int, int), int a, int b) {   // parameter = function pointer
+    return op(a, b);                              // "memanggil method" lewat pointer
+}
+
+int main(void) {
+    int (*pilih)(int, int) = tambah;   // pointer menunjuk tambah
+    printf("%d\n", hitung(tambah, 10, 3));  // 13
+    pilih = kurang;                          // tukar perilaku → polimorfisme
+    printf("%d\n", hitung(pilih, 10, 3));    // 7
+    return 0;
+}
+```
+
+Pola ini menjadi dasar `qsort` (stdlib) dan vtable pattern pada chapter Struct — persis konsep yang di Java dilakukan interface.
+
+## Variadic (Singkat)
+
+`printf` sendiri adalah variadic: `int printf(const char *fmt, ...)`. Membaca argumen variadic memakai `<stdarg.h>` (`va_list`, `va_arg`) — jarang dibuat sendiri, cukup pahami bahwa `...` = jumlah parameter tak terbatas.
+
+## Ringkasan Bentuk Function di C
+
+| Bentuk | Sintaks | Kapan dipakai |
+|---|---|---|
+| Biasa | `int f(int a, int b)` | default — pass by value |
+| Tanpa parameter | `int f(void)` | tanpa input, tulis `void` eksplisit |
+| Array parameter | `int f(int arr[], int n)` | proses banyak data + panjang terpisah |
+| Pointer parameter | `void f(int *x)` | ubah nilai pemanggil / hemat salinan struct |
+| Function pointer | `void f(int (*op)(int,int))` | callback, strategi bisa ditukar |
+| Variadic | `int f(const char *fmt, ...)` | jumlah argumen tak terbatas ala `printf` |
+| Static lokal | `static int lokal = 0;` di dalam f | simpan state antar pemanggilan |
+| Rekursif | `f memanggil f` dengan basis | tree, divide-and-conquer |
+
+## Di Dunia Nyata
+
+- **Validator form login**: function `int validasi(const char *user, const char *pass)` dipakai ulang di CLI, GUI, dan API handler.
+- **Kalkulator interaktif**: function pointer `int (*op)(int,int)` dipilih sesuai operator yang diketik user.
+- **Modul kalkulasi pajak**: prototype di `pajak.h` memungkinkan 5 file `.c` memanggil `hitungPPh` tanpa peduli urutan kompilasi.
+- **Statistik pembacaan sensor**: `static int hitung` mencatat berapa kali function dipanggil sepanjang program hidup.
+- **Sorting data mahasiswa**: mengirim function pembanding ke `qsort` — satu algoritma, kriteria banding apa pun.
+
+<div class="note">💡 Satu function, satu tanggung jawab. Jika kamu perlu menulis komentar untuk menjelaskan apa yang dilakukan function, pertimbangkan untuk memecahnya menjadi dua function dengan nama yang jelas. Untuk data yang harus berubah, ingat: kirim pointer, bukan nilainya.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int tambah(int a, int b) {
+    return a + b;
+}
+
+int kali(int a, int b) {
+    return a * b;
+}
+
+void sapa(char nama[], int berapa) {
+    for (int i = 1; i <= berapa; i++) {
+        printf("Halo ke-%d, %s!\\n", i, nama);
+    }
+}
+
+int faktorial(int n) {
+    if (n <= 1) return 1;
+    return n * faktorial(n - 1);
+}
+
+void gandakan(int *x) {
+    *x = *x * 2;
+}
+
+int hitung(int (*op)(int, int), int a, int b) {
+    return op(a, b);
+}
+
+int main(void) {
+    sapa("Sari", 2);
+    printf("4 + 6 = %d\\n", tambah(4, 6));
+    printf("4 * 6 = %d\\n", kali(4, 6));
+    printf("5! = %d\\n", faktorial(5));
+
+    int x = 21;
+    gandakan(&x);
+    printf("Digandakan: %d\\n", x);
+
+    printf("via function pointer (+): %d\\n", hitung(tambah, 10, 3));
+    printf("via function pointer (*): %d\\n", hitung(kali, 10, 3));
+    return 0;
+}`} />

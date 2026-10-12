@@ -1,0 +1,255 @@
+---
+title: "Proyek: Kalkulator Mini"
+description: "Menggabungkan method, percabangan, perulangan, dan try-catch jadi satu program utuh"
+order: 10
+quiz:
+  - q: "Method Tambah, Kurang, dan Kali sebaiknya dibuat…"
+    options: ["digabung dalam satu blok Main", "terpisah per operasi", "di file terpisah tanpa class", "di dalam komentar"]
+    answer: 1
+    explain: "Satu method satu tugas membuat kode mudah diuji dan diperbaiki."
+  - q: "switch dalam kalkulator dipakai untuk…"
+    options: ["mengulang program", "menyimpan riwayat", "memilih operasi berdasarkan pilihan pengguna", "mendeklarasikan variabel"]
+    answer: 2
+    explain: "Nilai menu (tanda plus, minus, dan sebagainya) menentukan cabang mana yang jalan."
+  - q: "Agar kalkulator bisa dipakai berulang, alurnya dibungkus…"
+    options: ["try-catch", "class kosong", "komentar", "perulangan while"]
+    answer: 3
+    explain: "While membuat program kembali ke menu setelah satu perhitungan selesai."
+  - q: "Hasil pembagian dua integer akan…"
+    options: ["dibulatkan ke bawah", "selalu desimal", "error", "dibulatkan ke atas"]
+    answer: 0
+    explain: "9 / 2 menghasilkan 4; gunakan tipe double bila ingin hasil pecahan."
+  - q: "Untuk mengubah input teks menjadi angka tanpa exception, gunakan…"
+    options: ["int.Parse saja", "int.TryParse", "Convert.ToString", "ToString()"]
+    answer: 1
+    explain: "TryParse mengembalikan bool sukses/gagal dan mengisi hasil lewat out — tanpa exception."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static int Tambah(int a, int b) { return a + b; }
+        static int Kurang(int a, int b) { return a - b; }
+        static int Kali(int a, int b) { return a * b; }
+
+        static void Main()
+        {
+            Console.WriteLine("2 + 3 = " + Tambah(2, 3));
+            Console.WriteLine("7 - 4 = " + Kurang(7, 4));
+            Console.WriteLine("6 x 3 = " + Kali(6, 3));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Semua materi sebelumnya kini dipakai bersama: **method untuk struktur, percabangan untuk memilih, perulangan untuk mengulang, exception untuk aman**.
+
+## 6 Fitur Kalkulator
+
+| # | Fitur | Materi yang dipakai |
+|---|---|---|
+| 1 | Empat operasi aritmetika | method + return |
+| 2 | Pemilihan operasi | `switch` |
+| 3 | Pembagian aman (nol dicek) | `if` + guard clause |
+| 4 | Input teks → angka | `int.TryParse` + `out` |
+| 5 | Menu berulang | `while` |
+| 6 | Riwayat hasil | `List<string>` |
+
+## Pecah Masalah Jadi Method
+
+```csharp
+static int Tambah(int a, int b) { return a + b; }
+static int Kurang(int a, int b) { return a - b; }
+static int Kali(int a, int b) { return a * b; }
+
+static double Bagi(int a, int b)
+{
+    if (b == 0) return 0;             // guard clause
+    return (double)a / b;
+}
+```
+
+Setiap operasi punya method sendiri. Main cukup memanggil method yang sesuai — logika aritmetika tersembunyi dan mudah diganti tanpa menyentuh UI.
+
+## Memilih Operasi
+
+```csharp
+static double Hitung(string op, int a, int b)
+{
+    switch (op)
+    {
+        case "+": return Tambah(a, b);
+        case "-": return Kurang(a, b);
+        case "x": return Kali(a, b);
+        case "/": return Bagi(a, b);
+        default: return 0;
+    }
+}
+```
+
+`return` di dalam `case` langsung menutup method, jadi `break` tidak diperlukan. C# 8 menulisnya lebih ringkas dengan switch expression:
+
+```csharp
+static double Hitung(string op, int a, int b) => op switch
+{
+    "+" => Tambah(a, b),
+    "-" => Kurang(a, b),
+    "x" => Kali(a, b),
+    "/" => Bagi(a, b),
+    _   => 0
+};
+```
+
+## Input Aman dengan TryParse
+
+```csharp
+string teks = "12";
+int angka;
+if (int.TryParse(teks, out angka))
+{
+    Console.WriteLine("Angka: " + angka);   // sukses
+}
+else
+{
+    Console.WriteLine("Input bukan angka"); // tanpa exception
+}
+```
+
+Pola `TryParse` membuat kalkulator tidak crash saat pengguna mengetik `abc` — cukup tampilkan pesan dan minta ulang.
+
+## Menjalankan Berulang
+
+```csharp
+int hitung = 0;
+while (hitung < 3)
+{
+    hitung++;
+    Console.WriteLine("Perhitungan ke-" + hitung + ": " + Hitung("+", hitung, 10));
+}
+```
+
+Perulangan membuat kalkulator melayani banyak input berturut-turut tanpa program harus dijalankan ulang.
+
+## Program Lengkap
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+class Program
+{
+    static int Tambah(int a, int b) { return a + b; }
+    static int Kurang(int a, int b) { return a - b; }
+    static int Kali(int a, int b) { return a * b; }
+
+    static double Bagi(int a, int b)
+    {
+        if (b == 0) return 0;
+        return (double)a / b;
+    }
+
+    static double Hitung(string op, int a, int b)
+    {
+        switch (op)
+        {
+            case "+": return Tambah(a, b);
+            case "-": return Kurang(a, b);
+            case "x": return Kali(a, b);
+            case "/": return Bagi(a, b);
+            default: return 0;
+        }
+    }
+
+    static void Main()
+    {
+        List<string> riwayat = new List<string>();
+        foreach (string op in new[] { "+", "-", "x", "/" })
+            riwayat.Add("12 " + op + " 4 = " + Hitung(op, 12, 4));
+
+        foreach (string baris in riwayat) Console.WriteLine(baris);
+
+        int angka;
+        Console.WriteLine(int.TryParse("99bukanAngka", out angka)
+            ? "Terbaca: " + angka
+            : "Bukan angka valid");
+    }
+}
+```
+
+Data (`a`, `b`, `operasi`), logika (method), dan tampilan (`Console.WriteLine`) dipisah dengan rapi — pola yang akan terus kamu pakai di proyek nyata. Lanjutkan dengan mode kalkulator ilmiah (pangkat, akar) atau riwayat yang bisa di-undo.
+
+## Di Dunia Nyata
+
+- Aplikasi kasir warung memakai pola switch operasi untuk memilih transaksi penjualan/pembelian.
+- Mesin hitung cicilan KPR: method `HitungBunga(principal, tenor)` dipakai dari CLI dan dari web.
+- Form deposit bank memakai `decimal.TryParse` agar input `abc` tidak melempar exception.
+- Kalkulator pajak penghasilan memecah tarif progresif jadi method per lapisan.
+
+<div class="note">💡 Kode yang sudah berjalan jangan langsung ditulis ulang. Sempurnakan satu method, uji, lanjut method berikutnya. Proyek kecil yang selesai lebih berharga daripada proyek besar yang setengah jadi.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+
+class Program
+{
+    static int Tambah(int a, int b) { return a + b; }
+    static int Kurang(int a, int b) { return a - b; }
+    static int Kali(int a, int b) { return a * b; }
+
+    static double Bagi(int a, int b)
+    {
+        if (b == 0) return 0;
+        return (double)a / b;
+    }
+
+    static double Hitung(string op, int a, int b)
+    {
+        switch (op)
+        {
+            case "+": return Tambah(a, b);
+            case "-": return Kurang(a, b);
+            case "x": return Kali(a, b);
+            case "/": return Bagi(a, b);
+            default: return 0;
+        }
+    }
+
+    static void Main()
+    {
+        int a = 12, b = 4;
+        Console.WriteLine(a + " + " + b + " = " + Hitung("+", a, b));
+        Console.WriteLine(a + " - " + b + " = " + Hitung("-", a, b));
+        Console.WriteLine(a + " x " + b + " = " + Hitung("x", a, b));
+        Console.WriteLine(a + " / " + b + " = " + Hitung("/", a, b));
+        Console.WriteLine(a + " / 0 = " + Hitung("/", a, 0));
+
+        List<string> riwayat = new List<string>();
+        for (int i = 1; i <= 3; i++)
+        {
+            int total = 0;
+            for (int j = 1; j <= i; j++)
+            {
+                total = Tambah(total, j);
+            }
+            riwayat.Add("Jumlah 1.." + i + " = " + total);
+        }
+        foreach (string baris in riwayat)
+        {
+            Console.WriteLine(baris);
+        }
+
+        string input = "99bukanAngka";
+        int angka;
+        if (int.TryParse(input, out angka))
+        {
+            Console.WriteLine("Terbaca: " + angka);
+        }
+        else
+        {
+            Console.WriteLine("Input bukan angka valid");
+        }
+    }
+}
+`} />

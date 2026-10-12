@@ -1,0 +1,128 @@
+---
+title: "Merge & Penyelesaian Konflik"
+description: "Menggabungkan branch, memahami fast-forward, dan mengurus konflik dengan tenang"
+order: 4
+quiz:
+  - q: "Fast-forward merge terjadi ketika…"
+    options: ["Kedua branch sama-sama maju", "Target merge tidak punya commit baru di luar cabang", "Selalu terjadi di semua merge", "Remote sedang offline"]
+    answer: 1
+    explain: "Bila main tidak bergerak sejak cabang dibuat, Git cukup memindahkan pointer — tanpa commit merge baru."
+  - q: "Konflik merge muncul ketika…"
+    options: ["File belum di-commit di branch manapun", "Dua branch mengubah baris yang sama dan Git tidak bisa memilih", "Nama branch terlalu panjang", "Repo terlalu besar"]
+    answer: 1
+    explain: "Git menandai blok dengan <<<<<<< dan ======= dan meminta kamu memilih hasil akhir."
+  - q: "Perintah menggabungkan branch ke branch aktif adalah…"
+    options: ["git join", "git merge nama-branch", "git combine", "git pull nama-branch"]
+    answer: 1
+    explain: "Pastikan berpindah dulu ke branch tujuan, lalu git merge nama-branch."
+  - q: "Untuk membatalkan proses merge yang sedang bermasalah dipakai…"
+    options: ["git abort", "git merge --abort", "git undo merge", "git reset --merge"]
+    answer: 1
+    explain: "git merge --abort mengembalikan working tree ke kondisi sebelum merge dimulai."
+  - q: "Opsi --no-ff pada merge berguna untuk…"
+    options: ["Menghapus commit", "Membuat commit merge eksplisit sehingga struktur cabang terlihat di riwayat", "Merge tanpa internet", "Melewati konflik"]
+    answer: 1
+    explain: "Dengan --no-ff, riwayat tetap menyimpan jejak bahwa fitur pernah berupa branch terpisah."
+example:
+  code: |
+    git switch main
+    git merge fitur-login
+    git log --oneline --graph
+---
+
+Setelah sebuah fitur selesai dikerjakan di branch, pekerjaan itu harus kembali ke `main`. Di sinilah **merge** bekerja.
+
+## Merge Sederhana
+
+```bash
+git switch main
+git merge fitur-login
+```
+
+Kalau `main` tidak bergerak sejak cabang dibuat, terjadi **fast-forward**: pointer `main` cukup digeser ke commit terakhir `fitur-login` — bersih, tanpa commit tambahan.
+
+## Memaksa Commit Merge (--no-ff)
+
+```bash
+git merge --no-ff fitur-login -m "Gabung fitur login"
+```
+
+Riwayat menjadi:
+
+```
+*   9a2b1c3 Gabung fitur login
+|\
+| * f3a91c2 Tambah form login
+| * 44c8e01 Siapkan route auth
+* | 8d1e0a4 Perbaiki README
+|/
+```
+
+Struktur cabang tetap terlihat — berguna untuk audit dan blame.
+
+## Menghadapi Konflik
+
+```bash
+git merge fitur-login
+# Auto-merging app.py
+# CONFLICT (content): Merge conflict in app.py
+```
+
+Buka file dan temukan penanda:
+
+```
+<<<<<<< HEAD
+port = 8000
+=======
+port = 8080
+>>>>>>> fitur-login
+```
+
+Perbaiki menjadi hasil yang kamu mau (hapus semua penanda), lalu:
+
+```bash
+git add app.py
+git commit -m "Selesaikan konflik merge fitur-login"
+```
+
+Ingin membatalkan sepenuhnya:
+
+```bash
+git merge --abort
+```
+
+## Tips Mengurangi Konflik
+
+- merge/rebase `main` ke cabang fitur secara berkala
+- satu branch satu topik — jangan campur refactor besar dengan fitur kecil
+- komunikasikan siapa menyentuh file apa
+
+## Tiga Hasil Merge
+
+| Hasil | Fungsi/arti | Contoh pemicu | Kapan dipakai |
+|---|---|---|---|
+| Fast-forward | Memajukan pointer tanpa commit merge | `git merge fitur-a` | Target belum punya commit baru |
+| Three-way merge | Menggabungkan dua ujung dan leluhur bersama | `git merge fitur-b` | Kedua branch sudah berkembang |
+| Konflik | Menunda hasil untuk keputusan manusia | Perubahan pada baris yang sama | Git tidak dapat memilih isi benar |
+
+Selalu berada di branch **tujuan** sebelum merge. Untuk memasukkan fitur ke `main`, jalankan `git switch main`, perbarui `main`, lalu `git merge fitur`. Sesudah konflik diedit, cari semua penanda dengan `git diff --check`, jalankan test, stage file, dan selesaikan commit. Jangan sekadar memilih “ours” atau “theirs” tanpa memahami perilaku gabungannya; kedua sisi bisa sama-sama diperlukan.
+
+`git merge --abort` aman untuk membatalkan merge yang belum selesai, tetapi perubahan lokal yang sudah ada sebelum merge dapat menyulitkan pemulihan. Mulailah dari working tree bersih. Menghapus file konflik atau memakai `reset --hard` tanpa inspeksi dapat membuang pekerjaan lokal.
+
+## Di Dunia Nyata
+
+- Menggabungkan branch login setelah CI dan review lulus.
+- Menyelesaikan konflik lockfile dengan meregenerasi lockfile, bukan mengedit marker sembarang.
+- Memakai `--no-ff` ketika kebijakan audit perlu menunjukkan batas satu fitur.
+- Membatalkan merge untuk berdiskusi dengan pemilik perubahan sebelum menentukan hasil bisnis.
+
+<div class="note">💡 Konflik merge bukan error fatal — itu Git meminta keputusan manusia karena dua perubahan saling bertabrakan. Baca kedua sisi, pilih yang benar, lalu commit hasilnya.</div>
+
+## Memeriksa Hasil
+
+```bash
+git log --oneline --graph --all
+git status
+```
+
+Pastikan tidak ada sisa konflik dan `git status` bersih sebelum lanjut.

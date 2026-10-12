@@ -1,0 +1,87 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Sidebar from '../../../components/Sidebar.astro';
+import { getLanguage } from '../../../data/languages';
+import { getLangChapters, getPassedChapters, chapterIdToSlug } from '../../../lib/progress';
+
+const { lang } = Astro.params;
+const language = getLanguage(lang!);
+if (!language) return Astro.redirect('/belajar');
+
+const chapters = await getLangChapters(language.id);
+const user = Astro.locals.user;
+const passed = user ? await getPassedChapters(user.id, language.id) : new Set<string>();
+const doneCount = chapters.filter((c) => passed.has(c.id)).length;
+const firstUnfinished = chapters.find((c) => !passed.has(c.id));
+const startSlug = firstUnfinished ? chapterIdToSlug(language.id, firstUnfinished.id) : null;
+const firstSlug = chapters[0] ? chapterIdToSlug(language.id, chapters[0].id) : '';
+---
+<Base title={language.name} description={`${language.name} — ${language.tagline}. Belajar gratis dengan contoh yang bisa dijalankan.`}>
+  <div class="border-b border-line bg-surface">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-4 py-10 sm:px-6">
+      <span class="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl shadow-sm" style={`background:${language.color}1A`}>{language.icon}</span>
+      <div class="flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="text-3xl font-extrabold tracking-tight">{language.name}</h1>
+          <span class="rounded-full border border-line px-3 py-1 text-xs font-bold text-muted">{language.category}</span>
+          {language.runtime !== 'none' && (
+            <span class="rounded-full bg-success-soft px-3 py-1 text-xs font-bold text-success">✔ Bisa dicoba langsung</span>
+          )}
+        </div>
+        <p class="mt-2 text-lg text-muted">{language.tagline}</p>
+      </div>
+      <div class="text-right">
+        {user && doneCount > 0 && (
+          <p class="text-sm font-bold text-primary">{doneCount}/{chapters.length} bab selesai</p>
+        )}
+        {startSlug || firstSlug ? (
+          <a href={`/belajar/${language.id}/${startSlug || firstSlug}`} class="mt-2 inline-block rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">
+            {doneCount > 0 ? '▶ Lanjutkan Belajar' : '▶ Mulai Belajar'}
+          </a>
+        ) : (
+          <span class="mt-2 inline-block rounded-xl bg-line px-6 py-3 text-sm font-bold text-muted">Materi segera hadir</span>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <div class="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row">
+    <Sidebar langId={language.id} langName={language.name} chapters={chapters} passed={passed} />
+
+    <div class="min-w-0 flex-1">
+      <h2 class="text-xl font-extrabold tracking-tight">Daftar Bab ({chapters.length})</h2>
+        <p class="mt-1 text-sm text-muted">Urutan belajar disarankan dari atas ke bawah. Semua bab tersedia untuk dipelajari.</p>
+      <ol class="mt-6 space-y-3">
+        {chapters.map((c, i) => {
+          const unlocked = true;
+          const done = passed.has(c.id);
+          const slug = chapterIdToSlug(language.id, c.id);
+          return (
+            <li>
+              {unlocked ? (
+                <a href={`/belajar/${language.id}/${slug}`} class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm transition hover:border-primary/40 hover:shadow-md">
+                  <span class:list={['flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold', done ? 'bg-success-soft text-success' : 'bg-primary-soft text-primary-dark']}>
+                    {done ? '✔' : i + 1}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-bold">{c.data.title}</p>
+                    <p class="mt-0.5 line-clamp-1 text-sm text-muted">{c.data.description}</p>
+                  </div>
+                  <span class="text-sm font-bold text-primary">→</span>
+                </a>
+              ) : (
+                <div class="flex items-center gap-4 rounded-2xl border border-line/70 bg-bg/60 p-5 opacity-70">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-line text-sm">🔒</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="font-bold text-muted">{c.data.title}</p>
+                    <p class="mt-0.5 text-sm text-muted/80">Lulus kuis bab {i} untuk membuka</p>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </div>
+</Base>

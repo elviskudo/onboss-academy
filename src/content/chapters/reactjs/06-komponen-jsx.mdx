@@ -1,0 +1,158 @@
+---
+title: "Komponen & JSX"
+description: "Menulis komponen fungsional, JSX yang benar, dan memecah UI jadi potongan kecil"
+order: 6
+quiz:
+  - q: "Komponen React modern biasanya ditulis sebagai…"
+    options: ["Class besar berisi semua kode", "Fungsi yang mengembalikan JSX", "File CSS", "Endpoint API"]
+    answer: 1
+    explain: "Function component mendominasi React modern; class hanya tersisa di kode lama."
+  - q: "Nama komponen React harus ditulis…"
+    options: ["PascalCase, mis. TodoList", "camelCase, mis. todoList", "lowercase, mis. todolist", "Bebas spasi"]
+    answer: 0
+    explain: "PascalCase membedakan komponen dari tag HTML bawaan saat dibaca compiler JSX."
+  - q: "Atribut className dipakai karena…"
+    options: ["Itu aturan CSS", "class sudah keyword reserved di JavaScript", "React membenci kata class", "Supaya lebih singkat"]
+    answer: 1
+    explain: "JSX berjalan di JavaScript; nama atribut class diganti className agar tidak bentrok."
+  - q: "Apa gunanya prop key saat merender daftar?"
+    options: ["Membantu React mengenali elemen mana yang berubah", "Mengubah tampilan", "Menyimpan data ke server", "Menambah animasi otomatis"]
+    answer: 0
+    explain: "key yang unik (biasanya id data) membuat update daftar efisien dan terprediksi."
+  - q: "Fragment <>...</> berguna untuk…"
+    options: ["Membungkus banyak elemen tanpa tag pembungkus tambahan", "Menghapus komponen", "Membuat style baru", "Mengganti import"]
+    answer: 0
+    explain: "JSX mensyaratkan satu root; fragment memenuhi aturan itu tanpa menambah node DOM."
+example:
+  code: |
+    const produk = [
+      { id: 1, nama: "Kopi", harga: 25000 },
+      { id: 2, nama: "Roti", harga: 12000 },
+    ];
+    console.log(produk.map((p) => p.nama + " — Rp" + p.harga).join("\\n"));
+---
+
+Dari sini kita mulai menulis React yang sesungguhnya. Fondasi JS dan state dari bab sebelumnya tetap dipakai — hanya bentuknya kini menjadi komponen dan JSX.
+
+## 4 Bagian Komponen Modern
+
+| Bagian | Bentuk | Fungsi | Kapan dipakai |
+|--------|--------|--------|---------------|
+| Function component | `function Kartu() {}` | Mendefinisikan unit UI | Selalu untuk komponen baru |
+| Props | `function Kartu({ item })` | Input read-only dari induk | Variasi data/perilaku |
+| State | `useState(nilaiAwal)` | Memori lokal yang reaktif | Data yang berubah karena interaksi |
+| JSX return | `return <article>…</article>` | Deskripsi tampilan | Hasil akhir tiap render |
+
+React lama juga punya class component dengan `extends React.Component`, tetapi kini jarang dipakai kecuali error boundary dan pemeliharaan kode lama. Function component lebih ringkas dan memakai hooks.
+
+## Struktur Komponen
+
+```jsx
+function Sapa() {
+  return <h1>Halo, OnBoss!</h1>;
+}
+```
+
+Komponen = fungsi bernama PascalCase yang mengembalikan JSX. Memanggilnya di JSX:
+
+```jsx
+export default function App() {
+  return (
+    <main>
+      <Sapa />
+    </main>
+  );
+}
+```
+
+## JSX yang Benar
+
+```jsx
+const judul = "Kopi Susu";
+
+<img src="/kopi.jpg" alt={judul} />
+<input type="text" placeholder="Cari..." disabled />
+<br />
+
+// wajib satu root
+<>
+  <h2>{judul}</h2>
+  <p>Enak disajikan dingin.</p>
+</>
+```
+
+Aturan penting: semua kurung tutup harus lengkap (`<br />`), atribut memakai `className`, `htmlFor`, dan `dangerouslySetInnerHTML` bukan default untuk konten user.
+
+## Props di Komponen
+
+```jsx
+function Kartu({ judul, isi }) {
+  return (
+    <article className="card">
+      <h3>{judul}</h3>
+      <p>{isi}</p>
+    </article>
+  );
+}
+
+<Kartu judul="Promo" isi="Diskon 20% hari ini" />
+```
+
+Ekspresi di dalam kurung kurawal `{...}` bisa berupa variabel, hasil fungsi, atau kondisi — selama tetap JavaScript.
+
+## Merender Daftar
+
+```jsx
+function Menu({ items }) {
+  return (
+    <ul>
+      {items.map((item) => (
+        <li key={item.id}>
+          {item.nama} — Rp{item.harga}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Rantai `map` dari bab array method langsung terpakai di sini. `key` harus unik per item — jangan pakai index bila daftar bisa berubah urutan.
+
+## Conditional Rendering
+
+React memakai percabangan JavaScript biasa. Ada **3 pola utama**:
+
+| Pola | Contoh | Kapan dipakai |
+|------|--------|---------------|
+| Early return | `if (!user) return <Login />` | Seluruh tampilan berbeda |
+| Ternary | `{stok ? <Beli /> : <Habis />}` | Dua alternatif |
+| Logical AND | `{error && <Pesan />}` | Tampilkan atau tidak |
+
+```jsx
+function Status({ stok, memuat }) {
+  if (memuat) return <p>Memuat…</p>;
+  return stok > 0 ? <button>Beli</button> : <p>Stok habis</p>;
+}
+```
+
+Hindari ternary bertingkat karena sulit dibaca; pecah ke variabel atau early return.
+
+## Kapan Memecah Komponen?
+
+Panduan praktis:
+
+- Satu file satu tanggung jawab: navbar, kartu, formulir terpisah
+- Komponen menerima props, jangan terlalu banyak
+- Bagian yang dipakai ulang minimal dua kali layak dijadikan komponen sendiri
+
+Jangan memecah setiap `<div>` menjadi komponen. Pecah ketika bagian punya tanggung jawab jelas, logika sendiri, atau benar-benar digunakan ulang.
+
+## Di Dunia Nyata
+
+- **E-commerce**: `DaftarProduk` melakukan map, `KartuProduk` menerima satu item lewat props.
+- **Dashboard**: `Sidebar`, `Header`, `TabelPesanan`, dan `Pagination` berubah independen.
+- **Autentikasi**: early return menampilkan halaman login sebelum dashboard bila user kosong.
+- **Notifikasi**: `errors.map` menghasilkan alert dengan `key` ID error yang stabil.
+- **Design system**: satu `Button` menerima variant, disabled, dan callback agar gaya konsisten.
+
+<div class="note">💡 Baca JSX sebagai deskripsi tampilan, bukan instruksi. Kalimat "tampilkan daftar produk sebagai kartu" diterjemahkan sekali di return; React yang memikirkan bagaimana memperbaruinya nanti.</div>

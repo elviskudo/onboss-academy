@@ -1,0 +1,225 @@
+---
+title: "Proyek: Katalog Produk"
+description: "Merangkai array asosiatif, function, OOP, dan file — katalog yang bisa dicari dan disimpan"
+order: 10
+quiz:
+  - q: "Langkah awal proyek katalog yang baik adalah…"
+    options: ["Langsung membuat 10 file", "Menyusun struktur data produk dulu", "Memasang framework berat", "Mendesain warna tombol"]
+    answer: 1
+    explain: "Struktur data yang jelas menentukan bentuk fungsi dan class di atasnya."
+  - q: "array_filter() pada array berfungsi…"
+    options: ["Menyaring elemen sesuai kondisi", "Mengurutkan elemen", "Menggabung dua array", "Menghapus file"]
+    answer: 0
+    explain: "Menyisakan item yang mengembalikan true."
+  - q: "Mengapa harga disimpan sebagai integer rupiah?"
+    options: ["Database tidak menerima float", "Karena string lebih lambat", "Menghindari galat floating point pada uang", "Supaya tampilan rapi"]
+    answer: 2
+    explain: "0.1 + 0.2 tidak pernah persis 0.3 di float — uang sebaiknya integer rupiah bulat."
+  - q: "Apa gunanya menyimpan logika pencarian di method cari() milik class Katalog?"
+    options: ["Menghapus produk", "Mengubah harga semua item", "Membuat file baru", "Pemanggil cukup katalog->cari(\"kopi\") tanpa tahu detail loop"]
+    answer: 3
+    explain: "Detail filter tersembunyi di satu tempat — mudah diganti ke database."
+  - q: "Bagian terakhir sebelum rilis adalah…"
+    options: ["Uji skenario kosong dan tak terduga", "Mengganti nama variabel", "Menambah animasi", "Memperpendek komentar"]
+    answer: 0
+    explain: "Katalog kosong, stok nol, dan data hilang wajib diuji lebih dulu."
+example:
+  code: |
+    <?php
+    $produk = [
+        ["nama" => "Kopi", "harga" => 25000, "stok" => 5],
+        ["nama" => "Teh", "harga" => 15000, "stok" => 2],
+    ];
+    foreach ($produk as $p) {
+        echo $p["nama"] . " Rp" . $p["harga"] . "\n";
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Materi selesai — rangkai semuanya jadi **katalog produk**: array asosiatif sebagai data, function untuk format & filter, class untuk mengelola, dan JSON agar datanya bertahan.
+
+## 4 Tahap Membangun Katalog
+
+| Tahap | Isi | Materi yang dipakai |
+| --- | --- | --- |
+| 1. Struktur data | Array of array asosiatif | Tipe data & array |
+| 2. Fungsi murni | `rupiah()`, `cariNama()` | Function |
+| 3. Bungkus jadi class | `Katalog` dengan property privat | OOP |
+| 4. Persistensi | Simpan/muat `katalog.json` | File |
+
+## Struktur Data
+
+```php
+<?php
+$produk = [
+    ["nama" => "Kopi susu", "harga" => 25000, "stok" => 5, "kategori" => "minuman"],
+    ["nama" => "Croissant", "harga" => 30000, "stok" => 2, "kategori" => "makanan"],
+    ["nama" => "Teh melati", "harga" => 15000, "stok" => 8, "kategori" => "minuman"],
+    ["nama" => "Roti bakar", "harga" => 20000, "stok" => 0, "kategori" => "makanan"],
+];
+```
+
+4 kunci wajib yang konsisten di tiap elemen — seperti baris hasil query.
+
+## Format Rupiah
+
+```php
+<?php
+function rupiah(int $n): string {
+    return "Rp" . number_format($n, 0, ",", ".");
+}
+
+echo rupiah(1250000); // Rp1.250.000
+```
+
+Harga memakai `int` rupiah bulat — menghindari galat floating point yang membuat total tidak pernah pas.
+
+## 3 Fungsi Pencarian & Penyaringan
+
+```php
+<?php
+function cariNama(array $produk, string $kata): array {
+    $hasil = [];
+    foreach ($produk as $p) {
+        if (stripos($p["nama"], $kata) !== false) {
+            $hasil[] = $p;
+        }
+    }
+    return $hasil;
+}
+
+function tersedia(array $produk): array {
+    return array_filter($produk, fn($p) => $p["stok"] > 0);
+}
+
+function termurah(array $produk): array {
+    usort($produk, fn($a, $b) => $a["harga"] <=> $b["harga"]);
+    return $produk;
+}
+```
+
+`stripos` mencari tanpa peduli huruf besar/kecil, `array_filter` menyaring tanpa loop manual, `usort` mengurutkan dengan pembanding buatan.
+
+## Class Katalog: 6 Method
+
+| Method | Tugas | Akses |
+| --- | --- | --- |
+| `tambah(array $p)` | Daftarkan produk | publik |
+| `cari(string $kata)` | Cari per nama | publik |
+| `tersedia()` | Saring stok > 0 | publik |
+| `totalNilaiStok()` | Nilai seluruh stok | publik |
+| `daftar()` | Cetak ke layar | publik |
+| `semua()` | Ambil semua isi (JSON) | publik |
+
+```php
+<?php
+class Katalog {
+    private array $produk = [];
+
+    public function tambah(array $p): void {
+        $this->produk[] = $p;
+    }
+
+    public function tersedia(): array {
+        return array_values(array_filter($this->produk, fn($p) => $p["stok"] > 0));
+    }
+
+    public function totalNilaiStok(): int {
+        $total = 0;
+        foreach ($this->produk as $p) {
+            $total += $p["harga"] * $p["stok"];
+        }
+        return $total;
+    }
+
+    public function daftar(): void {
+        foreach ($this->produk as $p) {
+            $status = $p["stok"] > 0 ? "tersedia" : "habis";
+            echo $p["nama"] . " — " . rupiah($p["harga"]) . " [$status]\n";
+        }
+    }
+}
+```
+
+Property `$produk` `private` — perubahan hanya lewat method, jadi aturan (stok tak boleh negatif) tak bisa dilewati pemanggil.
+
+## Simpan ke JSON
+
+```php
+<?php
+function simpanKatalog(Katalog $k, string $file): void {
+    file_put_contents($file, json_encode($k->semua(), JSON_PRETTY_PRINT));
+}
+
+function muatKatalog(string $file): array {
+    if (!file_exists($file)) return [];
+    return json_decode(file_get_contents($file), true) ?? [];
+}
+
+// hasilnya dikembalikan: foreach (muatKatalog($f) as $b) $k->tambah($b);
+```
+
+Alurnya: **baca JSON → ubah di memori → tulis kembali**. Butuh database? Ganti dua function ini dengan query PDO — class dan tampilan tetap.
+
+## Uji Sebelum Rilis
+
+- Katalog kosong → `daftar()` mencetak pesan ramah, bukan error.
+- `stok = 0` → tampil "habis", tidak ikut `tersedia()`.
+- Pencarian tanpa hasil → `[]`, bukan `null`.
+
+## Di Dunia Nyata
+
+- **Kasir kopi shop**: pencarian cepat `stok > 0` sebelum kasir menekan bayar.
+- **Dashboard gudang**: `totalNilaiStok()` menampilkan nilai persediaan dalam satu angka.
+- **Menu restoran digital**: kategori `makanan`/`minuman` disaring `array_filter` lalu dikelompokkan per halaman.
+- **Estimasi ongkir**: `usort` termurah, lalu `array_slice($hasil, 0, 3)` menampilkan 3 opsi.
+
+<div class="note">💡 Pola ini langsung dipindah ke database: ganti array dengan query PDO, lalu `rupiah()`, filter, class `Katalog`, dan tampilan tetap terpakai utuh. Pisahkan **sumber data** dari **logika bisnis** sejak awal — itu perbedaan proyek yang bisa dirawat dan proyek yang harus ditulis ulang.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+function rupiah(int $n): string {
+    return "Rp" . number_format($n, 0, ",", ".");
+}
+
+class Katalog {
+    private array $produk = [];
+
+    public function tambah(array $p): void {
+        $this->produk[] = $p;
+    }
+
+    public function cari(string $kata): array {
+        return array_filter($this->produk, fn($p) => stripos($p["nama"], $kata) !== false);
+    }
+
+    public function tersedia(): array {
+        return array_values(array_filter($this->produk, fn($p) => $p["stok"] > 0));
+    }
+
+    public function totalNilaiStok(): int {
+        $total = 0;
+        foreach ($this->produk as $p) {
+            $total += $p["harga"] * $p["stok"];
+        }
+        return $total;
+    }
+
+    public function daftar(): void {
+        foreach ($this->produk as $p) {
+            $status = $p["stok"] > 0 ? "tersedia" : "habis";
+            echo $p["nama"] . " - " . rupiah($p["harga"]) . " [$status]\\n";
+        }
+    }
+}
+
+$katalog = new Katalog();
+$katalog->tambah(["nama" => "Kopi susu", "harga" => 25000, "stok" => 5]);
+$katalog->tambah(["nama" => "Croissant", "harga" => 30000, "stok" => 2]);
+$katalog->tambah(["nama" => "Teh melati", "harga" => 15000, "stok" => 0]);
+
+echo "=== KATALOG ===\\n";
+$katalog->daftar();
+echo "Item tersedia: " . count($katalog->tersedia()) . "\\n";
+echo "Cari 'teh': " . count($katalog->cari("teh")) . "\\n";
+echo "Nilai stok total: " . rupiah($katalog->totalNilaiStok()) . "\\n";`} />

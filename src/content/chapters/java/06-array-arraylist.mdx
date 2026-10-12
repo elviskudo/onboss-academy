@@ -1,0 +1,184 @@
+---
+title: "Array & ArrayList"
+description: "Array statis, array 2D, 8 method Arrays, dan ArrayList dinamis — struktur data pertama di Java"
+order: 6
+quiz:
+  - q: "Panjang array di Java…"
+    options: ["Bisa ditambah saat runtime dengan mudah", "Tetap setelah dibuat", "Selalu 10", "Tidak punya batas"]
+    answer: 1
+    explain: "new int[5] membuat 5 slot permanen; untuk ukuran dinamis pakai ArrayList."
+  - q: "Indeks pertama array di Java dimulai dari…"
+    options: ["1", "-1", "0", "Bebas"]
+    answer: 2
+    explain: "Elemen terakhir berada di indeks panjang-1, misal arr[4] untuk int[5]."
+  - q: "Mengakses indeks di luar batas array memunculkan…"
+    options: ["NullPointerWarning", "Compile error", "ArrayIndexOutOfBoundsException", "Tidak terjadi apa-apa"]
+    answer: 2
+    explain: "Runtime exception — karena itu selalu cek panjang array sebelum mengakses indeks."
+  - q: "ArrayList berbeda dari array karena…"
+    options: ["Ukurannya bisa bertambah dan berkurang saat program berjalan", "Tidak butuh import", "Hanya menyimpan angka", "Selalu berukuran 5"]
+    answer: 0
+    explain: "add() dan remove() mengubah isi ArrayList bebas — array statis tidak bisa."
+  - q: "Cara mengetahui jumlah elemen ArrayList adalah…"
+    options: ["list.size()", "list.length", "list.count()", "list.capacity()"]
+    answer: 0
+    explain: "ArrayList memakai size(); array memakai atribut .length."
+example:
+  code: |
+    int[] nilai = {80, 90, 75, 88};
+    int total = 0;
+    for (int n : nilai) total += n;
+    System.out.println("Rata-rata: " + (double) total / nilai.length);
+
+    java.util.ArrayList<String> kota = new java.util.ArrayList<>();
+    kota.add("Jakarta");
+    kota.add("Bandung");
+    System.out.println(kota.get(0) + " & " + kota.size() + " kota");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Array menyimpan **sekumpulan data bertipe sama** dalam satu nama — jauh lebih rapi daripada membuat `nilai1`, `nilai2`, `nilai3`… Bab ini membandingkan dua wadah utama Java: array (statis) dan ArrayList (dinamis).
+
+## Deklarasi & Akses Array
+
+```java
+int[] nilai = {80, 90, 75, 88};   // array literal
+String[] nama = new String[3];     // array kosong, isi 3 slot (null)
+nilai[0] = 85;                     // ubah elemen pertama
+System.out.println(nilai[2]);      // 75
+System.out.println(nilai.length);  // 4 — atribut, bukan method()
+```
+
+Setiap akses memakai indeks `0` sampai `length - 1`. Indeks di luar batas = `ArrayIndexOutOfBoundsException`. Java **tidak** memeriksa batas array diam-diam seperti Python — salah indeks langsung error, yang justru membantu menemukan bug.
+
+## Menelusuri Array
+
+```java
+int total = 0;
+for (int i = 0; i < nilai.length; i++) {
+    total += nilai[i];
+}
+for (int n : nilai) {              // for-each: lebih ringkas
+    System.out.println(n);
+}
+```
+
+## 6 Method Utility `java.util.Arrays`
+
+| Method | Fungsi | Contoh hasil |
+|---|---|---|
+| `Arrays.sort(a)` | urutkan ascending | `{88,90}` → `{88, 90}` |
+| `Arrays.binarySearch(a, x)` | cari indeks (array harus terurut) | `2` atau `-(posisi sisip)-1` |
+| `Arrays.fill(a, v)` | isi semua elemen dengan v | `{0,0,0}` |
+| `Arrays.equals(a, b)` | bandingkan isi dua array | `true`/`false` |
+| `Arrays.copyOf(a, n)` | salin dengan panjang baru | array baru |
+| `Arrays.toString(a)` | ubah ke teks berformat | `"[80, 90, 75]"` |
+
+```java
+int[] data = {42, 7, 19};
+Arrays.sort(data);                              // {7, 19, 42}
+System.out.println(Arrays.toString(data));     // [7, 19, 42]
+System.out.println(Arrays.binarySearch(data, 19)); // 1
+```
+
+## Array Dua Dimensi
+
+```java
+int[][] matriks = {
+    {1, 2, 3},
+    {4, 5, 6}
+};
+System.out.println(matriks[1][2]); // 6
+System.out.println(matriks.length); // 2 baris
+System.out.println(matriks[0].length); // 3 kolom
+```
+
+Cocok untuk tabel, grid, atau papan permainan seperti tic-tac-toe.
+
+## ArrayList: Wadah Dinamis
+
+```java
+import java.util.ArrayList;
+
+ArrayList<String> kota = new ArrayList<>();
+kota.add("Jakarta");        // tambah di akhir
+kota.add("Bandung");
+kota.add(1, "Surabaya");    // sisipkan di indeks 1
+kota.remove("Surabaya");    // hapus berdasarkan isi (return boolean)
+kota.remove(0);             // hapus berdasarkan indeks (return elemen)
+System.out.println(kota.size() + " kota: " + kota.get(0));
+System.out.println(kota.contains("Bandung"));  // true
+System.out.println(kota.indexOf("Bandung"));   // 1, -1 jika tak ada
+kota.clear();               // kosongkan
+```
+
+**10 method ArrayList yang paling sering dipakai**: `add`, `add(index, e)`, `get`, `set`, `remove`, `size`, `contains`, `indexOf`, `isEmpty`, `clear`. Catat: `size()` adalah method, `length` adalah atribut — ini sumber salah tulis paling umum.
+
+```java
+ArrayList<Integer> angka = new ArrayList<>();
+angka.add(10);              // autoboxing: int → Integer
+int pertama = angka.get(0); // unboxing: Integer → int
+```
+
+Karena generic `<Integer>`, ArrayList tidak menerima primitif langsung — autoboxing menanganinya otomatis.
+
+## Array vs ArrayList vs Map — Kapan Mana?
+
+| Kondisi | Pilihan | Alasan |
+|---|---|---|
+| Ukuran tetap, tipe sama, akses cepat by index | **array** | hemat memori, cepat, ada `length` bawaan |
+| Ukuran berubah, sering tambah/hapus | **ArrayList** | dinamis, banyak method siap pakai |
+| Cari "nilai dari kunci" (nama → skor) | **HashMap** | pencarian hampir O(1) |
+| Data beda tipe jadi satu entitas | **object/class** | field terdeskripsi jelas |
+
+## Kejatuhan Umum
+
+```java
+String[] nama = new String[3];
+// semua elemen = null, bukan string kosong!
+// nama[0].length() → NullPointerException
+System.out.println(new int[]{1,2} == new int[]{1,2}); // false — dua objek berbeda
+```
+
+Array bersifat **mutable** (isi bisa diganti via index), tapi **panjangnya immutable**. Untuk membandingkan isi dua array pakai `Arrays.equals`, bukan `==`.
+
+## Di Dunia Nyata
+
+- **Menyimpan nilai 30 siswa satu kelas**: `double[] nilai = new double[30]` — rata-rata, min, maks dihitung satu loop.
+- **Keranjang belanja**: `ArrayList<Produk> keranjang` — user bebas menambah/menghapus item saat checkout.
+- **Papan tic-tac-toe 3×3**: `String[][] papan = new String[3][3]` — cek menang lewat baris/kolom/diagonal.
+- **Log server dengan batas memori**: `ArrayList` dengan `remove(0)` saat melebihi 1000 entri (ring buffer sederhana).
+- **Leaderboard turnamen**: `Arrays.sort` pada array skor lalu cetak 10 teratas — dasar fitur ranking game.
+
+<div class="note">💡 Array cocok untuk data berukuran tetap (koordinat, matriks, buffer). ArrayList untuk daftar yang sering bertambah — seperti daftar tugas atau keranjang belanja. Di bawah kap, ArrayList hanyalah array yang diganti ukurannya saat penuh — jadi untuk data ratusan ribu elemen dengan akses random, array mentah tetap lebih cepat.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.ArrayList;
+import java.util.Arrays;
+
+public class Main {
+    public static void main(String[] args) {
+        int[] nilai = {80, 90, 75, 88, 92};
+        int total = 0, tertinggi = nilai[0];
+        for (int n : nilai) {
+            total += n;
+            if (n > tertinggi) tertinggi = n;
+        }
+        System.out.println("Jumlah: " + total);
+        System.out.println("Rata-rata: " + (double) total / nilai.length);
+        System.out.println("Tertinggi: " + tertinggi);
+
+        Arrays.sort(nilai);
+        System.out.println("Terurut: " + Arrays.toString(nilai));
+        System.out.println("Binary search 88: " + Arrays.binarySearch(nilai, 88));
+
+        ArrayList<String> kota = new ArrayList<>();
+        kota.add("Jakarta");
+        kota.add("Bandung");
+        kota.add("Surabaya");
+        kota.remove("Bandung");
+        System.out.println(kota.size() + " kota tersisa: " + kota);
+        System.out.println("Elemen pertama: " + kota.get(0));
+        System.out.println("Ada Surabaya? " + kota.contains("Surabaya"));
+    }
+}`} />

@@ -1,0 +1,162 @@
+---
+title: "Docker Compose"
+description: "Menjalankan multi-container aplikasi dengan satu file deklaratif"
+order: 6
+quiz:
+  - q: "Docker Compose dipakai untuk…"
+    options: ["Mendeklarasikan dan menjalankan banyak container sebagai satu aplikasi", "Menulis Dockerfile", "Mengompres image", "Membuat VM"]
+    answer: 0
+    explain: "Satu file compose.yaml mendefinisikan service, volume, network — lalu docker compose up sekaligus."
+  - q: "Perintah menjalankan seluruh service di compose adalah…"
+    options: ["docker run all", "docker compose up -d", "docker compose start-all", "docker-compose-only"]
+    answer: 1
+    explain: "-d menjalankan di background; tanpa itu semua log menempel di terminal."
+  - q: "Field depends_on pada sebuah service berarti…"
+    options: ["Service ini harus start dulu sebelum yang lain", "Container saling copy file", "Service dibagikan image", "Port digabung"]
+    answer: 0
+    explain: "depends_on mengatur urutan start; kesiapan database baru ditunggu bila memakai healthcheck dan condition: service_healthy."
+  - q: "Environment variable di compose umumnya dideklarasikan pada…"
+    options: ["volumes:", "environment: atau env_file:", "build:", "healthcheck:"]
+    answer: 1
+    explain: "Nilai sensitif sebaiknya lewat env_file (.env) yang tidak ikut ke Git."
+  - q: "docker compose down berfungsi untuk…"
+    options: ["Menghentikan dan menghapus container compose (volume tetap ada)", "Menghapus image", "Menghapus volume", "Mengubah konfigurasi"]
+    answer: 0
+    explain: "Data volume sengaja dipertahankan; hapus eksplisit dengan docker compose down -v bila perlu."
+---
+
+Menjalankan aplikasi nyata berarti banyak container: web + database + cache + worker. **Docker Compose** mendeklarasikan semuanya dalam satu file YAML lalu menjalankannya sebagai satu kesaturan.
+
+## File compose.yaml
+
+```yaml
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+    depends_on:
+      - db
+    env_file: .env
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: appdb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+```
+
+## Perintah Harian
+
+```bash
+docker compose up -d            # jalankan semua service di background
+docker compose ps               # status service
+docker compose logs -f web      # ikuti log service tertentu
+docker compose exec web sh      # masuk ke dalam container service
+docker compose restart web
+docker compose down             # hentikan + hapus container (volume aman)
+docker compose down -v          # hapus juga named volume — HATI-HATI
+docker compose up -d --build    # build ulang lalu start
+```
+
+Satu orang cukup:
+
+```bash
+git clone repo-tim && cd repo-tim
+docker compose up -d
+```
+
+Seluruh stack berjalan tanpa instalasi manual apa pun di mesin.
+
+## depends_on & Healthcheck
+
+```yaml
+services:
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+```
+
+`service_healthy` menunggu `pg_isready` lulus sebelum api start — mencegah error "database connection refused" saat cold start.
+
+## Override untuk Development
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up
+```
+
+File kedua menimpa bagian tertentu (volume kode, port debug) tanpa mengubah file utama.
+
+## Lima Bagian Inti Compose
+
+Sebuah proyek Compose umumnya memakai **5 bagian** berikut.
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `services` | Mendefinisikan container aplikasi | `web`, `db` | Selalu |
+| `volumes` | Menyimpan data persisten | `db-data` | Database atau upload |
+| `networks` | Memisahkan jalur komunikasi | `backend` | Segmentasi service |
+| `configs` | Menyediakan konfigurasi non-rahasia | file konfigurasi | Konfigurasi terkelola |
+| `secrets` | Menyediakan nilai sensitif sebagai file | password DB | Runtime yang mendukungnya |
+
+Compose membuat default network per proyek dan DNS berdasarkan nama service. Aplikasi harus menghubungi `db:5432`, bukan `localhost:5432`; `localhost` di dalam container menunjuk container itu sendiri.
+
+```yaml
+services:
+  web:
+    build: .
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks: [frontend, backend]
+  db:
+    image: postgres:16-alpine
+    networks: [backend]
+networks:
+  frontend:
+  backend:
+    internal: true
+```
+
+Konfigurasi ini menjalankan web sebagai non-root, membuat root filesystem read-only, menyediakan `/tmp` sementara, dan mencegah database berada di jaringan frontend. Pastikan image memang mendukung UID tersebut dan menulis hanya ke path yang dimount.
+
+## Konfigurasi, Secret, dan Validasi
+
+File `.env` memudahkan development, tetapi bukan brankas secret: nilainya dapat terlihat lewat environment dan inspeksi proses. Di produksi gunakan secret manager platform, batasi akses file, dan rotasi kredensial. Jangan commit `.env`.
+
+```bash
+docker compose config
+docker compose config --services
+docker compose pull
+docker compose up -d --wait
+```
+
+`config` merender gabungan file dan substitusi variabel sehingga kesalahan terlihat sebelum start. `pull` mengambil image terlebih dahulu. `--wait` menunggu service running atau healthy pada versi Compose yang mendukungnya.
+
+## Di Dunia Nyata
+
+1. Tim onboarding menjalankan web, PostgreSQL, dan Redis secara konsisten dengan satu perintah.
+2. Pipeline integrasi membuat stack sementara, menjalankan test, lalu `docker compose down -v` agar bersih.
+3. Development override menambahkan bind mount dan port debugger tanpa mengubah konfigurasi dasar.
+4. Healthcheck mencegah worker menerima pekerjaan sebelum database benar-benar siap.
+5. Network internal memisahkan database dari service yang menerima trafik publik.
+
+Compose cocok untuk development, CI, demo, dan deployment satu host. Untuk penjadwalan lintas banyak host, autoscaling, dan rolling update besar, gunakan orchestrator; jangan memaksa Compose menyelesaikan masalah yang bukan cakupannya.
+
+<div class="note">💡 Simpan secret (password DB, API key) di file .env dan masukkan .env ke .gitignore. compose.yaml cukup memakai variabel env DB_PASSWORD — rahasia tidak pernah masuk ke version control.</div>

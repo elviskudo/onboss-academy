@@ -1,0 +1,192 @@
+---
+title: "Percabangan"
+description: "4 bentuk percabangan PHP — if, switch, match, ternary — plus sintaks alternatif"
+order: 4
+quiz:
+  - q: "Berapa bentuk percabangan utama yang dimiliki PHP?"
+    options: ["2: if dan switch", "3: if, switch, ternary", "4: if, switch, match, ternary", "1"]
+    answer: 2
+    explain: "if/elseif/else, switch, match (PHP 8), dan ternary — plus sintaks alternatif endif/endwhile."
+  - q: "match berbeda dari switch karena…"
+    options: ["Menggunakan perbandingan ===, tidak butuh break, dan bisa mengembalikan nilai", "Hanya untuk angka", "Wajib punya 4 case", "Tidak didukung PHP"]
+    answer: 0
+    explain: "match strict, tanpa fall-through, dan berupa ekspresi — switch masih longgar (==)."
+  - q: "case apa yang akan dicocokkan lebih dulu pada switch ($x = 5) dengan case 5 dan case \"5\"?"
+    options: ["case \"5\" karena string", "case 5 karena urutan pertama dan == cocok", "Keduanya dieksekusi", "Error tipe"]
+    answer: 1
+    explain: "switch memakai == (loose) dan berhenti di case pertama yang cocok — case 5 di atas kalah urutan."
+  - q: "Hasil dari $x = 7; echo $x > 5 ? \"besar\" : \"kecil\" adalah…"
+    options: ["besar", "kecil", "Error", "7"]
+    answer: 0
+    explain: "Ternary: kondisi ? nilai_jika_true : nilai_jika_false."
+  - q: "match tanpa default dan tanpa case yang cocok akan…"
+    options: ["Mengembalikan null", "Mengembalikan false", "Melempar UnhandledMatchError", "Diam-diam lewat"]
+    answer: 2
+    explain: "PHP 8 sengaja error — lebih baik daripada nilai kosong yang lolos diam-diam."
+example:
+  code: |
+    <?php
+    $nilai = 85;
+    if ($nilai >= 90) {
+        echo "A";
+    } elseif ($nilai >= 70) {
+        echo "B";
+    } else {
+        echo "C";
+    }
+    echo "\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang hanya berjalan lurus tidak banyak gunanya. Percabangan membuat kode **memilih jalur** berdasarkan kondisi — PHP punya 4 bentuk utama yang masing-masing punya tempatnya sendiri.
+
+## 4 Bentuk Percabangan
+
+| Bentuk | Perbandingan | Mengembalikan nilai | Kapan dipakai |
+| --- | --- | --- | --- |
+| `if / elseif / else` | `==`/`===` bebas ditulis | Tidak — hanya blok | Kondisi bertingkat / logika kompleks |
+| `switch` | `==` (loose) | Tidak — perlu `break` | Banyak nilai kunci yang setara |
+| `match` (PHP 8) | `===` (strict) | **Ya** — langsung ekspresi | Memilih satu nilai → satu hasil |
+| `?:` ternary | Ekspresi boolean | **Ya** | Cabang singkat satu baris |
+
+## Bentuk 1: if / elseif / else
+
+```php
+<?php
+$nilai = 85;
+
+if ($nilai >= 90) {
+    echo "A";
+} elseif ($nilai >= 70) {
+    echo "B";
+} else {
+    echo "C";
+}
+```
+
+Urutan pembacaan: dari atas ke bawah, cabang **pertama yang true dieksekusi** dan sisanya dilewati. Karena itu taruh kondisi paling spesifik di atas — jika `if ($x > 0)` ditulis sebelum `if ($x > 100)`, cabang kedua tidak akan pernah kebagian.
+
+```php
+<?php
+$umur = 20;
+$vip  = true;
+
+if ($umur >= 18 && $vip) {
+    echo "Selamat datang, member VIP!";
+} elseif ($umur >= 18) {
+    echo "Pengunjung biasa";
+} else {
+    echo "Maaf, belum cukup umur";
+}
+```
+
+## Bentuk 2: switch
+
+```php
+<?php
+$status = "lunas";
+
+switch ($status) {
+    case "pending":
+        echo "Menunggu pembayaran";
+        break;
+    case "lunas":
+        echo "Pesanan diproses";
+        break;
+    default:
+        echo "Status tidak dikenal";
+}
+```
+
+`break` mencegah **fall-through** (jatuh ke case berikutnya). Hilangkan `break` hanya bila memang ingin menggabungkan case. Switch memakai perbandingan `==` (loose), jadi `case 5` bisa tertangkap nilai `"5"`.
+
+## Bentuk 3: match (PHP 8)
+
+```php
+<?php
+$status = "lunas";
+
+$pesan = match ($status) {
+    "pending" => "Menunggu pembayaran",
+    "lunas"   => "Pesanan diproses",
+    "batal"   => "Pesanan dibatalkan",
+    default   => "Status tidak dikenal",
+};
+
+echo $pesan;
+```
+
+Tiga beda utama dari switch: **strict (`===`)**, **tidak butuh break**, dan **mengembalikan nilai** sehingga langsung bisa ditugaskan.
+
+## Bentuk 4: ternary & ekspresi ringkas
+
+```php
+<?php
+$umur = 17;
+$izin = $umur >= 18 ? "ya" : "tidak";
+
+$halaman = $_GET["halaman"] ?? 1;      // null coalescing
+$label   = $halaman ?: "beranda";      // elvis — pakai kanan bila kiri falsy
+```
+
+Ternary bersarang (`a ? b : c ? d : e`) bikin bacaan rusak — pakai if biasa atau `match` untuk cabang bertingkat.
+
+## Sintaks Alternatif
+
+```php
+<?php if ($tampil): ?>
+  <p>Halo</p>
+<?php endif; ?>
+```
+
+Bentuk `if: ... endif;`, `foreach: ... endforeach;`, dan `while: ... endwhile;` dipakai saat bercampur langsung dengan HTML di template.
+
+## Anti-Pattern
+
+- Nesting if 4 tingkat → tarik jadi guard clause: `if (!login) { redirect(); return; }`
+- Rantai `elseif` panjang dengan kondisi rumit → pertimbangkan `match` pada satu nilai kunci.
+- `switch` tanpa `default` → cabang tak terduga diam-diam tanpa output.
+
+## Di Dunia Nyata
+
+- **Menentukan ongkos kirim** dari provinsi lewat `match` yang mengembalikan angka.
+- **Hak akses halaman admin** — `if ($peran === 'admin') ... elseif ($peran === 'editor') ...`.
+- **Status pembayaran invoice**: `switch ($status)` menampilkan label dan aksi tombol yang berbeda.
+- **Kalkulator sederhana**: ternary memilih fungsi operator dari pilihan user.
+- **Menentukan kelas berat badan (BMI)**: rentang `if/elseif` mengubah angka jadi kategori "kurus/normal/gemuk".
+
+<div class="note">💡 Utamakan `match` untuk memilih berdasarkan satu nilai: dia strict, tidak bisa lupa `break`, dan langsung bernilai. Tapi ingat sisi kerasnya — `match` tanpa `default` melempar `UnhandledMatchError` saat tidak ada yang cocok, sedangkan `switch` diam-diam lewat. Error yang terlihat lebih baik daripada data yang hilang tanpa kabar.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$nilai = 85;
+
+if ($nilai >= 90) {
+    $huruf = "A";
+} elseif ($nilai >= 80) {
+    $huruf = "B";
+} elseif ($nilai >= 70) {
+    $huruf = "C";
+} else {
+    $huruf = "D";
+}
+echo "Nilai $nilai -> $huruf\\n";
+
+$status = "lunas";
+switch ($status) {
+    case "pending":
+        echo "Menunggu pembayaran\\n";
+        break;
+    case "lunas":
+        echo "Pesanan diproses\\n";
+        break;
+    default:
+        echo "Status tidak dikenal\\n";
+}
+
+$umur = 17;
+$izin = $umur >= 18 ? "ya" : "tidak";
+echo "Umur $umur, boleh masuk: $izin\\n";
+
+$halaman = $_GET["halaman"] ?? 3;
+echo "Halaman default: $halaman\\n";`} />

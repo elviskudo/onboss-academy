@@ -1,0 +1,125 @@
+---
+title: "SELECT dan Filter di PostgreSQL"
+description: "Ambil, saring, urutkan, dan batasi — fondasi query Postgres"
+order: 3
+quiz:
+  - q: "LIMIT 3 OFFSET 2 di PostgreSQL menampilkan…"
+    options: ["3 baris pertama", "2 baris pertama", "3 baris terakhir", "3 baris mulai dari baris ke-3"]
+    answer: 3
+    explain: "OFFSET 2 melewatkan 2 baris pertama; LIMIT 3 mengambil 3 baris sesudahnya."
+  - q: "ILIKE di PostgreSQL berbeda dengan LIKE karena…"
+    options: ["ILIKE lebih cepat", "ILIKE tidak case-sensitive, LIKE case-sensitive", "ILIKE hanya untuk angka", "Tidak ada bedanya"]
+    answer: 1
+    explain: "LIKE Postgres case-sensitive; ILIKE membandingkan tanpa peduli huruf besar-kecil — khas PostgreSQL."
+  - q: "Mengambil daftar departemen unik dilakukan dengan…"
+    options: ["SELECT DISTINCT dept FROM karyawan", "SELECT ALL dept", "SELECT UNIQUE dept", "SELECT dept ONLY"]
+    answer: 0
+    explain: "DISTINCT menghapus duplikat hasil — daftar dept unik: Data, Design, Engineering, Product."
+  - q: "Klausa ORDER BY pada Postgres mendukung…"
+    options: ["Hanya ASC", "NULLS FIRST / NULLS LAST untuk mengatur posisi NULL", "Hanya kolom angka", "Urutan acak wajib"]
+    answer: 1
+    explain: "Postgres mengizinkan kontrol eksplisit posisi NULL: ORDER BY dept NULLS LAST."
+  - q: "Apa yang dibaca query SELECT nama, gaji FROM karyawan WHERE gaji > 9000000?"
+    options: ["Semua kolom", "Semua karyawan", "Nama dan gaji karyawan bergaji di atas 9 juta", "Hanya gaji"]
+    answer: 2
+    explain: "Kolom dipilih sesuai daftar SELECT; baris disaring WHERE gaji > 9000000."
+example:
+  code: |
+    SELECT nama, gaji, dept
+    FROM karyawan
+    WHERE gaji BETWEEN 8000000 AND 11000000
+    ORDER BY gaji DESC
+    LIMIT 5;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setiap perjalanan data dimulai dari `SELECT`. Bab ini menguasai fondasinya di PostgreSQL — sekaligus menyorot perbedaan halus dari dialect lain.
+
+## Apa itu SELECT?
+
+`SELECT` membaca data dari satu atau lebih tabel lalu menghasilkan baris hasil. Urutan baca klausa secara logis: `FROM` (dari mana) → `WHERE` (saring baris) → `GROUP BY` → `HAVING` → `SELECT` (kolom apa) → `ORDER BY` (urut bagaimana) → `LIMIT` (ambil berapa).
+
+## Memilih Kolom dan Alias
+
+```sql
+SELECT nama AS karyawan,
+       gaji,
+       gaji * 12 AS gaji_tahunan
+FROM karyawan;
+```
+
+`AS` memberi nama pada kolom hasil. Ekspresi aritmetika langsung menghasilkan kolom baru — tanpa perlu membuat tabel turunan. Sebut juga nama kolom secara eksplisit, hindari `SELECT *` di produksi: perubahan struktur tabel tidak akan merusak query-mu.
+
+## Filter WHERE dan Operator
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE dept IN ('Data', 'Engineering')
+  AND gaji >= 9000000;
+```
+
+Delapan operator pembanding utama: `=`, `<>`, `<`, `>`, `<=`, `>=`, `BETWEEN`, `IS NULL`. Ditambah 4 operator set/pencocokan — `IN`, `LIKE`, `ILIKE`, `SIMILAR TO`. Digabungkan dengan `AND`, `OR`, dan kurung untuk prioritas.
+
+| Operator | Arti | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `=` / `<>` | sama / tidak sama | `gaji <> 0` | perbandingan nilai tunggal |
+| `<` `>` `<=` `>=` | kurang/besar | `gaji > 9000000` | rentang terbuka |
+| BETWEEN a AND b | di antara (inklusif) | gaji BETWEEN 8000000 AND 11000000 | rentang tertutup |
+| IN (daftar) | termasuk salah satu | dept IN ('Data','Product') | daftar pilihan pendek |
+| IS NULL / IS NOT NULL | mengecek kosong | email IS NULL | kolom opsional |
+| LIKE / ILIKE | pola teks | jabatan LIKE '%Developer%' | pencarian parsial |
+
+Postgres lebih suka `<>` dari `!=` karena itu bentuk standar SQL.
+
+## LIKE dan ILIKE
+
+```sql
+SELECT nama, jabatan
+FROM karyawan
+WHERE jabatan LIKE '%Developer%';
+
+SELECT nama
+FROM karyawan
+WHERE nama ILIKE 'a%';
+```
+
+Dua wildcard: `%` (teks apa saja, termasuk kosong) dan `_` (teks tepat satu karakter). Di Postgres, `LIKE` membedakan huruf besar-kecil, sedangkan `ILIKE` tidak — keduanya mendukung `\` sebagai escape dengan `ESCAPE`.
+
+## ORDER BY dan NULLS
+
+```sql
+SELECT nama, dept
+FROM karyawan
+ORDER BY dept ASC NULLS LAST, nama;
+```
+
+Fitur Postgres: `NULLS FIRST` / `NULLS LAST` mengatur posisi NULL secara eksplisit — penting saat kolom bisa kosong dan urutan laporan harus konsisten. Di kebanyakan database lain posisi NULL ditentukan diam-diam.
+
+## LIMIT dan OFFSET: Pagination
+
+```sql
+-- halaman 1, 3 item
+SELECT nama, gaji FROM karyawan ORDER BY id LIMIT 3 OFFSET 0;
+-- halaman 2
+SELECT nama, gaji FROM karyawan ORDER BY id LIMIT 3 OFFSET 3;
+```
+
+Postgres membolehkan `FETCH FIRST n ROWS ONLY` (standar SQL) sebagai alternatif LIMIT. Pola pagination selalu butuh ORDER BY yang deterministik agar tidak ada baris terlewat atau terulang antar-halaman.
+
+## Di Dunia Nyata
+
+- **Pencarian katalog** — `WHERE nama ILIKE '%keyboard%'` memungkinkan pengguna mencari tanpa peduli huruf besar-kecil.
+- **Filter laporan bulanan** — `WHERE terbit BETWEEN '2026-01-01' AND '2026-01-31'` mengunci satu periode laporan.
+- **Daftar karyawan aktif** — `WHERE email IS NOT NULL AND dept IN (...)` menyaring data kontak sebelum dikirim ke HRIS.
+- **Paginasi API** — `ORDER BY id LIMIT 20 OFFSET 40` menyajikan halaman 3 tanpa memuat seluruh tabel ke memori.
+- **Peringkat gaji** — `ORDER BY gaji DESC NULLS LAST` menjamin karyawan tanpa data gaji duduk di posisi paling bawah, bukan di atas.
+
+<div class="note">💡 Di Postgres, tipe data dijaga ketat: WHERE gaji > 'abc' akan error karena INTEGER tidak bisa dibandingkan dengan teks. Ketegasan ini mencegah kejanggalan data jauh sebelum jadi bug aplikasi.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT nama, gaji, dept
+FROM karyawan
+WHERE gaji BETWEEN 8000000 AND 11000000
+ORDER BY gaji DESC
+LIMIT 5;`} />

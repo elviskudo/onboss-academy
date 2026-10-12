@@ -1,0 +1,201 @@
+---
+title: "Method & Function"
+description: "Deklarasi method, parameter (normal & varargs), return, overloading, rekursi — memecah masalah jadi langkah kecil"
+order: 5
+quiz:
+  - q: "Method yang tidak mengembalikan nilai harus dideklarasikan dengan tipe…"
+    options: ["int", "void", "String", "null"]
+    answer: 1
+    explain: "void berarti tidak ada nilai kembalian; jika ada, tulis tipe datanya (int, double, String, ...)."
+  - q: "Method static dapat dipanggil…"
+    options: ["Hanya dari dalam class lain", "Hanya lewat new", "Tanpa membuat object", "Tanpa nama"]
+    answer: 2
+    explain: "static melekat pada class itu sendiri — contohnya System.out.println dipanggil tanpa object."
+  - q: "Dua method dengan nama sama tetapi parameter berbeda disebut…"
+    options: ["Overriding", "Recursion", "Overloading", "Inheritance"]
+    answer: 2
+    explain: "Overloading: beda jumlah/tipe parameter. Overriding: mengganti method milik parent class."
+  - q: "Nilai yang diberikan saat memanggil method disebut…"
+    options: ["Argument", "Return type", "Local variable", "Field"]
+    answer: 0
+    explain: "Argument adalah nilai saat pemanggilan; parameter adalah variabel penerima di definisi method."
+  - q: "Menerima jumlah parameter tak terbatas di Java memakai…"
+    options: ["varargs: int... nilai", "array kosong saja", "keyword many", "parameter global"]
+    answer: 0
+    explain: "Tiga titik (...) membuat parameter diterima sebagai array di dalam method."
+example:
+  code: |
+    public class Main {
+        static int tambah(int a, int b) {
+            return a + b;
+        }
+
+        static void sapa(String nama) {
+            System.out.println("Halo, " + nama + "!");
+        }
+
+        public static void main(String[] args) {
+            sapa("Sari");
+            System.out.println("Hasil: " + tambah(4, 6));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Method memecah masalah besar menjadi **langkah kecil yang bisa dipakai ulang**, diuji terpisah, dan dibaca manusia. Di Java semua function berada di dalam class dan disebut **method**.
+
+## Mendefinisikan Method
+
+```java
+static int luasPersegi(int sisi) {
+    return sisi * sisi;
+}
+
+static void sapa(String nama) {
+    System.out.println("Halo, " + nama + "!");
+}
+```
+
+Strukturnya: `<akses> <static?> <tipe kembalian> <nama>(<parameter>) { ... }`. `return` mengirim nilai keluar; method `void` berhenti tanpa nilai. `static` membuat method bisa dipanggil tanpa object — inilah bentuk "function" murni ala Java.
+
+## Memanggil Method
+
+```java
+public static void main(String[] args) {
+    int hasil = luasPersegi(5);   // argumen 5 masuk ke parameter sisi
+    sapa("Budi");
+    System.out.println("Luas: " + hasil);
+}
+```
+
+Method yang sama bisa dipanggil berkali-kali dengan argumen berbeda. Istilah: **parameter** ada di definisi, **argument** ada di pemanggilan.
+
+## 4 Jenis Parameter
+
+Java mengenal **4 cara memberi argument** ke method:
+
+| Jenis | Sintaks | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Biasa | `tipe nama` | `hitung(int a, int b)` | kasus umum, urutan jelas |
+| Varargs | `tipe... nama` | `jumlah(int... nilai)` | jumlah argumen berubah-ubah (0..∞) |
+| Array | `tipe[] nama` | `proses(int[] data)` | data sudah berbentuk array |
+| Object | `tipe objek` | `cetak(Barang b)` | kirim banyak field sekaligus |
+
+Java **tidak punya** parameter bernama (named arguments) atau nilai default ala Python — gunakan overloading atau builder object untuk itu.
+
+```java
+static int jumlah(int... nilai) {   // varargs: diterima sebagai int[]
+    int total = 0;
+    for (int n : nilai) total += n;
+    return total;
+}
+// jumlah() = 0, jumlah(1,2) = 3, jumlah(1,2,3) = 6
+```
+
+## void vs Value
+
+```java
+static void cetak(String pesan) {   // void: efek samping (cetak), tanpa hasil
+    System.out.println(pesan);
+}
+static boolean isGenap(int n) {     // boolean: mengembalikan keputusan
+    return n % 2 == 0;
+}
+```
+
+Pertimbangan desain: method yang menghitung harus **mengembalikan nilai** (mudah diuji), method yang berinteraksi dengan dunia luar (file, layar, jaringan) boleh `void`.
+
+## Return Lebih Dari Satu via Object
+
+```java
+static int[] minMaks(int[] data) {
+    int min = data[0], max = data[0];
+    for (int n : data) {
+        if (n < min) min = n;
+        if (n > max) max = n;
+    }
+    return new int[]{min, max};
+}
+```
+
+Java hanya mengembalikan **satu** nilai — bila perlu banyak, kembalikan array, List, atau object (Java 16+ juga bisa record: `record MinMaks(int min, int max)`).
+
+## Overloading
+
+```java
+static int tambah(int a, int b) { return a + b; }
+static double tambah(double a, double b) { return a + b; }
+static int tambah(int a, int b, int c) { return a + b + c; }
+```
+
+Satu nama, beberapa versi — kompilator memilih berdasarkan **tipe dan jumlah parameter**. Yang dibedakan hanya signature parameter, bukan tipe kembalian: `int f(int)` dan `double f(int)` = error kompilasi.
+
+## Rekursi
+
+```java
+static long faktorial(int n) {
+    if (n <= 1) return 1;              // basis: titik berhenti
+    return n * faktorial(n - 1);       // panggil diri sendiri
+}
+// faktorial(5) = 5*4*3*2*1 = 120
+```
+
+Rekursi tanpa basis = `StackOverflowError`. Untuk masalah sederhana, loop biasanya lebih hemat memori; rekursi bersinar pada struktur pohon/berkas dan algoritma divide-and-conquer.
+
+## Kapan Memecah Kode Jadi Method
+
+Pecah menjadi method ketika: (1) blok kode dipakai di **2+ tempat**, (2) blok itu lebih dari **~10 baris** dan namanya bisa diringkas jadi satu kalimat kerja, (3) blok itu **bisa diuji** secara terpisah. Aturan praktis: jika kamu butuh komentar untuk menjelaskan isi blok, method bernama baik menggantikan komentar itu.
+
+## Di Dunia Nyata
+
+- **Kalkulator pajak penghasilan**: method `hitungPPh(penghasilan, statusPajak)` dipakai simulasi web, laporan bulanan, dan export PDF.
+- **Validasi input checkout**: `boolean emailValid(String e)` dipakai di form registrasi, form kontak, dan form newsletter sekaligus.
+- **Generator nomor invoice**: method `String buatInvoice(int urutan)` menjaga format konsisten di semua modul penjualan.
+- **Logika bunga tabungan**: `double bungaBulanan(double saldo)` dipanggil 12x per tahun tanpa menyalin rumus.
+- **Konversi suhu**: `double celsiusKeFahrenheit(double c)` — satu rumus, banyak pemakaian (sensor, UI, laporan).
+
+<div class="note">💡 Beri nama method dengan kata kerja (<code>hitungLuas</code>, <code>ambilNilai</code>) dan parameter yang menjelaskan isinya — nama method yang baik menggantikan komentar. Hindari method "doEverything" — satu method idealnya punya satu tanggung jawab.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    static int tambah(int a, int b) {
+        return a + b;
+    }
+
+    static double tambah(double a, double b) {
+        return a + b;
+    }
+
+    static int jumlah(int... nilai) {
+        int total = 0;
+        for (int n : nilai) total += n;
+        return total;
+    }
+
+    static void sapa(String nama, int kali) {
+        for (int i = 1; i <= kali; i++) {
+            System.out.println("Halo ke-" + i + ", " + nama + "!");
+        }
+    }
+
+    static boolean isGenap(int n) {
+        return n % 2 == 0;
+    }
+
+    static long faktorial(int n) {
+        if (n <= 1) return 1;
+        return n * faktorial(n - 1);
+    }
+
+    public static void main(String[] args) {
+        sapa("Sari", 2);
+        System.out.println("int: " + tambah(4, 6));
+        System.out.println("double: " + tambah(2.5, 3.1));
+        System.out.println("varargs: " + jumlah(1, 2, 3, 4));
+        for (int i = 1; i <= 5; i++) {
+            System.out.print(i + (isGenap(i) ? " (genap) " : " (ganjil) "));
+        }
+        System.out.println();
+        System.out.println("5! = " + faktorial(5));
+    }
+}`} />

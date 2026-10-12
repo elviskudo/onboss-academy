@@ -1,0 +1,167 @@
+---
+title: "Operator & Percabangan"
+description: "7 operator aritmatika, 6 perbandingan, if-else, switch, dan ternary"
+order: 3
+quiz:
+  - q: "Hasil dari 20 % 6 adalah…"
+    options: ["3", "2", "4", "0"]
+    answer: 1
+    explain: "20 dibagi 6 = 3 sisa 2 — % mengambil sisa bagi."
+  - q: "Perbandingan mana yang menghasilkan true?"
+    options: ["7 / 2 == 3", "7 % 2 == 0", "10 > 20", "5 <= 4"]
+    answer: 0
+    explain: "7/2 pada int bernilai 3, sehingga 3 == 3 bernilai true."
+  - q: "Operator <=> pada C++20 disebut…"
+    options: ["Assignment", "Bitwise shift", "Three-way comparison (spaceship)", "Null coalescing"]
+    answer: 2
+    explain: "a <=> b menghasilkan hasil perbandingan lengkap: kurang, sama, atau lebih besar."
+  - q: "Switch di C++ paling cocok untuk…"
+    options: ["Memilih cabang berdasarkan nilai tetap seperti enum atau angka", "Perulangan", "Deklarasi variabel", "Membaca file"]
+    answer: 0
+    explain: "Cocok untuk menu, kode status, atau enum — lebih rapi daripada rantai if-else panjang."
+  - q: "Setelah cabang switch yang tidak pakai return, wajib diberi…"
+    options: ["continue", "break agar tidak fall-through", "return void", "delete"]
+    answer: 1
+    explain: "Tanpa break, eksekusi jatuh ke case berikutnya — bisa disengaja, bisa juga bug."
+example:
+  code: |
+    #include <iostream>
+    using namespace std;
+
+    int main() {
+        int nilai = 85;
+        if (nilai >= 90) {
+            cout << "A" << endl;
+        } else if (nilai >= 80) {
+            cout << "B" << endl;
+        } else {
+            cout << "C atau di bawah" << endl;
+        }
+        cout << (nilai >= 75 ? "Lulus" : "Remedial") << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Percabangan C++ mirip C, dengan tambahan **operator bool yang lebih ketat**. Bab ini menghitung operator per kategori lalu memakainya di `if`, `switch`, dan ternary.
+
+## Operator Aritmatika & Perbandingan
+
+C++ punya **7 operator aritmatika**: `+`, `-`, `*`, `/`, `%`, `++`, `--`.
+
+```cpp
+int a = 10, b = 3;
+cout << a + b << endl;    // 13
+cout << a / b << endl;    // 3   (pembagian int membuang pecahan)
+cout << a % b << endl;    // 1   (sisa bagi)
+cout << ++a << endl;      // 11  (tambah 1, lalu ambil nilai)
+cout << b-- << endl;      // 3   (ambil nilai, lalu kurangi)
+cout << (a == b) << endl; // 0 → false
+```
+
+**6 operator perbandingan**: `==`, `!=`, `<`, `>`, `<=`, `>=` (plus `<=>` di C++20 untuk perbandingan tiga arah). Selalu beri tanda kurung saat mencetak hasil perbandingan — tanpa itu `cout << a == b` dibaca `(cout << a) == b`.
+
+## Operator Logika & Bitwise
+
+C++ punya **3 operator logika**: `&&` (AND), `||` (OR), `!` (NOT) — keduanya *short-circuit*: `x != 0 && 10 / x > 1` tidak akan membagi nol karena sisi kanan dilewati saat `x == 0`.
+
+```cpp
+int umur = 20;
+bool punyaTiket = true;
+bool boleh = (umur >= 17) && punyaTiket;   // AND
+bool diskon = (umur < 5) || (umur > 60);   // OR
+bool batal = !boleh;                       // NOT
+
+int x = 12, y = 10;
+cout << (x & y) << endl;   // 8   bitwise AND
+cout << (x | y) << endl;   // 14  bitwise OR
+cout << (x ^ y) << endl;   // 6   bitwise XOR
+```
+
+**6 operator bitwise**: `&`, `|`, `^`, `~`, `<<`, `>>` — untuk flag, mask, dan kompresi bit, bukan aritmetika harian.
+
+## Operator Penugasan & Lainnya
+
+C++ punya **1 operator penugasan utama** (`=`) dan **10 varian gabungan**: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`.
+
+| Kategori | Jumlah | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Aritmatika | 7 | `total += harga` | hitung, akumulasi |
+| Perbandingan | 6 (+ `<=>`) | `umur >= 17` | validasi, filter |
+| Logika | 3 | `aktif && saldo > 0` | gabung syarat |
+| Bitwise | 6 | `flag & MASK` | bit, mask, protocol |
+| Penugasan | 1 + 10 gabungan | `x <<= 1` | tulis + ubah sekaligus |
+| Ternary | 1 | `a > b ? a : b` | nilai singkat |
+| Spesial | `sizeof`, `new`, `delete` | `new int` | memori & scope |
+
+## Bentuk Percabangan
+
+C++ mendukung **5 bentuk percabangan**: `if`, `if-else`, rantai `else if`, `switch`, dan ternary `?:` (C++17 menambah varian `if` dengan inisialisasi).
+
+```cpp
+int hari = 3;
+if (hari == 1) {
+    cout << "Senin" << endl;
+} else if (hari == 6 || hari == 7) {
+    cout << "Akhir pekan" << endl;
+} else {
+    cout << "Hari kerja" << endl;
+}
+
+switch (hari) {
+    case 1: cout << "Awal minggu" << endl; break;
+    case 3: cout << "Tengah minggu" << endl; break;
+    default: cout << "Hari lain" << endl;
+}
+```
+
+Urutan membaca kondisi: evaluasi dari atas ke bawah, begitu ada yang `true` cabang lain dilewati. Karena itu **rentang nilai ditulis dari yang paling ketat** — `nilai >= 90` sebelum `nilai >= 80`.
+
+**Kapan memakai mana:**
+
+| Bentuk | Pakai saat | Contoh kasus |
+|---|---|---|
+| `if / else if` | kondisi beda-beda, bukan nilai tetap | peringkat nilai, validasi form |
+| `switch` | satu variabel vs banyak nilai tetap | menu CLI, kode status HTTP |
+| ternary | butuh nilai, bukan aksi | `status = lulus ? "Lulus" : "Remedial"` |
+| `if` bersarang | hanya untuk syarat tambahan | cek role + cek saldo |
+
+**Anti-pattern**: sarang `if` 4 tingkat. Solusinya tulis guard clause di awal (`if (data kosong) return;`) supaya logika utama berjalan di level dangkal. Juga awas `if (x = 5)` — itu penugasan, bukan perbandingan. Perbandingan string memakai aturan leksikografis: `if (a < b)` membandingkan kode karakter demi karakter.
+
+## Di Dunia Nyata
+
+- Validasi form registrasi: cek `email != "" && panjang >= 5 && umur >= 17` dalam satu syarat.
+- Menu kasir: `switch (pilihan)` memilih `case '1'`…`case '5'` untuk 5 menu transaksi.
+- Biaya kirim: ternary `berat > 1 ? berat * 10000 : 5000`.
+- Filter data sensor: `if (suhu < -40 || suhu > 85) flagTidakNormal = true;`
+- Game: `hp <= 0 ? mati() : lanjut()` memutuskan status pemain tiap frame.
+
+<div class="note">💡 Bedakan <code>=</code> (menugaskan nilai) dan <code>==</code> (membandingkan). C++ membantu dengan peringatan kompilator, tetapi tetap periksa hasil <code>-Wall</code> — dan selalu bungkus ekspresi dengan kurung saat mencetak hasil perbandingan.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int nilai = 85;
+    if (nilai >= 90) cout << "Grade A" << endl;
+    else if (nilai >= 80) cout << "Grade B" << endl;
+    else cout << "Grade C atau di bawah" << endl;
+
+    string status = (nilai >= 75) ? "Lulus" : "Remedial";
+    cout << "Status: " << status << endl;
+
+    int hari = 3;
+    switch (hari) {
+        case 1: cout << "Senin" << endl; break;
+        case 3: cout << "Rabu" << endl; break;
+        default: cout << "Hari lain" << endl;
+    }
+
+    cout << "20 % 6 = " << 20 % 6 << endl;
+    cout << "Genap? " << (10 % 2 == 0) << endl;
+    string buah1 = "apple", buah2 = "pisang";
+    cout << "apple < pisang? " << (buah1 < buah2) << endl;
+    return 0;
+}`} />

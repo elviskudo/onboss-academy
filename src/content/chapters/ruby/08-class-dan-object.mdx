@@ -1,0 +1,208 @@
+---
+title: "Class & Object"
+description: "4 pilar OOP di Ruby, 1 constructor tanpa destructor, atribut, dan duck typing"
+order: 8
+quiz:
+  - q: "Berapa pilar OOP dan bagaimana statusnya di Ruby?"
+    options: ["3 pilar, Ruby tanpa inheritance", "4 pilar: encapsulation, inheritance, polymorphism, abstraction", "4 pilar, semuanya ada kata kuncinya", "2 pilar saja"]
+    answer: 1
+    explain: "Keempatnya ada, tapi abstraction tidak punya kata kunci abstract dan polymorphism memakai duck typing."
+  - q: "Ruby punya destructor eksplisit…"
+    options: ["__del yang wajib diisi", "__destruct ala Java", "Tidak ada — GC yang membersihkan", "finalize()"]
+    answer: 2
+    explain: "Ruby tidak punya destructor; objek dibersihkan garbage collector tanpa kode penutup wajib."
+  - q: "Empat cara mendefinisikan atribut di Ruby adalah…"
+    options: ["attr_reader, attr_writer, attr_accessor, atau getter/setter manual", "Hanya attr_accessor", "Hanya public property", "set dan get"]
+    answer: 0
+    explain: "attr_reader untuk baca saja, attr_writer untuk tulis saja, attr_accessor untuk keduanya."
+  - q: "Method yang dipanggil lewat Class, bukan instance, ditulis…"
+    options: ["def self.nama_method", "def static.nama", "static function nama", "class.nama"]
+    answer: 0
+    explain: "def self.hitung dipanggil sebagai Kalkulator.hitung tanpa membuat objek."
+  - q: "Instance variable yang belum pernah diisi akan bernilai…"
+    options: ["0", "false", "error", "nil"]
+    answer: 3
+    explain: "Ruby diam-diam memberi nil — karena itu initialize harus mengisi semua atribut penting."
+example:
+  code: |
+    class Siswa
+      attr_accessor :nama, :nilai
+
+      def initialize(nama, nilai)
+        @nama = nama
+        @nilai = nilai
+      end
+
+      def lulus?
+        @nilai >= 75
+      end
+    end
+
+    s = Siswa.new("Sari", 88)
+    puts "#{s.nama} lulus: #{s.lulus?}"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Class adalah cetakan objek: satu definisi menghasilkan ribuan objek dengan data masing-masing. Ruby adalah bahasa OOP penuh — bukan hanya class, tapi `42`, `nil`, dan class itu sendiri adalah objek.
+
+## Anatomi Class
+
+```ruby
+class Kucing
+  def sapa
+    puts "Meong!"
+  end
+end
+
+kucing = Kucing.new
+kucing.sapa
+```
+
+`new` adalah method kelas yang membuat objek kosong lalu memanggil `initialize` — Ruby hanya punya **1 constructor** (`initialize`) dan **0 destructor eksplisit**: urusan pembersihan diserahkan ke garbage collector.
+
+```ruby
+class Siswa
+  def initialize(nama, nilai)
+    @nama = nama      # instance variable — tiap objek punya salinan sendiri
+    @nilai = nilai
+  end
+
+  def info
+    "#{@nama}: #{@nilai}"
+  end
+
+  def lulus?
+    @nilai >= 75
+  end
+end
+
+s = Siswa.new("Budi", 80)
+puts s.info
+```
+
+Method predikat (mengembalikan boolean) ditulis berakhiran `?`; method berisiko menimpa data ditulis berakhiran `!`.
+
+## 4 Cara Mendefinisikan Atribut
+
+| # | Cara | Hasil | Kapan dipakai |
+| --- | --- | --- | --- |
+| 1 | `attr_reader :nama` | Getter saja | Data yang hanya dibaca (id, created_at) |
+| 2 | `attr_writer :nama` | Setter saja | Jarang — biasanya dikombinasikan |
+| 3 | `attr_accessor :nama` | Getter + setter | Data bebas diubah (nama, harga) |
+| 4 | `def nama; @nama; end` | Manual | Saat butuh logika tambahan di pembaca/penulis |
+
+```ruby
+class Produk
+  attr_accessor :nama     # 3. getter + setter
+  attr_reader   :kode     # 1. getter saja
+
+  def initialize(nama, harga, kode)
+    @nama = nama
+    @harga = harga
+    @kode = kode
+  end
+
+  # 4. setter manual — ada validasi tambahan
+  def harga=(nilai)
+    raise ArgumentError, "harga harus positif" if nilai <= 0
+    @harga = nilai
+  end
+
+  def harga
+    @harga
+  end
+end
+```
+
+## 4 Pilar OOP dan Statusnya di Ruby
+
+| Pilar | Implementasi Ruby | Status |
+| --- | --- | --- |
+| Encapsulation | `private`, `protected`, `public` (3 visibilitas) + `attr_*` | Ada, berbasis konvensi method |
+| Inheritance | `class Anak < Induk` — pewarisan **tunggal** | Ada, dibatasi 1 induk |
+| Polymorphism | Duck typing: "jika memanggil method yang sama, dianggap tipe sama" | Ada tanpa interface |
+| Abstraction | Module/mixin + method yang melempar `NotImplementedError` | Tidak ada kata kunci `abstract` |
+
+```ruby
+class Manusia
+  def initialize(nama)
+    @nama = nama
+  end
+
+  def sapa
+    "Halo, saya #{@nama}"
+  end
+end
+
+class Programmer < Manusia
+  def sapa
+    super + " — programmer Ruby"
+  end
+end
+
+puts Programmer.new("Sari").sapa
+```
+
+`super` memanggil method induk dengan argumen yang sama. Karena Ruby tidak punya interface, cukup pastikan objek menjawab method yang dibutuhkan — itulah duck typing.
+
+## 7 Method yang Dimiliki Semua Objek
+
+`class`, `inspect`, `to_s`, `nil?`, `is_a?`, `respond_to?`, `dup`. Semuanya tersedia bahkan pada angka: `42.class` → `Integer`, `42.is_a?(Numeric)` → `true`.
+
+Untuk data berupa record sederhana tanpa perilaku, Ruby menyediakan `Struct`:
+
+```ruby
+Titik = Struct.new(:x, :y)
+puts Titik.new(3, 4).x
+```
+
+## Kapan OOP vs Prosedural
+
+- **Prosedural/skrip**: data mentah diproses sekali lalu program selesai — script 30 baris membersihkan file log.
+- **OOP**: ada data + aturan yang melekat pada data itu (satu objek berubah seiring waktu), banyak objek serupa, atau logika dipakai lintas file.
+- Tanda peringatan: variabel global yang menumpuk dan `if` bertingkat yang menanyakan "tipe apa ini" — saatnya dibungkus class.
+
+## Di Dunia Nyata
+
+- **Model transaksi bank**: class `Rekening` menjaga saldo tetap positif lewat validasi di setter.
+- **Keranjang belanja sesi user**: tiap sesi punya objek `Keranjang` sendiri — `add`, `remove`, `total` tidak saling tabrak.
+- **Simulasi game**: `Pemain < Karakter` mewarisi `pindah` dan `serang` lalu menambah `level_up`.
+- **Integrasi payment gateway**: dua class `Midtrans` dan `Xendit` menjawab `charge(...)` — pemanggil tidak perlu tahu pakai yang mana.
+- **Konfigurasi lintas file**: module `Konfigurasi` berisi konstanta `PPN`, di-`include` ke mana pun butuh.
+
+<div class="note">💡 Enkapsulasi Ruby adalah kesepakatan, bukan pengamanan: instance variable `@harga` tetap bisa dibaca dari luar lewat `obj.instance_variable_get(:@harga)`, dan semua method bersifat public secara default. Tandailah `private` secara sadar — di Ruby, melindungi data berarti menulis batas yang jelas bagi pemakai class-mu.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`class Siswa
+  attr_accessor :nama, :nilai
+
+  def initialize(nama, nilai)
+    @nama = nama
+    @nilai = nilai
+  end
+
+  def lulus?
+    @nilai >= 75
+  end
+
+  def info
+    "#{@nama}: #{@nilai} lulus=#{lulus?}"
+  end
+end
+
+s = Siswa.new("Sari", 88)
+puts s.info
+s.nilai = 70
+puts s.info
+
+class Programmer < Siswa
+  def sapa
+    "Saya #{@nama}, programmer"
+  end
+end
+
+puts Programmer.new("Budi", 90).sapa
+puts 42.class
+
+Titik = Struct.new(:x, :y)
+puts Titik.new(3, 4).x`} />

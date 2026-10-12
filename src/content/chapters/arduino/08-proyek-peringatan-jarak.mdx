@@ -1,0 +1,198 @@
+---
+title: "Proyek: Sistem Peringatan Jarak"
+description: "Menyatukan ultrasonik, buzzer, LED, dan LCD — alarm jarak siap dipasang"
+order: 8
+quiz:
+  - q: "Inti proyek ini adalah…"
+    options: ["Merekam video", "Mengirim email", "Memberi peringatan saat objek mendekat ambang jarak", "Mengatur jam"]
+    answer: 2
+    explain: "Sensor mengukur jarak, lalu LED dan buzzer memberi umpan balik berjenjang."
+  - q: "Peringatan berjenjang (dekat = lebih intens) membuat…"
+    options: ["Konsumsi listrik naik drastis", "Umpan balik lebih intuitif bagi pengguna", "Sensor jadi tidak akurat", "Pin menjadi analog"]
+    answer: 1
+    explain: "Intensitas bunyi/LED sebanding urgensi — pola yang lazim pada sensor parkir."
+  - q: "Debounce pengukuran (mis. tiga bacaan konsisten) diperlukan agar…"
+    options: ["Alarm tidak berbunyi karena satu pembacaan liar", "LCD menyala", "Upload lebih cepat", "Pin hemat daya"]
+    answer: 0
+    explain: "Pembacaan ultrasonik kadang melompat — konfirmasi berturut menstabilkan keputusan."
+  - q: "Membungkus kode dalam fungsi-fungsi kecil bertujuan…"
+    options: ["Menambah jumlah baris", "Menggantikan kebutuhan sensor", "Menjaga agar loop() mudah dibaca dan diuji", "Mempercepat kompilasi dua kali lipat"]
+    answer: 2
+    explain: "loop() yang ringkas memudahkan menambah fitur berikutnya."
+  - q: "Langkah pengujian yang paling bijak adalah…"
+    options: ["Langsung pasang di mobil", "Uji bertahap per modul dulu, lalu gabung", "Uji tanpa tegangan", "Tanpa dokumentasi"]
+    answer: 1
+    explain: "Sensor dulu, lalu LED, lalu buzzer — kesalahan mudah dilacak pada bagian kecil."
+example:
+  code: |
+    const int TRIG = 9;
+    const int ECHO = 10;
+
+    float ukurJarakCm() {
+      digitalWrite(TRIG, LOW); delayMicroseconds(2);
+      digitalWrite(TRIG, HIGH); delayMicroseconds(10);
+      digitalWrite(TRIG, LOW);
+      unsigned long d = pulseIn(ECHO, HIGH, 25000);
+      return d == 0 ? -1 : d * 0.0343 / 2;
+    }
+
+    void setup() {
+      pinMode(TRIG, OUTPUT);
+      pinMode(ECHO, INPUT);
+      Serial.begin(9600);
+    }
+
+    void loop() {
+      Serial.println(ukurJarakCm());
+      delay(100);
+    }
+---
+
+Proyek akhir Arduino menyatukan **HC-SR04, 3 LED, dan buzzer** menjadi sistem peringatan berjenjang seperti sensor parkir: aman, waspada, dan bahaya. Fokusnya bukan fitur tambahan, tetapi integrasi kode yang benar, stabil, dan bisa diuji per bagian.
+
+## Spesifikasi 3 Zona
+
+| Zona | Rentang | LED | Buzzer | Arti |
+| --- | --- | --- | --- | --- |
+| Gagal baca | `cm < 0` | Semua mati | Senyap | Jangan memberi alarm palsu |
+| Aman | `cm >= 50` | Hijau | Senyap | Objek jauh |
+| Waspada | `20 <= cm < 50` | Kuning | Bip 1.000 Hz | Objek mendekat |
+| Bahaya | `0 <= cm < 20` | Merah | Nada 2.000 Hz | Berhenti |
+
+Urutan kondisi wajib dari kasus khusus (`cm < 0`), lalu paling dekat, lalu jauh. Jika mengecek `cm < 20` dulu, nilai gagal `-1` salah dianggap bahaya.
+
+## 6 Komponen dan Denah Pin
+
+| Komponen | Jumlah | Pin UNO | Catatan |
+| --- | ---: | --- | --- |
+| HC-SR04 | 1 | TRIG 9, ECHO 10 | 5 V + GND |
+| Buzzer pasif | 1 | 7 | `tone()` / `noTone()` |
+| LED hijau | 1 | 4 | Resistor 220 Ω |
+| LED kuning | 1 | 5 | Resistor 220 Ω |
+| LED merah | 1 | 6 | Resistor 220 Ω |
+| Breadboard + jumper | 1 set | — | Semua GND disatukan |
+
+```text
+HC-SR04: VCC->5V, GND->GND, TRIG->9, ECHO->10
+LED: pin 4/5/6 -> resistor 220 Ω -> anoda; katoda -> GND
+Buzzer pasif: positif->7, negatif->GND
+```
+
+## Sketch Lengkap
+
+```cpp
+const int TRIG = 9;
+const int ECHO = 10;
+const int BUZZER = 7;
+const int LED_HIJAU = 4;
+const int LED_KUNING = 5;
+const int LED_MERAH = 6;
+
+float ukurJarakCm() {
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+
+  unsigned long durasi = pulseIn(ECHO, HIGH, 25000);
+  if (durasi == 0) return -1;
+  return durasi * 0.0343 / 2;
+}
+
+float ambilRataRata() {
+  float total = 0;
+  int valid = 0;
+
+  for (int i = 0; i < 3; i++) {
+    float cm = ukurJarakCm();
+    if (cm >= 0) {
+      total += cm;
+      valid++;
+    }
+    delay(60);
+  }
+  return valid == 0 ? -1 : total / valid;
+}
+
+void matikanSemua() {
+  digitalWrite(LED_HIJAU, LOW);
+  digitalWrite(LED_KUNING, LOW);
+  digitalWrite(LED_MERAH, LOW);
+  noTone(BUZZER);
+}
+
+void beriStatus(float cm) {
+  matikanSemua();
+
+  if (cm < 0) {
+    return;
+  } else if (cm < 20) {
+    digitalWrite(LED_MERAH, HIGH);
+    tone(BUZZER, 2000);
+  } else if (cm < 50) {
+    digitalWrite(LED_KUNING, HIGH);
+    tone(BUZZER, 1000, 100);
+  } else {
+    digitalWrite(LED_HIJAU, HIGH);
+  }
+}
+
+void setup() {
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(LED_HIJAU, OUTPUT);
+  pinMode(LED_KUNING, OUTPUT);
+  pinMode(LED_MERAH, OUTPUT);
+  Serial.begin(9600);
+  matikanSemua();
+}
+
+void loop() {
+  float cm = ambilRataRata();
+  Serial.print("Jarak: ");
+  Serial.println(cm);
+  beriStatus(cm);
+  delay(100);
+}
+```
+
+Sketch ini benar-benar lengkap: semua konstanta pin, `pinMode`, pengukuran dengan timeout, rata-rata 3 sampel, status output, dan serial log tersedia dalam satu program.
+
+## Mengapa Dipecah Menjadi 4 Fungsi?
+
+| Fungsi | Satu tanggung jawab | Bisa diuji dengan |
+| --- | --- | --- |
+| `ukurJarakCm()` | Satu pengukuran mentah | Serial satu nilai |
+| `ambilRataRata()` | Stabilisasi 3 pembacaan | Gerakkan objek perlahan |
+| `matikanSemua()` | Kondisi output aman | Panggil sekali di `setup()` |
+| `beriStatus(cm)` | Peta jarak ke LED/buzzer | Kirim angka uji manual |
+
+`loop()` tinggal membaca, mencetak, dan memberi status. Struktur ini menghindari fungsi raksasa yang sulit dilacak saat satu komponen gagal.
+
+## Stabilisasi dan Keterbatasan
+
+Rata-rata 3 sampel mengurangi noise, tetapi pencilan ekstrem masih bisa memengaruhi hasil. Untuk lingkungan banyak pantulan, gunakan median 3 (urutkan tiga nilai, ambil tengah). Karena tiap sampel dijeda 60 ms, satu keputusan membutuhkan sekitar 180 ms — cukup cepat untuk orang berjalan, belum cukup untuk kendaraan berkecepatan tinggi.
+
+## Urutan Pengujian 5 Tahap
+
+```text
+1. Upload sensor saja -> Serial harus menampilkan jarak meja/papan yang masuk akal
+2. Nyalakan tiap LED satu per satu -> periksa polaritas dan resistor
+3. Jalankan tone buzzer 1 detik -> pastikan buzzer pasif berbunyi
+4. Uji fungsi beriStatus dengan cm tetap: 60, 30, 10, -1
+5. Gabungkan sensor nyata -> gerakkan papan dari 100 cm ke 10 cm
+```
+
+Jangan langsung menguji seluruh rangkaian. Tahap berurutan mengisolasi kegagalan: jika sensor benar tetapi zona salah, bug ada di logika — bukan kabel.
+
+## Di Dunia Nyata
+
+1. **Sensor parkir sepeda** — dipasang menghadap belakang, getaran mounting wajib diuji.
+2. **Peringatan jarak antrean** — LED merah menyala bila orang berdiri terlalu dekat (< 100 cm).
+3. **Tong sampah otomatis** — servo membuka tutup bila tangan berada 5–20 cm selama dua bacaan.
+4. **Pemantau isi tangki** — jarak kosong dikurangkan dari tinggi tangki lalu ditampilkan sebagai persen.
+5. **Robot penghindar halangan** — zona merah menghentikan motor, kuning memperlambat, hijau maju.
+
+<div class="note">💡 Saat menempelkan proyek di kendaraan atau mesin, mounting ikut diperiksa — getaran membuat sensor berubah arah atau kabel longgar yang gejalanya mirip "sensor rusak". Sistem ini untuk latihan/prototipe, bukan alat keselamatan kendaraan.</div>

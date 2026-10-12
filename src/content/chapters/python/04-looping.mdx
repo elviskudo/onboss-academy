@@ -1,0 +1,157 @@
+---
+title: "Looping"
+description: "for, while, range, break/continue, dan list comprehension"
+order: 4
+quiz:
+  - q: "for di Python biasanya mengiterasi…"
+    options: ["Hanya angka 1-10", "Elemen iterable (list, string, dict, range)", "Baris file", "Karakter acak"]
+    answer: 1
+    explain: "for x in iterable: — Python otomatis mengambil tiap elemen."
+  - q: "range(1, 6) menghasilkan angka…"
+    options: ["1,2,3,4,5,6", "0,1,2,3,4,5", "1,2,3,4,5", "6"]
+    answer: 2
+    explain: "range batas-akhir TIDAK diikutkan (eksklusif)."
+  - q: "Python punya bentuk perulangan…"
+    options: ["for, while, dan do-while", "for dan while saja", "for saja", "hanya repeat-until"]
+    answer: 1
+    explain: "Hanya ada 2: for dan while. Tidak ada do-while — pakai pola while True + break bila perlu."
+  - q: "break berfungsi untuk…"
+    options: ["Melanjutkan iterasi berikutnya", "Mengulang loop", "Keluar dari loop saat ini", "Menghentikan program"]
+    answer: 2
+    explain: "break = berhenti total. continue = lompati sisa iterasi berjalan."
+  - q: "enumerate() berguna saat butuh…"
+    options: ["Mengurutkan list", "Index sekaligus nilai saat iterasi", "Mengacak list", "Menghitung panjang"]
+    answer: 1
+    explain: "for i, v in enumerate(daftar): menghasilkan pasangan (index, nilai)."
+example:
+  code: |
+    for i in range(1, 6):
+        print(i, end=" ")
+    print()
+    buah = ["apel", "jeruk", "mangga"]
+    for idx, b in enumerate(buah):
+        print(idx, b)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Looping mengulang kode tanpa menyalin-nyalin. Python hanya punya **2 bentuk perulangan** — `for` dan `while` — plus `break`/`continue` dan comprehension untuk kasus ringkas.
+
+## for
+
+```python
+for i in range(5):        # 0..4
+    print(i)
+
+for b in ["a", "b"]:      # list
+    print(b)
+
+for huruf in "Python":    # string = iterable
+    print(huruf)
+
+for k, v in {"a": 1}.items():   # dict → kunci & nilai
+    print(k, v)
+```
+
+## while
+
+```python
+saldo = 100
+while saldo > 0:
+    saldo -= 30
+    print("Sisa:", saldo)
+```
+
+Pastikan kondisi bisa jadi False — kalau tidak, infinite loop!
+
+## break, continue, else-di-loop
+
+```python
+for i in range(10):
+    if i == 3:
+        continue   # lompati 3
+    if i == 6:
+        break      # berhenti di 6
+    print(i)       # 0,1,2,4,5
+
+# else pada loop: jalan kalau loop selesai TANPA break
+for n in range(2, 10):
+    if n % 7 == 0:
+        break
+else:
+    print("tidak ada kelipatan 7")
+```
+
+## Kapan Pakai Mana
+
+| Bentuk | Kapan dipakai | Contoh |
+|---|---|---|
+| `for x in iterable` | jumlah iterasi sudah jelas / data terurut | semua baris list |
+| `for i in range(n)` | iterasi berbasis angka | tabel perkalian |
+| `while kondisi` | berhenti bergantung kondisi, bukan jumlah | antrian belum kosong |
+| `while True + break` | tunggu input valid (tidak ada do-while) | ulangi sampai benar |
+| comprehension | transformasi/filtrasi data → list baru | ambil nilai > 80 |
+
+## Pola Klasik
+
+```python
+# 1. akumulasi
+total = sum(harga for harga in daftar_harga)
+
+# 2. cari pertama → break
+for s in siswa:
+    if s["nilai"] < 70:
+        print("Remedial:", s["nama"]); break
+
+# 3. filter → list baru
+tidak_lulus = [s for s in siswa if s["nilai"] < 70]
+
+# 4. hitung frekuensi
+frek = {}
+for k in "mississippi":
+    frek[k] = frek.get(k, 0) + 1
+```
+
+## enumerate, zip
+
+```python
+for i, buah in enumerate(["apel", "jeruk"], start=1):
+    print(i, buah)
+
+for nama, nilai in zip(["Sari", "Budi"], [90, 85]):
+    print(nama, nilai)
+```
+
+`enumerate` saat butuh index tanpa hitung manual, `zip` saat menggabungkan 2 list paralel.
+
+## List Comprehension
+
+```python
+kuadrat = [n * n for n in range(1, 6)]        # [1,4,9,16,25]
+genap = [n for n in range(10) if n % 2 == 0]
+
+# dict & set comprehension juga ada
+skor = {m: 90 for m in ["A", "B"]}
+genap_unik = {n % 3 for n in range(10)}
+```
+
+Ada 4 jenis comprehension: `[]` list, `{}` dict, `{}` set, dan `()` generator (hemat memori, dievaluasi lazy).
+
+## Di Dunia Nyata
+
+- Generate nomor invoice `INV-001` … `INV-500` dengan `range(1, 501)` lalu tulis ke file CSV.
+- Polling status pesanan tiap 5 detik dengan `while` sampai statusnya `"selesai"`.
+- Rekap penjualan: loop transaksi → kelompokkan per kategori → tampilkan 5 teratas.
+- Bersihkan data: comprehension menyaring baris dengan harga `None` sebelum masuk analisis.
+
+<div class="note">💡 `range(1, 6)` = 1,2,3,4,5 — batas kanan selalu eksklusif. Pola loop paling berguna adalah akumulasi (`sum`), cari pertama (`break`), filter (`[x for x in d if ...]`), hitung frekuensi (`get(k,0)+1`).</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`# Tabel perkalian
+for i in range(1, 6):
+    print(" ".join(f"{i*j:4}" for j in range(1, 6)))
+
+# Comprehension
+angka = [15, 8, 42, 4, 23]
+genap_besar = [n for n in angka if n % 2 == 0 and n > 10]
+print("Genap > 10:", genap_besar)
+print("Persen:", [f"{n}%" for n in [50, 75, 100]])`} />

@@ -1,0 +1,116 @@
+---
+title: "Package Manager"
+description: "Menginstal, memperbarui, dan menghapus software dengan apt, dnf, dan pacman"
+order: 5
+quiz:
+  - q: "Package manager pada Ubuntu/Debian adalah…"
+    options: ["apt", "dnf", "pacman", "brew"]
+    answer: 0
+    explain: "apt dipakai Debian/Ubuntu; dnf di RHEL/Fedora; pacman di Arch."
+  - q: "Perintah memperbarui daftar paket di Ubuntu adalah…"
+    options: ["apt upgrade", "apt update", "apt refresh", "apt sync"]
+    answer: 1
+    explain: "apt update menyegarkan index repo; apt upgrade menginstal versi baru paket."
+  - q: "Menginstal paket di Ubuntu dengan sudo adalah…"
+    options: ["sudo apt install nginx", "sudo apt get-nginx", "sudo install apt nginx", "sudo new nginx"]
+    answer: 0
+    explain: "apt install <nama> menarik paket beserta dependensinya dari repo."
+  - q: "Perintah mencari nama paket adalah…"
+    options: ["apt find nginx", "apt locate nginx", "apt search nginx", "apt query nginx"]
+    answer: 2
+    explain: "apt search memindai nama dan deskripsi paket di repo yang terdaftar."
+  - q: "dnf dipakai pada distro…"
+    options: ["RHEL/Rocky/Fedora", "Ubuntu", "Debian", "Arch"]
+    answer: 0
+    explain: "Keluarga Red Hat memakai dnf (pengganti yum) dengan format perintah setara."
+---
+
+Package manager adalah cara resmi memasang software di Linux: resmi, ter-update, dan dengan dependensi yang dikelola otomatis.
+
+## Kenapa Tidak Cuma "Download .exe"?
+
+Package manager memberi:
+
+- **Dependensi otomatis** — library yang dibutuhkan ikut terpasang
+- **Update terpusat** — satu perintah memperbarui seluruh sistem
+- **Repositori tepercaya** — paket ditandatangani, bukan file acak dari internet
+- **Uninstall bersih** — sisa file tidak tercecer
+
+## apt (Debian / Ubuntu)
+
+```bash
+sudo apt update                    # segarkan index repo
+sudo apt install -y nginx          # instal paket
+sudo apt install -y git curl       # banyak paket sekaligus
+apt search postgresql              # cari paket
+apt list --installed               # daftar yang terpasang
+```
+
+Memperbarui & menghapus:
+
+```bash
+sudo apt upgrade                   # perbarui semua paket terpasang
+sudo apt remove nginx              # hapus paket (config tetap)
+sudo apt purge nginx               # hapus + file konfigurasi
+sudo apt autoremove                # bersihkan dependensi tak terpakai
+```
+
+## dnf (RHEL / Rocky / Fedora)
+
+```bash
+sudo dnf install -y nginx
+sudo dnf update
+sudo dnf remove nginx
+dnf search postgresql
+dnf list installed
+```
+
+Sangat mirip dengan apt — pindah distro tidak butuh belajar ulang konsep.
+
+## pacman (Arch)
+
+```bash
+sudo pacman -Syu                   # sync + upgrade sekaligus
+sudo pacman -S nginx
+sudo pacman -R nginx
+pacman -Ss postgresql
+```
+
+## dpkg: Level Bawah (Darurat)
+
+```bash
+sudo dpkg -i paket.deb             # instal file .deb manual
+sudo dpkg -l | grep nginx          # status paket
+```
+
+Bila dependensi bermasalah: `sudo apt -f install` memperbaikinya.
+
+## Empat Lapisan Pengelolaan Paket
+
+Ada **4 komponen inti**: repository, metadata/index, package, dan dependency resolver. Tiga keluarga tool utama pada bab ini adalah APT/dpkg, DNF/RPM, dan pacman.
+
+| Tool/komponen | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `apt` | Resolusi dependency paket DEB | `apt show nginx` | Debian/Ubuntu |
+| `dpkg` | Operasi file DEB level rendah | `dpkg -L nginx` | Inspeksi paket terpasang |
+| `dnf` | Resolusi dependency paket RPM | `dnf info nginx` | Fedora/RHEL/Rocky |
+| `rpm` | Operasi RPM level rendah | `rpm -qf /usr/bin/curl` | Mencari pemilik file |
+| `pacman` | Sinkronisasi paket Arch | `pacman -Qi nginx` | Arch Linux |
+| Repository | Sumber paket bertanda tangan | Repo resmi distro | Instalasi tepercaya |
+
+`update` pada APT hanya menyegarkan katalog; `upgrade` memasang versi baru. Sebelum upgrade server produksi, baca paket yang akan berubah, siapkan snapshot/backup, dan jadwalkan restart jika kernel atau library penting diperbarui. Jangan menghapus lock package manager atau menjalankan dua transaksi bersamaan karena database paket dapat rusak.
+
+Tambahkan repository vendor hanya dari dokumentasi resmi, verifikasi fingerprint signing key, dan batasi distribusi serta arsitekturnya. Hindari skrip instalasi acak dengan akses root. Pin versi hanya bila kompatibilitas menuntutnya; paket yang dipin tetap perlu proses patch keamanan.
+
+## Di Dunia Nyata
+
+- Memasang Nginx beserta dependency konsisten dari repo distro.
+- Menelusuri paket pemilik suatu binary sebelum menghapusnya.
+- Menjalankan security upgrade terjadwal lalu memverifikasi service sehat.
+- Melakukan purge konfigurasi paket lama setelah backup dan audit.
+
+<div class="note">💡 Pada APT, jalankan `apt update` untuk menyegarkan index sebelum `apt upgrade`; tinjau daftar perubahan dan rencanakan rollback pada server produksi.</div>
+
+## Mencari Paket dari Sumber Lain
+
+Untuk software yang tidak ada di repo resmi (mis. versi terbaru Node.js), vendor menyediakan repository tambahan atau binary resmi. Hindari instalasi asal-asalan dari forum tanpa verifikasi — risiko keamanan dan dependency hell.

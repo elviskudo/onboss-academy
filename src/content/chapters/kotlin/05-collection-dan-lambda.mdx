@@ -1,0 +1,169 @@
+---
+title: "Collection & Lambda"
+description: "List, Map, dan Set dipadukan lambda — filter, map, dan reduce dalam satu baris"
+order: 5
+quiz:
+  - q: "List di Kotlin bersifat…"
+    options: ["selalu kosong", "hanya angka", "tidak bisa diubah isinya", "harus berupa Set"]
+    answer: 2
+    explain: "List immutable, gunakan mutableListOf bila perlu menambah elemen."
+  - q: "Method untuk menyaring elemen adalah…"
+    options: ["filter", "sort", "copy", "clear"]
+    answer: 0
+    explain: "filter mengembalikan kumpulan elemen yang memenuhi syarat."
+  - q: "Lambda adalah…"
+    options: ["tipe data angka", "fungsi anonim yang ditulis singkat", "nama class bawaan", "operator matematika"]
+    answer: 1
+    explain: "Contoh { n -> n * n } yang langsung diteruskan ke method."
+  - q: "Method untuk mengubah tiap elemen menjadi nilai baru adalah…"
+    options: ["forEach", "map", "join", "first"]
+    answer: 1
+    explain: "map mengubah isi, forEach hanya menjalankan aksi tanpa hasil kembalian."
+  - q: "Map menyimpan data berupa…"
+    options: ["kunci dan nilai", "baris database", "hanya urutan", "tuple tunggal"]
+    answer: 0
+    explain: "Map<K, V> memetakan kunci unik ke sebuah nilai."
+example:
+  code: |
+    fun main() {
+        val angka = listOf(1, 2, 3, 4, 5, 6)
+
+        val genap = angka.filter { it % 2 == 0 }
+        val kuadrat = angka.map { it * it }
+        val total = angka.reduce { a, b -> a + b }
+
+        println("Genap: $genap")
+        println("Kuadrat: $kuadrat")
+        println("Total: $total")
+
+        val skor = mapOf("sari" to 90, "budi" to 85)
+        println(skor["sari"])
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Collection dan lambda adalah pasangan paling produktif di Kotlin — data diproses secara deklaratif.
+
+## List, Set, dan Map
+
+Kotlin punya **3 jenis koleksi inti**, masing-masing dengan 2 varian pabrik (tetap dan bisa diubah) — total 6 fungsi pembuat yang perlu diingat:
+
+| Koleksi | Sifat | Fungsi tetap | Fungsi mutable | Contoh |
+| --- | --- | --- | --- | --- |
+| `List<T>` | berurutan, boleh duplikat | `listOf(...)` | `mutableListOf(...)` | daftar pesanan |
+| `Set<T>` | unik, tanpa urutan | `setOf(...)` | `mutableSetOf(...)` | tag unik |
+| `Map<K, V>` | kunci unik → nilai | `mapOf(...)` | `mutableMapOf(...)` | id → pengguna |
+
+```kotlin
+fun main() {
+    val buah = listOf("apel", "mangga", "jeruk")
+    val unik = setOf(1, 2, 2, 3)
+    val skor = mapOf("sari" to 90, "budi" to 85)
+
+    println(buah)
+    println(unik)          // [1, 2, 3] — duplikat dibuang
+    println(skor["budi"])
+    println(skor["zoe"] ?: 0)   // kunci hilang -> null, kasih default
+}
+```
+
+Set menghapus duplikat otomatis, Map menyimpan pasangan kunci nilai. Indeks List dimulai dari 0, dan akses `map[kunci]` selalu bertipe nullable.
+
+## List yang Bisa Diubah
+
+```kotlin
+fun main() {
+    val daftar = mutableListOf("satu")
+    daftar.add("dua")
+    daftar[0] = "pertama"
+
+    println(daftar)
+    println(daftar.size)
+}
+```
+
+`listOf` membuat daftar tetap, `mutableListOf` membuat daftar yang boleh diubah. Method utama kedua varian: `size`, `add`, `remove`, `contains` — dan `plus` untuk membuat salinan bertambah tanpa mengubah aslinya.
+
+## Lambda dan Higher-Order Function
+
+Lambda adalah fungsi anonim yang ditulis singkat: `{ parameter -> isi }`. Higher-order function adalah function yang menerima atau mengembalikan function — di sinilah lambda dipakai. **6 function koleksi yang paling sering**:
+
+| Function | Fungsi | Contoh hasil |
+| --- | --- | --- |
+| `filter` | menyaring elemen | `listOf(1,2,3).filter { it > 1 }` → `[2, 3]` |
+| `map` | mengubah tiap elemen | `listOf(1,2).map { it * 10 }` → `[10, 20]` |
+| `reduce` | menggabungkan jadi satu nilai | `listOf(1,2,3).reduce { a, b -> a + b }` → `6` |
+| `sortedBy` | mengurutkan menurut kriteria | `listOf(3,1,2).sortedBy { it }` → `[1, 2, 3]` |
+| `firstOrNull` | mengambil elemen pertama yang cocok | `listOf(1,2).firstOrNull { it > 5 }` → `null` |
+| `joinToString` | merangkai jadi string | `listOf("a","b").joinToString(", ")` → `"a, b"` |
+
+```kotlin
+fun main() {
+    val angka = listOf(1, 2, 3, 4, 5)
+
+    val genap = angka.filter { it % 2 == 0 }
+    val kuadrat = angka.map { it * it }
+
+    println(genap)
+    println(kuadrat)
+}
+```
+
+`it` mewakili elemen yang sedang diproses — cukup untuk lambda satu parameter.
+
+## Reduce dan Fold
+
+```kotlin
+fun main() {
+    val angka = listOf(1, 2, 3, 4, 5)
+
+    val total = angka.reduce { a, b -> a + b }
+    val totalAwal = angka.fold(100) { a, b -> a + b }
+
+    println("Total: $total")
+    println("Mulai 100: $totalAwal")
+}
+```
+
+`reduce` menggabungkan seluruh elemen, `fold` memberi nilai awal.
+
+## Rantai Operasi
+
+```kotlin
+fun main() {
+    val hasil = listOf(1, 2, 3, 4, 5, 6)
+            .filter { it % 2 == 0 }
+            .map { it * 10 }
+            .take(2)
+
+    println(hasil)
+}
+```
+
+Setiap langkah menghasilkan koleksi baru sehingga alur data mudah dibaca.
+
+## Di Dunia Nyata
+
+- **Menyaring produk stok habis** — `produk.filter { it.stok > 0 }.map { it.nama }` menampilkan nama yang masih tersedia.
+- **Mengelompokkan transaksi** — `transaksi.groupBy { it.kategori }` menghasilkan Map kategori → daftar transaksi untuk laporan bulanan.
+- **Menghitung total belanja** — `itemKeranjang.reduce { a, b -> a + b }` menjumlahkan harga seluruh item.
+- **Mencari username pertama yang online** — `pengguna.firstOrNull { it.online }` mengembalikan objek atau `null` tanpa loop eksplisit.
+- **Membuat daftar terbaca** — `nilai.sortedByDescending { it }.take(3).joinToString(", ")` menghasilkan "95, 88, 85" untuk papan juara.
+
+<div class="note">💡 filter memilih, map mengubah, reduce menggabungkan. Kuasai tiga kata ini dan sebagian besar pemrosesan data harian selesai dalam satu ekspresi.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val angka = listOf(1, 2, 3, 4, 5, 6)
+
+    val genap = angka.filter { it % 2 == 0 }
+    val kuadrat = angka.map { it * it }
+    val total = angka.reduce { a, b -> a + b }
+
+    println("Genap: " + genap)
+    println("Kuadrat: " + kuadrat)
+    println("Total: " + total)
+
+    val skor = mapOf("sari" to 90, "budi" to 85)
+    println("Skor sari: " + skor["sari"])
+}`} />

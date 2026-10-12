@@ -1,0 +1,135 @@
+---
+title: "Perulangan"
+description: "8 gaya mengulang di Ruby — times, each, while, range — plus break, next, redo, retry"
+order: 4
+quiz:
+  - q: "Berapa bentuk pengulangan yang dimiliki Ruby bawaan (termasuk iterator)?"
+    options: ["4", "8", "12", "Hanya for"]
+    answer: 1
+    explain: "times, upto/downto/step, while, until, for, loop, range each, dan iterator koleksi."
+  - q: "Perintah yang mengulang iterasi SAAT INI dari awal adalah…"
+    options: ["break", "next", "redo", "repeat"]
+    answer: 2
+    explain: "redo mengeksekusi ulang blok iterasi berjalan; next melompat ke iterasi berikutnya."
+  - q: "Metode untuk mengambil ELEMEN PERTAMA yang memenuhi kondisi adalah…"
+    options: ["select", "map", "find (detect)", "reject"]
+    answer: 2
+    explain: "find mengembalikan satu elemen pertama atau nil — lebih hemat daripada select lalu [0]."
+  - q: "while di Ruby berjalan selama kondisi bernilai…"
+    options: ["benar (truthy)", "false", "genap", "0"]
+    answer: 0
+    explain: "while mengulang selama ekspresinya truthy; until kebalikannya."
+  - q: "Apa beda [1,2,3].map dengan [1,2,3].each?"
+    options: ["map mengubah tiap elemen dan mengembalikan array baru, each hanya menjalankan blok", "Keduanya sama", "each mengembalikan array baru", "map tidak boleh menerima blok"]
+    answer: 0
+    explain: "each mengembalikan koleksi asli; map mengembalikan koleksi baru hasil transformasi."
+example:
+  code: |
+    3.times { |i| puts "Iterasi ke-#{i + 1}" }
+
+    angka = [2, 4, 6]
+    kuadrat = angka.map { |n| n * n }
+    puts kuadrat.inspect
+
+    total = [1, 2, 3, 4].reduce(:+)
+    puts total
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perulangan menghemat penulisan kode berulang. Ruby punya 8 gaya mengulang dan 4 pengendali alur — kuncinya bukan menghafal, tapi memilih bentuk yang paling terbaca untuk kasus itu.
+
+## 8 Gaya Mengulang
+
+| # | Gaya | Contoh singkat | Kapan dipakai |
+| --- | --- | --- | --- |
+| 1 | `Integer#times` | `3.times { \|i\| ... }` | Jumlah tetap tanpa variabel penghitung |
+| 2 | `upto` / `downto` / `step` | `5.upto(9) { \|n\| ... }` | Rentang berurutan jelas |
+| 3 | `while` | `while x > 0` | Kondisi berubah, jumlah tak diketahui |
+| 4 | `until` | `until selesai` | Kondisi berhenti, kebalikan while |
+| 5 | `for ... in` | `for n in 1..3` | Hindari — kotak besi gaya lama |
+| 6 | `loop do ... end` | `loop { break if ... }` | Loop terbuka dengan break manual |
+| 7 | `Range#each` | `('a'..'e').each { \|h\| }` | Iterasi rentang huruf/angka |
+| 8 | Iterator koleksi | `map`, `select`, `reduce` | Data di Array/Hash sudah tersedia |
+
+```ruby
+3.times { |i| puts "Baris ke-#{i + 1}" }
+
+(1..5).each { |n| print n, " " }
+puts
+
+hitung = 1
+until hitung > 3
+  puts "hitungan #{hitung}"
+  hitung += 1
+end
+```
+
+## 4 Pengendali Alur
+
+| Pengendali | Efek | Contoh kasus |
+| --- | --- | --- |
+| `break` | Keluar total dari perulangan | Data pertama sudah ketemu |
+| `next` | Lewati ke iterasi berikutnya | Baris komentar / kosong dilewati |
+| `redo` | Ulangi iterasi berjalan | Input user tidak valid, minta ulang |
+| `retry` | Ulangi dari awal blok rescue | Koneksi gagal, coba lagi sekali |
+
+```ruby
+[1, 2, 3, 4].each do |n|
+  next if n.odd?    # lompati ganjil
+  break if n > 3    # berhenti total
+  puts n            # output: 2
+end
+```
+
+## 4 Pola Klasik
+
+```ruby
+angka = [4, 8, 15, 16, 23, 42]
+
+# 1. Akumulasi
+total = angka.reduce(0) { |jumlah, n| jumlah + n }
+
+# 2. Cari pertama
+besar = angka.find { |n| n > 20 }        # 23
+
+# 3. Filter → baru
+genap = angka.select { |n| n.even? }     # [4, 8, 16]
+persepuluhan = angka.map { |n| n / 10 }  # [0, 0, 1, 1, 2, 4]
+
+# 4. Hitung frekuensi
+teks = "a b a c a b"
+frekuensi = teks.split.tally             # {"a"=>3, "b"=>2, "c"=>1}
+```
+
+`select`/`map`/`reduce` tidak mengubah array asli; versi ber-tanda seru (`select!`, `map!`) menimpa isinya.
+
+## Di Dunia Nyata
+
+- **Notifikasi email berkala**: `User.where(subscribed: true).each { |u| Mailer.send(u) }` tiap malam.
+- **Kuis dengan batas percobaan**: `loop` menampilkan soal sampai user menjawab benar atau `retry` habis.
+- **Peringatan stok kritis**: `produk.select { |p| p.stok < 5 }` lalu kirim ringkasan ke supervisor.
+- **Generator nomor invoice**: `loop { no = format("INV-%05d", nomor += 1); break unless Invoice.exists?(no) }`.
+- **Membersihkan input spreadsheet**: `baris.reject { |b| b.strip.empty? }` membuang baris kosong sebelum dihitung.
+
+<div class="note">💡 Pilih `map` bila kamu butuh hasil kembalian, `each` bila hanya butuh efek samping (cetak, simpan, kirim). Kode `each { hasil << x }` hampir selalu bisa dipangkas jadi satu baris `map` — dan hasilnya lebih mudah diuji karena bebas efek samping.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`3.times { |i| puts "Iterasi ke-#{i + 1}" }
+
+(1..5).each { |n| print n, " " }
+puts
+
+angka = [1, 2, 3, 4, 5, 6]
+genap = angka.select { |n| n.even? }
+puts genap.inspect
+
+kuadrat = angka.map { |n| n * n }
+puts kuadrat.inspect
+
+puts [1, 2, 3, 4].reduce(:+)
+
+[1, 2, 3, 4].each do |n|
+  next if n.odd?
+  break if n > 3
+  puts "genap: #{n}"
+end`} />

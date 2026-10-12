@@ -1,0 +1,177 @@
+---
+title: "Array, Slice & Map"
+description: "Menyimpan banyak data: slice yang tumbuh dan map yang cepat dicari"
+order: 7
+quiz:
+  - q: "Slice dibuat paling umum dengan…"
+    options: ["new slice", "make atau []T{}", "array()", "list()"]
+    answer: 1
+    explain: "Contoh: angka := make([]int, 0) atau angka := []int{1, 2, 3}."
+  - q: "Panjang slice diketahui lewat…"
+    options: ["count", "size()", "len()", "length"]
+    answer: 2
+    explain: "len menghitung elemen terisi, cap menghitung kapasitas maksimum."
+  - q: "Menambah elemen ke slice memakai…"
+    options: ["append", "push", "add", "insert"]
+    answer: 0
+    explain: "s = append(s, nilai) mengembalikan slice baru berisi tambahan di akhir."
+  - q: "Map dibuat dengan deklarasi…"
+    options: ["map[string]int", "dict[string]int", "hash{}", "table[]"]
+    answer: 0
+    explain: "map[K]V — kunci bertipe K, nilai bertipe V, contoh: map[string]int."
+  - q: "Membaca kunci yang tidak ada pada map menghasilkan…"
+    options: ["zero value dan false", "panic langsung", "nil pointer", "error kompilasi"]
+    answer: 0
+    explain: "Pola aman: nilai, ada := m[k] — bool kedua menyatakan kunci ditemukan."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func main() {
+        angka := []int{10, 20, 30}
+        angka = append(angka, 40)
+        fmt.Println("Slice:", angka, "panjang:", len(angka))
+
+        skor := map[string]int{"Sari": 90, "Budi": 85}
+        skor["Ani"] = 88
+        fmt.Println("Skor Sari:", skor["Sari"])
+        fmt.Println("Jumlah siswa:", len(skor))
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Array di Go berukuran tetap dan jarang dipakai langsung. **Slice dan map adalah alat harian** untuk menyimpan kumpulan data.
+
+## 3 Struktur Data Go
+
+| Struktur | Sifat | Index | Kapan dipakai |
+| --- | --- | --- | --- |
+| Array `[N]T` | Panjang tetap, tipe memuat N | 0..N-1 | Ukuran pasti & kecil (mis. buffer protokol) |
+| Slice `[]T` | Panjang tumbuh, ringkas | 0..len-1 | Daftar data dinamis — 90% kebutuhan |
+| Map `map[K]V` | Kunci → nilai, tak berurutan | Kunci | Cari/ubah data by nama (dictionaries) |
+
+## Array Tetap
+
+```go
+var skor [3]int
+skor[0] = 90
+skor[1] = 85
+skor[2] = 78
+
+fmt.Println(skor)
+fmt.Println(len(skor)) // 3
+```
+
+Panjang array bagian dari tipenya: `[3]int` dan `[4]int` adalah **tipe berbeda**. Karena kaku, data dinamis lebih cocok memakai slice.
+
+## Slice
+
+```go
+buah := []string{"Apel", "Mangga"}
+buah = append(buah, "Jeruk")
+
+fmt.Println(buah)
+fmt.Println(len(buah)) // 3
+fmt.Println(buah[0])   // Apel
+```
+
+Slice punya panjang yang bisa bertambah. `append` mengembalikan slice hasil, jadi hasilnya wajib disimpan kembali. Di balik layar slice punya 3 bagian: pointer ke array, `len`, dan `cap` (kapasitas).
+
+## Melintasi Slice
+
+```go
+angka := []int{5, 10, 15}
+total := 0
+
+for _, n := range angka {
+    total += n
+}
+fmt.Println("Total:", total)
+
+for i, n := range angka {
+    fmt.Println("Index", i, "=", n)
+}
+```
+
+Pakai `_` untuk index yang tidak dipakai.
+
+## Map
+
+```go
+skor := map[string]int{
+    "Sari": 90,
+    "Budi": 85,
+}
+
+skor["Ani"] = 88
+fmt.Println("Skor Sari:", skor["Sari"])
+
+nilai, ada := skor["Budi"]
+if ada {
+    fmt.Println("Ketemu:", nilai)
+}
+
+delete(skor, "Budi")
+fmt.Println("Jumlah:", len(skor))
+```
+
+Map menyimpan pasangan kunci-nilai dan mencarinya sangat cepat. Untuk membedakan "kunci tidak ada" dan "nilainya nol", gunakan bentuk dua nilai.
+
+## Operasi Utama (5 inti)
+
+| Operasi | Fungsi | Contoh |
+| --- | --- | --- |
+| `append(s, x)` | Tambah elemen di akhir | `s = append(s, 40)` |
+| `len(s)` | Jumlah elemen terisi | `len(skor)` |
+| `make([]T, n)` | Buat slice dengan kapasitas awal | `make([]int, 0, 16)` |
+| `delete(m, k)` | Hapus kunci map | `delete(skor, "Budi")` |
+| `copy(dst, src)` | Salin isi slice | `copy(a, b)` |
+
+Slice dan map **mutable** — isinya bisa berubah di tempat; tapi slice yang di-`append` melewati kapasitas akan menyalin ke array baru. Pilih slice untuk daftar berurutan, map untuk pencarian by kunci, array hanya saat ukurannya benar-benar tetap.
+
+## Di Dunia Nyata
+
+- **Daftar keranjang belanja**: slice `[]Produk` bertambah saat user menambah item
+- **Cache hitungan**: `map[string]int` menghitung frekuensi kata di artikel
+- **Index by ID**: `map[int]Pengguna` mencari user berdasarkan ID dalam O(1)
+- **Batch insert**: `make([]Baris, 0, 1000)` menyiapkan kapasitas agar tidak berulang salin memori
+- **Grup data**: `map[string][]string` mengelompokkan siswa per kelas
+
+<div class="note">💡 append bisa mengembalikan slice baru dengan kapasitas berbeda — selalu tulis s = append(s, x). Mengabaikan hasil append adalah bug umum yang membuat data hilang.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+func main() {
+    angka := []int{10, 20, 30}
+    angka = append(angka, 40)
+    fmt.Println("Slice:", angka, "panjang:", len(angka))
+
+    total := 0
+    for _, n := range angka {
+        total += n
+    }
+    fmt.Println("Total:", total)
+
+    skor := map[string]int{"Sari": 90, "Budi": 85}
+    skor["Ani"] = 88
+
+    nilai, ada := skor["Sari"]
+    if ada {
+        fmt.Println("Skor Sari:", nilai)
+    }
+
+    _, ada = skor["Zoe"]
+    fmt.Println("Zoe terdaftar:", ada)
+
+    delete(skor, "Budi")
+    fmt.Println("Jumlah siswa:", len(skor))
+
+    kosong := make([]string, 0, 2)
+    kosong = append(kosong, "a", "b")
+    fmt.Println("make slice:", kosong, "cap:", cap(kosong))
+}`} />

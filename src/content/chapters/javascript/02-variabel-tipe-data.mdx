@@ -1,0 +1,191 @@
+---
+title: "Variabel & Tipe Data"
+description: "let, const, string, number, boolean, array, object"
+order: 2
+quiz:
+  - q: "Perbedaan let dan const adalah…"
+    options: ["const tidak bisa di-assign ulang, let bisa", "let lebih cepat", "const hanya untuk angka", "Tidak ada bedanya"]
+    answer: 0
+    explain: "const untuk nilai tetap; let untuk nilai yang berubah. Default modern: const dulu, let bila perlu."
+  - q: "Tipe data untuk menyimpan daftar berurutan adalah…"
+    options: ["object", "array", "boolean", "null"]
+    answer: 1
+    explain: "Array ditulis dengan tanda kurung siku: [1, 2, 3]."
+  - q: "Hasil typeof \"42\" adalah…"
+    options: ["\"number\"", "\"string\"", "\"boolean\"", "\"object\""]
+    answer: 1
+    explain: "Tanda kutip membuat 42 jadi teks (string)."
+  - q: "Template literal memakai tanda…"
+    options: [" kutip ganda ", "backtick ` `", "kurung siku", "apostrof tunggal"]
+    answer: 1
+    explain: "Backtick memungkinkan interpolasi ${ekspresi}."
+  - q: "Bagaimana mengakses properti object orang.nama jika object = { nama: \"Budi\" }?"
+    options: ["orang[\"nama\"] atau orang.nama", "orang->nama", "orang::nama", "get orang.nama"]
+    answer: 0
+    explain: "Dot notation (orang.nama) atau bracket notation (orang[\"nama\"])."
+example:
+  code: |
+    const nama = "Sari";
+    let skor = 90;
+    skor = skor + 10;
+    const aktif = true;
+    const nilai = [85, 90, 78];
+    const siswa = { nama: "Budi", kelas: "XII" };
+    console.log(nama, skor, aktif, nilai, siswa);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## 3 Kata Kunci Deklarasi
+
+JavaScript punya tepat **3 kata kunci** untuk membuat variabel:
+
+| Kata kunci | Bisa di-assign ulang? | Scope | Kapan dipakai |
+|------------|----------------------|-------|---------------|
+| `const` | Tidak | Blok `{ }` | Default. Nilai tidak akan diganti |
+| `let` | Ya | Blok `{ }` | Nilai berubah: hitungan, skor, index loop |
+| `var` | Ya | Function (hoisting) | Gaya lama pre-ES6 — hindari |
+
+```js
+const pi = 3.14;     // preferensi utama
+let jumlah = 0;      // saat nilainya berubah
+var lama = "jangan"; // warisan ES5
+```
+
+**Mutabilitas**: `const` hanya mengunci *referensinya*. Object/array tetap bisa isinya diubah:
+
+```js
+const orang = { nama: "Sari" };
+orang.nama = "Budi";   // ✅ isi object boleh berubah
+// orang = {};         // ❌ TypeError: assignment to constant
+```
+
+## Scope: 4 Jangkauan Variabel
+
+```js
+const global = "terlihat di mana pun";
+
+function contoh() {
+  const diFungsi = "scope function";
+  if (true) {
+    const diBlok = "hanya di dalam { }";
+    var lama = "bocor ke seluruh fungsi (var)";
+  }
+}
+// console.log(diBlok); // ❌ ReferenceError
+```
+
+4 tingkat: **global** (di luar semua blok), **function** (`var` & isi fungsi), **block** (`let`/`const` di `{ }`), dan **module** (file ES module dengan `export`/`import`).
+
+## Aturan Penamaan (4 Aturan)
+
+1. camelCase: `userName`, `totalHarga`
+2. Bermakna: `hargaTotal` bukan `x`
+3. Hindari kata terlarang (kata kunci): `class`, `return`, `new`
+4. Konstanta besar pakai SCREAMING_CASE: `API_URL`, `MAX_RETRY`
+
+## 7 Tipe Data Primitif + Object
+
+JavaScript punya **7 tipe primitif** dan **1 tipe referensi (object)**:
+
+| Tipe | Sifat | Contoh | Buat apa |
+|------|-------|--------|----------|
+| `string` | teks, kutip `'…'`, `"…"`, backtick | `"Halo"` | Nama, pesan, ID |
+| `number` | bulat & desimal (+ `NaN`, `Infinity`) | `42`, `3.14` | Hitungan, harga |
+| `boolean` | `true` / `false` | `true` | Status aktif, flag |
+| `null` | sengaja kosong (eksplisit) | `null` | "Belum diisi" |
+| `undefined` | belum diberi nilai | `let x;` | Default variabel kosong |
+| `bigint` | bilangan bulat raksasa | `9007199254740993n` | ID besar, kripto |
+| `symbol` | identitas unik | `Symbol("id")` | Kunci object unik |
+
+Object mencakup array, function, Date, regex — semuanya bertipe `typeof … === "object"`. Default value primitif: `undefined` (kecuali `null` yang memang berisi `null`).
+
+## String
+
+```js
+const s1 = 'Halo';
+const s2 = "Dunia";
+const s3 = `Halo ${s1}!`;   // template literal
+
+s1.length;          // 4
+s1.toUpperCase();   // "HALO"
+s2.concat(' 🎉');   // "Dunia 🎉"
+"Halo".includes("Ha"); // true
+"Halo".slice(1, 3);    // "al"
+"Halo ".trim();        // hilangkan spasi tepi
+```
+
+## Number & Boolean
+
+```js
+const a = 10, b = 3;
+a + b; a - b; a * b; a / b; a % b; // 1 (sisa bagi)
+Math.round(4.6); // 5
+Math.max(3, 8);  // 8
+
+const benar = true;
+const salah = false;
+!benar; // false
+```
+
+## Array & Object
+
+```js
+const buah = ["apel", "jeruk"];
+buah.push("mangga");   // tambah di akhir
+buah[0];               // "apel"
+buah.length;           // 3
+
+const orang = { nama: "Sari", umur: 20 };
+orang.nama;            // "Sari"
+orang.kota = "Bandung"; // tambah properti baru
+```
+
+## typeof
+
+```js
+typeof "teks";   // "string"
+typeof 42;       // "number"
+typeof true;     // "boolean"
+typeof [1, 2];   // "object" (array adalah objek khusus)
+typeof null;     // "object" (bug legendaris JS — terima saja dulu)
+```
+
+## Konversi Tipe & Kejatuhan Umum
+
+| Kasus | Hasil | Keterangan |
+|-------|-------|------------|
+| `"1" + 1` | `"11"` | `+` diawali teks → string menang (implicit coercion) |
+| `"1" - 1` | `0` | Aritmatika memaksa angka |
+| `"5" * "2"` | `10` | Perkalian mengonversi otomatis |
+| `Number("12")` | `12` | Konversi **eksplisit** ke angka |
+| `String(12)` | `"12"` | Konversi eksplisit ke teks |
+| `Boolean("")` | `false` | `""`, `0`, `null`, `undefined`, `NaN` → falsy |
+
+```js
+0.1 + 0.2;              // 0.30000000000000004 — floating point IEEE 754
+Math.round(0.5 + 0.0000001 * 0) // pakai pembulatan hati-hati untuk uang
+"10" > "9";             // true — string dibandingkan alfabetis, bukan angka
+```
+
+## Di Dunia Nyata
+
+- **State form login**: `const` untuk URL API, `let` untuk `password` yang diketik ulang.
+- **Keranjang belanja**: array `[ ... ]` menyimpan item, object `{ nama, harga }` menyimpan detail satu item.
+- **Input harga** selalu masuk sebagai string — wajib `Number()` sebelum dihitung, kalau tidak hasilnya `"10000" + 5000`.
+- **Toggle tema gelap**: `let tema = "terang"` yang nilainya bolak-balik, disimpan sebagai string.
+- **ID transaksi raksasa** memakai `bigint` supaya tidak kehilangan presisi.
+
+<div class="note">💡 Kejatuhan terbesar JS bukan error-nya, tapi *kegagalannya memberi error*: `"1" + 1` tidak protes, ia diam-diam menghasilkan `"11"`. Selalu pakai `Number()` di batas data dari user/API.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const produk = {
+  nama: "Keyboard Mekanik",
+  harga: 450000,
+  stok: 12,
+  tags: ["mechanical", "rgb"],
+};
+const diskon = 0.1;
+const hargaAkhir = produk.harga * (1 - diskon);
+console.log(produk.nama, "→ Rp" + hargaAkhir.toLocaleString("id-ID"));
+console.log("Stok:", produk.stok, "| Tag pertama:", produk.tags[0]);
+console.log("Tipe data stok:", typeof produk.stok);`} />

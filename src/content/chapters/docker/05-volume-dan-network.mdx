@@ -1,0 +1,150 @@
+---
+title: "Volume & Network"
+description: "Data persisten antar container dan cara container saling terhubung"
+order: 5
+quiz:
+  - q: "Data di dalam container bersifat…"
+    options: ["Permanen selamanya", "Sementara — hilang saat container dihapus", "Tersimpan di host otomatis", "Terkirim ke registry"]
+    answer: 1
+    explain: "Writable layer container mudah rusak/hapus — data penting wajib lewat volume atau bind mount."
+  - q: "Named volume dibuat dengan…"
+    options: ["docker volume create nama", "docker run -v nama:/path", "docker network create", "COPY pada Dockerfile"]
+    answer: 0
+    explain: "Volume dikelola Docker sendiri, portable antar host; bind mount menunjuk path host eksplisit."
+  - q: "Dua container di container network default bisa saling akses…"
+    options: ["Tidak bisa langsung", "Ya, lewat nama container sebagai hostname", "Hanya lewat port 80", "Hanya bila keduanya root"]
+    answer: 1
+    explain: "Docker memberi DNS internal — container db bisa diakses app dengan host 'db'."
+  - q: "Port container diekspos ke host dengan flag…"
+    options: ["-p host:container", "--net", "-v", "--name"]
+    answer: 0
+    explain: "Contoh -p 8080:80 membuat host:8080 menerus ke container:80."
+  - q: "docker network ls menampilkan…"
+    options: ["Semua container", "Daftar jaringan Docker (bridge, host, none)", "Daftar volume", "Daftar image"]
+    answer: 1
+    explain: "Bridge adalah default; host menghilangkan isolasi jaringan; none tanpa network."
+---
+
+Tanpa langkah ekstra, container menghilang bersama datanya. **Volume** dan **network** adalah dua mekanisme dasar agar container benar-benar layak dipakai produksi.
+
+## Masalah Data Ephemeral
+
+```bash
+docker run --rm python:3.12-slim python -c "open('/data.txt','w').write('penting')"
+# file hilang bersama container
+```
+
+Solusi: mount data ke **volume** yang hidup di luar container.
+
+## Volume
+
+```bash
+docker volume create data-db
+
+docker run -d --name db \
+  -v data-db:/var/lib/postgresql/data \
+  postgres:16
+
+docker volume inspect data-db
+docker volume ls
+```
+
+Dua jenis mount utama:
+
+| Jenis | Perintah | Data dikelola |
+|-------|----------|---------------|
+| Named volume | `-v nama-data:/path` | Docker |
+| Bind mount | `-v /host/path:/path` | kamu (path host) |
+
+Bind mount untuk kode saat development:
+
+```bash
+docker run -v "$(pwd)/src:/app/src" my-node-app
+```
+
+Editan di editor langsung terlihat di container.
+
+## Network Antar Container
+
+```bash
+docker network create app-net
+
+docker run -d --name db  --network app-net postgres:16
+docker run -d --name api --network app-net -e DB_HOST=db my-api:1.0
+```
+
+Container `api` cukup menulis `DB_HOST=db` — DNS bawaan Docker membereskan resolusi ke IP container `db`. Tidak perlu IP statis, tidak perlu membuka port ke luar.
+
+```bash
+docker network ls
+docker network inspect app-net
+docker exec api ping -c 3 db
+```
+
+## Mengekspos ke Dunia Luar
+
+```bash
+docker run -d --name web -p 8080:80 nginx:alpine
+```
+
+- `8080` — port di host (yang kamu akses dari browser)
+- `80` — port di dalam container
+
+Tanpa `-p`, container hanya terjangkau dari container lain dalam network yang sama.
+
+## Tiga Jenis Mount
+
+Docker menyediakan **3 jenis mount utama**: volume, bind mount, dan tmpfs.
+
+| Jenis | Lokasi data | Kekuatan | Kapan dipakai |
+|---|---|---|---|
+| Named volume | Area yang dikelola Docker | Portabel dan mudah di-backup | Database dan data aplikasi |
+| Bind mount | Path eksplisit pada host | Sinkron langsung dengan host | Source code development |
+| tmpfs | Memori host | Cepat dan hilang saat berhenti | Data sementara yang sensitif |
+
+Gunakan sintaks `--mount` untuk konfigurasi yang lebih jelas:
+
+```bash
+docker run --rm \
+  --mount type=volume,src=data-db,dst=/var/lib/app \
+  --mount type=tmpfs,dst=/run/secrets \
+  alpine:3.20 sh -c 'mount | grep -E "app|secrets"'
+```
+
+Volume bukan backup. Kerusakan logis atau penghapusan oleh aplikasi ikut tersimpan. Buat backup terjadwal, enkripsi hasilnya, dan uji restore. Jangan menaruh secret permanen di bind mount yang dapat dibaca proses lain tanpa pengaturan permission.
+
+## Empat Driver Network Bawaan
+
+Ada **4 mode jaringan yang umum** pada satu host.
+
+| Driver | Isolasi | DNS antarkontainer | Kapan dipakai |
+|---|---|---|---|
+| bridge | Ada | Ya pada user-defined network | Aplikasi biasa satu host |
+| host | Hampir tidak ada | Mengikuti host | Kebutuhan performa atau port khusus |
+| none | Penuh tanpa jaringan | Tidak | Job offline |
+| overlay | Lintas host | Ya | Cluster/orchestrator |
+
+User-defined bridge lebih baik daripada bridge default karena menyediakan DNS berdasarkan nama dan segmentasi yang jelas. Publikasikan hanya port yang harus menerima trafik host. Binding `127.0.0.1:8080:80` membatasi akses ke host lokal:
+
+```bash
+docker run -d --name admin -p 127.0.0.1:8080:80 nginx:1.27-alpine
+```
+
+## Di Dunia Nyata
+
+1. PostgreSQL memakai named volume agar penggantian container tidak menghapus data.
+2. Developer bind-mount folder source untuk hot reload, tetapi dependencies tetap berada dalam volume terpisah.
+3. API dan database berada di network privat; hanya reverse proxy yang menerbitkan port 443.
+4. Job pemrosesan dokumen memakai tmpfs untuk file sementara agar hilang setelah container berhenti.
+5. Backup volume dijalankan terjadwal dan diuji restore ke volume baru sebelum dianggap valid.
+
+<div class="note">💡 Jangan taruh service database di network publik dengan port terbuka. Pola aman: db dan api di satu network privat; hanya api (atau reverse proxy) yang diekspos dengan -p ke host.</div>
+
+## Merapikan
+
+```bash
+docker stop db api
+docker rm db api
+docker volume rm data-db     # hapus data permanen — permanen juga!
+docker network rm app-net
+```

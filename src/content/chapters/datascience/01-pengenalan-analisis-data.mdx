@@ -1,0 +1,128 @@
+---
+title: "Pengenalan Analisis Data"
+description: "Dari data mentah menjadi jawaban — workflow analis data dengan Python murni"
+order: 1
+quiz:
+  - q: "Langkah pertama analisis data biasanya…"
+    options: ["Melatih model AI", "Mengumpulkan dan memahami data mentah", "Membeli GPU", "Menghapus semua kolom"]
+    answer: 1
+    explain: "Tanpa memahami isi dan kualitas data, analisis berikutnya mudah menghasilkan kesimpulan yang salah."
+  - q: "Struktur paling umum untuk menyimpan banyak baris data di Python murni adalah…"
+    options: ["list berisi dict", "dict berisi gambar", "set berisi file", "tuple berisi fungsi"]
+    answer: 0
+    explain: "Setiap dict mewakili satu baris dengan nama kolom, lalu list mengumpulkan seluruh baris."
+  - q: "Untuk mengetahui jumlah elemen sebuah list, gunakan…"
+    options: ["size()", "total()", "len()", "amount()"]
+    answer: 2
+    explain: "len() adalah fungsi bawaan Python yang menghitung panjang sequence apa pun, termasuk list."
+  - q: "Pada perintah for kota, nilai in data:, proses memecah tuple menjadi variabel disebut…"
+    options: ["Hashing", "Unpacking", "Casting", "Slicing"]
+    answer: 1
+    explain: "Unpacking — satu tuple (kota, nilai) dipecah langsung menjadi dua variabel di sisi kiri."
+  - q: "Hasil akhir analisis data yang baik seharusnya…"
+    options: ["Dapat ditindaklanjuti (actionable)", "Sebanyak mungkin grafik", "Dirahasiakan dari tim", "Tanpa kesimpulan"]
+    answer: 0
+    explain: "Analisis yang berguna menjawab pertanyaan bisnis dan menunjuk langkah berikutnya."
+example:
+  code: |
+    data = [("Jakarta", 10600), ("Bandung", 2500), ("Surabaya", 2800)]
+    total = sum(nilai for _, nilai in data)
+    print("Jumlah kota:", len(data))
+    print("Total penduduk (ribu):", total)
+    print("Kota terbesar:", max(data, key=lambda x: x[1])[0])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Analisis data** adalah proses mengubah data mentah menjadi informasi yang bisa dipakai untuk mengambil keputusan. Di bab ini kita mulai dengan Python murni: list, dict, dan perulangan.
+
+## Apa Itu Analisis Data?
+
+Pertanyaan yang dijawab lewat data, misalnya: kota mana yang penduduknya terbanyak? produk mana yang paling laris? nilai rata-rata kelas berapa?
+
+3 pekerjaan utama:
+
+- **Mengumpulkan** — membaca CSV, JSON, hasil API, atau sekadar daftar di kode.
+- **Mengolah** — membersihkan, menyaring, menghitung ringkasan.
+- **Menyimpulkan** — menyajikan angka akhir yang bisa ditindaklanjuti.
+
+## Workflow Analis Data
+
+Alurnya terdiri dari **6 tahap** yang sering diulang:
+
+```
+pertanyaan -> data -> bersih -> hitung -> visualisasi -> kesimpulan
+```
+
+| No | Tahap | Yang dikerjakan | Output |
+|----|-------|-----------------|--------|
+| 1 | Pertanyaan | Rumuskan pertanyaan bisnis | Hipotesis |
+| 2 | Data | Ambil dari CSV/API/dataset | Data mentah |
+| 3 | Bersih | Cek tipe, duplikat, nilai kosong | Data siap hitung |
+| 4 | Hitung | Filter, agregasi, statistik | Angka ringkasan |
+| 5 | Visualisasi | Grafik/teks teratur | Gambaran cepat |
+| 6 | Kesimpulan | Interpretasi angka | Rekomendasi |
+
+Kesalahan paling mahal justru ada di awal: **asumsi yang salah tentang data**. Selalu cetak beberapa baris pertama sebelum menghitung apa pun.
+
+## List: Wadah Data Pertama
+
+```python
+penduduk = [
+    ("Jakarta", 10600),
+    ("Bandung", 2500),
+    ("Surabaya", 2800),
+]
+
+print("Jumlah kota:", len(penduduk))
+print("Kota pertama:", penduduk[0])
+```
+
+Setiap elemen adalah **pasangan (nama, angka)**. List mempertahankan urutan, sehingga indeks 0 selalu mengacu ke data yang sama.
+
+## Menjelajahi Data dengan Loop
+
+```python
+total = 0
+for kota, nilai in penduduk:
+    total += nilai
+    print(f"{kota}: {nilai} ribu jiwa")
+
+print("Total:", total, "ribu jiwa")
+print("Rata-rata:", total // len(penduduk), "ribu jiwa")
+```
+
+`for kota, nilai in ...` membongkar tiap tuple menjadi dua variabel — jauh lebih ringkas daripada mengakses `[0]` dan `[1]` satu per satu.
+
+3 kebiasaan saat membuka data baru:
+
+1. `print(data[:3])` — lihat 3 baris pertama.
+2. `print(len(data))` — pastikan jumlah baris sesuai harapan.
+3. `print(type(data[0]))` — pastikan tipe datanya benar.
+
+## Menyimpulkan
+
+Dari tiga baris data saja kita sudah bisa menjawab: berapa banyak kota, total penduduknya, dan rata-ratanya. Bab berikutnya memperdalam list dan tuple untuk operasi yang lebih sering dipakai.
+
+## Di Dunia Nyata
+
+- **Rekap penjualan harian kasir** — total omzet per hari dari daftar transaksi di akhir shift.
+- **Cek nilai rata-rata kelas** — guru menghitung rata-rata, tertinggi, dan terendah sebelum rapat wali murid.
+- **Laporan stok gudang** — membandingkan sisa stok tiap barang terhadap ambang minimum.
+- **Filter pengunjung website** — menghitung berapa pengunjung unik per halaman dari daftar log.
+
+<div class="note">💡 Cetak selalu 3-5 baris pertama data sebelum menghitung. Bug analisis paling sering bukan di rumusnya, melainkan di data yang ternyata kosong, ganda, atau salah tipe.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`penduduk = [("Jakarta", 10600), ("Bandung", 2500), ("Surabaya", 2800), ("Medan", 2400)]
+
+total = 0
+terbesar = None
+for kota, nilai in penduduk:
+    total = total + nilai
+    if terbesar is None or nilai > terbesar[1]:
+        terbesar = (kota, nilai)
+
+print("Jumlah kota:", len(penduduk))
+print("Total (ribu):", total)
+print("Rata-rata (ribu):", total // len(penduduk))
+print("Terbesar:", terbesar[0], terbesar[1])`} />

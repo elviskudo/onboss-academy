@@ -1,0 +1,255 @@
+---
+title: "OOP Dasar"
+description: "4 pilar OOP — encapsulation, inheritance, polymorphism, abstraction — lengkap dengan class, constructor, interface"
+order: 8
+quiz:
+  - q: "Blueprint/object adalah pasangan yang tepat antara…"
+    options: ["Object sebagai blueprint, class sebagai data", "Class sebagai blueprint, object sebagai hasil cetakannya", "Keduanya selalu sama", "Class hanya untuk fungsi"]
+    answer: 1
+    explain: "Class mendefinisikan struktur dan perilaku; object adalah instance konkret dari class itu."
+  - q: "Method khusus yang dipanggil saat object dibuat disebut…"
+    options: ["Destructor", "Getter saja", "Constructor", "Main method"]
+    answer: 2
+    explain: "Constructor memiliki nama sama dengan class dan mengisi nilai awal field."
+  - q: "Pewarisan di Java memakai kata kunci…"
+    options: ["implements", "inherits", "extends", "super"]
+    answer: 2
+    explain: "class Kucing extends Hewan — Kucing mewarisi field dan method Hewan."
+  - q: "Menyembunyikan detail internal dan menampilkan hanya yang perlu disebut…"
+    options: ["Encapsulation", "Compilation", "Iteration", "Concatenation"]
+    answer: 0
+    explain: "Field private + getter/setter adalah bentuk encapsulation yang paling umum."
+  - q: "Method abstrak hanya boleh ada di…"
+    options: ["Class biasa", "Class abstract atau interface", "Constructor", "Static block"]
+    answer: 1
+    explain: "Class abstract/interface menjadi kontrak yang wajib diimplementasikan class turunan."
+example:
+  code: |
+    class Hewan {
+        String nama;
+        Hewan(String nama) { this.nama = nama; }
+        String bersuara() { return "..."; }
+    }
+
+    class Kucing extends Hewan {
+        Kucing(String nama) { super(nama); }
+        String bersuara() { return "Meong!"; }
+    }
+
+    public class Main {
+        public static void main(String[] args) {
+            Hewan h = new Kucing("Kitty");
+            System.out.println(h.nama + ": " + h.bersuara());
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Java adalah bahasa **berorientasi objek penuh**: data dan perilaku dibungkus bersama dalam class, lalu dipakai ulang lewat object. Bab ini merinci **4 pilar OOP** beserta mekanisme penunjangnya: class/object, constructor, inheritance, dan interface.
+
+## Class & Object
+
+```java
+class Siswa {
+    String nama;      // field (state)
+    int nilai;
+
+    void tampil() {   // method (perilaku)
+        System.out.println(nama + " → " + nilai);
+    }
+}
+
+// di method main:
+Siswa s = new Siswa();
+s.nama = "Sari";
+s.nilai = 90;
+s.tampil();
+```
+
+`class` adalah blueprint; `new Siswa()` membuat object baru di memori; `s` adalah referensi menujunya. Bisa ada ribuan object dari satu class.
+
+## Constructor & this
+
+```java
+class Siswa {
+    String nama;
+    int nilai;
+
+    Siswa() { this("Tanpa Nama", 0); }              // constructor overload
+    Siswa(String nama, int nilai) {                 // constructor utama
+        this.nama = nama;   // this = object yang sedang dibuat
+        this.nilai = nilai;
+    }
+}
+
+Siswa s = new Siswa("Budi", 85);
+```
+
+Java membuat **default constructor** (parameter kosong) hanya bila kamu tidak menulis constructor apa pun. Constructor overload memungkinkan beberapa cara pembuatan object.
+
+## Pilar 1: Encapsulation
+
+Menggabungkan data + method sekaligus **menyembunyikan detail internal** di balik akses `private`:
+
+```java
+class Rekening {
+    private double saldo;               // tidak bisa diakses langsung
+
+    void setor(double jumlah) {
+        if (jumlah > 0) saldo += jumlah; // validasi dijaga di dalam method
+    }
+    double getSaldo() { return saldo; }
+}
+```
+
+Tingkat akses Java: `private` (class saja), default/package (satu package), `protected` (+ turunan), `public` (semua). Field `private` memaksa akses lewat method, sehingga aturan bisnis (setoran harus > 0) tidak bisa dilanggar dari luar.
+
+## Pilar 2: Inheritance
+
+```java
+class Hewan {
+    String nama;
+    Hewan(String nama) { this.nama = nama; }
+    String bersuara() { return "..."; }
+}
+class Kucing extends Hewan {
+    Kucing(String nama) { super(nama); }   // super: panggil constructor parent
+    @Override
+    String bersuara() { return "Meong!"; }
+}
+class Anjing extends Hewan {
+    Anjing(String nama) { super(nama); }
+    @Override
+    String bersuara() { return "Guk!"; }
+}
+```
+
+Java mendukung **single inheritance** — satu class hanya boleh `extends` satu parent (akar hierarki: `Object`). Method yang tidak di-override otomatis diwarisi. `super(...)` memanggil constructor parent dan wajib berada di baris pertama constructor child.
+
+## Pilar 3: Polymorphism
+
+Satu tipe referensi, perilaku berbeda tergantung object sebenarnya (**dynamic dispatch**):
+
+```java
+Hewan[] hewan = { new Kucing("Kitty"), new Anjing("Bimo") };
+for (Hewan h : hewan) {
+    System.out.println(h.nama + ": " + h.bersuara());
+}
+// Kitty: Meong!   Bimo: Guk!
+```
+
+`h.bersuara()` memanggil versi milik object konkret, bukan milik `Hewan`. Polymorphism membuat array/collection bisa menyimpan bermacam turunan dan kode tetap sama.
+
+## Pilar 4: Abstraction
+
+Menampilkan **konsep penting, menyembunyikan detail** lewat class abstract dan interface:
+
+```java
+abstract class Bayar {
+    abstract double hitung(double total);   // wajib diisi turunan
+    void cetakStruk(double total) {         // method konkret boleh ada
+        System.out.println("Bayar: " + hitung(total));
+    }
+}
+
+class BayarTunai extends Bayar {
+    double hitung(double total) { return total; }
+}
+class BayarKartu extends Bayar {
+    double hitung(double total) { return total * 1.01; }  // biaya 1%
+}
+```
+
+Aturan main abstraction:
+
+| Fitur | Abstract class | Interface |
+|---|---|---|
+| Method abstrak | boleh | wajib diimplementasikan turunan |
+| Method konkret (default) | boleh | boleh sejak Java 8 (`default`) |
+| Field | semua visibilitas | hanya `public static final` |
+| Pewarisan | 1 class | **banyak** interface |
+| Kapan dipakai | "adalah" dengan kode bersama | "bisa melakukan" — kontrak kemampuan |
+
+```java
+interface DapatDikirim {
+    String lacak();
+}
+interface DapatDicetak {
+    String struk();
+}
+class Faktur implements DapatDikirim, DapatDicetak {
+    public String lacak() { return "JNE-123"; }
+    public String struk() { return "Faktur Rp10.000"; }
+}
+```
+
+Satu class boleh `implements` banyak interface — inilah cara Java mensiasati batas single inheritance.
+
+## instanceof & Casting
+
+```java
+Hewan h = new Kucing("Tom");
+if (h instanceof Kucing k) {   // cek tipe + smart cast (Java 16+)
+    System.out.println(k.bersuara());
+}
+```
+
+## Di Dunia Nyata
+
+- **Model e-commerce**: class `Produk` dengan field private + getter (encapsulation), turunan `Baju`, `Elektronik` menghitung berat/kirim berbeda (inheritance & polymorphism).
+- **Sistem pembayaran**: interface `Bayar` diimplementasikan `Tunai`, `Transfer`, `Ewallet` — menambah metode baru tanpa mengubah kode checkout (open-closed via abstraction).
+- **Game RPG**: base class `Karakter` dengan method `serang()` abstrak; setiap class monster mengoverride sesuai kekuatannya.
+- **Aplikasi bank**: class `Rekening` menolak setoran negatif lewat validasi di setter (encapsulation mencegah fraud).
+- **Plugin system**: interface `Plugin { void jalankan(); }` — aplikasi menjalankan semua plugin tanpa tahu class konkretnya (abstraction + polymorphism).
+
+<div class="note">💡 Urutan belajar 4 pilar: kuasai dulu <b>encapsulation</b> (private + getter/setter) karena paling sering dipakai sehari-hari; inheritance dan polymorphism menyusul; abstraction dipakai saat kamu sudah punya 2+ implementasi berbeda dari konsep yang sama. Jangan memaksakan pewarisan hanya karena "ada class induk" — komposisi sering lebih sederhana.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`abstract class Bayar {
+    abstract double hitung(double total);
+    void cetakStruk(double total) {
+        System.out.println("  Struk: Rp" + hitung(total));
+    }
+}
+
+class BayarTunai extends Bayar {
+    double hitung(double total) { return total; }
+}
+
+class BayarKartu extends Bayar {
+    double hitung(double total) { return total * 1.01; }
+}
+
+class Hewan {
+    String nama;
+    Hewan(String nama) { this.nama = nama; }
+    String bersuara() { return "..."; }
+}
+
+class Kucing extends Hewan {
+    Kucing(String nama) { super(nama); }
+    @Override
+    String bersuara() { return "Meong!"; }
+}
+
+class Anjing extends Hewan {
+    Anjing(String nama) { super(nama); }
+    @Override
+    String bersuara() { return "Guk!"; }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Hewan[] hewan = { new Kucing("Kitty"), new Anjing("Bimo") };
+        for (Hewan h : hewan) {
+            System.out.println(h.nama + ": " + h.bersuara());
+        }
+
+        Bayar[] metode = { new BayarTunai(), new BayarKartu() };
+        String[] namaMetode = { "Tunai", "Kartu" };
+        for (int i = 0; i < metode.length; i++) {
+            System.out.println("Bayar " + namaMetode[i] + " (total 100000):");
+            metode[i].cetakStruk(100000);
+        }
+    }
+}`} />

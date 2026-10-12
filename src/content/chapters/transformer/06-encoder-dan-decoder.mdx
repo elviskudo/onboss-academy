@@ -1,0 +1,120 @@
+---
+title: "Encoder dan Decoder"
+description: "Dua peran Transformer — memahami teks dan menghasilkan teks"
+order: 6
+quiz:
+  - q: "Bagian encoder Transformer berfungsi untuk…"
+    options: ["Mengompres file", "Menghasilkan teks satu per satu", "Membangun representasi pemahaman dari teks masukan", "Melatih tokenizer"]
+    answer: 2
+    explain: "Encoder menyaring teks input menjadi representasi kaya konteks (basis BERT)."
+  - q: "Bagian decoder bersifat…"
+    options: ["Autoregresif — menghasilkan token secara berurutan", "Paralel penuh tanpa urutan", "Hanya membaca gambar", "Tanpa parameter"]
+    answer: 0
+    explain: "Setiap token baru dihasilkan berdasarkan token yang sudah ada (basis GPT)."
+  - q: "Arsitektur encoder-decoder klasik dipakai untuk…"
+    options: ["Kompresi gambar saja", "Tugas seq2seq seperti terjemahan", "Menghitung rata-rata", "Mengatur tema editor"]
+    answer: 1
+    explain: "Encoder membaca kalimat sumber, decoder menulis kalimat target."
+  - q: "Masking pada decoder bertujuan…"
+    options: ["Menghapus token kosong", "Menyembunyikan data dari pengguna", "Mencegah melihat token masa depan saat training", "Mengganti warna layer"]
+    answer: 2
+    explain: "Tanpa mask, model akan 'menghafal' jawaban dari token berikutnya — bocor informasi."
+  - q: "BERT terutama menggunakan…"
+    options: ["Encoder (untuk pemahaman teks)", "Decoder saja", "Tokenizer saja", "Tidak ada attention"]
+    answer: 0
+    explain: "BERT unggul pada tugas klasifikasi dan ekstraksi — membaca, bukan menulis."
+example:
+  code: |
+    # Encoder: baca seluruh konteks sekaligus
+    # Decoder: hasilkan token berikutnya dari yang sudah ada
+
+    sebagian = "Hari ini cuaca"
+    for lanjutan in [" cerah", " mendung", " hujan"]:
+        print(sebagian + lanjutan)
+---
+
+Transformer punya **3 konfigurasi utama**: encoder-only (memahami), decoder-only (menghasilkan), dan encoder-decoder (mengubah satu sekuens menjadi sekuens lain).
+
+## Encoder: Membaca Utuh
+
+```python
+# Seluruh kalimat tersedia sekaligus — attention dua arah
+kalimat = "Film ini mengecewakan di awal tetapi menyelamatkan akhir cerita"
+
+# Encoder memproses SEMUA token serentak:
+# token "mengecewakan" bisa melihat "menyelamatkan" dan sebaliknya
+print(len(kalimat.split()), "token diproses paralel")
+```
+
+Attention dua arah membuat representasi tiap token mempertimbangkan konteks kiri dan kanan.
+
+## Decoder: Menulis Berurutan
+
+```python
+awal = "Hari ini cuaca"
+
+for _ in range(3):
+    # Pada kenyataan: model memilih token paling mungkin berikutnya
+    pass
+
+opsi = [" cerah", " mendung", " hujan"]
+for o in opsi:
+    print(awal + o)
+```
+
+Decoder hanya boleh melihat token sebelumnya: prediksi posisi ke-t tidak boleh memakai informasi posisi ke-t+1.
+
+## Masking Masa Depan
+
+```python
+# Matriks mask (lihat hanya ke kiri)
+# posisi 0 hanya melihat dirinya
+# posisi 1 melihat 0 dan 1
+# posisi 2 melihat 0, 1, 2
+n = 4
+for i in range(n):
+    izin = [j for j in range(n) if j <= i]
+    print(f"posisi {i} boleh melihat: {izin}")
+```
+
+Saat training, mask ini dipasang agar model belajar melanjutkan teks tanpa menyontek token berikutnya.
+
+## Seq2Seq: Menggabungkan Keduanya
+
+```
+Kalimat Indonesia -> [Encoder] -> representasi -> [Decoder] -> Kalimat Inggris
+```
+
+- **Encoder** memahami seluruh kalimat sumber sekaligus.
+- **Decoder** menghasilkan terjemahan kata demi kata, berhenti pada token akhir.
+
+## 3 Pilihan Arsitektur
+
+| Arsitektur | Attention | Tugas | Contoh keluarga |
+|------------|-----------|-------|-----------------|
+| Encoder-only | dua arah | klasifikasi, ekstraksi, embedding | BERT |
+| Decoder-only | causal (lihat kiri) | generasi, chat, kode | GPT |
+| Encoder-decoder | dua arah + causal + cross-attention | terjemahan, ringkasan | T5 |
+
+Pada encoder-decoder terdapat **3 attention**: self-attention encoder, masked self-attention decoder, dan cross-attention dari decoder ke keluaran encoder. Cross-attention memungkinkan kata target mengambil informasi bagian sumber yang relevan.
+
+## Proses Generasi Decoder
+
+Decoder menghasilkan token lewat **4 langkah berulang**:
+
+1. Baca prompt dan token yang sudah ada.
+2. Hitung distribusi probabilitas token berikutnya.
+3. Pilih satu token (greedy atau sampling).
+4. Tambahkan token; ulangi sampai token akhir atau batas panjang.
+
+Training bisa paralel karena semua target sudah diketahui dan ditutup causal mask. Saat inferensi tetap berurutan karena token berikutnya bergantung pada token yang baru dipilih.
+
+## Di Dunia Nyata
+
+- **Klasifikasi tiket bantuan** — encoder membaca seluruh tiket lalu memilih kategori.
+- **Chatbot dan coding assistant** — decoder menulis respons satu token per langkah.
+- **Terjemahan Indonesia–Jepang** — encoder membaca sumber, decoder menulis target lewat cross-attention.
+- **Ekstraksi entitas kontrak** — encoder memberi label nama, tanggal, dan nominal pada setiap token.
+- **Ringkasan berita** — encoder-decoder memadatkan artikel panjang menjadi teks baru yang singkat.
+
+<div class="note">💡 LLM percakapan saat ini umumnya decoder-only: satu arsitektur yang cukup kuat untuk memahami instruksi sekaligus menghasilkan jawaban — pemahaman dan generasi menyatu dalam satu proses prediksi token.</div>

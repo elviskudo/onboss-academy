@@ -1,0 +1,135 @@
+---
+title: "Hardening, Backup, dan Respons Insiden"
+description: "Menjaga sistem tetap sehat — patch, backup teruji, logging, dan rencana tanggap"
+order: 8
+quiz:
+  - q: "Hardening berarti…"
+    options: ["Memperkuat konfigurasi sistem dengan menghapus yang tidak perlu", "Menambah fitur sebanyak mungkin", "Mengganti hardware", "Menyalakan semua port"]
+    answer: 0
+    explain: "Kurangi permukaan serangan: matikan layanan, batasi akses, patch rutin."
+  - q: "Backup yang belum pernah diuji restore-nya dianggap…"
+    options: ["Backup terbaik", "Terlalu besar", "Belum tentu berguna saat krisis", "Ilegal"]
+    answer: 2
+    explain: "Nilai backup baru terbukti ketika proses pemulihan benar-benar dijalankan."
+  - q: "Prinsip 3-2-1 untuk backup berarti…"
+    options: ["3 server, 2 admin, 1 kunci", "3 salinan, 2 media berbeda, 1 salinan offsite", "3 patch, 2 log, 1 firewall", "3 hari kerja, 2 hari libur"]
+    answer: 1
+    explain: "Keragaman media dan lokasi melindungi dari kegagalan lokal maupun bencana."
+  - q: "Langkah pertama saat menduga insiden keamanan adalah…"
+    options: ["Deteksi, isolasi, dan pendokumentasian awal", "Menghapus semua log", "Memberi tahu publik sebelum verifikasi", "Mematikan semua backup"]
+    answer: 0
+    explain: "Isolasi membatasi penyebaran; dokumentasi menjaga bukti untuk analisis."
+  - q: "Setelah insiden selesai, langkah penting berikutnya adalah…"
+    options: ["Tidak melakukan apa-apa", "Menghapus tim respons", "Analisis pasca-insiden dan perbaikan sistemik", "Menonaktifkan logging"]
+    answer: 2
+    explain: "Tanpa pembelajaran, celah yang sama akan terulang."
+example:
+  code: |
+    # Checklist pemulihan setelah insiden
+    langkah = [
+        "pastikan ancaman sudah tertangani",
+        "ubah kredensial yang berpotensi bocor",
+        "patch celah yang dimanfaatkan",
+        "review log untuk aktivitas mencurigakan lain",
+        "susun laporan pasca-insiden",
+    ]
+    for i, t in enumerate(langkah, 1):
+        print(f"{i}. {t}")
+---
+
+Bab penutup: bagaimana sistem tetap **sehat setelah dibangun** — dan bagaimana bertindak ketika segalanya salah.
+
+## Hardening Berkelanjutan
+
+```python
+hardening = {
+    "patch": "rutin, otomatis bila mungkin",
+    "layanan": "hanya aktifkan yang dibutuhkan",
+    "akun": "hak minimum, tanpa akun bersama",
+    "firewall": "default deny, allowlist eksplisit",
+}
+for area, praktik in hardening.items():
+    print(f"{area:10}: {praktik}")
+```
+
+Harding bukan proyek sekali jalan, melainkan daftar periksa yang dijalankan berkala.
+
+## Backup yang Benar-Benar Siap
+
+```python
+rencana_backup = {
+    "frekuensi": "harian untuk data kritis",
+    "retensi": "30 hari + snapshot bulanan",
+    "pengujian": "restore penuh tiap kuartal",
+    "enkrpsi": "aktif baik di disk maupun offsite",
+}
+print(rencana_backup)
+```
+
+Uji restore — jangan menunggu bencana untuk mengetahui backup rusak.
+
+## Monitoring dan Deteksi
+
+```python
+def deteksi(anomali):
+    ambang_gagal_login = 10
+    return anomali["login_gagal_per_menit"] > ambang_gagal_login
+
+print(deteksi({"login_gagal_per_menit": 25}))  # True -> periksa
+```
+
+Pantau: lonjakan login gagal, transfer data tak wajar, proses aneh, dan perubahan file sensitif.
+
+## Rencana Tanggap Insiden
+
+```
+1. Deteksi & klasifikasi (tingkat dampak)
+2. Isolasi (pindahkan sistem terdampak dari jaringan bila perlu)
+3. Analisis & penghapusan ancaman
+4. Pemulihan layanan dari sumber tepercaya
+5. Komunikasi (internal/eksternal sesuai regulasi)
+6. Pembelajaran: laporan pasca-insiden
+```
+
+## Komunikasi yang Bertanggung Jawab
+
+- Sampaikan fakta terverifikasi, bukan spekulasi.
+- Libatkan pihak berwenang bila terdampak data pribadi (sesuai aturan yang berlaku).
+- Dokumentasikan timeline keputusan untuk audit.
+
+## Menutup Rangkaian Kursus
+
+```
+Lanskap -> Password -> SQLi -> XSS -> HTTPS -> 2FA -> OWASP -> Hardening
+```
+
+Keamanan adalah kebiasaan: **verifikasi, minimalisasi, pantau, perbaiki**.
+
+## Enam Fase Respons Insiden
+
+Ada **6 fase operasional** dari persiapan sampai pembelajaran.
+
+| Fase | Tujuan | Contoh tindakan | Hasil |
+|---|---|---|---|
+| Persiapan | Siap sebelum kejadian | Kontak, akses darurat, latihan | Playbook |
+| Deteksi | Memastikan sinyal | Korelasi alert dan log | Klasifikasi |
+| Containment | Membatasi penyebaran | Isolasi host, blok token | Dampak terkendali |
+| Eradikasi | Menghapus akar masalah | Patch dan hapus persistence | Sistem bersih |
+| Pemulihan | Mengembalikan layanan | Restore dan monitoring ketat | Operasi normal |
+| Pembelajaran | Mencegah pengulangan | Postmortem tanpa menyalahkan | Perbaikan terukur |
+
+Jangan langsung mematikan atau menghapus sistem jika tindakan itu menghancurkan bukti penting. Ikuti playbook, catat waktu dan pelaksana, simpan log secara read-only, dan libatkan pihak hukum atau forensik sesuai dampak. Containment cepat tetap harus menimbang keselamatan, kontinuitas layanan, dan integritas bukti.
+
+Backup memakai prinsip **3-2-1**: tiga salinan, dua jenis media, satu offsite. Tambahkan salinan immutable atau offline untuk menghadapi ransomware. Tetapkan RPO (berapa banyak data boleh hilang) dan RTO (berapa lama layanan boleh berhenti), lalu uji apakah prosedur restore benar-benar memenuhi keduanya.
+
+## Di Dunia Nyata
+
+1. Server publik hanya membuka 80/443, SSH dibatasi ke jaringan admin, dan login root dinonaktifkan.
+2. Patch kritis diuji cepat di staging lalu diluncurkan bertahap dengan rollback yang tersedia.
+3. Simulasi ransomware menguji apakah backup immutable dapat direstore tanpa kredensial produksi yang sudah dikompromikan.
+4. Token akun terdampak dicabut saat containment, lalu credential dirotasi setelah akar masalah dipahami.
+5. Postmortem menghasilkan pemilik dan tenggat untuk perbaikan logging, segmentasi, serta prosedur komunikasi.
+
+Hardening memiliki **5 baseline praktis**: minimalkan layanan, patch, least privilege, segmentasi jaringan, dan logging. Ukur penyimpangan konfigurasi secara berkala; server yang awalnya aman dapat mengalami configuration drift. Alert harus punya runbook dan petugas yang merespons, sebab log tanpa tindakan hanya menjadi arsip.
+
+<div class="note">💡 Lakukan "hari permainan" (game day) berkala: simulasikan insiden tanpa memberi tahu tim operasional. Kesiapan nyata teruji di latihan, bukan di slide.</div>

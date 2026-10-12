@@ -1,0 +1,181 @@
+---
+title: "String dalam C"
+description: "char array, null terminator, 10 fungsi string.h, snprintf — teks tanpa tipe data string"
+order: 7
+quiz:
+  - q: "String dalam C sebenarnya adalah…"
+    options: ["Tipe data khusus bernama string", "Array char yang diakhiri karakter nol '\\0'", "Struct bawaan compiler", "Pointer ke integer"]
+    answer: 1
+    explain: "Tidak ada tipe string di C — semua operasi teks berjalan di atas char array."
+  - q: "Fungsi untuk menghitung panjang string adalah…"
+    options: ["length()", "size()", "strlen()", "count()"]
+    answer: 2
+    explain: "strlen dari <string.h> menghitung karakter sampai sebelum '\\0'."
+  - q: " strcpy(a, b) berfungsi untuk…"
+    options: ["Membandingkan dua string", "Menggabungkan string", "Menyalin isi b ke a", "Menghapus string"]
+    answer: 2
+    explain: "Pastikan buffer a cukup besar — strcpy tidak memeriksa panjang sama sekali."
+  - q: "strcmp mengembalikan nilai nol jika…"
+    options: ["Kedua string identik", "String pertama lebih panjang", "String kosong", "Selalu nol"]
+    answer: 0
+    explain: "Nol berarti sama; nilai positif/negatif menunjukkan urutan perbandingan leksikografis."
+  - q: "Bahaya terbesar sprintf tanpa batas adalah…"
+    options: ["Buffer overflow menimpa memori lain", "Kompilasi gagal", "String jadi kosong", "Program jadi lebih lambat 2x"]
+    answer: 0
+    explain: "Gunakan snprintf(buf, sizeof(buf), ...) untuk membatasi jumlah karakter yang ditulis."
+example:
+  code: |
+    #include <stdio.h>
+    #include <string.h>
+
+    int main(void) {
+        char nama[20] = "Sari";
+        printf("Panjang: %zu\n", strlen(nama));
+        strcat(nama, " Wijaya");
+        printf("%s\n", nama);
+        printf("Sama? %d\n", strcmp(nama, "Sari Wijaya") == 0);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Di C, teks adalah **kumpulan karakter dalam memori** — dan memahami cara kerjanya membuat kamu aman dari bug memori paling berbahaya di bahasa ini.
+
+## String Literals & Char Array
+
+```c
+char s1[] = "Halo";           // otomatis ditambah '\0' → 5 byte
+char s2[10] = "Halo";         // buffer 10 byte, sisa diisi 0
+char c = 'A';                 // satu karakter
+
+printf("%s\n", s1);           // Halo
+printf("%c\n", s1[0]);        // H
+printf("%c\n", s1[4]);        // \0 (terminator, bukan huruf)
+```
+
+`%s` membaca karakter satu per satu sampai menemukan penutup `'\0'`. Tanpa penutup ini, printf/strlen akan terus membaca memori di luar array — undefined behavior. Selalu alokasikan buffer **+1 byte** dari panjang teks terpanjang untuk terminatornya.
+
+## 10 Fungsi `<string.h>` Wajib
+
+| Fungsi | Fungsi | Catatan aman |
+|---|---|---|
+| `strlen(s)` | panjang (tanpa `'\0'`) | hasil `size_t` (`%zu`) |
+| `strcpy(dst, src)` | salin src → dst | **tanpa cek panjang** |
+| `strncpy(dst, src, n)` | salin maks n karakter | bisa tanpa `'\0'` — hati-hati |
+| `strcat(a, b)` | gabung b di belakang a | buffer a harus cukup |
+| `strcmp(a, b)` | bandingkan isi | `0` = sama, `<0`/`>0` = urutan leksikografis |
+| `strncmp(a, b, n)` | banding n karakter pertama | aman untuk prefix check |
+| `strchr(s, c)` | cari karakter pertama | NULL jika tak ada |
+| `strstr(a, b)` | cari substring | NULL jika tak ada |
+| `strtok(s, delim)` | pecah jadi token | memodifikasi string asli |
+| `strdup(s)` | salin ke buffer baru | hasil wajib `free` |
+
+```c
+#include <string.h>
+
+char nama[30] = "Sari";
+printf("%zu\n", strlen(nama));     // 4
+
+char sapa[30] = "Halo, ";
+strcat(sapa, nama);                // sapa = "Halo, Sari"
+printf("%s\n", sapa);
+
+char salinan[30];
+strcpy(salinan, nama);             // salinan = "Sari"
+```
+
+Ukuran buffer harus cukup — `strcat` dan `strcpy` menulis tanpa memeriksa batas.
+
+## strcmp & Pembanding Aman
+
+```c
+char a[20] = "apple", b[20] = "banana";
+if (strcmp(a, b) == 0) {
+    printf("Sama\n");
+} else if (strcmp(a, b) < 0) {
+    printf("%s datang lebih dulu\n", a);
+}
+```
+
+Jangan pernah membandingkan string dengan `==` — itu membandingkan alamat memori, bukan isinya. `strcmp` adalah satu-satunya cara yang benar.
+
+## sprintf & snprintf
+
+```c
+char buffer[50];
+snprintf(buffer, sizeof(buffer), "%s mencetak %d buku", "Rina", 3);
+printf("%s\n", buffer);   // Rina mencetak 3 buku
+printf("%zu\n", strlen(buffer));  // karakter tanpa '\0'
+```
+
+`snprintf` membatasi jumlah karakter sesuai ukuran buffer — versi aman dari `sprintf`. Return value-nya = jumlah karakter yang *akan* ditulis (berguna mendeteksi pemotongan: jika `>= size`, teks terpotong).
+
+## strtok — Memecah String
+
+```c
+char data[] = "Sari,Budi,Rina";   // harus array, bukan literal
+char *token = strtok(data, ",");
+while (token != NULL) {
+    printf("Nama: %s\n", token);
+    token = strtok(NULL, ",");    // NULL = lanjutkan dari pemanggilan sebelumnya
+}
+```
+
+`strtok` memodifikasi array asli (mengganti delimiter jadi `'\0'`) — tidak bisa dipakai pada string literal.
+
+## Mengiterasi String
+
+```c
+char teks[] = "OnBoss";
+int vokal = 0;
+for (int i = 0; teks[i] != '\0'; i++) {
+    char c = teks[i];
+    if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') vokal++;
+}
+printf("Vokal: %d\n", vokal);
+```
+
+Loop berhenti saat menemui `'\0'` — pola paling umum untuk memproses teks di C.
+
+## Di Dunia Nyata
+
+- **Parsing baris log Nginx**: `strtok` memecah `"IP - - [tanggal] \"GET /\""` menjadi field-field untuk statistik trafik.
+- **Username dari string lengkap**: `strchr(namaLengkap, ' ')` memotong di spasi pertama saat proses registrasi.
+- **Cek ekstensi file**: `strstr(namaFile, ".txt") != NULL` menyaring berkas teks sebelum diproses batch.
+- **Merakit pesan error**: `snprintf(buffer, sizeof buffer, "Baris %d: %s", baris, pesan)` membatasi output agar tidak merusak memori.
+- **Filter input menu**: `strncmp(input, "exit", 4) == 0` mengenali perintah keluar dari keyboard user.
+
+<div class="note">💡 Selalu siapkan buffer lebih besar dari teks terpanjang, dan ingat <code>strlen</code> menghitung karakter <b>tanpa</b> penutup <code>'\0'</code> — alokasikan +1 untuk terminatornya. Untuk operasi apa pun yang menyalin atau menggabung, pertimbangkan versi <code>n</code>-nya (strncpy/snprintf) demi menghindari buffer overflow.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    char nama[30] = "Sari";
+    printf("Panjang: %zu\\n", strlen(nama));
+    printf("Karakter pertama: %c\\n", nama[0]);
+
+    char sapa[50] = "Halo, ";
+    strcat(sapa, nama);
+    printf("%s!\\n", sapa);
+
+    char salinan[30];
+    strcpy(salinan, sapa);
+    printf("Salinan: %s\\n", salinan);
+
+    printf("Sama dengan Sari? %d\\n", strcmp(nama, "Sari") == 0);
+
+    char pesan[60];
+    snprintf(pesan, sizeof(pesan), "%s berumur %d tahun", nama, 20);
+    printf("snprintf: %s\\n", pesan);
+
+    printf("Besar semua: ");
+    for (int i = 0; sapa[i] != '\\0'; i++) {
+        char c = sapa[i];
+        if (c >= 'a' && c <= 'z') c = c - 'a' + 'A';
+        printf("%c", c);
+    }
+    printf("\\n");
+    return 0;
+}`} />

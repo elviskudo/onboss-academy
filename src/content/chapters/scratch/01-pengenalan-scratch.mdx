@@ -1,0 +1,124 @@
+---
+title: "Pengenalan Scratch"
+description: "Bahasa visual blok — belajar logika pemrograman tanpa salah ketik sintaks"
+order: 1
+quiz:
+  - q: "Scratch adalah bahasa pemrograman yang…"
+    options: ["Dimasukkan lewat teks terminal", "Disusun dari blok warna-warni yang diseret dan disusun", "Hanya untuk matematika", "Harus dikompilasi dulu"]
+    answer: 1
+    explain: "Blok yang cocok akan 'mengunci' saat disusun — sintaks tidak bisa salah ketik."
+  - q: "Scratch dikembangkan oleh…"
+    options: ["MIT Media Lab", "Apple", "Oracle", "Sony"]
+    answer: 0
+    explain: "MIT membuat Scratch sebagai pintu masuk pemrograman untuk pelajar."
+  - q: "Tempat menyimpan dan menjalankan proyek Scratch disebut…"
+    options: ["Server", "Compiler", "Studio", "Emulator"]
+    answer: 2
+    explain: "Studio berisi kumpulan proyek yang bisa dilihat dan dikembangkan bersama."
+  - q: "Halaman kerja Scratch dibagi menjadi…"
+    options: ["Hanya terminal", "Daftar blok, area skrip, panggung, dan sprite", "Editor teks dan debugger", "Inventaris komponen elektronik"]
+    answer: 1
+    explain: "Empat bagian inti: palette blok, script area, stage preview, dan daftar sprite."
+  - q: "Keunggulan belajar pemrograman lewat Scratch adalah…"
+    options: ["Fokus pada logika dan algoritma tanpa hambatan sintaks", "Menghasilkan kode produksi siap pakai", "Membutuhkan PC mahal", "Tidak bisa membuat game"]
+    answer: 0
+    explain: "Blok membuat pemula berpikir tentang urutan dan kondisi sejak menit pertama."
+example:
+  code: |
+    // Struktur program Scratch (dalam bentuk tulisan):
+    // [ketika bendera diklik]
+    // [ke depan 10 langkah]
+    // [tunggu 1 detik]
+    // [ulangi 10 [ke depan 10 langkah]]
+---
+
+**Scratch** adalah bahasa pemrograman visual berbasis blok: algoritma disusun dengan menyeret blok warna-warni, bukan mengetik baris kode. Konsep yang dipelajari — urutan, kondisi, perulangan, variabel — sama persis dengan bahasa teks, jadi Scratch menjadi pondasi yang bisa langsung dipindahkan ke Python, JavaScript, atau C++.
+
+## Empat Bagian Antarmuka
+
+Scratch 3.0 membagi layar kerja menjadi 4 bagian wajib yang selalu ada di editor:
+
+```text
++-------------------+------------------------+
+| Palette blok      |                        |
+| (Kejadian, Gerak, |      Panggung          |
+|  Kontrol, ...)    |      + Sprite          |
+|                   |                        |
++-------------------+------------------------+
+|        Area Skrip (canvas drag & drop)     |
++--------------------------------------------+
+|        Daftar sprite (ikon tiap karakter)  |
++--------------------------------------------+
+```
+
+| Bagian | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| Palette blok | Gudang semua blok, dikelompokkan per warna | Saat mencari blok baru |
+| Area skrip | Kanvas tempat blok disusun jadi program | Saat menulis logika |
+| Panggung | Layar preview hasil proyek | Saat menguji program |
+| Daftar sprite | Mengelola karakter, latar, dan properti | Saat menambah/menghapus aktor |
+
+Klik kategori di palette untuk membuka isinya, lalu seret blok ke area skrip. Blok yang bentuknya cocok akan menempel; yang tidak cocok akan mental — sintaks salah ketik secara harfiah mustahil terjadi.
+
+## 9 Kategori Blok Bawaan
+
+Scratch 3.0 menyediakan **9 kategori inti** dengan lebih dari 100 blok, plus ekstensi ( pena, mikrokontroler, terjemahan) yang bisa ditambahkan dari tombol ekstensi.
+
+| Kategori | Warna | Fungsi utama | Contoh blok |
+| --- | --- | --- | --- |
+| Kejadian (Events) | Kuning | Menentukan kapan program mulai | `ketika bendera diklik` |
+| Kontrol (Control) | Oranye | Alur program: jeda, ulangi, kondisi | `ulangi 10`, `jika ... maka` |
+| Gerak (Motion) | Biru | Menggeser, memutar, pantul | `ke depan 10 langkah` |
+| Tampilan (Looks) | Ungu | Kostum, ukuran, ucapan | `ucap [Halo] selama 2 detik` |
+| Suara (Sound) | Merah muda | Memutar dan mengatur suara | `mainkan suara [pop]` |
+| Peraba (Sensing) | Biru muda | Mendeteksi sentuh, jarak, tombol | `menyentuh [Pemain]?` |
+| Operator | Hijau | Aritmatika, perbandingan, teks, acak | `acak dari 1 sampai 10` |
+| Data | Oranye tua | Variabel dan daftar | `buat variabel [skor]` |
+| Blok Saya (My Blocks) | Merah | Blok buatan sendiri (fungsi) | `buat blok [lompat]` |
+
+Kategori **Kejadian** selalu dibuka lebih dulu karena di situlah kepala skrip ditaruh; tanpa blok kejadian, blok lain tidak akan pernah berjalan.
+
+## 5 Bentuk Blok dan Artinya
+
+Bentuk blok menyimpan informasi tentang perilakunya — ini setara dengan peran `;`, `()`, dan `{}` di bahasa teks:
+
+| Bentuk | Penanda | Arti | Contoh |
+| --- | --- | --- | --- |
+| Kepala (hat) | Ada tonjolan lengkung di atas | Pemicu skrip, selalu paling atas | `ketika bendera diklik` |
+| Tumpukan (stack) | Ada sambungan atas-bawah | Berjalan berurutan | `ke depan 10 langkah` |
+| Pelapor (reporter) | Oval, menghasilkan nilai | Masukan untuk blok lain | `(posisi x)` |
+| Boolean | Segi enam, benar/salah | Kondisi di dalam `jika`/`ulangi sampai` | `<menyentuh tepi?>` |
+| C-blok | Berbentuk huruf C, berlubang | Membungkus blok lain | `ulangi 10 [...]` |
+
+## Blok Pertama: Bendera Hijau
+
+```text
+[ketika bendera diklik]        <- titik awal program (kepala skrip)
+[tampil]                       <- sprite muncul
+[ke depan 10 langkah]          <- bergerak sesuai arah
+[tunggu 1 detik]               <- jeda
+[ulangi 10 [ke depan 10 langkah]]   <- C-blok membungkus isi
+```
+
+Bendera hijau adalah "tombol start", tanda merah persegi adalah "tombol stop". Pola kerja yang disarankan: tambah 2–3 blok, klik bendera, lihat hasilnya. Iterasi pendek seperti ini membuat bug mudah ditemukan.
+
+## Menyimpan, Membagikan, dan Remix
+
+Setiap proyek Scratch terdiri dari 3 bagian yang tersimpan bersama: skrip tiap sprite, pustaka kostum, dan pustaka suara. Dari menu File kamu bisa menyimpan ke komputer (`.sb3`) atau ke akun Scratch; tombol **Bagikan (Share)** membuat proyek tampil publik di situs Scratch dan membuka tombol **Remix** bagi orang lain untuk mengubah versi kamu.
+
+| Aksi | Menu | Hasil |
+| --- | --- | --- |
+| Simpan lokal | File > Save to your computer | Berkas `.sb3` di komputer |
+| Simpan online | File > Save now (perlu login) | Versi terbaru di akun |
+| Bagikan | Tombol Share di kanan atas | Proyek publik + bisa di-remix |
+| Remix proyek orang | Tombol Remix di halaman proyek | Salinan yang bisa kamu ubah |
+
+## Di Dunia Nyata
+
+1. **Simulasi gerak planet** — guru memakai Scratch untuk memvisualisasikan orbit sebelum masuk ke rumus fisika.
+2. **Kuis interaktif kelas** — siswa membangun kuis dengan pesan dan kondisi, lalu dipakai untuk ulangan teman sekelas.
+3. **Prototipe game sebelum belajar coding teks** — ide gameplay diuji dengan blok dulu; kalau seru, baru diport ke bahasa lain.
+4. **Animasi pendek bercerita** — gabungan kostum, suara, dan pesan antar sprite untuk tugas seni budaya.
+5. **Kontrol robot sederhana lewat ekstensi** — micro:bit atau LEGO WeDo disambungkan ke palette ekstensi tanpa menulis C++.
+
+<div class="note">💡 Salah satu keunggulan Scratch: blok yang tidak cocok tidak akan bisa disambungkan — kesalahan sintaks yang membingungkan di bahasa teks tidak akan terjadi di sini, jadi semua waktu kamu habis untuk berpikir tentang logika, bukan menghapus tanda koma.</div>

@@ -1,0 +1,142 @@
+---
+title: "PWM dan Buzzer"
+description: "Menggunakan PWM untuk kecerahan LED dan nada buzzer pasif secara aman"
+order: 6
+quiz:
+  - q: "Apa yang dinyatakan duty cycle PWM?"
+    options: ["Persentase waktu sinyal berada pada HIGH", "Jumlah pin pada header", "Kapasitas microSD", "Alamat IP Pi"]
+    answer: 0
+    explain: "Duty cycle membandingkan durasi HIGH dengan satu periode penuh."
+  - q: "Apa pengaruh frekuensi pada buzzer pasif?"
+    options: ["Mengubah warna buzzer", "Menentukan tinggi nada", "Mengaktifkan SSH", "Mengubah pin menjadi input"]
+    answer: 1
+    explain: "Frekuensi getaran menentukan pitch yang terdengar."
+  - q: "Apa perbedaan utama buzzer aktif dan pasif?"
+    options: ["Buzzer pasif selalu memakai 5V", "Buzzer aktif tidak berbunyi", "Buzzer aktif memiliki osilator internal", "Buzzer pasif tidak memiliki polaritas"]
+    answer: 2
+    explain: "Buzzer aktif berbunyi dengan level tetap, sedangkan buzzer pasif memerlukan sinyal berfrekuensi."
+  - q: "Bagaimana mengendalikan buzzer yang menarik arus melebihi kemampuan GPIO?"
+    options: ["Hubungkan langsung ke 5V dan GPIO", "Hilangkan GND", "Naikkan duty cycle", "Gunakan transistor atau driver dan sumber yang sesuai"]
+    answer: 3
+    explain: "Driver memisahkan arus beban dari pin logika Pi yang terbatas."
+  - q: "Mengapa LED tetap memerlukan resistor saat memakai PWM?"
+    options: ["Pulsa HIGH tetap dapat menghasilkan arus berlebih", "PWM menghapus GPIO", "Resistor menentukan alamat IP", "PWM selalu memakai 12V"]
+    answer: 0
+    explain: "PWM mengubah durasi pulsa, bukan menghilangkan kebutuhan pembatas arus."
+example:
+  code: |
+    from gpiozero import PWMLED
+    from time import sleep
+
+    led = PWMLED(18)
+    for duty in (0, 0.25, 0.5, 0.75, 1):
+        led.value = duty
+        sleep(0.5)
+    led.off()
+---
+
+PWM atau **Pulse Width Modulation** mengubah proporsi waktu HIGH dan LOW pada sinyal digital. Teknik ini memberi kesan kecerahan bertingkat pada LED dan menghasilkan frekuensi nada pada buzzer pasif tanpa keluaran analog asli.
+
+## Besaran Dasar PWM
+
+Ada **3 besaran utama** dalam PWM.
+
+| Besaran | Fungsi/Arti | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Frekuensi | Jumlah siklus per detik | 1.000 Hz | Menghindari kedip atau menentukan nada |
+| Periode | Durasi satu siklus | 1 ms pada 1 kHz | Menghitung timing |
+| Duty cycle | Persentase waktu HIGH | 25%, 50%, 100% | Mengatur daya rata-rata |
+
+Hubungannya adalah periode = 1/frekuensi. Duty cycle 0% selalu LOW, 50% setengah waktu HIGH, dan 100% selalu HIGH. LED yang dipulsa cukup cepat tampak redup atau terang karena mata merata-ratakan cahaya.
+
+```text
+25%: █___█___█___
+50%: ██__██__██__
+75%: ███_███_███_
+```
+
+PWM tidak mengubah level HIGH menjadi tegangan aman yang berbeda. Saat HIGH, GPIO tetap sekitar 3,3V. Karena itu resistor LED dan batas arus masih berlaku.
+
+## Jenis PWM dan Pin
+
+Raspberry Pi mengenal **2 pendekatan**: software PWM dan hardware PWM.
+
+| Jenis | Cara kerja | Kelebihan | Kapan dipakai |
+|---|---|---|---|
+| Software PWM | Timing dibuat perangkat lunak | Fleksibel pada banyak GPIO | LED indikator dan demo |
+| Hardware PWM | Timing dibuat periferal SoC | Lebih stabil | Nada atau sinyal lebih konsisten |
+
+GPIO hardware PWM utama tersedia pada kanal yang dipetakan ke BCM12, BCM13, BCM18, dan BCM19, tetapi fungsi alternatif pin serta kanal yang berbagi harus diperhatikan. Untuk latihan gunakan BCM18. Linux bukan sistem real-time; software PWM dapat jitter saat CPU sibuk.
+
+## Mengatur Kecerahan LED
+
+Pasang BCM18 ke resistor 330 Ω, lalu LED ke GND. Matikan daya ketika merangkai. Instal gpiozero bila diperlukan dengan `sudo apt install python3-gpiozero`.
+
+```python
+from gpiozero import PWMLED
+from time import sleep
+
+led = PWMLED(18, frequency=1000)
+
+for duty in (0, 0.25, 0.5, 0.75, 1):
+    led.value = duty
+    sleep(0.5)
+
+led.off()
+led.close()
+```
+
+`value` memiliki rentang 0,0–1,0. Program ini memerlukan Pi dan LED fisik; runtime web tidak menghasilkan GPIO. Efek fade dapat dibuat tanpa loop manual:
+
+```python
+from gpiozero import PWMLED
+from signal import pause
+
+led = PWMLED(18)
+led.pulse(fade_in_time=1, fade_out_time=1)
+pause()
+```
+
+Gunakan PWM untuk indikator dan kontrol daya sederhana yang kompatibel. Jangan menganggap PWM LED sama dengan keluaran analog presisi untuk alat ukur.
+
+## Buzzer Aktif dan Pasif
+
+Ada **2 jenis buzzer** yang umum.
+
+| Jenis | Fungsi | Sinyal | Kapan dipakai |
+|---|---|---|---|
+| Aktif | Menghasilkan satu bunyi internal | ON/OFF | Alarm sederhana |
+| Pasif | Mengubah pulsa menjadi nada | Frekuensi PWM | Melodi dan pola berbeda |
+
+Buzzer pasif kecil dapat diuji dengan `TonalBuzzer`:
+
+```python
+from gpiozero import TonalBuzzer
+from gpiozero.tones import Tone
+from time import sleep
+
+buzzer = TonalBuzzer(18)
+for hz in (262, 294, 330):
+    buzzer.play(Tone(hz))
+    sleep(0.3)
+buzzer.stop()
+buzzer.close()
+```
+
+Periksa datasheet modul. Banyak modul buzzer menarik arus lebih besar daripada pin atau dirancang untuk 5V. Gunakan transistor/MOSFET dan sumber daya sesuai spesifikasi, serta GND bersama. Untuk beban induktif gunakan proteksi yang direkomendasikan produsen. Jangan menggerakkan speaker 8 Ω langsung dari GPIO.
+
+## Fungsi Frekuensi dan Duty Cycle
+
+Pada LED, duty cycle terutama mengatur kecerahan dan frekuensi dipilih cukup tinggi agar tidak berkedip. Pada buzzer pasif, frekuensi menentukan pitch, sedangkan duty sekitar 50% biasanya memberi gelombang simetris. Duty bukan kontrol volume yang linear; volume aman ditentukan driver, rangkaian, dan karakter transduser.
+
+Ada **3 kegagalan umum**: LED berkedip karena frekuensi terlalu rendah, nada tidak stabil karena software PWM terganggu beban CPU, dan Pi reset karena buzzer atau beban mengambil arus dari suplai yang tidak memadai. Diagnosis harus mencakup kode, wiring, dan catu daya.
+
+## Di Dunia Nyata
+
+- **Lampu status malam:** duty rendah mengurangi silau tanpa mengganti resistor sebagai pembatas arus.
+- **Alarm pintu:** pola tiga nada membedakan pintu terbuka dari sensor gagal.
+- **Antarmuka aksesibel:** bunyi pendek memberi umpan balik saat tombol diterima.
+- **Peringatan suhu:** frekuensi bunyi meningkat ketika suhu mendekati ambang.
+- **Kontrol kipas:** hardware PWM mengendalikan input kontrol kipas yang memang mendukung PWM, bukan memberi daya motor langsung.
+
+<div class="note">💡 PWM mengatur pola sinyal, bukan menambah kemampuan arus GPIO; jika beban tidak aman saat HIGH terus-menerus, beban itu juga tidak aman hanya karena duty cycle diperkecil.</div>

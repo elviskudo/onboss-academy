@@ -1,0 +1,187 @@
+---
+title: "Composition API"
+description: "ref, reactive, lifecycle, dan <script setup> — gaya Vue 3 modern"
+order: 7
+quiz:
+  - q: "Pada Composition API, nilai ref primitif diakses lewat…"
+    options: ["this.", ".value", "->", "$"]
+    answer: 1
+    explain: "const n = ref(0); n.value++ — di template cukup {{ n }} tanpa .value."
+  - q: "reactive() paling cocok untuk…"
+    options: ["Object atau array yang propertinya diakses langsung", "String sederhana", "Boolean", "Angka tunggal"]
+    answer: 0
+    explain: "user.nama langsung, tanpa .value — tetapi tidak bisa di-assign ulang ke object baru."
+  - q: "onMounted dipanggil saat…"
+    options: ["Aplikasi dimuat pertama", "Komponen sudah terpasang di DOM", "User logout", "State berubah"]
+    answer: 1
+    explain: "Tempat yang tepat untuk fetch data awal atau manipulasi DOM langsung."
+  - q: "<script setup> membuat…"
+    options: ["Top-level binding otomatis terekspos ke template", "Kode jadi async", "Komponen jadi global", "CSS ikut terpanggil"]
+    answer: 0
+    explain: "Tidak perlu return apa pun — semua yang dideklarasikan tersedia di template."
+  - q: "Apa keunggulan Composition API dibanding Options API?"
+    options: ["Logika terkait dikelompokkan, mudah dipindah ke composable", "Kode lebih pendek selalu", "Tidak butuh import", "Bisa dipakai tanpa Vue"]
+    answer: 0
+    explain: "Logic terkait (state, effect, method) berdampingan — bukan tersebar di data/methods/computed."
+example:
+  code: |
+    function useCounter(start = 0) {
+      let jumlah = start;
+      return {
+        jumlah: () => jumlah,
+        tambah: () => ++jumlah,
+      };
+    }
+    const c = useCounter(5);
+    c.tambah();
+    console.log(c.jumlah());
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Composition API adalah gaya standar Vue 3: logika ditulis dalam `script setup`, dikelompokkan berdasarkan **kegunaan**, bukan berdasarkan jenis opsi.
+
+## 5 Bagian Composition API
+
+| Bagian | API | Fungsi | Kapan dipakai |
+|--------|-----|--------|---------------|
+| State tunggal | `ref` | Nilai reaktif yang bisa diganti | string, angka, boolean, array |
+| State object | `reactive` | Proxy object/array | Form atau object stabil |
+| Nilai turunan | `computed` | Getter reaktif ber-cache | Total, filter, status |
+| Lifecycle | `onMounted`, `onUnmounted` | Setup/cleanup efek | Fetch, listener, timer |
+| Reuse logika | composable `useX()` | Gabungkan state + function | Fitur dipakai lintas komponen |
+
+Tidak ada class component yang perlu diwarisi. Function composable dan closure menggantikan mixin/class untuk memakai ulang perilaku.
+
+## ref dan reactive
+
+```html
+<script setup>
+import { ref, reactive } from "vue";
+
+const jumlah = ref(0);              // primitif — .value
+const user = reactive({             // object — langsung
+  nama: "Sari",
+  umur: 20,
+});
+
+function tambah() { jumlah.value++; }
+function ulangTahun() { user.umur++; }
+</script>
+
+<template>
+  <button @click="tambah">{{ jumlah }}</button>
+  <p>{{ user.nama }} {{ user.umur }}</p>
+</template>
+```
+
+Di dalam `<script setup>`, `jumlah` sudah berbentuk ref — di template cukup tulis `{{ jumlah }}`.
+
+## Lifecycle Hooks
+
+```html
+<script setup>
+import { onMounted, onUnmounted } from "vue";
+
+onMounted(() => {
+  console.log("Komponen siap — tempat fetch data awal");
+});
+
+onUnmounted(() => {
+  console.log("Bersihkan listener/timer di sini");
+});
+</script>
+```
+
+Urutan penting: `setup` → `onBeforeMount` → `onMounted` → (`onUpdated`) → `onUnmounted`.
+
+## Composable (Kode Pakai Ulang)
+
+```javascript
+// useCounter.js
+import { ref } from "vue";
+
+export function useCounter(start = 0) {
+  const jumlah = ref(start);
+  const tambah = () => jumlah.value++;
+  const kurang = () => jumlah.value--;
+  return { jumlah, tambah, kurang };
+}
+```
+
+```html
+<script setup>
+import { useCounter } from "./useCounter";
+const { jumlah, tambah } = useCounter(10);
+</script>
+```
+
+Composable adalah fungsi JS biasa yang mengembalikan ref/function — tidak perlu class atau mixin.
+
+## Pola JavaScript-nya (Closure)
+
+```javascript
+function useCounter(start = 0) {
+  let jumlah = start; // "state privat" lewat closure
+  return {
+    jumlah: () => jumlah,
+    tambah: () => ++jumlah,
+  };
+}
+
+const c = useCounter(5);
+c.tambah();
+console.log(c.jumlah()); // 6
+```
+
+Inilah inti closure yang membuat composable bisa menyimpan state tanpa global variable. Array/object dalam composable tetap diproses dengan function seperti `filter` dan `map`; template merender hasilnya lewat `v-for` dan memilih tampilan lewat `v-if`.
+
+## Options API vs Composition API
+
+Options API (`data`, `methods`, `computed`) tetap valid dan nyaman untuk komponen kecil. Composition API unggul saat satu fitur punya state, computed, lifecycle, dan handler yang perlu diletakkan berdekatan atau dipindah ke composable. Jangan migrasi kode Options API hanya demi gaya jika tidak ada masalah nyata.
+
+## Di Dunia Nyata
+
+- **`useFetch`**: menggabungkan `data`, `loading`, `error`, dan request/abort logic.
+- **`useAuth`**: state user, function login/logout, dan computed status autentikasi.
+- **`useCart`**: array item, handler tambah/hapus, serta computed total dan jumlah.
+- **`useWindowSize`**: listener resize dipasang saat mount dan dibersihkan saat unmount.
+- **`useTodo`**: list reaktif, function toggle/filter, dan sisa tugas untuk beberapa halaman.
+
+<div class="note">💡 `ref` untuk primitif (string, angka, boolean); `reactive` untuk object/array yang tidak perlu diganti total. Keduanya bisa berdampingan — yang penting konsisten di satu komponen.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Closure = inti cara ref/composable menyimpan state
+function useCounter(start = 0) {
+  let jumlah = start;
+  return {
+    jumlah: () => jumlah,
+    tambah: () => ++jumlah,
+    kurang: () => --jumlah,
+    reset: () => (jumlah = start),
+  };
+}
+
+function useTodo() {
+  const daftar = [];
+  return {
+    tambah: (teks) => daftar.push({ id: daftar.length + 1, teks, selesai: false }),
+    selesaikan: (id) => {
+      const t = daftar.find((x) => x.id === id);
+      if (t) t.selesai = true;
+    },
+    semua: () => daftar.slice(),
+    sisa: () => daftar.filter((t) => !t.selesai).length,
+  };
+}
+
+const counter = useCounter(5);
+counter.tambah();
+counter.tambah();
+console.log("Counter:", counter.jumlah());
+
+const todo = useTodo();
+todo.tambah("Belajar ref");
+todo.tambah("Buat composable");
+todo.selesaikan(1);
+console.log("Sisa tugas:", todo.sisa());
+console.log(todo.semua());`} />

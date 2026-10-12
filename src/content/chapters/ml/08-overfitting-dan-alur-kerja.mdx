@@ -1,0 +1,129 @@
+---
+title: "Overfitting dan Alur Kerja ML"
+description: "Menjaga model tetap jujur — generalisasi, regularisasi, dan MLOps dasar"
+order: 8
+quiz:
+  - q: "Overfitting berarti…"
+    options: ["Data terlalu sedikit kolom", "Model terlalu kecil", "Model hafal data latih tapi gagal pada data baru", "Training terlalu cepat"]
+    answer: 2
+    explain: "Cirinya: akurasi latih sangat tinggi, akurasi uji jauh lebih rendah."
+  - q: "Tanda paling klasik overfitting adalah…"
+    options: ["Selisih besar antara performa latih dan uji", "Loss latih dan uji sama", "Model tidak bisa diprediksi", "Fitur terlalu sedikit"]
+    answer: 0
+    explain: "Gap latih-vs-uji adalah sinyal utama; model terlalu menyesuaikan noise data latih."
+  - q: "Cara paling umum mengurangi overfitting adalah…"
+    options: ["Menambah layer tanpa batas", "Menambah data latih dan menyederhanakan model", "Menghapus data uji", "Melatih lebih banyak epoch tanpa henti"]
+    answer: 1
+    explain: "Data lebih banyak dan model lebih sederhana meningkatkan generalisasi."
+  - q: "Underfitting terjadi ketika…"
+    options: ["Data latih terlalu bersih", "Model terlalu besar", "Model terlalu sederhana untuk menangkap pola", "GPU terlalu cepat"]
+    answer: 2
+    explain: "Model underfit gagal bahkan pada data latih — perlu fitur atau model yang lebih ekspresif."
+  - q: "Memasang model agar bisa melayani prediksi nyata disebut…"
+    options: ["Deployment", "Anotasi", "Scaling data", "Tokenisasi"]
+    answer: 0
+    explain: "Deployment = memasang model agar bisa melayani prediksi nyata, lengkap dengan monitoring."
+example:
+  code: |
+    latih = [0.95, 0.96, 0.97]   # akurasi data latih
+    uji   = [0.60, 0.62, 0.58]   # akurasi data uji
+
+    gap = sum(latih) / len(latih) - sum(uji) / len(uji)
+    print("Gap latih-uji:", round(gap, 2))
+    if gap > 0.15:
+        print("Kemungkinan overfitting")
+---
+
+Bab terakhir menyatukan gambaran besar: bagaimana model yang jujur dibuat, diuji, dan dipakai di dunia nyata.
+
+## 3 Kondisi Model
+
+| Kondisi | Performa train | Performa test | Tindakan |
+|---------|----------------|---------------|----------|
+| Underfitting | rendah | rendah | tambah fitur/kompleksitas |
+| Pas | tinggi | tinggi, gap kecil | lanjut validasi/deploy |
+| Overfitting | sangat tinggi | rendah | sederhanakan/tambah data |
+
+```python
+latih = [0.95, 0.96, 0.97]
+uji   = [0.60, 0.62, 0.58]
+
+gap = sum(latih) / len(latih) - sum(uji) / len(uji)
+print("Gap:", round(gap, 2))
+if gap > 0.15:
+    print("Curiga overfitting — sederhanakan model atau tambah data")
+```
+
+Idealnya kedua angka tinggi dan selisihnya kecil. Tidak ada ambang gap universal; bandingkan terhadap baseline dan biaya kesalahan kasus tersebut.
+
+## 5 Cara Menjaga Generalisasi
+
+| Cara | Mekanisme | Kapan dicoba |
+|------|-----------|--------------|
+| Tambah data | memberi variasi nyata lebih banyak | data masih sedikit |
+| Sederhanakan model | kurangi kapasitas menghafal | gap train-test lebar |
+| Pilih fitur | buang noise/leakage | fitur sangat banyak |
+| Regularisasi | penalti kompleksitas | bobot terlalu ekstrem |
+| Early stopping | berhenti saat validasi memburuk | model dilatih per epoch |
+
+## Regularisasi
+
+3 teknik umum:
+
+- **L1/L2** — memberi penalti pada bobot besar.
+- **Dropout** — mematikan sebagian neuron acak saat melatih jaringan saraf.
+- **Pembatasan pohon** — batasi kedalaman atau jumlah daun decision tree.
+
+Intinya sama: **mengorbankan sedikit akurasi latih demi daya tahan di data baru**.
+
+## 7 Tahap Alur Kerja End-to-End
+
+```
+1. Rumuskan pertanyaan bisnis
+2. Kumpulkan & beri label data
+3. Bangun baseline sederhana
+4. Latih dan validasi model
+5. Evaluasi pada holdout final
+6. Deploy + monitoring
+7. Pantau drift, ulangi
+```
+
+| Tahap | Keluaran yang harus ada |
+|-------|-------------------------|
+| Pertanyaan | target dan biaya salah prediksi |
+| Data | dataset tervalidasi + definisi label |
+| Baseline | angka pembanding sederhana |
+| Training | model + parameter + versi kode |
+| Evaluasi | metrik holdout dan analisis error |
+| Deploy | endpoint/batch job yang terpantau |
+| Monitoring | metrik kualitas, latensi, drift |
+
+## Monitoring Pasca-Deploy
+
+```python
+# Distribusi data produksi bisa bergeser (drift)
+rata_latih = 42.5
+rata_produksi_bulan1 = 43.0
+rata_produksi_bulan6 = 61.7
+
+if abs(rata_produksi_bulan6 - rata_latih) / rata_latih > 0.2:
+    print("Drift terdeteksi — model perlu ditinjau")
+```
+
+Model yang sudah dideploy bukan tugas selesai: data dunia nyata terus berubah. Drift input belum tentu menurunkan kualitas, jadi bila label produksi tersedia ukur juga performa aktual sebelum retraining.
+
+## Etika dan Tanggung Jawab
+
+- Periksa **bias** pada kelompok pengguna tertentu.
+- Sediakan **penjelasan** untuk keputusan yang berdampak pada manusia.
+- Hormati privasi: data pribadi punya batas pemakaian yang jelas.
+
+## Di Dunia Nyata
+
+- **Skor kredit** — pantau recall dan tingkat penolakan per kelompok agar model tidak diskriminatif.
+- **Rekomendasi produk** — tren musiman menyebabkan drift; model dijadwalkan evaluasi ulang tiap minggu.
+- **Deteksi fraud** — pola penipu berubah cepat, jadi threshold dan false positive dipantau harian.
+- **Forecast stok** — retrain setelah promo besar karena pola belanja normal sementara berubah.
+- **Model medis** — perubahan alat laboratorium bisa menggeser distribusi input tanpa perubahan pasien.
+
+<div class="note">💡 Model terbaik bukan yang paling canggih, melainkan yang paling sederhana yang tetap bekerja baik di data baru — dan yang hasilnya bisa dijelaskan ke orang lain.</div>

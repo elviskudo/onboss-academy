@@ -1,0 +1,148 @@
+---
+
+title: "Ringkasan Kompleksitas & Peta Struktur Data"
+description: "Tabel cheat sheet semua materi DSA dan panduan memilih struktur data yang tepat"
+order: 10
+quiz:
+  - q: "Struktur data dengan lookup rata-rata tercepat untuk kunci unik adalah…"
+    options: ["Hash table (dict/set)", "Linked list", "Array tanpa urutan", "Stack"]
+    answer: 0
+    explain: "Dict memberi O(1) rata-rata untuk get, set, dan delete berbasis kunci."
+  - q: "Untuk struktur LIFO, pilihan paling tepat adalah…"
+    options: ["Queue", "Stack", "Graph", "BST"]
+    answer: 1
+    explain: "Stack: elemen terakhir masuk, pertama keluar — implementasi mudah dengan list."
+  - q: "Merge sort termasuk kelas kompleksitas…"
+    options: ["O(n)", "O(n log n)", "O(n^2)", "O(1)"]
+    answer: 1
+    explain: "Divide & conquer: log n level, tiap level menggabungkan total n elemen."
+  - q: "Pencarian pada graph tanpa bobot untuk jalur terpendek memakai…"
+    options: ["DFS", "BFS", "Bubble sort", "Binary search"]
+    answer: 1
+    explain: "BFS per level menjamin pertama kali mencapai target adalah jalur edge paling sedikit."
+  - q: "Operasi insert(0, x) pada list Python berkompleksitas…"
+    options: ["O(1)", "O(log n)", "O(n)", "O(n^2)"]
+    answer: 2
+    explain: "Semua elemen digeser satu posisi — gunakan deque bila sering menambah di depan."
+example:
+  code: |
+    # Cheat sheet kompleksitas (rata-rata / kasus terburuk)
+    # dict get/set : O(1) / O(n)
+    # list a[i]    : O(1) / O(1)
+    # list append  : O(1) / O(1) amortized
+    # binary search: O(log n)
+    # merge sort   : O(n log n)
+    # bubble sort  : O(n^2)
+    from collections import deque
+
+    tumpukan = [1, 2, 3]
+    tumpukan.pop()
+
+    antre = deque([1, 2, 3])
+    antre.popleft()
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perjalanan dari Big-O sampai graph kini dirangkum dalam satu peta — pegangan sebelum technical interview.
+
+## Tabel Kompleksitas Lengkap
+
+| Struktur / Operasi | Akses | Search | Insert | Delete |
+|--------------------|-------|--------|--------|--------|
+| Array / list | O(1) | O(n) | O(n) | O(n) |
+| Linked list | O(n) | O(n) | O(1)* | O(1)* |
+| Stack (list) | O(1) top | O(n) | O(1) push | O(1) pop |
+| Queue (deque) | O(1) ujung | O(n) | O(1) | O(1) |
+| Dict / hash table | — | O(1) avg | O(1) avg | O(1) avg |
+| BST seimbang | O(log n) | O(log n) | O(log n) | O(log n) |
+
+\\* setelah posisi node diketahui.
+
+## Algoritma yang Sudah Dipelajari
+
+| Algoritma | Kompleksitas | Catatan |
+|-----------|--------------|---------|
+| Linear search | O(n) | tanpa syarat data |
+| Binary search | O(log n) | data harus terurut |
+| Bubble sort | O(n^2) | sederhana, data kecil |
+| Selection sort | O(n^2) | minimal swap |
+| Merge sort | O(n log n) | stabil, butuh memori O(n) |
+| BFS | O(V + E) | per level, queue |
+| DFS | O(V + E) | per cabang, stack |
+
+## Panduan Memilih Struktur Data
+
+```
+butuh akses berindeks          -> list
+butuh antrean / sering pop(0)  -> deque
+butuh cari by kunci cepat      -> dict / set
+butuh urutan LIFO (undo)       -> stack (list)
+butuh hierarki / rangking      -> tree / heap
+butuh jaringan hubungan        -> graph (adjacency list)
+```
+
+## Pola Penyelesaian yang Muncul Berulang
+
+- **Frequency count** → dict
+- **Deduplication** → set
+- **Perlevel / jalur terpendek** → BFS
+- **Cek semua kemungkinan dengan backtrack** → DFS rekursif
+- **Data besar + cari berulang** → sort sekali + binary search
+- **Kembalikan kembali (undo)** → stack
+
+## Checklist Technical Interview
+
+1. Tinjau contoh kecil dulu, pastikan paham masalah
+2. Sebutkan struktur data dan kompleksitas yang kamu pilih
+3. Tulis kode sederhana dulu, baru optimasi bila perlu
+4. Uji dengan input kosong, satu elemen, dan duplikat
+5. Sebutkan kompleksitas waktu & memori di akhir
+
+## Tujuh Kelas Pertumbuhan
+
+Ada **7 kelas utama** yang dibahas: O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ), dan O(n!). Kelas menunjukkan tren saat n besar, bukan janji durasi. Konstanta, cache CPU, I/O, dan bentuk data tetap menentukan performa nyata; ukur setelah memilih algoritma yang secara asimtotik masuk akal.
+
+| Kebutuhan | Pilihan awal | Waktu utama | Alasan |
+|---|---|---:|---|
+| akses posisi | list | O(1) | indeks langsung |
+| FIFO dua ujung | deque | O(1) | tidak menggeser elemen |
+| lookup key | dict/set | O(1) rata-rata | hashing |
+| prioritas | heap | O(log n) | root selalu ekstrem |
+| pencarian terurut | binary search | O(log n) | ruang dibelah dua |
+| konektivitas | adjacency list | O(V+E) | simpan edge yang ada |
+
+Analisis yang lengkap menyebut **3 hal**: ukuran input, waktu, dan ruang tambahan. Jelaskan pula average/worst/amortized bila berbeda. Jangan menyebut linked-list insert O(1) tanpa syarat “node sudah diketahui”, atau BST search O(log n) tanpa syarat “tree seimbang”.
+
+## Di Dunia Nyata
+
+- API memakai dict untuk lookup ID dan list untuk urutan hasil.
+- Scheduler memakai heap karena hanya butuh tugas minimum berikutnya.
+- Sistem rekomendasi memakai graph untuk hubungan user-item.
+- Pipeline batch membandingkan biaya preprocessing dengan jumlah query berikutnya.
+
+<div class="note">💡 Interview tidak menuntut hafal semua algoritma — yang dinilai adalah kemampuan memilih struktur data yang tepat dan menganalisis kompleksitasnya. Kuasai tabel di atas beserta alasannya, bukan sekadar hafalan.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import time
+from collections import deque
+
+data = list(range(1_000_000))
+
+t0 = time.perf_counter()
+_ = data[999_999]
+t1 = time.perf_counter()
+_ = 999_999 in data
+t2 = time.perf_counter()
+
+lookup = {x: x for x in data}
+_ = 999_999 in lookup
+t3 = time.perf_counter()
+
+print(f"list akses indeks : {t1-t0:.6f}s  O(1)")
+print(f"list cari in      : {t2-t1:.6f}s  O(n)")
+print(f"dict cari         : {t3-t2:.6f}s  O(1) avg")
+
+stack = [1, 2, 3]
+print("stack pop ->", stack.pop())
+q = deque([1, 2, 3])
+print("queue popleft ->", q.popleft())`} />

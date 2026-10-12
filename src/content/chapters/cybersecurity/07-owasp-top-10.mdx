@@ -1,0 +1,165 @@
+---
+title: "OWASP Top 10"
+description: "Sepuluh risiko aplikasi web paling kritis dan cara menutupnya"
+order: 7
+quiz:
+  - q: "OWASP Top 10 adalah…"
+    options: ["Daftar risiko keamanan aplikasi web paling kritis", "Jenis virus komputer", "Protokol jaringan", "Nama framework PHP"]
+    answer: 0
+    explain: "Diterbitkan komunitas OWASP sebagai acuan bersama pengembang dan auditor."
+  - q: "Broken Access Control berarti…"
+    options: ["Pengguna bisa mengakses fitur/data di luar haknya", "Server kehabisan RAM", "CSS gagal dimuat", "Database penuh"]
+    answer: 0
+    explain: "Misal pengguna biasa membuka halaman admin lewat mengubah URL atau ID objek."
+  - q: "Cryptographic Failure (dulu Sensitive Data Exposure) menyangkut…"
+    options: ["Data sensitif yang tidak terenkripsi atau dienkripsi lemah", "Kurangnya RAM", "Lambatnya CDN", "Salahnya timezone"]
+    answer: 0
+    explain: "Termasuk data lama di backup, log, dan URL yang tidak ikut dienkripsi."
+  - q: "Injection (termasuk SQLi) dicegah utama dengan…"
+    options: ["Parameterized query dan validasi input", "Menyembunyikan form", "Mengganti font", "Mematikan JavaScript"]
+    answer: 0
+    explain: "Sudah dibahas di bab SQL injection — data dipisahkan dari perintah."
+  - q: "Security Misconfiguration paling sering berupa…"
+    options: ["Kredensial default, fitur demo, dan error verbose di produksi", "Kode terlalu rapi", "Terlalu banyak unit test", "Dokumentasi terlalu lengkap"]
+    answer: 1
+    explain: "Hapus akun default, nonaktifkan fitur debug, dan potong pesan error di produksi."
+example:
+  code: |
+    # Checklist ringkas rilis aman
+    checklist = [
+        "akun default dimatikan",
+        "error verbose di nonaktifkan",
+        "dependency dipatch",
+        "backup teruji restore-nya",
+    ]
+    for item in checklist:
+        print("[x]", item)
+---
+
+**OWASP Top 10** merangkum sepuluh risiko paling kritis pada aplikasi web. Memahaminya setara dengan menutup sebagian besar lubang umum sejak awal.
+
+## Mengapa Daftar Ini Penting
+
+Setiap tahun komunitas keamanan menyusun ulang daftar berdasarkan data insiden nyata. Menutup sepuluh risiko ini lebih berdampak daripada membeli satu perangkat mahal tanpa perbaikan kode.
+
+## Lima Risiko Paling Sering
+
+### 1. Broken Access Control
+
+```python
+# Prinsip: cek hak di SERVER untuk setiap request
+def boleh_akses(user, objek):
+    return user["role"] == "admin" or objek["pemilik_id"] == user["id"]
+
+print("Jangan percaya pengecekan yang hanya ada di sisi browser")
+```
+
+Uji horizontal (antar pengguna selevel) dan vertikal (antar level hak).
+
+### 2. Cryptographic Failure
+
+- Enkripsi data sensitif saat disimpan **dan** saat transit (HTTPS).
+- Jangan simpan nomor kartu/kredensial tanpa kebutuhan jelas.
+- Periksa juga backup, log, dan cache.
+
+### 3. Injection
+
+```python
+# Ingat dari bab SQLi:
+# cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+print("Parameterized query menutup celah injection utama")
+```
+
+Berlaku juga untuk OS command, LDAP, dan template — pola pemisahan data-vs-perintah tetap sama.
+
+### 4. Insecure Design
+
+Desain aman dimulai dari kerangka: alur pemulihan akun, rate limit, pemisahan peran, dan ancaman modeling sebelum baris kode pertama.
+
+### 5. Security Misconfiguration
+
+```python
+produksi = {
+    "akun_default": "harus dimatikan",
+    "debug_mode": False,
+    "error_verbose": False,
+    "hak_db_aplikasi": "minimal",
+}
+print(produksi)
+```
+
+## Lima Risiko Berikutnya
+
+### 6. Komponen Rentang dan Kedaluwarsa
+
+```python
+dependensi = ["framework-web@versi-terbaru", "library-auth@patch-keamanan"]
+print("Jalankan audit dependensi rutin di CI")
+```
+
+### 7. Kegagalan Autentikasi
+
+Rujuk bab password & 2FA: hash kuat, MFA, pembatasan percobaan, sesi terkendali.
+
+### 8. Kegagalan Integritas Perangkat Lunak dan Data
+
+- Tandatangani/update dari sumber resmi.
+- Waspadai pipeline CI yang menarik paket tak tepercaya.
+- Verifikasi integritas backup sebelum dibutuhkan.
+
+### 9. Kegagalan Logging dan Monitoring
+
+```python
+event = {"aksi": "login_gagal", "user_id": 42, "ip": "10.0.0.5"}
+print("Log ke server terpusat + notifikasi untuk pola mencurigakan")
+```
+
+### 10. Server-Side Request Forgery (SSRF)
+
+Validasi dan allowlist URL yang boleh diambil server; jangan biarkan pengguna menentukan tujuan request internal bebas.
+
+## Menutupnya dengan Kebiasaan
+
+```python
+checklist = [
+    "akun default dimatikan",
+    "error verbose di nonaktifkan",
+    "dependency dipatch",
+    "backup teruji restore-nya",
+]
+for item in checklist:
+    print("[x]", item)
+```
+
+## Ringkasan Sepuluh Risiko
+
+OWASP Top 10 edisi 2021 memiliki **10 kategori**.
+
+| Kode | Risiko | Kontrol utama | Use case pemeriksaan |
+|---|---|---|---|
+| A01 | Broken Access Control | Deny by default, cek server | Ubah ID objek antaruser |
+| A02 | Cryptographic Failures | TLS dan algoritma modern | Audit data sensitif |
+| A03 | Injection | Parameterisasi | Review query dan command |
+| A04 | Insecure Design | Threat modeling | Review alur bisnis |
+| A05 | Security Misconfiguration | Baseline aman | Audit config produksi |
+| A06 | Vulnerable Components | Inventaris dan patch | Scan dependency |
+| A07 | Identification/Auth Failures | MFA dan sesi aman | Uji login/reset |
+| A08 | Software/Data Integrity Failures | Verifikasi artefak | Audit CI/CD |
+| A09 | Logging/Monitoring Failures | Log terpusat dan alert | Simulasi insiden |
+| A10 | SSRF | Allowlist tujuan dan egress | Uji fitur fetch URL |
+
+Daftar ini adalah kategori risiko, bukan sepuluh bug konkret. Satu endpoint dapat memiliki beberapa kategori sekaligus. Prioritaskan berdasarkan aset, exposure, kemungkinan eksploitasi, dan dampak bisnis; jangan menganggap nomor urut sebagai skor pasti untuk organisasi.
+
+## Di Dunia Nyata
+
+1. API invoice memeriksa kepemilikan setiap objek untuk mencegah pengguna membaca invoice pelanggan lain.
+2. Pipeline menghasilkan inventaris dependency, memindai CVE, dan memblokir artefak yang gagal policy.
+3. Fitur impor gambar hanya mengakses domain allowlist dan dibatasi egress agar tidak mencapai metadata cloud internal.
+4. Tim menjalankan tabletop pemulihan akun untuk menemukan celah desain sebelum fitur dirilis.
+5. Alert login admin dari lokasi baru diuji sampai benar-benar diterima petugas piket, bukan hanya tercatat di dashboard.
+
+Gunakan Top 10 untuk percakapan awal, lalu turunkan menjadi acceptance criteria, test, konfigurasi, dan pemilik kontrol. Static scanner menemukan sebagian pola; authorization, business logic, dan insecure design tetap memerlukan review manusia serta pengujian terarah dengan izin.
+
+Catat pengecualian yang diterima beserta alasan, pemilik, kontrol kompensasi, dan tanggal tinjau ulang. Temuan tanpa tenggat dan verifikasi perbaikan mudah kembali pada rilis berikutnya.
+
+<div class="note">💡 OWASP Top 10 adalah titik mulai, bukan daftar selesai. Gunakan juga OWASP ASVS sebagai checklist verifikasi dan alat scanning otomatis di alur CI.</div>

@@ -1,0 +1,155 @@
+---
+title: "Variabel dan Argumen"
+description: "Menyimpan data di skrip: aturan penamaan, quoting, variabel bawaan, dan input dari baris perintah"
+order: 2
+quiz:
+  - q: "Sintaks menulis (mendeklarasikan) variabel di Bash adalah…"
+    options: ["$nama=\"Budi\"", "nama=\"Budi\"", "var nama=\"Budi\"", "let nama=\"Budi\""]
+    answer: 1
+    explain: "Sisi kiri tanpa $; tanda dolar hanya dipakai saat MEMBACA isi variabel."
+  - q: "Baris mana yang akan error sebagai penugasan?"
+    options: ["nama=\"Budi\"", "nama=Budi", "nama = \"Budi\"", "NAMA=budi"]
+    answer: 2
+    explain: "Spasi di sekitar = dilarang — Bash menganggap nama sebagai perintah, bukan penugasan."
+  - q: "Mengapa variabel harus dikutip saat dipakai di test, misalnya [ -z \"$1\" ] ?"
+    options: ["Agar nilai kosong tetap dihitung satu argumen", "Supaya test berjalan lebih cepat", "Karena Bash tidak mengenal tanda kurung", "Supaya variabel jadi global"]
+    answer: 0
+    explain: "Tanpa kutip, nilai kosong membuat Bash melihat [ -z ] tanpa argumen — sintaks yang error."
+  - q: "Tanda $@ dalam skrip berarti…"
+    options: ["Jumlah argumen", "Semua argumen sebagai daftar terpisah", "Argumen pertama", "Nilai exit code"]
+    answer: 1
+    explain: "\"$@\" mempertahankan batas antar argumen — penting saat tiap argumen bisa mengandung spasi."
+  - q: "Perintah yang menandai variabel agar diwariskan ke proses anak adalah…"
+    options: ["setenv", "define", "export", "global"]
+    answer: 2
+    explain: "export menandai variabel environment; tanpa itu, child process tidak melihatnya."
+example:
+  code: |
+    #!/usr/bin/env bash
+    nama="OnBoss"
+    echo "Halo, $nama"
+    export LANGKAH=3
+    echo "Argumen: $1"
+    echo "Jumlah argumen: $#"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Variabel di Bash adalah **nama yang menunjuk ke teks** — tidak ada deklarasi tipe, tidak ada kata kunci. Aturan utamanya cuma dua: tanpa `$` saat menulis, dengan `$` saat membaca.
+
+## Apa Itu Variabel Bash?
+
+Saat skrip mengeksekusi `judul="Kursus Bash"`, Bash membuat entri bernama `judul` di memori sesi berjalan, berisi teks `Kursus Bash`. Secara teknis semua nilai bertipe string; angka seperti `2026` baru dianggap numerik saat masuk aritmetika `$(( ))`.
+
+```bash
+judul="Kursus Bash"
+tahun=2026
+echo "$judul tahun $tahun"
+```
+
+Tidak ada `var`, `let`, atau `int` — penugasan cukup `nama=nilai`. Ini beda jauh dengan bahasa umum seperti Python atau JavaScript.
+
+## Aturan Penamaan dan Penugasan
+
+| Aturan | Contoh benar | Contoh salah | Alasan |
+| --- | --- | --- | --- |
+| Tanpa spasi di sekitar `=` | `kota=Bandung` | `kota = Bandung` | Bash membaca `kota` sebagai perintah |
+| Huruf kecil + underscore (konvensi) | `user_name` | `userName` | Gaya komunitas Bash lebih seragam |
+| Diawali huruf atau underscore | `_tmp=1` | `2nama=x` | Nama tidak boleh diawali angka |
+| Case-sensitive | `Kota` ≠ `kota` | — | Dua nama berbeda |
+
+`export nama="x"` menandai variabel agar ikut terbawa ke proses anak (program lain yang dipanggil skrip). Tanpa `export`, child process tidak melihatnya.
+
+## Tanda Kutip: Dunia yang Berbeda
+
+Ini sumber bug nomor satu pemula Bash:
+
+```bash
+nama="On Boss"
+echo $nama           # bisa pecah jadi dua argumen
+echo "$nama"         # aman, tetap satu argumen utuh
+echo '$nama'         # literal $nama, tanpa isi variabel
+```
+
+| Penulisan | `$nama` di dalamnya | Spasi diperhatikan |
+| --- | --- | --- |
+| `$nama` | dibaca isinya | dipecah jadi kata |
+| `"$nama"` | dibaca isinya | dijaga utuh |
+| `'$nama'` | tetap teks literal | dijaga utuh |
+
+Kebiasaan baik: **selalu kutip referensi variabel** dengan `"..."`. Tanda kutip tunggal dipakai saat ingin teks benar-benar literal, misal regex atau expression yang tidak boleh disentuh shell.
+
+## Variabel Bawaan Skrip
+
+Saat skrip dijalankan, Bash sudah menyediakan 6 variabel khusus tanpa perlu didefinisikan:
+
+| Variabel | Arti | Contoh pemakaian |
+| --- | --- | --- |
+| `$0` | nama skrip | pesan bantuan |
+| `$1` `$2` ... | argumen posisi | input pengguna |
+| `$@` | semua argumen, terpisah | dipakai ulang satu per satu |
+| `$#` | jumlah argumen | validasi input wajib |
+| `$?` | kode keluar perintah terakhir | pengecekan error |
+| `$$` | PID skrip saat ini | file lock, log |
+
+Argumen posisi berhenti di `$9`; untuk argumen ke-10 dan seterusnya pakai `${10}`.
+
+```bash
+#!/usr/bin/env bash
+echo "Nama skrip : $0"
+echo "Argumen 1  : $1"
+echo "Argumen 2  : $2"
+echo "Semua      : $@"
+echo "Jumlah     : $#"
+```
+
+Jalankan dengan `bash sapa.sh Sari 25` — nilai `$1` menjadi `Sari` dan `$2` menjadi `25`.
+
+## Membaca Input dari Pengguna
+
+Selain argumen, skrip bisa meminta input interaktif:
+
+```bash
+read -p "Nama kamu: " nama
+echo "Halo, $nama"
+```
+
+`read` menunggu Enter lalu menyimpan isinya ke variabel — berguna untuk skrip interaktif; untuk skrip terjadwal, lebih andal memakai argumen.
+
+## Aritmetika dan Substitusi
+
+```bash
+i=$((i + 1))            # aritmetika: satu-satunya cara menambah angka
+hari=$(date +%A)        # substitusi command: output jadi isi variabel
+panjang=${#nama}        # jumlah karakter
+kosong=${user:-root}    # fallback kalau user belum diset
+```
+
+| Ekspansi | Fungsi |
+| --- | --- |
+| `$((...))` | hitung angka |
+| `$(...)` | jalankan perintah, ambil output |
+| `${#var}` | panjang teks |
+| `${var:-default}` | nilai cadangan |
+
+## Di Dunia Nyata
+
+1. **Skrip deploy** — `ENV=${1:-staging}` lalu semua langkah memakai `$ENV`, jadi satu skrip melayani banyak environment.
+2. **Validasi input wajib** — `[ $# -ge 1 ] || { echo "argumen wajib"; exit 1; }` mencegah skrip jalan dengan parameter kosong.
+3. **Backup bertanggal** — `file="backup-$(date +%F).tar.gz"` menghasilkan nama unik tiap hari tanpa campur tangan manusia.
+4. **Kredensial sementara** — `export DB_PASS="rahasia"` agar program anak (mysqldump) bisa membacanya selama sesi.
+5. **Log berlabel** — variabel `LOG="[$(date +%T)]"` dicetak di depan setiap pesan supaya mudah dilacak waktunya.
+
+<div class="note">💡 Kutip variabel yang berisi spasi. Tanpa tanda kutip, `$alamat` yang berisi "Jl. Merdeka 1" dipecah shell jadi tiga argumen terpisah — bug klasik yang menghancurkan skrip backup di production.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+kota="Jakarta"
+tahun=2026
+echo "Kota: $kota"
+echo "Tahun: $tahun"
+echo "Gabungan: $kota $tahun"
+echo "Panjang teks: \${#kota}"
+i=$((1 + 2))
+echo "Aritmetika: $i"
+echo "Jumlah argumen: $#"
+echo "Kode keluar terakhir: $?"`} />

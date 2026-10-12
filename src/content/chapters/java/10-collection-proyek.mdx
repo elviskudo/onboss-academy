@@ -1,0 +1,206 @@
+---
+title: "Collection & Proyek Mini"
+description: "Hirarki Collection (List, Set, Queue, Map), 12 method inti, dan proyek konsol manajemen tugas"
+order: 10
+quiz:
+  - q: "HashMap menyimpan data dalam bentuk…"
+    options: ["Baris tabel berurutan", "Pasangan kunci → nilai (key-value)", "Hanya array dua dimensi", "Teks panjang"]
+    answer: 1
+    explain: "map.get(\"satu\") mengambil nilai berdasarkan kunci — kunci unik, nilai bisa duplikat."
+  - q: "Method menambah elemen ke ArrayList adalah…"
+    options: ["push()", "insert()", "add()", "append()"]
+    answer: 2
+    explain: "add(elemen) menambah di akhir; add(index, elemen) menyisipkan di posisi tertentu."
+  - q: "Collection yang TIDAK mengizinkan elemen kembar adalah…"
+    options: ["ArrayList", "LinkedList", "HashSet", "ArrayDeque"]
+    answer: 2
+    explain: "Set menolak duplikat — cocok untuk tag, username terdaftar, dan daftar izin unik."
+  - q: "Untuk menghapus elemen ArrayList berdasarkan posisi, gunakan…"
+    options: ["remove(index)", "delete(pos)", "clear(index)", "drop(index)"]
+    answer: 0
+    explain: "remove(int index) menghapus pada indeks dan menggeser elemen sesudahnya ke kiri."
+  - q: "Keunggulan utama memecah program menjadi method kecil adalah…"
+    options: ["Kode lebih mudah diuji, dibaca, dan dipakai ulang", "Program otomatis jadi lebih cepat", "Tidak perlu variabel lagi", "Menghilangkan kebutuhan komentar"]
+    answer: 0
+    explain: "Method kecil dengan satu tanggung jawab adalah inti dari program yang mudah dirawat."
+example:
+  code: |
+    import java.util.ArrayList;
+    import java.util.HashMap;
+
+    public class Main {
+        public static void main(String[] args) {
+            ArrayList<String> tugas = new ArrayList<>();
+            tugas.add("Belajar Java");
+            tugas.add("Kerjakan proyek");
+
+            HashMap<String, Integer> skor = new HashMap<>();
+            skor.put("Quiz 1", 90);
+
+            for (int i = 0; i < tugas.size(); i++) {
+                System.out.println((i + 1) + ". " + tugas.get(i));
+            }
+            System.out.println("Skor Quiz 1: " + skor.get("Quiz 1"));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bab terakhir memadukan **collection** yang sudah dipelajarinya menjadi satu program konsol yang benar-benar berguna. Collection Framework Java adalah pustaka wadah data siap pakai — tidak perlu menulis ulang list dan map dari nol.
+
+## Hirarki Collection Framework
+
+Java punya **4 interface utama** di `java.util.Collection` plus **1 interface pemetaan** terpisah (`Map`):
+
+| Interface | Ciri | Implementasi populer | Urutan? | Duplikat? |
+|---|---|---|---|---|
+| `List` | berurutan, berindeks | `ArrayList`, `LinkedList` | ya | ya |
+| `Set` | tanpa duplikat | `HashSet`, `TreeSet` | tergantung | **tidak** |
+| `Queue` | antrean (FIFO) | `ArrayDeque`, `PriorityQueue` | ya | tergantung |
+| `Deque` | dua ujung | `ArrayDeque` | ya | tergantung |
+| `Map` | kunci → nilai | `HashMap`, `TreeMap` | tergantung | kunci unik |
+
+Panduan cepat: butuh list berindeks → `List`; butuh keunikan → `Set`; butuh antrean/proses berurutan → `Queue`; butuh lookup kunci → `Map`.
+
+## ArrayList: 12 Method Inti
+
+```java
+import java.util.ArrayList;
+
+ArrayList<String> tugas = new ArrayList<>();
+tugas.add("Belajar Java");
+tugas.add("Review pull request");
+tugas.add(1, "Kerjakan latihan");     // sisipkan di tengah
+
+System.out.println(tugas.size());     // 3
+System.out.println(tugas.get(0));
+tugas.set(0, "Belajar Java SE");      // ganti elemen indeks 0
+tugas.remove(0);                      // hapus berdasarkan indeks
+tugas.remove("Review pull request");  // hapus berdasarkan isi
+
+for (int i = 0; i < tugas.size(); i++) {
+    System.out.println((i + 1) + ". " + tugas.get(i));
+}
+```
+
+Keduabelas method yang wajib dikuasai: `add`, `add(i,e)`, `get`, `set`, `remove(int)`, `remove(Object)`, `size`, `contains`, `indexOf`, `isEmpty`, `clear`, `sort` (Java 8+).
+
+## HashMap untuk Data Berpasangan
+
+```java
+import java.util.HashMap;
+
+HashMap<String, Integer> skor = new HashMap<>();
+skor.put("Sari", 90);
+skor.put("Budi", 85);
+
+System.out.println(skor.get("Sari"));      // 90
+System.out.println(skor.containsKey("Budi")); // true
+System.out.println(skor.getOrDefault("Rina", 0)); // 0 jika tak ada
+
+for (String nama : skor.keySet()) {
+    System.out.println(nama + " → " + skor.get(nama));
+}
+for (Integer nilai : skor.values()) {
+    System.out.println("Nilai: " + nilai);
+}
+for (var entri : skor.entrySet()) {         // kunci + nilai sekaligus
+    System.out.println(entri.getKey() + " = " + entri.getValue());
+}
+```
+
+Kunci unik, nilai boleh diubah berkali-kali — cocok untuk kamus, penghitung kata, atau konfigurasi. Karena HashMap tidak berurutan, gunakan `TreeMap` bila butuh iterasi terurut berdasarkan kunci.
+
+## Pola Program: Input → Proses → Output
+
+```java
+ArrayList<Integer> angka = new ArrayList<>();
+angka.add(5);
+angka.add(8);
+angka.add(3);
+
+int total = 0;
+for (int n : angka) total += n;                 // proses
+System.out.println("Total = " + total);         // output
+```
+
+Walau tanpa input keyboard, pola ini tetap berlaku: data disiapkan, diolah, lalu ditampilkan. Semua proyek di bawah memakai kerangka yang sama.
+
+## Proyek Mini: Manajemen Tugas
+
+Rancang dulu sebelum mengetik kode:
+
+1. `ArrayList<String> daftar` menyimpan judul tugas (penomoran otomatis).
+2. `HashMap<String, Boolean> status` menyimpan selesai/belum per judul.
+3. Method `tambah`, `selesai`, `tampilkan`, `hapus` mengoperasikannya.
+4. `hitungProgres` menghitung persentase selesai — memadukan koleksi + looping.
+
+Jalankan contoh di bawah, lalu tambahkan fitur **hapus tugas** dan **hitung progres persen** sebagai latihan. Perhatikan penggunaan `Boolean.TRUE.equals(...)` — aman dari NPE dibanding `status.get(t)` yang bisa null.
+
+## Di Dunia Nyata
+
+- **To-do list app**: ArrayList judul + HashMap status — model data inti Todoist/Any.do versi mini.
+- **Sistem nilai kelas**: HashMap `nama → nilai`, iterasi `entrySet()` untuk hitung rata-rata dan cari peringkat.
+- **Shopping cart**: `ArrayList<Produk>` dengan `add`/`remove` saat user menambah/menghapus item.
+- **Counter frekuensi kata**: HashMap `kata → jumlah` — dasar analisis sentimen sederhana dan word cloud.
+- **Validasi username unik**: `HashSet<String> terdaftar` menolak duplikat secara struktural — tanpa pengecekan manual.
+
+<div class="note">💡 Kumpulan penguasaanmu sekarang: tipe data, percabangan, looping, method, array/ArrayList, String, OOP, exception, dan collection. Di dunia nyata kamu hampir tidak pernah memakai array mentah untuk data dinamis — ArrayList/HashMap adalah default, dan penguasaan 4 interface (List, Set, Queue, Map) sudah cukup untuk 90% kasus harian.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.ArrayList;
+import java.util.HashMap;
+
+public class Main {
+    ArrayList<String> daftar = new ArrayList<>();
+    HashMap<String, Boolean> status = new HashMap<>();
+
+    void tambah(String judul) {
+        daftar.add(judul);
+        status.put(judul, false);
+        System.out.println("Ditambahkan: " + judul);
+    }
+
+    void selesai(String judul) {
+        if (status.containsKey(judul)) {
+            status.put(judul, true);
+            System.out.println("Selesai: " + judul);
+        } else {
+            System.out.println("Tugas tidak ditemukan");
+        }
+    }
+
+    void tampilkan() {
+        if (daftar.isEmpty()) {
+            System.out.println("(belum ada tugas)");
+            return;
+        }
+        for (String t : daftar) {
+            String tanda = Boolean.TRUE.equals(status.get(t)) ? "[x]" : "[ ]";
+            System.out.println(tanda + " " + t);
+        }
+    }
+
+    int hitungProgres() {
+        int selesai = 0;
+        for (Boolean s : status.values()) {
+            if (Boolean.TRUE.equals(s)) selesai++;
+        }
+        return selesai;
+    }
+
+    public static void main(String[] args) {
+        Main app = new Main();
+        app.tambah("Belajar Java");
+        app.tambah("Kerjakan proyek");
+        app.tambah("Review kode");
+        app.selesai("Belajar Java");
+        app.selesai("Tugas Hilang");
+        app.tampilkan();
+
+        int selesai = app.hitungProgres();
+        int persen = selesai * 100 / app.daftar.size();
+        System.out.println("Progres: " + selesai + "/" + app.daftar.size()
+                + " (" + persen + "%)");
+    }
+}`} />

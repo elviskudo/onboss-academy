@@ -1,0 +1,161 @@
+---
+title: "Data Fetching"
+description: "Mengambil data di server component: await, cache Next.js, revalidate, dan Suspense"
+order: 4
+quiz:
+  - q: "Di server component, data API paling sederhana diambil dengan…"
+    options: ["useEffect + useState", "localStorage", "await fetch(...) di komponen async", "onClick handler"]
+    answer: 2
+    explain: "Server component boleh async — cukup await fetch di badan komponen, tanpa hook."
+  - q: "fetch tanpa konfigurasi khusus di Next.js…"
+    options: ["Selalu persisten di Data Cache", "Mengikuti cache default framework/runtime dan dapat dikonfigurasi per request", "Mengembalikan null", "Hanya bekerja di client"]
+    answer: 1
+    explain: "Kebijakan cache harus dinyatakan sesuai kebutuhan; gunakan cache atau revalidate secara eksplisit agar perilakunya jelas lintas versi."
+  - q: "export const revalidate = 60 pada halaman berarti…"
+    options: ["Data/statik direfresh tiap 60 detik (ISR)", "Request dibatalkan tiap 60 detik", "Halaman dihapus", "Kode dikompilasi ulang 60 kali"]
+    answer: 0
+    explain: "ISR (Incremental Static Regeneration): halaman statis diperbarui berkala tanpa rebuild penuh."
+  - q: "Untuk data yang tidak boleh cache sama sekali (mis. data user login), gunakan…"
+    options: ["revalidate = 0", "localStorage", "fetch(url, { cache: \"no-store\" })", "force static"]
+    answer: 2
+    explain: "no-store melewati cache; setiap request mengambil data terbaru dari sumber."
+  - q: "<Suspense> berguna untuk…"
+    options: ["Menampilkan fallback sementara sambil bagian berat dimuat", "Mengganti layout", "Mengubah metadata", "Menyembunyikan error"]
+    answer: 0
+    explain: "Bungkus bagian lambat dengan Suspense agar bagian lain tetap tampil lebih dulu (streaming)."
+example:
+  code: |
+    async function ambilProduk() {
+      await new Promise((r) => setTimeout(r, 10));
+      return [
+        { id: 1, nama: "Kopi Susu", harga: 25000 },
+        { id: 2, nama: "Roti Bakar", harga: 18000 },
+      ];
+    }
+
+    ambilProduk().then((produk) => {
+      console.log(produk.map((p) => p.nama + " — Rp" + p.harga).join("\\n"));
+    });
+---
+
+Salah satu alasan orang pindah ke Next.js: mengambil data tanpa membuat endpoint terpisah. Di App Router, halaman biasa adalah komponen async.
+
+## await Langsung di Halaman
+
+```typescript
+// app/produk/page.tsx
+type Produk = { id: number; nama: string; harga: number };
+
+async function ambilProduk(): Promise<Produk[]> {
+  const res = await fetch(`${process.env.API_URL}/produk`);
+  if (!res.ok) throw new Error("Gagal memuat produk");
+  return res.json();
+}
+
+export default async function ProdukPage() {
+  const produk = await ambilProduk();
+
+  return (
+    <ul>
+      {produk.map((p) => (
+        <li key={p.id}>
+          {p.nama} — Rp{p.harga}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Tidak ada useEffect, tidak ada state loading manual — server yang menunggu, user menerima HTML utuh.
+
+## Mengontrol Cache
+
+```typescript
+// selalu segar (tanpa cache)
+const akun = await fetch(`${API_URL}/akun`, { cache: "no-store" });
+
+// di-cache statis, diisi saat build
+const kategori = await fetch(`${API_URL}/kategori`, { cache: "force-cache" });
+
+// di-cache + refresh berkala
+const artikel = await fetch(`${API_URL}/artikel`, { next: { revalidate: 60 } });
+```
+
+Pilih kebijakan cache per data, sesuai sifatnya: profil user = no-store, katalog = force-cache, berita = revalidate.
+
+## ISR: Halaman Statis yang Hidup
+
+```typescript
+// app/artikel/page.tsx
+export const revalidate = 300; // detik
+
+export default async function ArtikelPage() {
+  const artikel = await fetch(`${API_URL}/artikel`, { next: { revalidate: 300 } });
+  return <DaftarArtikel artikel={await artikel.json()} />;
+}
+```
+
+Halaman dirender statis lalu diperbarui di latar belakang — kombinasi cepatnya SSG dengan datanya yang tetap segar.
+
+## Streaming dengan Suspense
+
+```typescript
+import { Suspense } from "react";
+
+export default function Halaman() {
+  return (
+    <main>
+      <h1>Katalog</h1>
+      <Suspense fallback={<p>Memuat ulasan…</p>}>
+        <UlasanTerbaru />   {/* async component di file sendiri */}
+      </Suspense>
+    </main>
+  );
+}
+```
+
+Bagian cepat tampil segera; bagian lambat menyusul saat siap — user tidak menatap layar kosong.
+
+## Fetch di Banyak Tempat dengan Aman
+
+```typescript
+// lib/produk.ts — dipakai berbagai komponen
+export async function getProduk(id: string) {
+  const res = await fetch(`${API_URL}/produk/${id}`, { next: { revalidate: 60 } });
+  if (!res.ok) return null;
+  return res.json() as Promise<Produk | null>;
+}
+```
+
+Untuk akses data non-`fetch`, React `cache()` dapat memoize pemanggilan yang sama dalam satu proses render agar layout dan halaman tidak mengulang query.
+
+## Tiga Strategi Kesegaran
+
+Pilih **3 strategi utama** berdasarkan sifat data.
+
+| Strategi | Konfigurasi | Fungsi | Kapan dipakai |
+|---|---|---|---|
+| Dinamis | `cache: "no-store"` | membaca sumber terbaru | akun dan stok kritis |
+| Statis | `cache: "force-cache"` | memakai data tersimpan | kategori jarang berubah |
+| Revalidasi | `next: { revalidate: 60 }` | menyegarkan berkala | artikel dan katalog |
+
+Cache request, cache data, dan cache halaman adalah lapisan berbeda. Nyatakan kebijakan secara eksplisit dan ukur kebutuhan aktual; jangan meng-cache data personal lintas pengguna. Jalankan request independen secara paralel agar tidak membentuk waterfall.
+
+```typescript
+const [produk, kategori] = await Promise.all([
+  getProduk(),
+  getKategori(),
+]);
+```
+
+Error dari `fetch` HTTP tidak otomatis melempar untuk status 404/500, sehingga `res.ok` wajib diperiksa. Gunakan `notFound()` untuk resource yang memang tidak ada dan biarkan error tak terduga ditangkap `error.tsx`.
+
+## Di Dunia Nyata
+
+- Profil login memakai `no-store` agar data antar pengguna tidak tertukar.
+- Kategori toko memakai cache statis karena hampir tidak berubah.
+- Berita memakai revalidasi 60 detik agar cepat tetapi tetap segar.
+- Dasbor menjalankan query statistik independen secara paralel dan men-stream widget lambat.
+
+<div class="note">💡 Pertanyaan pertama setiap kali mengambil data: "seberapa sering data ini berubah?" Jawabannya menentukan cache: no-store untuk data personal, revalidate untuk konten editorial, force-cache untuk referensi yang hampir tidak pernah berubah.</div>

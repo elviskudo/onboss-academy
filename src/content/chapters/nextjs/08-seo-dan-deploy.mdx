@@ -1,0 +1,178 @@
+---
+title: "SEO, Metadata & Deploy"
+description: "Metadata dinamis, sitemap, dan membawa aplikasi Next.js ke produksi"
+order: 8
+quiz:
+  - q: "SEO paling mendasar yang dibantu Next.js adalah…"
+    options: ["Warna tema otomatis", "Halaman dirender di server sehingga crawler menerima HTML utuh", "Iklan otomatis", "Domain gratis"]
+    answer: 1
+    explain: "Konten sudah ada di HTML respons — mesin pencari tidak perlu mengeksekusi JavaScript berat."
+  - q: "Cara paling sederhana mengatur title seluruh halaman…"
+    options: ["export const metadata di layout.tsx root", "Menulis <title> di CSS", "Mengubah package.json", "Mengedit index.html manual"]
+    answer: 0
+    explain: "Metadata di layout mewarisi ke semua halaman di bawahnya, lalu bisa ditimpa per halaman."
+  - q: "next/image membantu performa dengan…"
+    options: ["Optimasi ukutan, lazy loading, dan format modern otomatis", "Menghapus gambar", "Mengubah gambar jadi teks", "Memperbesar resolusi maksimal"]
+    answer: 0
+    explain: "Ukuran file turun drastis dan gambar hanya dimuat saat mendekati viewport."
+  - q: "File sitemap.ts di app/ berfungsi untuk…"
+    options: ["Membuat /sitemap.xml otomatis dari daftar URL", "Menyimpan log server", "Mengatur routing", "Mengompilasi aset"]
+    answer: 0
+    explain: "Sitemap membantu mesin pencari menemukan seluruh halaman situsmu."
+  - q: "Perintah build produksi Next.js adalah…"
+    options: ["npm run dev", "ng serve", "npm run build", "npm run lint only"]
+    answer: 2
+    explain: "Hasil build di folder .next kemudian dijalankan dengan npm start atau di-deploy ke Vercel."
+example:
+  code: |
+    const situs = {
+      title: "OnBoss Toko — Belanja Harian",
+      description: "Kopi, roti, dan kebutuhan dapur",
+      url: "https://toko.example.id",
+      sitemap: 12,
+    };
+    console.log(situs.title);
+    console.log(situs.url + "/sitemap.xml (" + situs.sitemap + " URL)");
+---
+
+Bab penutup: memastikan aplikasi ditemukan mesin pencari dan siap dijalankan pengguna sungguhan.
+
+## Metadata Statis dan Dinamis
+
+```typescript
+// app/layout.tsx — berlaku global
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://toko.example.id"),
+  title: {
+    default: "OnBoss Toko",
+    template: "%s — OnBoss Toko",
+  },
+  description: "Belanja kebutuhan harian dengan cepat",
+  openGraph: {
+    images: ["/og.jpg"],
+  },
+};
+```
+
+```typescript
+// app/produk/[id]/page.tsx — menimpa judul per halaman
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const produk = await getProduk(id);
+  return { title: produk?.nama ?? "Produk" };
+}
+```
+
+Judul halaman detail otomatis menjadi "Kopi Susu — OnBoss Toko" berkat `title.template`.
+
+## Gambar dan Font Optimasi
+
+```typescript
+import Image from "next/image";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export default function Hero() {
+  return (
+    <section className={inter.className}>
+      <Image src="/hero.jpg" alt="Promo mingguan" width={1200} height={600} priority />
+    </section>
+  );
+}
+```
+
+`next/image` menghasilkan srcset otomatis; `next/font` menghindari layout shift dari font eksternal.
+
+## Sitemap dan Robots
+
+```typescript
+// app/sitemap.ts
+import type { MetadataRoute } from "next";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const produk = await getSemuaProduk();
+
+  return [
+    { url: "https://toko.example.id", priority: 1 },
+    ...produk.map((p) => ({
+      url: `https://toko.example.id/produk/${p.id}`,
+      lastModified: new Date(),
+    })),
+  ];
+}
+```
+
+```typescript
+// app/robots.ts
+export default function robots() {
+  return {
+    rules: { userAgent: "*", allow: "/", disallow: "/admin" },
+    sitemap: "https://toko.example.id/sitemap.xml",
+  };
+}
+```
+
+## Build dan Deploy
+
+```bash
+npm run build
+npm start        # jalankan hasil build di :3000
+```
+
+Atau dorong ke git dan hubungkan ke Vercel — build dan deploy berjalan otomatis. Variabel rahasia (`DATABASE_URL`, API key) cukup diisi di pengaturan environment.
+
+## Empat Pilar SEO Teknis
+
+SEO produksi setidaknya memiliki **4 pilar teknis**.
+
+| Pilar | Fungsi | Contoh | Kapan diperiksa |
+|---|---|---|---|
+| Metadata | Menjelaskan halaman | title, description, OG | Setiap template halaman |
+| Crawlability | Mengarahkan crawler | robots, sitemap | Saat URL berubah |
+| Canonical | Mencegah duplikasi URL | `alternates.canonical` | Filter atau domain ganda |
+| Performance | Mempercepat pengalaman | Image, font, caching | Sebelum dan sesudah rilis |
+
+Metadata tidak menggantikan konten yang berguna. Setiap halaman harus punya satu judul deskriptif, heading yang logis, alt gambar bermakna, dan tautan internal yang dapat diikuti crawler.
+
+```typescript
+export const metadata: Metadata = {
+  alternates: { canonical: "/produk" },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: "Katalog Produk",
+    description: "Temukan kebutuhan harian",
+    images: [{ url: "/og-produk.jpg", width: 1200, height: 630 }],
+  },
+};
+```
+
+## Tiga Target Deploy
+
+Next.js umum dijalankan pada **3 target**: platform terkelola, Node.js server mandiri, atau container. Static export hanya cocok bila aplikasi tidak membutuhkan fitur server saat request.
+
+```bash
+npm run build
+npm start
+```
+
+Saat deploy, environment variable tanpa prefix `NEXT_PUBLIC_` hanya tersedia di server; variabel berprefix tersebut masuk bundle browser dan tidak boleh berisi secret. Jalankan migrasi database sebagai langkah terkontrol, lalu lakukan smoke test pada halaman dan endpoint penting.
+
+## Di Dunia Nyata
+
+- Toko membuat sitemap dari seluruh slug produk aktif.
+- Situs multi-domain memakai canonical agar ranking tidak terbagi.
+- Portal privat memberi `noindex` pada halaman akun dan memeriksa otorisasi di server.
+- Tim memantau Core Web Vitals setelah deploy, bukan hanya skor lokal.
+
+## Checklist Sebelum Rilis
+
+- Metadata dan OG image terisi di semua halaman penting
+- Gambar besar dikirim lewat `next/image`
+- Error boundary tersedia per segmen
+- Route admin dilindungi autentikasi dan otorisasi server
+- Core Web Vitals diperiksa pada halaman utama
+
+<div class="note">💡 Selamat — track Next.js selesai. Kamu kini memegang App Router end-to-end: layout dan page, server vs client component, data fetching dengan cache, rute dinamis, route handler, server action, sampai SEO dan deploy. Proyek toko yang kamu bangun bisa langsung dihubungkan ke database sungguhan dan domain produksi.</div>

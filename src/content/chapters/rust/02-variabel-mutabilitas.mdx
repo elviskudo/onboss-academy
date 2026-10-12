@@ -1,0 +1,141 @@
+---
+title: "Variabel & Mutabilitas"
+description: "let, let mut, const, dan shadowing — aturan main Rust soal data"
+order: 2
+quiz:
+  - q: "Variabel Rust pada dasarnya…"
+    options: ["selalu mutable", "immutable (tidak bisa diubah)", "bisa diubah tanpa batas", "bersifat global"]
+    answer: 1
+    explain: "Nilai awal bersifat immutable kecuali kamu menulis let mut."
+  - q: "Agar nilai bisa diubah ulang, deklarasinya…"
+    options: ["var x = 5;", "change x = 5;", "let mut x = 5;", "mutable x;"]
+    answer: 2
+    explain: "mut menandai variabel yang boleh dimodifikasi setelah dibuat."
+  - q: "Mendeklarasikan ulang variabel bernama sama disebut…"
+    options: ["shadowing", "overriding", "recasting", "rebinding"]
+    answer: 0
+    explain: "Shadowing membolehkan nilai baru (bahkan tipe baru) dengan nama yang sama."
+  - q: "Nilai const harus…"
+    options: ["diketahui saat kompilasi dan immutable", "boleh berubah runtime", "bertipe dinamis", "dideklarasikan di dalam main saja"]
+    answer: 0
+    explain: "const ditanam ke binari, tanpa alamat memori sendiri."
+  - q: "Membaca nilai variabel immutable yang dimutasi akan…"
+    options: ["menjadi nol", "panic", "diabaikan", "error kompilasi"]
+    answer: 3
+    explain: "Rust menolak perubahan ilegal sebelum program dijalankan."
+example:
+  code: |
+    fn main() {
+        let jumlah = 5;
+        let mut total = 0;
+        total += jumlah;
+
+        const MAKS: i32 = 100;
+
+        let nilai = "teks";
+        let nilai = nilai.len();
+
+        println!("total = {}, maks = {}", total, MAKS);
+        println!("nilai = {}", nilai);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Aturan pertama Rust: **data tidak berubah kecuali kamu minta secara eksplisit**. Ini sumber keamanan Rust.
+
+## 4 Cara Mendeklarasikan Nilai
+
+| Cara | Sintaks | Mutabilitas | Kapan dipakai |
+| --- | --- | --- | --- |
+| `let` | `let x = 5;` | Immutable | Default — mulai dari sini |
+| `let mut` | `let mut x = 5;` | Mutable | Nilai pasti akan berubah |
+| `const` | `const MAKS: i32 = 100;` | Selalu immutable | Konstanta global, tipe wajib |
+| `static` | `static NAMA: &str = "...";` | Selalu immutable | Nilai hidup sepanjang program |
+
+## let dan let mut
+
+```rust
+let jumlah = 5;
+println!("{}", jumlah);
+
+// jumlah = 6;   // error: tidak bisa mengubah nilai immutable
+
+let mut total = 0;
+total += jumlah;
+println!("{}", total);
+```
+
+Mulailah dengan `let`. Tambahkan `mut` hanya jika nilai memang harus berubah — kebiasaan ini membuat kode lebih mudah dipikirkan.
+
+## const
+
+```rust
+const MAKS: i32 = 100;
+const NAMA: &str = "OnBoss";
+
+println!("{} {}", MAKS, NAMA);
+```
+
+`const` ditulis dengan huruf besar sebagian, tipe wajib disebut, dan nilainya harus bisa dihitung saat kompilasi. Beda dengan `let`: `const` tidak bisa di-shadow dan hidup di seluruh skupnya.
+
+## Shadowing
+
+```rust
+let nilai = "20";
+let nilai: i32 = nilai.parse().unwrap();
+
+println!("{}", nilai + 1);
+```
+
+Shadowing membolehkan kamu mengubah nilai (bahkan tipe) dengan nama yang sama — berguna saat mengubah bentuk data di tengah jalan. Beda dengan `mut`: `mut` mengubah isi variabel yang sama, shadowing membuat variabel baru bernama sama.
+
+## Umur dan Cakupan
+
+```rust
+let luar;
+{
+    let dalam = 10;
+    luar = dalam;
+    println!("di dalam: {}", dalam);
+}
+println!("di luar: {}", luar);
+```
+
+Variabel hidup dari baris deklarasi sampai akhir bloknya. Setelah itu Rust membuangnya otomatis (Drop) — inilah sebabnya Rust tidak membutuhkan garbage collector.
+
+## Aturan Penamaan
+
+Snake case untuk variabel dan fungsi (`total_skor`), PascalCase untuk tipe (`Siswa`), UPPER_CASE untuk `const` (`MAKS`). Compiler hanya memberi peringatan (warning), bukan error, untuk penamaan yang tidak sesuai.
+
+## Di Dunia Nyata
+
+- **Counter form**: input jumlah pesanan `let mut qty = 1;` lalu `qty += 1` saat tombol tambah ditekan
+- **Konstanta aplikasi**: `const PAJAK_PPN: f64 = 0.11;` dipakai di seluruh modul billing
+- **Parse input**: `let teks = input; let angka: i32 = teks.parse()...;` — ubah string jadi angka lewat shadowing
+- **State halaman**: `mut scroll_y` yang terus diperbarui saat user scroll
+- **Batas konfigurasi**: `static MAX_KONEKSI: usize = 100;` untuk limit server
+
+<div class="note">💡 Jika Rust menolak perubahan pada variabel, biasanya itu bukan bug compiler — periksa apakah deklarasimu memang seharusnya let mut.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let jumlah = 5;
+    let mut total = 0;
+    total += jumlah;
+    println!("total = {}", total);
+
+    const MAKS: i32 = 100;
+    println!("maks = {}", MAKS);
+
+    let nilai = "20";
+    let nilai: i32 = nilai.parse().unwrap();
+    println!("nilai setelah parse = {}", nilai + 1);
+
+    let luar;
+    {
+        let dalam = 10;
+        luar = dalam;
+        println!("di dalam: {}", dalam);
+    }
+    println!("di luar: {}", luar);
+}`} />

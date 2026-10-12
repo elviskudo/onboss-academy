@@ -1,0 +1,199 @@
+---
+title: "Proyek: Sistem Kasir Mini"
+description: "Gabungkan interface, function, array method, dan class jadi aplikasi konsol"
+order: 10
+quiz:
+  - q: "Langkah pertama menyusun proyek TS sebaiknya…"
+    options: ["Langsung menulis console.log", "Menyusun tipe data (interface) dulu", "Memasang library UI", "Membuat 10 file sekaligus"]
+    answer: 1
+    explain: "Interface menjadi kontrak: semua fungsi dan class tahu bentuk data yang dipakai."
+  - q: "Mengapa total belanja dihitung dengan reduce()?"
+    options: ["Karena reduce mengakumulasi array jadi satu nilai", "Karena reduce paling cepat", "Karena reduce menghapus data", "Karena reduce mengurutkan"]
+    answer: 0
+    explain: "Dari banyak item keluar satu angka total — kasus klasik reduce."
+  - q: "Metode class untuk menambah item ke keranjang sebaiknya mengembalikan…"
+    options: ["Nilai string apa saja", "void atau konfirmasi, bukan memutar state dari luar", "Promise selalu", "Tidak ada return"]
+    answer: 1
+    explain: "Menjaga state privat dan mengekspos aksi lewat method = encapsulation yang sehat."
+  - q: "Apa gunanya memberi tipe pada fungsi hitungTotal(k: Keranjang): number?"
+    options: ["Mempercepat fungsi", "Menghapus parameter", "Memastikan fungsi hanya menerima Keranjang dan selalu number", "Mengubah fungsi jadi class"]
+    answer: 2
+    explain: "Kontrak masukan dan keluaran dicek kompilator di setiap pemanggilan."
+  - q: "Bagian mana yang paling rawan bug jika tanpa tipe data?"
+    options: ["Selisih perhitungan diskon dan total", "Warna terminal", "Nama file", "Urutan log"]
+    answer: 0
+    explain: "Keranjang item bercampur tipe adalah sumber typo klasik — interface mencegahnya."
+example:
+  code: |
+    interface Item { nama: string; harga: number; qty: number }
+    const keranjang: Item[] = [{ nama: "Kopi", harga: 25000, qty: 2 }];
+    const total = keranjang.reduce((s, i) => s + i.harga * i.qty, 0);
+    console.log("Total:", total);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sekarang gabungkan semua materi: interface, union, generic kecil, dan class — menjadi aplikasi kasir sederhana yang berjalan di konsol.
+
+## Peta Materi ke Proyek
+
+| Bagian proyek | Konsep yang dipakai | Dari bab |
+|---------------|---------------------|----------|
+| `interface Item`, `interface Struk` | Type alias & interface | 5 |
+| `subtotal()` + `reduce()` | Function tipe, array method | 3 & 4 |
+| `hitungTotal()` dengan diskon | Operator, percabangan | 2 |
+| `class Kasir` + `private struk` | Class & access modifier | 8 |
+| Loop `for...of` saat cetak | Looping bertipe | 3 |
+| Validasi input kasir | Union & narrowing | 6 |
+
+Urutan membangun yang terbukti: **tipe data dulu → fungsi murni → class yang menyimpan state → UI/konsol**. Dengan urutan ini, setiap lapis bisa diuji sendiri sebelum lapis berikutnya ditulis.
+
+## Model Data
+
+```typescript
+interface Item {
+  nama: string;
+  harga: number;
+  qty: number;
+}
+
+interface Struk {
+  items: Item[];
+  diskonPersen: number;
+}
+```
+
+Semua fungsi berikutnya bekerja di atas kontrak ini — bukan objek tanpa bentuk.
+
+## Menghitung Total
+
+```typescript
+function subtotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.harga * item.qty, 0);
+}
+
+function hitungTotal(struk: Struk): number {
+  const sub = subtotal(struk.items);
+  return sub - (sub * struk.diskonPersen) / 100;
+}
+
+const struk: Struk = {
+  items: [
+    { nama: "Kopi", harga: 25000, qty: 2 },
+    { nama: "Roti", harga: 15000, qty: 1 },
+  ],
+  diskonPersen: 10,
+};
+
+console.log("Total:", hitungTotal(struk));
+```
+
+## Class Kasir
+
+```typescript
+class Kasir {
+  private struk: Struk = { items: [], diskonPersen: 0 };
+
+  tambahItem(nama: string, harga: number, qty: number): void {
+    const ada = this.struk.items.find((i) => i.nama === nama);
+    if (ada) ada.qty += qty;
+    else this.struk.items.push({ nama, harga, qty });
+  }
+
+  setDiskon(persen: number): void {
+    this.struk.diskonPersen = persen;
+  }
+
+  total(): number {
+    return hitungTotal(this.struk);
+  }
+
+  cetak(): void {
+    console.log("--- STRUK ---");
+    for (const i of this.struk.items) {
+      console.log(i.nama, "x" + i.qty, "=", i.harga * i.qty);
+    }
+    console.log("Diskon:", this.struk.diskonPersen + "%");
+    console.log("TOTAL:", this.total());
+  }
+}
+```
+
+## Menjalankan Aplikasi
+
+```typescript
+const kasir = new Kasir();
+kasir.tambahItem("Kopi", 25000, 2);
+kasir.tambahItem("Roti", 15000, 1);
+kasir.setDiskon(10);
+kasir.cetak();
+```
+
+Ide lanjutan (latihan): tambah method `hapusItem(nama)`, simpan ke `localStorage`, dan tampilkan pajak PPN 11%.
+
+## Di Dunia Nyata
+
+- **POS restoran**: `tambahItem` dipanggil tiap kali kasir menekan menu — item sama otomatis menumpuk qty-nya.
+- **Diskon member** diatur lewat `setDiskon()` — angka `0` sampai `100` divalidasi sebelum mengubah state.
+- **Struk digital** dicetak dari `cetak()` — format konsisten karena semua baca dari satu `struk` privat.
+- **Toko online** memakai pola identik: `subtotal()` untuk keranjang, `hitungTotal()` untuk halaman checkout.
+- **Pengujian unit**: `subtotal()` bisa diuji tanpa membuat instance `Kasir` — itulah gunanya fungsi murni terpisah.
+
+<div class="note">💡 Pola ini — interface dulu, lalu fungsi murni, baru class yang menyimpan state — adalah cara menulis TypeScript yang mudah dites. Fungsi murni seperti subtotal() bisa diuji tanpa membuat object Kasir.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Item {
+  nama: string;
+  harga: number;
+  qty: number;
+}
+
+interface Struk {
+  items: Item[];
+  diskonPersen: number;
+}
+
+function subtotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.harga * item.qty, 0);
+}
+
+function hitungTotal(struk: Struk): number {
+  const sub = subtotal(struk.items);
+  return sub - (sub * struk.diskonPersen) / 100;
+}
+
+class Kasir {
+  private struk: Struk = { items: [], diskonPersen: 0 };
+
+  tambahItem(nama: string, harga: number, qty: number): void {
+    const cocok = this.struk.items.filter((i) => i.nama === nama);
+    if (cocok.length > 0) {
+      cocok[0].qty += qty;
+    } else {
+      this.struk.items.push({ nama: nama, harga: harga, qty: qty });
+    }
+  }
+
+  setDiskon(persen: number): void {
+    this.struk.diskonPersen = persen;
+  }
+
+  total(): number {
+    return hitungTotal(this.struk);
+  }
+
+  cetak(): void {
+    console.log("--- STRUK ---");
+    for (const i of this.struk.items) {
+      console.log(i.nama, "x" + i.qty, "=", i.harga * i.qty);
+    }
+    console.log("Diskon:", this.struk.diskonPersen + "%");
+    console.log("TOTAL:", this.total());
+  }
+}
+
+const kasir = new Kasir();
+kasir.tambahItem("Kopi susu", 25000, 2);
+kasir.tambahItem("Roti bakar", 15000, 1);
+kasir.tambahItem("Kopi susu", 25000, 1);
+kasir.setDiskon(10);
+kasir.cetak();`} />

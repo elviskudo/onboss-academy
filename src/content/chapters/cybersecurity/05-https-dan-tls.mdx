@@ -1,0 +1,130 @@
+---
+title: "HTTPS dan Keamanan Transport"
+description: "Mengamankan data dalam perjalanan — TLS, sertifikat, dan HSTS"
+order: 5
+quiz:
+  - q: "Fungsi utama HTTPS adalah…"
+    options: ["Mengenkripsi komunikasi browser-server", "Mempercepat internet", "Menghapus cookie", "Mengganti hosting"]
+    answer: 0
+    explain: "HTTPS = HTTP di atas TLS; isi lalu lintas terenkripsi dan identitas server bisa diverifikasi."
+  - q: "TLS memberikan tiga jaminan utama, dua di antaranya…"
+    options: ["Enkripsi dan autentikasi server", "Anonimitas dan torrent", "Kompresi dan caching", "SSH dan FTP"]
+    answer: 0
+    explain: "Ditambah integritas pesan — data tidak berubah di tengah jalan."
+  - q: "Sertifikat TLS diterbitkan oleh…"
+    options: ["Certificate Authority (CA) tepercaya", "Penyedia hosting gratis", "Browser korban", "Mesin pencari"]
+    answer: 0
+    explain: "CA menandatangani identitas domain; browser memverifikasi rantai kepercayaan."
+  - q: "HSTS memerintahkan browser…"
+    options: ["Selalu memakai HTTPS untuk domain tersebut", "Menghapus sertifikat", "Melewati enkripsi", "Memakai FTP"]
+    answer: 0
+    explain: "HSTS menutup peluang downgrade ke HTTP lewat koneksi awal yang rentan."
+  - q: "HTTPOnly dan Secure pada cookie berkaitan dengan…"
+    options: ["Membatasi pembacaan cookie dan memaksa lewat HTTPS", "Menghapus cookie harian", "Menambah ukuran cookie", "Mengganti nama cookie"]
+    answer: 1
+    explain: "Secure mencegah cookie dikirim lewat koneksi HTTP tak terenkripsi."
+example:
+  code: |
+    # Verifikasi sertifikat (konsep; jalankan di lingkungan yang aman)
+    # python -c "import ssl,socket; print('Selalu verifikasi sertifikat')"
+    #
+    # Pada produksi: JANGAN mematikan verifikasi sertifikat
+    # ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE  <- jangan lakukan ini
+
+    print("TLS valid = enkripsi + identitas server terverifikasi")
+---
+
+Komunikasi tanpa enkripsi ibarat kartu pos: siapa pun di jalur bisa membacanya. **HTTPS** menutup celah ini.
+
+## Apa yang Diberikan TLS?
+
+- **Enkripsi** — isi pesan tidak terbaca penyadap jalur.
+- **Integritas** — perubahan di tengah jalan terdeteksi.
+- **Autentikasi** — server terbukti pemilik domain (lewat sertifikat).
+
+## Cara Kerja Singkat
+
+```
+Browser -> "halo, saya mau TLS" -> Server kirim sertifikat
+Browser verifikasi rantai kepercayaan ke CA
+Kunci enkripsi disepakati -> koneksi terenkripsi
+```
+
+Bila verifikasi gagal, browser menampilkan peringatan — **jangan pernah mengklik "lanjutkan" pada situs peringatan sertifikat**.
+
+## Verifikasi yang Benar (Prinsip)
+
+```python
+import ssl
+
+# Prinsip penting: jangan pernah mematikan verifikasi
+# ctx.check_hostname = False      # JANGAN
+# ctx.verify_mode = ssl.CERT_NONE # JANGAN
+
+print("Selalu biarkan check_hostname dan verifikasi sertifikat aktif")
+print("Self-signed hanya untuk lingkungan uji internal tertutup")
+```
+
+Mematikan verifikasi membuat enkripsi berguna bagi penyadap yang menyamar sebagai server.
+
+## HTTP vs HTTPS pada Praktik
+
+```
+http://contoh.com          -> terbaca di WiFi publik
+https://contoh.com         -> terenkripsi
+```
+
+Aktifkan redirect 301 dari HTTP ke HTTPS untuk semua halaman.
+
+## HSTS dan Header Pendukung
+
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+HSTS mengunci domain ke HTTPS setahun ke depan. Dampingi dengan `Secure` pada cookie dan pertimbangkan preload HSTS.
+
+## Wi-Fi Publik dan VPN
+
+```python
+risiko_wifi_publik = [
+    "penyadapan lalu lintas HTTP",
+    "pemalsuan DNS palsu (evil twin)",
+    "serangan pada layanan berbagi file",
+]
+print("Di WiFi publik: HTTPS wajib, matikan berbagi file, pertimbangkan VPN")
+```
+
+## Empat Bagian Kepercayaan TLS
+
+Ada **4 bagian** yang bekerja bersama pada koneksi HTTPS.
+
+| Bagian | Fungsi | Contoh | Kegagalan umum |
+|---|---|---|---|
+| Sertifikat | Mengikat domain ke public key | Sertifikat `example.com` | Kedaluwarsa |
+| CA chain | Menghubungkan ke root tepercaya | Intermediate CA | Chain tidak lengkap |
+| Handshake | Menegosiasikan versi dan kunci | TLS 1.3 | Versi lama diizinkan |
+| Record encryption | Melindungi data aplikasi | AEAD | Cipher usang |
+
+TLS modern menggunakan kriptografi asimetris untuk autentikasi dan pertukaran kunci, lalu kriptografi simetris yang lebih cepat untuk data sesi. Forward secrecy membatasi dampak jika private key server bocor kemudian. Operasikan TLS 1.2 atau 1.3 sesuai kompatibilitas; nonaktifkan protokol usang.
+
+```bash
+curl --fail --show-error --location https://example.com/
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+`curl` gagal bila sertifikat atau status HTTP bermasalah. `openssl s_client` membantu memeriksa chain dan nama server; jangan menambahkan opsi yang mematikan verifikasi pada client produksi. Otomatiskan penerbitan serta renewal sertifikat dan alert sebelum kedaluwarsa.
+
+HSTS baru aman setelah seluruh subdomain mendukung HTTPS. `includeSubDomains` dan preload sulit dibatalkan, jadi uji bertahap dengan `max-age` pendek. HTTPS juga harus digunakan untuk koneksi internal yang melintasi jaringan tidak tepercaya.
+
+## Di Dunia Nyata
+
+1. Toko online mengalihkan seluruh HTTP ke HTTPS dan menandai cookie sesi `Secure`, `HttpOnly`, serta `SameSite`.
+2. API mobile melakukan verifikasi hostname normal dan tidak menerima semua sertifikat saat debugging selesai.
+3. Load balancer menghentikan TLS, lalu mengenkripsi ulang koneksi ke service sensitif di jaringan internal.
+4. Monitoring memberi peringatan 30 hari sebelum sertifikat habis agar renewal gagal tidak menjadi downtime.
+5. Organisasi menguji konfigurasi TLS setelah perubahan cipher atau proxy, termasuk chain untuk client lama yang masih didukung.
+
+TLS melindungi data saat transit, bukan endpoint yang sudah terinfeksi, database tanpa kontrol akses, atau situs phishing dengan sertifikat valid. Tetap perlukan autentikasi, otorisasi, patch, dan edukasi pengguna.
+
+<div class="note">💡 Ikon gembok bukan jaminan situs baik — hanya jaminan koneksi terenkripsi. Penipuan tetap bisa berjualan di situs HTTPS yang sah sertifikatnya.</div>

@@ -1,0 +1,134 @@
+---
+title: "Pengenalan R"
+description: "Bahasa statistik berbasis vektor: 4 cara kerja utama, operator dasar, skrip, dan ekosistem"
+order: 1
+quiz:
+  - q: "R dirancang utamanya untuk…"
+    options: ["Sistem operasi", "Render game 3D", "Statistika dan analisis data", "Menyusun presentasi"]
+    answer: 2
+    explain: "R adalah bahasa pemrograman statistika — ekspresinya dekat dengan notasi matematika."
+  - q: "Eksekusi skrip R dari terminal memakai perintah…"
+    options: ["r run analisis.R", "Rscript analisis.R", "R --go analisis.R", "execute analisis.R"]
+    answer: 1
+    explain: "Rscript menjalankan skrip tanpa masuk ke sesi interaktif."
+  - q: "Apa hasil c(1, 2, 3) * 10?"
+    options: ["10", "10, 20, 30", "Error", "1, 2, 3, 10"]
+    answer: 1
+    explain: "Operasi R bersifat vektor: perkalian diterapkan elemen demi elemen."
+  - q: "Operator penugasan yang menjadi konvensi komunitas R adalah…"
+    options: ["<-", ":=", "let", "->>"]
+    answer: 0
+    explain: "= valid pada banyak konteks, tetapi <- membedakan assignment dari argumen bernama dengan jelas."
+  - q: "Fungsi untuk memeriksa struktur objek adalah…"
+    options: ["show()", "typeofonly()", "inspect()", "str()"]
+    answer: 3
+    explain: "str() merangkum tipe, dimensi, nama, dan contoh nilai objek."
+example:
+  code: |
+    umur <- c(21, 25, 30, 35)
+    cat("Rata-rata umur:", mean(umur), "tahun\n")
+    cat("Simpangan baku:", round(sd(umur), 2), "\n")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+R adalah bahasa yang lahir dari dan untuk statistika. Kekuatan utamanya bukan sintaks loop, melainkan operasi vektor, fungsi statistik, tabel data, dan grafik yang bekerja langsung pada sekumpulan observasi.
+
+## Apa Itu R?
+
+R adalah bahasa interpreted, gratis, dan open source untuk analisis data serta visualisasi. Ross Ihaka dan Robert Gentleman memulainya di University of Auckland. Kini R berjalan di Windows, macOS, dan Linux serta dipakai luas di riset, kesehatan, keuangan, dan ilmu sosial.
+
+Empat cara kerja utama R:
+
+| Mode | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| Console interaktif | mencoba ekspresi satu per satu | eksplorasi data |
+| Skrip `.R` | menyimpan analisis yang bisa diulang | laporan dan otomasi |
+| R Markdown/Quarto | menggabungkan kode dan narasi | laporan reproducible |
+| Package | membungkus fungsi dan dokumentasi | kode lintas proyek |
+
+## R sebagai Kalkulator Vektor
+
+```r
+2 + 2
+sqrt(144)
+log(100, base = 10)
+x <- 1:10
+x * 2
+x[x > 5]
+```
+
+`1:10` membuat vektor 10 angka. `x * 2` mengalikan seluruh elemen; `x[x > 5]` menghasilkan subset berdasarkan vektor logis. Ini pola dasar R: masukkan seluruh kolom, bukan satu nilai per pemanggilan.
+
+## Variabel dan Operator Dasar
+
+```r
+nama <- "Sari"
+umur <- 25L
+tinggi <- 1.65
+aktif <- TRUE
+```
+
+| Operator | Fungsi | Contoh |
+| --- | --- | --- |
+| `<-` | penugasan | `x <- 10` |
+| `+ - * / ^` | aritmetika | `x ^ 2` |
+| `== != < <= > >=` | perbandingan | `umur >= 18` |
+| `& \| !` | logika vektor | `x > 1 & x < 5` |
+| `%in%` | keanggotaan | `kota %in% c("Jkt", "BDG")` |
+
+Gunakan `<-` untuk assignment dan `=` untuk argumen bernama, misalnya `mean(x, na.rm = TRUE)`. Keduanya sering valid, tetapi pembagian ini membuat maksud kode langsung terlihat.
+
+## Memeriksa Objek dan Output
+
+```r
+x <- c(2, 4, 6)
+class(x)
+typeof(x)
+length(x)
+str(x)
+print(x)
+cat("Rata-rata:", mean(x), "\n")
+```
+
+`print()` mempertahankan representasi objek, sedangkan `cat()` menyusun teks ramah manusia. `str()` adalah alat inspeksi pertama untuk objek yang belum dikenal.
+
+## Menjalankan Skrip
+
+Simpan kode sebagai `analisis.R`, lalu:
+
+```bash
+Rscript analisis.R
+```
+
+Gunakan console untuk bertanya cepat kepada data; pindahkan langkah final ke skrip supaya hasil dapat diulang. Skrip yang baik selalu menghasilkan output sama dari input sama dan tidak bergantung pada objek tersisa di workspace.
+
+## Ekosistem R
+
+Ada 3 komponen ekosistem yang perlu dikenal:
+
+| Komponen | Peran |
+| --- | --- |
+| CRAN | repositori utama package R |
+| Bioconductor | package bioinformatika |
+| RStudio/Positron | IDE untuk menulis, menjalankan, dan debug |
+
+Package dipasang sekali dengan `install.packages("nama")`, lalu dimuat per sesi dengan `library(nama)`. Materi kursus ini memakai base R agar semua contoh berjalan tanpa package eksternal.
+
+## Di Dunia Nyata
+
+1. **Epidemiologi** — menghitung incidence rate dan interval kepercayaan dari data pasien per wilayah.
+2. **Keuangan** — mengukur return, volatilitas, dan korelasi portofolio dari deret harga harian.
+3. **A/B testing** — membandingkan conversion rate dua varian dan memeriksa ketidakpastian hasil.
+4. **Quality control** — mendeteksi batch produksi yang berada di luar batas statistik.
+5. **Laporan rutin** — satu skrip membaca CSV terbaru, menghitung KPI, lalu menghasilkan tabel yang konsisten setiap minggu.
+
+<div class="note">💡 Mulailah dari vektor: jika `x` berisi satu kolom data, coba `x * 2`, `mean(x)`, atau `x[x > batas]` sebelum menulis loop. Fungsi R dirancang menerima seluruh kumpulan observasi sekaligus.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`umur <- c(21, 25, 30, 35)
+print(umur)
+print(mean(umur))
+print(round(sd(umur), 2))
+print(umur * 2)
+print(umur[umur >= 25])
+cat("Selesai menghitung", length(umur), "responden\n")`} />

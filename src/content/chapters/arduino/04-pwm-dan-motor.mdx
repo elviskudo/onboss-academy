@@ -1,0 +1,162 @@
+---
+title: "PWM dan Kontrol Kecerahan"
+description: "analogWrite, pin berekor tilde, dan menggerakkan motor DC kecepatan variable"
+order: 4
+quiz:
+  - q: "analogWrite() pada Arduino menghasilkan…"
+    options: ["Tegangan 0-5V kontinu", "Sinyal PWM, bukan tegangan analog murni", "Sinyal Wi-Fi", "Output serial"]
+    answer: 1
+    explain: "PWM mensimulasikan tegangan rata-rata lewat pulsa cepat dengan lebar bervariasi."
+  - q: "Pin PWM pada UNO biasanya ditandai dengan…"
+    options: ["Titik (.)", "Panah (->)", "Simbol tilde (~)", "Garis ganda"]
+    answer: 2
+    explain: "Contoh pin PWM UNO: 3, 5, 6, 9, 10, 11."
+  - q: "Nilai analogWrite berapa yang membuat LED paling redup (tanpa mati)?"
+    options: ["Angka kecil seperti 10-30", "255", "1023", "0 (selalu mati)"]
+    answer: 0
+    explain: "Rentang analogWrite adalah 0 (mati) sampai 255 (terang penuh)."
+  - q: "Untuk motor DC, driver (mis. L298N) diperlukan karena…"
+    options: ["Motor butuh Wi-Fi", "Pin Arduino tidak mampu menyuplai arus motor", "Driver menambah resolusi", "Tanpa driver motor tidak bisa dipasang"]
+    answer: 1
+    explain: "Driver menyuplai arus besar dari catu daya eksternal, dikendalikan sinyal kecil Arduino."
+  - q: "Nilai 0 pada analogWrite berarti…"
+    options: ["Pin high terus", "Pin jadi input", "Pin low terus (mati)", "Board reset"]
+    answer: 2
+    explain: "Duty cycle 0% setara dengan digitalWrite LOW."
+example:
+  code: |
+    const int LED = 9;
+
+    void setup() {
+      pinMode(LED, OUTPUT);
+    }
+
+    void loop() {
+      for (int b = 0; b <= 255; b += 5) {
+        analogWrite(LED, b);
+        delay(20);
+      }
+      for (int b = 255; b >= 0; b -= 5) {
+        analogWrite(LED, b);
+        delay(20);
+      }
+    }
+---
+
+**PWM (Pulse Width Modulation)** mengubah perbandingan waktu HIGH dan LOW dengan cepat sehingga LED tampak lebih redup atau motor berputar lebih lambat. Ini bukan tegangan analog murni; multimeter hanya menampilkan nilai rata-ratanya.
+
+## 6 Pin PWM UNO
+
+Arduino UNO punya **6 pin PWM**: 3, 5, 6, 9, 10, dan 11, semuanya ditandai simbol `~` pada papan.
+
+| Pin | Timer internal | Frekuensi default | Catatan |
+| --- | --- | ---: | --- |
+| 3, 11 | Timer2 | sekitar 490 Hz | Umum untuk LED/motor |
+| 5, 6 | Timer0 | sekitar 980 Hz | Timer juga dipakai `millis()` |
+| 9, 10 | Timer1 | sekitar 490 Hz | Servo library memakai Timer1 |
+
+Pemakaian library yang mengubah timer dapat mengganggu PWM pada pin terkait. Untuk pemula, hindari menggabungkan `Servo.h` dengan PWM pin 9/10 dalam sketch yang sama.
+
+## Duty Cycle dan Rentang 8-bit
+
+`analogWrite(pin, nilai)` menerima **256 tingkat (0–255)**:
+
+| Nilai | Duty cycle | Perilaku pin | Kesan LED |
+| ---: | ---: | --- | --- |
+| 0 | 0% | LOW terus | Mati |
+| 64 | sekitar 25% | HIGH seperempat waktu | Redup |
+| 128 | sekitar 50% | HIGH setengah waktu | Sedang |
+| 192 | sekitar 75% | HIGH tiga perempat waktu | Terang |
+| 255 | 100% | HIGH terus | Maksimum |
+
+```cpp
+const int LED = 9;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  analogWrite(LED, 128);
+  delay(1000);
+  analogWrite(LED, 255);
+  delay(1000);
+  analogWrite(LED, 0);
+  delay(1000);
+}
+```
+
+## Fade Naik-Turun
+
+```cpp
+void loop() {
+  for (int terang = 0; terang <= 255; terang += 5) {
+    analogWrite(LED, terang);
+    delay(20);
+  }
+  for (int terang = 255; terang >= 0; terang -= 5) {
+    analogWrite(LED, terang);
+    delay(20);
+  }
+}
+```
+
+Ada sekitar 52 langkah per arah (`255 / 5`), masing-masing 20 ms, jadi satu fade naik atau turun berlangsung sekitar 1,04 detik. Langkah lebih kecil = lebih halus tetapi lebih lama bila delay tetap.
+
+## Mengubah Sensor Menjadi Output PWM
+
+```cpp
+const int POT = A0;
+const int LED = 9;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  int mentah = analogRead(POT);                // 0..1023
+  int pwm = map(mentah, 0, 1023, 0, 255);     // 0..255
+  analogWrite(LED, pwm);
+}
+```
+
+Perbedaan resolusi penting: ADC masukan 10-bit (1.024 nilai), PWM keluaran 8-bit (256 nilai), sehingga `map()` menggabungkan tiap 4 nilai input menjadi 1 tingkat output.
+
+## Motor DC Harus Lewat Driver
+
+Motor menarik arus jauh di atas kemampuan pin dan menghasilkan tegangan balik saat berhenti. Gunakan MOSFET + diode flyback untuk satu arah, atau H-bridge (TB6612FNG/L298N) untuk dua arah.
+
+```cpp
+const int ENA = 9;   // pin PWM ke driver
+const int IN1 = 7;
+const int IN2 = 8;
+
+void setup() {
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+}
+
+void setKecepatan(int persen) {
+  persen = constrain(persen, 0, 100);
+  analogWrite(ENA, persen * 255L / 100);
+}
+
+void loop() {
+  setKecepatan(60);
+}
+```
+
+`255L` memaksa aritmatika `long` sehingga perkalian tidak overflow pada platform dengan integer kecil. Daya motor berasal dari catu eksternal; GND catu motor dan GND Arduino wajib disatukan.
+
+## Di Dunia Nyata
+
+1. **Lampu tidur yang meredup otomatis** — LDR dipetakan terbalik ke PWM LED.
+2. **Kipas penyejuk kotak elektronik** — suhu menentukan duty cycle motor melalui MOSFET.
+3. **Robot line follower** — dua motor diberi PWM berbeda untuk membelok halus.
+4. **Lampu indikator napas** — fade 2 detik naik-turun memberi tanda perangkat hidup.
+5. **Pompa mini variabel** — potensiometer mengatur debit melalui driver motor.
+
+<div class="note">💡 PWM tinggi terlihat halus untuk LED, tetapi motor bisa mendengung karena frekuensi masuk rentang pendengaran. Untuk buzzer pasif gunakan `tone(pin, frekuensi)`, bukan `analogWrite()`.</div>

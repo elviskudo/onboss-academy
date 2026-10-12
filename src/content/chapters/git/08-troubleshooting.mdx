@@ -1,0 +1,130 @@
+---
+title: "Troubleshooting Git"
+description: "Menangani hal yang paling sering bikin panik: salah commit, file hilang, dan riwayat berantakan"
+order: 8
+quiz:
+  - q: "Perintah pertama saat bingung dengan keadaan repo adalah…"
+    options: ["git status", "rm -rf .git", "git init ulang", "git push --force"]
+    answer: 0
+    explain: "git status selalu memberi gambaran: file apa yang berubah, staged, atau untracked."
+  - q: "reflog berfungsi untuk…"
+    options: ["Menghapus log remote", "Merekam pergerakan HEAD — penyelamat saat salah reset/rebase", "Mengompres repo", "Mengubah remote"]
+    answer: 1
+    explain: "Hampir semua posisi HEAD pernah dicatat reflog; dari sana bisa dipulihkan dengan reset --hard ke hash lama."
+  - q: "Perintah membuang perubahan lokal pada satu file tertentu adalah…"
+    options: ["git restore nama-file", "git delete nama-file", "git clean nama-file", "git drop nama-file"]
+    answer: 0
+    explain: "git restore nama-file mengembalikan isi file ke versi staging/HEAD — perubahan lokal hilang permanen."
+  - q: "git checkout -- nama-file pada git lama berfungsi untuk…"
+    options: ["Membuat file baru", "Mengembalikan file ke versi terakhir di staging", "Menghapus branch", "Melihat isi file"]
+    answer: 1
+    explain: "Di Git modern perintah setara adalah git restore nama-file."
+  - q: "git cherry-pick dipakai untuk…"
+    options: ["Mengambil satu commit tertentu dari branch lain ke branch sekarang", "Menghapus commit", "Mengganti remote", "Menambah file random"]
+    answer: 0
+    explain: "Berguna saat fix darurat di main perlu diport ke branch release tanpa menggabung seluruh branch."
+---
+
+Git hampir tidak pernah benar-benar menghilangkan pekerjaanmu — asal tahu ke mana mencarinya. Bab ini kumpulan penyelamatan paling sering dipakai.
+
+## Mulai dari Status
+
+```bash
+git status
+git log --oneline --graph --all
+git diff
+```
+
+Tiga perintah ini menjawab 80% kebingungan: apa yang berubah, bagaimana riwayatnya, dan apa isinya.
+
+## Salah Commit? Reflog Menyelamatkan
+
+```bash
+git reflog
+# 9f8e7d6 HEAD@{0}: commit: Perbaiki bug login
+# 5c4b3a2 HEAD@{1}: reset: moving to HEAD~1
+# 1a2b3c4 HEAD@{2}: commit (initial): commit awal
+```
+
+Ingin mengembalikan commit yang sudah di-reset?
+
+```bash
+git reset --hard 5c4b3a2
+```
+
+Reflog mencatat setiap pergerakan HEAD selama sekitar 90 hari — hampir mustahil kehilangan posisi kalau pernah dilewati.
+
+## File Terlanjur Hilang / Diubah
+
+```bash
+git restore file-terlanjur-dihapus.txt      # kembalikan isi file
+git restore --staged file.txt               # lepas dari staging
+git clean -n                                # pratinjau file untracked yang akan dihapus
+git clean -f                                # hapus permanen file untracked
+```
+
+## Ambil Satu Commit dari Branch Lain
+
+```bash
+git switch main
+git cherry-pick a1b2c3d
+```
+
+Commit `a1b2c3d` dari branch mana pun diport sebagai commit baru di `main`.
+
+## Deteksi Awal Masalah Umum
+
+```bash
+git fsck               # cek integritas object database
+git bisect start       # cari commit yang memperkenalkan bug secara binary search
+git bisect bad         # tandai HEAD bermasalah
+git bisect good v1.0   # tandai versi yang masih baik
+```
+
+## Kebiasaan Pencegahan
+
+- commit kecil-kecil dengan pesan jelas — rollback mudah
+- jangan `push --force` ke branch bersama
+- sebelum `reset --hard`, catat dulu hash `git log` terakhir
+- `git stash` sebelum bereksperimen besar
+
+## Enam Gejala dan Diagnosis
+
+| Gejala | Periksa | Tindakan aman | Risiko |
+|---|---|---|---|
+| File salah staged | `git diff --staged` | `git restore --staged file` | Tidak membuang edit |
+| Edit tracked salah | `git diff file` | `git restore file` | Edit lokal hilang |
+| Commit hilang | `git reflog` | Buat branch dari hash | Reflog dapat kedaluwarsa |
+| Merge macet | `git status` | Selesaikan atau `git merge --abort` | Jangan hapus marker sembarang |
+| Rebase macet | `git status` | Continue, skip, atau abort | Skip membuang commit tersebut |
+| File untracked menumpuk | `git clean -nd` | `git clean -fd` setelah review | Penghapusan permanen |
+
+Diagnosis selalu dimulai dengan perintah baca-saja: `status`, `diff`, `log`, dan `reflog`. Sebelum operasi destruktif, buat penunjuk pengaman:
+
+```bash
+git branch backup/sebelum-perbaikan
+git status
+git clean -nd
+git reset --hard HEAD
+```
+
+Baris terakhir menghapus edit tracked yang belum commit; jalankan hanya jika pratinjau dan backup memang sesuai. `git clean -f` menghapus untracked yang tidak dapat dipulihkan Git. Jangan menghapus `.git`, melakukan clone ulang di atas folder kerja, atau force push saat penyebab belum diketahui.
+
+## Di Dunia Nyata
+
+- Memulihkan commit setelah reset salah dengan membuat branch dari hash reflog.
+- Memakai `git bisect` untuk menemukan commit pertama yang merusak endpoint pembayaran.
+- Mengambil hotfix tunggal ke branch release dengan cherry-pick dan menyelesaikan konflik.
+- Membatalkan rebase yang salah sebelum mencoba lagi dari working tree bersih.
+
+<div class="note">💡 Kunci pemulihan di Git: `git reflog`. Hampir semua operasi berisiko (reset, rebase, amend) menyimpan jejaknya di reflog — di situ hash commit lama masih menunggu untuk dipanggil kembali.</div>
+
+## Peta Pertolongan Cepat
+
+```
+salah commit lokal      -> git reset --soft HEAD~1
+commit sudah di-push    -> git revert <hash>
+file terlanjur diubah   -> git restore <file>
+kebingungan total       -> git reflog, lalu reset --hard <hash>
+branch berantakan       -> git merge --abort / git rebase --abort
+```

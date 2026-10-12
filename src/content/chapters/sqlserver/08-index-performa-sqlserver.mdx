@@ -1,0 +1,149 @@
+---
+title: "Index & Performa SQL Server"
+description: "Clustered, nonclustered, INCLUDE, dan membaca execution plan untuk query cepat"
+order: 8
+quiz:
+  - q: "Clustered index pada SQL Server…"
+    options: ["Boleh banyak per tabel", "Hanya satu per tabel — menentukan urutan fisik data", "Khusus untuk kolom teks", "Tidak menyimpan data"]
+    answer: 1
+    explain: "Tabel punya maksimal satu clustered index; leaf-nya adalah baris data itu sendiri (di leaf diorganisasi B-tree)."
+  - q: "Nonclustered index…"
+    options: ["Menyimpan salinan kolom index + pointer ke baris", "Menggantikan data tabel", "Hanya untuk PRIMARY KEY", "Wajib unique"]
+    answer: 0
+    explain: "Struktur B-tree terpisah berisi kunci index dan (biasanya) RID/ clustering key untuk menuju baris asli."
+  - q: "INCLUDE pada CREATE INDEX bertujuan…"
+    options: ["Mengunci kolom", "Menambah kolom payload di leaf — menjadikan query covering tanpa biaya seek", "Mengurutkan index", "Membagi index jadi dua"]
+    answer: 1
+    explain: "Kolom di INCLUDE tidak jadi bagian kunci pencarian, tapi hadir di leaf — data tersedia langsung dari index."
+  - q: "Query dengan equality pada dua kolom lalu ORDER BY kolom ketiga paling didukung index…"
+    options: ["Key index berurutan: dua kolom equality lalu kolom sort", "Index satu kolom sort saja", "Index tanpa kolom filter", "Tidak perlu index"]
+    answer: 0
+    explain: "Susun key equality lebih dahulu lalu sort; kolom range, bila ada, diletakkan setelahnya agar seek dan urutan efektif."
+  - q: "Menemukan query lambat di produksi paling mudah lewat…"
+    options: ["Query Store / DMV sys.dm_exec_query_stats + execution plan", "menebak dari nama prosedur", "Log backup", "Sp_who tanpa parameter"]
+    answer: 0
+    explain: "sys.dm_exec_query_stats menunjukkan total worker time & reads per query — titik mulai optimasi yang terukur."
+example:
+  code: |
+    CREATE CLUSTERED INDEX ix_karyawan_id
+        ON dbo.karyawan (id);
+
+    CREATE NONCLUSTERED INDEX ix_karyawan_divisi_gaji
+        ON dbo.karyawan (divisi_id, gaji DESC)
+        INCLUDE (nama);
+    GO
+
+    SELECT nama, gaji
+    FROM dbo.karyawan
+    WHERE divisi_id = 3
+    ORDER BY gaji DESC;
+---
+
+Index adalah struktur paling menentukan kecepatan baca di SQL Server. Bab ini membedah jenisnya, cara memilihnya, dan cara membuktikannya dengan execution plan.
+
+## Empat Bentuk Index Utama
+
+| Bentuk | Struktur/fungsi | Kapan dipakai |
+| --- | --- | --- |
+| Clustered | leaf berisi baris data; maksimal satu | akses rentang/urutan utama |
+| Nonclustered | B-tree terpisah + locator | jalur query tambahan |
+| Unique | menegakkan nilai unik | email/kunci bisnis |
+| Filtered | hanya subset baris | status aktif, nilai non-NULL |
+
+`INCLUDE` bukan jenis index terpisah: ia menaruh kolom payload di leaf nonclustered index agar query menjadi covering tanpa memperlebar search key.
+
+## Clustered vs Nonclustered
+
+```sql
+-- Satu clustered index per tabel: urutan fisik logis data
+CREATE CLUSTERED INDEX ix_pesanan_id
+    ON dbo.pesanan (id);
+
+-- Nonclustered: struktur pencarian terpisah
+CREATE NONCLUSTERED INDEX ix_pesanan_status
+    ON dbo.pesanan (status, tanggal);
+```
+
+Clustered index adalah "tulang punggung" tabel — biasanya PRIMARY KEY. Nonclustered index berjumlah banyak, menunjuk kembali ke clustered key (atau RID bila tanpa clustered).
+
+## Covering Index dengan INCLUDE
+
+```sql
+CREATE NONCLUSTERED INDEX ix_karyawan_divisi_gaji
+    ON dbo.karyawan (divisi_id, gaji DESC)
+    INCLUDE (nama);
+
+SELECT nama, gaji
+FROM dbo.karyawan
+WHERE divisi_id = 3
+ORDER BY gaji DESC;
+```
+
+Query di bawah index ini menjadi **covering**: semua kolom yang dibutuhkan sudah ada di leaf index — SQL Server cukup melakukan seek + scan index, tanpa key lookup ke heap/table.
+
+## Filtered Index dan Index Unik
+
+```sql
+CREATE UNIQUE NONCLUSTERED INDEX ux_pelanggan_email
+    ON dbo.pelanggan (email)
+    WHERE email IS NOT NULL;
+
+CREATE NONCLUSTERED INDEX ix_pesanan_baru
+    ON dbo.pesanan (tanggal)
+    WHERE status = 'BARU';
+```
+
+Filtered index hanya memuat sebagian baris — lebih kecil, lebih cepat untuk query yang selalu menyaring kondisi sama (email aktif, pesanan berstatus tertentu).
+
+## Membaca Execution Plan & DMV
+
+```sql
+-- Siapkan dulu: SET STATISTICS IO, TIME ON; lalu jalankan query dengan Actual plan
+
+SELECT TOP (10)
+    st.text,
+    qs.execution_count,
+    qs.total_worker_time,
+    qs.total_logical_reads
+FROM sys.dm_exec_query_stats AS qs
+CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) AS st
+ORDER BY qs.total_logical_reads DESC;
+```
+
+Cari: **Clustered Index Seek** (bagus) vs **Table/Clustered Index Scan** (pindai penuh — kandidat index); **Key Lookup** berulang berarti index belum covering. DMV di atas menunjukkan 10 query paling rakus reads — mulailah optimasi dari sana.
+
+## Pertimbangan Menulis Index
+
+```sql
+-- Menambah index menambah biaya tulis: lakukan sadar, bukan berlebihan
+CREATE NONCLUSTERED INDEX ix_riwayat_karyawan_tanggal
+    ON dbo.riwayat_gaji (karyawan_id, berlaku_dari DESC)
+    INCLUDE (gaji);
+```
+
+Setiap index memperlambat INSERT/UPDATE/DELETE dan memakan storage. Ukur dulu dengan execution plan dan statistik I/O; index hanya untuk jalur query yang terbukti penting.
+
+## Empat Sinyal Execution Plan
+
+| Operator/sinyal | Arti | Tindakan |
+| --- | --- | --- |
+| Index Seek | rentang index terarah | biasanya baik; cek jumlah baris |
+| Scan | membaca banyak/all leaf | wajar untuk hasil besar; cek selectivity |
+| Key Lookup | mengambil kolom yang tidak ada di index | INCLUDE bila berulang mahal |
+| Sort | pengurutan eksplisit | sesuaikan key index bila dominan |
+
+Seek tidak otomatis baik dan scan tidak otomatis buruk. Query yang mengembalikan 80% tabel memang lebih murah scan; bandingkan *actual rows*, logical reads, CPU, dan durasi.
+
+## Prinsip Kunci Index
+
+Urutkan key berdasarkan pola **Equality → Sort → Range**. Letakkan kolom output saja di INCLUDE. Jaga clustered key sempit, stabil, dan idealnya meningkat agar nonclustered index serta page split tidak membengkak.
+
+## Di Dunia Nyata
+
+- **Daftar pesanan aktif** — filtered index status BARU jauh lebih kecil daripada index seluruh histori.
+- **Pencarian karyawan per divisi** — key divisi + gaji dan INCLUDE nama membuat query covering.
+- **Email pengguna** — unique index sekaligus mempercepat login dan menjamin tidak ada duplikat.
+- **Top-N riwayat** — index karyawan + tanggal DESC mendukung APPLY TOP tanpa sort per karyawan.
+- **Triage produksi** — Query Store/DMV menemukan query dengan logical reads terbesar sebelum optimasi dimulai.
+
+<div class="note">💡 Predicate yang membungkus kolom dengan fungsi, misalnya `YEAR(tanggal) = 2026`, umumnya tidak sargable. Tulis rentang `tanggal >= '20260101' AND tanggal < '20270101'` agar optimizer dapat melakukan index seek.</div>

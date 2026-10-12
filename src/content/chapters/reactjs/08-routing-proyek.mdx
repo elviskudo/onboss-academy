@@ -1,0 +1,180 @@
+---
+title: "Routing & Proyek Mini"
+description: "react-router-dom: rute, params, navigasi — lalu menyusun proyek katalog produk"
+order: 8
+quiz:
+  - q: "Routing di React biasanya ditangani…"
+    options: ["Browser bawaan tanpa library", "Library terpisah seperti react-router-dom", "CSS", "React sendiri secara default"]
+    answer: 1
+    explain: "React adalah library UI; routing diserahkan ke pustaka seperti react-router-dom (atau Next.js)."
+  - q: "Elemen untuk navigasi tanpa reload penuh adalah…"
+    options: ["<a href=\"/tentang\">", "<nav-link>", "<Link to=\"/tentang\">", "<goto>"]
+    answer: 2
+    explain: "Link react-router menangkap klik dan mengganti URL secara client-side."
+  - q: "Rute dinamis /produk/:id diakses lewat…"
+    options: ["useParams() untuk mengambil nilai :id", "useEffect()", "useState()", "useRef()"]
+    answer: 0
+    explain: "useParams mengembalikan object berisi parameter rute, mis. { id: \"3\" }."
+  - q: "File component yang diekspor default dari file route di App Router Next.js…"
+    options: ["page", "route", "layout", "index"]
+    answer: 0
+    explain: "page.tsx menjadi halaman; route.ts untuk API; layout.tsx untuk pembungkus bersama."
+  - q: "Struktur folder App Router yang benar untuk URL /tentang adalah…"
+    options: ["app/tentang/page.tsx", "app/tentang.tsx saja", "app/pages/tentang.js", "app/tentang/index.html"]
+    answer: 0
+    explain: "Setiap URL = folder + page.(tsx|jsx). Folder juga bisa memuat layout dan loading."
+example:
+  code: |
+    const rute = [
+      { path: "/", label: "Beranda" },
+      { path: "/produk", label: "Produk" },
+      { path: "/tentang", label: "Tentang" },
+    ];
+    console.log(rute.map((r) => r.label + " → " + r.path).join("\\n"));
+---
+
+Bab terakhir: memasak semua bahan jadi satu aplikasi kecil dengan routing, lalu mengaitkannya dengan struktur proyek App Router.
+
+## 5 Bagian Routing
+
+| Bagian | React Router | Fungsi | Contoh use case |
+|--------|--------------|--------|-----------------|
+| Router | `BrowserRouter` | Sinkronkan UI dengan URL | Membungkus SPA |
+| Daftar rute | `Routes` + `Route` | Pilih komponen berdasarkan path | `/produk` → katalog |
+| Navigasi | `Link` / `NavLink` | Pindah tanpa reload penuh | Navbar, breadcrumb |
+| Parameter | `useParams()` | Baca segmen dinamis | `/produk/42` |
+| Child route | `Outlet` | Tempat render nested route | Layout admin |
+
+React sendiri tidak menyediakan router. Untuk SPA biasa gunakan React Router; framework seperti Next.js punya file-based routing bawaan.
+
+## Pasang & Setup Router
+
+```jsx
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Beranda />} />
+        <Route path="/produk" element={<Produk />} />
+        <Route path="/tentang" element={<Tentang />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+`BrowserRouter` membungkus seluruh aplikasi; `Routes` memilih tampilan mana yang cocok dengan URL sekarang.
+
+## Link dan Navigasi
+
+```jsx
+import { Link, NavLink } from "react-router-dom";
+
+<nav>
+  <NavLink to="/">Beranda</NavLink>
+  <NavLink to="/produk">Produk</NavLink>
+  <Link to="/kontak">Kontak</Link>
+</nav>
+```
+
+`NavLink` otomatis menambah class aktif — berguna untuk menandai menu yang sedang dibuka.
+
+## Rute Dinamis
+
+```jsx
+import { useParams } from "react-router-dom";
+
+function DetailProduk() {
+  const { id } = useParams();
+  return <h1>Detail produk #{id}</h1>;
+}
+
+<Route path="/produk/:id" element={<DetailProduk />} />
+```
+
+URL `/produk/42` membuat `id` bernilai `"42"` — data diambil berdasarkan nilai itu.
+
+## Nested Route
+
+```jsx
+<Route path="/admin" element={<LayoutAdmin />}>
+  <Route index element={<Dasbor />} />
+  <Route path="pengguna" element={<Pengguna />} />
+</Route>
+```
+
+`<Outlet />` di dalam `LayoutAdmin` menampung child route yang sedang aktif.
+
+## Struktur Proyek (App Router)
+
+Proyek React di Next.js memakai konvensi folder:
+
+```
+app/
+  layout.tsx        pembungkus global (navbar, footer)
+  page.tsx          beranda → /
+  produk/
+    page.tsx        /produk
+    [id]/page.tsx   /produk/42 (rute dinamis)
+  tentang/
+    page.tsx        /tentang
+```
+
+Rute ditentukan oleh nama file dan folder — tidak perlu daftar rute manual.
+
+## Proyek Mini: Katalog
+
+```jsx
+// data.js
+export const produk = [
+  { id: 1, nama: "Kopi Susu", harga: 25000 },
+  { id: 2, nama: "Roti Bakar", harga: 18000 },
+];
+
+// KartuProduk.jsx
+function KartuProduk({ item }) {
+  return (
+    <article className="card">
+      <h3>{item.nama}</h3>
+      <p>Rp{item.harga}</p>
+      <Link to={"/produk/" + item.id}>Lihat</Link>
+    </article>
+  );
+}
+
+// DaftarProduk.jsx
+function DaftarProduk() {
+  const [cari, setCari] = useState("");
+  const hasil = produk.filter((p) =>
+    p.nama.toLowerCase().includes(cari.toLowerCase())
+  );
+
+  return (
+    <div>
+      <input value={cari} onChange={(e) => setCari(e.target.value)} />
+      {hasil.map((p) => (
+        <KartuProduk key={p.id} item={p} />
+      ))}
+    </div>
+  );
+}
+```
+
+Rangkai: `<App>` memuat Router, Navbar dengan Link, rute `/` ke DaftarProduk, dan `/produk/:id` ke halaman detail. State `cari` adalah variabel reaktif, `filter` melakukan looping deklaratif, props mengirim produk ke kartu, dan kondisi hasil kosong bisa dirender dengan `{hasil.length === 0 && <p>Tidak ditemukan</p>}`.
+
+## Pilih React Router atau Next.js
+
+Jangan campur dua sistem routing dalam satu aplikasi. React Router cocok untuk SPA client-side yang dibangun Vite. Next.js cocok saat butuh server rendering, SEO kuat, API route, dan konvensi proyek lengkap. Komponen, props, state, fungsi handler, list, dan conditional rendering tetap sama pada keduanya.
+
+## Di Dunia Nyata
+
+- **Katalog e-commerce**: `/produk` berisi filter, `/produk/:id` menampilkan detail berdasarkan ID URL.
+- **Dashboard admin**: nested `/admin/pengguna` dan `/admin/pesanan` berbagi sidebar melalui `Outlet`.
+- **Aplikasi SaaS**: route privat memeriksa session lalu mengarahkan user tanpa akses ke `/login`.
+- **Dokumentasi**: `NavLink` menandai bab aktif dan parameter slug memilih konten.
+- **Checkout**: rute per tahap (`/checkout/alamat`, `/bayar`) memungkinkan tombol back browser bekerja.
+
+<div class="note">💡 Selamat — kamu sudah menutup track React: fondasi JS (ES6, array method, props sebagai argumen, logika state) lalu diaplikasikan pada komponen, JSX, hooks, dan routing. Langkah lanjutan yang disarankan: pelajari TypeScript untuk React, lalu framework App Router seperti Next.js yang tersedia di OnBoss Academy.</div>

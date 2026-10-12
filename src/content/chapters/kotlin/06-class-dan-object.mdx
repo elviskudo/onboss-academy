@@ -1,0 +1,179 @@
+---
+title: "Class & Object"
+description: "Class, properti, constructor, dan singleton object di Kotlin"
+order: 6
+quiz:
+  - q: "Properti di class Kotlin terdiri dari…"
+    options: ["hanya variabel global", "getter dan setter otomatis", "function statis", "komentar panjang"]
+    answer: 1
+    explain: "val dan var di dalam class otomatis menghasilkan pembaca dan penulis."
+  - q: "Kata kunci membuat satu instance tunggal adalah…"
+    options: ["singleton", "static", "object", "instance"]
+    answer: 2
+    explain: "object deklarasi membuat class sekaligus instance-nya dalam satu langkah."
+  - q: "Blok init pada class berfungsi untuk…"
+    options: ["menjalankan kode saat objek dibuat", "menghapus objek", "mengompilasi kode", "membuat file baru"]
+    answer: 0
+    explain: "init dieksekusi berurutan bersama constructor primer."
+  - q: "Cara memanggil method pada objek adalah…"
+    options: ["titik dan nama method", "panah besar", "titik koma", "tanda tanya"]
+    answer: 0
+    explain: "objek.sapa() memanggil member function tersebut."
+  - q: "Visibilitas bawaan member di Kotlin adalah…"
+    options: ["public", "private", "protected", "internal only"]
+    answer: 0
+    explain: "Berbeda dengan Java, default Kotlin adalah public."
+example:
+  code: |
+    class Siswa(val nama: String, var nilai: Int) {
+        fun info(): String = "$nama mendapat $nilai"
+    }
+
+    object Penghitung {
+        private var jumlah = 0
+        fun tambah() = ++jumlah
+        fun total() = jumlah
+    }
+
+    fun main() {
+        val s = Siswa("Sari", 88)
+        println(s.info())
+
+        Penghitung.tambah()
+        Penghitung.tambah()
+        println("Objek dibuat: " + Penghitung.total())
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Class di Kotlin ditulis ringkas: satu baris bisa langsung mendeklarasikan properti sekaligus constructor.
+
+## Class Dasar
+
+```kotlin
+class Produk(val nama: String, var harga: Int)
+
+fun main() {
+    val p = Produk("Kopi", 25000)
+    println("${p.nama} Rp${p.harga}")
+    p.harga = 30000
+}
+```
+
+`val` menghasilkan properti baca-saja, `var` menghasilkan properti yang bisa diubah.
+
+Kotlin punya **4 pilar OOP**, semuanya tersedia — dengan catatan yang perlu diketahui jujur:
+
+| Pilar | Status di Kotlin | Mekanismenya |
+| --- | --- | --- |
+| Encapsulation | Ada | 4 level visibilitas: `private`, `protected`, `internal`, `public` (bawaan) |
+| Inheritance | Ada, dibatasi | Class final secara bawaan — harus ditulis `open class` untuk diwarisi |
+| Polymorphism | Ada | `override` wajib pada method yang menimpa |
+| Abstraction | Ada | `abstract class` dan `interface` |
+
+Perbedaan penting dengan Java: default visibilitas Kotlin adalah `public`, dan semua class bersifat `final` kecuali diberi `open`. Keputusan ini mencegah pewarisan tidak sengaja.
+
+## Blok init dan Properti Tambahan
+
+```kotlin
+class Produk(val nama: String, hargaAwal: Int) {
+    var harga: Int = hargaAwal
+
+    init {
+        require(hargaAwal > 0) { "Harga harus positif" }
+        println("Produk $nama dibuat")
+    }
+}
+```
+
+`init` berjalan saat instance dibuat, urut dengan parameter constructor.
+
+## Member Function
+
+```kotlin
+class Siswa(val nama: String, var nilai: Int) {
+    fun lulus(): Boolean = nilai >= 75
+
+    fun naikkan(poin: Int) {
+        nilai += poin
+    }
+}
+
+fun main() {
+    val s = Siswa("Budi", 70)
+    s.naikkan(10)
+    println("${s.nama}: ${s.nilai}")
+}
+```
+
+## Singleton dengan object
+
+```kotlin
+object Konfigurasi {
+    val namaAplikasi = "OnBoss Academy"
+    val versi = "1.0"
+}
+
+fun main() {
+    println(Konfigurasi.namaAplikasi)
+}
+```
+
+Tidak ada `Konfigurasi()` — instance sudah ada dan dipakai bersama.
+
+## Companion Object
+
+```kotlin
+class Produk(val nama: String) {
+    companion object {
+        fun buat(nama: String) = Produk(nama)
+    }
+}
+
+fun main() {
+    val p = Produk.buat("Teh")
+    println(p.nama)
+}
+```
+
+`companion object` adalah padanan method statis yang aman terhadap tipe. Ringkasan: Kotlin **tidak punya `static`**; ada 2 penggantinya — `object` untuk singleton tunggal dan `companion object` untuk anggota bersama sebuah class.
+
+Kapan memakai apa:
+
+- **Class biasa** — objek dengan identitas dan keadaan yang berubah (Akun, Sesi).
+- **Data class** — sekadar membawa data (lihat bab berikutnya).
+- **Object** — satu-satunya instance: konfigurasi, layanan, konstanta.
+- **Companion object** — factory method dan konstanta yang terkait satu class.
+
+## Di Dunia Nyata
+
+- **Model data pengguna** — `class Pengguna(val id: Long, val nama: String)` dipakai lintas lapisan aplikasi.
+- **Konfigurasi aplikasi** — `object Konfigurasi { val versi = "1.2" }` dijamin satu instance untuk seluruh program.
+- **Validasi lewat init** — `require(harga > 0)` di blok init menolak objek tidak valid begitu dibuat, bukan saat sudah dipakai.
+- **Penghitung sesi login** — `object Penghitung` menyimpan jumlah yang bertambah tanpa variabel global.
+- **Factory pembuat objek** — `Produk.buat(nama)` menyembunyikan logika inisialisasi rumit di companion object.
+
+<div class="note">💡 Kotlin tidak punya kata kunci static. Gunakan companion object untuk factory method dan konstanta bersama, atau object tunggal bila memang hanya boleh ada satu instance.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`class Siswa(val nama: String, var nilai: Int) {
+    fun info(): String = "$nama mendapat $nilai"
+
+    fun lulus(): Boolean = nilai >= 75
+}
+
+object Penghitung {
+    private var jumlah = 0
+    fun tambah(): Int = ++jumlah
+    fun total(): Int = jumlah
+}
+
+fun main() {
+    val s = Siswa("Sari", 88)
+    println(s.info())
+    println("Lulus: " + s.lulus())
+
+    Penghitung.tambah()
+    Penghitung.tambah()
+    println("Objek dibuat: " + Penghitung.total())
+}`} />

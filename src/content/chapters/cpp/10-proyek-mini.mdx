@@ -1,0 +1,234 @@
+---
+title: "Proyek Mini: Katalog Produk"
+description: "Memadukan class, vector, map, dan algoritma menjadi program konsol nyata"
+order: 10
+quiz:
+  - q: "Mengapa vector lebih tepat daripada array statis untuk daftar produk?"
+    options: ["Karena array tidak bisa menyimpan struct", "Jumlah produk bisa bertambah saat program berjalan", "Agar kompilasi lebih cepat", "Karena array tidak ada di C++"]
+    answer: 1
+    explain: "push_back membuat daftar fleksibel tanpa perlu menebak ukuran maksimum di awal."
+  - q: "Method bertanda const pada class berarti…"
+    options: ["Method wajib static", "Method selalu private", "Method tidak mengubah anggota object", "Method mengembalikan pointer"]
+    answer: 2
+    explain: "Const member function menjamin keamanan data — boleh dipanggil pada object const."
+  - q: "Mengurutkan vector produk berdasarkan harga memakai…"
+    options: ["reverse()", "map()", "set()", "sort dengan lambda sebagai pembanding"]
+    answer: 3
+    explain: "sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga < b.harga; });"
+  - q: "Menyimpan jumlah produk per kategori paling tepat dengan…"
+    options: ["vector tanpa struktur", "map<string, int>", "string gabungan", "char array"]
+    answer: 1
+    explain: "map<string,int> menghitung otomatis per kunci dan mengurutkan nama kategorinya."
+  - q: "Langkah pertama menyusun proyek adalah…"
+    options: ["Menentukan data (struct/class) dan fungsi apa yang dibutuhkan", "Langsung menulis main()", "Memilih warna terminal", "Menghapus semua komentar"]
+    answer: 0
+    explain: "Rancang model data dulu — struktur yang jelas membuat logika mengikuti dengan mudah."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    #include <algorithm>
+    using namespace std;
+
+    struct Produk {
+        string nama;
+        int harga;
+    };
+
+    int main() {
+        vector<Produk> katalog = {
+            {"Kopi", 25000}, {"Teh", 15000}, {"Jus", 20000}
+        };
+        for (const auto &p : katalog) {
+            cout << p.nama << " - Rp" << p.harga << endl;
+        }
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bab penutup menyatukan **semua materi C++** — tipe data, percabangan, loop, function, class, container, lambda, dan algoritma — menjadi satu program katalog produk yang utuh.
+
+## 6 Fitur Katalog
+
+| # | Fitur | Materi yang dipakai |
+|---|---|---|
+| 1 | Tambah produk | `struct` + `vector.push_back` |
+| 2 | Tampilkan tabel | range-based `for` + `const &` |
+| 3 | Cari berdasarkan nama | `find_if` + lambda |
+| 4 | Urutkan berdasarkan harga | `sort` + lambda pembanding |
+| 5 | Hitung nilai stok | akumulasi + operator aritmatika |
+| 6 | Statistik per kategori | `map<string,int>` + structured binding |
+
+## Model Data
+
+```cpp
+struct Produk {
+    string nama;
+    int harga;
+    int stok;
+
+    bool tersedia() const { return stok > 0; }
+};
+```
+
+Satu struct merepresentasikan satu record — menambah kolom berarti menambah satu baris, bukan merombak program. Method `const` menjamin tidak ada yang diam-diam mengubah data saat sekadar menampilkan.
+
+## Menambah & Menampilkan
+
+```cpp
+vector<Produk> katalog;
+katalog.push_back({"Kopi", 25000, 10});
+katalog.push_back({"Teh", 15000, 0});
+
+for (const auto &p : katalog) {
+    cout << p.nama << " - Rp" << p.harga
+         << (p.tersedia() ? " (ada)" : " (habis)") << endl;
+}
+```
+
+Range-based for dengan `const &` menampilkan semua produk tanpa menyalin satu pun — pola yang sama dipakai untuk loop mana pun yang hanya membaca.
+
+## Mencari & Mengurutkan
+
+```cpp
+sort(katalog.begin(), katalog.end(),
+     [](const Produk &a, const Produk &b) {
+         return a.harga < b.harga;      // termurah dulu
+     });
+
+auto it = find_if(katalog.begin(), katalog.end(),
+    [](const Produk &p) { return p.nama == "Kopi"; });
+if (it != katalog.end()) {
+    cout << "Ketemu: " << it->nama << endl;
+}
+```
+
+Lambda sebagai pembanding membuat pengurutan sesuai kriteria apa pun dalam satu baris. `find_if` mengembalikan iterator — bandingkan dengan `end()` untuk mengetahui apakah ketemu.
+
+## Statistik dengan map
+
+```cpp
+map<string, int> hitungPerKategori;
+hitungPerKategori["Minuman"] = 2;
+hitungPerKategori["Makanan"] = 1;
+
+for (const auto &[kategori, jumlah] : hitungPerKategori) {
+    cout << kategori << ": " << jumlah << " produk" << endl;
+}
+```
+
+Pola yang sama dipakai untuk hitung frekuensi penjualan, jumlah produk habis, atau total penjualan per bulan — cukup ganti kuncinya.
+
+## Rancangan Program Lengkap
+
+Urutan menyusun proyek: (1) tentukan `struct Produk`, (2) siapkan `vector<Produk>` sebagai storage, (3) tulis fungsi tampilkan, (4) tambahkan sort + find, (5) hitung total, (6) rapikan output. Program di bawah sudah lengkap — jalankan, lalu lanjutkan dengan fitur **hapus produk** dan **filter kategori** sebagai latihan akhir.
+
+```cpp
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+struct Produk {
+    string nama, kategori;
+    int harga, stok;
+    bool tersedia() const { return stok > 0; }
+};
+
+int main() {
+    vector<Produk> katalog = {
+        {"Kopi", "Minuman", 25000, 10},
+        {"Teh", "Minuman", 15000, 0},
+        {"Jus", "Minuman", 20000, 5},
+        {"Roti", "Makanan", 12000, 8}
+    };
+
+    cout << "=== KATALOG ===" << endl;
+    for (const auto &p : katalog) {
+        cout << p.nama << " (Rp" << p.harga << ") "
+             << (p.tersedia() ? "[ada]" : "[habis]") << endl;
+    }
+
+    sort(katalog.begin(), katalog.end(),
+         [](const Produk &a, const Produk &b) { return a.harga < b.harga; });
+    cout << "Termurah: " << katalog.front().nama << endl;
+
+    auto it = find_if(katalog.begin(), katalog.end(),
+        [](const Produk &p) { return p.nama == "Jus"; });
+    if (it != katalog.end()) cout << "Ditemukan: " << it->nama << endl;
+
+    int total = 0, unit = 0;
+    map<string, int> perKategori;
+    for (const auto &p : katalog) {
+        total += p.harga * p.stok;
+        unit += p.stok;
+        perKategori[p.kategori] += p.stok;
+    }
+    cout << "Total stok: " << unit << " unit" << endl;
+    cout << "Nilai stok: Rp" << total << endl;
+
+    for (const auto &[kat, jumlah] : perKategori) {
+        cout << kat << ": " << jumlah << " unit" << endl;
+    }
+    return 0;
+}
+```
+
+## Di Dunia Nyata
+
+- Aplikasi kasir warung memakai pola persis ini: daftar produk + pencarian cepat + total belanja.
+- Dashboard inventaris gudang menampilkan nilai stok per kategori — hanya ganti sumber data jadi file/database.
+- Katalog e-commerce memakai `sort` dengan kriteria ganti (harga, rating, terbaru) lewat lambda yang berbeda.
+- Sistem pengadaan sekolah mencari produk termurah lewat `min_element` pada vektor penawaran.
+- Laporan penjualan bulanan memakai `map<string,int>` untuk menghitung transaksi per cabang.
+
+<div class="note">💡 Kamu telah menyelesaikan 10 bab C++: dari <code>cout</code> sampai class, vector, map, lambda, dan smart pointer. Langkah berikutnya: file I/O, template, dan multi-threading untuk proyek yang lebih besar.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+struct Produk {
+    string nama;
+    int harga;
+    int stok;
+    bool tersedia() const { return stok > 0; }
+};
+
+int main() {
+    vector<Produk> katalog = {
+        {"Kopi", 25000, 10},
+        {"Teh", 15000, 0},
+        {"Jus", 20000, 5},
+        {"Roti", 12000, 8}
+    };
+
+    cout << "=== KATALOG ===" << endl;
+    for (const auto &p : katalog) {
+        cout << p.nama << " - Rp" << p.harga
+             << (p.tersedia() ? " (ada)" : " (habis)") << endl;
+    }
+
+    sort(katalog.begin(), katalog.end(),
+         [](const Produk &a, const Produk &b) { return a.harga < b.harga; });
+    cout << "Termurah: " << katalog.front().nama << endl;
+
+    auto it = find_if(katalog.begin(), katalog.end(),
+        [](const Produk &p) { return p.nama == "Jus"; });
+    if (it != katalog.end()) cout << "Ditemukan: " << it->nama << endl;
+
+    int total = 0, unit = 0;
+    for (const auto &p : katalog) {
+        total += p.harga * p.stok;
+        unit += p.stok;
+    }
+    cout << "Total stok: " << unit << " unit" << endl;
+    cout << "Nilai stok: Rp" << total << endl;
+    return 0;
+}`} />

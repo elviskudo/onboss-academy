@@ -1,0 +1,151 @@
+---
+title: "Scaffold & CRUD"
+description: "Dari satu perintah generator menjadi aplikasi lengkap Create, Read, Update, Delete"
+order: 5
+quiz:
+  - q: "Scaffold pada Rails adalah…"
+    options: ["File CSS", "Generator yang membuat CRUD lengkap", "Nama database", "Server web"]
+    answer: 1
+    explain: "rails g scaffold membuat model, migrasi, controller, view, dan rute sekaligus."
+  - q: "Rute yang dibuat oleh resources :products berjumlah…"
+    options: ["7 rute CRUD", "1 rute", "3 rute", "0 rute"]
+    answer: 0
+    explain: "index, show, new, create, edit, update, destroy."
+  - q: "Method controller untuk menyimpan data baru adalah…"
+    options: ["show", "index", "create", "destroy"]
+    answer: 2
+    explain: "create menerima POST lalu memanggil save pada objek baru."
+  - q: "Setelah create berhasil, umumnya Rails diarahkan ke…"
+    options: ["Halaman sukses produk", "Rute index atau show produk", "File Gemfile", "Konsol database"]
+    answer: 1
+    explain: "Konvensinya redirect ke show atau index plus pesan notice."
+  - q: "Perintah menghapus data lewat controller adalah…"
+    options: ["DELETE /products/1", "GET /products/1", "POST /home", "PUT /new"]
+    answer: 0
+    explain: "HTTP DELETE dipetakan ke action destroy."
+example:
+  code: |
+    # rails generate scaffold Product name:string price:integer
+    # rails db:migrate
+    # bin/rails server
+
+    class ProductsController < ApplicationController
+      def create
+        @product = Product.new(product_params)
+        if @product.save
+          redirect_to @product, notice: "Produk dibuat"
+        else
+          render :new, status: :unprocessable_entity
+        end
+      end
+    end
+---
+
+CRUD adalah tulang punggung aplikasi web. Rails menyediakan generator agar kamu tidak menulis ulang pola yang sama.
+
+## Membuat Scaffold
+
+```bash
+rails generate scaffold Product name:string price:integer stock:integer
+rails db:migrate
+```
+
+Satu perintah menghasilkan model, migrasi, controller, tujuh view, dan seluruh rute.
+
+## CRUD Lengkap
+
+```ruby
+class ProductsController < ApplicationController
+  def index
+    @products = Product.all
+  end
+
+  def show
+    @product = Product.find(params[:id])
+  end
+
+  def new
+    @product = Product.new
+  end
+
+  def create
+    @product = Product.new(product_params)
+    redirect_to @product if @product.save
+  end
+
+  def destroy
+    Product.find(params[:id]).destroy
+    redirect_to products_path
+  end
+end
+```
+
+Setiap action mengerjakan satu tugas dan menyerahkan sisanya ke model dan view.
+
+## Strong Parameters
+
+```ruby
+private
+
+def product_params
+  params.require(:product).permit(:name, :price, :stock)
+end
+```
+
+Tanpa `permit`, Rails menolak penyisipan kolom rahasia seperti `admin`.
+
+## Mengikat Rute
+
+```ruby
+Rails.application.routes.draw do
+  resources :products
+end
+```
+
+Ganti `resources` dengan `only` bila hanya membutuhkan beberapa rute saja.
+
+## Ketika Validasi Gagal
+
+```ruby
+if @product.save
+  redirect_to @product, notice: "Produk tersimpan"
+else
+  render :new, status: :unprocessable_entity
+end
+```
+
+User kembali ke formulir dengan error yang tampil di bawah input.
+
+## Empat Operasi CRUD
+
+CRUD terdiri dari **4 operasi** yang dipetakan ke HTTP dan Active Record.
+
+| Operasi | HTTP | Active Record | Respons umum |
+|---|---|---|---|
+| Create | POST | `new` + `save` | 201 atau redirect |
+| Read | GET | `find` / `where` | 200 |
+| Update | PATCH/PUT | `update` | 200 atau redirect |
+| Delete | DELETE | `destroy` | 204 atau redirect |
+
+Scaffold membuat titik awal lengkap, tetapi jumlah file bergantung versi dan konfigurasi generator; jangan mengandalkan klaim “tujuh view”. Yang stabil adalah model, migration, resource controller, route, view/form untuk HTML, serta test terkait.
+
+## Alur Aman Controller
+
+Gunakan `before_action :set_product` untuk show, edit, update, dan destroy agar lookup tidak berulang. Pada kegagalan create render `:new`; pada kegagalan update render `:edit`, keduanya dengan status `:unprocessable_entity`. `render` mempertahankan object beserta errors, sedangkan redirect memulai request baru dan kehilangan state tersebut.
+
+Strong Parameters adalah batas input. Permit hanya atribut yang boleh diubah user; role, owner ID, atau status pembayaran harus ditentukan server. Otorisasi tetap diperlukan karena permit tidak memeriksa siapa yang boleh mengubah record.
+
+## Di Dunia Nyata
+
+- Admin katalog membuat dan memperbarui produk lewat form scaffold yang disesuaikan.
+- Sistem tiket membatasi update hanya untuk tiket milik user.
+- Soft-delete dipilih bila audit mengharuskan data tetap tersimpan.
+- Pagination menjaga halaman index tetap cepat saat tabel membesar.
+
+## Kegagalan dan Konsistensi
+
+Setiap action perlu menangani jalur berhasil dan gagal. `save!` serta `update!` melempar exception dan cocok di service atau job yang memiliki penanganan terpusat; versi tanpa bang mengembalikan `false` dan cocok untuk form yang perlu menampilkan error. Untuk destroy, pertimbangkan dependency association dan kegagalan callback sebelum memberi pesan sukses.
+
+Gunakan transaction bila satu operasi CRUD mengubah beberapa model sebagai satu aturan bisnis. Cegah lost update pada data yang sering diedit bersamaan dengan optimistic locking melalui kolom `lock_version`. Untuk endpoint create yang mungkin dikirim ulang akibat timeout, desain idempotency key agar order atau pembayaran tidak tercipta dua kali. Scaffold tidak menyediakan seluruh kebijakan tersebut karena aturan konsistensi bergantung pada domain aplikasi.
+
+<div class="note">💡 Scaffold luar biasa untuk awal, tapi jangan berhenti di situ. Buang, ubah, dan kembangkan hasil generator agar sesuai kebutuhan bisnis — scaffold adalah titik awal, bukan jawaban akhir.</div>

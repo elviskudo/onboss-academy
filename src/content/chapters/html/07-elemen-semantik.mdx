@@ -1,0 +1,130 @@
+---
+title: "Elemen Semantik"
+description: "header, nav, main, article, footer — HTML yang bermakna"
+order: 7
+quiz:
+  - q: "Elemen mana yang menandai konten utama halaman?"
+    options: ["<main>", "<div>", "<section>", "<article>"]
+    answer: 0
+    explain: "<main> hanya boleh satu per halaman dan memuat konten utama unik."
+  - q: "Elemen <nav> sebaiknya dipakai untuk…"
+    options: ["Judul artikel", "Navigasi utama/tiap", "Footer", "Komentar"]
+    answer: 1
+    explain: "<nav> untuk blok navigasi — membantu pembaca layar melompati menu."
+  - q: "Elemen mana yang paling tepat untuk konten mandiri seperti posting blog?"
+    options: ["<div>", "<article>", "<span>", "<aside>"]
+    answer: 1
+    explain: "<article> untuk konten mandiri yang masuk akal jika didistribusikan sendiri (RSS, sosmed)."
+  - q: "Perbedaan utama elemen semantik vs <div> adalah…"
+    options: ["Semantik lebih kecil ukurannya", "Semantik memberi makna pada browser & mesin pencari", "Div sudah tidak didukung", "Semantik hanya untuk CSS"]
+    answer: 1
+    explain: "Nama elemen semantik menjelaskan ISINYA (header, nav, footer…), bukan sekadar kotak seperti div."
+  - q: "<aside> biasanya dipakai untuk…"
+    options: ["Konten samping yang relevan (sidebar, kotak terkait)", "Iklan wajib", "Kode script", "Formulir login"]
+    answer: 0
+    explain: "<aside> = konten sisian yang tetap relevan (sidebar, related posts)."
+example:
+  code: |
+    <header>
+      <h1>Blog Teknologi</h1>
+      <nav><a href="/">Beranda</a> <a href="/artikel">Artikel</a></nav>
+    </header>
+    <main>
+      <article>
+        <h2>Memulai Belajar Web</h2>
+        <p>HTML semantik membuat struktur lebih bermakna.</p>
+      </article>
+    </main>
+    <footer><p>&copy; 2026 Blog Teknologi</p></footer>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+*Semantic HTML* = memilih elemen yang **maknanya sesuai isinya**. Ini penting untuk SEO, aksesibilitas, dan kemudahan styling.
+
+## Peta Elemen Semantik
+
+| Elemen | Untuk Apa |
+|--------|-----------|
+| `<header>` | Bagian atas halaman/konten (logo, judul, menu) |
+| `<nav>` | Blok navigasi |
+| `<main>` | Konten utama (satu per halaman) |
+| `<article>` | Konten mandiri (artikel, kartu) |
+| `<section>` | Pengelompokan konten bertopik |
+| `<aside>` | Konten sisian (sidebar) |
+| `<footer>` | Bagian bawah (copyright, kontak) |
+
+HTML5 mengenalkan **lebih dari 30 elemen semantik**, tetapi **7 landmark utama** di tabel tadi cukup untuk membangun mayoritas halaman. `<section>` harus punya heading, sedangkan `<article>` harus tetap masuk akal bila dibaca terpisah.
+
+## Alur Memilih Elemen
+
+| Isi | Pilih | Jangan pilih | Alasan |
+|-----|-------|--------------|--------|
+| Menu utama | `<nav>` | `<div>` | Menjadi landmark navigasi |
+| Konten unik halaman | `<main>` | `<section>` luar | Hanya satu konten utama |
+| Posting mandiri | `<article>` | `<div>` | Bisa didistribusikan sendiri |
+| Kelompok bertopik | `<section>` | `<article>` | Bagian dari dokumen lebih besar |
+| Informasi terkait | `<aside>` | `<section>` | Bukan alur utama |
+
+## Contoh Struktur Halaman Utuh
+
+```html
+<body>
+  <header>
+    <h1>BelajarWeb.id</h1>
+    <nav>
+      <a href="/">Beranda</a>
+      <a href="/tutorial">Tutorial</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+      <h2>Cara Kerja HTTP</h2>
+      <p>HTTP adalah protokol pertukaran dokumen di web…</p>
+    </article>
+    <aside>
+      <h3>Artikel Terkait</h3>
+      <p><a href="/tcp">Mengenal TCP</a></p>
+    </aside>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 BelajarWeb.id</p>
+  </footer>
+</body>
+```
+
+## Detail & Footer
+
+```html
+<details>
+  <summary>Klik untuk melihat jawaban</summary>
+  Jawabannya adalah HTTP.
+</details>
+
+<footer>Kontak: halo@contoh.com</footer>
+```
+
+## Di Dunia Nyata
+
+- **Portal berita** — tiap berita memakai `<article>`, berita terkait berada di `<aside>`
+- **Toko online** — `<main>` memuat produk, `<nav>` kategori, `<footer>` kebijakan retur
+- **Dokumentasi** — `<section>` membagi topik dan heading membentuk daftar isi otomatis
+- **Aplikasi bank** — landmark semantik membantu pengguna pembaca layar lompat langsung ke transaksi
+
+<div class="note">💡 Ganti &lt;div&gt; sebagai pembungkus umum seminimal mungkin. Kalau isinya navigasi → pakai &lt;nav&gt;. Kalau judul atas → &lt;header&gt;. Browser dan Google akan “mengerti” halamanmu.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<header style="background:#EEF0FF;padding:16px">
+  <h1>📖 Ruang Baca</h1>
+  <nav><a href="#">Beranda</a> · <a href="#">Katalog</a></nav>
+</header>
+<main style="padding:16px">
+  <article>
+    <h2>Review Buku: Clean Code</h2>
+    <p>Buku wajib bagi setiap programmer…</p>
+  </article>
+</main>
+<footer style="background:#17181D;color:white;padding:16px;text-align:center">
+  &copy; 2026 Ruang Baca
+</footer>`} />

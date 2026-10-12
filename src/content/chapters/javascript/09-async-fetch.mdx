@@ -1,0 +1,194 @@
+---
+title: "Async: Promise & Fetch"
+description: "setTimeout, async/await, dan mengambil data dari API"
+order: 9
+quiz:
+  - q: "Promise mewakili…"
+    options: ["Nilai masa depan yang belum pasti (sukses/gagal)", "Variabel global", "Tipe data angka", "Elemen DOM"]
+    answer: 0
+    explain: "Promise: pending → fulfilled (resolve) atau rejected."
+  - q: "async function selalu…"
+    options: ["Berjalan sinkron", "Menghapus error", "Mengembalikan Promise", "Butuh callback"]
+    answer: 2
+    explain: "Nilai return dalam async otomatis dibungkus Promise. Await hanya valid di dalam async."
+  - q: "await berguna untuk…"
+    options: ["Menghapus Promise", "Membuat timer", "Menunggu Promise selesai lalu lanjut baris berikutnya", "Mengubah DOM"]
+    answer: 2
+    explain: "await membuat kode async terbaca seperti sinkron — jebakan blocking tidak terjadi karena event loop tetap jalan."
+  - q: "Cara menangani error pada async/await adalah…"
+    options: ["try { } catch (e) { }", "if (error)", "catchError()", "then(null)"]
+    answer: 0
+    explain: "Reject pada Promise memicu throw di dalam blok try — tangkap dengan catch."
+  - q: "fetch(\"api/data\") mengembalikan…"
+    options: ["Data JSON langsung", "String HTML", "Elemen DOM", "Promise berisi Response"]
+    answer: 3
+    explain: "Response masih perlu .json() (juga Promise) untuk membaca body JSON."
+example:
+  code: |
+    async function ambilData() {
+      const res = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+      const data = await res.json();
+      console.log(data);
+    }
+    ambilData();
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JavaScript berjalan *single-threaded* dengan **event loop**: kode sinkron dieksekusi berurutan, operasi lambat (jaringan, timer) diserahkan ke browser lalu hasilnya masuk lagi ke antrean. Tanpa async, satu `fetch` lambat akan membekukan seluruh halaman.
+
+Promise punya **3 status**: `pending` → `fulfilled` (resolve) atau `rejected`.
+
+## 7 Cara Kerja dengan Promise
+
+| Cara | Fungsi | Contoh |
+|------|--------|--------|
+| `then` | Ambil hasil sukses | `p.then((v) => …)` |
+| `catch` | Tangkap kegagalan | `p.catch((e) => …)` |
+| `finally` | Selalu jalan (cleanup) | `p.finally(() => tutupLoading())` |
+| `Promise.all` | Semua harus sukses, sekaligus | Ambil profil + settings paralel |
+| `Promise.allSettled` | Tunggu semua, tak peduli sukses/gagal | Laporan batch |
+| `Promise.race` | Yang pertama selesai (menang) | Timeout: `race([fetch, delay])` |
+| `Promise.any` | Yang pertama sukses | Coba beberapa mirror API |
+
+## setTimeout & setInterval
+
+```js
+setTimeout(() => console.log("3 detik kemudian"), 3000);
+
+const timer = setInterval(() => console.log("tiap detik"), 1000);
+clearInterval(timer); // berhenti
+```
+
+## Promise
+
+```js
+const janji = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("Berhasil!"), 1000);
+});
+
+janji
+  .then((hasil) => console.log(hasil))
+  .catch((err) => console.error(err))
+  .finally(() => console.log("selesai"));
+```
+
+## async / await
+
+```js
+function tunggu(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function jalan() {
+  console.log("mulai");
+  await tunggu(1000);
+  console.log("1 detik kemudian");
+}
+jalan();
+```
+
+## Klasik: Callback vs Promise vs async/await
+
+```js
+// 1. Callback — rawan "callback hell" bersarang
+getData(id, (user) => getPosts(user.id, (posts) => render(posts)));
+
+// 2. Promise — datar, tapi tetap .then berantai
+getData(id).then((u) => getPosts(u.id)).then(render);
+
+// 3. async/await — paling mudah dibaca
+const user = await getData(id);
+const posts = await getPosts(user.id);
+render(posts);
+```
+
+Ketiganya mekanisme sama; `async/await` hanyalah sintaks di atas Promise.
+
+## Prioritas di Event Loop
+
+1. **Task/makro** (urutan antre): `setTimeout`, `setInterval`, event klik.
+2. **Microtask** (didahulukan): callback Promise (`then`/`catch`), `queueMicrotask`.
+
+```js
+setTimeout(() => console.log("timer")); // makro
+Promise.resolve().then(() => console.log("janji")); // microtask
+console.log("sinkron");
+// urutan: sinkron → janji → timer
+```
+
+## Status Response: 8 Kasus yang Wajib Dikenal
+
+| Status | Arti | Sikap kode |
+|--------|------|------------|
+| `200` | OK | Lanjut baca body |
+| `201` | Created | Sumber daya baru dibuat |
+| `204` | No Content | Sukses tanpa body (hapus) |
+| `400` | Bad Request | Data dari user salah — tampilkan pesan input |
+| `401` | Unauthorized | Token hilang/kedaluwarsa → arahkan login |
+| `403` | Forbidden | Login tapi tidak berhak |
+| `404` | Not Found | URL/ID salah |
+| `500` | Server Error | Bukan salah user — coba lagi / laporkan |
+
+`res.ok` hanya mencakup 200–299; sisanya harus ditangani sendiri.
+
+## fetch + try/catch
+
+```js
+async function getPost(id) {
+  try {
+    const res = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    console.log(data.title);
+  } catch (e) {
+    console.error("Gagal:", e.message);
+  }
+}
+getPost(1);
+```
+
+<div class="note">💡 Selalu cek <code>res.ok</code> — fetch TIDAK melempar error untuk status 404/500, hanya untuk kegagalan jaringan.</div>
+
+## Async Paralel vs Berurutan
+
+```js
+// ❌ Berurutan — total waktu = jumlah semua request
+const res1 = await fetch("/api/1");
+const res2 = await fetch("/api/2");
+```
+
+```js
+// ✅ Paralel — total waktu = request terlama
+const [res1, res2] = await Promise.all([fetch("/api/1"), fetch("/api/2")]);
+```
+
+```js
+// ❌ forEach TIDAK menunggu await di dalamnya
+ids.forEach(async (id) => await simpan(id)); // lanjut sebelum selesai
+
+// ✅ for...of menghormati await berurutan
+for (const id of ids) await simpan(id);
+```
+
+## Di Dunia Nyata
+
+- **Muat dashboard**: profil user dan data notifikasi diambil paralel dengan `Promise.all` supaya layar cepat terisi.
+- **Tombol "Simpan"**: menampilkan spinner, `await` PATCH ke API, lalu `finally` mematikan spinner — sukses maupun gagal.
+- **Auto-refresh harga saham/crypto**: `setInterval` memanggil `fetch` tiap 5 detik.
+- **Login**: `await` POST credentials, simpan token, tangkap error 401 jadi pesan "Password salah".
+- **Timeout request**: `Promise.race([fetch(url), tolakSetelah(5000)])` agar UI tidak muter selamanya.
+
+<TryIt lang="javascript" runtime="client-js" code={`async function getUsers() {
+  console.log("Mengambil data pengguna…");
+  try {
+    const res = await fetch("https://jsonplaceholder.typicode.com/users?_limit=3");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const users = await res.json();
+    users.forEach((u) => console.log(\`\${u.name} — \${u.email}\`));
+    console.log("Selesai mengambil", users.length, "pengguna.");
+  } catch (e) {
+    console.error("Terjadi kesalahan:", e.message);
+  }
+}
+getUsers();`} />

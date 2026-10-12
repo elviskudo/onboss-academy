@@ -1,0 +1,131 @@
+---
+title: "Regresi"
+description: "Memprediksi angka kontinu — dari garis lurus sampai evaluasi error"
+order: 4
+quiz:
+  - q: "Regresi memprediksi output berupa…"
+    options: ["Kategori tetap", "Angka kontinu", "Gambar", "Kode program"]
+    answer: 1
+    explain: "Misalnya harga rumah, suhu, atau lalu lintas — semua nilai dalam rentang kontinu."
+  - q: "Model regresi linear paling sederhana berupa…"
+    options: ["Garis lurus y = a + b*x", "Pohon keputusan", "Jaringan saraf 100 lapis", "Diagram lingkaran"]
+    answer: 0
+    explain: "Intercept a dan kemiringan b adalah parameter yang dipelajari dari data."
+  - q: "MAE mengukur…"
+    options: ["Kecepatan komputasi", "Jumlah kolom data", "Rata-rata selisih absolut prediksi dan kenyataan", "Tingkat korelasi"]
+    answer: 2
+    explain: "MAE mudah diinterpretasikan dalam satuan asli data (mis. juta rupiah)."
+  - q: "Jika prediksi harga rumah selalu meleset +200 juta, ini menunjukkan…"
+    options: ["Overfitting sempurna", "Bias model yang konsisten ke satu arah", "Data sudah ideal", "Model pasti terbaik"]
+    answer: 1
+    explain: "Bias berarti model punya kesalahan sistematis ke satu arah — perlu fitur atau bentuk model yang lebih baik."
+  - q: "Menambahkan fitur yang tidak relevan dapat…"
+    options: ["Membuat model semakin rumit tanpa manfaat nyata", "Selalu meningkatkan akurasi", "Menghapus bias otomatis", "Mempercepat komputasi selalu"]
+    answer: 0
+    explain: "Fitur berisiko menambah noise; pilih fitur berdasarkan makna dan uji dampaknya."
+example:
+  code: |
+    x = [1, 2, 3, 4]
+    y = [2, 4, 6, 8]
+
+    n = len(x)
+    b = sum(x[i] * y[i] for i in range(n)) / sum(x[i] ** 2 for i in range(n))
+    print("Kemiringan b:", b)   # garis y = 2x
+---
+
+Regresi menjawab pertanyaan **"berapa nilainya?"** — bentuk supervised learning yang paling langsung terasa manfaatnya di bisnis.
+
+## Model Termudah: Rata-rata
+
+```python
+harga = [900, 1100, 950, 1400]
+prediksi = sum(harga) / len(harga)
+print("Prediksi harga berikutnya:", prediksi)
+```
+
+Bahkan sebelum memakai ML, rata-rata sudah menjadi baseline. Model yang baik **harus mengalahkan baseline ini**.
+
+## Regresi Linear Sederhana
+
+Rumusnya hanya satu garis:
+
+```
+y = a + b * x
+a = intercept (nilai y saat x = 0)
+b = kemiringan (berapa y naik per 1 unit x)
+```
+
+```python
+# y = a + b*x, data tanpa intercept untuk ilustrasi
+x = [1, 2, 3, 4]
+y = [2, 4, 6, 8]
+
+n = len(x)
+b = sum(x[i] * y[i] for i in range(n)) / sum(x[i] ** 2 for i in range(n))
+print("b =", b)                      # 2.0
+
+for xi in x:
+    print(xi, "->", b * xi)
+```
+
+`b` adalah kemiringan garis: setiap kenaikan 1 unit x, y naik `b` unit.
+
+## Dengan Banyak Fitur
+
+```python
+# luas, kamar -> harga
+fitur = [(60, 2), (85, 3), (45, 1), (120, 4)]
+harga = [900, 1400, 650, 2100]
+
+# Model umum: harga = b0 + b1*luas + b2*kamar
+# bobot (b0, b1, b2) dipelajari otomatis oleh library regresi
+```
+
+Semakin banyak fitur relevan, semakin fleksibel model — asalkan data mencukupi.
+
+## 4 Metrik Evaluasi Regresi
+
+| Metrik | Rumus sederhana | Sifat utama |
+|--------|-----------------|-------------|
+| MAE | rerata `\|prediksi - kenyataan\|` | satuan asli, tahan pencilan |
+| MSE | rerata `(prediksi - kenyataan)^2` | menghukum error besar |
+| RMSE | akar MSE | kembali ke satuan asli |
+| R² | `1 - (sisa / total)` | 1.0 = sempurna, 0 = tak ada gunanya |
+
+```python
+kenyataan = [900, 1400, 650, 2100]
+prediksi  = [950, 1350, 700, 2000]
+
+mae = sum(abs(k - p) for k, p in zip(kenyataan, prediksi)) / len(kenyataan)
+print("MAE:", mae)   # rata-rata meleset 50 juta
+
+mse = sum((k - p) ** 2 for k, p in zip(kenyataan, prediksi)) / len(kenyataan)
+print("MSE:", mse)
+
+# R^2: berapa banyak variasi harga yang berhasil dijelaskan model
+mean_kenyataan = sum(kenyataan) / len(kenyataan)
+ss_total = sum((k - mean_kenyataan) ** 2 for k in kenyataan)
+ss_sisa  = sum((k - p) ** 2 for k, p in zip(kenyataan, prediksi))
+print("R2:", round(1 - ss_sisa / ss_total, 3))
+```
+
+MAE (Mean Absolute Error) memakai satuan asli data — paling mudah dijelaskan ke pemangku kepentingan.
+
+2 jenis kesalahan yang harus dibedakan:
+
+- **Bias** — error sistematis ke satu arah (selalu meleset +200 juta).
+- **Variance** — error yang berubah-ubah antar data; tanda model terlalu menyesuaikan data latih.
+
+## Ketika Garis Lurus Tidak Cukup
+
+Hubungan non-linear (mis. pertumbuhan eksponensial) butuh model lebih fleksibel: polynomial features, decision tree, atau boosting. Pilih model sesuai bentuk hubungan data — bukan yang paling rumit.
+
+## Di Dunia Nyata
+
+- **Anggaran bulanan** — tim keuangan memakai regresi jumlah karyawan vs biaya listrik untuk menyusun proyeksi.
+- **Estimasi waktu tiba pengiriman** — jarak, jam kirim, dan kemacetan dipetakan ke menit tiba.
+- **Proyeksi permintaan listrik** — PLN memperkirakan beban puncak dari suhu dan hari kerja.
+- **Harga kos/kontrakan** — luas, lantai, dan jarak kampus dipetakan ke sewa bulanan.
+- **Target penjualan sales** — regresi jumlah kunjungan vs deal menentukan target realistis per orang.
+
+<div class="note">💡 Laporkan MAE dalam satuan bisnis: "rata-rata meleset Rp50 juta" jauh lebih dipahami daripada angka MSE mentah tanpa konteks.</div>

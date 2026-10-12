@@ -1,0 +1,122 @@
+---
+title: "User, Group, & Sudo"
+description: "Membuat user, mengelola grup, dan prinsip hak minimum lewat sudo"
+order: 6
+quiz:
+  - q: "Perintah membuat user baru di Linux adalah…"
+    options: ["useradd", "adduser-new", "user-create", "newaccount"]
+    answer: 0
+    explain: "useradd (Debian juga punya wrapper adduser yang interaktif) menambah entri di /etc/passwd."
+  - q: "sudo berfungsi untuk…"
+    options: ["Membuat user baru otomatis", "Menjalankan perintah dengan hak root sementara", "Mengenkripsi terminal", "Backup file"]
+    answer: 1
+    explain: "Dengan sudo, user biasa menjalankan perintah admin tanpa login sebagai root penuh."
+  - q: "Daftar user yang boleh memakai sudo dikelola di…"
+    options: ["/etc/sudoers dan /etc/sudoers.d/", "/home/sudo", "/var/sudo", "/opt/sudoers"]
+    answer: 0
+    explain: "Edit lewat visudo (aman dari syntax error), bukan editor biasa."
+  - q: "Perintah mengubah password user adalah…"
+    options: ["passwd", "chpass", "password-set", "usermod -p"]
+    answer: 0
+    explain: "passwd (tanpa argumen = ganti password sendiri) — admin bisa: passwd username."
+  - q: "Prinsip least privilege berarti…"
+    options: ["Semua user jadi root agar mudah", "Berikan hak seminimal yang dibutuhkan pekerjaan", "Hak root dibagikan ke semua", "Tidak pakai password"]
+    answer: 1
+    explain: "Hak maksimal saat dibutuhkan saja — memperkecil dampak bila akun atau server bocor."
+---
+
+Multi-user adalah DNA Linux: setiap orang punya akun sendiri, hak terpisah, dan admin bertindak lewat **sudo** — bukan login sebagai root terus-menerus.
+
+## User & Group
+
+```bash
+whoami                    # user aktif sekarang
+id                        # UID, GID, dan grup
+cat /etc/passwd | tail    # entri user sistem
+```
+
+Group mengelola hak secara kolektif: anggota `www-data` otomatis bisa membaca file web, tanpa hak individual satu per satu.
+
+## Membuat & Mengelola User
+
+```bash
+sudo useradd -m -s /bin/bash sari   # buat user + home directory
+sudo passwd sari                    # set password
+sudo usermod -aG www-data sari      # tambah ke grup (a = append)
+groups sari                         # lihat grup user
+sudo userdel -r lama                # hapus user + home-nya
+```
+
+Flag penting `useradd`:
+
+- `-m` — buat home directory `/home/sari`
+- `-s /bin/bash` — tentukan shell login
+
+## Sudo: Hak Admin Sementara
+
+```bash
+sudo systemctl restart nginx    # jalankan perintah sebagai root
+sudo -u postgres psql           # jalankan sebagai user tertentu
+sudo -l                        # lihat hak sudo milikmu
+```
+
+Menambah user ke sudo (Ubuntu):
+
+```bash
+sudo usermod -aG sudo sari
+```
+
+Konfigurasi halus lewat `visudo`:
+
+```bash
+sudo visudo
+# sari ALL=(ALL:ALL) ALL
+# deploy ALL=(root) NOPASSWD: /usr/bin/systemctl reload nginx
+```
+
+`NOPASSWD` dibatasi pada perintah spesifik — jangan diberikan kosong untuk semua perintah.
+
+## Keamanan Akun yang Wajib
+
+```bash
+sudo passwd --expire sari        # paksa ganti password saat login berikutnya
+sudo chage -l sari               # info aging password
+```
+
+- Matikan login root via SSH: `PermitRootLogin no` di `/etc/ssh/sshd_config`
+- Pakai SSH key, bukan password, untuk akses rutin
+- Satu akun per orang — jangan berbagi akun
+
+## Empat Identitas Akses
+
+Linux menilai akses melalui **4 unsur inti**: real user ID, effective user ID, primary group, dan supplementary groups.
+
+| Unsur/tool | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| UID | Identitas numerik user | `id -u sari` | Kepemilikan proses/file |
+| Primary GID | Grup default file baru | `id -g sari` | Kebijakan dasar user |
+| Supplementary groups | Hak tambahan kolektif | `id -nG sari` | Akses project atau device |
+| `sudo` | Delegasi command terkontrol | `sudo -l` | Tugas admin tertentu |
+| `su` | Mengganti sesi user | `su - postgres` | Shell login user service bila perlu |
+
+`/etc/passwd` menyimpan metadata akun, bukan password plaintext; hash berada di `/etc/shadow` yang hanya dapat dibaca root. Akun service sebaiknya memakai shell non-login dan hak minimum. Setelah `usermod -aG`, user perlu login ulang agar token grup baru aktif. Jangan melupakan `-a`: `usermod -G` tanpa append mengganti seluruh supplementary groups.
+
+Delegasikan command spesifik melalui file `/etc/sudoers.d/` dan validasi dengan `visudo -cf`. Hindari `NOPASSWD: ALL`, akun bersama, dan menjalankan editor bebas lewat sudo karena editor dapat membuka shell root. Audit penggunaan sudo melalui journal/auth log.
+
+## Di Dunia Nyata
+
+- Memberi deployer hak hanya untuk reload satu service, bukan shell root penuh.
+- Membuat user service tanpa login interaktif untuk worker aplikasi.
+- Menambahkan developer ke grup project agar tidak memakai chmod 777.
+- Menonaktifkan akun pegawai keluar sambil mempertahankan file untuk handover.
+
+<div class="note">💡 Jangan edit `/etc/sudoers` dengan editor biasa. Pakai `visudo`, yang memvalidasi sintaks sebelum perubahan dapat mengunci akses admin.</div>
+
+## Peta File Penting User
+
+```
+/etc/passwd    -> daftar user (terbuka semua)
+/etc/shadow    -> hash password (hanya root)
+/etc/group     -> daftar grup
+/home/sari     -> data pribadi user sari
+```

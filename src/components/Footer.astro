@@ -1,0 +1,45 @@
+---
+const year = new Date().getFullYear();
+---
+<footer class="mt-20 border-t border-line bg-surface">
+  <div class="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-lg font-extrabold text-white">O</span>
+        <span class="text-lg font-extrabold">OnBoss Academy</span>
+      </div>
+      <p class="mt-4 max-w-xs text-sm leading-6 text-muted">
+        Platform belajar pemrograman gratis: materi ringkas, editor contoh yang bisa dijalankan, kuis per bab, dan sertifikat.
+      </p>
+    </div>
+    <div>
+      <h3 class="text-sm font-bold uppercase tracking-wider text-muted">Belajar</h3>
+      <ul class="mt-4 space-y-2.5 text-sm">
+        <li><a href="/belajar/html" class="text-ink/80 hover:text-primary">HTML</a></li>
+        <li><a href="/belajar/css" class="text-ink/80 hover:text-primary">CSS</a></li>
+        <li><a href="/belajar/javascript" class="text-ink/80 hover:text-primary">JavaScript</a></li>
+        <li><a href="/belajar/python" class="text-ink/80 hover:text-primary">Python</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-sm font-bold uppercase tracking-wider text-muted">Populer</h3>
+      <ul class="mt-4 space-y-2.5 text-sm">
+        <li><a href="/belajar/reactjs" class="text-ink/80 hover:text-primary">React</a></li>
+        <li><a href="/belajar/sql" class="text-ink/80 hover:text-primary">SQL</a></li>
+        <li><a href="/belajar/git" class="text-ink/80 hover:text-primary">Git</a></li>
+        <li><a href="/belajar/dsa" class="text-ink/80 hover:text-primary">Struktur Data & Algoritma</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="text-sm font-bold uppercase tracking-wider text-muted">Akun</h3>
+      <ul class="mt-4 space-y-2.5 text-sm">
+        <li><a href="/register" class="text-ink/80 hover:text-primary">Daftar</a></li>
+        <li><a href="/login" class="text-ink/80 hover:text-primary">Masuk</a></li>
+        <li><a href="/dashboard" class="text-ink/80 hover:text-primary">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-line py-6 text-center text-sm text-muted">
+    © {year} OnBoss Academy. Materi ditulis orisinal untuk komunitas belajar.
+  </div>
+</footer>

@@ -1,0 +1,125 @@
+---
+title: "Klasifikasi"
+description: "Memutuskan kategori — decision tree, logistic, dan ambang keputusan"
+order: 5
+quiz:
+  - q: "Keluaran klasifikasi berupa…"
+    options: ["Matriks numpy", "Angka kontinu bebas", "Kategori/label", "File CSV"]
+    answer: 2
+    explain: "Contoh kelas: kucing vs anjing, lulus vs tidak, churn vs bertahan."
+  - q: "Decision tree memutuskan dengan…"
+    options: ["Menghitung jarak euclidean", "Serangkaian pertanyaan berjenjang", "Mengacak jawaban", "Memiringkan garis"]
+    answer: 1
+    explain: "Setiap simpul memecah data berdasar satu fitur, cabang menuntun ke keputusan."
+  - q: "Probabilitas prediksi 0.92 pada klasifikasi biner berarti…"
+    options: ["Model yakin 92% masuk kelas positif", "Model salah 92%", "Akurasi data 92%", "Data latih 92 baris"]
+    answer: 0
+    explain: "Probabilitas menunjukkan keyakinan model — bisa dipakai ambang penyesuaian risiko."
+  - q: "Kelas yang tidak seimbang (95% vs 5%) menyebabkan…"
+    options: ["Data harus dihapus", "Model selalu gagal", "Akurasi bisa tinggi tapi kelas minoritas sering salah", "Regresi otomatis dipakai"]
+    answer: 2
+    explain: "Model condong ke kelas mayoritas; perlu teknik penyeimbangan dan metrik yang tepat."
+  - q: "Ambang keputusan (threshold) yang diturunkan akan…"
+    options: ["Mengurangi semua prediksi ke nol", "Meningkatkan jumlah prediksi positif", "Menghapus kelas negatif", "Tidak berdampak apa pun"]
+    answer: 1
+    explain: "Threshold lebih rendah membuat model lebih 'agresif' menandai positif — false positive ikut naik."
+example:
+  code: |
+    def keputusan(skor):
+        if skor >= 0.7:
+            return "ya"
+        elif skor >= 0.4:
+            return "ragu"
+        else:
+            return "tidak"
+
+    print(keputusan(0.9), keputusan(0.5), keputusan(0.1))
+---
+
+Klasifikasi adalah supervised learning yang outputnya **kategori**. Setiap keputusan bisnis diskret (ya/tidak, kategori produk, tingkat risiko) bisa dipetakan ke masalah klasifikasi.
+
+## 3 Bentuk Klasifikasi
+
+| Bentuk | Jumlah kelas | Contoh |
+|--------|--------------|--------|
+| Biner | tepat 2 | spam/ham, lulus/gagal |
+| Multi-kelas | 3 atau lebih, pilih satu | jenis hewan, kategori tiket |
+| Multi-label | 2 atau lebih bisa aktif bersama | tag film: aksi + komedi |
+
+## Dua Kelas: Biner
+
+```python
+# Risiko berdasarkan skor model
+skor = 0.82
+label = "berisiko" if skor >= 0.5 else "aman"
+print(label)
+```
+
+Ambang 0.5 adalah default; dalam kasus nyata ambang disesuaikan dengan biaya salah prediksi. Menurunkan threshold menaikkan jumlah positif (dan false positive); menaikkannya melakukan kebalikan.
+
+## Decision Tree secara Intuisi
+
+```
+Apakah penghasilan > 5jt?
+  ya -> Apakah riwayat kredit bagus?
+        ya  -> setujui
+        tidak -> tolak
+  tidak -> tolak
+```
+
+Setiap cabang adalah satu pertanyaan pada satu fitur. Kelebihannya: keputusan mudah dijelaskan ke manusia non-teknis.
+
+## Logistic Regression
+
+```python
+import math
+
+def probabilitas(z):
+    return 1 / (1 + math.exp(-z))
+
+print(round(probabilitas(2.0), 2))   # ~0.88
+print(round(probabilitas(-2.0), 2))  # ~0.12
+```
+
+Fungsi sigmoid memetakan skor apa pun ke rentang 0..1 — di situlah asal angka "probabilitas" sebuah prediksi.
+
+## Menilai Hasil Klasifikasi
+
+Ada **4 hasil** untuk setiap prediksi biner:
+
+| Hasil | Kenyataan | Prediksi | Arti |
+|-------|-----------|----------|------|
+| TP | positif | positif | berhasil menemukan kasus |
+| TN | negatif | negatif | berhasil menolak kasus |
+| FP | negatif | positif | alarm palsu |
+| FN | positif | negatif | kasus terlewat |
+
+```python
+kenyataan = [1, 1, 0, 0, 1, 0, 1, 0]
+prediksi  = [1, 0, 0, 0, 1, 1, 1, 0]
+
+tp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 1)
+tn = sum(1 for k, p in zip(kenyataan, prediksi) if k == 0 and p == 0)
+fp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 0 and p == 1)
+fn = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 0)
+
+akurasi = (tp + tn) / len(kenyataan)
+print("TP:", tp, "TN:", tn, "FP:", fp, "FN:", fn)
+print("Akurasi:", round(akurasi, 2))
+```
+
+Dari TP/FP/FN lahir **precision** dan **recall** — dibahas tuntas di bab evaluasi.
+
+## Klasifikasi Multi-kelas
+
+Multi-kelas bisa diselesaikan sebagai banyak biner (one-vs-rest) atau dengan model yang langsung mendukung banyak kelas. Pada kelas tidak seimbang, akurasi bisa menipu: tebakan mayoritas terus-menerus tampak bagus walau kelas penting selalu terlewat.
+
+## Di Dunia Nyata
+
+- **Moderasi komentar** — multi-label menandai spam, ancaman, dan kata kasar secara bersamaan.
+- **Triase rumah sakit** — klasifikasi risiko rendah/sedang/tinggi menentukan antrean pemeriksaan.
+- **Persetujuan transaksi** — skor fraud melewati threshold akan menahan kartu untuk verifikasi.
+- **Routing tiket pelanggan** — pesan diklasifikasikan ke tagihan, teknis, refund, atau lainnya.
+- **Inspeksi produk pabrik** — kamera memberi label lolos/cacat sebelum barang dikemas.
+
+<div class="note">💡 Dalam klasifikasi, tanyakan dulu: "mana yang lebih mahal — false positive atau false negative?" Jawabannya menentukan ambang dan metrik yang dipakai.</div>

@@ -1,0 +1,130 @@
+---
+title: "Output, Pipe, dan Redirect"
+description: "Mengarahkan stdin/stdout/stderr: 3 stream, 6 operator redirect, dan pipeline perintah penyaring"
+order: 3
+quiz:
+  - q: "Simbol untuk mengarahkan output ke file (menimpa) adalah…"
+    options: [">", ">>", "|", "<"]
+    answer: 0
+    explain: "> menimpa isi file, >> menambah di akhir file."
+  - q: "Pipe (|) berfungsi untuk…"
+    options: ["Membuat file baru", "Menghubungkan output satu perintah ke input perintah lain", "Menghapus direktori", "Menghentikan proses"]
+    answer: 1
+    explain: "Pipeline meneruskan stream stdout ke stdin perintah berikutnya."
+  - q: "Perintah untuk mencari teks dalam file adalah…"
+    options: ["find", "grep", "sort", "wc"]
+    answer: 1
+    explain: "grep mencocokkan pola pada baris file atau output."
+  - q: "2> pada perintah berarti…"
+    options: ["Mengarahkan error (stderr) ke file", "Output biasa ke file", "Membaca input ganda", "Menjalankan perintah dua kali"]
+    answer: 0
+    explain: "Nomor 1 = stdout, nomor 2 = stderr. 2> menangkap pesan error."
+  - q: "Perintah yang menghitung jumlah baris adalah…"
+    options: ["count", "wc", "lines", "sum"]
+    answer: 1
+    explain: "wc -l menghitung baris; wc tanpa opsi menghitung baris, kata, dan karakter."
+example:
+  code: |
+    ls -la > daftar.txt
+    cat daftar.txt | grep ".sh" | wc -l
+    echo "pesan error" 2> error.log
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Menguasai arus data di terminal membuat skrip terasa seperti pipa ledeng: data mengalir dari perintah ke perintah tanpa file sementara, dan hasil akhir bisa disimpan permanen ke file.
+
+## Tiga Stream: stdin, stdout, stderr
+
+Setiap proses Linux punya **3 stream** yang selalu terbuka:
+
+| Nomor | Nama | Fungsi | Arah |
+| --- | --- | --- | --- |
+| 0 | stdin | input (keyboard, file) | masuk |
+| 1 | stdout | hasil normal | keluar |
+| 2 | stderr | pesan error | keluar |
+
+Membedakan stdout dan stderr penting saat skrip otomatis: log normal boleh dipotong, pesan error harus tetap terlihat.
+
+## Enam Operator Redirect
+
+```bash
+echo "Halo" > sapa.txt        # timpa file
+echo "Lagi" >> sapa.txt       # tambah di akhir file
+sort < daftar.txt             # baca input dari file
+grep "x" app.log 2> err.txt   # stderr ke file, stdout tetap layar
+program > semua.log 2>&1      # gabung stdout+stderr ke satu file
+program &> semua.log          # cara singkat untuk gabung keduanya
+```
+
+| Operator | Fungsi |
+| --- | --- |
+| `>` | tulis stdout, timpa file |
+| `>>` | tulis stdout, tambah di akhir |
+| `<` | ambil stdin dari file |
+| `2>` | tulis stderr ke file |
+| `2>&1` | arahkan stderr mengikuti stdout |
+| `&>` | arahkan stdout dan stderr sekaligus |
+
+`>` membuang isi lama tanpa peringatan. Kalau ingin menambah baris, wajib pakai `>>`.
+
+## Pipe Antar Perintah
+
+```bash
+ls -la | grep ".sh"
+cat data.txt | sort | uniq | wc -l
+```
+
+Setiap perintah menerima hasil sebelumnya sebagai input. Pipeline bisa sedalam yang kamu butuh — tidak ada batas jumlah tahap.
+
+## Delapan Perintah Penyaring
+
+Ini kotak perkakas utama saat menyusun pipeline:
+
+| Perintah | Fungsi | Contoh |
+| --- | --- | --- |
+| `grep` | saring baris yang cocok pola | `grep -i "error" app.log` |
+| `sort` | urutkan baris | `sort nama.txt` |
+| `uniq` | hapus baris berurutan kembar | `sort \| uniq` |
+| `wc` | hitung baris/kata/karakter | `wc -l file.txt` |
+| `head` | ambil baris awal | `head -n 5 file.txt` |
+| `tail` | ambil baris akhir | `tail -f app.log` |
+| `cut` | ambil kolom tertentu | `cut -d: -f1 /etc/passwd` |
+| `tr` | translasi/hapus karakter | `tr 'a-z' 'A-Z'` |
+
+`uniq` hanya menghapus duplikat yang **bersebelahan** — karena itu pola klasiknya selalu `sort | uniq`.
+
+## Pola Pipeline Klasik
+
+```bash
+# berapa baris error hari ini?
+grep -c "ERROR" app.log
+
+# 3 user paling sering muncul di log
+grep "login" app.log | awk '{print $3}' | sort | uniq -c | sort -rn | head -n 3
+
+# 5 file terbesar di direktori ini
+du -sh * | sort -rh | head -n 5
+```
+
+Pola `hitung → urutkan → ambil-n` begitu umum sampai layak dihafal: `sort | uniq -c | sort -rn | head -n 3`.
+
+## Di Dunia Nyata
+
+1. **Audit log error malam ini** — `grep -i "error" /var/log/app.log | tail -n 50` menampilkan 50 kejadian terakhir tanpa membuka jutaan baris.
+2. **Laporan kelengkapan deploy** — `ls dist/ | wc -l` menghitung jumlah file hasil build sebelum diunggah.
+3. **Backup yang hanya mencatat error** — `mysqldump ... > backup.sql 2> backup.err` memisahkan data dari pesan error untuk ditinjau terpisah.
+4. **Cek port aplikasi** — `ss -tulnp | grep :8080` langsung menunjukkan proses yang mendengarkan port 8080.
+5. **Membersihkan data CSV** — `cut -d, -f2 data.csv | tr -d '\r' | sort | uniq` mengekstrak kolom kedua, membersihkan karakter Windows, lalu menghitung nilai unik.
+
+<div class="note">💡 Pipe hanya meneruskan stdout, bukan stderr. Kalau pesan error "hilang" di pipeline, tambahkan `2>&1` sebelum tanda pipe agar ikut terbawa ke tahap berikutnya.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+echo "alpha"
+echo "beta"
+echo "gamma" > sementara.txt
+cat sementara.txt
+echo "delta" >> sementara.txt
+wc -l < sementara.txt
+ls -la | wc -l
+grep -c "" sementara.txt`} />

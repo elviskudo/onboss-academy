@@ -1,0 +1,131 @@
+---
+title: "Agregasi dan GROUP BY"
+description: "Menghitung ringkasan data: COUNT, SUM, AVG, GROUP BY, dan HAVING"
+order: 4
+quiz:
+  - q: "Fungsi agregat yang menghitung jumlah baris adalah…"
+    options: ["SUM", "AVG", "COUNT", "MAX"]
+    answer: 2
+    explain: "COUNT menghitung jumlah baris; SUM menjumlahkan nilai, AVG menghitung rata-rata."
+  - q: "Ada berapa fungsi agregat inti yang wajib dikuasai?"
+    options: ["3", "4", "5", "7"]
+    answer: 2
+    explain: "5 fungsi inti: COUNT, SUM, AVG, MIN, MAX — sisanya hanya varian seperti COUNT(DISTINCT ...)."
+  - q: "Klausa HAVING berfungsi untuk…"
+    options: ["Menyaring hasil agregat GROUP BY", "Membuat tabel baru", "Mengurutkan kolom", "Mengganti WHERE"]
+    answer: 0
+    explain: "WHERE menyaring baris sebelum dikelompokkan; HAVING menyaring grup setelah agregasi."
+  - q: "GROUP BY dept bersama SELECT dept, COUNT(*) artinya…"
+    options: ["Menghitung jumlah karyawan per departemen", "Menghitung semua karyawan", "Menghapus departemen", "Mengurutkan departemen"]
+    answer: 0
+    explain: "Baris dikelompokkan per dept, lalu COUNT dihitung untuk tiap grup."
+  - q: "SELECT dept, SUM(gaji) FROM karyawan GROUP BY dept tanpa kolom lain berarti…"
+    options: ["Error karena kurang HAVING", "Valid — dept wajib di GROUP BY, gaji dibungkus agregat", "Error karena SUM", "Harus pakai ORDER BY"]
+    answer: 1
+    explain: "Aturan emas: kolom non-agregat di SELECT harus ikut GROUP BY."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata_rata
+    FROM karyawan
+    GROUP BY dept
+    ORDER BY rata_rata DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi **agregat** meringkas banyak baris menjadi satu angka — padanan "mengiterasi list lalu menjumlahkan" di bahasa pemrograman, tapi dilakukan database dalam satu langkah. Digabung `GROUP BY`, kamu bisa membuat laporan ringkas tanpa menulis satu pun perulangan.
+
+## 5 Fungsi Agregat Inti
+
+| Fungsi | Hitungan | Hasil pada 8 Karyawan |
+|--------|----------|-----------------------|
+| `COUNT(*)` | jumlah baris | 8 |
+| `SUM(kolom)` | total nilai | 77.800.000 |
+| `AVG(kolom)` | rata-rata | 9.725.000 |
+| `MIN(kolom)` | nilai terkecil | 7.000.000 (Joko) |
+| `MAX(kolom)` | nilai terbesar | 12.000.000 (Dewi) |
+
+```sql
+SELECT COUNT(*) AS jumlah_karyawan,
+       SUM(gaji) AS total_gaji,
+       ROUND(AVG(gaji)) AS rata_rata,
+       MIN(gaji) AS terendah,
+       MAX(gaji) AS tertinggi
+FROM karyawan;
+```
+
+Kelima fungsi ini meringkas seluruh baris jadi satu baris hasil. Dua varian penting: `COUNT(kolom)` menghitung hanya baris dengan nilai tidak-NULL, dan `COUNT(DISTINCT dept)` menghitung nilai unik (4 departemen di data kita).
+
+## Mengelompokkan dengan GROUP BY
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, SUM(gaji) AS total
+FROM karyawan
+GROUP BY dept
+ORDER BY total DESC;
+```
+
+Baris dikelompokkan berdasarkan `dept`, lalu fungsi dihitung **per grup**. Di data kita:
+
+| dept | jumlah | total gaji |
+|------|-------|------------|
+| Engineering | 4 | 38.500.000 |
+| Data | 2 | 19.800.000 |
+| Product | 1 | 12.000.000 |
+| Design | 1 | 7.500.000 |
+
+Aturan emas: setiap kolom di SELECT yang bukan fungsi agregat harus ikut di GROUP BY.
+
+## Menyaring Grup dengan HAVING
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata_rata
+FROM karyawan
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY rata_rata DESC;
+```
+
+`WHERE` menyaring baris **sebelum** dikelompokkan; `HAVING` menyaring **hasil grup**. Di sini hanya departemen berisi 2 orang atau lebih yang tampil: Engineering (4) dan Data (2) — Product dan Design gugur.
+
+## Menggabungkan WHERE, GROUP BY, HAVING
+
+```sql
+SELECT dept, COUNT(*) AS jumlah
+FROM karyawan
+WHERE gaji >= 8000000
+GROUP BY dept
+HAVING COUNT(*) >= 1
+ORDER BY jumlah DESC;
+```
+
+Urutan logis: `FROM` → `WHERE` (saring baris) → `GROUP BY` (kelompokkan) → `HAVING` (saring grup) → `SELECT` → `ORDER BY`. Karena WHERE dulu, hanya 7 karyawan (Joko tersaring) yang masuk perhitungan.
+
+## Agregat dengan JOIN dan Subquery
+
+```sql
+SELECT p.nama AS proyek, p.budget, k.nama AS ketua
+FROM proyek p
+JOIN karyawan k ON p.lead_id = k.id
+WHERE p.budget > (SELECT AVG(budget) FROM proyek);
+```
+
+Fungsi agregat bisa dipakai di subquery untuk membandingkan tiap baris dengan nilai ringkasan. Pola ini menggantikan perulangan "kalau budget di atas rata-rata, tambahkan ke list" — cukup satu query.
+
+## Di Dunia Nyata
+
+- **Dashboard penjualan harian**: `SELECT tanggal, SUM(total) FROM pesanan GROUP BY tanggal` — grafik omzet per hari.
+- **Menentukan SKU terlaris toko**: `GROUP BY produk_id HAVING COUNT(*) >= 100` memilih produk dengan minimal 100 transaksi.
+- **Menghitung karyawan per divisi untuk rapat HR**: `COUNT(*)` per `dept`, plus `ROUND(AVG(gaji))` sebagai pembanding upah.
+- **Deteksi data ganda saat impor**: `GROUP BY email HAVING COUNT(*) > 1` menemukan email yang tercatat dua kali.
+
+<div class="note">💡 GROUP BY tanpa HAVING tetap valid — HAVING bersifat opsional. Sebaliknya, fungsi agregat pada SELECT wajib punya GROUP BY (atau memang dimaksudkan meringkas seluruh tabel).</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT dept,
+       COUNT(*) AS jumlah,
+       MIN(gaji) AS termurah,
+       MAX(gaji) AS termahal,
+       ROUND(AVG(gaji)) AS rata_rata
+FROM karyawan
+GROUP BY dept
+ORDER BY rata_rata DESC;`} />

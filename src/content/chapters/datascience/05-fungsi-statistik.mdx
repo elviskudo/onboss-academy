@@ -1,0 +1,159 @@
+---
+title: "Fungsi Statistik Sederhana"
+description: "Rata-rata, median, modus, dan sebaran — dihitung sendiri tanpa library"
+order: 5
+quiz:
+  - q: "Rata-rata (mean) dihitung dengan…"
+    options: ["Jumlah semua nilai dibagi jumlah data", "Nilai tengah data", "Nilai yang paling sering muncul", "Nilai terbesar dikurangi terkecil"]
+    answer: 0
+    explain: "Mean = total seluruh nilai / banyaknya data."
+  - q: "Median adalah…"
+    options: ["Nilai paling sering muncul", "Nilai tengah setelah data diurutkan", "Selisih nilai terbesar dan terkecil", "Jumlah nilai dibagi dua"]
+    answer: 1
+    explain: "Median diambil dari data yang sudah diurutkan; bila jumlah data genap, median = rata-rata dua nilai tengah."
+  - q: "Untuk data [3, 5, 5, 7, 9], modusnya adalah…"
+    options: ["3", "5", "7", "9"]
+    answer: 1
+    explain: "5 muncul dua kali — lebih sering daripada nilai lain."
+  - q: "Range data adalah…"
+    options: ["Nilai terbesar - nilai terkecil", "Jumlah semua nilai", "Median - mean", "Nilai tengah dikali 2"]
+    answer: 0
+    explain: "Range (rentang) menunjukkan seberapa jauh data tersebar dari ujung ke ujung."
+  - q: "Bila ada nilai pencilan ekstrem, ringkasan yang lebih representatif adalah…"
+    options: ["Mean", "Median", "Range", "Jumlah data"]
+    answer: 1
+    explain: "Median tidak terpengaruh nilai ekstrem, sehingga lebih aman untuk data dengan pencilan."
+example:
+  code: |
+    data = [70, 75, 75, 80, 95]
+    print("Mean :", sum(data) / len(data))
+    urut = sorted(data)
+    print("Median:", urut[len(data) // 2])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Statistik deskriptif** merangkum sekumpulan angka menjadi beberapa angka penting. Di bab ini kita menghitungnya sendiri agar paham cara kerjanya.
+
+## 4 Ringkasan Utama
+
+| Ukuran | Rumus sederhana | Menjawab |
+|--------|-----------------|----------|
+| Mean | `jumlah nilai / banyak data` | berapa rata-ratanya |
+| Median | nilai tengah setelah diurut | angka tengah, tahan pencilan |
+| Modus | nilai paling sering muncul | yang paling umum |
+| Range | `maks - mins` | seberapa lebar sebaran |
+
+## Mean (Rata-rata)
+
+```python
+data = [70, 75, 75, 80, 95]
+
+mean = sum(data) / len(data)
+print("Mean:", mean)
+```
+
+`sum()` adalah fungsi bawaan Python untuk menjumlahkan seluruh elemen numerik.
+
+## Median (Nilai Tengah)
+
+```python
+urut = sorted(data)
+n = len(urut)
+
+if n % 2 == 1:
+    median = urut[n // 2]
+else:
+    median = (urut[n // 2 - 1] + urut[n // 2]) / 2
+
+print("Median:", median)
+```
+
+`n % 2` mengecek ganjil/genap. Ingat selalu **urutkan dulu** sebelum mengambil nilai tengah.
+
+## Modus (Nilai Terpopuler)
+
+```python
+hitung = {}
+for n in data:
+    hitung[n] = hitung.get(n, 0) + 1
+
+modus = max(hitung, key=hitung.get)
+print("Modus:", modus)
+```
+
+`max` dengan `key=hitung.get` memilih kunci dengan nilai terbesar — trik ringkas yang sering dipakai.
+
+## Range dan Sebaran
+
+```python
+rentang = max(data) - min(data)
+print("Min:", min(data))
+print("Max:", max(data))
+print("Range:", rentang)
+```
+
+Range lebar berarti data tersebar luas; range sempit berarti data terkonsentrasi di sekitar nilai yang sama.
+
+2 ukuran sebaran lanjutan bila perlu ketelitian lebih:
+
+```python
+# Varian = rerata kuadrat jarak ke mean
+varian = sum((x - mean) ** 2 for x in data) / len(data)
+
+# Simpangan baku = akar varian (satuan sama dengan data)
+simpangan = varian ** 0.5
+print("Varian:", round(varian, 2))
+print("Simpangan baku:", round(simpangan, 2))
+```
+
+## Membungkus dalam Fungsi
+
+```python
+def ringkas(angka):
+    urut = sorted(angka)
+    n = len(urut)
+    med = urut[n // 2] if n % 2 == 1 else (urut[n // 2 - 1] + urut[n // 2]) / 2
+    return {
+        "mean": sum(angka) / n,
+        "median": med,
+        "min": urut[0],
+        "max": urut[-1],
+    }
+
+print(ringkas([10, 20, 30, 40]))
+```
+
+Fungsi membuat analisis bisa dipakai ulang pada dataset berikutnya tanpa menyalin kode.
+
+## Di Dunia Nyata
+
+- **Rata-rata nilai ujian** — guru membandingkan mean kelasnya terhadap rata-rata sekolah.
+- **Gaji karyawan** — HR memakai **median**, bukan mean, karena direktur bisa menaikkan rata-rata secara timpang.
+- **Standar deviasi suhu kota** — BMKG memantau sebaran suhu harian untuk deteksi anomali.
+- **Harga properti listing** — makelar melaporkan min/max/median tiga angka sekaligus agar pembeli paham rentang.
+- **Cek kualitas produksi** — simpangan baku diameter produk dipakai untuk menentukan batas toleransi mesin.
+
+<div class="note">💡 Selalu laporkan mean bersama median. Bila keduanya jauh berbeda, biasanya ada nilai pencilan yang menarik perhatian — bisa peluang, bukan kesalahan input.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [72, 85, 91, 66, 85, 78, 85, 99]
+
+mean = sum(data) / len(data)
+
+urut = sorted(data)
+n = len(urut)
+if n % 2 == 1:
+    median = urut[n // 2]
+else:
+    median = (urut[n // 2 - 1] + urut[n // 2]) / 2
+
+hitung = {}
+for x in data:
+    hitung[x] = hitung.get(x, 0) + 1
+modus = max(hitung, key=hitung.get)
+
+print("Data urut :", urut)
+print("Mean      :", round(mean, 2))
+print("Median    :", median)
+print("Modus     :", modus)
+print("Range     :", max(data) - min(data))`} />

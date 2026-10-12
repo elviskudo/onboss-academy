@@ -1,0 +1,115 @@
+---
+title: "JOIN di PostgreSQL"
+description: "Menggabungkan tabel: INNER, LEFT, dan relasi yang terjaga"
+order: 4
+quiz:
+  - q: "INNER JOIN proyek dengan karyawan pada p.lead_id = k.id menampilkan…"
+    options: ["Semua baris dari kedua tabel", "Hanya proyek yang punya ketua cocok di karyawan", "Semua karyawan", "Hanya baris NULL"]
+    answer: 1
+    explain: "INNER JOIN mengeluarkan hanya baris yang memenuhi syarat ON di kedua tabel."
+  - q: "LEFT JOIN karyawan (kiri) dengan proyek menjamin…"
+    options: ["Semua karyawan tampil, proyek bisa NULL", "Semua proyek tampil", "Tidak ada NULL sama sekali", "Hasil selalu 3 baris"]
+    answer: 0
+    explain: "LEFT JOIN menjamin seluruh baris tabel kiri tampil; yang tanpa pasangan diisi NULL."
+  - q: "Kolom penghubung proyek → karyawan adalah…"
+    options: ["proyek.budget → karyawan.gaji", "proyek.lead_id → karyawan.id", "proyek.nama → karyawan.nama", "Tidak ada"]
+    answer: 1
+    explain: "lead_id menyimpan id karyawan ketua — kunci relasi antar kedua tabel."
+  - q: "Menulis syarat tabel kanan di WHERE saat LEFT JOIN akan…"
+    options: ["Tidak berpengaruh", "Menggandakan baris", "Error", "Mengubah hasil menjadi seperti INNER JOIN"]
+    answer: 3
+    explain: "WHERE yang menolak NULL pada tabel kanan membatalkan jaminan LEFT JOIN — pindahkan syarat ke ON atau gunakan INNER JOIN."
+  - q: "Alias tabel pada JOIN berguna untuk…"
+    options: ["Memperpendek penulisan dan menghindari ambiguitas nama kolom", "Menghapus tabel", "Mengubah tipe data", "Mengurutkan otomatis"]
+    answer: 0
+    explain: "Dengan alias p dan k, kolom ditulis p.budget dan k.nama — jelas dan singkat."
+example:
+  code: |
+    SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+    FROM proyek p
+    JOIN karyawan k ON p.lead_id = k.id
+    ORDER BY p.budget DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Relasi antar tabel adalah alasan database relasional eksis. Di PostgreSQL, `JOIN` menggabungkan baris terkait dengan sintaks standar yang bersih.
+
+## Apa itu JOIN?
+
+JOIN menggabungkan baris dari dua (atau lebih) tabel berdasarkan kunci pencocokan — biasanya foreign key ke primary key. Tanpa JOIN, aplikasi harus membaca dua tabel terpisah lalu menggabungkannya di memori; dengan JOIN, database mengerjakannya dalam satu query.
+
+Terdapat **5 jenis JOIN** yang perlu dikuasai:
+
+| Jenis | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| INNER JOIN | hanya baris yang cocok di kedua sisi | data wajib lengkap (pesanan + produk) |
+| LEFT JOIN | semua baris kiri + NULL di kanan | daftar lengkap + data terkait kalau ada |
+| RIGHT JOIN | semua baris kanan + NULL di kiri | jarang; biasanya cukup ditulis ulang sebagai LEFT |
+| FULL OUTER JOIN | semua baris kedua sisi | audit data yatim dua arah |
+| CROSS JOIN | hasil kali baris (pasangan semua) | matriks, kombinasi produk |
+
+Di praktik harian, **INNER dan LEFT menguasai lebih dari 90% kasus**.
+
+## Dua Tabel, Satu Relasi
+
+Tabel `proyek` menyimpan `lead_id` — pointer ke `karyawan.id`. Pertanyaan "siapa ketua tiap proyek?" dijawab dengan menggabungkan keduanya lewat ON clause.
+
+## INNER JOIN
+
+```sql
+SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+FROM proyek p
+JOIN karyawan k ON p.lead_id = k.id
+ORDER BY p.budget DESC;
+```
+
+`JOIN` tanpa spesifikasi = INNER JOIN. Hasilnya 3 baris (satu per proyek) lengkap dengan nama ketua — hanya baris dengan kecocokan di kedua tabel yang keluar.
+
+## LEFT JOIN
+
+```sql
+SELECT k.nama, k.dept, p.nama AS proyek
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+ORDER BY k.id;
+```
+
+Semua 8 karyawan tampil; lima yang tidak memimpin proyek mendapat NULL di kolom proyek. Pola "daftar lengkap + data terkait kalau ada" ini sangat umum di aplikasi.
+
+## Menghitung dari Hasil JOIN
+
+```sql
+SELECT k.dept, COUNT(p.id) AS jumlah_proyek, COALESCE(SUM(p.budget), 0) AS total_budget
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+GROUP BY k.dept
+ORDER BY total_budget DESC;
+```
+
+`COUNT(p.id)` tidak menghitung NULL; `COALESCE(SUM(p.budget), 0)` mengubah grup tanpa proyek jadi 0, bukan NULL — laporan tetap rapi.
+
+## NATURAL JOIN dan USING: Varian Singkat
+
+```sql
+SELECT nama, budget
+FROM proyek
+JOIN karyawan ON lead_id = id;  -- USING(id) juga bisa jika nama kolom sama
+```
+
+`USING(kolom)` dipakai ketika kedua tabel punya nama kolom sama persis; `NATURAL JOIN` menemukan kolom bersama otomatis — praktis, tapi berisiko saat skema berubah. Untuk kode produksi, `ON` eksplisit lebih aman.
+
+## Di Dunia Nyata
+
+- **Detail pesanan** — INNER JOIN `pesanan` dengan `produk` menampilkan nama produk tiap baris keranjang belanja.
+- **Karyawan tanpa proyek** — LEFT JOIN memunculkan seluruh HRD meski sebagian belum pernah memimpin proyek.
+- **Laporan penjualan per kota** — JOIN `pesanan` dengan `pelanggan` lalu GROUP BY kota menghasilkan omzet per wilayah.
+- **Audit data yatim** — FULL OUTER JOIN menemukan proyek yang merujuk ketua tidak ada, dan karyawan yang ID-nya tidak dipakai proyek mana pun.
+- **Matriks jadwal** — CROSS JOIN hari × jam kerja membangun template kalender kosong yang nanti diisi aplikasi.
+
+<div class="note">💡 Di Postgres, JOIN menjamin tipe kompatibel: meng-join INTEGER ke TEXT langsung error — relasi yang salah ketik terdeteksi sebelum jadi kebocoran data.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT k.nama AS ketua, k.dept, p.nama AS proyek, p.budget
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+ORDER BY k.id;`} />

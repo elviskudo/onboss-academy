@@ -1,0 +1,154 @@
+---
+title: "OOP & Proyek Mini"
+description: "4 pilar OOP, class, method, pewarisan — plus manajemen tugas"
+order: 10
+quiz:
+  - q: "Method __init__ berfungsi untuk…"
+    options: ["Menghapus object", "Inisialisasi object baru (constructor)", "Mengimpor library", "Mencetak object"]
+    answer: 1
+    explain: "Dipanggil otomatis saat Tugas(...) dibuat. self merujuk object itu sendiri."
+  - q: "Parameter pertama method class biasanya…"
+    options: ["self", "this", "obj", "cls"]
+    answer: 0
+    explain: "Python memakai self (eksplisit) — bukan this seperti Java/JS."
+  - q: "Python punya 4 pilar OOP — yang TIDAK baku di Python adalah…"
+    options: ["Inheritance", "Polymorphism", "Encapsulation (hanya konvensi _nama)", "Semua baku"]
+    answer: 2
+    explain: "Python tidak punya private ketat; _nama/__nama hanya nama-mangling & konvensi komunitas."
+  - q: "__str__ menentukan…"
+    options: ["Representasi teks object saat di-print", "Ukuran object", "Nama file", "Kecepatan object"]
+    answer: 0
+    explain: "Tanpa __str__, print(object) tampil <__main__.Tugas object at 0x...> yang jelek."
+  - q: "Dalam proyek manajemen tugas, status 'selesai' paling tepat disimpan sebagai…"
+    options: ["Variabel global", "Teks di nama tugas", "Atribut object / field dict", "File txt terpisah"]
+    answer: 2
+    explain: "Data objek (self.daftar / dict['selesai']) — satu sumber kebenaran, mudah diubah & di-query."
+example:
+  code: |
+    class Tugas:
+        def __init__(self, judul):
+            self.judul = judul
+            self.selesai = False
+
+        def tandai(self):
+            self.selesai = True
+
+        def __str__(self):
+            status = "✔" if self.selesai else "○"
+            return f"{status} {self.judul}"
+
+    t = Tugas("Belajar Python")
+    print(t)
+    t.tandai()
+    print(t)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+OOP mengelompokkan data + perilaku jadi `class`. Python mendukung **4 pilar OOP** (dengan catatan jujur soal encapsulation) lewat sintaks yang ringkas.
+
+## Class & Object
+
+```python
+class Siswa:
+    def __init__(self, nama, nilai):
+        self.nama = nama
+        self.nilai = nilai
+
+    def lulus(self):
+        return self.nilai >= 70
+
+    def __str__(self):
+        return f"{self.nama} ({self.nilai}) → {'LULUS' if self.lulus() else 'REMED'}"
+
+s = Siswa("Sari", 90)
+print(s)
+```
+
+`class` = cetak biru, object = hasil cetak (`Siswa("Sari", 90)`). `__init__` = constructor, `__str__` = tampilan saat di-print, `__repr__` = representasi untuk developer.
+
+## 4 Pilar OOP di Python
+
+| Pilar | Makna | Status & cara di Python |
+|---|---|---|
+| Encapsulation | sembunyikan detail internal | **Konvensi**: `_nama` (jangan di luar class), `__nama` (name mangling) — tidak ada private ketat |
+| Inheritance | class anak memakai induk | `class Kucing(Hewan):` — ada multi-level & MRO |
+| Polymorphism | metode sama, perilaku beda | method override + duck typing ("kalau jalan seperti bebek…") |
+| Abstraction | sembunyikan kompleksitas | `abc.ABC` + `@abstractmethod` untuk interface wajib |
+
+```python
+class Hewan:
+    def bersuara(self):
+        return "..."
+
+class Kucing(Hewan):
+    def bersuara(self):
+        return "Meong!"
+```
+
+## Method & Properti
+
+```python
+class Lingkaran:
+    def __init__(self, r):
+        self.r = r
+
+    @property
+    def luas(self):
+        return 3.14 * self.r ** 2
+
+print(Lingkaran(7).luas)
+```
+
+Ada **3 jenis method**: instance (`self`), `@classmethod` (butuh `cls`, untuk factory), dan `@staticmethod` (tanpa self/cls, utilitas murni). `@property` membuat atribut terbaca seperti field tapi dihitung otomatis.
+
+## Constructor & Destructor
+
+`__init__` dipanggil saat object dibuat; `__del__` (destructor) dipanggil saat dihapus GC — **jarang dipakai**. Untuk resource (file, koneksi), Python lebih suka context manager: `__enter__`/`__exit__`, dipakai lewat `with`.
+
+## Kapan OOP vs Prosedural
+
+- **OOP**: banyak state berubah + perilaku terkait (akun bank, keranjang belanja, karakter game, model data).
+- **Prosedural/fungsional**: skrip sekali jalan, transformasi data, logika matematis murni.
+- Python fleksibel: kelas bisa dipakai tanpa pewarisan, dan fungsi bebas di dalam class — pakai sesuai kebutuhan, bukan ritual.
+
+## Proyek Akhir: Manajemen Tugas
+
+Gabungkan class, list, method, dan string formatting jadi aplikasi konsol nyata. Fitur wajib yang sudah ada: tambah tugas, tandai selesai, tampilkan daftar, hitung progres. Latihan lanjutan: hapus tugas, simpan/ muat dari JSON (chapter 8), dan cari tugas dengan `for` + `if` (chapter 4).
+
+## Di Dunia Nyata
+
+- Class `Karyawan` menyimpan gaji + method `hitungTHR()` — data dan aturannya tidak tercecer.
+- Model `Produk` dengan `@property harga_setelah_diskon` dipakai ulang di keranjang & halaman checkout.
+- Game: class `Pemain` pewarisan `Karakter` — statistik beda, cara serang sama.
+- Aplikasi tiket: class `Pesanan` dengan status (`dibayar` → `selesai`) memakai method, bukan variabel global yang bisa lupa di-set.
+
+<div class="note">💡 Python percaya pada duck typing: yang penting object punya method yang dibutuhkan, bukan keturunannya. Tulis class saat ada **state + aturan yang hidup bersama** — kalau hanya satu fungsi murni, cukup `def` biasa.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`class ManajemenTugas:
+    def __init__(self):
+        self.daftar = []
+
+    def tambah(self, judul):
+        self.daftar.append({"judul": judul, "selesai": False})
+        print(f"➕ Ditambahkan: {judul}")
+
+    def selesaikan(self, i):
+        if 0 <= i < len(self.daftar):
+            self.daftar[i]["selesai"] = True
+            print(f"✔ Selesai: {self.daftar[i]['judul']}")
+
+    def tampilkan(self):
+        if not self.daftar:
+            print("(belum ada tugas)")
+        for i, t in enumerate(self.daftar, 1):
+            ikon = "✔" if t["selesai"] else "○"
+            print(f"{ikon} {i}. {t['judul']}")
+
+app = ManajemenTugas()
+app.tambah("Belajar Python")
+app.tambah("Buat proyek")
+app.tambah("Review kode")
+app.selesaikan(0)
+app.tampilkan()
+print(f"Progres: {sum(t['selesai'] for t in app.daftar)}/{len(app.daftar)}")`} />

@@ -1,0 +1,120 @@
+---
+title: "Tipe Data MySQL"
+description: "Memilih tipe kolom yang tepat: angka, teks, waktu, biner, JSON, dan spasial"
+order: 2
+quiz:
+  - q: "Tipe yang tepat untuk menyimpan uang adalah…"
+    options: ["FLOAT", "DECIMAL", "TEXT", "ENUM"]
+    answer: 1
+    explain: "DECIMAL menyimpan angka presisi; FLOAT dapat mengalami pembulatan biner."
+  - q: "VARCHAR(50) artinya…"
+    options: ["Selalu 50 byte", "Angka 50 digit", "Teks maksimal 50 karakter", "Wajib kosong"]
+    answer: 2
+    explain: "VARCHAR menyesuaikan panjang isi sampai batas maksimum 50 karakter."
+  - q: "Berapa keluarga tipe data MySQL yang dibahas?"
+    options: ["4", "5", "6", "8"]
+    answer: 2
+    explain: "6 keluarga: numerik, teks, tanggal/waktu, biner, JSON, dan spasial."
+  - q: "TIMESTAMP MySQL berbeda dari DATETIME karena…"
+    options: ["Tidak menyimpan waktu", "Dikonversi mengikuti zona waktu sesi", "Selalu teks", "Rentangnya lebih luas"]
+    answer: 1
+    explain: "TIMESTAMP disimpan sebagai UTC lalu dikonversi saat baca/tulis; DATETIME tidak."
+  - q: "BOOLEAN di MySQL adalah alias untuk…"
+    options: ["TINYINT(1)", "BIT(1) selalu", "VARCHAR(5)", "JSON"]
+    answer: 0
+    explain: "MySQL memetakan BOOLEAN ke TINYINT(1): 0 false, nonzero true."
+example:
+  code: |
+    SELECT nama,
+           CAST(gaji AS REAL) / 1000000 AS gaji_juta,
+           CASE WHEN gaji >= 10000000 THEN 'Tinggi' ELSE 'Normal' END AS kategori
+    FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tipe data menentukan nilai yang sah, rentang, ukuran penyimpanan, serta operasi yang dapat dilakukan pada kolom. Pemilihan tipe yang tepat mencegah data rusak dan membuat index lebih efisien.
+
+## 6 Keluarga Tipe Data MySQL
+
+| Keluarga | Tipe Utama | Fungsi/Arti | Contoh Penggunaan |
+|----------|------------|-------------|--------------------|
+| Numerik | `INT`, `BIGINT`, `DECIMAL`, `FLOAT`, `DOUBLE` | bilangan | id, jumlah, uang, sensor |
+| Teks | `CHAR`, `VARCHAR`, `TEXT`, `ENUM`, `SET` | karakter/pilihan | nama, artikel, status |
+| Tanggal/waktu | `DATE`, `TIME`, `DATETIME`, `TIMESTAMP`, `YEAR` | waktu kalender | lahir, created_at |
+| Biner | `BINARY`, `VARBINARY`, `BLOB`, `BIT` | byte mentah/bit | hash, payload kecil |
+| JSON | `JSON` | dokumen tervalidasi | atribut fleksibel |
+| Spasial | `POINT`, `LINESTRING`, `POLYGON`, `GEOMETRY` | koordinat/geometri | lokasi dan peta |
+
+Jumlah tipe spesifik lebih banyak karena varian ukuran (`TINYINT`, `SMALLINT`, `MEDIUMINT`, `INT`, `BIGINT`) dan kapasitas (`TINYTEXT` sampai `LONGTEXT`). Tabel di atas mengelompokkan semuanya ke 6 keluarga yang stabil.
+
+## 8 Tipe Numerik Utama
+
+| Tipe | Rentang/Sifat | Contoh | Buat Apa |
+|------|---------------|--------|----------|
+| `TINYINT` | -128..127 signed | `aktif TINYINT` | status kecil |
+| `SMALLINT` | -32.768..32.767 | `tahun SMALLINT` | angka terbatas |
+| `MEDIUMINT` | sekitar ±8,3 juta | `views MEDIUMINT` | hitungan menengah |
+| `INT` | sekitar ±2,1 miliar | `id INT` | id umum |
+| `BIGINT` | sekitar ±9,22 kuintiliun | `event_id BIGINT` | skala sangat besar |
+| `DECIMAL(p,s)` | desimal eksak | `DECIMAL(15,2)` | uang |
+| `FLOAT` | pecahan aproksimasi 4 byte | `suhu FLOAT` | sensor |
+| `DOUBLE` | pecahan aproksimasi 8 byte | `koordinat DOUBLE` | sains |
+
+`UNSIGNED` menghapus nilai negatif dan memperbesar batas positif; gunakan hanya jika domain memang tidak pernah negatif. `DECIMAL(15,2)` menyimpan 15 digit total, 2 di belakang koma.
+
+```sql
+CREATE TABLE gaji_mysql (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  pokok DECIMAL(15,2) NOT NULL,
+  bonus DECIMAL(15,2) NOT NULL DEFAULT 0.00
+);
+```
+
+## Teks dan Pilihan
+
+| Tipe | Sifat | Kapan Dipakai |
+|------|-------|---------------|
+| `CHAR(n)` | panjang tetap | kode negara `ID`, hash tetap |
+| `VARCHAR(n)` | panjang variabel | nama, email, slug |
+| `TEXT` | teks sampai 65.535 byte | deskripsi/artikel |
+| `ENUM` | satu nilai dari daftar | status stabil |
+| `SET` | beberapa nilai dari daftar | label kecil; tabel relasi lebih fleksibel |
+
+`VARCHAR(100)` membatasi 100 karakter, bukan selalu 100 byte. Ukuran byte dipengaruhi encoding seperti `utf8mb4`.
+
+## 5 Tipe Tanggal/Waktu
+
+| Tipe | Isi | Catatan |
+|------|-----|---------|
+| `DATE` | tanggal | 1000-01-01..9999-12-31 |
+| `TIME` | waktu/durasi | dapat lebih dari 24 jam |
+| `DATETIME` | tanggal + waktu | tanpa konversi zona waktu |
+| `TIMESTAMP` | momen UTC | dikonversi mengikuti timezone sesi |
+| `YEAR` | tahun | 1901..2155 dan 0000 |
+
+Gunakan `TIMESTAMP` untuk waktu kejadian global seperti `created_at`; gunakan `DATETIME` untuk jadwal lokal seperti "toko buka 09:00" yang tidak boleh bergeser saat timezone berubah.
+
+## NULL, DEFAULT, dan Konversi
+
+`NOT NULL` adalah aturan wajib isi; `DEFAULT` mengisi nilai saat INSERT tidak menyebut kolom. MySQL dapat melakukan konversi implisit (`'10' + 2` menjadi 12), tetapi ini rawan data kotor. Lebih aman gunakan `CAST(nilai AS tipe)` dan aktifkan *strict SQL mode* agar input invalid ditolak, bukan diam-diam dipotong.
+
+## Di Dunia Nyata
+
+- Harga produk: `DECIMAL(15,2)`, bukan FLOAT.
+- Email pengguna: `VARCHAR(254) NOT NULL`, biasanya diberi UNIQUE index.
+- Waktu transaksi lintas negara: `TIMESTAMP` dan tampilkan sesuai timezone pengguna.
+- Atribut produk yang bervariasi: `JSON`; field yang sering dicari tetap kolom biasa agar mudah di-index.
+
+<div class="note">💡 ALTER TABLE untuk mengganti tipe dapat menyalin tabel dan mengunci operasi pada data besar. Pilih tipe berdasarkan domain dan pertumbuhan, bukan sekadar nilai hari ini.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT nama,
+       jabatan,
+       CAST(gaji AS REAL) / 1000000 AS gaji_juta,
+       CASE
+         WHEN gaji >= 11000000 THEN 'Level A'
+         WHEN gaji >= 9000000 THEN 'Level B'
+         ELSE 'Level C'
+       END AS level
+FROM karyawan
+ORDER BY gaji DESC;`} />

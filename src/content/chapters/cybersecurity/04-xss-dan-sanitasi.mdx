@@ -1,0 +1,127 @@
+---
+title: "XSS dan Sanitasi Konten"
+description: "Mencegah skrip berbahaya tertanam di halaman — encoding, CSP, dan kebijakan konten"
+order: 4
+quiz:
+  - q: "XSS (Cross-Site Scripting) memungkinkan penyerang…"
+    options: ["Menjalankan skrip di browser korban atas nama situs", "Menghapus backup", "Mengambil alih CPU server", "Memperlambat koneksi internet"]
+    answer: 0
+    explain: "Skrip berjalan di konteks situs yang korban percayai — cookie dan sesi ikut terancam."
+  - q: "Pencegahan utama XSS saat menampilkan data pengguna adalah…"
+    options: ["Output encoding/escaping sesuai konteks", "Menyembunyikan URL", "Menggunakan tema gelap", "Mempercepat JavaScript"]
+    answer: 0
+    explain: "Teks yang berpotensi berisi markup harus di-escape sebelum dirender."
+  - q: "Content-Security-Policy (CSP) berfungsi untuk…"
+    options: ["Menghapus semua JavaScript", "Mengenkripsi email", "Membatasi sumber skrip yang boleh dijalankan di halaman", "Mengatur warna tema"]
+    answer: 2
+    explain: "CSP membatasi origin skrip, gaya, dan sumber daya — lapisan pertahanan bila encoding terlewat."
+  - q: "innerHTML berisiko dibanding textContent karena…"
+    options: ["innerHTML selalu lebih lambat", "innerHTML menafsirkan markup HTML dalam string", "innerHTML tidak mendukung teks", "innerHTML menghapus CSS"]
+    answer: 1
+    explain: "Menyisipkan teks pengguna lewat innerHTML membuka pintu eksekusi markup."
+  - q: "Cookie httpOnly sebaiknya diaktifkan agar…"
+    options: ["JavaScript tidak bisa membaca cookie sesi", "Cookie jadi lebih manis", "Website jadi lebih cepat", "Cookie tampil di URL"]
+    answer: 0
+    explain: "Bila skrip penyerang tetap berjalan, cookie httpOnly tidak langsung bisa dicuri."
+example:
+  code: |
+    # Output encoding sederhana untuk teks yang ditampilkan
+    def escape_html(teks):
+        return (teks.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;"))
+
+    masukan = '<b>promo</b> "gratis"'
+    print(escape_html(masukan))
+---
+
+XSS terjadi ketika **data tak tepercaya dirender sebagai markup hidup**. Kabar baiknya: pencegahannya seragam dan bisa diterapkan konsisten.
+
+## Tiga Bentuk XSS (Gambaran)
+
+- **Stored** — skrip tersimpan di server (mis. komentar), tampil ke banyak korban.
+- **Reflected** — skrip ikut di URL/parameter dan langsung dipantulkan.
+- **DOM-based** — manipulasi berbahaya terjadi sepenuhnya di sisi browser.
+
+## Pencegahan #1: Output Encoding
+
+```python
+def escape_html(teks):
+    return (teks.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace('"', "&quot;"))
+
+print(escape_html('<script>alert(1)</script>'))
+# hasilnya teks biasa yang tidak dieksekusi browser
+```
+
+Selalu **escape sesuai konteks**: HTML body, atribut, URL, dan JavaScript punya aturan encoding berbeda.
+
+## Pencegahan #2: DOM API yang Aman
+
+```javascript
+// Berisiko:
+// el.innerHTML = inputPengguna;
+
+// Aman: sisipkan sebagai teks biasa
+// el.textContent = inputPengguna;
+```
+
+`textContent` memperlakukan string sebagai teks murni tanpa menafsirkan markup.
+
+## Pencegahan #3: Content-Security-Policy
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'
+```
+
+Header di atas membatasi skrip hanya dari origin situs sendiri — skrip tertanam dari domain asing diblokir browser.
+
+## Pencegahan #4: Cookie yang Tahan XSS
+
+```
+Set-Cookie: session=abc; HttpOnly; Secure; SameSite=Lax
+```
+
+`HttpOnly` menutup akses JavaScript; `Secure` memaksa HTTPS; `SameSite` mengurangi risiko CSRF.
+
+## Praktik Tambahan
+
+- **Sanitasi HTML kaya** (bila fitur editor diperlukan) memakai allowlist library tepercaya, bukan regex buatan sendiri.
+- **WASP**: verifikasi berkala dengan tool scanning otomatis di CI.
+- Uji manual: masukkan teks `<b>uji</b>` di setiap kolom — pastikan tampil sebagai teks, bukan bold sungguhan.
+
+## Empat Konteks Output
+
+Ada **4 konteks utama** yang memerlukan perlakuan berbeda.
+
+| Konteks | Risiko | Pertahanan | Contoh aman |
+|---|---|---|---|
+| Teks HTML | Tag ditafsirkan browser | HTML escaping | Template auto-escape |
+| Atribut HTML | Keluar dari kutip atribut | Attribute encoding | Set properti DOM |
+| URL | Skema atau tujuan berbahaya | Parse dan allowlist | Hanya `https:` |
+| JavaScript | Data menjadi kode | Serialisasi JSON aman | Hindari inline script |
+
+Satu fungsi `escape_html` tidak aman untuk semua konteks. Gunakan auto-escaping framework dan API DOM yang tepat. Jika produk memang mengizinkan HTML kaya, sanitasi dengan library terawat menggunakan allowlist tag serta atribut; jangan memakai regex buatan sendiri.
+
+CSP adalah lapisan kedua. Kebijakan kuat menghindari `unsafe-inline`, memakai nonce atau hash untuk skrip yang diizinkan, dan diluncurkan dahulu melalui mode report-only agar pelanggaran sah terlihat. CSP tidak memperbaiki sink DOM berbahaya.
+
+```http
+Content-Security-Policy-Report-Only: default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'
+```
+
+Trusted Types pada aplikasi browser besar dapat membatasi assignment ke sink berisiko. Cookie `HttpOnly` mengurangi pencurian token, tetapi XSS masih dapat menjalankan aksi sebagai korban; tetap perbaiki sumber XSS.
+
+## Di Dunia Nyata
+
+1. Kolom komentar dirender sebagai teks melalui template auto-escape, bukan `innerHTML`.
+2. Editor artikel mengizinkan `<p>` dan `<strong>`, tetapi membuang event handler, iframe, dan URL tak aman.
+3. Halaman pencarian tidak memantulkan query mentah ke markup atau script analytics.
+4. Dashboard memasang CSP report-only, memperbaiki pelanggaran, lalu mengaktifkan enforcement.
+5. Tim menguji setiap sink dengan string markup tak berbahaya dan memastikan hasil tampil sebagai teks.
+
+Sanitasi dilakukan saat render sesuai tujuan output; menyimpan input asli dapat diperlukan untuk audit atau keluaran lain. Jangan mengandalkan validasi input saja karena karakter yang sah pada nama atau artikel dapat tetap berbahaya saat ditempatkan di konteks yang salah.
+
+<div class="note">💡 "Kami sudah mem-filter kata script" bukan pertahanan. Penyerang punya banyak variasi tag dan encoding. Yang andal selalu output encoding + CSP.</div>

@@ -1,0 +1,135 @@
+---
+title: "Hash Table: dict di Balik Layar"
+description: "Bagaimana hash + bucket membuat lookup O(1) dan apa itu tabrakan"
+order: 7
+quiz:
+  - q: "Hash table mencapai lookup rata-rata O(1) dengan…"
+    options: ["Menelusuri semua elemen", "Mengubah kunci jadi indeks lewat fungsi hash", "Mengurutkan data dulu", "Menyimpan data di disk"]
+    answer: 1
+    explain: "hash(kunci) menentukan bucket tujuan langsung — tanpa scan."
+  - q: "Tabrakan (collision) terjadi ketika…"
+    options: ["Dua kunci berbeda menghasilkan hash bucket yang sama", "Memori penuh", "Kunci terlalu panjang", "Data tidak urut"]
+    answer: 0
+    explain: "Ruang indeks lebih kecil dari kemungkinan kunci — tabrakan tidak bisa dihindari, hanya dikelola."
+  - q: "Python dict menangani tabrakan dengan…"
+    options: ["Menolak kunci baru", "Chaining: bucket berisi daftar entri", "Menghapus kunci lama", "Mengubah hash kuncinya"]
+    answer: 1
+    explain: "Setiap slot bucket menyimpan rantai entri; perbandingan kunci dilakukan saat tabrakan."
+  - q: "Kompleksitas lookup dict Python pada kasus terburuk adalah…"
+    options: ["O(1)", "O(log n)", "O(n) — semua kunci jatuh ke satu bucket", "O(n^2)"]
+    answer: 2
+    explain: "Kasar tapi jarang: kalau semua kunci tabrak parah, bucket menjadi rantai panjang."
+  - q: "Syarat kunci hash yang baik adalah…"
+    options: ["Hashable (tidak bisa diubah) dan konsisten saat hash()", "Selalu string", "Selalu lebih panjang dari 16 karakter", "Harus berupa tuple"]
+    answer: 0
+    explain: "list tidak bisa jadi kunci karena mutable; tuple, string, angka bisa."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hash table adalah struktur data dengan **lookup rata-rata tercepat**: O(1). Di Python ia hadir sebagai `dict` — tipe yang paling sering kamu pakai tanpa sadar.
+
+## Operasi Dasar dict
+
+```python
+harga = {"apel": 5000, "mangga": 8000, "jeruk": 6000}
+
+print(harga["mangga"])        # ambil         O(1)
+harga["pepaya"] = 4000        # sisip/update  O(1)
+del harga["apel"]             # hapus         O(1)
+print("jeruk" in harga)       # cek keberadaan O(1)
+print(harga.get("durian", 0)) # ambil aman, default 0
+```
+
+## Bagaimana Di Balik Layar
+
+```
+kunci --hash()--> indeks bucket --> entri (kunci, nilai)
+```
+
+1. `hash(kunci)` menghasilkan bilangan integer.
+2. Modulo ukuran tabel menentukan **bucket** (slot) tujuan.
+3. Kunci dan nilai disimpan sebagai pasangan di bucket itu.
+
+```python
+for kata in ["apel", "mangga", "jeruk"]:
+    print(kata, "->", hash(kata) % 8, "(bucket)")
+```
+
+Setiap pemanggilan `hash` untuk kunci yang sama selalu menghasilkan angka yang sama — itulah syarat utama fungsi hash.
+
+## Menghitung Frekuensi
+
+Kasus klasik hash table: menghitung kemunculan tanpa nested loop.
+
+```python
+teks = "onboss academy onboss git onboss"
+frek = {}
+for kata in teks.split():
+    frek[kata] = frek.get(kata, 0) + 1
+
+print(frek)   # {'onboss': 3, 'academy': 1, 'git': 1}
+```
+
+Tanpa dict, cara ini butuh O(n^2). Dengan dict: O(n).
+
+## Set: Hash Table Tanpa Nilai
+
+```python
+unik = {"python", "go", "rust", "python"}
+print(len(unik))          # 3 — duplikat hilang
+print("go" in unik)       # O(1)
+```
+
+## Kunci Harus Hashable
+
+```python
+d = {}
+d[(1, 2)] = "tuple boleh"      # tuple immutable -> boleh
+# d[[1, 2]] = "list tidak"     # list mutable -> TypeError
+```
+
+| Kunci | Boleh? |
+|-------|--------|
+| str, int, float, bool | ya |
+| tuple (berisi hashable) | ya |
+| frozenset | ya |
+| list, dict, set | tidak |
+
+## Collision dan Kapasitas
+
+Ada **2 strategi collision umum**: separate chaining menyimpan beberapa entri per bucket, sedangkan open addressing mencari slot lain dalam tabel. CPython `dict` memakai open addressing, bukan chaining. Ketika tabel terlalu padat, dict memperbesar kapasitas dan menyusun ulang slot; biaya resize O(n), tetapi operasi sepanjang waktu tetap O(1) amortized.
+
+| Operasi dict/set | Rata-rata | Terburuk | Kapan dipakai |
+|---|---:|---:|---|
+| get / membership | O(1) | O(n) | lookup key |
+| insert / update | O(1) amortized | O(n) | indeks dan cache |
+| delete | O(1) amortized | O(n) | mencabut entri |
+| iterasi | O(n) | O(n) | memproses semua entri |
+
+Kesamaan key mengikuti kontrak `a == b` dan hash yang sama untuk objek setara. Karena hash string diacak antarproses, jangan menyimpan nilai `hash()` sebagai ID permanen. `dict` mempertahankan insertion order, tetapi urutan itu bukan urutan berdasarkan key.
+
+## Di Dunia Nyata
+
+- Mengindeks session berdasarkan token agar request tidak memindai seluruh session.
+- Menghitung frekuensi kata atau event dalam satu lintasan.
+- Set menghapus duplikat ID sebelum query database.
+- Dict memetakan kode produk ke stok dan memperbaruinya secara langsung.
+
+<div class="note">💡 Di Python, hampir semua "cari sesuatu berkali-kali" lebih cepat dengan dict/set O(1) daripada list `in` O(n). Konversi list ke set sekali, lalu nikmati lookup kilat.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`harga = {"apel": 5000, "mangga": 8000, "jeruk": 6000}
+harga["pepaya"] = 4000
+print("mangga:", harga["mangga"])
+print("ada durian?", "durian" in harga, "| default:", harga.get("durian", "tidak ada"))
+
+frek = {}
+teks = "onboss academy onboss git onboss linux docker"
+for kata in teks.split():
+    frek[kata] = frek.get(kata, 0) + 1
+print("frekuensi:", frek)
+
+unik = set("python go rust python go".split())
+print("set unik:", sorted(unik), "| jumlah:", len(unik))
+
+print("hash konsisten:", hash("onboss") == hash("onboss"))`} />

@@ -1,0 +1,162 @@
+---
+title: "Server & Client Component"
+description: 'Server component sebagai default, "use client" seperlunya — membagi beban dengan tepat'
+order: 3
+quiz:
+  - q: "Default komponen di App Router adalah…"
+    options: ["Server component", "Client component", "Web component", "Nilai dinamis tiap user"]
+    answer: 0
+    explain: "Tanpa directive apa pun, komponen dirender di server dan tidak mengirim kode ke browser."
+  - q: "Direktif yang menjadikan komponen berjalan di browser adalah…"
+    options: ["\"use client\" di baris paling atas file", "\"use server\"", "\"use strict\"", "\"use static\""]
+    answer: 2
+    explain: "use client menandai batas: komponen di bawahnya (dan import-nya) masuk ke bundle client."
+  - q: "Server component boleh…"
+    options: ["Memakai useState", "Memanggil database dan API langsung tanpa endpoint terpisah", "Menambahkan onClick", "Menggunakan useEffect"]
+    answer: 1
+    explain: "Akses data langsung di server adalah keunggulan utama — rahasia API tidak pernah ke browser."
+  - q: "useEffect hanya bisa dipakai di…"
+    options: ["Komponen client", "Server component", "Layout server", "File route.ts"]
+    answer: 0
+    explain: "Efek samping browser tidak ada artinya di server — karena itu butuh \"use client\"."
+  - q: "Struktur yang disarankan untuk meminimalkan JavaScript ke browser…"
+    options: ["Client component sedikit mungkin di ujung pohon (tombol, input)", "Semua file \"use client\"", "Tanpa layout", "Satu file raksasa"]
+    answer: 0
+    explain: "Komponen induk tetap server; hanya bagian interaktif yang diberi directive use client."
+example:
+  code: |
+    function ServerOnly(judul) {
+      return "[server] " + judul + " (data dari API aman di sini)";
+    }
+    function Interaktif(toggle) {
+      return toggle ? "[client] siap diklik" : "[client] diam";
+    }
+    console.log(ServerOnly("Katalog"));
+    console.log(Interaktif(true));
+---
+
+Perbedaan paling penting di App Router: di mana kode dijalankan. Bab ini memutuskan kapan komponen menjadi server dan kapan menjadi client.
+
+## Server Component (Default)
+
+```typescript
+// app/produk/page.tsx — server component
+import { ProdukService } from "./produk.service";
+
+export default async function ProdukPage() {
+  const produk = await ProdukService.ambilSemua();
+
+  return (
+    <ul>
+      {produk.map((p) => (
+        <li key={p.id}>{p.nama}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Komponen async, mengambil data langsung, dan browser tidak menerima satu byte pun kode fetching-nya.
+
+## Client Component
+
+```typescript
+"use client";
+
+import { useState } from "react";
+
+export default function CariProduk() {
+  const [kata, setKata] = useState("");
+
+  return (
+    <input
+      value={kata}
+      onChange={(e) => setKata(e.target.value)}
+      placeholder="Cari produk…"
+    />
+  );
+}
+```
+
+`"use client"` ditulis sebagai string literal pertama file — menandai file ini (dan turunannya) menjadi bagian bundle client.
+
+## Melewatkan Props dari Server ke Client
+
+```typescript
+// Server: mengambil data
+import TambahKeranjang from "./tambah-keranjang";
+
+export default async function Halaman() {
+  const produk = await ambilProduk();
+  // props serializable: teks, angka, object, array
+  return <TambahKeranjang produk={produk} />;
+}
+```
+
+```typescript
+"use client";
+
+export default function TambahKeranjang({ produk }: { produk: Produk }) {
+  return <button onClick={() => keranjang.tambah(produk.id)}>Beli</button>;
+}
+```
+
+Aturan: props yang dikirim ke client harus bisa diserialisasi — tidak boleh berupa function atau class instance.
+
+## Pola Komponen Hybrid
+
+```typescript
+// Server component: layout data
+export default function KartuProduk({ id }: { id: string }) {
+  return (
+    <section>
+      <JudulProduk id={id} />       {/* server */}
+      <BeliProduk id={id} />        {/* client */}
+    </section>
+  );
+}
+```
+
+Satu tampilan bisa mencampur keduanya: teks dan data dari server, tombol interaktif dari client.
+
+## Kapan "use client"?
+
+- State (`useState`, `useReducer`)
+- Efek samping (`useEffect`)
+- Event handler (`onClick`, `onChange`)
+- Browser API (`localStorage`, `window`)
+- Context provider yang butuh hook
+
+Selebihnya, biarkan tetap server component.
+
+## Empat Perbedaan Utama
+
+Ada **4 pembeda praktis** antara kedua jenis komponen.
+
+| Kemampuan | Server Component | Client Component | Kapan dipakai |
+|---|---|---|---|
+| Akses database/secret | Ya | Tidak | Query aman di server |
+| State dan effect | Tidak | Ya | UI interaktif |
+| Event browser | Tidak | Ya | Klik dan input |
+| JavaScript ke browser | Tidak untuk modul server | Ya | Batasi ukuran bundle |
+
+Batas `"use client"` berlaku pada seluruh import di bawahnya. Karena itu letakkan komponen interaktif di daun pohon, bukan pada layout besar. Server component boleh merender client component, dan client component dapat menerima server-rendered `children`, tetapi client tidak boleh mengimpor modul server secara langsung.
+
+```typescript
+// app/produk/page.tsx — server
+import Filter from "./filter";
+
+export default async function ProdukPage() {
+  const produk = await getProduk();
+  return <><Filter /><Daftar produk={produk} /></>;
+}
+```
+
+## Di Dunia Nyata
+
+- Katalog mengambil data di server dan mengirim hanya tombol filter ke client.
+- Navbar client menyimpan status menu terbuka dengan `useState`.
+- Halaman akun membaca cookie di server agar token tidak masuk bundle browser.
+- Grafik interaktif menerima array serializable dari komponen server.
+
+<div class="note">💡 Aturan praktis: mulai semua komponen tanpa "use client", tambahkan hanya saat butuh interaktivitas browser. Menandai layout besar sebagai client memperlebar bundle dan batas hydration tanpa perlu.</div>

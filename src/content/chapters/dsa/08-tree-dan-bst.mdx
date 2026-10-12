@@ -1,0 +1,209 @@
+---
+
+title: "Tree & Traversal BST"
+description: "Node, binary search tree, dan tiga cara menelusuri: inorder, preorder, postorder"
+order: 8
+quiz:
+  - q: "Binary search tree (BST) memiliki sifat…"
+    options: ["Anak kiri < parent < anak kanan", "Semua anak di kiri", "Kedua anak selalu sama", "Kedalaman selalu sama"]
+    answer: 0
+    explain: "Properti ini membuat pencarian membuang separuh subtree tiap langkah — seperti binary search."
+  - q: "Inorder traversal BST menghasilkan elemen…"
+    options: ["Terurut menaik", "Terurut menurun", "Acak", "Kanan lalu kiri"]
+    answer: 0
+    explain: "Kiri -> parent -> kanan pada BST seimbang selalu menghasilkan urutan naik."
+  - q: "Preorder traversal mengunjungi…"
+    options: ["Kiri, kanan, parent", "Parent, kiri, kanan", "Kanan, parent, kiri", "Hanya parent"]
+    answer: 1
+    explain: "Preorder cocok untuk menyalin struktur tree atau serialisasi."
+  - q: "Postorder traversal mengunjungi…"
+    options: ["Parent dulu", "Kiri, kanan, parent", "Kanan, kiri, parent", "Level terakhir saja"]
+    answer: 1
+    explain: "Anak dulu baru parent — berguna untuk hapus tree atau hitung total subtree."
+  - q: "Pencarian di BST seimbang berkompleksitas…"
+    options: ["O(n)", "O(log n)", "O(n^2)", "O(1)"]
+    answer: 1
+    explain: "Tiap langkah turun satu level membuang separuh sisa — setara binary search. BST miring bisa jadi O(n)."
+example:
+  code: |
+    class Node:
+        def __init__(self, data):
+            self.data = data
+            self.left = None
+            self.right = None
+
+    def insert(root, data):
+        if root is None:
+            return Node(data)
+        if data < root.data:
+            root.left = insert(root.left, data)
+        else:
+            root.right = insert(root.right, data)
+        return root
+
+    def inorder(root):
+        if root:
+            inorder(root.left)
+            print(root.data, end=" ")
+            inorder(root.right)
+
+    root = None
+    for x in [50, 30, 70, 20, 40, 60, 80]:
+        root = insert(root, x)
+    inorder(root)   # 20 30 40 50 60 70 80
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tree adalah struktur hierarki: satu **root**, tiap node bisa punya **anak kiri** dan **anak kanan**. Varian paling terkenal: **Binary Search Tree (BST)**.
+
+## Anatomi Tree
+
+```
+        50
+       /  \
+     30    70
+    / \   / \
+  20  40 60  80
+```
+
+- **Node** — simpul berisi data
+- **Root** — node paling atas
+- **Leaf** — node tanpa anak (20, 40, 60, 80)
+- **Height** — jumlah level; memengaruhi kompleksitas operasi
+
+## Insert di BST
+
+```python
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.left = None
+        self.right = None
+
+def insert(root, data):
+    if root is None:
+        return Node(data)
+    if data < root.data:
+        root.left = insert(root.left, data)
+    else:
+        root.right = insert(root.right, data)
+    return root
+
+root = None
+for x in [50, 30, 70, 20, 40, 60, 80]:
+    root = insert(root, x)
+```
+
+Kecil ke kiri, besar ke kanan — properti inilah yang membuat pencarian efisien.
+
+## Pencarian
+
+```python
+def cari(root, target):
+    if root is None or root.data == target:
+        return root
+    if target < root.data:
+        return cari(root.left, target)
+    return cari(root.right, target)
+
+print(cari(root, 60) is not None)   # True
+print(cari(root, 65) is not None)   # False
+```
+
+Tiap langkah membuang separuh subtree: **O(log n)** pada BST seimbang.
+
+## Tiga Traversal
+
+```python
+def inorder(root):
+    if root:
+        inorder(root.left)
+        print(root.data, end=" ")
+        inorder(root.right)
+
+def preorder(root):
+    if root:
+        print(root.data, end=" ")
+        preorder(root.left)
+        preorder(root.right)
+
+def postorder(root):
+    if root:
+        postorder(root.left)
+        postorder(root.right)
+        print(root.data, end=" ")
+
+inorder(root)     # 20 30 40 50 60 70 80  -> terurut
+preorder(root)    # 50 30 20 40 70 60 80  -> root di depan
+postorder(root)   # 20 40 30 60 80 70 50  -> root di belakang
+```
+
+| Traversal | Urutan | Kasus pakai |
+|-----------|--------|-------------|
+| Inorder | kiri, root, kanan | data terurut |
+| Preorder | root, kiri, kanan | salin/serialisasi tree |
+| Postorder | kiri, kanan, root | hapus tree, hitung subtree |
+
+## Jenis Tree dan Operasi
+
+Ada **4 keluarga yang sering ditemui**: binary tree membatasi dua anak, BST menambahkan aturan urutan, heap menjaga minimum/maksimum di root, dan balanced BST menjaga tinggi O(log n). Tree umum seperti struktur folder boleh memiliki banyak anak.
+
+| Struktur | Aturan | Operasi utama | Kapan dipakai |
+|---|---|---|---|
+| Binary tree | maksimal dua anak | traversal | ekspresi dan keputusan |
+| BST | kiri < root < kanan | search/insert/delete | data terurut dinamis |
+| Heap | parent minimum/maksimum | push/pop O(log n) | priority queue |
+| Balanced BST | tinggi dijaga logaritmik | operasi O(log n) | ordered map/set |
+
+Ada **4 traversal dasar**: inorder, preorder, postorder, dan level-order. Tiga pertama lazim memakai stack atau rekursi; level-order memakai queue. Semua mengunjungi n node sehingga waktunya O(n). Memori tambahan O(h) untuk DFS dengan tinggi h, sedangkan BFS dapat menyimpan O(w) node selebar level terbesar.
+
+## Di Dunia Nyata
+
+- Tree folder merender navigasi dan menghitung ukuran subtree.
+- Abstract syntax tree mewakili ekspresi sebelum compiler mengeksekusinya.
+- BST seimbang mendukung pencarian rentang dan urutan key.
+- Heap memilih job berprioritas tertinggi tanpa mengurutkan seluruh antrean.
+
+<div class="note">💡 BST yang disisipkan dalam urutan terurut akan miring jadi rantai — operasi jatuh ke O(n). Struktur seimbang (AVL, red-black) atau setara Python `bisect` menjaga ketinggian tetap log n.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`class Node:
+    def __init__(self, data):
+        self.data = data
+        self.left = None
+        self.right = None
+
+def insert(root, data):
+    if root is None:
+        return Node(data)
+    if data < root.data:
+        root.left = insert(root.left, data)
+    else:
+        root.right = insert(root.right, data)
+    return root
+
+def inorder(root, hasil):
+    if root:
+        inorder(root.left, hasil)
+        hasil.append(root.data)
+        inorder(root.right, hasil)
+
+def preorder(root, hasil):
+    if root:
+        hasil.append(root.data)
+        preorder(root.left, hasil)
+        preorder(root.right, hasil)
+
+def postorder(root, hasil):
+    if root:
+        postorder(root.left, hasil)
+        postorder(root.right, hasil)
+        hasil.append(root.data)
+
+root = None
+for x in [50, 30, 70, 20, 40, 60, 80]:
+    root = insert(root, x)
+
+print("inorder   :", inorder(root, []))
+print("preorder  :", preorder(root, []))
+print("postorder :", postorder(root, []))`} />

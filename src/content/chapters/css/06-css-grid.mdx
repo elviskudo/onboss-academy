@@ -1,0 +1,125 @@
+---
+title: "CSS Grid"
+description: "Layout dua dimensi — baris dan kolom sekaligus"
+order: 6
+quiz:
+  - q: "Keunggulan Grid dibanding Flex adalah…"
+    options: ["Lebih ringan", "Bisa mengatur baris DAN kolom sekaligus", "Tidak butuh CSS", "Hanya untuk tabel"]
+    answer: 1
+    explain: "Flex fokus satu sumbu; Grid mengendalikan dua dimensi sekaligus."
+  - q: "grid-template-columns: 1fr 1fr 1fr; menghasilkan…"
+    options: ["3 kolom sama lebar", "1 kolom", "3 baris", "Kolom otomatis 1px"]
+    answer: 0
+    explain: "fr = fraksi ruang tersedia. Tiga 1fr = tiga kolom sama besar."
+  - q: "repeat(3, 1fr) setara dengan…"
+    options: ["1fr 1fr 1fr", "3fr", "repeat 3 kali saja", "300px"]
+    answer: 0
+    explain: "repeat(n, …) hanya singkatan sintaks."
+  - q: "Agar grid responsif tanpa media query, gunakan…"
+    options: ["grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));", "width: 100%", "float: left", "display: table"]
+    answer: 0
+    explain: "auto-fit + minmax membuat kolom otomatis menyesuaikan lebar layar."
+  - q: "grid-gap sekarang lebih dikenal sebagai…"
+    options: ["margin", "gap", "space", "spacing"]
+    answer: 1
+    explain: "gap (row-gap & column-gap) mengatur jarak antar cell grid."
+example:
+  code: |
+    <div class="grid">
+      <div class="sel">1</div><div class="sel">2</div>
+      <div class="sel">3</div><div class="sel">4</div>
+    </div>
+    <style>
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .sel { background: #4F46E5; color: white; padding: 32px; text-align: center; border-radius: 10px; font-weight: bold; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Dasar Grid
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+```
+
+Grid memiliki **2 sumbu sekaligus** (baris dan kolom) serta **4 konsep struktur**: container, track, line, dan cell/area.
+
+| Konsep | Arti | Contoh | Kapan dipakai |
+|--------|------|--------|---------------|
+| Track | Satu baris/kolom | `1fr 2fr` | Ukuran layout |
+| Line | Garis pembatas track | `1 / -1` | Menentukan bentang |
+| Cell | Perpotongan baris-kolom | Satu kartu | Penempatan dasar |
+| Area | Beberapa cell bernama | `grid-area: sidebar` | Layout halaman |
+
+## Unit `fr`
+
+`1fr` = satu bagian dari sisa ruang. Kolom `2fr 1fr` berarti lebar 2:1.
+
+## Baris dan Kolom
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  grid-template-rows: 80px 1fr;
+  gap: 12px;
+}
+```
+
+## Spanning (Membentang)
+
+```css
+.judul { grid-column: 1 / -1; } /* bentang semua kolom */
+.hero  { grid-column: span 2; }
+```
+
+## Layout Responsif Tanpa Media Query
+
+```css
+.galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+```
+
+Kolom otomatis: 4 di layar lebar, 2 di tablet, 1 di HP.
+
+## Grid vs Flex — Kapan Pakai Mana?
+
+| Gunakan **Grid** | Gunakan **Flex** |
+|---|---|
+| Layout halaman utuh | Sekumpulan item sejajar |
+| Formulir label + input | Navbar kiri-kanan |
+| Gallery foto | Kartu dalam satu baris |
+
+## Di Dunia Nyata
+
+- **Galeri foto** — `auto-fit + minmax()` menambah/mengurangi kolom tanpa breakpoint
+- **Dashboard** — kartu metrik membentang dua kolom, grafik memakai seluruh baris
+- **Layout artikel** — sidebar 240px dan isi `1fr` tetap stabil di desktop
+- **Form data** — label dan input sejajar dalam dua track yang konsisten
+
+<div class="note">💡 Pilih Grid ketika hubungan baris DAN kolom penting; pilih Flex ketika hanya satu arah yang penting. Keduanya bukan saingan: Grid sering mengatur halaman, Flex mengatur isi komponennya.</div>
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`.galeri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.galeri div {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+.galeri div:nth-child(odd) { background: #4F46E5; }
+.galeri div:nth-child(even) { background: #8B5CF6; }`} />

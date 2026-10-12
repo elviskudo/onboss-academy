@@ -1,0 +1,134 @@
+---
+title: "JOIN & APPLY di SQL Server"
+description: "INNER, LEFT, FULL JOIN plus CROSS APPLY dan OUTER APPLY khas T-SQL"
+order: 4
+quiz:
+  - q: "INNER JOIN mengembalikan…"
+    options: ["Semua baris kiri", "Hanya baris yang cocok di kedua tabel", "Semua baris kanan", "Baris tanpa pasangan"]
+    answer: 1
+    explain: "INNER JOIN = irisan: baris hanya muncul bila kunci pencocokan ditemukan di kedua sisi."
+  - q: "LEFT JOIN dipakai saat ingin…"
+    options: ["Membuang baris tanpa pasangan", "Mempertahankan semua baris tabel kiri", "Mengurutkan data", "Menggabungkan dua SELECT kolom"]
+    answer: 1
+    explain: "Baris kiri tetap tampil meski tidak ada pasangan; kolom kanan diisi NULL."
+  - q: "CROSS APPLY setara konseptual dengan…"
+    options: ["CROSS JOIN biasa", "INNER JOIN dengan fungsi tabel-valued", "FULL OUTER JOIN", "UNION ALL"]
+    answer: 1
+    explain: "CROSS APPLY memanggil fungsi TVF per baris kiri dan hanya mempertahankan baris yang menghasilkan hasil."
+  - q: "OUTER APPLY mempertahankan baris kiri yang…"
+    options: ["Hanya yang cocok", "Cocok maupun tidak cocok (kolom kanan jadi NULL)", "Duplikat", "Kosong"]
+    answer: 1
+    explain: "Persis LEFT JOIN untuk pemanggilan fungsi: baris tanpa hasil fungsi tetap tampil dengan NULL."
+  - q: "Menumpuk dua hasil SELECT sejajar baris memakai…"
+    options: ["JOIN", "UNION ALL", "MERGE", "INTERSECT"]
+    answer: 1
+    explain: "UNION ALL menggabungkan tanpa menghapus duplikat — lebih cepat dari UNION yang mengurutkan untuk unik."
+example:
+  code: |
+    SELECT k.nama, d.nama AS divisi
+    FROM dbo.karyawan AS k
+    INNER JOIN dbo.divisi AS d ON d.id = k.divisi_id;
+
+    SELECT k.nama, g.gaji
+    FROM dbo.karyawan AS k
+    OUTER APPLY (
+        SELECT TOP (1) gaji
+        FROM dbo.riwayat_gaji AS rg
+        WHERE rg.karyawan_id = k.id
+        ORDER BY berlaku_dari DESC
+    ) AS g;
+---
+
+Relasi antar tabel diwujudkan lewat **JOIN**. SQL Server menambah dua varian unik: **CROSS APPLY** dan **OUTER APPLY** — operator untuk input kanan yang boleh berkorelasi ke setiap baris kiri.
+
+## Enam Bentuk Penggabungan
+
+| Bentuk | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| INNER JOIN | baris cocok kedua sisi | relasi wajib |
+| LEFT JOIN | semua kiri, kanan bisa NULL | data utama + opsional |
+| RIGHT JOIN | semua kanan, kiri bisa NULL | jarang; dapat dibalik jadi LEFT |
+| FULL OUTER JOIN | semua kedua sisi | rekonsiliasi/audit |
+| CROSS APPLY | hasil kanan per baris kiri, yang kosong dibuang | top-N/subquery berkorelasi |
+| OUTER APPLY | hasil kanan per baris kiri, yang kosong jadi NULL | top-N termasuk induk kosong |
+
+Ada **4 JOIN relasional utama** dan **2 APPLY khas T-SQL**. CROSS JOIN (hasil kali Kartesius) juga tersedia, tetapi berbeda dari APPLY karena input kanan tidak perlu berkorelasi.
+
+## INNER JOIN
+
+```sql
+SELECT
+    p.nama AS produk,
+    k.nama AS kategori
+FROM dbo.produk AS p
+INNER JOIN dbo.kategori AS k ON k.id = p.kategori_id
+WHERE p.harga > 100000;
+```
+
+`ON` menyatakan kunci pencocokan; `INNER JOIN` hanya mempertahankan baris dengan pasangan. Alias (`AS p`) membuat query tetap terbaca.
+
+## LEFT, RIGHT, dan FULL JOIN
+
+```sql
+-- Semua pelanggan, lengkap dengan pesanannya bila ada
+SELECT pl.nama, ps.nomor
+FROM dbo.pelanggan AS pl
+LEFT JOIN dbo.pesanan AS ps ON ps.pelanggan_id = pl.id;
+
+-- Semua baris dari kedua sisi
+SELECT pl.nama, ps.nomor
+FROM dbo.pelanggan AS pl
+FULL OUTER JOIN dbo.pesanan AS ps ON ps.pelanggan_id = pl.id;
+```
+
+`ISNULL(ps.nomor, N'(belum pesan)')` merapikan kolom NULL hasil join. FULL JOIN berguna saat audit: menemukan data yatim di dua sisi relasi.
+
+## CROSS APPLY dan OUTER APPLY
+
+```sql
+-- 3 produk termahal per kategori (fungsi dijalankan per baris kategori)
+SELECT k.nama AS kategori, t.nama AS produk, t.harga
+FROM dbo.kategori AS k
+CROSS APPLY (
+    SELECT TOP (3) nama, harga
+    FROM dbo.produk AS p
+    WHERE p.kategori_id = k.id
+    ORDER BY harga DESC
+) AS t;
+
+-- Termasuk kategori yang belum punya produk
+SELECT k.nama, t.nama AS produk
+FROM dbo.kategori AS k
+OUTER APPLY (
+    SELECT TOP (1) nama
+    FROM dbo.produk AS p
+    WHERE p.kategori_id = k.id
+    ORDER BY harga DESC
+) AS t;
+```
+
+Inilah idiom T-SQL untuk "top-N per grup"; SQL Server juga bisa mengerjakannya dengan window function ROW_NUMBER(). CROSS APPLY menyaring baris kiri tanpa hasil, OUTER APPLY mempertahankannya. Input kanan boleh berupa table-valued function atau subquery berkorelasi seperti contoh di atas.
+
+## UNION dan EXCEPT
+
+```sql
+SELECT email FROM dbo.pelanggan
+UNION
+SELECT email FROM dbo.prospek;
+
+SELECT email FROM dbo.pelanggan
+EXCEPT
+SELECT email FROM dbo.prospek;
+```
+
+`UNION` menggabungkan + menghapus duplikat; `UNION ALL` mempertahankan duplikat dan biasanya lebih murah; `EXCEPT` mengambil yang ada di kiri tapi tidak di kanan.
+
+## Di Dunia Nyata
+
+- **Detail produk** — INNER JOIN produk dan kategori hanya menampilkan produk dengan kategori sah.
+- **Daftar pelanggan lengkap** — LEFT JOIN mempertahankan pelanggan yang belum pernah membuat pesanan.
+- **Rekonsiliasi migrasi** — FULL OUTER JOIN menemukan ID yang hanya ada di sistem lama atau baru.
+- **Tiga harga terbaru per produk** — CROSS APPLY + TOP (3) menjalankan subquery terurut untuk tiap produk.
+- **Aktivitas terakhir pengguna** — OUTER APPLY mempertahankan pengguna yang belum punya aktivitas dengan hasil kanan NULL.
+
+<div class="note">💡 APPLY dapat menjalankan subquery berkorelasi untuk banyak baris kiri. Pastikan kolom pencocokan dan ORDER BY di sisi kanan punya index, lalu periksa actual execution plan agar pola top-N tidak berubah menjadi scan berulang.</div>

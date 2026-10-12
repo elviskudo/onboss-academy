@@ -1,0 +1,112 @@
+---
+title: "Supervised Learning"
+description: "Belajar dari contoh berlabel — klasifikasi dan regresi dalam satu kerangka"
+order: 2
+quiz:
+  - q: "Supervised learning membutuhkan…"
+    options: ["GPU minimal 16GB", "Data tanpa judul", "Data dengan label jawaban", "Database relasional"]
+    answer: 2
+    explain: "Label berfungsi sebagai kunci jawaban yang menuntun proses belajar model."
+  - q: "Prediksi harga rumah (angka kontinu) termasuk masalah…"
+    options: ["Regresi", "Klasifikasi", "Clustering", "Asosiasi"]
+    answer: 0
+    explain: "Output berupa angka kontinu = regresi; output berupa kategori = klasifikasi."
+  - q: "Prediksi 'apakah email spam?' termasuk masalah…"
+    options: ["Regresi linear", "Klasifikasi biner", "Reduksi dimensi", "Deteksi anomali"]
+    answer: 1
+    explain: "Hanya ada dua kategori jawaban — spam atau tidak — sehingga masalahnya klasifikasi biner."
+  - q: "Data pelatihan (training) dipakai untuk…"
+    options: ["Menggantikan data uji", "Menjalankan aplikasi user", "Mengajarkan pola ke model", "Membuat laporan bulanan"]
+    answer: 2
+    explain: "Model menyesuaikan parameter internalnya berdasarkan data pelatihan."
+  - q: "Fungsi kerugian (loss) mengukur…"
+    options: ["Seberapa jauh prediksi dari jawaban benar", "Kecepatan komputer", "Ukuran file model", "Jumlah fitur"]
+    answer: 0
+    explain: "Semakin kecil loss, semakin dekat prediksi ke label — proses belajar berusaha menekan loss."
+example:
+  code: |
+    # Supervised: fitur -> label
+    # luas(m2), kamar -> harga(juta)
+    data = [(60, 2, 900), (85, 3, 1400), (45, 1, 650)]
+    for luas, kamar, harga in data:
+        print(f"Luas {luas} m2, {kamar} kamar -> Rp{harga} juta")
+---
+
+Supervised learning adalah keluarga algoritma paling banyak dipakai di industri: belajar memetakan **input ke output yang sudah diketahui jawabannya**.
+
+## Struktur Data Supervised
+
+```python
+# (fitur, label)
+contoh = [
+    ((160, 60), "sehat"),
+    ((190, 95), "risiko"),
+    ((165, 55), "sehat"),
+]
+```
+
+Setiap baris = satu pengamatan. Fitur boleh banyak (puluhan kolom), label selalu satu per baris untuk kasus regresi/klasifikasi standar.
+
+## 2 Tipe Masalah Supervised
+
+| Tipe | Output | Contoh | Kapan dipakai |
+|------|--------|--------|---------------|
+| Klasifikasi | kategori | spam/ham, kucing/anjing | keputusan diskret |
+| Regresi | angka kontinu | harga rumah, suhu besok | perlu angka perkiraan |
+
+```python
+# Klasifikasi biner sederhana dengan ambang
+def prediksi_kebugaran(detak_jantung):
+    return "risiko" if detak_jantung > 140 else "aman"
+
+print(prediksi_kebugaran(150))   # risiko
+```
+
+## 4 Langkah Cara Model "Belajar"
+
+Model punya **parameter** yang awalnya acak. Setiap iterasi (epoch):
+
+1. Prediksi untuk data latih.
+2. Hitung selisih dengan label (**loss**).
+3. Sesuaikan parameter untuk menekan loss.
+4. Ulangi — proses ini disebut **optimasi** (gradient descent).
+
+```
+loss = selisih(prediksi, label)
+parameter = parameter - laju_belajar * gradien(loss)
+```
+
+```python
+# Sketsa konsep pelatihan
+for epoch in range(100):
+    loss = hitung_selisih(model, data_latih)
+    model.sesuaikan_parameter(loss)
+print("Selesai dilatih, loss akhir:", loss)
+```
+
+2 fungsi loss yang paling umum:
+
+| Loss | Rumus sederhana | Untuk masalah |
+|------|-----------------|---------------|
+| MSE | rerata `(prediksi - label)^2` | regresi |
+| Cross-entropy | `-label*log(p) - (1-label)*log(1-p)` | klasifikasi |
+
+## Transfer Learning: Belajar dari Model Besar
+
+Alih-alih melatih dari nol, kita bisa memakai model yang sudah dilatih data raksasa, lalu menyesuaikannya pada data spesifik — menghemat data dan waktu komputasi.
+
+## Kapan Supervised Cocok?
+
+- Ada banyak contoh berlabel.
+- Pola input-output relatif stabil.
+- Kesalahan prediksi bisa dikuantifikasi.
+
+## Di Dunia Nyata
+
+- **Kredit scoring bank** — fitur (pendapatan, riwayat, utang) dipetakan ke label "layak/tidak layak".
+- **Deteksi penyakit dari hasil lab** — angka darah dipetakan ke label diagnosis dokter.
+- **Harga rumah bekas** — luas, lokasi, umur bangunan dipetakan ke harga jual terakhir.
+- **Sortir tiket support** — isi pesan pelanggan dipetakan ke label divisi (teknis, tagihan, lainnya).
+- **Prediksi jam sibuk restoran** — riwayat pesanan dipetakan ke jumlah pesanan per jam.
+
+<div class="note">💡 Kualitas label menentukan kualitas model. Label yang diberi terburu-buru atau bertentangan antar pemberi anotasi akan melatih model yang sama buruknya.</div>

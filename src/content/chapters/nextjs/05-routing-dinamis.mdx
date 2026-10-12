@@ -1,0 +1,169 @@
+---
+title: "Routing Dinamis & Navigasi"
+description: "Rute [id], generateStaticParams, metadata per halaman, dan navigasi dengan Link"
+order: 5
+quiz:
+  - q: "Folder [id] di app/produk/[id]/page.tsx membuat…"
+    options: ["Rute dinamis yang mewakili banyak URL, mis. /produk/1 dan /produk/2", "Satu halaman tetap", "Folder tersembunyi", "Endpoint API"]
+    answer: 0
+    explain: "Kurung siku menandai segmen dinamis; nilainya diterima komponen lewat props params."
+  - q: "Nilai params pada halaman App Router diambil dari…"
+    options: ["window.location", "Props kedua halaman: { params, searchParams }", "localStorage", "useParams hook bawaan"]
+    answer: 1
+    explain: "App Router meneruskan params sebagai props async — cukup await params."
+  - q: "generateStaticParams berfungsi untuk…"
+    options: ["Mendaftarkan kombinasi rute yang akan dibangun statis saat build", "Mengubah tema", "Menghapus cache", "Membuat form"]
+    answer: 0
+    explain: "Next.js pre-render daftar id yang kamu berikan — sisanya dirender sesuai kebutuhan."
+  - q: "Navigasi antar halaman di dalam aplikasi memakai…"
+    options: ["Komponen Link dari next/link", "Tag <a> biasa selalu", "window.open", "reload()"]
+    answer: 0
+    explain: "Link melakukan navigasi client-side: lebih cepat dan mempertahankan state layout."
+  - q: "generateMetadata dipakai untuk…"
+    options: ["Mengompilasi TypeScript", "Mengatur warna", "Mengisi title dan description dinamis per halaman", "Membuat rute baru"]
+    answer: 2
+    explain: "Metadata dinamis membuat hasil pencarian dan preview share sesuai isi halaman."
+example:
+  code: |
+    const rute = [
+      { url: "/produk/1", param: { id: "1" } },
+      { url: "/produk/2", param: { id: "2" } },
+      { url: "/produk/3", param: { id: "3" } },
+    ];
+    console.log(rute.map((r) => r.url + " → id=" + r.param.id).join("\\n"));
+---
+
+Routing dinamis membuat satu file mewakili ribuan URL. Bab ini mempelajari params, pembangunan statis, dan navigasi antar halaman.
+
+## Membaca Params
+
+```typescript
+// app/produk/[id]/page.tsx → /produk/42
+export default async function DetailProduk({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const produk = await getProduk(id);
+
+  if (!produk) return notFound();
+
+  return (
+    <article>
+      <h1>{produk.nama}</h1>
+      <p>Rp{produk.harga}</p>
+    </article>
+  );
+}
+```
+
+Sejak Next.js 15, `params` dan `searchParams` adalah Promise — await dulu sebelum dipakai.
+
+## Search Params
+
+```typescript
+export default async function Katalog({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; halaman?: string }>;
+}) {
+  const { q = "", halaman = "1" } = await searchParams;
+  const produk = await cariProduk(q, Number(halaman));
+
+  return <HasilPencarian produk={produk} kata={q} />;
+}
+```
+
+URL `/katalog?q=kopi&halaman=2` langsung terbaca tanpa library query string.
+
+## Pre-render Rute Dinamis
+
+```typescript
+// app/produk/[id]/page.tsx
+export async function generateStaticParams() {
+  const produk = await fetch(`${API_URL}/produk`, { next: { revalidate: 3600 } }).then((r) => r.json());
+
+  return produk.map((p: { id: string }) => ({ id: p.id }));
+}
+```
+
+Produk unggulan dibangun statis saat build; produk baru menyusul saat diminta (fallback biasa).
+
+## Metadata Dinamis
+
+```typescript
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const produk = await getProduk(id);
+
+  return {
+    title: produk?.nama ?? "Produk tidak ditemukan",
+    description: produk ? `Beli ${produk.nama} seharga Rp${produk.harga}` : undefined,
+  };
+}
+```
+
+## Navigasi dengan Link
+
+```typescript
+import Link from "next/link";
+
+export default function Navbar() {
+  return (
+    <nav>
+      <Link href="/">Beranda</Link>
+      <Link href="/produk">Produk</Link>
+      <Link href="/tentang">Tentang</Link>
+      <Link href={`/produk/${id}`}>Lihat Detail</Link>
+    </nav>
+  );
+}
+```
+
+## Route Group
+
+```
+app/
+  (kedai)/
+    page.tsx        tetap "/" 
+    produk/page.tsx tetap "/produk"
+```
+
+Folder dalam kurung biasa menyusun kode tanpa menambah segmen URL — berguna memisahkan area aplikasi.
+
+## Tiga Bentuk Segmen Dinamis
+
+App Router memiliki **3 bentuk segmen dinamis**.
+
+| Bentuk | Nilai params | Contoh URL | Kapan dipakai |
+|---|---|---|---|
+| `[id]` | satu string | `/produk/42` | Detail satu entitas |
+| `[...slug]` | array wajib | `/docs/a/b` | Hierarki kedalaman bebas |
+| `[[...slug]]` | array opsional | `/docs` atau `/docs/a` | Root dan turunan satu handler |
+
+```typescript
+export default async function Docs({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}) {
+  const { slug = [] } = await params;
+  return <p>Lokasi: /{slug.join("/")}</p>;
+}
+```
+
+Validasi parameter tetap diperlukan. `id` dari URL adalah string yang tidak tepercaya; cek format sebelum query dan panggil `notFound()` saat resource tidak ada. Untuk navigasi programatik dari client component, gunakan `useRouter`; untuk tautan biasa tetap pilih `Link` agar prefetch dan aksesibilitas bekerja.
+
+## Di Dunia Nyata
+
+- Toko memakai `[id]` untuk ribuan detail produk dari satu file.
+- Dokumentasi memakai `[...slug]` untuk struktur bab bertingkat.
+- Katalog menyimpan filter dan halaman di `searchParams` agar URL dapat dibagikan.
+- Artikel populer memakai `generateStaticParams`, sedangkan artikel baru dirender saat diminta.
+
+<div class="note">💡 Dua API yang sering dibutuhkan bersamaan: generateStaticParams untuk kecepatan build, generateMetadata untuk SEO. Keduanya menerima params yang sama dengan halamannya — tidak perlu logika pengambilan data dobel.</div>

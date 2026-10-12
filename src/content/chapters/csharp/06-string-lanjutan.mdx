@@ -1,0 +1,170 @@
+---
+title: "String Lanjutan"
+description: "Interpolasi, immutability, 12 method string, dan StringBuilder"
+order: 6
+quiz:
+  - q: "Cara menulis string interpolation di C# adalah…"
+    options: ["'Nilai {x}'", "$\"Nilai {x}\"", "%(x)s", "${x}"]
+    answer: 1
+    explain: "Awali kutip ganda dengan $ lalu bungkus variabel dalam kurung kurawal."
+  - q: "Untuk menghitung jumlah karakter sebuah string dipakai properti…"
+    options: ["Count", "Size", "Capacity", "Length"]
+    answer: 3
+    explain: "Length adalah properti bawaan string, tanpa kurung."
+  - q: "Mengubah seluruh teks menjadi huruf kapital dilakukan dengan…"
+    options: ["up()", "Capital()", "ToUpper()", "MakeBig()"]
+    answer: 2
+    explain: "ToUpper() mengembalikan salinan teks berhuruf besar — teks asli tidak berubah."
+  - q: "String di C# bersifat…"
+    options: ["mutable", "immutable (tidak bisa diubah)", "static", "abstract"]
+    answer: 1
+    explain: "Setiap operasi seperti ToUpper menghasilkan string baru, bukan mengubah yang lama."
+  - q: "Saat membangun teks dari ribuan potongan dalam loop, pilihan terbaik adalah…"
+    options: ["StringBuilder", "operator + terus menerus", "char array manual", "string s = null"]
+    answer: 0
+    explain: "Karena string immutable, + di loop membuat ratusan salinan — StringBuilder mengubah di tempat."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            string nama = "Sari";
+            int umur = 20;
+
+            Console.WriteLine($"Halo {nama}, umurmu {umur} tahun");
+            Console.WriteLine("Panjang: " + nama.Length);
+            Console.WriteLine(nama.ToUpper());
+            Console.WriteLine(nama.Substring(1, 2));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah tipe paling sering dipakai. C# punya **banyak method bawaan** untuk membaca dan memformat teks — plus satu hal penting yang membedakannya dari bahasa lain: sifat *immutable*.
+
+## String Interpolation
+
+```csharp
+string nama = "Sari";
+int umur = 20;
+
+Console.WriteLine($"Halo {nama}, umurmu {umur} tahun");
+Console.WriteLine($"Nilai akhir: {85 + 10}");
+Console.WriteLine($"Harga: {125000m:N0}");        // Rp gaya angka: 125,000.00
+```
+
+Tanda `$` sebelum kutip ganda mengaktifkan interpolasi: isi kurung kurawal dievaluasi dulu lalu disisipkan ke teks. Cara ini lebih mudah dibaca daripada menyambung dengan `+`.
+
+## Panjang, Index, dan Sifat Immutable
+
+```csharp
+string teks = "OnBoss";
+
+Console.WriteLine(teks.Length);   // 6
+Console.WriteLine(teks[0]);       // O
+Console.WriteLine(teks[5]);       // s
+```
+
+Index terakhir selalu `Length - 1`. Mengakses index di luar rentang membuat `IndexOutOfRangeException`. Setiap string **immutable**: `teks.ToUpper()` tidak mengubah `teks`, melainkan mengembalikan salinan baru — karena itu hasilnya wajib disimpan kembali.
+
+## 12 Method Paling Sering Dipakai
+
+| Method | Fungsi | Contoh hasil |
+|---|---|---|
+| `Trim()` | buang spasi di tepi | `"abc "` → `"abc"` |
+| `ToUpper()` / `ToLower()` | huruf besar / kecil | `"ABC"` |
+| `Substring(p, n)` | potong n karakter | `"Boss"` |
+| `IndexOf(t)` | posisi pertama, −1 bila tak ada | `2` |
+| `Contains(t)` | ada/tidak substring | `true` |
+| `StartsWith` / `EndsWith` | awalan / akhiran | `true` / `false` |
+| `Replace(a, b)` | ganti semua kemunculan | teks baru |
+| `Split(pemisah)` | pecah jadi `string[]` | 3 potong |
+| `Insert(p, t)` | sisip di posisi | teks baru |
+| `Remove(p, n)` | hapus n karakter | teks baru |
+| `Equals(t)` | bandingkan isi | `true` |
+| `PadLeft(n)` | tambah spasi di kiri | rapi kolom |
+
+```csharp
+string teks = " Belajar C# ";
+
+Console.WriteLine(teks.Trim());        // "Belajar C#"
+Console.WriteLine(teks.Contains("C#")); // true
+Console.WriteLine(teks.Replace("C#", "dotNET"));
+Console.WriteLine(teks.Substring(1, 6));
+```
+
+## Memecah dan Menyusun
+
+```csharp
+string kalimat = "satu dua tiga";
+string[] kata = kalimat.Split(' ');
+
+Console.WriteLine(kata.Length);   // 3
+Console.WriteLine(kata[1]);       // dua
+
+string gabung = string.Join(" - ", kata);
+Console.WriteLine(gabung);        // satu - dua - tiga
+```
+
+Untuk data terstruktur seperti CSV, `Split(',')` lalu `Trim()` tiap kolom adalah langkah pertama yang paling umum.
+
+## StringBuilder untuk Banyak Penggabungan
+
+```csharp
+using System.Text;
+
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 3; i++)
+{
+    sb.Append("baris ").Append(i).AppendLine();
+}
+Console.WriteLine(sb.ToString());
+```
+
+Karena string immutable, `s += "x"` di dalam loop 10.000 iterasi membuat 10.000 salinan. `StringBuilder` menulis di tempat dan jauh lebih cepat untuk penggabungan besar.
+
+## Di Dunia Nyata
+
+- Membersihkan input: `nama.Trim().ToLower()` sebelum disimpan ke database agar konsisten.
+- Validasi format email: `if (email.Contains("@") && email.EndsWith(".com"))`.
+- Memotong nomor telepon tampilan: `no.Substring(0, 4) + "****" + no.Substring(8)`.
+- Parsing CSV hasil ekspor: `baris.Split(',')` lalu konversi tiap kolom sesuai tipenya.
+- Membangun laporan teks panjang dari ratusan baris data dengan `StringBuilder`.
+
+<div class="note">💡 String bersifat immutable: <code>teks.Trim()</code> tidak menghapus spasi dari variabel asli, melainkan menghasilkan salinan baru. Selalu pakai hasil kembalian method-nya — dan beralih ke <code>StringBuilder</code> begitu penggabungan terjadi di dalam loop.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Text;
+
+class Program
+{
+    static void Main()
+    {
+        string nama = "Sari";
+        int umur = 20;
+
+        Console.WriteLine($"Halo {nama}, umurmu {umur} tahun");
+        Console.WriteLine("Panjang: " + nama.Length);
+        Console.WriteLine(nama.ToUpper());
+        Console.WriteLine(nama.Substring(1, 2));
+
+        string kalimat = "satu dua tiga";
+        string[] kata = kalimat.Split(' ');
+        Console.WriteLine("Jumlah kata: " + kata.Length);
+        Console.WriteLine("Kata kedua: " + kata[1]);
+        Console.WriteLine(string.Join(" - ", kata));
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 3; i++)
+        {
+            sb.Append("baris ").Append(i).AppendLine();
+        }
+        Console.WriteLine("StringBuilder:");
+        Console.WriteLine(sb.ToString().Trim());
+    }
+}
+`} />

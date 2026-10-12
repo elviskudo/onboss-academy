@@ -1,0 +1,162 @@
+---
+title: "Function & Array"
+description: "4 bentuk fungsi, 6 fitur parameter, 3 jenis array PHP, dan 16 fungsi array inti"
+order: 6
+quiz:
+  - q: "Berapa jenis array yang dimiliki PHP?"
+    options: ["1", "2: indexed dan asosiatif", "3: indexed, asosiatif, dan multidimensi", "5"]
+    answer: 2
+    explain: "Ketiganya sebenarnya satu tipe `array` — bedanya kunci numerik, kunci teks, atau gabungan bertingkat."
+  - q: "Keunikan array PHP dibanding bahasa lain adalah…"
+    options: ["Harus dideklarasikan tipenya", "Tidak boleh bersarang", "Hanya boleh berisi angka", "Satu tipe array bisa jadi list sekaligus map terurut"]
+    answer: 3
+    explain: "PHP array adalah ordered map: kunci int/string + nilai, dipertahankan urutannya."
+  - q: "Apa output: count([10, 20, 30])?"
+    options: ["3", "30", "60", "array"]
+    answer: 0
+    explain: "count() menghitung jumlah elemen array."
+  - q: "return pada fungsi PHP berfungsi…"
+    options: ["Menghapus fungsi", "Memanggil fungsi lain", "Mengirim nilai keluar sekaligus menghentikan fungsi", "Mencetak ke layar"]
+    answer: 2
+    explain: "Kode setelah return tidak dijalankan; echo tidak menggantikan return."
+  - q: "[1, 2] + [3] menghasilkan…"
+    options: ["[1, 2, [3]]", "[3, 1, 2]", "Error", "[1, 2, 3]"]
+    answer: 3
+    explain: "Operator + pada array menggabung elemen; kunci kembar diambil dari array kiri."
+example:
+  code: |
+    <?php
+    function luasPersegi($sisi) {
+        return $sisi * $sisi;
+    }
+    echo luasPersegi(5), "\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi membagi pekerjaan jadi bagian yang bisa dipakai ulang, array menyimpan kumpulan data — di PHP keduanya menyatu dalam satu alur.
+
+## 4 Bentuk Deklarasi Fungsi
+
+| # | Bentuk | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| 1 | Named function | `function tambah($a, $b)` | Fungsi biasa, bisa dipakai ulang |
+| 2 | Closure | `$f = function ($x) { return $x * 2; };` | Logika yang menangkap variabel sekitar |
+| 3 | Arrow function (7.4) | `$f = fn($x) => $x * 2;` | Satu ekspresi, lebih ringkas |
+| 4 | Method | `class A { function hitung() {} }` | Perilaku milik object (OOP) |
+
+## 6 Fitur Parameter
+
+| # | Fitur | Contoh | Fungsi |
+| --- | --- | --- | --- |
+| 1 | Nilai default | `($nama = "Tamu")` | Argumen opsional |
+| 2 | Type declaration | `(int $a, int $b)` | Tolak tipe salah (TypeError) |
+| 3 | Return type | `: array` | Paksa tipe keluaran |
+| 4 | By reference | `(&$total)` | Fungsi mengubah variabel pemanggil |
+| 5 | Variadic | `(...$angka)` | Terima argumen tak terbatas |
+| 6 | Nullable | `(?string $kota)` | Boleh null |
+
+```php
+<?php
+function jumlah(...$angka) {
+    return array_sum($angka);
+}
+
+echo jumlah(1, 2, 3), "\n";     // 6
+```
+
+## 3 Jenis Array
+
+```php
+<?php
+$buah = ["Apel", "Mangga", "Anggur"];        // 1. indexed — kunci 0,1,2
+$siswa = ["nama" => "Sari", "nilai" => 90];  // 2. asosiatif — kunci teks
+$matriks = [[1, 2], [3, 4]];                 // 3. multidimensi
+```
+
+| Jenis | Kunci | Contoh penggunaan |
+| --- | --- | --- |
+| Indexed | Integer berurutan (0-based) | Daftar hasil query, antrian |
+| Asosiatif | String / int bebas | Baris database, data form, konfigurasi |
+| Multidimensi | Gabungan keduanya | Tabel, grafik, data bersarang |
+
+Catatan khas PHP: **satu tipe `array`** menampung keduanya; string numerik (`"1"`) otomatis berubah jadi integer `1`.
+
+```php
+<?php
+$nilai = ["Budi" => 75, "Sari" => 92, "Rina" => 88];
+echo $nilai["Sari"], "\n";          // akses per kunci
+echo implode(", ", array_keys($nilai)), "\n";
+```
+
+## 16 Fungsi Array Inti
+
+**Struktur & akses (8)**
+
+| # | Fungsi | Fungsi | # | Fungsi | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `count` | Jumlah elemen | 5 | `sort` | Urut, indeks disusun ulang |
+| 2 | `array_push` | Tambah ke akhir | 6 | `ksort` | Urut berdasarkan kunci |
+| 3 | `array_pop` | Ambil dari akhir | 7 | `usort` | Urut dengan pembanding buatan |
+| 4 | `array_shift` | Ambil dari depan | 8 | `array_unique` | Buang duplikat |
+
+**Transformasi & query (8)**
+
+| # | Fungsi | Fungsi | # | Fungsi | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 9 | `array_merge` | Gabung — kunci kembar: kanan menang | 13 | `in_array` | Cek keanggotaan nilai |
+| 10 | `array_filter` | Saring sesuai kondisi | 14 | `array_key_exists` | Cek kunci ada |
+| 11 | `array_map` | Terapkan fungsi ke tiap elemen | 15 | `array_keys` | Daftar kunci |
+| 12 | `array_sum` | Jumlahkan semua nilai | 16 | `array_column` | Ambil satu kolom |
+
+Jembatan teks: `implode` (array → teks) dan `explode` (kebalikannya).
+
+## Operator + untuk Array (Khas PHP)
+
+```php
+<?php
+$a = ["x" => 1, "y" => 2];
+$b = ["y" => 9, "z" => 3];
+
+var_dump($a + $b);            // x=1, y=2, z=3 — kunci kembar: kiri menang
+var_dump(array_merge($a, $b)); // x=1, y=9, z=3 — kunci kembar: kanan menang
+
+$gabung = [...[1, 2], ...[3]]; // spread PHP 7.4+ → [1, 2, 3]
+```
+
+Pakai `+` bila data kiri tidak boleh tertimpa; `array_merge` bila yang belakang harus menang.
+
+## Di Dunia Nyata
+
+- **Rekap nilai kelas**: `array_column($hasil, "nilai")` lalu `array_sum` menghitung total, `max` mencari peringkat.
+- **Filter produk tersedia**: `array_filter($produk, fn($p) => $p["stok"] > 0)` sebelum ditampilkan.
+- **Form multi-pilihan**: `$_POST["hobi"]` datang sebagai array — `in_array("renang", $hobi)` mengecek pilihan.
+
+<div class="note">💡 Fungsi mengembalikan lewat `return`, bukan `echo`. `echo` hanya mencetak ke layar — `$hasil = tambah(2, 3);` akan `null` bila di dalam fungsi hanya ada `echo`. Simpan nilai di variabel, cetak di pemanggil: peran fungsi dan peran tampilan harus terpisah.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+function tambah($a, $b) {
+    return $a + $b;
+}
+
+function sapa(string $nama, string $gelar = ""): string {
+    $awal = $gelar === "" ? "" : $gelar . " ";
+    return "Halo, " . $awal . $nama . "!";
+}
+
+function jumlah(...$angka) {
+    return array_sum($angka);
+}
+
+echo sapa("Sari") . "\\n";
+echo sapa("Sari", "Dr.") . "\\n";
+echo "2 + 3 = " . tambah(2, 3) . "\\n";
+echo "Jumlah: " . jumlah(1, 2, 3, 4) . "\\n";
+
+$nilai = ["Budi" => 75, "Sari" => 92, "Rina" => 88];
+foreach ($nilai as $nama => $n) {
+    echo $nama . " = " . $n . "\\n";
+}
+echo "Tertinggi: " . max($nilai) . "\\n";
+echo "Jumlah semua: " . array_sum($nilai) . "\\n";
+echo "Gabung + : " . implode(",", ["a" => 1] + ["b" => 2]) . "\\n";`} />

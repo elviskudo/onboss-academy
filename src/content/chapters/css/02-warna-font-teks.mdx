@@ -1,0 +1,124 @@
+---
+title: "Warna, Font, dan Teks"
+description: "Mengatur warna, tipografi, dan jarak teks"
+order: 2
+quiz:
+  - q: "Format warna HEX untuk merah murni adalah…"
+    options: ["#FF0000", "#00FF00", "#0000FF", "#FFFF00"]
+    answer: 0
+    explain: "HEX #RRGGBB. Merah penuh = FF di posisi pertama."
+  - q: "Property untuk mengubah ukuran huruf adalah…"
+    options: ["text-size", "font-size", "size", "letter-size"]
+    answer: 1
+    explain: "font-size mengatur ukuran teks (px, em, rem, %)."
+  - q: "Satuan rem mereferensikan…"
+    options: ["Ukuran font elemen induk", "Ukuran font root (html)", "Resolusi layar", "Pixel absolut"]
+    answer: 1
+    explain: "rem = root em (biasanya 16px). em = font elemen induk — hati-hati bersarang."
+  - q: "Property untuk mengatur ketebalan huruf adalah…"
+    options: ["font-style", "font-weight", "text-bold", "thick"]
+    answer: 1
+    explain: "font-weight: bold/700. font-style: italic."
+  - q: "text-align: center; berfungsi untuk…"
+    options: ["Menengahkan teks horizontal", "Menengahkan vertikal", "Merata kanan", "Menambah jarak huruf"]
+    answer: 0
+    explain: "text-align: left | center | right | justify (horizontal)."
+example:
+  code: |
+    <h1>Judul Elegan</h1>
+    <p>Paragraf dengan spasi baris nyaman dan warna lembut.</p>
+    <style>
+      h1 { color: #17181D; font-family: Georgia, serif; font-size: 2.2rem; }
+      p  { color: #6B7280; line-height: 1.8; font-size: 1.05rem; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Warna
+
+CSS menerima warna dalam beberapa format:
+
+```css
+color: red;                  /* nama warna */
+color: #4F46E5;              /* HEX */
+color: rgb(79, 70, 229);     /* RGB */
+color: hsl(245, 75%, 59%);   /* Hue-Saturation-Lightness */
+color: rgb(79 70 229 / 0.8); /* dengan transparansi */
+```
+
+HSL paling mudah disetel: ubah `hue` untuk ganti warna, `lightness` untuk terang/gelap.
+
+Ada **5 format warna modern yang umum**:
+
+| Format | Contoh | Kekuatan | Kapan dipakai |
+|--------|--------|----------|---------------|
+| Keyword | `red` | Mudah dibaca | Demo cepat |
+| HEX | `#4F46E5` | Ringkas, umum di desain | Token warna solid |
+| RGB(A) | `rgb(79 70 229 / .8)` | Kanal & alpha jelas | Transparansi |
+| HSL(A) | `hsl(245 75% 59%)` | Mudah ubah hue/lightness | Variasi tema |
+| `currentColor` | `border-color: currentColor` | Mengikuti warna teks | Ikon/border adaptif |
+
+## Tipografi
+
+```css
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #17181D;
+}
+
+h1 {
+  font-size: 2.5rem;   /* 2.5 × font root */
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.italic { font-style: italic; }
+```
+
+### Font Shorthand
+
+```css
+font: italic 700 16px/1.6 'Inter', sans-serif;
+/* gaya | ketebalan | ukuran/baris | keluarga */
+```
+
+<div class="note">💡 Selalu akhiri daftar <code>font-family</code> dengan generic: <code>sans-serif</code>, <code>serif</code>, atau <code>monospace</code> — jaring pengaman jika font utama gagal dimuat.</div>
+
+## Jarak Teks
+
+```css
+p {
+  margin-bottom: 1rem;    /* jarak luar */
+  letter-spacing: 0.05em; /* jarak antar huruf */
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+```
+
+## Di Dunia Nyata
+
+- **Portal berita** — `line-height` lega dan lebar `65ch` menjaga artikel nyaman dibaca
+- **Brand perusahaan** — HEX/token memastikan warna identitas sama di tombol dan heading
+- **Dashboard data** — warna status selalu dibantu teks/ikon agar tidak bergantung pada warna
+- **Aplikasi multibahasa** — font fallback menampilkan aksara yang tidak tersedia di font utama
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #17181D;
+  font-size: 2rem;
+  letter-spacing: -1px;
+}
+p {
+  color: #6B7280;
+  line-height: 1.9;
+  max-width: 40ch;
+}
+.alert {
+  background: #FFFBEB;
+  border-left: 4px solid #F59E0B;
+  padding: 12px 16px;
+  color: #92400E;
+}`} />

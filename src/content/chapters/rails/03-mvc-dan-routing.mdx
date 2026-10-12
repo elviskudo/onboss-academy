@@ -1,0 +1,143 @@
+---
+title: "MVC & Routing"
+description: "Model, View, Controller, dan pemetaan URL yang menentukan alur aplikasi"
+order: 3
+quiz:
+  - q: "MVC pada Rails terdiri dari…"
+    options: ["Model, View, Controller", "Module, Variable, Class", "Menu, View, Command", "Map, Value, Cache"]
+    answer: 0
+    explain: "Model mengelola data, View menampilkan, Controller mengatur alur."
+  - q: "Peran controller adalah…"
+    options: ["Menyimpan baris ke database", "Menerima request lalu memanggil model dan view", "Mengompilasi CSS", "Mengelola server"]
+    answer: 1
+    explain: "Controller adalah penghubung antara request, data, dan tampilan."
+  - q: "File tempat mendefinisikan rute adalah…"
+    options: ["config/routes.rb", "app/routing.rb", "public/routes.rb", "index.php"]
+    answer: 0
+    explain: "Rails membaca config/routes.rb untuk memetakan URL ke controller."
+  - q: "Baris resources :products pada routes menghasilkan…"
+    options: ["Satu rute POST saja", "Tujuh rute CRUD standar", "Tidak ada rute", "Rute untuk file statis"]
+    answer: 1
+    explain: "resources membuat index, show, new, create, edit, update, dan destroy."
+  - q: "Variabel instance pada controller (diawali @) tersedia di…"
+    options: ["View", "Database", "Routing", "Gemfile"]
+    answer: 0
+    explain: "View membaca variabel instance yang didefinisikan controller."
+example:
+  code: |
+    # config/routes.rb
+    Rails.application.routes.draw do
+      root "pages#home"
+      resources :products
+    end
+
+    class ProductsController < ApplicationController
+      def index
+        @products = Product.all
+      end
+    end
+---
+
+MVC adalah peta jalan Rails. Setiap request melewati tiga bagian ini secara berurutan.
+
+## Model
+
+```ruby
+class Product < ApplicationRecord
+  # perilaku dan data produk
+end
+
+products = Product.all
+```
+
+Model berbicara ke database, mengvalidasi data, dan menjalankan aturan bisnis.
+
+## View
+
+```ruby
+<h1>Daftar Produk</h1>
+<ul>
+  <% @products.each do |product| %>
+    <li><%= product.name %></li>
+  <% end %>
+</ul>
+```
+
+View hanya bertugas merender — tanpa logika bisnis yang rumit.
+
+## Controller
+
+```ruby
+class ProductsController < ApplicationController
+  def index
+    @products = Product.all
+  end
+
+  def show
+    @product = Product.find(params[:id])
+  end
+end
+```
+
+Controller membaca `params`, memanggil model, lalu menyerahkan data ke view.
+
+## Routing
+
+```ruby
+Rails.application.routes.draw do
+  root "pages#home"
+  get "tentang", to: "pages#about"
+  resources :products
+end
+```
+
+Format `controller#action` membuat rute mudah diprediksi hanya dengan membaca daftar rute.
+
+## Tujuh Rute Bawaan resources
+
+```ruby
+# GET    /products         index
+# GET    /products/new     new
+# POST   /products         create
+# GET    /products/1       show
+# GET    /products/1/edit  edit
+# PATCH  /products/1       update
+# DELETE /products/1       destroy
+```
+
+Perintah `bin/rails routes` menampilkan seluruh peta rute aplikasi kapan pun.
+
+## Delapan Aksi REST
+
+Secara konsep CRUD Rails memakai **7 action resource**; `new` dan `edit` hanya menampilkan form, sedangkan perubahan data dilakukan `create` dan `update`.
+
+| Verb | Path | Action | Fungsi |
+|---|---|---|---|
+| GET | `/products` | index | daftar |
+| GET | `/products/:id` | show | detail |
+| GET | `/products/new` | new | form baru |
+| POST | `/products` | create | membuat data |
+| GET | `/products/:id/edit` | edit | form edit |
+| PATCH/PUT | `/products/:id` | update | memperbarui |
+| DELETE | `/products/:id` | destroy | menghapus |
+
+`resources` juga menghasilkan named helpers agar URL tidak dirangkai manual. Batasi dengan `only:` atau `except:` supaya endpoint yang tidak didukung tidak terbuka. Urutan route penting: Rails memilih kecocokan pertama dari atas ke bawah.
+
+## Batas Tanggung Jawab
+
+Model menangani aturan domain dan query, controller mengorkestrasi request singkat, view mempresentasikan hasil. Routing menentukan pintu masuk dan constraint. `before_action` cocok untuk memuat resource atau autentikasi bersama, tetapi jangan menyembunyikan alur bisnis yang rumit di callback.
+
+## Di Dunia Nyata
+
+- Namespace `/admin` memisahkan panel internal dari katalog publik.
+- Nested route `/orders/:order_id/items` menunjukkan kepemilikan item.
+- Constraint membatasi subdomain atau format JSON.
+- Health-check route sederhana memberi load balancer indikator kesiapan aplikasi.
+
+## Parameter dan Respons
+
+Route dinamis menaruh segmen seperti `:id` di `params`. Query string, body form, dan parameter route bertemu di object yang sama, sehingga controller harus memakai strong parameters sebelum mass assignment. Untuk resource yang tidak ditemukan, `find` memicu 404 melalui penanganan exception; jangan mengubah semua kegagalan menjadi status 200.
+
+Satu action dapat melayani format berbeda melalui `respond_to`, tetapi jangan mencampur presentasi HTML dan kontrak API secara berlebihan. Redirect mengirim respons 3xx dan meminta browser membuat request baru; render langsung menghasilkan body pada request yang sama. Setelah perubahan data berhasil, redirect mencegah submit ulang saat refresh. Setelah validasi gagal, render mempertahankan object beserta error agar form bisa menjelaskan masalah kepada user.
+
+<div class="note">💡 Jaga controller tetap tipis. Kalau satu method controller sudah panjang dan penuh kondisi, kemungkinan logika itu seharusnya pindah ke model — di situlah tempat aturan bisnis berada.</div>

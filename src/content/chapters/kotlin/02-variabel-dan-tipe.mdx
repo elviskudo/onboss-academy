@@ -1,0 +1,177 @@
+---
+title: "Variabel & Tipe Data"
+description: "val, var, tipe data primitif, dan string template di Kotlin"
+order: 2
+quiz:
+  - q: "Kata kunci untuk membuat variabel yang tidak bisa diubah adalah…"
+    options: ["val", "var", "let", "const only"]
+    answer: 0
+    explain: "val bersifat read-only, var bisa ditulis ulang."
+  - q: "Tipe data untuk bilangan desimal di Kotlin adalah…"
+    options: ["int", "Float", "Double", "decimal"]
+    answer: 2
+    explain: "Double adalah default untuk angka desimal, Float butuh akhiran f."
+  - q: "Tipe data teks di Kotlin disebut…"
+    options: ["String", "Char", "Text", "StringBuilder only"]
+    answer: 0
+    explain: "String untuk teks panjang, Char untuk satu karakter."
+  - q: "String template memakai tanda…"
+    options: ["dollar", "hash", "at", "percent"]
+    answer: 0
+    explain: "Contoh Halo $nama atau hasil ${1 + 2}."
+  - q: "Tipe data untuk nilai benar dan salah adalah…"
+    options: ["Bool", "boolean", "Boolean", "bit"]
+    answer: 2
+    explain: "Kotlin memakai Boolean dengan nilai true dan false."
+example:
+  code: |
+    fun main() {
+        val nama = "Sari"
+        var umur = 20
+        umur += 1
+
+        val tinggi = 1.65
+        val aktif = true
+        val huruf = 'A'
+
+        println("$nama berumur $umur tahun")
+        println("Tinggi $tinggi, aktif $aktif, huruf $huruf")
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kotlin menuntut setiap variabel dinyatakan jelas, tetapi tipe sering bisa ditebak otomatis.
+
+## val dan var
+
+```kotlin
+fun main() {
+    val kota = "Bandung"
+    var skor = 10
+
+    skor += 5
+    println("$kota skor $skor")
+
+    // kota = "Jakarta"  // error kompilasi
+}
+```
+
+Gunakan `var` hanya bila nilai benar-benar berubah. Kotlin hanya punya **2 kata kunci deklarasi variabel**: `val` (read-only) dan `var` (bisa ditulis ulang), plus satu varian khusus `const val` untuk konstanta di level atas dan companion object.
+
+Aturan penamaan di Kotlin:
+
+- camelCase untuk variabel dan function (`jumlahNilai`)
+- PascalCase untuk class dan interface (`ProdukKopi`)
+- huruf besar semua hanya untuk konstanta benar-benar tetap (`MAX_SKOR`)
+- kata kunci (`class`, `val`, `object`) tidak boleh dipakai sebagai nama
+
+Scope mengikuti tempat deklarasi: variabel di dalam `fun` terlihat sampai bloknya selesai, properti di dalam class terlihat pada seluruh member, dan variabel di atas `fun` bersifat top-level dalam satu file.
+
+```kotlin
+const val MAX_SKOR = 100      // konstanta compile-time
+var skor = 0                  // boleh berubah
+skor = minOf(skor + 10, MAX_SKOR)
+println("Skor: $skor")
+```
+
+## Tipe Data: 10 Tipe Dasar
+
+Kotlin punya **10 tipe dasar**: 6 tipe angka, `Boolean`, `Char`, `String`, dan `Array`. Enam tipe angka berarti seluruh kebutuhan numerik — dari byte sampai long — tanpa tipe tambahan dari library.
+
+```kotlin
+val umur: Int = 20
+val panjang: Long = 100_000_000L
+val desimal: Double = 3.14
+val kecil: Float = 1.5f
+val aktif: Boolean = true
+val huruf: Char = 'A'
+```
+
+| Tipe | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `Byte` | 8 bit, -128..127 | `val b: Byte = 127` | data biner hemat memori |
+| `Short` | 16 bit, -32768..32767 | `val s: Short = 1000` | angka kecil yang dibatasi ukuran |
+| `Int` | 32 bit, ±2,1 miliar | `val n = 42` | hitungan sehari-hari |
+| `Long` | 64 bit | `val id = 9_000_000_000L` | ID, timestamp milidetik |
+| `Float` | 32 bit desimal | `val x = 1.5f` | grafis, hemat ruang |
+| `Double` | 64 bit desimal | `val pi = 3.14` | default angka desimal |
+| `Boolean` | `true`/`false` | `val lulus = true` | penanda benar-salah |
+| `Char` | 1 karakter Unicode | `val huruf = 'A'` | satu karakter |
+| `String` | teks immutable | `val nama = "Sari"` | seluruh teks |
+| `Array` | larutan berukuran tetap | `val a = arrayOf(1, 2)` | jarang — pakai List |
+
+Tanda bawah pada angka `100_000_000` hanya mempermudah pembacaan.
+
+## Type Inference
+
+```kotlin
+val angka = 42        // tipe Int ditebak
+val teks = "Halo"     // tipe String ditebak
+val hasil = angka + 1  // Int
+```
+
+Ketik tipe secara manual hanya saat membantu pembaca kode.
+
+## String Template
+
+```kotlin
+fun main() {
+    val nama = "Budi"
+    val umur = 25
+
+    println("Halo, $nama!")
+    println("Umur: $umur tahun")
+    println("Tahun lahir: " + (2026 - umur))
+}
+```
+
+Ekspresi yang kompleks dipisah dengan operasi string `+` agar tetap terbaca.
+
+## Konversi Tipe
+
+Tidak ada konversi otomatis antar tipe numerik — semuanya eksplisit lewat **6 fungsi konversi angka**: `toByte()`, `toShort()`, `toInt()`, `toLong()`, `toFloat()`, `toDouble()`, ditambah `toString()` untuk semua tipe.
+
+```kotlin
+val teks = "123"
+val angka = teks.toInt()
+
+val bilangan = 4.99
+val bulat = bilangan.toInt()   // 4, bagian desimal dibuang
+
+println(angka + 1)
+println(bulat)
+println(3.toString() + 1)      // "31" — string + angka = konkatenasi
+```
+
+Kejatuhan yang paling sering:
+
+- `4.99.toInt()` membuang desimal (menuju nol), bukan membulatkan ke 5.
+- `"1" + 1` dihasilkan `"11"` — operator `+` pada String berarti konkatenasi, bukan penjumlahan.
+- Angka di luar rentang tipe membuat error runtime (`Int` maksimal sekitar 2,1 miliar).
+
+## Di Dunia Nyata
+
+- **Mengubah input API** — data JSON datang sebagai teks, lalu dikonversi dengan `toInt()`/`toDouble()` sebelum dihitung.
+- **Menyimpan konstanta aplikasi** — `const val HARGA_PREMIUM = 99000` di satu tempat agar tidak tersebar di banyak file.
+- **Menghitung rata-rata** — `total.toDouble() / jumlah` wajib mengubah salah satu ke `Double` agar hasil tidak dipotong.
+- **Memvalidasi umur** — `val dewasa = umur >= 17` menghasilkan `Boolean` yang langsung bisa dipakai sebagai kondisi.
+- **Menyimpan ID besar** — nomor induk atau timestamp pakai `Long`, karena `Int` tidak cukup untuk angka di atas 2 miliar.
+
+<div class="note">💡 Kotlin melarang operasi antar tipe berbeda tanpa konversi. Int ditambah Double harus diubah dulu, misalnya umur.toDouble() + 0.5 — keputusan ini mencegah kesalahan pembulatan diam-diam.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val nama = "Sari"
+    var umur = 20
+    umur += 1
+
+    val tinggi = 1.65
+    val aktif = true
+
+    println("$nama berumur $umur tahun")
+    println("Tinggi $tinggi, aktif $aktif")
+
+    val teks = "123"
+    val angka = teks.toInt()
+    println("Hasil konversi: " + (angka + 1))
+}`} />

@@ -1,0 +1,150 @@
+---
+title: "Function"
+description: "def, parameter, return, lambda, args/kwargs, scope"
+order: 5
+quiz:
+  - q: "Cara mendefinisikan fungsi di Python adalah…"
+    options: ["function nama_fungsi() {}", "def nama_fungsi():", "fn nama_fungsi()", "func nama_fungsi()"]
+    answer: 1
+    explain: "def diikuti nama, parameter dalam kurung, dan titik dua."
+  - q: "return dalam fungsi berfungsi untuk…"
+    options: ["Mencetak ke layar", "Menghapus fungsi", "Mengulang fungsi", "Mengembalikan nilai ke pemanggil"]
+    answer: 3
+    explain: "Tanpa return, fungsi mengembalikan None. print ≠ return."
+  - q: "Parameter default ditulis…"
+    options: ["def sapa(nama=\"Teman\"):", "def sapa(nama: \"Teman\")", "def sapa(nama -> \"Teman\")", "Tidak bisa"]
+    answer: 0
+    explain: "def f(x=10): — nilai dipakai jika argumen tidak dikirim."
+  - q: "Apa gunanya **kwargs?"
+    options: ["Mengumpulkan argumen posisional berlebih jadi tuple", "Membuat dict argumen bernama", "Membagi fungsi", "Menghitung panjang"]
+    answer: 1
+    explain: "**kwargs menangkap sisa argumen bernama sebagai dict. *args = posisional → tuple."
+  - q: "Lambda adalah…"
+    options: ["Fungsi anonim satu ekspresi", "Library", "Tipe data", "Kata kunci loop"]
+    answer: 0
+    explain: "lambda x: x*2 — praktis untuk key function di sort/map."
+example:
+  code: |
+    def sapa(nama):
+        return f"Halo, {nama}!"
+
+    print(sapa("Sari"))
+    kuadrat = lambda n: n ** 2
+    print(kuadrat(7))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi memecah masalah besar jadi potongan yang bisa dipakai ulang, diuji, dan dibaca orang lain. Deklarasi di Python cuma 1 kata kunci: `def`.
+
+## Definisi & Pemanggilan
+
+```python
+def sapa(nama):
+    return f"Halo, {nama}!"
+
+print(sapa("Budi"))
+```
+
+Tanpa `return`, fungsi tetap jalan tapi mengembalikan `None`. Fungsi yang mengembalikan nilai = ekspresi; yang hanya efek samping (print, tulis file) = prosedur.
+
+## Parameter & Return
+
+```python
+def tambah(a, b=10):     # b default 10
+    return a + b
+
+hasil = tambah(5)        # 15
+```
+
+Python punya **5 jenis parameter**:
+
+| Jenis | Sintaks | Contoh panggilan |
+|---|---|---|
+| posisional (wajib) | `def f(a, b)` | `f(1, 2)` |
+| default | `def f(a, b=10)` | `f(1)` → b=10 |
+| bernama | parameter apa pun | `f(b=3, a=1)` |
+| variadic posisional | `def f(*args)` | `f(1, 2, 3)` → tuple |
+| variadic bernama | `def f(**kw)` | `f(x=1, y=2)` → dict |
+
+Aturan: setelah parameter bernama biasa, parameter lain harus bernama; urutan `*args` → parameter normal → `**kwargs`.
+
+## Args & Kwargs
+
+```python
+def total(*angka, pajak=0.1):
+    dasar = sum(angka)
+    return dasar + dasar * pajak
+
+print(total(100, 200, pajak=0.11))
+```
+
+- `*args` → tuple argumen posisional
+- `**kwargs` → dict argumen bernama
+
+## Docstring
+
+```python
+def bagi(a, b):
+    """Membagi a dengan b. Raise ValueError jika b == 0."""
+    if b == 0:
+        raise ValueError("b tidak boleh 0")
+    return a / b
+```
+
+## Lambda & Fungsi Tingkat Tinggi
+
+```python
+kuadrat = lambda n: n ** 2
+
+nilai = [("Sari", 90), ("Budi", 75), ("Rina", 88)]
+urut = sorted(nilai, key=lambda x: x[1], reverse=True)
+map(lambda n: n * 2, [1, 2, 3])
+filter(lambda n: n % 2 == 0, range(10))
+```
+
+Fungsi tingkat tinggi menerima fungsi sebagai argumen (`sorted(key=...)`, `map`, `filter`). `lambda` hanya untuk ekspresi satu baris — kalau butuh logika, tulis `def`.
+
+## Scope
+
+```python
+global_x = 10
+
+def demo():
+    lokal_x = 5
+    return global_x + lokal_x
+
+# lokal_x tidak terlihat di luar fungsi
+```
+
+Urutan pencarian variabel: **L**okal → **E**nclosing → **G**lobal → **B**uilt-in (LEGB). Baca variabel global dari dalam fungsi bisa langsung; **menulis** ulangnya perlu `global x` (atau lebih baik: kembalikan nilai saja).
+
+## Kapan Memecah Kode jadi Fungsi
+
+1. Blok yang dipakai di 2 tempat atau lebih.
+2. Lebih dari ±10 baris yang melakukan satu tugas.
+3. Perlu diuji terpisah dari alur utama.
+4. Nama pekerjaannya bisa jadi kalimat kerja: `hitung_total()`, `validasi_email()`.
+
+## Di Dunia Nyata
+
+- `hitung_total(harga, qty, pajak)` dipakai keranjang belanja dan halaman checkout — satu sumber kebenaran.
+- `validasi_email(x)` dipakai form daftar, form login, dan reset password sekaligus.
+- Fungsi `kirim_wa(nomor, pesan)` membungkus API SMS supaya tinggal diganti providernya.
+- `lambda` sebagai `key` untuk urutkan produk berdasarkan harga atau rating.
+
+<div class="note">💡 Jangan kasih argumen default berupa list/dict (`def tambah(x, daftar=[])`) — objek itu dibuat sekali dan menempel antar pemanggilan. Default yang aman: `None`, lalu `daftar = daftar or []` di dalam tubuh fungsi.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def rata_rata(*nilai):
+    if not nilai:
+        return 0
+    return sum(nilai) / len(nilai)
+
+def format_user(nama, **info):
+    detail = ", ".join(f"{k}={v}" for k, v in info.items())
+    return f"{nama} ({detail})"
+
+print("Rata-rata:", rata_rata(80, 90, 100, 70))
+print(format_user("Sari", kelas="XII", kota="Bandung"))
+urut = sorted(["python", "java", "go", "rust"], key=len)
+print("Pendek ke panjang:", urut)`} />

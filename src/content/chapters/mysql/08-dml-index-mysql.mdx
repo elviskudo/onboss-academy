@@ -1,0 +1,123 @@
+---
+title: "DML dan Index di MySQL"
+description: "Mengubah data dengan aman dan memilih index yang mempercepat query"
+order: 8
+quiz:
+  - q: "INSERT tanpa id pada kolom AUTO_INCREMENT akan…"
+    options: ["Error", "Mendapat id otomatis", "Menimpa baris", "Menghapus tabel"]
+    answer: 1
+    explain: "Database mengalokasikan id berikutnya otomatis."
+  - q: "UPDATE tanpa WHERE…"
+    options: ["Mengubah baris pertama", "Mengubah semua baris", "Error", "Tidak melakukan apa-apa"]
+    answer: 1
+    explain: "WHERE adalah pembatas target; tanpa itu semua baris berubah."
+  - q: "Berapa struktur index utama yang dibahas?"
+    options: ["2", "3", "4", "5"]
+    answer: 1
+    explain: "3 struktur: B-tree, FULLTEXT, dan spatial R-tree."
+  - q: "Index komposit (dept, gaji) optimal untuk…"
+    options: ["WHERE gaji saja", "WHERE dept dan rentang gaji", "Kolom nama saja", "INSERT saja"]
+    answer: 1
+    explain: "Aturan leftmost prefix membuat dept atau dept+gaji terlayani, bukan gaji saja secara optimal."
+  - q: "Cara memeriksa pemakaian index adalah…"
+    options: ["EXPLAIN", "COMMIT", "DESCRIBE DATABASE", "ROLLBACK"]
+    answer: 0
+    explain: "EXPLAIN menunjukkan access type, key, dan perkiraan baris."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah
+    FROM karyawan
+    GROUP BY dept;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+DML mengubah isi tabel; index mempercepat cara data itu ditemukan. Keduanya berhubungan: semakin banyak index, pembacaan tertentu makin cepat tetapi setiap penulisan makin mahal.
+
+## 3 Perintah DML Tulis
+
+| Perintah | Fungsi | Risiko | Pengaman |
+|----------|--------|--------|----------|
+| `INSERT` | tambah baris | tipe/constraint salah | sebut daftar kolom |
+| `UPDATE` | ubah baris | semua baris berubah | uji WHERE dengan SELECT |
+| `DELETE` | hapus baris | kehilangan data | transaksi + backup |
+
+```sql
+INSERT INTO karyawan (nama, jabatan, gaji, dept)
+VALUES
+  ('Tono Wijaya', 'Mobile Developer', 9800000, 'Engineering'),
+  ('Nina Sari', 'Data Engineer', 10200000, 'Data');
+```
+
+Satu INSERT multi-baris mengurangi perjalanan jaringan dan overhead parsing. Untuk data sangat besar gunakan mekanisme bulk load MySQL dengan validasi dan staging table.
+
+## Pola Aman UPDATE dan DELETE
+
+```sql
+START TRANSACTION;
+SELECT id, nama, gaji FROM karyawan WHERE dept = 'Design' FOR UPDATE;
+UPDATE karyawan SET gaji = gaji + 500000 WHERE dept = 'Design';
+-- cocokkan ROW_COUNT() dan hasil SELECT
+COMMIT;
+```
+
+Empat langkah aman: mulai transaksi, SELECT target, lakukan perubahan, COMMIT bila jumlah baris sesuai — atau ROLLBACK bila tidak. Jangan menganggap `sql_safe_updates` sebagai satu-satunya pengaman; kondisi berindex pun bisa tetap terlalu luas.
+
+## 3 Struktur Index Utama
+
+| Struktur | Cocok untuk | Contoh |
+|----------|-------------|--------|
+| B-tree | kesamaan, rentang, urutan, prefix | `WHERE dept = ? ORDER BY gaji` |
+| FULLTEXT | pencarian kata dalam teks | `MATCH(isi) AGAINST(...)` |
+| Spatial (R-tree) | geometri/lokasi | area yang memuat titik |
+
+InnoDB memakai B-tree untuk primary dan secondary index. Hash index internal dapat muncul sebagai optimasi adaptif, tetapi bukan index umum yang kamu desain untuk tabel InnoDB.
+
+## Index Tunggal dan Komposit
+
+```sql
+CREATE INDEX idx_karyawan_dept_gaji ON karyawan (dept, gaji);
+```
+
+Index komposit mengikuti aturan **leftmost prefix**. `(dept, gaji)` membantu:
+
+1. `WHERE dept = 'Data'`;
+2. `WHERE dept = 'Data' AND gaji >= 9000000`;
+3. urutan gaji dalam satu dept.
+
+Ia tidak optimal untuk `WHERE gaji >= 9000000` tanpa dept. Urutkan kolom berdasarkan pola query nyata: equality biasanya sebelum range.
+
+## Clustered dan Secondary Index InnoDB
+
+Primary key adalah clustered index: baris tabel disimpan mengikuti struktur primary key. Secondary index menyimpan nilainya plus primary key untuk menemukan baris penuh. Karena itu primary key yang pendek dan stabil menghemat semua secondary index; `BIGINT` biasanya lebih hemat daripada string UUID acak yang panjang.
+
+## EXPLAIN dan Selectivity
+
+```sql
+EXPLAIN SELECT nama, gaji
+FROM karyawan
+WHERE dept = 'Data'
+ORDER BY gaji DESC;
+```
+
+Baca tiga kolom utama: `type` (ALL = full scan; ref/range lebih selektif), `key` (index dipilih), `rows` (perkiraan baris dibaca). Index kolom dengan sedikit nilai seperti boolean sering tidak membantu sendiri karena terlalu banyak baris tetap cocok.
+
+## Biaya Index
+
+Setiap index memakai disk dan harus diperbarui saat INSERT/UPDATE/DELETE. Hindari membuat index untuk setiap kolom. Gunakan *slow query log* dan EXPLAIN untuk menemukan query nyata, lalu desain index yang melayani filter, JOIN, dan urutannya.
+
+## Di Dunia Nyata
+
+- Login: UNIQUE index pada email mempercepat lookup sekaligus mencegah akun ganda.
+- Riwayat pesanan: index `(user_id, created_at)` melayani daftar terbaru per pengguna.
+- Katalog: FULLTEXT untuk pencarian deskripsi, bukan `LIKE '%kata%'` pada jutaan baris.
+- Maintenance: hapus index duplikat setelah memastikan tidak dipakai constraint/query.
+
+<div class="note">💡 Demo editor memakai SQLite, jadi contoh SELECT berjalan tetapi DDL/index khusus MySQL harus diuji di MySQL asli. Index terbaik mengikuti query nyata, bukan sekadar kolom yang “terlihat penting”.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT dept,
+       COUNT(*) AS jumlah,
+       MAX(gaji) AS termahal
+FROM karyawan
+GROUP BY dept
+ORDER BY termahal DESC;`} />

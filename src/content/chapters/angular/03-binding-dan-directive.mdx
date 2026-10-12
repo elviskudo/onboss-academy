@@ -1,0 +1,171 @@
+---
+title: "Binding & Directive"
+description: "Menampilkan data, menangani event, dan mengendalikan tampilan dengan *ngIf dan *ngFor"
+order: 3
+quiz:
+  - q: "Sintaks interpolation {{ nilai }} menampilkan…"
+    options: ["Nilai expression JavaScript ke dalam template", "Komentar", "Nama file", "Error handling"]
+    answer: 0
+    explain: "{{ }} mengevaluasi ekspresi lalu menyisipkannya sebagai teks."
+  - q: "Event click pada button Angular ditulis…"
+    options: ["[click]=\"proses()\"", "on-click=\"proses()\"", "(click)=\"proses()\"", "onclick={proses}"]
+    answer: 2
+    explain: "Kurung siku [] = property binding, kurung biasa () = event binding. Contoh benar: (click)."
+  - q: "Direktif untuk menampilkan elemen secara kondisional adalah…"
+    options: ["*ngFor", "*ngIf", "*ngSwitchCase", "[hidden]"]
+    answer: 1
+    explain: "*ngIf membuat elemen ada atau hilang dari DOM sesuai kondisi."
+  - q: "Cara merender daftar data di Angular…"
+    options: ["*ngFor=\"let item of items\"", "*ngIf=\"items\"", "for item in items", "@loop items"]
+    answer: 0
+    explain: "*ngFor mengiterasi array dan menghasilkan satu template per item."
+  - q: "Two-way binding dengan [(ngModel)] memerlukan…"
+    options: ["Imports FormsModule di komponen", "HttpClient", "Router", "Tidak perlu apa pun"]
+    answer: 0
+    explain: "ngModel berasal dari FormsModule — daftarkan di imports komponen standalone kamu."
+example:
+  code: |
+    const items = ["Kopi", "Teh", "Roti"];
+    const list = items.map((i, idx) => idx + 1 + ". " + i).join("\\n");
+    console.log(list);
+---
+
+Data di class harus sampai ke layar, dan sentuhan pengguna harus sampai kembali ke class. Angular menyebutnya **binding**.
+
+## Interpolation
+
+```typescript
+@Component({
+  selector: "app-sapa",
+  standalone: true,
+  template: `
+    <h1>Halo, {{ nama }}!</h1>
+    <p>Total: {{ 10000 * jumlah }}</p>
+    <p>Uppercase: {{ nama | uppercase }}</p>
+  `,
+})
+class SapaComponent {
+  nama = "Sari";
+  jumlah = 3;
+}
+```
+
+Ekspresi apa pun yang valid di JavaScript bisa dipakai di dalam `{{ }}`.
+
+## Property dan Event Binding
+
+```html
+<img [src]="fotoUrl" [alt]="nama" />
+<button [disabled]="!bolehKlik" (click)="beli()">Beli</button>
+<input [value]="nama" (input)="ubah($any($event.target).value)" />
+```
+
+- Siku siku `[]` mengirim **nilai dari class ke template**
+- Kurung `()` mengirim **event dari template ke class**
+
+## Two-Way Binding
+
+```typescript
+import { FormsModule } from "@angular/forms";
+
+@Component({
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <input [(ngModel)]="nama" />
+    <p>Halo, {{ nama }}</p>
+  `,
+})
+class ProfilComponent {
+  nama = "";
+}
+```
+
+`[(ngModel)]` menggabungkan dua arah sekaligus: mengetik memperbarui `nama`, dan perubahan `nama` dari kode memperbarui input.
+
+## Direktif Kondisional
+
+```html
+<p *ngIf="user; else belumLogin">Selamat datang, {{ user.nama }}</p>
+
+<ng-template #belumLogin>
+  <p>Silakan masuk.</p>
+</ng-template>
+
+<div [ngClass]="{ aktif: dipilih, redup: !dipilih }">Kartu</div>
+<div [hidden]="sedangMuat">Konten utama</div>
+```
+
+## Perulangan
+
+```html
+<ul>
+  <li *ngFor="let produk of daftarProduk; let i = index">
+    {{ i + 1 }}. {{ produk.nama }} — Rp{{ produk.harga }}
+  </li>
+</ul>
+
+<ul>
+  <li *ngFor="let produk of daftarProduk; trackBy: trackById">
+    {{ produk.nama }}
+  </li>
+</ul>
+```
+
+`trackBy` membantu Angular mengenali item mana yang berubah — daftar panjang jadi jauh lebih hemat performa.
+
+## Kontrol Flow Baru (Angular 17+)
+
+```html
+@if (daftarProduk.length > 0) {
+  <ul>
+    @for (produk of daftarProduk; track produk.id) {
+      <li>{{ produk.nama }}</li>
+    } @empty {
+      <li>Belum ada produk.</li>
+    }
+  </ul>
+}
+```
+
+Sintaks blok `@if` / `@for` adalah pilihan modern untuk kebutuhan yang dahulu ditangani `*ngIf` / `*ngFor`.
+
+## Empat Bentuk Binding
+
+Angular menyediakan **4 bentuk binding utama**.
+
+| Bentuk | Arah | Sintaks | Kapan dipakai |
+|---|---|---|---|
+| Interpolation | class ke teks | `{{ total() }}` | Isi teks sederhana |
+| Property | class ke properti DOM | `[disabled]="invalid"` | Nilai non-string atau atribut dinamis |
+| Event | DOM ke class | `(click)="simpan()"` | Menangani aksi pengguna |
+| Two-way | dua arah | `[(ngModel)]="nama"` | Input sederhana yang sinkron |
+
+Directive terbagi menjadi **2 kategori**: structural mengubah struktur DOM, sedangkan attribute mengubah perilaku atau tampilan elemen yang sudah ada. Pada Angular modern, built-in control flow memiliki **4 blok utama**: `@if`, `@for`, `@switch`, dan `@defer`.
+
+```typescript
+@Component({
+  standalone: true,
+  template: `
+    @switch (status()) {
+      @case ("muat") { <p>Memuat…</p> }
+      @case ("sukses") { <p>Data siap.</p> }
+      @default { <p role="alert">Terjadi kesalahan.</p> }
+    }
+  `,
+})
+export class StatusComponent {
+  status = signal<"muat" | "sukses" | "gagal">("muat");
+}
+```
+
+Ekspresi template sebaiknya cepat dan tanpa side effect. Hitung nilai kompleks di `computed()` atau method terkontrol, bukan dengan pekerjaan berat pada setiap render.
+
+## Di Dunia Nyata
+
+- Tombol checkout dinonaktifkan lewat property binding saat keranjang kosong.
+- Form pencarian mengirim event input untuk memperbarui hasil.
+- Dasbor memakai `@if` untuk skeleton, error, dan konten.
+- Tabel pesanan memakai `@for` dengan `track pesanan.id` agar DOM stabil.
+
+<div class="note">💡 Bedakan dua kurung: [prop] = data mengalir ke bawah, (event) = kabar mengalir ke atas, [(ngModel)] = dua arah sekaligus. Mengingat tiga pola ini membuat sebagian besar template Angular mudah dibaca.</div>

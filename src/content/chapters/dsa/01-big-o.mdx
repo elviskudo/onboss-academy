@@ -1,0 +1,169 @@
+---
+
+title: "Big-O: Mengukur Efisiensi Algoritma"
+description: "Cara membaca notasi kompleksitas dan mengukur pertumbuhan waktu"
+order: 1
+quiz:
+  - q: "Notasi Big-O digunakan untuk…"
+    options: ["Mengukur pertumbuhan efisiensi algoritma seiring ukuran input", "Mengukur ukuran file di disk", "Menandai versi bahasa", "Menghitung jumlah baris kode"]
+    answer: 0
+    explain: "Big-O memperkirakan bagaimana waktu/space tumbuh saat n membesar, bukan detik absolut."
+  - q: "Algoritma dengan kompleksitas O(1) berarti…"
+    options: ["Waktu konstan, tidak bergantung pada n", "Selalu 1 detik", "Hanya bekerja untuk n=1", "Memakai 1 memori byte"]
+    answer: 0
+    explain: "Akses list berindeks dan lookup dict dalam Python rata-rata O(1)."
+  - q: "O(n) disebut…"
+    options: ["Konstan", "Linear", "Logaritmik", "Kuadratik"]
+    answer: 1
+    explain: "Satu putaran penuh melalui n elemen — contohnya pencarian linear."
+  - q: "Binary search memiliki kompleksitas…"
+    options: ["O(n)", "O(n log n)", "O(log n)", "O(1)"]
+    answer: 2
+    explain: "Setiap langkah membagi dua ruang pencarian — jauh lebih lambat pertumbuhannya daripada linear."
+  - q: "Dua nested loop di atas list berukuran n menghasilkan…"
+    options: ["O(n)", "O(n + n)", "O(n^2)", "O(2^n)"]
+    answer: 2
+    explain: "n kali n operasi — pertumbuhan kuadratik, melambat drastis saat n besar."
+example:
+  code: |
+    # Perbandingan pertumbuhan waktu — kecil ke besar:
+    # O(1) < O(log n) < O(n) < O(n log n) < O(n^2) < O(2^n)
+    n = 1_000_000
+    print("O(1)        :", 1)
+    print("O(log n)    :", n.bit_length())
+    print("O(n)        :", n)
+    print("O(n log n)  :", int(n * n.bit_length()))
+    print("O(n^2)      :", "terlalu besar")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Big-O adalah **bahasa standar untuk berbicara efisiensi**. Alih-alih bilang algoritma kita "cukup cepat", kita menyatakan bagaimana waktu dan memori tumbuh saat input membesar.
+
+## Kenapa Tidak Cukup Ukur Detik?
+
+Waktu absolut dipengaruhi mesin, bahasa, dan beban server. Big-O menyaring semua itu: yang tersisa adalah **bentuk pertumbuhannya** — informasi yang tetap valid di komputer mana pun.
+
+```python
+import time
+
+def linear(n):
+    total = 0
+    for i in range(n):
+        total += i
+    return total
+
+for n in [1000, 10000, 100000]:
+    start = time.perf_counter()
+    linear(n)
+    dt = time.perf_counter() - start
+    print(f"n={n:7}  waktu={dt:.6f}")
+```
+
+n naik 10x, waktu juga ~10x — ciri khas **O(n) lineer**.
+
+## Kelas Kompleksitas Umum
+
+```
+O(1)        konstan       akses list[i], dict[key]
+O(log n)    logaritmik    binary search
+O(n)        linear        satu loop penuh
+O(n log n)  linearithmic  merge sort, heap sort
+O(n^2)      kuadratik     bubble sort, nested loop
+O(2^n)      eksponensial  subset semua kemungkinan
+O(n!)       faktorial     semua urutan (travelling salesman)
+```
+
+Urutan pertumbuhan:
+
+```
+O(1) < O(log n) < O(n) < O(n log n) < O(n^2) < O(2^n) < O(n!)
+```
+
+## Contoh Nyata di Python
+
+```python
+data = list(range(1_000_000))
+
+# O(1) — akses indeks
+print(data[123])
+
+# O(n) — cari semua yang memenuhi syarat
+positif = [x for x in data if x > 0]
+
+# O(n^2) — pasangan elemen
+pairs = [(a, b) for a in data[:100] for b in data[:100] if a < b]
+```
+
+## Big-O Space
+
+Kompleksitas memori dihitung terpisah:
+
+```python
+def tanpa_memori_tambahan(data):
+    for x in data:
+        if x < 0:
+            return True
+    return False          # O(1) space
+
+def menyalin_semua(data):
+    salinan = list(data)  # O(n) space
+    return salinan
+```
+
+## Aturan Menghitung Big-O
+
+Ada **4 aturan inti**: abaikan konstanta, ambil suku dominan, jumlahkan blok berurutan, dan kalikan blok bersarang. Dua loop terpisah masing-masing sepanjang n menjadi O(n + n) = O(n), bukan O(n²). Sebaliknya, loop n yang membungkus loop n menghasilkan O(n × n) = O(n²). Untuk dua input berbeda, pertahankan variabelnya: membaca n pengguna lalu m transaksi adalah O(n + m), bukan O(n).
+
+| Pola kode | Cara hitung | Hasil | Kapan muncul |
+|---|---|---|---|
+| Akses satu indeks | satu operasi | O(1) | mengambil item berdasarkan posisi |
+| Satu loop n elemen | n operasi | O(n) | validasi seluruh input |
+| Membelah ruang tiap langkah | log₂ n langkah | O(log n) | binary search |
+| Dua loop bersarang | n × n | O(n²) | membandingkan semua pasangan |
+| Rekursi dua cabang | sekitar 2ⁿ | O(2ⁿ) | subset tanpa memoization |
+
+Big-O, Big-Theta, dan Big-Omega adalah **3 batas asimtotik**. O memberi batas atas, Ω batas bawah, dan Θ batas atas sekaligus bawah yang ketat. Dalam praktik rekayasa, “kompleksitas algoritma” biasanya menyebut O untuk kasus terburuk, tetapi operasi hash lazim dilaporkan sebagai rata-rata/amortized dan harus diberi label.
+
+## Di Dunia Nyata
+
+- Memilih pagination agar API tidak memuat seluruh jutaan baris sekaligus.
+- Menolak nested loop untuk mencocokkan dua daftar besar dan menggantinya dengan set.
+- Mengestimasi apakah proses rekonsiliasi transaksi selesai dalam jendela batch malam.
+- Membandingkan biaya waktu dengan memori ketika cache O(n) menghilangkan perhitungan berulang.
+
+<div class="note">💡 Baca Big-O sebagai "kasus terburuk kecuali dinyatakan lain". Sebagian besar library Python (dict, list) dioptimasi agar operasi umumnya O(1) atau O(n) — manfaatkan, jangan menulis ulang apa yang platform sudah sediakan.</div>
+
+## Ringkasan
+
+| Kelas | Arti praktis |
+|-------|--------------|
+| O(1) | Hampir instan berapapun n |
+| O(log n) | Sangat cepat bahkan untuk n juta |
+| O(n) | Masih sehat untuk n juta |
+| O(n log n) | Batas wajar sorting besar |
+| O(n^2) | Hanya untuk n ribu ke bawah |
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import time
+
+def linear(n):
+    total = 0
+    for i in range(n):
+        total += 1
+    return total
+
+def quadratic(n):
+    total = 0
+    for i in range(n):
+        for j in range(n):
+            total += 1
+    return total
+
+for n in [100, 200, 400]:
+    t0 = time.perf_counter()
+    linear(n)
+    t1 = time.perf_counter()
+    quadratic(n)
+    t2 = time.perf_counter()
+    print(f"n={n:4}  O(n)={t1-t0:.5f}s  O(n^2)={t2-t1:.5f}s")
+print("n naik 2x -> linear 2x, kuadratik 4x")`} />

@@ -1,0 +1,174 @@
+---
+title: "Enum & Utility Types"
+description: "Nilai konstan berkelompok dan tipe bawaan TypeScript yang menghemat kode"
+order: 9
+quiz:
+  - q: "Enum dipakai untuk…"
+    options: ["Membuat array", "Mengelompokkan nilai konstan dengan nama", "Mengimpor file", "Menghitung jumlah variabel"]
+    answer: 1
+    explain: "Contoh: Role.Admin, Role.User — jauh lebih terbaca daripada angka telanjang 1, 2."
+  - q: "Anggota enum numerik tanpa nilai otomatis…"
+    options: ["Berurutan mulai 0", "Selalu 1", "Error", "Menjadi string"]
+    answer: 0
+    explain: "Member pertama = 0, kedua = 1, dan seterusnya; bisa juga ditulis manual."
+  - q: "Partial<T> menghasilkan…"
+    options: ["Semua properti wajib", "Semua properti T jadi opsional", "T jadi array", "T jadi readonly"]
+    answer: 1
+    explain: "Cocok untuk fungsi update: boleh mengirim hanya sebagian properti."
+  - q: "Pick<T, \"nama\"> memilih…"
+    options: ["Hanya properti nama dari T", "Semua properti", "Properti selain nama", "Index array"]
+    answer: 0
+    explain: "Pick membentuk tipe baru dari properti terpilih — berguna untuk respons API ringan."
+  - q: "Record<K, V> merepresentasikan…"
+    options: ["Array berisi record", "Tipe tuple", "Fungsi rekursif", "Object dengan kunci bertipe K dan nilai V"]
+    answer: 3
+    explain: "Contoh: Record<string, number> → { umur: 20, skor: 90 }."
+example:
+  code: |
+    enum Role { User, Admin, Super }
+    const saya: Role = Role.Admin;
+    console.log(saya, Role[saya]);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua alat produktif terakhir di toolbox dasar TypeScript: **enum** untuk nilai konstan berkelompok, dan **utility types** untuk membentuk tipe baru tanpa menulis ulang definisi.
+
+## Enum
+
+```typescript
+enum Role {
+  User,
+  Admin,
+  Super,
+}
+
+const saya: Role = Role.Admin;
+console.log(saya);            // 1
+console.log(Role[saya]);      // "Admin" (mapping balik)
+```
+
+Kamu juga bisa memberi nilai string:
+
+```typescript
+enum Status {
+  Aktif = "AKTIF",
+  Nonaktif = "NONAKTIF",
+}
+
+const s: Status = Status.Aktif;
+console.log(s === "AKTIF"); // true
+```
+
+**3 bentuk enum**: numerik (default, mulai 0), string (`= "AKTIF"`), dan campuran. Alternatif ringan tanpa kode runtime: `type Status = "AKTIF" | "NONAKTIF"` plus `as const`.
+
+## 10 Utility Types Bawaan
+
+| Utility | Hasil | Kapan dipakai |
+|---------|-------|---------------|
+| `Partial<T>` | Semua properti opsional | Fungsi update (kirim sebagian) |
+| `Required<T>` | Semua properti wajib | Simpan ke database |
+| `Readonly<T>` | Semua `readonly` | Konfigurasi tak boleh diubah |
+| `Pick<T, K>` | Hanya properti terpilih | Respons API ringan |
+| `Omit<T, K>` | Semua kecuali yang dihapus | Buang field sensitif (password) |
+| `Record<K, V>` | Object kunci K, nilai V | Dictionary, peta hitung |
+| `Exclude<T, U>` | Sisakan tipe yang tidak di-`U` | Buang angka dari union |
+| `Extract<T, U>` | Ambil irisan | Saring union |
+| `NonNullable<T>` | Buang `null`/`undefined` | Setelah guard |
+| `ReturnType<F>` | Tipe kembalian fungsi | Menguji kontrak fungsi |
+
+Semua sudah ada di TypeScript — tidak perlu library tambahan.
+
+## Utility Types: Partial & Required
+
+```typescript
+interface Profil {
+  nama: string;
+  email: string;
+  umur: number;
+}
+
+function perbarui(data: Partial<Profil>): Partial<Profil> {
+  return data;
+}
+
+console.log(perbarui({ umur: 21 })); // hanya sebagian properti
+
+function lengkap(data: Partial<Profil>): Required<Profil> {
+  return { nama: "Sari", email: "sari@mail.com", umur: 21, ...data };
+}
+```
+
+## Pick, Omit, dan Record
+
+```typescript
+type Produk = { nama: string; harga: number; stok: number; gudang: string };
+
+type Ringkas = Pick<Produk, "nama" | "harga">;   // nama + harga saja
+type TanpaStok = Omit<Produk, "stok">;            // semua kecuali stok
+
+const daftar: Record<string, Ringkas> = {
+  kopi: { nama: "Kopi", harga: 25000 },
+};
+
+console.log(daftar.kopi.harga);
+```
+
+## Readonly
+
+```typescript
+const konfigurasi: Readonly<Profil> = {
+  nama: "OnBoss",
+  email: "halo@onboss.dev",
+  umur: 1,
+};
+// konfigurasi.umur = 2; // ✖ Cannot assign
+```
+
+## Di Dunia Nyata
+
+- **Role user** (`Admin/Operator/Kasir`) disimpan sebagai enum — menulis `2` tanpa konteks tidak akan lolos review.
+- **Endpoint PATCH** menerima `Partial<Profil>`: kirim hanya `email`, field lain tetap utuh.
+- **Halaman daftar** memakai `Pick<Produk, "nama" | "harga">` karena kolom stok/gudang tidak ditampilkan.
+- **Respons login** memakai `Omit<User, "passwordHash">` supaya hash tidak pernah bocor ke client.
+- **Grafik penjualan** `Record<string, number>` mengubah array transaksi jadi `{ "2026-10": 1250000 }`.
+
+<div class="note">💡 Utility types (Partial, Required, Pick, Omit, Record, Readonly) adalah bagian dari TypeScript — tidak perlu library tambahan. Manfaatkan sebelum membuat tipe duplikat dengan tangan.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`enum Role {
+  User,
+  Admin,
+  Super,
+}
+
+interface Produk {
+  nama: string;
+  harga: number;
+  stok: number;
+}
+
+const daftar: Produk[] = [
+  { nama: "Kopi", harga: 25000, stok: 5 },
+  { nama: "Teh", harga: 15000, stok: 2 },
+];
+
+const antrian: Partial<Produk>[] = [
+  { nama: "Roti", harga: 10000 },
+  { nama: "Jus", harga: 20000 },
+];
+
+console.log("Peran:", Role[Role.Admin], "=", Role.Admin);
+
+let totalNilai = 0;
+for (const p of daftar) {
+  const nilai = p.harga * p.stok;
+  totalNilai += nilai;
+  console.log(p.nama, "nilai stok:", nilai);
+}
+console.log("Total nilai stok:", totalNilai);
+
+const ringkas: Record<string, Pick<Produk, "nama" | "harga">> = {
+  kopi: { nama: "Kopi", harga: 25000 },
+};
+console.log("Entri ringkas:", ringkas.kopi.nama, ringkas.kopi.harga);
+console.log("Antrian masuk:", antrian.length, "item");`} />

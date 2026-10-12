@@ -1,0 +1,198 @@
+---
+title: "Pointer & Memori"
+description: "Model memori jujur: stack vs heap, new/delete, 4 masalah klasik, dan smart pointer"
+order: 9
+quiz:
+  - q: "new pada C++ berfungsi untuk…"
+    options: ["Membuat variabel lokal", "Mengalokasikan memori di heap", "Mengompilasi kode", "Menghapus memori"]
+    answer: 1
+    explain: "int *p = new int; — memori diambil dari heap dan wajib dilepas dengan delete."
+  - q: "Kebalikan operator new adalah…"
+    options: ["free", "remove", "delete", "clear"]
+    answer: 2
+    explain: "delete p melepas memori yang dialokasikan new; free() adalah gaya C untuk malloc()."
+  - q: "Referensi (&) dibanding pointer memiliki keunggulan…"
+    options: ["Bisa bernilai null", "Lebih cepat dua kali", "Wajib diinisialisasi dan tidak bisa dialihkan — lebih aman", "Bisa di-arithmetic"]
+    answer: 2
+    explain: "Referensi selalu menunjuk object yang valid, sehingga risiko dereference null hilang."
+  - q: "Memory leak terjadi ketika…"
+    options: ["Memori dialokasikan tapi tidak pernah dilepas", "Program berjalan lambat", "Variabel dideklarasikan dua kali", "Pointer di-decrement"]
+    answer: 0
+    explain: "Setiap new harus berpasangan dengan delete agar memori kembali tersedia."
+  - q: "Solusi modern C++ untuk mencegah memory leak adalah…"
+    options: ["Menggunakan void", "Menghapus semua pointer", "Menghindari class", "Smart pointer seperti unique_ptr dan shared_ptr"]
+    answer: 3
+    explain: "Smart pointer melepas memori secara otomatis saat keluar scope — prinsip RAII."
+example:
+  code: |
+    #include <iostream>
+    #include <memory>
+    using namespace std;
+
+    int main() {
+        int a = 42;
+        int *p = &a;
+        cout << *p << endl;
+
+        int *data = new int[3]{10, 20, 30};
+        cout << data[1] << endl;
+        delete[] data;
+
+        auto aman = make_unique<int>(99);
+        cout << *aman << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ memberi kontrol penuh atas memori — dan karena itu menuntut **tanggung jawab yang penuh pula**. Bab ini menjelaskan jujur di mana data hidup, bagaimana mengalokasinya, dan 4 cara kegagalan yang paling sering terjadi.
+
+## 5 Segmen Memori
+
+Ketika program berjalan, memorinya dibagi menjadi **5 segmen**:
+
+| Segmen | Isi | Hidup sampai | Contoh |
+|---|---|---|---|
+| Text | instruksi mesin | program berjalan | badan fungsi |
+| Data | variabel global berinisialisasi | program selesai | `int g = 5;` global |
+| BSS | variabel global tanpa nilai | program selesai | `int g;` global |
+| Heap | objek `new` | sampai `delete` | `new int` |
+| Stack | variabel lokal, parameter, return address | blok/function selesai | `int a;` di fungsi |
+
+**Stack vs Heap:**
+
+| Aspek | Stack | Heap |
+|---|---|---|
+| Kecepatan | sangat cepat (pindah pointer stack) | lebih lambat (cari blok kosong) |
+| Ukuran | kecil (biasanya ±1–8 MB) | besar, dibatasi RAM |
+| Kontrol otomatis | ya, dilepas saat scope selesai | tidak, wajib `delete` |
+| Kapan dipakai | data kecil, umur pendek | data besar, umur panjang |
+
+## Pointer Dasar
+
+```cpp
+int a = 42;
+int *p = &a;          // p menyimpan alamat a
+
+cout << p << endl;    // alamat (angka heksadesimal)
+cout << *p << endl;   // 42 — dereference
+*p = 100;             // ubah nilai lewat pointer
+cout << a << endl;    // 100
+```
+
+Pola ini sama dengan C: `&` mengambil alamat, `*` membaca isi alamat. Di C++11+ ada `nullptr` sebagai pengganti `NULL`/`0` yang tipe-nya jelas.
+
+## Pointer vs Referensi
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void lewatPointer(int *x) { *x = *x * 2; }
+void lewatReferensi(int &x) { x = x * 2; }
+
+int main() {
+    int a = 21, b = 21;
+    lewatPointer(&a);
+    lewatReferensi(b);
+    cout << a << " " << b << endl;   // 42 42
+    return 0;
+}
+```
+
+| Aspek | Pointer `T *` | Referensi `T &` |
+|---|---|---|
+| Bisa `nullptr` | ya | tidak |
+| Bisa dialihkan | ya | tidak — selalu ke objek awal |
+| Perlu `*` saat dipakai | ya | tidak |
+| Bisa arithmetic | ya | tidak |
+| Wajib diinisialisasi | tidak (tapi sebaiknya) | ya |
+
+Aturan praktis: **pilih referensi** kecuali butuh null, berpindah target, atau bekerja dengan array dinamis.
+
+## new & delete
+
+```cpp
+int *p = new int(42);        // alokasi satu int berisi 42
+cout << *p << endl;
+delete p;                    // wajib
+p = nullptr;                 // cegah penggunaan ganda
+
+int *arr = new int[5]{};     // array 5 elemen, semua 0
+delete[] arr;                // array → delete dengan []
+```
+
+Pasangan yang salah (`new` + `delete[]`, atau lupa `delete`) menyebabkan **undefined behavior**. Selalu set pointer ke `nullptr` setelah dihapus.
+
+## 4 Masalah Klasik
+
+```cpp
+// 1. Memory leak — alokasi tak pernah dilepas
+void bocor() { int *p = new int(1); }        // p hilang, memori tertinggal
+
+// 2. Dangling pointer — menunjuk memori yang sudah dihapus
+int *q = new int(5);
+delete q;
+// cout << *q;                                // UB — jangan lakukan
+
+// 3. Double delete — menghapus dua kali
+// delete q;                                 // UB
+
+// 4. Out of bounds — akses di luar alokasi
+int *r = new int[3];
+// r[10] = 1;                                // merusak memori tetangga
+```
+
+Gejala di lapangan: segfault, nilai aneh yang berubah sendiri, atau memori terus naik padahal program "sudah selesai".
+
+## Smart Pointer
+
+```cpp
+#include <memory>
+
+unique_ptr<int> p = make_unique<int>(99);   // milik tunggal
+shared_ptr<int> q = make_shared<int>(50);   // bisa dibagi, ada hitungan referensi
+weak_ptr<int> w = q;                        // pinjam tanpa menambah hitungan
+
+cout << *p << endl;
+// tidak perlu delete — dilepas otomatis saat keluar scope
+```
+
+C++ modern punya **3 smart pointer** (`unique_ptr`, `shared_ptr`, `weak_ptr`); `auto_ptr` sudah dihapus di C++17. Semuanya bekerja dengan prinsip **RAII**: sumber daya diikat ke umur objek, dilepas otomatis — bahkan saat exception terjadi.
+
+## Di Dunia Nyata
+
+- Game menyimpan ribuan tekstur di heap via `vector<unique_ptr<Tekstur>>` — satu-satunya tempat yang muat.
+- Parser menumpuk node pohon `shared_ptr<Node>` sehingga banyak bagian bisa berbagi subtree yang sama.
+- Sistem embedding yang berjalan berbulan-bulan harus bebas leak: semua alokasi dibungkus RAII.
+- File I/O besar dibuka lewat objek RAII (`ifstream`) agar dialihkan antar fungsi dan ditutup otomatis saat keluar scope.
+- Profiler memori memakai `new`/`delete` counting untuk menemukan bagian kode yang membocorkan memori.
+
+<div class="note">💡 Aturan modern C++: hindari <code>new</code>/<code>delete</code> manual. Gunakan <code>vector</code>, <code>string</code>, atau smart pointer yang melepas memori otomatis — kebanyakan memory leak langsung hilang sebelum menjadi bug.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <memory>
+using namespace std;
+
+void gandakan(int &x) { x *= 2; }
+
+int main() {
+    int a = 42;
+    int *p = &a;
+    cout << "Alamat: " << p << endl;
+    cout << "Nilai: " << *p << endl;
+
+    gandakan(a);
+    cout << "Setelah digandakan: " << a << endl;
+
+    int *data = new int[3]{10, 20, 30};
+    int total = 0;
+    for (int i = 0; i < 3; i++) total += data[i];
+    cout << "Jumlah array heap: " << total << endl;
+    delete[] data;
+
+    auto aman = make_unique<int>(99);
+    cout << "Smart pointer: " << *aman << endl;
+    return 0;
+}`} />

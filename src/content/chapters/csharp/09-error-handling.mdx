@@ -1,0 +1,208 @@
+---
+title: "Error Handling"
+description: "try, catch, finally, throw, dan using — menangani exception tanpa program mati"
+order: 9
+quiz:
+  - q: "Blok yang menangani exception ditulis dengan…"
+    options: ["try", "rescue", "handle", "catch"]
+    answer: 3
+    explain: "catch menangkap exception yang dilempar di dalam blok try."
+  - q: "Exception yang muncul saat membagi nol adalah…"
+    options: ["FormatException", "DivideByZeroException", "NullException", "MathException"]
+    answer: 1
+    explain: "Pembagian integer dengan nol di C# melempar DivideByZeroException."
+  - q: "Blok finally…"
+    options: ["selalu dijalankan, baik ada exception maupun tidak", "hanya jalan saat error", "hanya jalan saat sukses", "menimpa error"]
+    answer: 0
+    explain: "Finally dipakai untuk membersihkan resource, misalnya menutup koneksi."
+  - q: "Exception yang terjadi saat mengubah teks bukan angka menjadi int adalah…"
+    options: ["IOException", "ArgumentException", "FormatException", "OverflowException"]
+    answer: 2
+    explain: "int.Parse melempar FormatException bila format tidak cocok dengan angka."
+  - q: "Untuk melempar exception sendiri dipakai kata kunci…"
+    options: ["raise", "throw", "catch", "error"]
+    answer: 1
+    explain: "Contoh: throw new ArgumentException(\"data kosong\");"
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            try
+            {
+                int nol = 0;
+                int hasil = 100 / nol;
+                Console.WriteLine(hasil);
+            }
+            catch (DivideByZeroException)
+            {
+                Console.WriteLine("Tidak boleh bagi nol!");
+            }
+            finally
+            {
+                Console.WriteLine("Program selesai.");
+            }
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Exception membuat program berhenti mendadak. **try-catch menangkap kegagalan** supaya program tetap bisa melanjutkan pekerjaan lain. C# punya **5 mekanisme** penanganan: `try`, `catch`, `finally`, `throw`, dan `using`.
+
+## try dan catch
+
+```csharp
+try
+{
+    int nol = 0;
+    int hasil = 100 / nol;
+    Console.WriteLine(hasil);
+}
+catch (DivideByZeroException)
+{
+    Console.WriteLine("Tidak boleh bagi nol!");
+}
+
+Console.WriteLine("Program tetap jalan");
+```
+
+Kode berisiko dibungkus `try`. Jika muncul exception, eksekusi langsung pindah ke `catch` yang sesuai, dan baris setelah blok tetap dieksekusi.
+
+## 8 Exception yang Paling Sering Muncul
+
+| Exception | Penyebab klasik |
+|---|---|
+| `DivideByZeroException` | `100 / 0` pada integer |
+| `FormatException` | `int.Parse("abc")` |
+| `NullReferenceException` | memanggil method objek `null` |
+| `IndexOutOfRangeException` | `arr[10]` pada array berisi 3 |
+| `ArgumentNullException` | method menerima `null` |
+| `ArgumentException` | nilai argumen di luar aturan |
+| `InvalidOperationException` | urutan operasi salah (ubah koleksi saat foreach) |
+| `OverflowException` | hasil melebihi rentang tipe, pada konteks `checked` |
+
+Semua berasal dari turunan `System.Exception` — ada **3 tingkat utama** hierarkinya: `Exception` (semua), `SystemException` (dibuat CLR), dan turunan spesifik seperti `IOException` (file), `SqlException` (database).
+
+## Menangkap Tipe Exception
+
+```csharp
+try
+{
+    string teks = "abc";
+    int angka = int.Parse(teks);
+    Console.WriteLine(angka);
+}
+catch (FormatException)
+{
+    Console.WriteLine("Format angka tidak valid");
+}
+catch (Exception e)
+{
+    Console.WriteLine("Error lain: " + e.Message);
+}
+```
+
+Tangkap tipe paling spesifik di atas, dan `Exception` sebagai jaring pengaman terakhir di paling bawah. C# 6 menambah filter exception: `catch (Exception e) when (e.Message.Contains("timeout"))`.
+
+## finally
+
+```csharp
+try
+{
+    Console.WriteLine("Mulai proses...");
+    int[] data = { 1, 2 };
+    Console.WriteLine(data[5]);
+}
+catch (IndexOutOfRangeException)
+{
+    Console.WriteLine("Index di luar jangkauan");
+}
+finally
+{
+    Console.WriteLine("Blok finally selalu jalan");
+}
+```
+
+`finally` berjalan **selalu** — baik ada error maupun tidak, termasuk saat exception mengalir keluar. Cocok untuk menutup file atau koneksi. Untuk resource berbasis `IDisposable`, `using` menuliskan finally ini secara otomatis:
+
+```csharp
+using (System.IO.StreamReader r = new System.IO.StreamReader("data.txt"))
+{
+    Console.WriteLine(r.ReadLine());
+}   // file dijamin tertutup, bahkan bila exception terjadi di dalam
+```
+
+## throw
+
+```csharp
+static int Bagi(int a, int b)
+{
+    if (b == 0)
+    {
+        throw new ArgumentException("Pembagi tidak boleh nol");
+    }
+    return a / b;
+}
+```
+
+`throw` memaksa exception keluar dari method. Pemanggil harus menangkapnya dengan `try-catch` — kalau tidak, CLR menghentikan program dengan pesan error.
+
+## Di Dunia Nyata
+
+- Membaca file konfigurasi: `try` membuka file, `catch (FileNotFoundException)` menyediakan nilai default.
+- Input form: `try { int.Parse(input) } catch (FormatException)` memberi pesan "masukkan angka" ke pengguna.
+- Koneksi database: `using (var conn = new SqlConnection(...))` menutup koneksi otomatis walau query gagal.
+- API web menangkap exception lalu mengubahnya jadi respons HTTP 400/500 yang rapi.
+- Timeout layanan pihak ketiga dilempar sebagai `TimeoutException` dan dicatat ke log.
+
+<div class="note">💡 Jangan pernah menangkap exception lalu diam saja tanpa pesan. Minimal tulis pesan atau catat ke log — kegagalan yang disembunyikan jauh lebih sulit diperbaiki daripada error yang terlihat jelas di layar.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        try
+        {
+            int nol = 0;
+            int hasil = 100 / nol;
+            Console.WriteLine(hasil);
+        }
+        catch (DivideByZeroException)
+        {
+            Console.WriteLine("Tidak boleh bagi nol!");
+        }
+        finally
+        {
+            Console.WriteLine("Blok finally dijalankan");
+        }
+
+        try
+        {
+            int angka = int.Parse("abc");
+            Console.WriteLine(angka);
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine("Format angka tidak valid");
+        }
+
+        try
+        {
+            int[] data = { 1, 2 };
+            Console.WriteLine(data[5]);
+        }
+        catch (IndexOutOfRangeException)
+        {
+            Console.WriteLine("Index di luar jangkauan");
+        }
+
+        Console.WriteLine("Program tetap jalan");
+    }
+}
+`} />

@@ -1,0 +1,115 @@
+---
+title: "Proses di Linux"
+description: "Memantau, mencari, dan mengelola proses: ps, top, kill, nice"
+order: 4
+quiz:
+  - q: "Setiap proses di Linux memiliki…"
+    options: ["PID unik", "Nama tetap", "Port network", "Folder khusus"]
+    answer: 0
+    explain: "PID (Process ID) adalah nomor identitas proses selama berjalan."
+  - q: "Perintah melihat daftar proses secara snapshot adalah…"
+    options: ["ps aux", "ls -l", "df -h", "netstat"]
+    answer: 0
+    explain: "ps aux menampilkan user, PID, CPU, memori, dan perintah tiap proses."
+  - q: "SIGTERM pada proses berarti…"
+    options: ["Matikan paksa sekarang juga", "Minta proses berhenti dengan sopan (bisa menolak)", "Mengubah prioritas", "Membekukan proses"]
+    answer: 1
+    explain: "kill tanpa argumen mengirim SIGTERM — proses bisa membersihkan diri dulu."
+  - q: "SIGKILL (kill -9) berfungsi untuk…"
+    options: ["Membuat backup proses", "Menghentikan paksa tanpa kesempatan cleanup", "Mengubah nama proses", "Mengangkat prioritas"]
+    answer: 1
+    explain: "Bila SIGTERM diabaikan, kill -9 memaksa kernel menghapus proses — data belum tentu tersimpan rapi."
+  - q: "Mencari proses nginx dilakukan dengan…"
+    options: ["ps aux | grep nginx", "ls nginx", "cd nginx", "pwd nginx"]
+    answer: 0
+    explain: "Pipa grep menyaring output ps ke baris yang memuat kata kunci."
+---
+
+Setiap program yang berjalan di Linux adalah **proses** — lengkap dengan PID, pemilik, pemakaian CPU/RAM, dan status.
+
+## Melihat Proses
+
+```bash
+ps aux                      # semua proses, format lengkap
+ps aux | grep nginx         # cari proses nginx
+ps -ef --forest             # lihat relasi parent-child
+```
+
+Kolom penting `ps aux`:
+
+```
+USER  PID  %CPU %MEM  COMMAND
+root  812   0.1  2.4  nginx: master process
+www-  813   0.0  1.1  nginx: worker process
+```
+
+## Memantau Secara Live
+
+```bash
+top        # pemantau klasik, refresh tiap 3 detik
+htop       # versi lebih ramah (install dulu bila belum ada)
+```
+
+Pintasan `top`/`htop` yang berguna: `M` urutkan memori, `P` urutkan CPU, `k` kill, `q` keluar.
+
+## Menghentikan Proses
+
+```bash
+kill 1234          # SIGTERM — permintaan berhenti yang sopan
+kill -9 1234       # SIGKILL — paksa, tanpa cleanup
+killall nginx      # berdasarkan nama
+pkill -f "python server.py"  # berdasarkan pola command line
+```
+
+Urutan yang benar: coba `kill` biasa dulu; `kill -9` hanya bila proses membandel.
+
+## Prioritas Proses (nice)
+
+```bash
+nice -n 10 ./backup-besar.sh       # jalankan dengan prioritas lebih rendah
+renice -n -5 -p 1234               # ubah nice (butuh root untuk prioritas lebih tinggi)
+```
+
+Skala nice: -20 (paling tinggi, butuh root) sampai 19 (paling rendah). Backup dan indexing dijalankan dengan nice positif agar tidak merampok CPU layanan utama.
+
+## Proses Orphan & Zombie
+
+- **Orphan** — induknya mati, diadopsi init (PID 1); umum & tidak berbahaya.
+- **Zombie** — sudah selesai tapi entri statusnya belum dibaca induk; tanda induk bermasalah menutup child.
+
+```bash
+ps aux | awk '$8=="Z" {print}'   # tampilkan zombie
+```
+
+## Lima Keadaan dan Empat Sinyal Utama
+
+Proses umum tampil dalam **5 keadaan inti**: running/runnable (`R`), sleeping (`S`), uninterruptible sleep (`D`), stopped (`T`), dan zombie (`Z`). Empat sinyal operasional berikut paling sering dipakai.
+
+| Sinyal | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `SIGTERM` (15) | Meminta berhenti rapi | `kill -TERM 1234` | Langkah pertama shutdown |
+| `SIGKILL` (9) | Menghentikan lewat kernel | `kill -KILL 1234` | Proses benar-benar tidak merespons |
+| `SIGHUP` (1) | Umumnya reload konfigurasi | `kill -HUP 1234` | Jika dokumentasi service mendukung |
+| `SIGSTOP`/`SIGCONT` | Jeda/lanjut proses | `kill -STOP 1234` | Diagnosis sementara |
+
+PID dapat didaur ulang setelah proses mati. Verifikasi pemilik dan command dengan `ps -p PID -o user,pid,ppid,stat,cmd` sebelum mengirim sinyal, terutama dengan sudo. Untuk service systemd, utamakan `systemctl stop nama` agar supervisor memahami perubahan state dan menjalankan prosedur stop unit.
+
+Load average bukan persentase CPU; ia menghitung pekerjaan runnable dan uninterruptible. Bandingkan dengan jumlah CPU melalui `nproc`. Proses status `D` sering menunggu disk atau jaringan dan bahkan SIGKILL baru efektif setelah kernel call kembali.
+
+## Di Dunia Nyata
+
+- Mengurutkan `top` berdasarkan memori saat aplikasi memicu OOM.
+- Mengirim SIGTERM ke worker agar request aktif selesai sebelum deployment.
+- Menurunkan prioritas kompresi backup supaya API tetap responsif.
+- Melacak zombie ke parent process yang tidak memanggil wait.
+
+<div class="note">💡 `kill` default mengirim SIGTERM. Beri aplikasi waktu menutup koneksi dan menulis data; SIGKILL adalah pilihan terakhir karena tidak memberi kesempatan cleanup.</div>
+
+## Informasi Sistem Cepat
+
+```bash
+uptime              # lama nyala & load average
+free -h             # pemakaian RAM
+cat /proc/cpuinfo | grep "model name" | head -1
+pgrep -a nginx      # PID + nama command sekali jalan
+```

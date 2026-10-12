@@ -1,0 +1,163 @@
+---
+title: "Aktuator, Buzzer, dan Relay"
+description: "Menggerakkan dunia fisik — bunyi, motor servo, dan beban listrik"
+order: 7
+quiz:
+  - q: "Buzzer aktif berbunyi dengan…"
+    options: ["PWM khusus 10 kHz", "Tegangan DC langsung (tanpa sinyal frekuensi)", "Koneksi Bluetooth", "Sinyal analog A0"]
+    answer: 1
+    explain: "Buzzer aktif berisi generator internal; beri HIGH saja sudah bunyi."
+  - q: "Servo SG90 diputar ke sudut tertentu dengan…"
+    options: ["Pustaka Servo.h + fungsi write(sudut)", "analogWrite(255)", "digitalRead", "EEPROM.write"]
+    answer: 0
+    explain: "Servo mengharapkan pulsa 50 Hz dengan lebar 1-2 ms sebagai penentu sudut."
+  - q: "Relay Arduino umumnya dipicu dengan…"
+    options: ["analogWrite langsung ke gulungan 220V", "Sinyal Wi-Fi bawaan", "Sinyal digital dari pin (melalui transistor/modul driver)", "Pin reset"]
+    answer: 2
+    explain: "Modul relay memisahkan sisi tegangan rendah (Arduino) dari beban tinggi."
+  - q: "Untuk beban AC 220V pada relay, hal wajib yang dijaga adalah…"
+    options: ["Warna kabel", "Isolasi dan jarak aman antarjalur — jangan disentuh saat aktif", "Kecepatan baud", "Resolusi ADC"]
+    answer: 1
+    explain: "Listrik arus bolak-balik berbahaya; gunakan enclosure tertutup dan praktik kerja aman."
+  - q: "Motor servo berbeda dari motor DC biasa karena…"
+    options: ["Bisa diposisikan ke sudut tertentu", "Lebih murah", "Tidak butuh daya", "Bisa memutar 360 derajat terus-menerus tanpa henti"]
+    answer: 0
+    explain: "Servo mengunci posisi — cocok untuk lengan robot dan penunjuk instrumen."
+example:
+  code: |
+    #include <Servo.h>
+
+    Servo tangan;
+
+    void setup() {
+      tangan.attach(9);
+    }
+
+    void loop() {
+      tangan.write(0);   delay(500);
+      tangan.write(90);  delay(500);
+      tangan.write(180); delay(500);
+    }
+---
+
+Aktuator mengubah sinyal listrik menjadi tindakan fisik. Setelah sensor memberi **input**, ada **3 keluarga output** yang sering dipakai pemula: buzzer untuk bunyi, servo untuk posisi, dan relay untuk sakelar beban.
+
+## Perbandingan 3 Aktuator
+
+| Aktuator | Sinyal kontrol | Daya | Fungsi | Contoh nyata |
+| --- | --- | --- | --- | --- |
+| Buzzer aktif/pasif | Digital atau `tone()` | Rendah | Alarm/nada | Timer dapur |
+| Servo posisi | Pulsa 50 Hz via `Servo.h` | Sedang, catu eksternal disarankan | Sudut 0–180° | Kunci/lengan robot |
+| Modul relay | Digital HIGH/LOW | Driver di modul + catu | Sakelar beban terisolasi | Pompa/lampu |
+
+Jangan menyalakan motor, solenoid, atau gulungan relay telanjang langsung dari pin; gunakan modul driver yang punya transistor dan diode flyback.
+
+## 2 Jenis Buzzer
+
+| Jenis | Cara bunyi | Kontrol nada |
+| --- | --- | --- |
+| Aktif | `digitalWrite(pin, HIGH)` | Tidak; nada tetap dari osilator internal |
+| Pasif | `tone(pin, frekuensi, durasi)` | Ya; frekuensi menentukan pitch |
+
+```cpp
+const int BUZZER = 7;
+
+void setup() {
+  pinMode(BUZZER, OUTPUT);
+}
+
+void loop() {
+  tone(BUZZER, 1000, 300);  // 1.000 Hz selama 300 ms
+  delay(700);
+  noTone(BUZZER);
+}
+```
+
+`tone()` cocok untuk buzzer pasif. Buzzer aktif cukup HIGH/LOW; memanggil tone padanya tetap menghasilkan nada internal yang sama.
+
+## Servo: Posisi Terkendali
+
+Servo SG90 memiliki **3 kabel**: cokelat/hitam ke GND, merah ke 5 V, oranye/kuning ke pin sinyal. Arus saat macet bisa ratusan mA, jadi untuk lebih dari satu servo gunakan catu 5 V eksternal dan satukan GND.
+
+```cpp
+#include <Servo.h>
+
+Servo tangan;
+
+void setup() {
+  tangan.attach(9);
+}
+
+void loop() {
+  tangan.write(0);
+  delay(500);
+  tangan.write(90);
+  delay(500);
+  tangan.write(180);
+  delay(500);
+}
+```
+
+`write(0..180)` meminta posisi, bukan kecepatan. Rentang mekanis servo berbeda-beda; hentikan bila terdengar berdengung di ujung karena itu tanda gigi tertahan.
+
+## Relay: 3 Terminal Kontak
+
+| Terminal | Arti | Kondisi relay mati |
+| --- | --- | --- |
+| COM | Jalur bersama dari sumber | Terhubung ke NC |
+| NO (Normally Open) | Normal terbuka | Beban mati; menutup saat aktif |
+| NC (Normally Closed) | Normal tertutup | Beban hidup; membuka saat aktif |
+
+```cpp
+const int RELAY = 8;
+
+void setup() {
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, LOW);   // sesuaikan: sebagian modul active-LOW
+}
+
+void loop() {
+  digitalWrite(RELAY, HIGH);
+  delay(1000);
+  digitalWrite(RELAY, LOW);
+  delay(1000);
+}
+```
+
+Banyak modul relay **active-LOW**: LOW = menyala. Verifikasi label/dokumentasi modul, lalu beri nama konstanta `RELAY_AKTIF` agar logika jelas. Saat boot pin bisa mengambang sesaat; pilih koneksi NO agar beban penting tetap mati jika kontroler gagal.
+
+## Pola Sensor → Keputusan → Aktuator
+
+```cpp
+const int BUZZER = 7;
+const int AMBANG = 20;
+
+void beriAlarm(float cm) {
+  if (cm > 0 && cm < AMBANG) {
+    tone(BUZZER, 2000);
+  } else {
+    noTone(BUZZER);
+  }
+}
+```
+
+Fungsi ini memisahkan keputusan dari pengukuran sensor. `cm > 0` mencegah kegagalan sensor dianggap sebagai benda dekat.
+
+## Keselamatan Daya
+
+```text
+- Motor/servo/pompa: catu eksternal sesuai tegangan dan arus beban
+- Sinyal driver tetap dari Arduino, semua GND sisi DC disatukan
+- Beban induktif butuh diode flyback (biasanya sudah ada di modul)
+- Jalur AC PLN wajib enclosure tertutup; pemula cukup uji relay dengan LED DC
+```
+
+## Di Dunia Nyata
+
+1. **Alarm pintu** — reed switch terbuka memicu buzzer pasif 2 kHz.
+2. **Pakan ikan otomatis** — servo membuka katup 45° selama 1 detik tiap jadwal RTC.
+3. **Pompa tanaman** — relay NO menyalakan pompa saat sensor tanah di bawah ambang.
+4. **Palang parkir mini** — sensor jarak memicu servo dari 0° ke 90°.
+5. **Ventilasi kabinet** — relay menghidupkan kipas 12 V saat suhu > 35 °C.
+
+<div class="note">💡 Uji seluruh logika dengan beban ringan (LED pengganti) sebelum menyambungkan beban nyata. Setelah arah logika, active-LOW, dan kondisi boot benar, baru pasang relay ke jalur beban sesungguhnya.</div>

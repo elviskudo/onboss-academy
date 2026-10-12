@@ -1,0 +1,105 @@
+---
+title: "Index MongoDB"
+description: "Mempercepat query dengan index tunggal, compound, unique, dan cara membaca explain"
+order: 5
+quiz:
+  - q: "Tujuan utama index pada MongoDB adalah…"
+    options: ["Menyimpan data ganda", "Mempercepat pencarian & menegakkan uniqueness", "Mengenkripsi dokumen", "Meng-backup koleksi"]
+    answer: 1
+    explain: "Index membuat struktur pencarian (B-tree) sehingga query tidak harus memindai seluruh koleksi."
+  - q: "Membuat index unik pada field email dilakukan dengan…"
+    options: ["db.kol.createIndex({ email: 1 }, { unique: true })", "db.kol.index({ email: 1 })", "db.kol.unique(\"email\")", "db.kol.addIndex(\"email\")"]
+    answer: 0
+    explain: "Opsi { unique: true } menegakkan nilai tak boleh terduplikat — pengganti constraint UNIQUE SQL."
+  - q: "Angka 1 dan -1 pada definisi index berarti…"
+    options: ["Prioritas query", "Arah traversal B-tree (naik/turun)", "Jumlah duplikat", "Versi index"]
+    answer: 1
+    explain: "Arah menentukan urutan penyimpanan; untuk compound index, kombinasi arah mendukung query sort terkait."
+  - q: "Compound index terbaik untuk query { a: 1, b: 1 } adalah…"
+    options: ["{ b: 1 } saja", "{ a: 1, b: 1 } — urutan sama dengan query", "Dua index terpisah selalu lebih baik", "{ a: -1, b: -1 } saja"]
+    answer: 1
+    explain: "Index maju { a: 1, b: 1 } melayani filter a, maupun a + b, maupun sort (a, b) — paling serbaguna."
+  - q: "Melihat apakah query memakai index dilakukan dengan…"
+    options: ["db.kol.find(...).pretty()", "db.kol.find(...).explain(\"executionStats\")", "db.kol.stats()", "db.kol.check()"]
+    answer: 1
+    explain: "explain(\"executionStats\") menunjukkan jenis scan (IXSCAN vs COLLSCAN) dan jumlah dokumen dibaca."
+example:
+  code: |
+    db.produk.createIndex({ nama: 1 })
+    db.produk.createIndex({ kategori: 1, harga: -1 })
+    db.produk.createIndex({ email: 1 }, { unique: true })
+    db.produk.find({ kategori: "Monitor" }).sort({ harga: -1 }).explain("executionStats")
+---
+
+Query lambat di koleksi besar hampir selalu berujung ke satu solusi: **index yang tepat**. Tapi index bukan tanpa biaya — setiap index memperlambat write.
+
+## Apa itu Index?
+
+Index adalah struktur **B-tree** terurut yang menyimpan nilai field dan penunjuk ke dokumen. Tanpa index MongoDB melakukan `COLLSCAN`; dengan index yang cocok planner melakukan `IXSCAN` dan hanya mengunjungi rentang relevan.
+
+Ada **6 jenis index utama** yang umum ditemui:
+
+| Jenis | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Single-field | satu field | `{ nama: 1 }` | filter/sort satu atribut |
+| Compound | beberapa field berurutan | `{ kategori: 1, harga: -1 }` | filter + sort gabungan |
+| Multikey | setiap elemen array | `{ tags: 1 }` | tags, item array |
+| Text | pencarian kata | `{ deskripsi: "text" }` | pencarian teks dasar |
+| Geospatial | lokasi 2dsphere | `{ lokasi: "2dsphere" }` | terdekat/radius |
+| Hashed | hash nilai field | `{ tenantId: "hashed" }` | distribusi shard merata |
+
+Opsi `unique`, `sparse`, `partialFilterExpression`, dan TTL mengubah perilaku index; itu opsi, bukan struktur dasar terpisah.
+
+## Index Tunggal
+
+```javascript
+db.produk.createIndex({ nama: 1 })
+db.produk.getIndexes()
+db.produk.dropIndex("nama_1")
+```
+
+Index dibuat sekali, dipakai otomatis oleh query planner. `getIndexes()` melihat daftarnya; `dropIndex` menghapusnya bila sudah tidak terpakai.
+
+## Compound Index
+
+```javascript
+db.produk.createIndex({ kategori: 1, harga: -1 })
+
+db.produk.find({ kategori: "Monitor" }).sort({ harga: -1 })
+```
+
+Index `{ kategori: 1, harga: -1 }` melayani query filter kategori + sort harga dengan satu index. Prinsip **ESR**: Equality dulu, Sort, lalu Range — urutan field di compound index.
+
+## Unique dan Index Lain
+
+```javascript
+db.pelanggan.createIndex({ email: 1 }, { unique: true })
+db.produk.createIndex({ nama: 1 }, { sparse: true })
+db.produk.createIndex({ tags: 1 }) // otomatis multikey karena tags array
+```
+
+`unique` mencegah duplikasi nilai; `sparse` mengabaikan dokumen tanpa field itu; field array otomatis menjadi multikey index (satu dokumen = banyak entri index).
+
+## Membaca explain()
+
+```javascript
+db.produk.find({ kategori: "Monitor", harga: { $gt: 1000000 } })
+  .sort({ harga: -1 })
+  .explain("executionStats")
+```
+
+Cari dua hal: **IXSCAN** berarti index dipakai (bagus), **COLLSCAN** berarti seluruh koleksi dipindai (belum tentu buruk untuk koleksi kecil). `totalDocsExamined` yang jauh lebih besar dari `nReturned` adalah tanda index belum optimal. Nilai `totalKeysExamined` menunjukkan berapa entri index yang dilalui.
+
+## Aturan ESR
+
+Untuk compound index, urutkan field sebagai **Equality → Sort → Range**. Query `{ kategori: "Monitor", harga: { $gt: 1000000 } }` dengan sort harga cocok dengan `{ kategori: 1, harga: -1 }`. Index itu juga mendukung *prefix* `{ kategori: 1 }`, tetapi tidak efisien untuk filter harga tanpa kategori.
+
+## Di Dunia Nyata
+
+- **Login pengguna** — unique index email mempercepat lookup sekaligus menolak akun duplikat di level database.
+- **Katalog kategori** — compound kategori + harga melayani filter dan sort tanpa tahap sort memori.
+- **Pencarian lokasi** — 2dsphere index menjawab toko terdekat dan wilayah dalam radius.
+- **Penghapusan sesi** — TTL index otomatis menghapus token kedaluwarsa berdasarkan field Date.
+- **Optimasi API lambat** — executionStats membandingkan `nReturned` dan `totalDocsExamined` sebelum serta sesudah index dibuat.
+
+<div class="note">💡 Index menambah biaya storage dan menurunkan kecepatan insert/update — jangan membuat index "siapa tahu berguna". Ukur dengan explain(), lalu index hanya query yang benar-benar sering jalan.</div>

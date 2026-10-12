@@ -1,0 +1,118 @@
+---
+title: "Distro & Shell Linux"
+description: "Memahami keluarga distribusi dan peran shell di dalam sistem"
+order: 1
+quiz:
+  - q: "Distro Linux paling umum dipakai di server cloud adalah…"
+    options: ["Ubuntu", "macOS", "Windows 11", "Chrome OS"]
+    answer: 0
+    explain: "Ubuntu LTS adalah default banyak provider cloud dan dokumentasi tutorial."
+  - q: "Shell pada Linux berfungsi untuk…"
+    options: ["Menggambar antarmuka", "Menerjemahkan perintah teks menjadi aksi sistem", "Mengelola hardware grafis", "Menyimpan file sistem"]
+    answer: 1
+    explain: "Shell seperti bash/zsh membaca perintah kamu lalu menjalankannya lewat program sistem."
+  - q: "Perbedaan utama Debian dan turunannya (Ubuntu) adalah…"
+    options: ["Nama folder home", "Ubuntu menambah paket & tool di atas basis Debian", "Debian tidak pakai kernel Linux", "Tidak ada hubungannya"]
+    answer: 1
+    explain: "Ubuntu adalah turunan Debian — paket dan manajemen sama (dpkg/apt), plus customisasi Canonical."
+  - q: "Shebang #!/bin/bash pada skrip menentukan…"
+    options: ["Tema terminal", "Interpreter yang dipakai menjalankan skrip", "Hak akses file", "Lokasi backup"]
+    answer: 1
+    explain: "Sistem membaca baris pertama ini untuk memilih program interpreter yang tepat."
+  - q: "Terminal dan shell adalah…"
+    options: ["Hal yang sama", "Terminal = program jendela teks; shell = program yang menerima perintah di dalamnya", "Shell = kabel koneksi", "Terminal hanya untuk game"]
+    answer: 1
+    explain: "Bisa saja satu terminal menjalankan shell berbeda (bash, zsh, fish)."
+---
+
+Linux adalah **kernel** — jantung sistem operasi. Yang kamu unduh dan install disebut **distribusi (distro)**: bundel kernel + shell + perpustakaan + manajer paket.
+
+## Keluarga Distro
+
+```
+Debian -----> Ubuntu -----> Mint, Pop!_OS
+   \--------> RHEL/CentOS/Rocky -----> Amazon Linux, AlmaLinux
+    \-------> Arch (rolling release)
+```
+
+- **Debian / Ubuntu** — stabil, dokumentasi melimpah, favorit pemula & server
+- **RHEL / Rocky / Alma** — standar enterprise, dukungan jangka panjang
+- **Arch** — rolling release, minimalis, untuk yang ingin memahami tiap komponen
+- **Alpine** — super ringan, populer untuk container Docker
+
+Untuk mulai belajar: **Ubuntu Server LTS** atau **Debian** — keduanya dipakai luas di produksi.
+
+## Shell: Gerbang Perintah
+
+```bash
+uname -a          # info kernel
+cat /etc/os-release   # identitas distro
+echo $SHELL       # shell aktif sekarang
+```
+
+Shell yang umum:
+
+- **bash** — default historis, paling kompatibel skrip lama
+- **zsh** — default macOS modern, tab-completion lebih baik
+- **fish** — ramah pemula, sintaksis khusus
+
+```bash
+chsh -s /usr/bin/zsh   # ganti shell login (bila distro mendukung)
+```
+
+## Interaksi vs Skrip
+
+Mode interaktif: kamu ketik perintah satu per satu. Mode skrip: perintah disimpan dalam file agar bisa dijalankan berulang dan konsisten.
+
+```bash
+#!/usr/bin/env bash
+# backup-harian.sh
+set -euo pipefail
+tar -czf "/backup/$(date +%F).tar.gz" /var/www
+echo "Backup selesai"
+```
+
+## Lingkungan Kerja yang Disiapkan Admin
+
+Saat pertama login ke server Linux biasanya kamu disambut prompt seperti `user@server:~$`:
+
+```bash
+whoami       # siapa kamu
+hostname     # nama server
+pwd          # posisi sekarang (home directory)
+```
+
+## Empat Keluarga Distro dan Tiga Shell
+
+Ada **4 keluarga/pilihan distro utama** yang relevan untuk pemula dan server, serta **3 shell umum**.
+
+| Nama | Jenis | Fungsi/ciri | Kapan dipakai |
+|---|---|---|---|
+| Debian/Ubuntu | Distro | Stabil, paket DEB, dokumentasi luas | Server umum dan belajar |
+| RHEL/Rocky/Alma | Distro | Siklus enterprise, paket RPM | Infrastruktur perusahaan |
+| Arch | Distro | Rolling release dan minimal | Lab yang perlu paket terbaru |
+| Alpine | Distro | Ringan dan memakai musl/BusyBox | Image container kecil |
+| Bash | Shell | Kompatibilitas skrip terluas | Otomasi lintas server |
+| Zsh | Shell | Interaktif dan completion kaya | Terminal workstation |
+| Fish | Shell | UX ramah, sintaks berbeda | Pemakaian interaktif pribadi |
+
+Distro menentukan repositori, siklus update, default konfigurasi, dan dukungan; shell menerjemahkan command line, ekspansi variabel, pipe, serta skrip. Keduanya bukan terminal: terminal hanya antarmuka tempat shell berjalan. Periksa interpreter skrip dengan shebang dan gunakan `/usr/bin/env bash` bila lokasi Bash dapat berbeda.
+
+Jangan menyalin perintah instalasi antar keluarga tanpa memeriksa distro. Jalankan skrip dari sumber tepercaya, baca isinya sebelum eksekusi, dan hindari pola unduh-langsung-ke-root seperti `curl ... | sudo sh`.
+
+## Di Dunia Nyata
+
+- Ubuntu LTS dipilih untuk VM aplikasi karena dokumentasi dan patch keamanan panjang.
+- Rocky Linux dipakai ketika software vendor mensyaratkan ekosistem RHEL.
+- Alpine dipakai sebagai base container setelah kompatibilitas native library diuji.
+- Bash menjalankan backup konsisten, sedangkan Zsh dipakai developer secara interaktif.
+
+<div class="note">💡 Mulai dari satu distro dan dalami — konsep shell, permission, dan proses di semua distro Linux sama. Perbedaan utama ada pada manajer paket, siklus rilis, dan tool bawaan.</div>
+
+## Mencoba Linux dengan Aman
+
+- **WSL** (Windows Subsystem for Linux) — Linux di dalam Windows
+- **VM** (VirtualBox/UTM) — mesin virtual penuh
+- **Container** — lingkungan terisolasi ringan
+
+Semua cara ini aman: host utama tidak tersentuh.

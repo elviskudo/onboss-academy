@@ -1,0 +1,194 @@
+---
+title: "Function & Ownership"
+description: "fn, nilai balik, dan aturan ownership yang membuat Rust aman tanpa GC"
+order: 6
+quiz:
+  - q: "Fungsi Rust didefinisikan dengan…"
+    options: ["func nama() {}", "fn nama() {}", "def nama():", "function nama()"]
+    answer: 1
+    explain: "fn dipakai untuk fungsi maupun method; tipe parameter ditulis setelah nama."
+  - q: "Nilai balik fungsi dinyatakan dengan…"
+    options: ["return: Tipe", ": Tipe", "-> Tipe", "gives Tipe"]
+    answer: 2
+    explain: "Contoh: fn jumlah(a: i32, b: i32) -> i32 { a + b }."
+  - q: "Ketika String dipindahkan (move) ke fungsi lain…"
+    options: ["variabel asli tidak bisa dipakai lagi", "otomatis dicopy", "menjadi global", "di-clone compiler"]
+    answer: 0
+    explain: "Nilai milik (String, Vec) berpindah kepemilikan; yang lama sudah tidak sah dipakai."
+  - q: "Meminjam data tanpa mengambil alih ditulis dengan…"
+    options: ["& nilai", "* nilai", "@ nilai", "# nilai"]
+    answer: 0
+    explain: "Parameter &String atau &str meminjam data sehingga pemilik aslinya tetap bisa memakainya."
+  - q: "Pada satu waktu, data boleh dimiliki oleh…"
+    options: ["semua orang sekaligus", "tidak ada pemilik", "dua pinjaman mutabel", "satu pemilik, atau banyak pinjaman, atau satu pinjaman mutabel"]
+    answer: 3
+    explain: "Inilah aturan ownership inti Rust yang mencegah data race dan double free."
+example:
+  code: |
+    fn jumlah(a: i32, b: i32) -> i32 {
+        a + b
+    }
+
+    fn sapa(nama: &str) {
+        println!("Halo, {}!", nama);
+    }
+
+    fn main() {
+        let hasil = jumlah(3, 4);
+        sapa("OnBoss");
+        println!("3 + 4 = {}", hasil);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi di Rust sederhana, tapi aturan **ownership**-nya yang membuat bahasa ini istimewa.
+
+## Mendefinisikan Fungsi
+
+```rust
+fn jumlah(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn sapa(nama: &str) {
+    println!("Halo, {}!", nama);
+}
+
+fn main() {
+    let hasil = jumlah(3, 4);
+    sapa("Sari");
+    println!("{}", hasil);
+}
+```
+
+Pernyataan terakhir tanpa titik koma menjadi nilai balik. Fungsi tanpa `->` berarti tidak mengembalikan apa pun. Rust **tidak punya parameter default atau variadic** seperti Go — gunakan slice `&[i32]` untuk argumen berjumlah bebas.
+
+## 4 Bentuk Penerimaan Data
+
+| Bentuk | Sintaks | Efek pada pemanggil |
+| --- | --- | --- |
+| Pindah milik (move) | `f(t: String)` | Variabel asli tidak sah dipakai lagi |
+| Pinjam biasa | `f(t: &String)` | Boleh dipakai lagi, tidak bisa diubah |
+| Pinjam mutabel | `f(t: &mut String)` | Eksklusif — tidak boleh ada pembaca lain |
+| Clone eksplisit | `f(t: t.clone())` | Salinan baru, asli tetap utuh |
+
+## Ownership: Pemindahan Nilai
+
+```rust
+fn ambil(teks: String) -> String {
+    println!("{}", teks);
+    teks
+}
+
+fn main() {
+    let s = String::from("Halo");
+    let s2 = ambil(s);
+    // println!("{}", s);   // error: s sudah berpindah
+    println!("{}", s2);
+}
+```
+
+Tipe milik seperti `String` dan `Vec` **pindah kepemilikan** saat dilewatkan. Variabel lama sudah tidak valid setelah itu. Tipe salinan murah (`i32`, `bool`, `f64`) tetap di-*copy* otomatis.
+
+## Pinjaman (Borrowing)
+
+```rust
+fn panjang(teks: &String) -> usize {
+    teks.len()
+}
+
+fn main() {
+    let s = String::from("OnBoss");
+    println!("{}", panjang(&s));
+    println!("masih bisa dipakai: {}", s);
+}
+```
+
+Dengan `&`, data hanya dipinjam — pemilik asli tetap bisa menggunakannya setelah fungsi selesai.
+
+## Pinjaman Mutabel
+
+```rust
+fn tambah_skor(s: &mut i32) {
+    *s += 10;
+}
+
+fn main() {
+    let mut skor = 80;
+    tambah_skor(&mut skor);
+    println!("skor = {}", skor);
+}
+```
+
+Satu pinjaman mutabel pada satu waktu, dan tidak boleh bercampur dengan pinjaman biasa. Aturan inilah yang mematikan data race sejak kompilasi.
+
+## 3 Aturan Ownership
+
+1. Setiap nilai punya **tepat satu pemilik**
+2. Boleh ada **banyak pinjaman immutable (`&`)** ATAU **tepat satu pinjaman mutabel (`&mut`)** — tidak keduanya
+3. Pinjaman tidak boleh bertahan lebih lama dari data yang dipinjam
+
+## Closure
+
+```rust
+let kali = |a: i32, b: i32| a * b;
+println!("{}", kali(3, 4));
+
+let kenaikan = 10;
+let hitung = |skor: i32| skor + kenaikan;   // menutup variabel sekitar
+```
+
+Closure ditulis `|parameter| ekspresi` dan otomatis meminjam variabel di sekitarnya — dipakai luas bersama iterator (`map`, `filter`).
+
+## Di Dunia Nyata
+
+- **Fungsi validasi**: `fn validasi_email(s: &str) -> bool` meminjam teks tanpa memakannya
+- **Konversi data**: `fn ke_json(p: &Pengguna) -> String` menghasilkan salinan baru
+- **Update state game**: `fn gerak(posisi: &mut Vec2)` menyentuh posisi pemain secara mutabel
+- **Parse file**: `fn baca(path: &str) -> Result<String, Error>` memindahkan hasil baca ke pemanggil
+- **Pipeline ETL**: closure `.map(|b| ubah(b)).filter(|b| lolos(b))` memproses rekaman
+
+<div class="note">💡 Pinjam (&) untuk membaca, pinjam mutabel (&mut) untuk mengubah, dan pindahkan milik hanya jika memang tidak dibutuhkan lagi. Tiga aturan ini menyelesaikan sebagian besar masalah memori di Rust.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn jumlah(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+fn sapa(nama: &str) {
+    println!("Halo, {}!", nama);
+}
+
+fn ambil(teks: String) -> String {
+    println!("dipindah: {}", teks);
+    teks
+}
+
+fn panjang(teks: &String) -> usize {
+    teks.len()
+}
+
+fn tambah_skor(s: &mut i32) {
+    *s += 10;
+}
+
+fn main() {
+    let hasil = jumlah(3, 4);
+    sapa("OnBoss Academy");
+    println!("3 + 4 = {}", hasil);
+
+    let s = String::from("Halo Rust");
+    let s2 = ambil(s);
+    println!("balikan: {}", s2);
+
+    let nama = String::from("OnBoss");
+    println!("panjang: {}", panjang(&nama));
+    println!("nama masih dipakai: {}", nama);
+
+    let mut skor = 80;
+    tambah_skor(&mut skor);
+    println!("skor = {}", skor);
+
+    let kali = |a: i32, b: i32| a * b;
+    println!("closure kali: {}", kali(3, 4));
+}`} />

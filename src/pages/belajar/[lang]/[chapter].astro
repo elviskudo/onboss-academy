@@ -1,0 +1,101 @@
+---
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import Sidebar from '../../../components/Sidebar.astro';
+import TryIt from '../../../components/TryIt.astro';
+import QuizRunner from '../../../components/QuizRunner.astro';
+import { getLanguage } from '../../../data/languages';
+import { getLangChapters, getPassedChapters, chapterIdToSlug } from '../../../lib/progress';
+
+const { lang, chapter } = Astro.params;
+const language = getLanguage(lang!);
+if (!language) return Astro.redirect('/belajar');
+
+const chapters = await getLangChapters(language.id);
+const index = chapters.findIndex((c) => chapterIdToSlug(language.id, c.id) === chapter);
+const entry = index >= 0 ? chapters[index] : null;
+if (!entry) return Astro.redirect(`/belajar/${language.id}`);
+
+const user = Astro.locals.user;
+const passed = user ? await getPassedChapters(user.id, language.id) : new Set<string>();
+const { Content } = await render(entry);
+
+const next = chapters[index + 1];
+const nextSlug = next ? chapterIdToSlug(language.id, next.id) : null;
+const isFinal = !next;
+const allPassed = !!user && chapters.every((c) => passed.has(c.id));
+const quizPublic = entry.data.quiz.map((q) => ({ q: q.q, options: q.options }));
+---
+<Base title={`${entry.data.title} — ${language.name}`} description={entry.data.description}>
+  <div class="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:flex-row">
+    <Sidebar langId={language.id} langName={language.name} chapters={chapters} passed={passed} currentId={entry.id} />
+
+    <article class="min-w-0 flex-1">
+      <nav class="mb-6 flex flex-wrap items-center gap-1.5 text-sm text-muted">
+        <a href="/belajar" class="hover:text-primary">Belajar</a>
+        <span>/</span>
+        <a href={`/belajar/${language.id}`} class="hover:text-primary">{language.name}</a>
+        <span>/</span>
+        <span class="text-ink">{entry.data.title}</span>
+      </nav>
+
+      <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm sm:p-8">
+        <div class="mb-6 flex items-center gap-3 border-b border-line pb-5">
+          <span class="flex h-11 w-11 items-center justify-center rounded-xl text-xl" style={`background:${language.color}1A`}>{language.icon}</span>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-muted">Bab {index + 1} dari {chapters.length}</p>
+            <h1 class="text-2xl font-extrabold tracking-tight sm:text-3xl">{entry.data.title}</h1>
+          </div>
+        </div>
+        <div class="prose-tutorial">
+          <Content />
+        </div>
+
+        {entry.data.example && language.runtime !== 'none' && (
+          <TryIt
+            lang={entry.data.example.lang || language.pistonName || language.id}
+            runtime={language.runtime}
+            pistonName={language.pistonName}
+            code={entry.data.example.code}
+            title="✍️ Latihan: Coba Ubah Kodenya"
+          />
+        )}
+        {entry.data.example && language.runtime === 'none' && (
+          <div class="my-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+            <div class="border-b border-line bg-primary-soft/60 px-4 py-2.5 text-sm font-bold text-primary-dark">✍️ Contoh</div>
+            <pre class="overflow-x-auto bg-[#1E1E2E] p-4 font-mono text-[13px] leading-6 text-[#E2E8F0]"><code>{entry.data.example.code}</code></pre>
+          </div>
+        )}
+      </div>
+
+      <QuizRunner
+        langId={language.id}
+        chapterSlug={chapter!}
+        quiz={quizPublic}
+        loggedIn={!!user}
+        nextHref={isFinal ? '/dashboard' : `/belajar/${language.id}/${nextSlug}`}
+        nextLabel={next ? `Lanjut: ${next.data.title}` : '🎓 Selesai — Lihat Sertifikat'}
+        isFinal={isFinal}
+      />
+
+      {isFinal && allPassed && (
+        <div class="mt-6 rounded-2xl border border-success/30 bg-success-soft p-6 text-center">
+          <p class="text-2xl">🎓</p>
+          <p class="mt-2 font-extrabold text-success">Selamat! Kamu sudah menyelesaikan semua bab {language.name}.</p>
+          <a href="/dashboard" class="mt-3 inline-block rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white">Lihat Sertifikat di Dashboard</a>
+        </div>
+      )}
+
+      <div class="mt-8 flex items-center justify-between rounded-2xl border border-line bg-surface p-5">
+        {index > 0 ? (
+          <a href={`/belajar/${language.id}/${chapterIdToSlug(language.id, chapters[index - 1].id)}`} class="text-sm font-bold text-muted hover:text-primary">← {chapters[index - 1].data.title}</a>
+        ) : <span></span>}
+        {next ? (
+          <a href={`/belajar/${language.id}/${nextSlug}`} class="text-sm font-bold text-primary hover:underline">{next.data.title} →</a>
+        ) : (
+          <a href={`/belajar/${language.id}`} class="text-sm font-bold text-primary hover:underline">Kembali ke {language.name} →</a>
+        )}
+      </div>
+    </article>
+  </div>
+</Base>

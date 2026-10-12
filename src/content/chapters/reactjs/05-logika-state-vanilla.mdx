@@ -1,0 +1,174 @@
+---
+title: "Logika State Vanilla"
+description: "Data berubah = tampilan berubah — memahami state, immutable update, dan reducer tanpa React"
+order: 5
+quiz:
+  - q: "State dalam React adalah…"
+    options: ["Styling komponen", "File konfigurasi", "Data internal komponen yang berubah seiring waktu", "Nama komponen"]
+    answer: 2
+    explain: "State adalah memori komponen: nilainya bisa berubah dan perubahan itu memicu render ulang."
+  - q: "Mengubah state langsung dengan push() di React…"
+    options: ["Tidak memicu render ulang — harus salin dulu", "Selalu memicu error compile", "Menghapus state", "Membuat state jadi string"]
+    answer: 0
+    explain: "React membandingkan referensi object/array. Mutasi diam-diam tidak terdeteksi; buat salinan baru."
+  - q: "Cara immutable untuk menambah item array…"
+    options: ["lama.push(baru)", "[...lama, baru]", "lama = baru", "delete lama"]
+    answer: 1
+    explain: "Spread menghasilkan array baru dengan referensi berbeda — React mendeteksi perubahan."
+  - q: "Reducer berguna ketika…"
+    options: ["Perubahan state punya banyak aksi/tipe berbeda", "State selalu kosong", "Tidak ada tombol", "Hanya ada satu variabel"]
+    answer: 0
+    explain: "Reducer mengelola semua aksi dalam satu fungsi switch — pola di balik useReducer."
+  - q: "Fungsi render yang baik seharusnya…"
+    options: ["Murni: output hanya bergantung pada input", "Mengubah state global", "Membaca file disk", "Selalu mengembalikan angka"]
+    answer: 0
+    explain: "Fungsi murni tanpa efek samping membuat alur data React mudah ditebak."
+example:
+  code: |
+    let state = { count: 0 };
+    function setState(partial) {
+      state = { ...state, ...partial };
+      console.log("Render:", state.count);
+    }
+    setState({ count: state.count + 1 });
+    setState({ count: state.count * 10 });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`useState` bukan sihir — ia hanya membungkus pola lama: simpan data, ubah data, perbarui tampilan. Bab ini melatih pola itu tanpa React sama sekali.
+
+## Mengapa Data Berubah Perlu Ditangani
+
+Tampilan bergantung data. Bila data berubah diam-diam tanpa kabar, tampilan basi. React menyelesaikannya dengan menyimpan state di tempat terpusat dan me-render ulang saat state berubah.
+
+## Immutable Update
+
+```js
+const user = { nama: "Sari", peran: "Admin" };
+
+// ❌ mutasi — referensi sama, sulit dilacak
+user.peran = "Member";
+
+// ✅ salin-lalu-ubah — object baru
+const baru = { ...user, peran: "Member" };
+
+const keranjang = ["kopi"];
+const tambah = [...keranjang, "roti"]; // ["kopi", "roti"]
+const kurang = keranjang.filter((i) => i !== "kopi");
+```
+
+## Mini useState
+
+```js
+function buatState(awal) {
+  let nilai = awal;
+  const pendengar = [];
+
+  return {
+    get: () => nilai,
+    set: (baru) => {
+      nilai = baru;
+      pendengar.forEach((fn) => fn(nilai));
+    },
+    subscribe: (fn) => pendengar.push(fn),
+  };
+}
+
+const hitung = buatState(0);
+hitung.subscribe((v) => console.log("Tampilan:", v));
+hitung.set(hitung.get() + 1); // Tampilan: 1
+```
+
+Ini esensi `useState`: nilai tersembunyi di closure, `set` memicu kabar ke semua pendengar.
+
+## Reducer: Satu Fungsi, Banyak Aksi
+
+```js
+function reducer(state, aksi) {
+  switch (aksi.tipe) {
+    case "tambah":
+      return { ...state, count: state.count + 1 };
+    case "kalikan":
+      return { ...state, count: state.count * aksi.faktor };
+    default:
+      return state;
+  }
+}
+
+let state = reducer({ count: 0 }, { tipe: "tambah" });
+state = reducer(state, { tipe: "kalikan", faktor: 10 });
+```
+
+Setiap aksi menghasilkan state baru tanpa menyentuh state lama — persis yang diharapkan `useReducer`.
+
+## 4 Bentuk State yang Umum
+
+| Bentuk | Contoh | Update immutable | Kapan dipakai |
+|--------|--------|------------------|---------------|
+| Primitif | `0`, `false`, `""` | ganti nilai langsung | counter, toggle, input |
+| Object | `{ nama, email }` | `{ ...lama, nama: baru }` | form, profil, konfigurasi |
+| Array | `[{ id, teks }]` | `[...lama, item]` / `filter` | keranjang, todo, notifikasi |
+| State machine sederhana | `"idle"`, `"loading"`, `"success"`, `"error"` | pilih status baru | request API & proses bertahap |
+
+Ada **3 aturan utama** state React: simpan nilai minimal, jangan mutasi object/array, dan turunkan nilai yang bisa dihitung alih-alih menyimpannya dua kali. Contoh: simpan `harga` dan `qty`, tetapi hitung `total = harga * qty` saat render.
+
+## State vs Variabel Biasa
+
+Variabel biasa hilang saat fungsi komponen selesai dan perubahannya tidak memicu render. State bertahan antar-render dan setter memberi tahu React bahwa UI perlu dihitung ulang. State adalah padanan **variabel yang reaktif**, bukan variabel global.
+
+Saat nilai baru bergantung pada nilai sebelumnya, gunakan updater function:
+
+```jsx
+setCount((lama) => lama + 1);
+setItems((lama) => [...lama, itemBaru]);
+```
+
+Bentuk ini aman ketika React menggabungkan beberapa update dalam satu batch.
+
+## Percabangan dan Loop pada State
+
+Reducer memakai `switch` untuk memilih aksi — padanan percabangan. Array state diproses dengan `map`, `filter`, atau `reduce` — padanan looping tanpa mutasi:
+
+```js
+const ditandai = todos.map((t) =>
+  t.id === id ? { ...t, selesai: true } : t
+);
+const tersisa = todos.filter((t) => t.id !== idHapus);
+```
+
+## Di Dunia Nyata
+
+- **Keranjang belanja**: array item ditambah dengan spread, dihapus dengan filter, total dihitung reduce.
+- **Form checkout**: satu object state menyimpan alamat; tiap input menyalin object lalu mengganti satu field.
+- **Request API**: status berpindah `idle → loading → success/error` agar spinner dan pesan tepat.
+- **Editor dokumen**: reducer menangani aksi tambah blok, pindah blok, hapus, dan undo secara terpusat.
+- **Filter katalog**: state menyimpan query dan kategori; daftar hasil dihitung dari keduanya, bukan disimpan ulang.
+
+<div class="note">💡 Kunci berpikir React: bukan "bagaimana mengubah tombol di layar", melainkan "data apa yang berubah, lalu tampilan apa yang mengikuti". Latih kebiasaan immutable update sekarang — kebiasaan ini yang menyelamatkanmu dari bug state di aplikasi nyata.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`function buatState(awal) {
+  let nilai = awal;
+  const pendengar = [];
+  return {
+    get: function () { return nilai; },
+    set: function (baru) { nilai = baru; pendengar.forEach(function (fn) { fn(nilai); }); },
+    subscribe: function (fn) { pendengar.push(fn); },
+  };
+}
+
+const hitung = buatState(0);
+hitung.subscribe(function (v) { console.log("Tampilan:", v); });
+hitung.set(hitung.get() + 1);
+hitung.set(hitung.get() * 10);
+
+function reducer(state, aksi) {
+  switch (aksi.tipe) {
+    case "tambah": return { ...state, count: state.count + 1 };
+    case "kalikan": return { ...state, count: state.count * aksi.faktor };
+    default: return state;
+  }
+}
+let s = reducer({ count: 0 }, { tipe: "tambah" });
+s = reducer(s, { tipe: "kalikan", faktor: 10 });
+console.log("Hasil reducer:", s.count);`} />

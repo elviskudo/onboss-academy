@@ -1,0 +1,137 @@
+---
+title: "Validasi & Asosiasi"
+description: "Menjaga data tetap benar dan menghubungkan antar model tanpa SQL manual"
+order: 7
+quiz:
+  - q: "Validasi Rails ditulis di bagian…"
+    options: ["View", "Model", "Routing", "Gemfile"]
+    answer: 1
+    explain: "Validasi adalah aturan data sehingga diletakkan di model."
+  - q: "validates :name, presence: true artinya…"
+    options: ["Nama wajib diisi", "Nama harus unik", "Nama berupa angka", "Nama boleh kosong"]
+    answer: 0
+    explain: "presence: true menolak nilai nil, string kosong, dan spasi."
+  - q: "Asosiasi untuk relasi satu ke banyak adalah…"
+    options: ["has_one dan contains", "has_many dan belongs_to", "many_to_many only", "link_to"]
+    answer: 1
+    explain: "Order belongs_to Customer, sedangkan Customer has_many Orders."
+  - q: "Cara mengambil semua pesanan milik pelanggan adalah…"
+    options: ["SELECT manual", "customer.get_orders_sql", "customer.orders", "Order.find_all"]
+    answer: 2
+    explain: "Asosiasi memberi method orders yang sudah dioptimasi query-nya."
+  - q: "validates :email, uniqueness: true berfungsi untuk…"
+    options: ["Menolak email yang sudah terdaftar", "Mengirim email", "Format email otomatis", "Menyimpan email ganda"]
+    answer: 0
+    explain: "Rails memeriksa tabel apakah email sudah dipakai."
+example:
+  code: |
+    class Product < ApplicationRecord
+      validates :name, presence: true, uniqueness: true
+      validates :price, numericality: { greater_than: 0 }
+    end
+
+    class Order < ApplicationRecord
+      belongs_to :customer
+    end
+
+    class Customer < ApplicationRecord
+      has_many :orders
+    end
+---
+
+Dua hal yang membuat aplikasi Rails awet: data yang tervalidasi dan relasi yang dinyatakan jelas di model.
+
+## Validasi Dasar
+
+```ruby
+class Product < ApplicationRecord
+  validates :name, presence: true
+  validates :price, numericality: { greater_than: 0 }
+  validates :sku, uniqueness: true, length: { minimum: 3 }
+end
+```
+
+Validasi berjalan dua arah: saat `save` dipanggil dan saat `valid?` diperiksa.
+
+## Menangani Gagal Validasi
+
+```ruby
+product = Product.new(price: -5)
+
+if product.save
+  puts "tersimpan"
+else
+  puts product.errors.full_messages
+end
+```
+
+Pesan dari `errors` langsung bisa ditampilkan di bawah input formulir.
+
+## Asosiasi Satu ke Banyak
+
+```ruby
+class Customer < ApplicationRecord
+  has_many :orders, dependent: :destroy
+end
+
+class Order < ApplicationRecord
+  belongs_to :customer
+end
+```
+
+Dengan ini, `customer.orders` mengembalikan semua pesanan pelanggan tersebut.
+
+## Satu ke Satu dan Banyak ke Banyak
+
+```ruby
+class User < ApplicationRecord
+  has_one :profile
+  has_many :roles, through: :assignments
+end
+```
+
+`through` menangani relasi banyak ke banyak lewat tabel perantara.
+
+## Menghindari Query N+1
+
+```ruby
+# boros: query terpisah tiap customer
+# Customer.all.each { |c| c.orders.count }
+
+# hemat: muat asosiasi sekaligus
+customers = Customer.includes(:orders).all
+```
+
+## Validator dan Relasi
+
+Ada **6 validator umum**: presence, uniqueness, length, numericality, format, dan inclusion. Validasi memberi pesan ramah aplikasi, tetapi constraint database tetap diperlukan untuk aturan kritis yang bisa dilanggar request bersamaan.
+
+| Konsep | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| presence | wajib terisi | nama | input wajib |
+| uniqueness | kandidat unik | email | dipasangkan index unik |
+| numericality | batas angka | harga > 0 | jumlah dan uang |
+| format | pola teks | kode pos | format terbatas |
+| `belongs_to` | sisi pemilik FK | order→customer | banyak-ke-satu |
+| `has_many :through` | relasi via join model | user→roles | banyak-ke-banyak |
+
+Ada **4 asosiasi dasar**: belongs_to, has_one, has_many, dan has_many through/HABTM. Pilih through bila tabel penghubung memiliki atribut atau validasi. `dependent: :destroy` menjalankan callback setiap anak; `delete_all` lebih cepat tetapi melewati callback. Tentukan perilaku penghapusan secara sadar agar tidak meninggalkan orphan atau menghapus data penting.
+
+## Integritas dan Performa
+
+`uniqueness: true` saja rentan race condition; tambahkan unique index. Foreign key database mencegah referensi ke parent yang tidak ada. Gunakan `includes` ketika view membaca asosiasi banyak record, lalu periksa log SQL agar N+1 benar-benar hilang.
+
+## Di Dunia Nyata
+
+- Checkout menolak kuantitas nol sebelum membuat order item.
+- Unique index menjaga username tetap tunggal saat signup bersamaan.
+- `has_many :through` menyimpan role beserta tanggal pemberian akses.
+- Eager loading mempercepat daftar order beserta nama customer.
+
+## Callback dan Aturan Domain
+
+Validasi bersyarat dapat memakai `if:` atau `unless:`, tetapi aturan yang rumit lebih mudah dipahami sebagai method bernama. Custom validator tepat untuk aturan yang benar-benar digunakan lintas model. Hindari callback panjang yang mengirim jaringan atau mengubah banyak model secara tersembunyi; pindahkan orkestrasi ke object operasi atau job agar alurnya eksplisit dan dapat diuji.
+
+Callback `after_commit` berjalan setelah transaction benar-benar tersimpan, sehingga lebih aman untuk menjadwalkan kerja eksternal daripada `after_save`. Meski begitu, pengiriman pesan yang wajib tidak boleh bergantung pada proses yang bisa mati tepat setelah commit tanpa strategi outbox atau queue yang andal. Untuk sebagian besar aplikasi awal, cukup antrekan job di `after_commit`, ukur kegagalannya, lalu tingkatkan desain ketika kebutuhan reliabilitas memang muncul.
+
+<div class="note">💡 Letakkan validasi di model, bukan hanya di controller. Dengan begitu data tetap terlindungi walau datang lewat konsol, job background, atau API lain.</div>

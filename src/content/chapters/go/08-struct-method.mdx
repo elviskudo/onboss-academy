@@ -1,0 +1,189 @@
+---
+title: "Struct & Method"
+description: "Menggabungkan data dan fungsi ala Go — tanpa class, tetap terstruktur"
+order: 8
+quiz:
+  - q: "Go tidak memiliki kata kunci…"
+    options: ["struct", "class", "func", "interface"]
+    answer: 1
+    explain: "Go memakai struct untuk data dan interface untuk perilaku, tanpa class."
+  - q: "Akses ke field struct memakai…"
+    options: ["panah (->)", "kurung siku", "titik (.)", "koma"]
+    answer: 2
+    explain: "Contoh: s.Nama — pada pointer struct, Go otomatis melakukan dereference."
+  - q: "Method didefinisikan dengan…"
+    options: ["func (p Tipe) Nama() {}", "method Tipe.Nama() {}", "def Nama(self)", "Tipe::Nama()"]
+    answer: 0
+    explain: "Receiver ditaruh di kurung sebelum nama method: func (t Titik) Pindah() {}."
+  - q: "Supaya method bisa mengubah field struct, receiver harus…"
+    options: ["nilai biasa (Tipe)", "interface", "pointer (*Tipe)", "global"]
+    answer: 2
+    explain: "Receiver pointer menerima salinan alamat, sehingga perubahan terlihat pada objek asli."
+  - q: "Inheritance di Go dilakukan lewat…"
+    options: ["extends", "implements", "inherits", "tidak ada — pakai embedding/komposisi"]
+    answer: 3
+    explain: "Go tidak punya inheritance; struct bisa menanam struct lain (embedding) agar field/method naik."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    type Siswa struct {
+        Nama  string
+        Skor  int
+    }
+
+    func (s Siswa) Perkenalan() {
+        fmt.Println(s.Nama, "skor", s.Skor)
+    }
+
+    func (s *Siswa) TambahSkor(n int) {
+        s.Skor += n
+    }
+
+    func main() {
+        s := Siswa{Nama: "Sari", Skor: 80}
+        s.TambahSkor(10)
+        s.Perkenalan()
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanpa kata kunci `class`, Go tetap punya OOP: **struct untuk data, method untuk perilaku**.
+
+## Mendefinisikan Struct
+
+```go
+type Siswa struct {
+    Nama string
+    Umur int
+}
+```
+
+`type` mendeklarasikan tipe baru. Nama field ditulis PascalCase agar bisa diakses dari package lain.
+
+## Membuat dan Mengakses
+
+```go
+s := Siswa{Nama: "Sari", Umur: 20}
+s2 := Siswa{}
+s2.Nama = "Budi"
+
+fmt.Println(s.Nama)  // Sari
+fmt.Println(s2.Nama) // Budi (default string kosong)
+```
+
+Field yang tidak diisi otomatis mendapat zero value sesuai tipenya.
+
+## Method dengan Receiver
+
+```go
+func (s Siswa) Perkenalan() {
+    fmt.Println("Halo, saya", s.Nama)
+}
+
+func main() {
+    s := Siswa{Nama: "Sari"}
+    s.Perkenalan()
+}
+```
+
+Receiver ditulis di kurung sebelum nama method — pendekatan Go menggantikan `this` atau `self`.
+
+## Receiver Nilai vs Pointer
+
+```go
+func (s *Siswa) TambahSkor(n int) {
+    s.Skor += n
+}
+
+s := Siswa{Skor: 80}
+s.TambahSkor(10)
+fmt.Println(s.Skor) // 90
+```
+
+Jika method mengubah isi struct, gunakan receiver pointer `*Siswa`. Untuk method yang hanya membaca, receiver nilai sudah cukup.
+
+## Interface, Bukan Inheritance
+
+Go **tidak punya inheritance**. Polymorphism datang dari interface yang dipenuhi otomatis:
+
+```go
+type Bentuk interface {
+    Luas() float64
+}
+
+type Persegi struct{ Sisi float64 }
+
+func (p Persegi) Luas() float64 { return p.Sisi * p.Sisi }
+
+func cetak(b Bentuk) {
+    fmt.Println("Luas:", b.Luas())
+}
+```
+
+Cukup punya method `Luas()` — tidak perlu kata `implements`. Untuk "mewarisi" field, Go memakai **embedding**: struct yang memuat struct lain otomatis mempromosikan field dan method-nya.
+
+## Status 4 Pilar OOP di Go
+
+| Pilar | Status di Go | Mekanismenya |
+| --- | --- | --- |
+| Encapsulation | ✅ Ada | Field huruf kecil = privat untuk package |
+| Inheritance | ❌ Tidak ada | Digantikan embedding + komposisi |
+| Polymorphism | ✅ Ada | Interface, dipenuhi implicit |
+| Abstraction | ✅ Ada | Interface menyembunyikan detail |
+
+Jadi tidak ada `class`, `extends`, atau constructor bawaan — konstruktor hanya konvensi fungsi `NewSiswa(...)`.
+
+## Di Dunia Nyata
+
+- **Layer repository**: interface `Penyimpanan` dengan implementasi in-memory & PostgreSQL, ditukar lewat config
+- **Model API**: struct `Produk` + method `Validasi()` sebelum disimpan ke database
+- **Embedding**: `struct { Loggers }` menanam logger ke 20 tipe layanan sekaligus
+- **Renderer**: fungsi menerima interface `Tampilan` — mendukung HTML dan JSON tanpa if-else
+- **Domain hitung**: `Titik` dengan method `Jarak()` menyimpan data sekaligus cara menghitungnya
+
+<div class="note">💡 Go juga punya interface yang terpenuhi otomatis (implicit satisfaction). Tidak perlu menulis kata kunci implements — cukup punya method dengan nama dan tipe yang sama.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+type Siswa struct {
+    Nama string
+    Skor int
+}
+
+func (s Siswa) Perkenalan() {
+    fmt.Println("Halo, saya", s.Nama, "- skor", s.Skor)
+}
+
+func (s *Siswa) TambahSkor(n int) {
+    s.Skor += n
+}
+
+type Bentuk interface {
+    Luas() float64
+}
+
+type Persegi struct{ Sisi float64 }
+
+func (p Persegi) Luas() float64 { return p.Sisi * p.Sisi }
+
+func cetak(b Bentuk) {
+    fmt.Println("Luas bentuk:", b.Luas())
+}
+
+func main() {
+    s := Siswa{Nama: "Sari", Skor: 80}
+    s.TambahSkor(10)
+    s.Perkenalan()
+
+    b := Siswa{Nama: "Budi"}
+    b.Perkenalan()
+    fmt.Println("Skor Budi:", b.Skor)
+
+    cetak(Persegi{Sisi: 4})
+}`} />

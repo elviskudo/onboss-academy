@@ -1,0 +1,110 @@
+---
+title: "Tokenisasi"
+description: "Memecah teks menjadi token — vocabulary, subword, dan BPE"
+order: 2
+quiz:
+  - q: "Token dalam NLP adalah…"
+    options: ["Jenis model", "Satuan teks hasil pemecahan: kata, subkata, atau karakter", "Nama optimizer", "Bobot jaringan"]
+    answer: 1
+    explain: "Token bisa berupa kata utuh ('kucing'), subkata ('kuc'+'ing'), atau karakter tunggal."
+  - q: "Masalah vocabulary kata-utuh adalah…"
+    options: ["Kosakata bisa membengkak jutaan entri", "Tidak bisa memproses spasi", "Selalu salah arti", "Hanya untuk bahasa Mandarin"]
+    answer: 0
+    explain: "Kata jarang membuat vocabulary raksasa; subword menyeimbangkan ukuran dan cakupan."
+  - q: "BPE (Byte Pair Encoding) bekerja dengan…"
+    options: ["Menerjemahkan teks", "Menghapus semua tanda baca", "Menggabungkan pasangan simbol paling sering muncul", "Memadatkan gambar"]
+    answer: 2
+    explain: "BPE membangun subword dari frekuensi pasangan — kata langka dipecah menjadi potongan umum."
+  - q: "Token khusus seperti [CLS] atau <|endoftext|> berfungsi untuk…"
+    options: ["Hiasan teks", "Penanda struktur/awal-akhir bagi model", "Nama file model", "Satuan ukuran"]
+    answer: 1
+    explain: "Token khusus membawa informasi struktural: batas dokumen, posisi kelas, dan sejenisnya."
+  - q: "Ketika token tidak dikenal, tokenizer modern biasanya…"
+    options: ["Memecahnya menjadi subkata atau byte", "Mengganti dengan teks acak", "Menghentikan program", "Menghapus kalimat"]
+    answer: 0
+    explain: "Pendekatan byte-level memastikan teks apa pun tetap bisa direpresentasikan."
+example:
+  code: |
+    # Sketsa subword sederhana: kata langka dipecah ke potongan umum
+    vocab = {"kuc": 0, "ing": 1, "berlari": 2}
+    kata = "kucingberlari".split("berlari")[0]
+    print([vocab.get(potongan, 0) for potongan in ("kuc", "ing")])
+---
+
+Sebelum model melihat teks, teks harus diubah menjadi **deretan angka**. Tahap pertamanya adalah tokenisasi.
+
+## Mengapa Bukan Kata Utuh?
+
+```python
+teks = "Membelanjakan, membelanjakan, membelanjakan!"
+print(teks.split())
+```
+
+`split()` memecah spasi — mudah, tapi menghasilkan kosakata besar dan tidak menangani kata jarang dengan baik.
+
+## 4 Tingkat Tokenisasi
+
+| Pendekatan | Contoh | Kelebihan | Konsekuensi |
+|------------|--------|-----------|-------------|
+| Byte | byte UTF-8 | semua input terwakili | sekuens paling panjang |
+| Karakter | m, e, m, b, e, l | vocabulary kecil | makna tersebar banyak token |
+| Kata | membelanjakan | intuitif dan pendek | kosakata besar, ada kata asing |
+| Subkata | mem + belan + jakan | cakupan dan panjang seimbang | potongan tidak selalu intuitif |
+
+Model modern banyak memakai subword atau byte-level. Tidak ada satu tokenisasi terbaik untuk semua bahasa: corpus, target vocabulary, dan domain menentukan hasilnya.
+
+## Intuisi BPE
+
+```python
+# 1. Awali dengan token per karakter
+kata = list("lowers")
+
+# 2. Hitung pasangan paling sering di seluruh korpus
+# 3. Gabungkan pasangan itu menjadi token baru
+# 4. Ulangi sampai vocabulary mencapai ukuran target (mis. 50.000)
+print(kata)
+```
+
+Hasilnya: kata umum seperti "yang" menjadi satu token; kata langka dipecah menjadi potongan yang tetap berguna.
+
+## Token di Dunia Nyata
+
+```python
+# Perkiraan perilaku tokenizer modern (bukan library tertentu)
+kalimat = "OnBoss Academy mengajarkan machine learning"
+# token mungkin menjadi: ["On", "Boss", " Academy", " meng", "ajarkan", " machine", " learning"]
+
+print(len(kalimat.split()), "kata spasi ->", len(kalimat.split()), "token (ilustrasi)")
+```
+
+Tanda spasi sering ikut menyatu ke token agar batas kata tidak hilang.
+
+## Token Khusus
+
+Ada **4 peran umum** token khusus (nama persisnya berbeda antar model):
+
+| Peran | Contoh token | Fungsi |
+|-------|--------------|--------|
+| Awal sekuens | `[CLS]`, `<s>` | titik awal/representasi klasifikasi |
+| Akhir sekuens | `[SEP]`, `</s>` | batas dokumen atau segmen |
+| Padding | `[PAD]` | menyamakan panjang batch |
+| Tidak dikenal | `[UNK]` | fallback tokenizer lama |
+
+Tokenizer byte-level biasanya dapat merepresentasikan input apa pun sehingga `[UNK]` jarang atau tidak diperlukan. Padding bukan isi: attention mask mencegah model menganggapnya konteks.
+
+## Dampak ke Biaya dan Konteks
+
+- **Jumlah token menentukan biaya dan kecepatan** — API LLM dihitung per token.
+- **Panjang konteks** model dinyatakan dalam token (mis. 8k, 128k token).
+- Tokenisasi yang buruk membuat kode asing atau teks campuran boros token.
+- Kata bukan token: satu kata Indonesia bisa menjadi satu atau beberapa token tergantung vocabulary.
+
+## Di Dunia Nyata
+
+- **Perhitungan biaya chatbot** — tim menghitung token prompt + jawaban sebelum menetapkan harga layanan.
+- **Pemotongan dokumen RAG** — dokumen dibagi sesuai batas token, bukan jumlah karakter.
+- **Analisis bahasa daerah** — kata langka dapat pecah ke banyak subword sehingga konteks cepat penuh.
+- **Batch training** — `[PAD]` menyamakan panjang kalimat dan attention mask mengabaikan isinya.
+- **Pemrosesan kode** — spasi, simbol, dan nama variabel punya pola token berbeda dari prosa.
+
+<div class="note">💡 Ketika hasil model terasa aneh pada teks campuran bahasa/emoji/kode, tokenizer sering jadi biang keladinya — teks langka terpecah jadi potongan yang jarang muncul saat pelatihan.</div>

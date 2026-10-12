@@ -1,0 +1,182 @@
+---
+title: "Form & Server Action"
+description: 'Menangani form tanpa endpoint terpisah: "use server", useActionState, dan validasi'
+order: 7
+quiz:
+  - q: "Server action didefinisikan dengan…"
+    options: ["\"use server\" di dalam fungsi atau file action", "\"use client\"", "export const config", "middleware.ts"]
+    answer: 0
+    explain: "Directive use server menandai fungsi tersebut akan dieksekusi di server, bisa dipanggil dari client."
+  - q: "useActionState memberikan…"
+    options: ["Daftar rute", "Instance React", "State hasil action terakhir, fungsi submit, dan status pending", "Objek metadata"]
+    answer: 2
+    explain: "Hook ini (pengganti useFormState) menyediakan data return action + indikator isPending."
+  - q: "Keunggulan server action dibanding endpoint API terpisah untuk form…"
+    options: ["Tidak perlu menulis route handler sendiri; tipe dan pemanggilan langsung nyambung", "Tidak butuh validasi", "Form otomatis jadi client component", "Bisa tanpa HTML"]
+    answer: 0
+    explain: "Satu fungsi action dipakai sebagai endpoint sekaligus logic — mengurangi boilerplate."
+  - q: "Validasi form di server action sebaiknya…"
+    options: ["Dihapus", "Ditulis ulang juga di server, jangan hanya mengandalkan validasi client", "Dipindah ke CSS", "Ditulis di metadata"]
+    answer: 1
+    explain: "Client bisa dilewati — validasi server adalah garis pertahanan terakhir yang sah."
+  - q: "progressive enhancement pada form berarti…"
+    options: ["Form tetap berfungsi tanpa JavaScript", "Form hanya jalan di browser lama", "Form butuh WASM", "Form offline-only"]
+    answer: 0
+    explain: "Form server action tetap terkirim saat JS belum termuat — bagus untuk kecepatan awal."
+example:
+  code: |
+    async function submitAction(data) {
+      await new Promise((r) => setTimeout(r, 5));
+      if (!data.email.includes("@")) {
+        return { error: "Email tidak valid" };
+      }
+      return { ok: true, message: "Terima kasih, " + data.email };
+    }
+
+    submitAction({ email: "salah" }).then((r) => console.log(r));
+    submitAction({ email: "sari@mail.com" }).then((r) => console.log(r));
+---
+
+Form adalah interaksi paling umum di aplikasi. Dengan server action, form Next.js bisa diproses di server tanpa menulis endpoint API terpisah.
+
+## Action Dasar
+
+```typescript
+"use server";
+
+export async function simpanPesan(formData: FormData) {
+  const nama = formData.get("nama") as string;
+  const isi = formData.get("isi") as string;
+
+  if (!nama || !isi) {
+    return { error: "Nama dan pesan wajib diisi" };
+  }
+
+  await db.pesan.create({ data: { nama, isi } });
+  return { ok: true };
+}
+```
+
+Fungsi dengan `"use server"` menjadi RPC aman: client memanggil, server yang mengeksekusi.
+
+## Form dengan useActionState
+
+```typescript
+"use client";
+
+import { useActionState } from "react";
+import { daftarAkun } from "./actions";
+
+export default function FormDaftar() {
+  const [state, action, pending] = useActionState(daftarAkun, null);
+
+  return (
+    <form action={action}>
+      <input name="email" type="email" required />
+      <input name="sandi" type="password" required />
+      {state?.error && <p role="alert">{state.error}</p>}
+      <button disabled={pending}>
+        {pending ? "Mengirim…" : "Daftar"}
+      </button>
+    </form>
+  );
+}
+```
+
+`state` berisi nilai yang dikembalikan action terakhir; `pending` menandai request masih berjalan.
+
+## Validasi Ganda (Client & Server)
+
+```typescript
+"use server";
+
+export async function daftarAkun(prev: any, formData: FormData) {
+  const email = String(formData.get("email") ?? "");
+  const sandi = String(formData.get("sandi") ?? "");
+
+  if (!email.includes("@")) {
+    return { error: "Format email salah" };
+  }
+  if (sandi.length < 8) {
+    return { error: "Sandi minimal 8 karakter" };
+  }
+
+  await buatAkun({ email, sandi });
+  return { ok: true };
+}
+```
+
+Client memberi umpan balik cepat (required, type=email), server memvalidasi ulang dengan aturan yang sama.
+
+## Mengubah Data: Pattern Server → Client
+
+```typescript
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+export async function tambahProduk(formData: FormData) {
+  await db.produk.create({ data: { nama: String(formData.get("nama")) } });
+
+  revalidatePath("/produk"); // segarkan cache halaman katalog
+  redirect("/produk");       // pindahkan user
+}
+```
+
+`revalidatePath` memperbarui data ter-cache; `redirect` memindahkan pengguna setelah aksi berhasil.
+
+## Action di Komponen Server
+
+```typescript
+// Tanpa "use client" pun bisa
+export default function HapusTombol({ id }: { id: string }) {
+  async function hapus() {
+    "use server";
+    await db.produk.delete({ where: { id } });
+    revalidatePath("/produk");
+  }
+
+  return <form action={hapus}><button>Hapus</button></form>;
+}
+```
+
+Bila komponen tidak butuh state/hook interaktif, action cukup didefinisikan inline di komponen server.
+
+## Lima Tahap Mutasi Aman
+
+Mutasi server yang lengkap memiliki **5 tahap**.
+
+| Tahap | Fungsi | Contoh | Kapan dilakukan |
+|---|---|---|---|
+| Baca | Mengambil `FormData` | `formData.get()` | Awal action |
+| Validasi | Menolak bentuk salah | panjang sandi | Sebelum akses data |
+| Otorisasi | Memeriksa hak user | pemilik produk | Sebelum mutasi |
+| Mutasi | Menulis data | `db.produk.create` | Setelah input sah |
+| Sinkronisasi UI | Menyegarkan atau pindah | `revalidatePath` | Setelah berhasil |
+
+Jangan mempercayai hidden input untuk identitas pemilik atau harga. Nilai tersebut dapat diubah pengguna; ambil sesi di server dan baca data sensitif dari database.
+
+```typescript
+"use server";
+
+export async function hapusProduk(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const produk = await db.produk.findUnique({ where: { id } });
+
+  if (!produk || produk.ownerId !== user.id) return { error: "Tidak diizinkan" };
+  await db.produk.delete({ where: { id } });
+  revalidatePath("/produk");
+  return { ok: true };
+}
+```
+
+## Di Dunia Nyata
+
+- Form registrasi mengembalikan error per field tanpa menghapus input pengguna.
+- Tombol hapus memastikan resource milik sesi aktif sebelum mutasi.
+- Form komentar tetap dapat dikirim sebelum JavaScript selesai dimuat.
+- Panel produk menyegarkan cache katalog setelah harga diperbarui.
+
+<div class="note">💡 Alur yang disarankan: validasi singkat di client untuk kenyamanan, validasi lengkap di server action untuk keamanan, dan selalu kembalikan object pesan yang bisa ditampilkan langsung di bawah form.</div>

@@ -1,0 +1,203 @@
+---
+title: "Perulangan (Looping)"
+description: "4 bentuk loop Java, break/continue, labeled loop, dan pola klasik pengolahan data"
+order: 4
+quiz:
+  - q: "Loop for dievaluasi dalam urutan…"
+    options: ["Kondisi → inisialisasi → update → isi loop", "Inisialisasi → kondisi → isi loop → update", "Update → kondisi → isi loop", "Isi loop → inisialisasi → kondisi"]
+    answer: 1
+    explain: "for (init; kondisi; update) { isi } — update berjalan setiap akhir iterasi."
+  - q: "Perintah continue pada loop berfungsi untuk…"
+    options: ["Menghentikan seluruh loop", "Melompati ke iterasi berikutnya", "Mengulang dari awal", "Menghapus variabel loop"]
+    answer: 1
+    explain: "continue melewati sisa isi loop lalu lanjut ke iterasi berikutnya; break menghentikan loop."
+  - q: "Loop do-while mengeksekusi isi loop…"
+    options: ["Minimal sekali", "Nol kali jika kondisi false", "Tepat 10 kali", "Hanya saat input kosong"]
+    answer: 0
+    explain: "do { ... } while (kondisi); — isi dijalankan dulu baru kondisi dicek."
+  - q: "Nilai i pada akhir for (int i = 0; i < 3; i++) adalah…"
+    options: ["3", "2", "4", "0"]
+    answer: 0
+    explain: "Loop berhenti ketika i sudah tidak memenuhi i < 3, sehingga i = 3."
+  - q: "Perulangan for-each (for (int x : arr)) paling cocok untuk…"
+    options: ["Menelusuri semua elemen array", "Mengubah ukuran array", "Membuat array baru", "Menghapus elemen terakhir"]
+    answer: 0
+    explain: "for-each membaca tiap elemen tanpa perlu indeks — cocok saat posisi elemen tak dibutuhkan."
+example:
+  code: |
+    int total = 0;
+    for (int i = 1; i <= 5; i++) {
+        total += i;
+        System.out.println("i = " + i + ", total = " + total);
+    }
+    int n = 3;
+    while (n > 0) {
+        System.out.println("Sisa " + n);
+        n--;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perulangan membuat program mengerjakan pekerjaan berulang **tanpa menyalin kode** — hitung total, proses daftar, cetak pola. Java mendukung **4 bentuk perulangan utama**: `for`, `while`, `do-while`, dan `for-each`.
+
+## Loop for
+
+```java
+for (int i = 1; i <= 5; i++) {
+    System.out.println("Perulangan ke-" + i);
+}
+```
+
+Komponennya: `inisialisasi; kondisi; update`. Selama kondisi bernilai `true`, isi loop dijalankan lalu `update` dievaluasi. Pakai `for` saat jumlah iterasi **diketahui** — biasanya berbasis indeks atau counter.
+
+## while & do-while
+
+```java
+int saldo = 100;
+while (saldo > 0) {          // dicek SEBELUM isi loop — bisa 0 kali
+    System.out.println("Sisa saldo: " + saldo);
+    saldo -= 30;
+}
+
+int percobaan = 0;           // do-while: isi dijalankan dulu
+do {
+    percobaan++;
+} while (percobaan < 3);
+```
+
+| Bentuk | Kapan dicek | Minimal jalan | Contoh use case |
+|---|---|---|---|
+| `for` | tiap awal iterasi | 0 kali | telusuri 1..n, proses array berindeks |
+| `while` | sebelum isi | 0 kali | baca input sampai user mengetik "quit" |
+| `do-while` | sesudah isi | **1 kali** | menu yang pasti tampil minimal sekali |
+| `for-each` | per elemen koleksi | 0 kali | cetak semua nilai, akumulasi tanpa indeks |
+
+## For-Each
+
+```java
+int[] nilai = {80, 90, 75};
+for (int n : nilai) {              // baca semua elemen, tanpa index
+    System.out.println(n);
+}
+```
+
+Lebih ringkas dan aman (tidak bisa salah indeks), tapi **tidak bisa mengubah** array dan tidak tahu posisi elemen. Saat butuh indeks, kembali ke `for` klasik.
+
+## Break & Continue
+
+```java
+for (int i = 1; i <= 10; i++) {
+    if (i == 4) continue;   // lewati angka 4
+    if (i > 6) break;       // berhenti setelah 6
+    System.out.print(i + " ");
+}
+// cetak: 1 2 3 5 6
+```
+
+`break` keluar dari **seluruh** loop terdekat; `continue` melewati sisa iterasi berjalan lalu lanjut. Java juga punya **label** untuk loop bersarang:
+
+```java
+outer:
+for (int b = 1; b <= 3; b++) {
+    for (int k = 1; k <= 3; k++) {
+        if (b * k > 4) break outer;   // hentikan kedua loop sekaligus
+        System.out.println(b + "x" + k + "=" + (b * k));
+    }
+}
+```
+
+## Perulangan Bersarang
+
+```java
+for (int baris = 1; baris <= 3; baris++) {
+    for (int kolom = 1; kolom <= 3; kolom++) {
+        System.out.print("*");
+    }
+    System.out.println();
+}
+```
+
+Mencetak pola 3×3. Variabel loop luar dan dalam wajib beda nama agar tidak saling menimpa.
+
+## 4 Pola Klasik
+
+```java
+// 1. Akumulasi
+int total = 0;
+for (int n : nilai) total += n;
+
+// 2. Cari pertama (dengan flag)
+int pertamaNegatif = 0;
+for (int n : nilai) {
+    if (n < 0) { pertamaNegatif = n; break; }
+}
+
+// 3. Filter → array baru
+java.util.ArrayList<Integer> lulus = new java.util.ArrayList<>();
+for (int n : nilai) {
+    if (n >= 75) lulus.add(n);
+}
+
+// 4. Hitung frekuensi (pola "accumulator per kategori")
+int ganjil = 0;
+for (int n : nilai) {
+    if (n % 2 != 0) ganjil++;
+}
+```
+
+Keempat pola ini muncul berulang di ujian, competitive programming, dan pemrosesan data nyata.
+
+## Di Dunia Nyata
+
+- **Menghitung rata-rata nilai kelas**: akumulasi total via for-each, lalu dibagi ` nilai.length`.
+- **Mencari harga termurah di keranjang belanja**: pola "asumsikan pertama, bandingkan sisanya" — dasar fitur price tracking e-commerce.
+- **Menu kantin interaktif**: do-while menampilkan menu berulang sampai user memilih keluar.
+- **Mengirim batch notifikasi email**: loop 50 email per batch, `continue` melewati alamat yang bounce.
+- **Validasi input PIN ATM**: do-while meminta PIN sampai benar atau percobaan habis (maksimal 3 kali).
+
+<div class="note">💡 Hati-hati loop tanpa update — kondisi <code>while</code> yang tak pernah berubah membuat loop berputar selamanya (infinite loop) dan menghabiskan CPU. Selalu pastikan ada jalur menuju <code>false</code>: counter bertambah, atau data menyusut.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    public static void main(String[] args) {
+        int total = 0;
+        for (int i = 1; i <= 5; i++) {
+            total += i;
+        }
+        System.out.println("Jumlah 1..5 = " + total);
+
+        int n = 5;
+        while (n > 0) {
+            System.out.print(n + " ");
+            n--;
+        }
+        System.out.println();
+
+        int percobaan;
+        do {
+            percobaan = 1;
+            System.out.println("Menu tampil (percobaan " + percobaan + ")");
+        } while (percobaan < 0);
+
+        for (int i = 1; i <= 7; i++) {
+            if (i == 4) continue;
+            if (i > 6) break;
+            System.out.print(i + " ");
+        }
+        System.out.println();
+
+        int[] nilai = {80, 90, 75, 60, 88};
+        int totalNilai = 0, lulus = 0;
+        for (int v : nilai) {
+            totalNilai += v;
+            if (v >= 75) lulus++;
+        }
+        System.out.println("Rata-rata: " + (double) totalNilai / nilai.length);
+        System.out.println("Lulus: " + lulus + "/" + nilai.length);
+
+        for (int b = 1; b <= 3; b++) {
+            for (int k = 1; k <= 3; k++) System.out.print("*");
+            System.out.println();
+        }
+    }
+}`} />

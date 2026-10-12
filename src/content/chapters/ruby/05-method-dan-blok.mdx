@@ -1,0 +1,172 @@
+---
+title: "Method & Blok"
+description: "6 jenis parameter, return implisit, yield, dan Proc vs Lambda — cara Ruby memecah kode"
+order: 5
+quiz:
+  - q: "Bentuk definisi method yang dipanggil lewat class, bukan objek, ditulis…"
+    options: ["def static nama", "def self.nama_method", "def class.nama", "class def nama"]
+    answer: 1
+    explain: "def self.kali membuat method yang bisa dipanggil Hitung.kali(2, 3) tanpa instance."
+  - q: "Berapa jenis parameter yang didukung method Ruby?"
+    options: ["6: positional, default, keyword, splat, double splat, block", "2: wajib dan opsional", "4", "3"]
+    answer: 0
+    explain: "Kelimanya dipakai bersama-sama, misal def simpan(paksa: false, *tag, **opsi, &blok)."
+  - q: "Blok `{ }` yang diberikan pemanggil method dijalankan lewat…"
+    options: ["call_block", "exec", "yield", "run"]
+    answer: 2
+    explain: "yield menjalankan blok; block_given? mengecek dulu apakah blok memang dikirim."
+  - q: "Perbedaan proc biasa dengan lambda adalah…"
+    options: ["Lambda mengecek jumlah argument secara ketat dan punya return sendiri", "Tidak ada bedanya", "Proc tidak bisa dipanggil", "Lambda hanya untuk angka"]
+    answer: 0
+    explain: "Lambda melempar ArgumentError saat jumlah argumen salah; proc bersikap lunak seperti blok."
+  - q: "Nilai kembalian default sebuah method Ruby adalah…"
+    options: ["null", "false", "nilai ekspresi terakhir yang dieksekusi", "harus selalu pakai return"]
+    answer: 2
+    explain: "Tanpa return pun method mengembalikan hasil ekspresi terakhir — itu sebabnya if bisa langsung ditugaskan."
+example:
+  code: |
+    def sapa(nama = "Teman")
+      "Halo, #{nama}!"
+    end
+
+    puts sapa("Sari")
+    puts sapa
+
+    def total(*angka)
+      angka.sum
+    end
+
+    puts total(2, 3, 5)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Method mengemas logika agar bisa dipakai ulang, blok menambahkan perilaku fleksibel ke method tersebut. Inilah wujud "function" di Ruby — dan cara utama Ruby menghindari duplikasi tanpa inheritance.
+
+## 5 Bentuk Definisi Method
+
+| Bentuk | Sintaks | Kapan dipakai |
+| --- | --- | --- |
+| Instance method | `def lulus?` | Perilaku tiap objek |
+| Class method | `def self.hitung` | Utility tanpa objek, factory |
+| Setter | `def harga=(nilai)` | Menambah validasi saat atribut ditulis |
+| Predicate | `def aktif?` | Selalu mengembalikan true/false |
+| Bang method | `def simpan!` | Versi yang menimpa data / berisiko gagal |
+
+```ruby
+def sapa
+  puts "Selamat belajar Ruby!"
+end
+
+sapa   # kurung boleh kosong
+```
+
+Method ditutup `end`, dipanggil tanpa tanda kurung bila tanpa argumen.
+
+## 6 Jenis Parameter
+
+| # | Jenis | Contoh | Fungsi |
+| --- | --- | --- | --- |
+| 1 | Positional wajib | `def luas(p, l)` | Argumen tetap berurutan |
+| 2 | Default / opsional | `def sapa(nama, salam = "Halo")` | Argumen boleh dilewat |
+| 3 | Keyword argument | `def pindah(alamat:, kurir: "JNE")` | Pemanggil menulis nama argumen |
+| 4 | Variadic (splat) | `def jumlah(*angka)` | Menerima argumen tak terbatas |
+| 5 | Double splat | `def konfigurasi(**opsi)` | Kumpulan keyword jadi hash |
+| 6 | Block (`&blok`) | `def dengan_blok(&b)` | Blok diterima sebagai objek |
+
+```ruby
+def sapa(nama, salam = "Halo")
+  "#{salam}, #{nama}!"
+end
+
+def pindah(alamat:, kurir: "JNE")
+  "#{kurir} → #{alamat}"
+end
+
+def jumlah(*angka)
+  angka.sum
+end
+
+puts sapa("Sari")
+puts pindah(alamat: "Bandung")
+puts jumlah(1, 2, 3, 4)
+```
+
+Memanggil dengan keyword eksplisit membuat kode pemanggil terbaca tanpa menghafal urutan argumen.
+
+## Return: Implisit dan Eksplisit
+
+```ruby
+def tambah(a, b)
+  a + b          # nilai ekspresi terakhir = nilai kembalian
+end
+
+def batas_umur(usia)
+  return "tolak" if usia < 17   # keluar lebih awal
+  "terima"
+end
+
+hasil = tambah(3, 4)   # 7
+```
+
+`return` hanya dibutuhkan untuk keluar lebih awal. Tanpa `return`, method tetap mengembalikan `nil` bila tidak ada ekspresi bermakna — Ruby tidak punya tipe "void".
+
+## Blok, yield, dan Proc
+
+```ruby
+def ulang_kali(n)
+  n.times { yield }
+end
+
+ulang_kali(3) { puts "blok dijalankan" }
+
+def aman
+  yield if block_given?
+end
+```
+
+2 sintaks blok: `{ ... }` untuk satu-dua baris dan `do ... end` untuk blok panjang. 2 jenis objek blok: `proc` (argument lunak, gaya blok) dan `lambda`/`->` (argument ketat, punya return sendiri). Blok bersifat **closure** — ia menangkap variabel di sekitarnya saat dibuat:
+
+```ruby
+faktor = 3
+kali = ->(n) { n * faktor }
+puts kali.call(5)   # 15
+```
+
+`map`, `select`, dan `reduce` adalah higher-order method: menerima logika (blok) sebagai argumen.
+
+## Di Dunia Nyata
+
+- **Format uang berulang**: `def rupiah(n)` mengubah `1_250_000` jadi `"Rp1.250.000"` — dipanggil dari 20 tempat cetak struk.
+- **Validasi form reusable**: `def wajib_ada(isi, nama)` dipakai untuk nama, email, dan alamat tanpa menyalif-if.
+- **Enkripsi password**: `def hash_password(opsi)` membungkus logika bcrypt sekali untuk seluruh aplikasi.
+- **Generator laporan**: method `laporan(bulan:) { |baris| ... }` menerima blok penulis — CSV, JSON, atau teks tinggal ganti bloknya.
+- **Query aman**: method `cari(kata)` berisi `where("nama ILIKE ?", "%#{kata}%")` — SQL injection dicegah dari satu titik saja.
+
+<div class="note">💡 Method di Ruby tidak pernah "tidak mengembalikan apa-apa": ia selalu mengembalikan nilai ekspresi terakhir (atau `nil`). Karena itu `if`, `case`, dan `begin` bisa langsung ditugaskan ke variabel — manfaatkan ini alih-alih menulis variabel sementara di tiap cabang.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`def sapa(nama = "Teman")
+  "Halo, #{nama}!"
+end
+
+puts sapa("Sari")
+puts sapa
+
+def kali(a, b)
+  a * b
+end
+puts kali(6, 7)
+
+def jumlah(*angka)
+  angka.sum
+end
+puts jumlah(1, 2, 3, 4)
+
+def ulang_kali(n)
+  n.times { yield }
+end
+ulang_kali(3) { puts "blok dijalankan" }
+
+faktor = 3
+kali_lambda = ->(n) { n * faktor }
+puts kali_lambda.call(5)`} />

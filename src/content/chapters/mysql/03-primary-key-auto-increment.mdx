@@ -1,0 +1,129 @@
+---
+title: "PRIMARY KEY, AUTO_INCREMENT, dan UNIQUE"
+description: "Kunci identitas baris: penomoran otomatis dan aturan nilai unik"
+order: 3
+quiz:
+  - q: "PRIMARY KEY menjamin…"
+    options: ["Nilai boleh NULL", "Setiap baris unik dan tidak NULL", "Urutan hasil SELECT", "Data terenkripsi"]
+    answer: 1
+    explain: "Primary key adalah identitas baris, sehingga otomatis UNIQUE dan NOT NULL."
+  - q: "AUTO_INCREMENT berfungsi untuk…"
+    options: ["Menambah semua angka", "Menghitung baris", "Mengisi id otomatis saat INSERT", "Mengompres data"]
+    answer: 2
+    explain: "Database mengalokasikan angka id berikutnya tanpa aplikasi menghitung sendiri."
+  - q: "UNIQUE pada kolom nullable di MySQL membolehkan…"
+    options: ["Hanya satu NULL", "Beberapa NULL", "Tidak ada NULL", "Semua nilai duplikat"]
+    answer: 1
+    explain: "MySQL menganggap NULL tidak sama dengan NULL, jadi beberapa NULL diperbolehkan."
+  - q: "Ada berapa jenis primary key berdasarkan jumlah kolom?"
+    options: ["1", "2", "3", "4"]
+    answer: 1
+    explain: "2 jenis: sederhana (satu kolom) dan komposit (beberapa kolom)."
+  - q: "Setelah id 5 dihapus, AUTO_INCREMENT umumnya…"
+    options: ["Memakai ulang 5", "Melanjutkan ke nilai berikutnya", "Mulai dari 1", "Error"]
+    answer: 1
+    explain: "AUTO_INCREMENT adalah pengalokasi identitas, bukan penjamin urutan tanpa celah."
+example:
+  code: |
+    SELECT id, nama, jabatan
+    FROM karyawan
+    ORDER BY id;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setiap baris membutuhkan identitas yang stabil. MySQL menyediakan `PRIMARY KEY`, `AUTO_INCREMENT`, dan `UNIQUE` untuk menjaga identitas serta mencegah duplikasi di tingkat database.
+
+## 3 Batasan Identitas
+
+| Batasan | Menjamin | NULL | Jumlah per Tabel |
+|---------|----------|------|------------------|
+| `PRIMARY KEY` | unik + identitas utama | dilarang | tepat 0 atau 1 |
+| `UNIQUE` | kombinasi nilai tidak duplikat | beberapa NULL boleh di MySQL | banyak |
+| `AUTO_INCREMENT` | angka otomatis | biasanya NOT NULL | maksimal 1 kolom |
+
+```sql
+CREATE TABLE pengguna (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(254) NOT NULL UNIQUE,
+  nama VARCHAR(100) NOT NULL
+) ENGINE=InnoDB;
+```
+
+`id` dipakai relasi internal; `email` tetap unik sebagai aturan bisnis. Jika email berubah, foreign key tidak perlu ikut berubah karena tetap menunjuk id.
+
+## 2 Bentuk Primary Key
+
+**Key sederhana** memakai satu kolom, misalnya `id`. **Key komposit** memakai dua atau lebih kolom:
+
+```sql
+CREATE TABLE anggota_proyek (
+  karyawan_id INT NOT NULL,
+  proyek_id INT NOT NULL,
+  peran VARCHAR(50) NOT NULL,
+  PRIMARY KEY (karyawan_id, proyek_id)
+);
+```
+
+Kombinasi karyawan–proyek hanya boleh muncul sekali. Ini pola relasi many-to-many: padanan array anggota pada objek proyek, tetapi disimpan sebagai tabel penghubung yang dapat di-JOIN.
+
+## Cara Kerja AUTO_INCREMENT
+
+```sql
+INSERT INTO pengguna (email, nama)
+VALUES ('sari@example.com', 'Sari Wijaya');
+```
+
+Aplikasi tidak mengirim `id`; InnoDB mengalokasikannya atomik sehingga dua request bersamaan tidak memperoleh id sama. Ambil id hasil INSERT memakai API driver (`lastInsertId`) atau `LAST_INSERT_ID()` di koneksi yang sama.
+
+AUTO_INCREMENT **tidak menjamin tanpa celah**. Rollback, INSERT gagal, atau penghapusan dapat meninggalkan nomor hilang. Karena id adalah identitas, bukan nomor antrean/laporan, celah tidak perlu "diperbaiki".
+
+## UNIQUE dan NULL
+
+```sql
+CREATE TABLE kontak (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(254) NULL,
+  UNIQUE KEY uq_kontak_email (email)
+);
+```
+
+MySQL membolehkan beberapa NULL karena NULL berarti nilai tidak diketahui, bukan nilai yang sama. Bila email wajib dan harus unik, gabungkan `NOT NULL UNIQUE`.
+
+UNIQUE komposit juga tersedia: `UNIQUE (tenant_id, kode)` artinya kode boleh sama di tenant berbeda, tetapi tidak boleh ganda dalam tenant yang sama.
+
+## Natural Key vs Surrogate Key
+
+| Pilihan | Contoh | Kelebihan | Risiko |
+|---------|--------|-----------|--------|
+| Natural key | NIK, email | bermakna bagi bisnis | dapat berubah/panjang |
+| Surrogate key | integer id | kecil, stabil, JOIN cepat | butuh UNIQUE tambahan |
+
+Pola umum MySQL adalah surrogate `BIGINT AUTO_INCREMENT` sebagai primary key, lalu natural key diberi UNIQUE. Hindari memakai nomor telepon sebagai primary key karena nomor dapat berganti.
+
+## Foreign Key dan Integritas
+
+```sql
+CREATE TABLE proyek_mysql (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  lead_id INT NOT NULL,
+  nama VARCHAR(100) NOT NULL,
+  CONSTRAINT fk_proyek_lead
+    FOREIGN KEY (lead_id) REFERENCES karyawan(id)
+);
+```
+
+Foreign key mencegah `lead_id` menunjuk baris yang tidak ada. Kolom referensi harus kompatibel tipenya: signed/unsigned dan ukuran integer harus sama.
+
+## Di Dunia Nyata
+
+- **Akun pengguna**: id internal AUTO_INCREMENT + email NOT NULL UNIQUE.
+- **Item keranjang**: primary key komposit `(keranjang_id, produk_id)` mencegah produk ganda.
+- **SaaS multi-tenant**: UNIQUE `(tenant_id, slug)` menjaga slug unik per pelanggan, bukan global.
+- **Pesanan**: id numerik untuk JOIN; nomor pesanan ramah manusia disimpan terpisah dan UNIQUE.
+
+<div class="note">💡 Demo memakai SQLite: `INTEGER PRIMARY KEY` juga mengalokasikan id otomatis, tetapi sintaks `AUTO_INCREMENT` adalah khusus MySQL. Jangan menilai urutan waktu dari id; simpan `created_at` terpisah.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT id, nama, jabatan, gaji, dept
+FROM karyawan
+ORDER BY id;`} />

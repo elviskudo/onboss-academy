@@ -1,0 +1,191 @@
+---
+title: "Proyek Aplikasi Todo"
+description: "Merangkai komponen, service, form, dan routing jadi aplikasi todo yang lengkap"
+order: 8
+quiz:
+  - q: "Urutan langkah paling masuk akal saat membangun fitur Angular baru…"
+    options: ["Mulai dari CSS tema", "Tulis test setelah deploy", "Definisikan model & service dulu, lalu komponen tampilan, terakhir routing", "Semua fitur dalam satu file"]
+    answer: 2
+    explain: "Model → service (logika/data) → komponen (tampilan) → routing. Tanggung jawab tiap lapis jelas sejak awal."
+  - q: "Item todo yang sudah selesai sebaiknya…"
+    options: ["Diberi status done di data, bukan dihapus dari array", "Dihapus permanen", "Disimpan di CSS", "Ditambah properti baru tiap render"]
+    answer: 0
+    explain: "Status adalah data; pengguna masih bisa melihat riwayat dan membatalkannya."
+  - q: "Di mana daftar todo sebaiknya disimpan agar bisa dipakai banyak komponen?"
+    options: ["Di dalam masing-masing komponen", "Di service TodoService (providedIn root)", "Di template", "Di file CSS"]
+    answer: 1
+    explain: "Service singleton menjaga satu sumber kebenaran untuk seluruh halaman."
+  - q: "Method untuk menyelesaikan todo paling tepat menulis…"
+    options: ["this.todos = this.todos.map(...)", "this.todos.push()", "delete window.todos", "location.reload()"]
+    answer: 0
+    explain: "Map menghasilkan array baru berisi salinan yang sudah diperbarui — aman untuk deteksi perubahan."
+  - q: "Struktur folder yang baik untuk fitur todo…"
+    options: ["app/todo/ berisi komponen, service, dan model todo", "Semua file di src/", "Pisahkan tiap baris ke file berbeda", "Simpan di folder public"]
+    answer: 0
+    explain: "Disusun per fitur, semua file terkait todo berdekatan — mudah ditemukan tim."
+example:
+  code: |
+    const todos = [
+      { id: 1, judul: "Belajar Angular", done: false },
+      { id: 2, judul: "Bangun proyek todo", done: false },
+    ];
+    const selesai = todos.map((t) =>
+      t.id === 1 ? { ...t, done: true } : t
+    );
+    console.log(JSON.stringify(selesai, null, 2));
+---
+
+Bab penutup: merangkai seluruh materi — komponen standalone, service + DI, form, dan routing — jadi satu aplikasi todo yang utuh.
+
+## Model dan Service
+
+```typescript
+// todo.model.ts
+export interface Todo {
+  id: number;
+  judul: string;
+  done: boolean;
+}
+
+// todo.service.ts
+import { Injectable, signal } from "@angular/core";
+import { Todo } from "./todo.model";
+
+@Injectable({ providedIn: "root" })
+export class TodoService {
+  private state = signal<Todo[]>([
+    { id: 1, judul: "Belajar standalone component", done: true },
+    { id: 2, judul: "Menyelesaikan proyek todo", done: false },
+  ]);
+
+  readonly todos = this.state.asReadonly();
+
+  tambah(judul: string) {
+    const baru: Todo = { id: Date.now(), judul, done: false };
+    this.state.update((list) => [...list, baru]);
+  }
+
+  toggle(id: number) {
+    this.state.update((list) =>
+      list.map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
+  }
+
+  hapus(id: number) {
+    this.state.update((list) => list.filter((t) => t.id !== id));
+  }
+
+  sisa() {
+    return this.state().filter((t) => !t.done).length;
+  }
+}
+```
+
+Service memegang satu-satunya sumber data. Semua perubahan lewat method yang menghasilkan array baru.
+
+## Komponen Daftar
+
+```typescript
+import { Component, inject } from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { TodoService } from "./todo.service";
+
+@Component({
+  selector: "app-todo",
+  standalone: true,
+  imports: [FormsModule],
+  template: `
+    <h1>Todo — {{ service.sisa() }} tersisa</h1>
+
+    <form (ngSubmit)="tambah(input.value); input.value = ''">
+      <input #input placeholder="Judul tugas" required />
+      <button>Tambah</button>
+    </form>
+
+    <ul>
+      @for (t of service.todos(); track t.id) {
+        <li [class.selesai]="t.done">
+          <input type="checkbox" [checked]="t.done" (change)="service.toggle(t.id)" />
+          {{ t.judul }}
+          <button (click)="service.hapus(t.id)">Hapus</button>
+        </li>
+      } @empty {
+        <li>Belum ada tugas. Kerjakan sesuatu!</li>
+      }
+    </ul>
+  `,
+  styles: [`.selesai { text-decoration: line-through; opacity: .6; }`],
+})
+export class TodoComponent {
+  protected service = inject(TodoService);
+
+  tambah(judul: string) {
+    if (judul.trim()) this.service.tambah(judul.trim());
+  }
+}
+```
+
+Perhatikan bagaimana materi sebelumnya bertemu: `inject()` untuk service, `[(ngModel)]`/form untuk input, `@for` untuk daftar, dan update immutable untuk mutasi data.
+
+## Filter per Halaman
+
+```typescript
+// app.routes.ts
+export const routes: Routes = [
+  { path: "", component: TodoComponent, title: "Semua Todo" },
+  {
+    path: "selesai",
+    loadComponent: () => import("./todo/selesai.component").then((m) => m.SelesaiComponent),
+  },
+];
+```
+
+Halaman `selesai` cukup membaca service yang sama lalu menyaring `done === true` — tidak ada duplikasi data.
+
+## Empat Lapisan Proyek
+
+Aplikasi ini tersusun dari **4 lapisan** yang masing-masing punya satu tanggung jawab.
+
+| Lapisan | Fungsi | Contoh | Kapan berubah |
+|---|---|---|---|
+| Model | Bentuk data | `Todo` | Kontrak data bertambah |
+| Service | State dan operasi | `TodoService` | Aturan bisnis berubah |
+| Component | Input dan tampilan | `TodoComponent` | Interaksi UI berubah |
+| Router | URL dan halaman | `routes` | Alur navigasi berubah |
+
+## Menjaga Data Setelah Reload
+
+Versi lokal dapat menyimpan signal ke `localStorage` dengan `effect`. Penyimpanan browser cocok untuk satu perangkat, bukan sinkronisasi multi-user.
+
+```typescript
+private state = signal<Todo[]>(this.baca());
+
+constructor() {
+  effect(() => localStorage.setItem("todos", JSON.stringify(this.state())));
+}
+
+private baca(): Todo[] {
+  try {
+    return JSON.parse(localStorage.getItem("todos") ?? "[]") as Todo[];
+  } catch {
+    return [];
+  }
+}
+```
+
+Untuk API nyata, pertahankan API method service (`tambah`, `toggle`, `hapus`) agar komponen tidak perlu mengetahui apakah data berasal dari memory, browser, atau server. Tambahkan loading dan rollback bila mutasi jaringan gagal.
+
+## Di Dunia Nyata
+
+- Tim operasional memfilter tugas selesai tanpa menduplikasi sumber data.
+- Todo pribadi bertahan setelah reload lewat penyimpanan lokal.
+- Aplikasi kolaboratif mengganti penyimpanan lokal dengan API dan autentikasi.
+- Pengujian service memastikan toggle hanya mengubah item dengan ID yang cocok.
+
+## Langkah Lanjutan
+
+- Tambahkan `provideHttpClient` dan simpan todo ke API nyata
+- Tulis unit test service dengan `ng test` (logika murni, mudah dites)
+- Pasang guard pada halaman admin bila todo punya banyak pengguna
+
+<div class="note">💡 Selamat menyelesaikan track Angular! Kamu sudah memegang alur lengkap: standalone component untuk tampilan, service + dependency injection untuk logika, pipe & Observable untuk data asinkron, Reactive Forms untuk input, dan routing untuk navigasi. Proyek todo di atas bisa langsung dikembangkan jadi aplikasi nyata — tambahkan API, lalu deploy dengan ng build.</div>

@@ -1,0 +1,129 @@
+---
+title: "Alur Kerja Tim & Pull Request"
+description: "Dari branch fitur sampai merge: konvensi commit, PR, review, dan CI"
+order: 7
+quiz:
+  - q: "Pull Request (atau Merge Request) pada dasarnya adalah…"
+    options: ["Permintaan formal menggabungkan branch ke branch lain, lengkap dengan diskusi dan review", "Perintah push paksa", "Tipe file Git", "Jenis remote"]
+    answer: 0
+    explain: "PR memungkinkan review, komentar, dan pemeriksaan otomatis sebelum merge."
+  - q: "Alur kerja fitur yang umum di tim adalah…"
+    options: ["Semua edit langsung di main", "Buat branch fitur, kerja, push, buka PR, review, merge", "Kirim file lewat email", "Edit di server produksi"]
+    answer: 1
+    explain: "Branch fitur memisahkan pekerjaan; PR menjadi gerbang review sebelum masuk main."
+  - q: "Conventional Commits membantu karena…"
+    options: ["Membuat repo lebih kecil", "Pesan commit konsisten dan bisa diotomatisasi (changelog, versioning)", "Menghapus kebutuhan review", "Mengenkripsi kode"]
+    answer: 1
+    explain: "Prefiks seperti feat:, fix:, docs: membuat riwayat mudah dipindai dan diproses mesin."
+  - q: "CI (Continuous Integration) dalam alur PR berfungsi untuk…"
+    options: ["Menjalankan build dan test otomatis setiap ada perubahan", "Membuat desain UI", "Mengganti code review", "Menghosting database"]
+    answer: 0
+    explain: "CI memberi sinyal otomatis apakah perubahan aman digabung — sebelum manusia review."
+  - q: "Sebelum membuka PR, sebaiknya…"
+    options: ["Force push ke main", "Pastikan branch sudah rebase/merge main terbaru dan test lokal lulus", "Hapus branch lama", "Mengubah konfigurasi remote"]
+    answer: 1
+    explain: "PR yang dijalankan di atas base terbaru mengurangi konflik dan kegagalan CI."
+---
+
+Git dipakai sendirian pun sudah powerful; bersama tim, nilainya berlipat — **asal ada konvensi**.
+
+## Konvensi Branch Tim
+
+```
+main              -> selalu stabil, siap deploy
+fitur/xxx         -> pekerjaan baru
+bugfix/xxx        -> perbaikan bug non-kritis
+hotfix/xxx        -> perbaikan darurat produksi
+release/x.y.z     -> persiapan rilis
+```
+
+Alur umum satu fitur:
+
+```bash
+git switch main
+git pull
+git switch -c fitur/keranjang-belanja
+# kerja & commit berkala
+git push -u origin fitur/keranjang-belanja
+```
+
+## Conventional Commits
+
+Pesan commit yang konsisten membuat riwayat terbaca manusia dan mesin:
+
+```
+feat: tambah validasi keranjang
+fix: kembalikan diskon ke checkout
+docs: perbarui README instalasi
+refactor: pisah service pembayaran
+test: tambah unit test kalkulator pajak
+chore: naikkan dependensi express
+```
+
+## Pull Request yang Baik
+
+1. Judul jelas: `feat: tambah halaman checkout`
+2. Deskripsi menjelaskan **apa** dan **mengapa**, bukan hanya bagaimana
+3. Ukuran wajar — PR 200 baris jauh lebih mudah direview daripada 2000
+4. Sertakan screenshot untuk perubahan UI, test untuk perubahan logika
+
+```
+## Perubahan
+- Tambah form checkout + validasi alamat
+
+## Cara menguji
+1. Login, isi keranjang, klik Checkout
+2. Kosongkan alamat -> muncul error validasi
+
+## Screenshot
+(describe)
+```
+
+## Review sebagai Diskusi
+
+- Komentar review sifatnya membangun; bahas kode, bukan orang
+- Balas dengan penjelasan atau perbaiki langsung di branch yang sama — PR otomatis ter-update
+- Setelah approve + CI hijau, merge (squash atau merge commit, ikuti konvensi tim)
+
+## Continuous Integration (CI)
+
+Workflow GitHub Actions minimal untuk Node.js:
+
+```yaml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm test
+```
+
+## Enam Tahap Kolaborasi
+
+| Tahap | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Sinkronisasi | Memulai dari base terbaru | `git pull --ff-only` | Sebelum membuat branch |
+| Branch | Mengisolasi pekerjaan | `git switch -c fitur/cart` | Satu isu atau fitur |
+| Commit | Mencatat unit perubahan | `git commit -m "feat: tambah cart"` | Setelah test terkait lulus |
+| Push | Membagikan branch | `git push -u origin fitur/cart` | Untuk CI dan review |
+| Review | Memeriksa logika, risiko, dan test | Pull Request | Sebelum integrasi |
+| Merge | Memasukkan perubahan disetujui | Squash/merge/rebase merge | Setelah approval dan CI hijau |
+
+Branch protection sebaiknya mewajibkan status CI, minimal satu approval, dan melarang force push ke `main`. Reviewer memeriksa kebenaran, keamanan, kompatibilitas, dan cakupan test; CI membantu, tetapi tidak menggantikan keputusan manusia. Pemilik PR bertanggung jawab menjawab komentar dan menguji ulang setelah resolusi konflik.
+
+Jangan memasukkan secret ke commit atau log CI. Jika telanjur, cabut dan rotasi secret segera—menghapus baris di PR tidak cukup karena nilai masih ada dalam riwayat. Hindari PR raksasa; pisahkan refactor mekanis dari perubahan perilaku agar risiko mudah dilihat.
+
+## Di Dunia Nyata
+
+- Dua developer mengerjakan checkout dan katalog pada branch berbeda tanpa saling menimpa.
+- CI menolak migrasi karena test integrasi gagal sebelum mencapai produksi.
+- CODEOWNERS meminta review tim keamanan untuk perubahan autentikasi.
+- Squash merge merangkum commit WIP menjadi satu perubahan yang mudah direvert.
+
+<div class="note">💡 Satu aturan emas: jangan pernah push langsung ke main di repo tim. Semua perubahan lewat branch + PR + review + CI — itulah pengaman terbesar dari kesalahan kolektif.</div>

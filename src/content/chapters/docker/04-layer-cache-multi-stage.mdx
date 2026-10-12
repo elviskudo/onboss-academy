@@ -1,0 +1,146 @@
+---
+title: "Layer, Cache, & Multi-Stage Build"
+description: "Cara Docker membangun image berlapis dan teknik mempercepat serta mengecilkan build"
+order: 4
+quiz:
+  - q: "Setiap instruksi dalam Dockerfile menghasilkan…"
+    options: ["Satu container", "Satu layer image", "Satu repository", "Satu network"]
+    answer: 1
+    explain: "Image hanyalah tumpukan layer; layer yang tidak berubah dipakai ulang dari cache."
+  - q: "Cache Docker direset saat…"
+    options: ["Isi instruksi pada layer sebelumnya berubah", "Container dihapus", "Port diganti", "Nama image diganti saja"]
+    answer: 0
+    explain: "Perubahan pada satu layer membatalkan semua layer sesudahnya — urutan COPY/RUN sangat menentukan."
+  - q: "Multi-stage build dipakai untuk…"
+    options: ["Menjalankan dua container sekaligus", "Memisahkan tahap build dan runtime agar image akhir kecil & bersih", "Membuat replica database", "Backup image"]
+    answer: 1
+    explain: "Compiler dan dependency build ditinggalkan di stage pertama; hanya artefak final yang disalin ke stage kedua."
+  - q: "Menyalin hasil build dari stage bernama builder ditulis dengan…"
+    options: ["COPY --from=builder /app/dist /usr/share/nginx/html", "COPY --from=0 /app", "RUN builder copy", "ADD builder /app"]
+    answer: 0
+    explain: "--from=builder (atau --from=0) mengambil file dari stage lain dalam Dockerfile yang sama."
+  - q: "Dockerfile berikut: COPY . . lalu RUN pip install — pola ini…"
+    options: ["Optimal", "Membuang cache tiap ada perubahan kode; install dependensi dulu lebih cepat", "Menyebabkan error build", "Memperkecil image"]
+    answer: 1
+    explain: "requirements.txt yang jarang berubah di-COPY dulu agar layer install tetap ter-cache."
+---
+
+Docker membangun image secara **berlapis (layer)**. Memahami lapisan ini kunci build cepat dan image kecil.
+
+## Image = Tumpukan Layer
+
+Setiap instruksi menghasilkan layer baru:
+
+```
+FROM python:3.12-slim        -> layer base
+COPY requirements.txt .      -> layer dependensi (cache-able)
+RUN pip install ...          -> layer install (lambat, cache-able)
+COPY . .                     -> layer kode (sering berubah)
+CMD ["python", "app.py"]     -> metadata
+```
+
+Layer bersifat **immutable dan shared**: banyak image bisa memakai ulang layer yang sama — inilah kenapa pull layer yang sudah ada instan.
+
+## Strategi Cache yang Efektif
+
+```dockerfile
+# BAIK: dependensi dulu, kode kemudian
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+
+# BURUK: . berubah -> pip install ikut diulang tiap build
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+```
+
+Prinsip: **yang jarang berubah di atas, yang sering berubah di bawah**.
+
+## Layer Sampah & Pruning
+
+```bash
+docker build --no-cache -t app:1.0 .   # build tanpa cache (kasus khusus)
+docker system df                       # lihat pemakaian disk Docker
+docker image prune -a                  # hapus image tak terpakai
+docker builder prune                   # bersihkan cache build
+```
+
+## Multi-Stage Build
+
+Sering kali image build butuh tool besar (compiler, SDK) yang tidak diperlukan saat runtime. Multi-stage memisahkannya:
+
+```dockerfile
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+```
+
+```bash
+docker build -t frontend:1.0 .
+```
+
+Image akhir hanya berisi nginx + file statis — puluhan MB lebih kecil dari image dengan toolchain Node.js penuh.
+
+## Hasil Nyata
+
+```
+image satu-stage (node + app)   : ~1,1 GB
+image multi-stage (nginx only)  : ~40 MB
+```
+
+Selain ukuran, attack surface juga menyusut: tidak ada compiler atau package manager di container produksi.
+
+## Empat Jenis Perubahan terhadap Cache
+
+Ada **4 pemicu penting** yang menentukan cache build.
+
+| Pemicu | Dampak | Contoh | Strategi |
+|---|---|---|---|
+| Instruksi berubah | Layer dan semua sesudahnya dibangun ulang | Mengubah `RUN` | Stabilkan langkah mahal |
+| Isi file `COPY` berubah | Cache mulai invalid dari COPY itu | Kode aplikasi berubah | Salin lockfile lebih dahulu |
+| Base image berubah | Semua stage turunannya berubah | Digest baru | Update terjadwal dan uji |
+| Build argument berubah | Layer yang memakainya berubah | `ARG VERSION` | Jangan gunakan untuk secret |
+
+Cache mempercepat build, bukan jaminan bahwa paket eksternal tetap sama. Lockfile dan pin versi tetap diperlukan. Untuk melihat keputusan cache secara rinci gunakan BuildKit:
+
+```bash
+docker build --progress=plain -t app:1.0 .
+docker history app:1.0
+docker image inspect app:1.0 --format '{{.Size}}'
+```
+
+`docker history` membantu menemukan layer besar. Namun file yang dihapus pada layer berikutnya masih tersimpan di layer sebelumnya. Karena itu unduh, pakai, dan hapus cache paket dalam satu `RUN`, atau jangan pernah memasukkan file rahasia ke build context.
+
+## Secret saat Build
+
+`ARG TOKEN` dan `ENV TOKEN` bukan tempat rahasia karena nilainya dapat muncul pada metadata atau histori. Dengan BuildKit, mount secret hanya selama satu langkah dan tidak menyalinnya ke layer:
+
+```dockerfile
+# syntax=docker/dockerfile:1
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci
+```
+
+```bash
+docker build --secret id=npmrc,src="$HOME/.npmrc" -t app:1.0 .
+```
+
+Tetap periksa stage final: jangan menyalin seluruh direktori builder bila hanya satu binary atau folder `dist` yang diperlukan. Jalankan runtime sebagai user non-root dan pilih base runtime yang memiliki patch keamanan.
+
+## Di Dunia Nyata
+
+1. Monorepo menyalin lockfile dahulu sehingga perubahan README tidak memicu instalasi ulang ratusan paket.
+2. Aplikasi Go dibangun di stage compiler lalu binary statis disalin ke image runtime minimal.
+3. Frontend Node dibangun di stage builder, sedangkan nginx saja yang masuk image produksi.
+4. Pipeline privat memakai secret mount untuk token registry paket tanpa menyimpannya di image.
+5. Tim memeriksa `docker history` ketika ukuran image melonjak setelah sebuah pull request.
+
+Optimasi harus diukur. Build yang lebih rumit tidak layak jika hanya menghemat beberapa detik, tetapi pemisahan builder dan runtime hampir selalu memberi keuntungan ukuran, keamanan, dan reproduksibilitas.
+
+<div class="note">💡 Multi-stage bukan sekadar memperkecil image — ia memisahkan rahasia build (credential npm, key) dari runtime. Credential yang hanya dipakai di stage builder tidak pernah masuk ke image final yang di-push ke registry.</div>

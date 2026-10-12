@@ -1,0 +1,140 @@
+---
+title: "Perulangan dan Kondisi"
+description: "Ulangi dan jika — dua konsep inti yang dipakai di semua bahasa"
+order: 6
+quiz:
+  - q: "Blok 'ulangi 10' akan…"
+    options: ["Menjalankan isi blok sebanyak 10 kali", "Menjalankan sekali", "Berhenti program", "Menghapus isi blok"]
+    answer: 0
+    explain: "Perulangan menghemat menyalin blok yang sama berkali-kali."
+  - q: "Blok 'ulangi sampai <...>' berhenti ketika…"
+    options: ["Setelah 10 kali", "Kondisi di dalam kurung bernilai benar", "Saat bendera diklik", "Saat sprite disembunyikan"]
+    answer: 1
+    explain: "Berbeda dari 'ulangi N', bentuk ini berjalan sampai syarat terpenuhi."
+  - q: "Blok 'jika <...> maka' mengeksekusi isi hanya saat…"
+    options: ["Kondisinya salah", "Program baru dimulai", "Kondisinya bernilai benar", "Variabel dihapus"]
+    answer: 2
+    explain: "Tambahkan 'jika tidak' (else) untuk menangani kasus selain itu."
+  - q: "Perbandingan 'dan' pada kondisi menghasilkan benar bila…"
+    options: ["Kedua syarat sama-sama benar", "Salah satu benar", "Keduanya salah", "Selalu benar"]
+    answer: 0
+    explain: "Blok 'atau' sebaliknya cukup satu syarat benar."
+  - q: "Perulangan di dalam perulangan disebut…"
+    options: ["Perulangan acak", "Perulangan bersarang", "Kondisi mati", "Event loop"]
+    answer: 1
+    explain: "Berguna untuk grid: lakukan untuk tiap baris, di dalamnya untuk tiap kolom."
+example:
+  code: |
+    // Gerak zig-zag sampai menyentuh tepi:
+    // [ketika bendera diklik]
+    // [ulangi sampai <menyentuh tepi?> [
+    //    [gerak 10 langkah]
+    //    [berputar 90 derajat]
+    //    [jika <(y posisi) > [150]> [
+    //        [gerak -100 langkah]
+    //        [berputar 90 derajat]
+    //    ]]
+    // ]]
+---
+
+Dua blok oranye ini adalah **jantung logika**: perulangan menggantikan menyalin blok manual, kondisi membuat keputusan. Kategori **Kontrol** berisi **11 blok**, dan dari jumlah itu **3 bentuk perulangan** serta **2 bentuk percabangan** yang akan kita bedah di sini.
+
+## 3 Bentuk Perulangan
+
+| Bentuk blok | Berhenti saat | Padanan di bahasa teks | Kapan dipakai |
+| --- | --- | --- | --- |
+| `ulangi [10] [...]` | Jumlah iterasi habis | `for (i = 0; i < 10; i++)` | Gerak tetap, hitung mundur |
+| `ulangi sampai <kondisi> [...]` | Kondisi bernilai benar | `while (!kondisi)` | Menuju garis finis, cari pertama |
+| `selamanya [...]` | Tidak pernah (hanya `berhenti semua`) | `while (true)` | Game loop, cek tombol terus |
+
+### Perulangan Tetap
+
+```text
+[ketika bendera diklik]
+[ulangi 4 [
+   [gerak 50 langkah]
+   [berputar 90 derajat]
+]]
+```
+
+Empat sisi persegi — empat blok, bukan dua puluh. Pola **akumulasi** (ubah skor tiap iterasi) juga memakai bentuk ini.
+
+### Perulangan Kondisional
+
+```text
+[ulangi sampai <menyentuh warna [merah]?> [
+   [gerak 3 langkah]
+]]
+```
+
+Penting: Scratch tidak punya `break`/`continue`. Untuk keluar lebih dulu, sisipkan `jika <syarat> [berhenti [skrip ini]]` di dalam lubang. Inilah satu-satunya "jalan pintas" resmi, dan lebih mudah dibaca daripada `break` bersarang di bahasa teks.
+
+## 2 Bentuk Percabangan
+
+| Bentuk blok | Cabang | Padanan |
+| --- | --- | --- |
+| `jika <kondisi> [...]` | 1 cabang (if saja) | `if (...) {}` |
+| `jika <kondisi> [...] jika tidak [...]` | 2 cabang (if/else) | `if (...) {} else {}` |
+
+Untuk 3 cabang ke atas, bertingkat `jika tidak [ jika ... ]` — setara `else if`:
+
+```text
+[jika <(nyawa) > [0]> [
+   [tampil]
+] jika tidak [
+   [sembunyi]
+   [kirim [kalah]]
+]]
+```
+
+Urutan pembacaan kondisi **dari atas ke bawah**; begitu ada cabang yang cocok, sisanya dilewati. Karena itu, taruh syarat yang paling spesifik di atas — mirip `switch` yang membaca case dari atas.
+
+## Menggabungkan Syarat: 3 Operator Logika
+
+```text
+[jika <<menyentuh [musuh]?> dan <(nyawa) < [1]>> [kirim [kalah]]]
+[jika <<menyentuh [koin]?> atau <menyentuh [bintang]?>> [ubah [skor] sebesar 1]]
+[jika <tidak <menyentuh [duri]?>> [lanjut]]
+```
+
+| Operator | Benar bila | Analogi |
+| --- | --- | --- |
+| `dan` | Kedua sisi benar | `&&` |
+| `atau` | Minimal satu sisi benar | `\|\|` |
+| `tidak` | Membalik nilai | `!` |
+
+Blok boolean (segienam) hanya boleh masuk ke slot boolean — `jika` menerima satu segienam saja, jadi untuk dua syarat wajib disambung `dan`/`atau`.
+
+## Perulangan Bersarang (Grid)
+
+```text
+[ulangi 5 [                    <- 5 baris
+   [ulangi 5 [                 <- 5 kolom per baris
+      [gerak 50 langkah]
+   ]]
+   [geser x sebesar -250]
+   [geser y sebesar 50]
+]]
+```
+
+Total eksekusi: 5 × 5 = 25 iterasi dari 2 blok. Struktur baris-dalam-baris adalah pola grid umum pada proyek visual, dan ini juga cara klasik memodelkan tabel/baris-kolom.
+
+## Jebakan Umum
+
+```text
+- Lupa isi "ulangi" -> program terasa macet (loop kosong tidak terlihat)
+- Kondisi tanpa operator perbandingan -> nilai bohong/benar tak terduga
+- Tidak ada jeda dalam loop ketat -> animasi terlalu cepat / CPU tinggi
+- "selamanya" berisi "jika" tunggal -> dicek sekali lalu mati
+- Kondisi tak pernah terpenuhi -> "ulangi sampai" tak berujung
+```
+
+## Di Dunia Nyata
+
+1. **Menggambar poligon** — `ulangi [sisi]` dengan `berputar (360 / sisi) derajat` menggambar segi n berapa pun.
+2. **Ulang tahun hitung mundur** — `ulangi 10` berisi ubah `sisa` -1 dan `tunggu 1`.
+3. **Deteksi tabrakan berkelanjutan** — `selamanya` + `jika <menyentuh [musuh]?>` mengecek tiap frame.
+4. **Mencari item dalam daftar** — `ulangi sampai <item ke-i = target>` berhenti begitu ketemu, lebih cepat daripada memindai habis.
+5. **Layanan antrean koin** — `selamanya` mengecek panjang daftar; kalau > 0, keluarkan item pertama.
+
+<div class="note">💡 Seringkali "jika" sebaiknya ditaruh DI DALAM "ulangi sampai" — periksa terus sampai syarat tercapai — bukan "jika" tunggal yang hanya mengecek sekali saat skrip mulai.</div>

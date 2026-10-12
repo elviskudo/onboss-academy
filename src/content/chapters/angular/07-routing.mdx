@@ -1,0 +1,188 @@
+---
+title: "Routing Angular"
+description: "Menyusun rute, router outlet, dan navigasi antar halaman dengan provideRouter"
+order: 7
+quiz:
+  - q: "Daftar rute Angular modern didefinisikan di…"
+    options: ["Konstanta routes bertipe Routes, lalu didaftarkan lewat provideRouter", "File CSS global", "Decorator @Route", "HTML sitemap"]
+    answer: 0
+    explain: "Array of Routes menjadi sumber kebenaran URL aplikasi, dipasang di app.config.ts."
+  - q: "Tag <router-outlet> berfungsi untuk…"
+    options: ["Menghubungkan database", "Menampilkan komponen rute yang sedang aktif di posisi itu", "Mengganti title browser", "Menyembunyikan semua konten"]
+    answer: 1
+    explain: "Rute memilih komponen, router-outlet adalah slot tempat komponen itu dirender."
+  - q: "Navigasi di template memakai…"
+    options: ["routerLink=\"/produk\"", "href=\"/produk\" biasa", "navigate-to", "goTo('/produk')"]
+    answer: 0
+    explain: "routerLink menjaga navigasi client-side tanpa memuat ulang halaman penuh."
+  - q: "Parameter dinamis /produk/:id dibaca dengan…"
+    options: ["inject(ActivatedRoute).snapshot.paramMap", "File produk.ts", "localStorage", "HttpClient"]
+    answer: 0
+    explain: "snapshot berisi nilai rute saat ini; paramMap.get('id') mengambil nilai parameternya."
+  - q: "Guard canMatch / canActivate berguna untuk…"
+    options: ["Mengompilasi ulang aplikasi", "Menghapus cache", "Memblokir akses rute tertentu, mis. halaman admin yang belum login", "Mengubah warna tema"]
+    answer: 2
+    explain: "Guard mengembalikan true/false/UrlTree — false berarti navigasi dibatalkan."
+example:
+  code: |
+    const routes = [
+      { path: "", label: "Beranda" },
+      { path: "produk", label: "Produk" },
+      { path: "produk/:id", label: "Detail" },
+      { path: "admin", label: "Admin (terproteksi)" },
+    ];
+    console.log(routes.map((r) => "/" + r.path + " → " + r.label).join("\\n"));
+---
+
+Aplikasi multi-halaman butuh navigasi. Angular membawa sistem routing bawaan yang terintegrasi dengan komponen dan guard.
+
+## Mendaftarkan Rute
+
+```typescript
+// app.routes.ts
+import { Routes } from "@angular/router";
+import { BerandaComponent } from "./beranda/beranda.component";
+
+export const routes: Routes = [
+  { path: "", component: BerandaComponent, title: "Beranda" },
+  { path: "produk", loadComponent: () => import("./produk/produk.component").then((m) => m.ProdukComponent) },
+  { path: "**", redirectTo: "" },
+];
+```
+
+```typescript
+// app.config.ts
+import { provideRouter } from "@angular/router";
+import { routes } from "./app.routes";
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideRouter(routes)],
+};
+```
+
+`loadComponent` memuat komponen secara lazy — bundle awal jadi lebih ringan.
+
+## Router Outlet dan RouterLink
+
+```typescript
+@Component({
+  selector: "app-root",
+  standalone: true,
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Beranda</a>
+      <a routerLink="/produk" routerLinkActive="active">Produk</a>
+    </nav>
+    <router-outlet />
+  `,
+})
+export class AppComponent {}
+```
+
+## Rute Anak (Nested)
+
+```typescript
+export const routes: Routes = [
+  {
+    path: "admin",
+    loadComponent: () => import("./admin/layout.component").then((m) => m.LayoutComponent),
+    children: [
+      { path: "", component: DasborComponent },
+      { path: "pengguna", component: PenggunaComponent },
+    ],
+  },
+];
+```
+
+```html
+<!-- layout.component.html -->
+<h2>Panel Admin</h2>
+<router-outlet />
+```
+
+## Membaca Parameter
+
+```typescript
+import { ActivatedRoute } from "@angular/router";
+
+@Component({
+  standalone: true,
+  template: `<h1>Detail produk #{{ id }}</h1>`,
+})
+export class DetailProdukComponent {
+  private route = inject(ActivatedRoute);
+  id = this.route.snapshot.paramMap.get("id");
+}
+```
+
+## Navigasi dari Kode
+
+```typescript
+import { Router } from "@angular/router";
+
+export class LoginComponent {
+  private router = inject(Router);
+
+  masuk() {
+    if (this.autentikasi()) {
+      this.router.navigate(["/admin"]);
+    }
+  }
+}
+```
+
+## Guard untuk Rute Terproteksi
+
+```typescript
+import { CanMatchFn } from "@angular/router";
+
+export const authGuard: CanMatchFn = (segments) => {
+  const login = localStorage.getItem("token");
+  return login ? true : ["/login"];
+};
+```
+
+```typescript
+{ path: "admin", canMatch: [authGuard], component: AdminComponent }
+```
+
+Guard mengembalikan `true` untuk melanjutkan atau `UrlTree`/`RedirectCommand` untuk mengalihkan.
+
+## Enam Bagian Router
+
+Router modern memiliki **6 bagian utama**.
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Route config | Memetakan path | `{ path: "produk" }` | Semua navigasi |
+| Outlet | Slot hasil rute | `<router-outlet>` | Layout aplikasi |
+| Link | Navigasi deklaratif | `routerLink` | Menu dan tautan |
+| Params | Identitas URL | `:id` | Detail entitas |
+| Guard | Mengontrol navigasi | `canMatch` | Login atau peran |
+| Resolver | Menyiapkan data | `resolve` | Data wajib sebelum halaman |
+
+Parameter yang dapat berubah tanpa menghancurkan komponen sebaiknya dibaca reaktif, bukan hanya dari snapshot.
+
+```typescript
+import { toSignal } from "@angular/core/rxjs-interop";
+import { map } from "rxjs";
+
+export class DetailProdukComponent {
+  private route = inject(ActivatedRoute);
+  id = toSignal(this.route.paramMap.pipe(map((params) => params.get("id"))), {
+    initialValue: null,
+  });
+}
+```
+
+Guard hanya mengatur pengalaman navigasi, bukan keamanan data. API tetap wajib memeriksa sesi dan izin karena pengguna dapat memanggil endpoint langsung.
+
+## Di Dunia Nyata
+
+- Toko memakai `/produk/:id` untuk detail yang dapat dibagikan.
+- Panel admin memakai lazy loading agar kode admin tidak masuk bundle awal.
+- Checkout memakai guard untuk mengalihkan pengguna yang belum login.
+- Halaman laporan membaca query parameter untuk filter tanggal yang dapat dibookmark.
+
+<div class="note">💡 Kebiasaan baik: satu rute satu halaman, judul rute diisi (properti title) agar tab browser informatif, dan rute admin dibungkus guard sejak awal — jangan menunggu aplikasi bocor dulu baru menambahkan proteksi.</div>

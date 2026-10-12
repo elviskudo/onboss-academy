@@ -1,0 +1,131 @@
+---
+title: "Active Record & Migrasi"
+description: "ORM Rails yang membuat baris database terasa seperti objek Ruby biasa"
+order: 4
+quiz:
+  - q: "Active Record adalah bagian Rails untuk…"
+    options: ["Mengelola template HTML", "Berinteraksi dengan database lewat objek Ruby", "Mengelola rute", "Membuat CSS"]
+    answer: 1
+    explain: "Active Record adalah ORM — pemetaan objek ke tabel database."
+  - q: "Perintah membuat migrasi baru adalah…"
+    options: ["rails generate migration nama", "rails db:create_table", "rails new migration", "rails db:init"]
+    answer: 0
+    explain: "rails g migration NamaMembuatTabel membuat file migrasi berversi."
+  - q: "Migrasi dijalankan dengan perintah…"
+    options: ["rails db:sync", "rails migrate:run", "rails db:migrate", "rails db:update_all"]
+    answer: 2
+    explain: "db:migrate menjalankan file migrasi yang belum terpasang."
+  - q: "Product.find(1) akan…"
+    options: ["Mengembalikan produk id 1", "Menghapus produk", "Membuat produk baru", "Menghitung jumlah produk"]
+    answer: 0
+    explain: "find melempar error bila tidak ada, find_by mengembalikan nil."
+  - q: "Metode untuk menyimpan objek baru ke database adalah…"
+    options: ["write", "save", "insert_self", "post"]
+    answer: 1
+    explain: "save (atau create) menghasilkan perintah INSERT ke tabel."
+example:
+  code: |
+    class Product < ApplicationRecord
+    end
+
+    # di konsol Rails
+    product = Product.create(name: "Kopi", price: 25000)
+    puts product.id
+
+    Product.all.each { |p| puts p.name }
+    product.update(price: 30000)
+---
+
+Active Record membuat tabel database terasa seperti koleksi objek Ruby. Kamu menulis Ruby, Rails yang menerjemahkan ke SQL.
+
+## Membuat Migrasi
+
+```ruby
+# di terminal
+# rails generate migration CreateProducts name:string price:integer
+```
+
+File migrasi berisi perintah Ruby yang mendeskripsikan perubahan skema.
+
+## Isi Migrasi
+
+```ruby
+class CreateProducts < ActiveRecord::Migration[7.1]
+  def change
+    create_table :products do |t|
+      t.string :name, null: false
+      t.integer :price, default: 0
+      t.timestamps
+    end
+  end
+end
+```
+
+`t.timestamps` menambahkan kolom `created_at` dan `updated_at` secara otomatis.
+
+## Menjalankan dan Menarik Kembali
+
+```bash
+bin/rails db:migrate     # terapkan migrasi
+bin/rails db:rollback     # batalkan migrasi terakhir
+bin/rails db:migrate:status  # lihat status migrasi
+```
+
+Skema database selalu bisa direproduksi dari kode migrasi.
+
+## Query Sehari-hari
+
+```ruby
+Product.all
+Product.find(3)
+Product.where(price: 25000)
+Product.order(created_at: :desc).limit(5)
+Product.count
+```
+
+Semua method di atas menghasilkan SQL yang diefisienkan oleh Rails.
+
+## Create, Update, Hapus
+
+```ruby
+product = Product.create(name: "Teh", price: 15000)
+product.update(price: 18000)
+product.destroy
+
+Product.find_by(name: "Teh")
+```
+
+## Tipe Kolom dan Constraint
+
+Ada **8 tipe kolom umum**: string, text, integer, decimal, boolean, date, datetime, dan references. Pilih `decimal` untuk uang, bukan float, agar pembulatan tepat. `references` membuat foreign key column; tambahkan constraint database agar integritas tidak hanya bergantung pada model.
+
+| Tipe/fitur | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `string` | teks pendek | nama | judul dan kode |
+| `text` | teks panjang | deskripsi | isi bebas |
+| `decimal` | angka presisi | harga | uang |
+| `boolean` | dua keadaan | aktif | flag |
+| `datetime` | waktu | diterbitkan_at | event |
+| `references` | foreign key | customer | relasi |
+| index | mempercepat lookup | email unik | filter/join sering |
+
+## Query yang Aman
+
+Relation Active Record bersifat lazy: SQL biasanya dijalankan saat data benar-benar dibaca. Chain `where`, `order`, `limit`, dan `select` agar filter berlangsung di database. Gunakan placeholder atau hash conditions; jangan interpolasi input user ke string SQL. `find` melempar `ActiveRecord::RecordNotFound`, sementara `find_by` mengembalikan `nil`.
+
+Migrasi produksi harus kecil dan dapat diterapkan tanpa downtime panjang. Menambah kolom nullable biasanya aman; perubahan tipe atau default pada tabel besar perlu diuji. Rollback bukan pengganti backup data.
+
+## Di Dunia Nyata
+
+- Index unik database mencegah dua akun memakai email yang sama saat request bersamaan.
+- Transaction membatalkan seluruh pembayaran bila salah satu update gagal.
+- Scope merangkum query produk aktif yang dipakai berulang.
+- Batch processing menghindari memuat jutaan record ke RAM sekaligus.
+
+## Transaction dan Batch
+
+Gunakan `ActiveRecord::Base.transaction` ketika beberapa perubahan harus berhasil atau gagal sebagai satu unit, misalnya mengurangi stok dan membuat order. Exception membatalkan transaction; kegagalan yang ditelan di dalam blok dapat menghasilkan commit yang tidak diinginkan. Panggilan API eksternal sebaiknya tidak berada dalam transaction panjang karena lock database tertahan selama menunggu jaringan.
+
+Untuk tabel besar, `find_each` mengambil record per batch dan menahan memori tetap terkendali. Hindari `Product.all.each` bila seluruh object tidak perlu dimuat sekaligus. Pilih kolom dengan `pluck` ketika hanya butuh nilai sederhana. Pantau log SQL untuk query tak terduga, scan tanpa index, dan N+1. ORM mengurangi SQL manual, tetapi desain index dan jumlah round-trip tetap menentukan performa database.
+
+<div class="note">💡 Jangan mengubah tabel langsung lewat konsol database. Selalu lewat migrasi — tim lain cukup menjalankan db:migrate dan mendapatkan skema yang sama persis.</div>

@@ -1,0 +1,154 @@
+---
+import Base from '../layouts/Base.astro';
+import CheckinButton from '../components/CheckinButton.astro';
+import { db } from '../lib/db';
+import { LANGUAGES, getLanguage } from '../data/languages';
+import { getLangChapters } from '../lib/progress';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/login');
+
+function ymd(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+const today = ymd();
+const checkedToday = !!(await db.attendance.findUnique({ where: { userId_date: { userId: user.id, date: today } } }));
+const attendances = await db.attendance.findMany({ where: { userId: user.id }, select: { date: true }, orderBy: { date: 'desc' } });
+const total = attendances.length;
+
+let streak = 0;
+{
+  const set = new Set(attendances.map((a) => a.date));
+  const cursor = new Date();
+  if (!set.has(ymd(cursor))) cursor.setDate(cursor.getDate() - 1);
+  while (set.has(ymd(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+}
+
+const progressRows = await db.chapterProgress.findMany({ where: { userId: user.id }, select: { langId: true } });
+const startedLangIds = [...new Set(progressRows.map((r) => r.langId))];
+const certificates = await db.certificate.findMany({ where: { userId: user.id }, orderBy: { issuedAt: 'desc' } });
+
+// progress per bahasa yang dimulai
+const langProgress = [];
+for (const id of startedLangIds) {
+  const language = getLanguage(id);
+  if (!language) continue;
+  const chapters = await getLangChapters(id);
+  const passedCount = await db.chapterProgress.count({ where: { userId: user.id, langId: id } });
+  langProgress.push({ language, passedCount, total: chapters.length, complete: passedCount >= chapters.length && chapters.length > 0 });
+}
+
+const totalChapters = langProgress.reduce((s, l) => s + l.total, 0);
+const totalDone = langProgress.reduce((s, l) => s + l.passedCount, 0);
+const overallPct = totalChapters ? Math.round((totalDone / totalChapters) * 100) : 0;
+---
+<Base title="Dashboard" description="Progres belajar, absensi, dan sertifikatmu.">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight">Halo, {user.name.split(' ')[0]} 👋</h1>
+        <p class="mt-1.5 text-muted">{Astro.url.searchParams.get('welcome') ? 'Selamat bergabung! Mulai dari bab pertama HTML — cocok untuk pemula total.' : 'Lanjutkan perjalanan belajarmu hari ini.'}</p>
+      </div>
+      <a href="/belajar" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-primary/30 hover:bg-primary-dark">Jelajahi Bahasa →</a>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-3">
+      <div class="lg:col-span-2"><CheckinButton streak={streak} total={total} checkedToday={checkedToday} /></div>
+      <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <p class="text-sm font-bold uppercase tracking-wider text-muted">Progres Keseluruhan</p>
+        <p class="mt-2 text-4xl font-extrabold tracking-tight">{overallPct}<span class="text-xl text-muted">%</span></p>
+        <p class="mt-1 text-sm text-muted">{totalDone} dari {totalChapters || 0} bab diselesaikan</p>
+        <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-line">
+          <div class="h-full rounded-full bg-primary transition-all" style={`width:${overallPct}%`}></div>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-3 text-center">
+          <div class="rounded-xl bg-bg p-3">
+            <p class="text-2xl font-extrabold text-primary">{langProgress.length}</p>
+            <p class="text-xs text-muted">Bahasa dimulai</p>
+          </div>
+          <div class="rounded-xl bg-bg p-3">
+            <p class="text-2xl font-extrabold text-success">{certificates.length}</p>
+            <p class="text-xs text-muted">Sertifikat</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 grid gap-8 lg:grid-cols-2">
+      <section>
+        <h2 class="text-xl font-extrabold tracking-tight">Progres Belajar</h2>
+        {langProgress.length === 0 ? (
+          <div class="mt-4 rounded-2xl border border-dashed border-line bg-surface p-10 text-center">
+            <p class="text-3xl">🌱</p>
+            <p class="mt-3 font-bold">Belum ada progres</p>
+            <p class="mt-1 text-sm text-muted">Mulai dari <a href="/belajar/html" class="font-bold text-primary hover:underline">HTML</a> — bahasa dasar web.</p>
+          </div>
+        ) : (
+          <div class="mt-4 space-y-3">
+            {langProgress.map(({ language, passedCount, total, complete }) => {
+              const pct = total ? Math.round((passedCount / total) * 100) : 0;
+              return (
+                <a href={`/belajar/${language.id}`} class="flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:border-primary/40 hover:shadow-md">
+                  <span class="flex h-11 w-11 items-center justify-center rounded-xl text-xl" style={`background:${language.color}1A`}>{language.icon}</span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center justify-between gap-2">
+                      <p class="font-bold">{language.name}</p>
+                      <p class="text-xs font-bold text-muted">{passedCount}/{total} bab {complete && '🎓'}</p>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-line">
+                      <div class:list={['h-full rounded-full', complete ? 'bg-success' : 'bg-primary']} style={`width:${pct}%`}></div>
+                    </div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 class="text-xl font-extrabold tracking-tight">Sertifikat Kamu</h2>
+        {certificates.length === 0 ? (
+          <div class="mt-4 rounded-2xl border border-dashed border-line bg-surface p-10 text-center">
+            <p class="text-3xl">🏆</p>
+            <p class="mt-3 font-bold">Belum ada sertifikat</p>
+            <p class="mt-1 text-sm text-muted">Selesaikan semua bab + kuis sebuah bahasa untuk mendapatkannya.</p>
+          </div>
+        ) : (
+          <div class="mt-4 space-y-3">
+            {certificates.map((c) => (
+              <a href={`/sertifikat/${c.code}`} class="flex items-center gap-4 rounded-2xl border border-success/30 bg-success-soft/50 p-4 transition hover:shadow-md">
+                <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-success-soft text-xl">🎓</span>
+                <div class="min-w-0 flex-1">
+                  <p class="font-bold">{c.langTitle}</p>
+                  <p class="text-xs text-muted">Lulus {c.issuedAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} · {c.code}</p>
+                </div>
+                <span class="text-sm font-bold text-success">Lihat →</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+
+    <section class="mt-12">
+      <h2 class="text-xl font-extrabold tracking-tight">Semua Bahasa</h2>
+      <p class="mt-1 text-sm text-muted">Klik untuk mulai atau lanjut belajar.</p>
+      <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {LANGUAGES.map((l) => (
+          <a href={`/belajar/${l.id}`} class="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-sm transition hover:border-primary/40">
+            <span class="text-xl">{l.icon}</span>
+            <span class="text-sm font-bold">{l.name}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</Base>

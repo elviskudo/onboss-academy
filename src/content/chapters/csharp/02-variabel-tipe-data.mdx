@@ -1,0 +1,158 @@
+---
+title: "Variabel & Tipe Data"
+description: "13 tipe primitif, var vs dynamic, konversi, dan jebakan pembagian integer"
+order: 2
+quiz:
+  - q: "Tipe data untuk bilangan bulat di C# adalah…"
+    options: ["float", "decimal", "whole", "int"]
+    answer: 3
+    explain: "int menyimpan bilangan bulat 32 bit, contoh: int umur = 20;"
+  - q: "Tipe yang menyimpan teks adalah…"
+    options: ["char[]", "text", "string", "varchar"]
+    answer: 2
+    explain: "string menyimpan rangkaian karakter, ditulis dalam kutip ganda."
+  - q: "Pada var nama = \"Sari\"; tipe variabel ditentukan oleh…"
+    options: ["nilai awal saat kompilasi", "kata var itu sendiri selalu string", "runtime bebas", "penamaan variabel"]
+    answer: 0
+    explain: "var hanya meminta compiler menyimpulkan tipe dari nilai kanannya — tetap ber-type."
+  - q: "Hasil dari int a = 7, b = 2; lalu a / b adalah…"
+    options: ["3.5", "3", "4", "error kompilasi"]
+    answer: 1
+    explain: "Pembagian dua int membuang pecahan; tulis (double)a / b untuk mendapatkan 3.5."
+  - q: "Ekspresi yang menghasilkan nilai double dari bilangan bulat adalah…"
+    options: ["int.Parse(x)", "(double)x", "Convert.ToString(x)", "x.ToString()"]
+    answer: 1
+    explain: "Cast (double) mengubah nilai numerik; Parse/ToString dipakai untuk string."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            int umur = 20;
+            double tinggi = 1.65;
+            string nama = "Sari";
+            bool aktif = true;
+
+            Console.WriteLine(nama + " berumur " + umur + " tahun");
+            Console.WriteLine("Tinggi " + tinggi + ", aktif: " + aktif);
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Karena C# ber-type, **setiap variabel punya tipe sejak awal**. Tipe inilah yang menentukan data apa yang boleh masuk, operasi apa yang boleh dilakukan, dan apakah kesalahan tertangkap saat kompilasi atau saat program jalan.
+
+## 3 Cara Mendeklarasikan Variabel
+
+```csharp
+int umur = 20;              // 1. tipe eksplisit
+var nama = "Sari";          // 2. var — tipe disimpulkan compiler
+dynamic skor = 90;          // 3. dynamic — tipe baru di runtime
+```
+
+| Cara | Tipe diketahui | Aman? | Kapan dipakai |
+|---|---|---|---|
+| `int x = 1;` | saat menulis | paling aman | default harian |
+| `var x = 1;` | saat kompilasi, dari nilai kanan | sama amannya | singkat, tetap ber-type |
+| `dynamic x = 1;` | saat runtime | runtime error bila salah | interop dinamis / JSON longgar |
+
+`var` bukan "tipe bebas": `var x = 5;` lalu `x = "teks";` → **error kompilasi**. `dynamic` justru menunda cek ke runtime — pakai seperlunya.
+
+Untuk mutabilitas ada **2 kata kunci tambahan**: `const` (nilai mati, tidak bisa berubah) dan `readonly` (hanya boleh diisi di konstruktor).
+
+## 13 Tipe Primitif
+
+C# punya **13 tipe primitif (built-in)**: 8 bilangan bulat, 3 pecahan, `bool`, dan `char`.
+
+| Tipe | Ukuran | Rentang/sifat | Contoh | Buat apa |
+|---|---|---|---|---|
+| `byte` | 1 byte | 0 … 255 | `200` | data biner |
+| `sbyte` | 1 byte | −128 … 127 | `-50` | data biner bernilai minus |
+| `short` | 2 byte | ±32 ribu | `1234` | hemat memori |
+| `ushort` | 2 byte | 0 … 65.535 | `60000` | nilai positif kecil |
+| `int` | 4 byte | ±2,1 miliar | `20`, `-7` | hitungan umum |
+| `uint` | 4 byte | 0 … 4,2 miliar | `3000000000u` | ID, indeks |
+| `long` | 8 byte | ±9,2 × 10¹⁸ | `10000000000L` | timestamp, ID besar |
+| `ulong` | 8 byte | 0 … 1,8 × 10¹⁹ | `5uL` | nilai sangat besar |
+| `float` | 4 byte | ±3,4 × 10³⁸, ~7 digit | `4.5f` | grafis, sensor |
+| `double` | 8 byte | ~15–16 digit | `1.65` | desimal standar |
+| `decimal` | 16 byte | 28–29 digit | `125000.75m` | uang, rupiah |
+| `bool` | 1 byte | `true` / `false` | `aktif = true` | status, kondisi |
+| `char` | 2 byte | 0 … 65.535 (Unicode) | `'A'` | satu karakter |
+
+**Tipe non-primitif/acuan**: `string`, `object`, `array`, `class`, `interface`, `delegate`, `dynamic`. Semua tipe nilai juga punya varian `Nullable<T>` (`int?`) yang boleh `null`.
+
+## Nilai Default & Inisialisasi
+
+- **Tipe nilai** (`int`, `double`, `bool`, `struct`) → otomatis `0`, `0.0`, `false` bila berada di field atau static.
+- **Tipe acuan** (`string`, `object`, `List<>`) → `null`.
+- **Variabel lokal**: wajib diisi sebelum dipakai — compiler C# menolak penggunaan dengan error CS0165 ("use of unassigned local variable").
+
+```csharp
+int a = 5;            // ok
+double b = a;         // implicit: int → double aman
+// double c = 3.14;   // int d = c; → error, harus cast
+int e = (int)3.99;    // hasilnya 3 — dipotong, tidak dibulatkan
+```
+
+## 5 Cara Konversi Tipe
+
+| Cara | Contoh | Hasil |
+|---|---|---|
+| Implicit (otomatis) | `double d = 5;` | `5.0` |
+| Cast eksplisit | `int n = (int)3.99;` | `3` |
+| `Convert.ToX` | `Convert.ToInt32("42")` | `42` |
+| `Parse` / `TryParse` | `int.Parse("42")` | `42` / gagal → exception |
+| `ToString()` | `(42).ToString()` | `"42"` |
+
+Konversi otomatis hanya terjadi dari tipe **lebih sempit ke lebih luas**; arah sebaliknya wajib cast eksplisit.
+
+## Jebakan yang Sering Terjadi
+
+| Kode | Hasil | Kenapa |
+|---|---|---|
+| `7 / 2` | `3` | dua int → pembagian int |
+| `"1" + 1` | `"11"` | `+` pada string berarti konkatenasi, bukan angka |
+| `(int)3.99` | `3` | dipotong, bukan dibulatkan ke 4 |
+| `0.1 + 0.2` | `0.30000000000000004` | double biner tidak presisi |
+| `int.MaxValue + 1` | overflow diam-diam | gunakan `checked(x + 1)` untuk menangkap |
+
+## Di Dunia Nyata
+
+- Menyimpan harga produk dalam `decimal` supaya `10%` dari `Rp 9.900` tidak menghasilkan sisa biner.
+- Validasi form: `int umur; if (int.TryParse(input, out umur))` mencegah exception saat input bukan angka.
+- ID pelanggan dalam `long` agar tidak overflow setelah jutaan transaksi.
+- Skor game memakai `int`; nilai fisika seperti kecepatan memakai `float`/`double`.
+- Status on/off tombol disimpan sebagai `bool` — satu byte, jelas maksudnya.
+
+<div class="note">💡 Tulis nama variabel dengan huruf kecil di awal (camelCase): umurSiswa, totalHarga. Hindari nama generik seperti a atau x pada kode produksi — dan ingat <code>decimal</code> bukan sekadar "double yang lebih lambat", melainkan tipe yang dirancang khusus untuk uang.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        int umur = 20;
+        double tinggi = 1.65;
+        string nama = "Sari";
+        bool aktif = true;
+        decimal gaji = 1250000.75m;
+
+        Console.WriteLine(nama + " berumur " + umur + " tahun");
+        Console.WriteLine("Tinggi: " + tinggi);
+        Console.WriteLine("Status aktif: " + aktif);
+        Console.WriteLine("Gaji: " + gaji);
+
+        double lebar = (double)7 / 2;
+        Console.WriteLine("7 / 2 = " + lebar);
+
+        var jumlah = 10;
+        Console.WriteLine("var menjadi int: " + (jumlah + 5));
+    }
+}
+`} />

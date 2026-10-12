@@ -1,0 +1,131 @@
+---
+title: "Container vs VM"
+description: "Kenapa container jauh lebih ringan dari mesin virtual dan kapan memakai keduanya"
+order: 1
+quiz:
+  - q: "Perbedaan utama container dan VM adalah…"
+    options: ["Container berbagi kernel host; VM punya kernel sendiri", "Container hanya untuk Windows", "VM tidak butuh hypervisor", "Tidak ada perbedaan"]
+    answer: 0
+    explain: "Container hanya mengisolasi proses di kernel yang sama; VM mem-boot OS penuh dengan hypervisor."
+  - q: "Komponen yang menjalankan container Docker di host adalah…"
+    options: ["Nginx", "Docker daemon (dockerd)", "systemd saja", "Kubernetes"]
+    answer: 1
+    explain: "Daemon Docker menerima perintah CLI, mengelola image, jaringan, dan storage container."
+  - q: "Container biasanya start dalam…"
+    options: ["Beberapa detik", "5-10 menit", "Sampai reboot host", "Tergantung ISO OS"]
+    answer: 0
+    explain: "Tidak ada boot OS — hanya menjalankan proses aplikasi — sehingga start hitungan detik."
+  - q: "Isolasi container dilakukan memakai fitur kernel Linux…"
+    options: ["RAID", "namespaces dan cgroups", "swap memory", "cron"]
+    answer: 1
+    explain: "Namespaces mengisolasi tampilan (jaringan, filesystem); cgroups membatasi resource (CPU, RAM)."
+  - q: "Kapan VM masih lebih tepat daripada container?"
+    options: ["Butuh kernel berbeda dari host atau isolasi penuh", "Aplikasi web kecil", "Ingin startup cepat", "Ingin image kecil"]
+    answer: 0
+    explain: "Mis. menjalankan Windows di Linux host, atau kebutuhan compliance isolasi penuh."
+---
+
+Container adalah **proses aplikasi yang diisolasi** — bukan mesin virtual. Karena berbagi kernel dengan host, container jauh lebih ringan dan cepat dibanding VM.
+
+## Arsitektur VM vs Container
+
+```
+VM (berat):
++--------------------------------------+
+| App A | App B |   <- aplikasi        |
+| Guest OS A | Guest OS B | <- OS penuh|
++--------------------------------------+
+       Hypervisor
++--------------------------------------+
+|         Host OS + Hardware          |
++--------------------------------------+
+
+Container (ringan):
++--------------------------------------+
+| App A | App B | App C  <- isolasi    |
++--------------------------------------+
+|       Container runtime (Docker)     |
++--------------------------------------+
+|        Host OS + Kernel             |
++--------------------------------------+
+```
+
+Container tidak memuat OS: tidak ada boot, tidak ada kernel duplikat — hanya aplikasi dan library-nya.
+
+## Angka Nyata
+
+| Aspek | VM | Container |
+|-------|----|-----------|
+| Start | menit | detik |
+| Ukuran | GB | MB |
+| Isolasi | kernel terpisah | namespace (sama-sama kuat untuk kebanyakan kasus) |
+| Resource | alokasi penuh | batas fleksibel via cgroups |
+| Density | puluhan per host | ratusan per host |
+
+## Menjalankan Container Pertama
+
+```bash
+docker run --rm hello-world
+```
+
+Docker akan: cek image lokal -> tidak ada? unduh dari registry -> buat container dari image -> jalankan prosesnya -> selesai (karena `--rm`, container langsung dibersihkan).
+
+## Dibalik Layar: Namespaces & Cgroups
+
+```bash
+docker run -d --name web -p 8080:80 nginx:alpine
+docker inspect web --format '{{.State.Status}}'
+```
+
+- **Namespaces** — container melihat filesystem, jaringan, dan PID sendiri
+- **Cgroups** — CPU dan RAM dibatasi: `docker run --memory=256m --cpus=0.5 ...`
+
+## Kapan Pakai Apa?
+
+```
+butuh banyak app di satu server, startup cepat, CI/CD   -> container
+butuh kernel berbeda, isolasi compliance penuh, Windows -> VM
+app monolitik kecil sekali jalan                        -> container juga cukup
+```
+
+Kombinasi umum di produksi: VM/cloud instance sebagai host, container sebagai unit deployment di dalamnya.
+
+## Empat Komponen Inti
+
+Ada **4 komponen inti** pada alur Docker: client, daemon, image, dan container.
+
+| Komponen | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Docker client | Mengirim perintah ke daemon | `docker run` | Setiap operasi dari terminal atau CI |
+| Docker daemon | Mengelola build, image, network, dan container | `dockerd` | Berjalan sebagai layanan host |
+| Image | Paket aplikasi read-only | `nginx:1.27-alpine` | Menjadi artefak deployment |
+| Container | Proses terisolasi dari sebuah image | `web` | Menjalankan aplikasi |
+
+Container memakai **namespaces** untuk memisahkan PID, mount, network, user, IPC, dan hostname. Cgroups mengukur serta membatasi CPU, memori, dan proses. Keduanya meningkatkan isolasi, tetapi container tetap berbagi kernel; kerentanan kernel host dapat berdampak ke semua container. Karena itu gunakan image tepercaya, user non-root, batas resource, dan patch host.
+
+```bash
+docker run --rm --name terbatas \
+  --memory=256m --cpus=0.5 --pids-limit=100 \
+  --read-only --security-opt=no-new-privileges \
+  nginx:1.27-alpine
+```
+
+Perintah tersebut memberi empat pembatas: memori, CPU, jumlah proses, dan filesystem read-only. Opsi `no-new-privileges` mencegah proses memperoleh hak tambahan. Pada workload yang membutuhkan tulisan, mount hanya direktori yang memang perlu ditulis.
+
+## Biaya dan Batas Isolasi
+
+VM membawa guest OS sehingga memakai lebih banyak RAM dan disk, tetapi batas antarkernel lebih kuat. Container menghemat resource karena layer image dapat dibagi dan tidak mem-boot OS. Pilihan bukan sekadar “mana lebih cepat”: nilai juga kernel yang dibutuhkan, model ancaman, lisensi, kepatuhan, dan kemudahan operasi.
+
+Jangan menjalankan container dengan `--privileged` kecuali kebutuhan perangkat keras benar-benar dipahami. Mode itu memberi akses luas ke host dan menghapus banyak batas keamanan. Hindari pula mount socket Docker ke aplikasi umum karena siapa pun yang menguasai socket praktis dapat mengendalikan host.
+
+## Di Dunia Nyata
+
+1. Tim SaaS menjalankan API, worker, dan reverse proxy sebagai container terpisah di satu VM agar rilis tiap layanan independen.
+2. CI membuat container sementara untuk menjalankan test pada versi runtime yang sama, lalu menghapusnya dengan `--rm`.
+3. Sistem lama yang mensyaratkan kernel atau OS berbeda ditempatkan dalam VM, bukan dipaksa masuk container.
+4. Perusahaan memakai VM sebagai batas tenant dan container di dalam tiap VM sebagai unit deployment cepat.
+5. Job konversi video diberi batas CPU dan memori agar lonjakan satu pekerjaan tidak menjatuhkan layanan lain.
+
+Sebelum memilih, tanyakan tiga hal: apakah aplikasi butuh kernel tertentu, sekuat apa batas isolasinya, dan apakah prosesnya stateless atau membutuhkan storage eksternal. Jawaban itu lebih berguna daripada sekadar membandingkan ukuran image.
+
+<div class="note">💡 Container bukan mesin kecil — ia proses di host kamu. Port yang dibuka container tanpa mapping `-p` tidak terjangkau dari luar; resource tak terbatas bisa menghabiskan RAM host. Isolasi kuat, tapi tetap kelola seperti proses biasa.</div>

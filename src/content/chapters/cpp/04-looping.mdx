@@ -1,0 +1,215 @@
+---
+title: "Perulangan (Looping)"
+description: "4 bentuk loop C++ — for, range-based for, while, do-while — plus break/continue"
+order: 4
+quiz:
+  - q: "for (int n : data) pada C++ disebut…"
+    options: ["Classic for loop", "Range-based for loop", "Recursive loop", "Lambda loop"]
+    answer: 1
+    explain: "Menelusuri semua elemen container tanpa mengelola indeks — idiom modern C++."
+  - q: "Loop do-while mengecek kondisi…"
+    options: ["Sebelum isi loop", "Hanya sekali di awal", "Setelah isi loop — minimal sekali berjalan", "Tidak pernah"]
+    answer: 2
+    explain: "Cocok untuk menu yang pasti ditampilkan minimal satu kali."
+  - q: "continue pada loop berfungsi untuk…"
+    options: ["Menghentikan seluruh loop", "Melompati sisa iterasi saat ini", "Mengulang dari awal", "Menghapus elemen"]
+    answer: 1
+    explain: "continue langsung lanjut ke iterasi berikutnya; break justru keluar dari loop sepenuhnya."
+  - q: "while (true) tanpa break akan…"
+    options: ["Berjalan selamanya sampai dihentikan dari luar", "Berhenti otomatis setelah 100 iterasi", "Compile error", "Berjalan tepat satu kali"]
+    answer: 0
+    explain: "Loop tak berujung — pastikan ada break atau kondisi yang akhirnya menjadi false."
+  - q: "Nilai i setelah for (int i = 0; i < 4; i++) selesai adalah…"
+    options: ["3", "5", "0", "4"]
+    answer: 3
+    explain: "Loop berhenti ketika i tidak lagi memenuhi i < 4, sehingga i = 4."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    using namespace std;
+
+    int main() {
+        vector<int> data = {5, 3, 8, 1};
+        int total = 0;
+        for (int n : data) {
+            total += n;
+        }
+        cout << "Jumlah = " << total << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ punya **4 bentuk perulangan**: `for` gaya C, range-based `for` (C++11), `while`, dan `do-while`. Memilih yang tepat membuat loop terbaca sekali lihat — memilih yang salah membuat bug indeks yang sulit ditemukan.
+
+## Perbandingan 4 Bentuk
+
+| Bentuk | Sintaks singkat | Pakai saat | Minimal jalan |
+|---|---|---|---|
+| `for` | `for (int i = 0; i < n; i++)` | jumlah iterasi diketahui | 0 kali |
+| range-based `for` | `for (int n : data)` | menelusuri seluruh elemen | 0 kali |
+| `while` | `while (kondisi)` | berhenti saat syarat berubah | 0 kali |
+| `do-while` | `do { } while (kondisi);` | isi pasti dijalankan sekali | 1 kali |
+
+C++ **tidak punya** for-in/of atau repeat-until — gaya pemetaan elemen ada di range-based for, dan syarat berhenti selalu ditulis sendiri.
+
+## Range-Based For
+
+```cpp
+#include <vector>
+#include <map>
+
+vector<int> data = {5, 3, 8, 1};
+for (int n : data) {
+    cout << n << " ";
+}
+cout << endl;
+
+for (const string &kota : {"Jakarta", "Bandung"}) {  // const ref: tanpa salinan
+    cout << kota << endl;
+}
+
+map<string, int> skor = {{"Sari", 90}};
+for (const auto &[nama, nilai] : skor) {             // C++17 structured binding
+    cout << nama << " = " << nilai << endl;
+}
+```
+
+`const &` membuat elemen tidak tersalin dan tidak bisa diubah — pola paling umum di C++ modern. Kekurangannya: tidak ada indeks. Kalau butuh nomor urut, pakai classic for atau indeks terpisah.
+
+## Classic for
+
+```cpp
+for (int i = 1; i <= 5; i++) {
+    cout << "Perulangan ke-" << i << endl;
+}
+
+for (int i = 0; i < 10; i += 2) {   // langkah 2
+    cout << i << " ";
+}
+
+for (int k = (int)v.size() - 1; k >= 0; k--) {   // mundur
+    cout << v[k];
+}
+```
+
+Tiga bagian dalam kurung: **inisialisasi**, **kondisi berhenti**, **penambahan** — boleh dibiarkan kosong selama kamu tahu konsekuensinya.
+
+## while & do-while
+
+```cpp
+int saldo = 100;
+while (saldo > 0) {
+    cout << "Sisa: " << saldo << endl;
+    saldo -= 30;
+}
+
+int percobaan = 0;
+do {
+    percobaan++;
+    cout << "Percobaan ke-" << percobaan << endl;
+} while (percobaan < 3);
+```
+
+`while` mengecek dulu — kalau kondisi awal sudah false, blok tidak pernah jalan. `do-while` mengecek di akhir, sehingga selalu jalan minimal sekali: pas untuk menu dan prompt input.
+
+## Break & Continue
+
+```cpp
+for (int i = 1; i <= 10; i++) {
+    if (i == 4) continue;   // lewati 4
+    if (i > 6) break;       // berhenti setelah 6
+    cout << i << " ";       // 1 2 3 5 6
+}
+cout << endl;
+```
+
+C++ **tidak punya label break** seperti Java — keluar dari loop bersarang harus lewat `goto` (jarang dipakai) atau memecah logika jadi fungsi.
+
+## 4 Pola Klasik
+
+```cpp
+// 1. Akumulasi
+int total = 0;
+for (int n : data) total += n;
+
+// 2. Cari pertama
+int ketemu = -1;
+for (int i = 0; i < (int)data.size(); i++) {
+    if (data[i] > 50) { ketemu = i; break; }
+}
+
+// 3. Filter → daftar baru
+vector<int> lulus;
+for (int n : data) {
+    if (n >= 75) lulus.push_back(n);
+}
+
+// 4. Hitung frekuensi
+map<string, int> hitung;
+for (const string &k : kata) hitung[k]++;
+```
+
+## Nested Loop & Pola
+
+```cpp
+int n = 3;
+for (int b = 1; b <= n; b++) {
+    for (int k = 1; k <= b; k++) {
+        cout << "*";
+    }
+    cout << endl;
+}
+```
+
+Menghasilkan pola tangga — latihan klasik untuk memahami interaksi dua indeks. Biaya loop bersarang **berlipat**: 1.000 × 1.000 = satu juta iterasi, jadi ukur dulu apakah pekerjaannya sepadan.
+
+## Di Dunia Nyata
+
+- Menampilkan 100 baris log server: classic `for` dengan nomor baris agar mudah dilaporkan.
+- Memproses antrian pesanan sampai kosong: `while (!antrian.empty())`.
+- Menampilkan menu ATM minimal sekali lalu mengulang sampai pengguna memilih keluar: `do-while`.
+- Menghitung rata-rata nilai hanya untuk siswa yang hadir: filter di `if`, bukan di kondisi loop.
+- Membalik urutan array: loop mundur dari `size()-1` ke `0`.
+
+<div class="note">💡 Di C++17, deklarasi <code>int</code> di dalam for boleh diganti dengan <code>auto</code> — <code>for (auto n : data)</code> membuat kode tetap benar walau tipe elemen berubah. Untuk elemen besar, tulis <code>for (const auto &n : data)</code> agar tidak tersalin diam-diam.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<int> data = {5, 3, 8, 1, 9};
+    int total = 0;
+    for (int n : data) total += n;
+    cout << "Jumlah = " << total << endl;
+    cout << "Rata-rata = " << (double) total / data.size() << endl;
+
+    int n = 5;
+    while (n > 0) {
+        cout << n << " ";
+        n--;
+    }
+    cout << endl;
+
+    int percobaan = 0;
+    do {
+        percobaan++;
+    } while (percobaan < 3);
+    cout << "Percobaan: " << percobaan << endl;
+
+    for (int i = 1; i <= 7; i++) {
+        if (i == 4) continue;
+        if (i > 6) break;
+        cout << i << " ";
+    }
+    cout << endl;
+
+    for (int b = 1; b <= 3; b++) {
+        for (int k = 1; k <= b; k++) cout << "*";
+        cout << endl;
+    }
+    return 0;
+}`} />

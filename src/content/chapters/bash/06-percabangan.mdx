@@ -1,0 +1,175 @@
+---
+title: "Percabangan dan Pengecekan"
+description: "Membuat keputusan dengan 3 bentuk percabangan, operator file/string/angka, dan exit status"
+order: 6
+quiz:
+  - q: "Struktur percabangan bawaan Bash ditulis dengan…"
+    options: ["if { }", "if ... then ... fi", "if end", "switch"]
+    answer: 1
+    explain: "Setiap if ditutup dengan fi; blok else berada di antara then dan fi."
+  - q: "Pengecekan apakah file biasa ada ditulis dengan…"
+    options: ["exists namafile", "check namafile", "-f namafile", "file? namafile"]
+    answer: 2
+    explain: "-f mengecek file biasa; -d untuk direktori; -e untuk path jenis apa pun."
+  - q: "Apa perbedaan utama [[ ... ]] dibanding [ ... ] ?"
+    options: ["[[ ... ]] fiturnya lebih kaya dan aman di Bash", "[ ... ] selalu lebih cepat", "[ ... ] mendukung regex", "Tidak ada perbedaan"]
+    answer: 0
+    explain: "[[ ... ]] bawaan Bash mendukung &&, ||, pola glob, dan tidak melakukan word splitting."
+  - q: "Operator untuk membandingkan dua angka sama adalah…"
+    options: ["equals", "==", "=", "-eq"]
+    answer: 3
+    explain: "-eq untuk angka; == atau = untuk string."
+  - q: "Struktur case ditutup dengan…"
+    options: ["end", "esac", "close", "done"]
+    answer: 1
+    explain: "case ... esac — esac adalah case yang dibalik, seperti if ... fi."
+example:
+  code: |
+    #!/usr/bin/env bash
+    if [ -f "config.txt" ]; then
+      echo "config ada"
+    else
+      echo "config tidak ditemukan"
+    fi
+
+    case "$1" in
+      start) echo "menyalakan" ;;
+      stop)  echo "mematikan" ;;
+      *)     echo "argumen tidak dikenal" ;;
+    esac
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Skrip yang berguna tidak hanya menjalankan perintah berurutan — ia memilih langkah berdasarkan file, input, angka, atau keberhasilan perintah sebelumnya.
+
+## Tiga Bentuk Percabangan Bash
+
+Bash punya **3 bentuk utama** untuk mengambil keputusan:
+
+| Bentuk | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| `if / elif / else` | keputusan berdasarkan kondisi | rentang angka atau kondisi campuran |
+| `case` | cocokkan satu nilai ke banyak pola | subcommand seperti start/stop/status |
+| `&&` dan `||` | aksi singkat dari exit status | satu tindakan sukses/gagal |
+
+## if, elif, dan else
+
+```bash
+if [ -f "config.txt" ]; then
+  echo "File config ditemukan"
+elif [ -d "config.txt" ]; then
+  echo "Nama itu ternyata direktori"
+else
+  echo "Tidak ditemukan"
+fi
+```
+
+Kurung siku `[ ... ]` sebenarnya adalah perintah `test`; karena itu spasi di kedua sisinya wajib. `if` tidak menunggu nilai boolean — ia membaca **exit status** perintah: status 0 masuk cabang `then`.
+
+## Tiga Kategori Operator Test
+
+### 1. File
+
+| Operator | Benar bila |
+| --- | --- |
+| `-e path` | path ada, jenis apa pun |
+| `-f path` | file biasa ada |
+| `-d path` | direktori ada |
+| `-r path` | bisa dibaca |
+| `-w path` | bisa ditulis |
+| `-x path` | bisa dieksekusi |
+
+### 2. String
+
+| Operator | Benar bila |
+| --- | --- |
+| `-z "$a"` | string kosong |
+| `-n "$a"` | string tidak kosong |
+| `"$a" = "$b"` | string sama |
+| `"$a" != "$b"` | string berbeda |
+
+### 3. Numerik
+
+Bash punya **6 operator perbandingan angka**:
+
+| Operator | Arti | Operator matematika setara |
+| --- | --- | --- |
+| `-eq` | sama | `==` |
+| `-ne` | tidak sama | `!=` |
+| `-lt` | kurang dari | `<` |
+| `-le` | kurang atau sama | `<=` |
+| `-gt` | lebih dari | `>` |
+| `-ge` | lebih atau sama | `>=` |
+
+```bash
+skor=85
+if [ "$skor" -ge 90 ]; then
+  echo "A"
+elif [ "$skor" -ge 75 ]; then
+  echo "B"
+else
+  echo "C"
+fi
+```
+
+## `[ ]` vs `[[ ]]`
+
+```bash
+# Portable POSIX: bekerja di sh, dash, bash
+[ "$nama" = "Budi" ]
+
+# Khusus Bash: glob, regex, dan logika lebih aman
+[[ $nama == B* && $umur -ge 18 ]]
+[[ $email =~ ^[^@]+@[^@]+$ ]]
+```
+
+Pakai `[ ]` bila skrip harus portable lintas shell. Pakai `[[ ]]` untuk skrip Bash murni karena tidak melakukan word splitting dan mendukung regex.
+
+## case untuk Banyak Pilihan
+
+```bash
+case "$1" in
+  start)   echo "menyalakan layanan" ;;
+  stop)    echo "mematikan layanan" ;;
+  restart) echo "memulai ulang layanan" ;;
+  *)       echo "argumen tidak dikenal" ;;
+esac
+```
+
+Pola `*` adalah fallback/default. Setiap cabang ditutup `;;` agar Bash tidak lanjut ke cabang berikutnya.
+
+## Short-circuit dengan && dan ||
+
+```bash
+mkdir -p backup && echo "Direktori siap"
+grep -q "ERROR" app.log || echo "Tidak ada error"
+```
+
+`&&` menjalankan kanan hanya jika kiri sukses (exit 0); `||` menjalankan kanan hanya jika kiri gagal. Pakai untuk keputusan satu langkah, bukan mengganti blok `if` kompleks.
+
+## Di Dunia Nyata
+
+1. **Validasi konfigurasi sebelum deploy** — `[ -r .env ] || exit 1` mencegah deploy berjalan tanpa kredensial.
+2. **Memilih environment** — `case "$1" in staging|production)` menentukan server tujuan dari argumen CLI.
+3. **Health check otomatis** — `if curl -fsS "$URL"; then ...` menilai langsung exit status curl, bukan parsing teks output.
+4. **Menjaga kapasitas disk** — hasil persentase `df` dibandingkan dengan `-ge 90`, lalu alarm dikirim jika melewati 90%.
+5. **Idempotent setup** — `[ -d node_modules ] || npm install` hanya memasang dependency jika belum ada.
+
+<div class="note">💡 Lebih aman menguji perintah langsung — `if curl -fsS "$url"; then` — daripada menjalankannya dulu lalu membaca `$?`. Kode tetap dekat dengan kondisi dan tidak bisa tertimpa perintah lain.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+nilai=85
+if [ "$nilai" -ge 90 ]; then
+  echo "Nilai A"
+elif [ "$nilai" -ge 75 ]; then
+  echo "Nilai B"
+else
+  echo "Nilai C"
+fi
+
+case "$nilai" in
+  9*) echo "tingkat atas" ;;
+  8*) echo "tingkat menengah" ;;
+  *)  echo "tingkat lain" ;;
+esac`} />

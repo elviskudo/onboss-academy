@@ -1,0 +1,180 @@
+---
+title: "Perulangan"
+description: "4 struktur perulangan PHP — for, foreach, while, do-while — plus break dan continue"
+order: 5
+quiz:
+  - q: "Berapa struktur perulangan inti PHP?"
+    options: ["2", "3", "4: for, foreach, while, do-while", "8"]
+    answer: 2
+    explain: "Keempatnya masing-masing punya tempat: penghitung, array, kondisi awal, dan minimal sekali."
+  - q: "for ($i = 0; $i < 3; $i++) akan berjalan…"
+    options: ["3 kali (0, 1, 2)", "2 kali", "4 kali", "Tak terhingga"]
+    answer: 0
+    explain: "Loop berhenti saat kondisi tengah jadi false — nilai 3 tidak ikut dieksekusi."
+  - q: "Apa beda while dan do-while?"
+    options: ["do-while lebih lambat", "do-while mengecek kondisi setelah blok — minimal sekali jalan", "while tidak valid PHP", "Tidak ada bedanya"]
+    answer: 1
+    explain: "while bisa 0 kali; do-while minimal 1 kali karena pengecekan ada di akhir."
+  - q: "continue; di dalam foreach berfungsi…"
+    options: ["Mengulang dari awal", "Menghentikan seluruh loop", "Melompat ke iterasi berikutnya", "Menghapus array"]
+    answer: 2
+    explain: "Sisa blok iterasi current dilewati; break menghentikan loop total."
+  - q: "Yang membedakan foreach dari for untuk array adalah…"
+    options: ["for tidak boleh menerima array", "Tidak ada bedanya", "foreach lebih cepat selalu", "foreach tidak perlu mengelola indeks sendiri"]
+    answer: 3
+    explain: "foreach menyusuri isi array apa adanya — menghindari off-by-one pada penghitung indeks."
+example:
+  code: |
+    <?php
+    $buah = ["Apel", "Mangga", "Anggur"];
+    foreach ($buah as $b) {
+        echo "- $b\n";
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perulangan menjalankan blok kode yang sama berkali-kali. PHP punya **4 struktur perulangan** — pilih berdasarkan apa yang kamu tahu sebelum loop dimulai.
+
+## Kapan Pakai Mana
+
+| Struktur | Bentuk | Kapan dipakai |
+| --- | --- | --- |
+| `for` | `for (mulai; kondisi; langkah)` | Jumlah iterasi diketahui & terkait penghitung |
+| `foreach` | `foreach ($arr as $x)` | Menyusuri array — **paling aman untuk array** |
+| `while` | `while (kondisi)` | Jumlah tak diketahui, bergantung kondisi berubah |
+| `do-while` | `do {...} while (kondisi)` | Minimal harus jalan sekali (menu, konfirmasi) |
+
+```php
+<?php
+// for — penghitung
+for ($i = 1; $i <= 3; $i++) {
+    echo "Perulangan ke-$i\n";
+}
+
+// while — kondisi
+$sisa = 3;
+while ($sisa > 0) {
+    echo "Sisa $sisa\n";
+    $sisa--;
+}
+
+// do-while — minimal sekali
+$n = 5;
+do {
+    echo "Minimal sekali: $n\n";
+    $n--;
+} while ($n > 10);   // kondisi tak pernah true, blok tetap jalan sekali
+```
+
+## foreach: 2 Bentuk
+
+```php
+<?php
+$buah = ["Apel", "Mangga", "Anggur"];
+
+foreach ($buah as $b) {
+    echo "- $b\n";
+}
+
+foreach ($buah as $indeks => $b) {
+    echo ($indeks + 1) . ". $b\n";
+}
+
+$siswa = ["nama" => "Sari", "nilai" => 90];
+foreach ($siswa as $kunci => $nilai) {
+    echo "$kunci: $nilai\n";
+}
+```
+
+Untuk angka berurutan, `foreach (range(1, 5) as $n)` menggantikan for tanpa risiko salah batas.
+
+## 2 Pengendali Alur
+
+```php
+<?php
+foreach ([1, 2, 3, 4, 5] as $n) {
+    if ($n === 3) continue;   // lompati 3
+    if ($n === 4) break;      // berhenti total di 4
+    echo $n;                  // output: 12
+}
+```
+
+`break` dan `continue` menerima level: `break 2` keluar dua tingkat loop bersarang, `continue 2` melompat satu iterasi di loop luar. `exit;` berbeda lagi — ia menghentikan seluruh skrip, bukan cuma loop.
+
+## 4 Pola Klasik
+
+```php
+<?php
+$nilai = [70, 85, 60, 92, 75];
+
+// 1. Akumulasi
+$total = 0;
+foreach ($nilai as $n) { $total += $n; }
+
+// 2. Cari pertama
+$tertinggi = null;
+foreach ($nilai as $n) {
+    if ($n > 80) { $tertinggi = $n; break; }
+}
+
+// 3. Filter → array baru
+$KKM = [];
+foreach ($nilai as $n) { if ($n >= 70) $KKM[] = $n; }
+
+// 4. Hitung frekuensi
+$frek = ["A" => 0, "B" => 0];
+foreach ($nilai as $n) { $n >= 85 ? $frek["A"]++ : $frek["B"]++; }
+
+echo $total, " ", $tertinggi, " ", count($KKM), "\n";
+```
+
+Tiga pola terakhir juga punya padanan fungsi sekali jalan: `array_sum`, `array_filter`, `array_count_values`.
+
+## Loop Bersarang
+
+```php
+<?php
+for ($i = 1; $i <= 3; $i++) {
+    for ($j = 1; $j <= 3; $j++) {
+        echo "$i x $j = " . ($i * $j) . "\n";
+    }
+}
+```
+
+Batasi maksimal 2 tingkat bersarang — lebih dari itu, angkat inner loop jadi fungsi terpisah.
+
+## Di Dunia Nyata
+
+- **Menampilkan daftar produk** dari array hasil query dengan nomor urut otomatis.
+- **Batch email newsletter**: `while` mengambil 100 alamat per batch sampai query mengembalikan kosong.
+- **Kuis dengan feed-back**: `do-while` mengulang soal sampai jawaban benar, minimal sekali tampil.
+- **Membuat tabel perkalian** untuk halaman latihan sekolah dengan for bersarang.
+- **Memproses baris CSV**: `foreach (explode("\n", $isi) as $baris)` lalu `continue` saat baris kosong atau komentar.
+
+<div class="note">💡 Hati-hati loop tanpa batas: pastikan selalu ada kondisi yang benar-benar berubah menuju nilai berhenti, atau pasang `break` pengaman. Loop yang tidak pernah selesai memakan CPU server sampai request di-kill — dan di PHP, tiap detik yang hilang itu tagihan hosting bersama.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$buah = ["Apel", "Mangga", "Anggur"];
+
+foreach ($buah as $indeks => $b) {
+    echo ($indeks + 1) . ". $b\\n";
+}
+
+echo "---\\n";
+for ($i = 1; $i <= 3; $i++) {
+    echo "$i x 7 = " . ($i * 7) . "\\n";
+}
+
+echo "---\\n";
+$hitung = 0;
+while ($hitung < 3) {
+    echo "while ke-" . ($hitung + 1) . "\\n";
+    $hitung++;
+}
+
+echo "---\\n";
+foreach (range(1, 6) as $n) {
+    if ($n % 2 === 0) continue;
+    echo "Ganjil: $n\\n";
+}`} />

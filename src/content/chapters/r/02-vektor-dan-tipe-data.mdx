@@ -1,0 +1,150 @@
+---
+title: "Vektor & Tipe Data"
+description: "Unit dasar R: 6 tipe vektor atomik, coercion, indexing 1-based, recycling, NA, dan factor"
+order: 2
+quiz:
+  - q: "Vektor atomik di R berisi…"
+    options: ["Elemen bertipe campur", "Satu tipe data saja, panjang berapa pun", "Hanya angka", "Khusus teks"]
+    answer: 1
+    explain: "Vektor atomik homogen; untuk elemen bertipe campur gunakan list."
+  - q: "Urutan coercion ketika logical, integer, double, dan character dicampur adalah…"
+    options: ["character → double → integer → logical", "logical → integer → double → character", "integer → character → logical → double", "Tidak ada coercion"]
+    answer: 1
+    explain: "R menaikkan semua elemen ke tipe paling fleksibel agar vektor tetap homogen."
+  - q: "Apa fungsi index negatif x[-2]?"
+    options: ["Mengambil elemen kedua", "Menghasilkan error", "Mengambil semua kecuali elemen kedua", "Mengubah elemen kedua negatif"]
+    answer: 2
+    explain: "Index negatif mengecualikan posisi; index positif memilih posisi."
+  - q: "Cara yang benar menguji nilai hilang adalah…"
+    options: ["x == NA", "is.na(x)", "x === NA", "missing(x)"]
+    answer: 1
+    explain: "NA bukan nilai biasa; perbandingan dengannya tetap menghasilkan NA, jadi gunakan is.na()."
+  - q: "Recycling tanpa warning terjadi bila…"
+    options: ["Panjang vektor kecil membagi habis panjang vektor besar", "Kedua vektor bertipe sama", "Vektor berisi integer", "Selalu tanpa warning"]
+    answer: 0
+    explain: "Jika panjang bukan kelipatan, R tetap menghitung tetapi memberi warning karena pasangan elemen tidak rapi."
+example:
+  code: |
+    nilai <- c(85, 90, 78, 92)
+    nama <- c("Adi", "Budi", "Citra", "Dewi")
+    cat(nama[2], "nilai:", nilai[2], "\n")
+    cat("Naik 5 poin:", nilai + 5, "\n")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Vektor adalah unit data terkecil R: satu nilai pun sebenarnya vektor dengan panjang 1. Memahami tipe atomik, coercion, indexing, dan nilai hilang membuat hampir semua operasi R berikutnya terasa konsisten.
+
+## Enam Tipe Vektor Atomik
+
+R punya **6 tipe atomik**. Empat pertama paling sering muncul dalam analisis sehari-hari:
+
+| Tipe | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| logical | `TRUE`, `FALSE`, `NA` | `c(TRUE, FALSE)` | filter dan kondisi |
+| integer | bilangan bulat, sufiks `L` | `42L` | hitungan diskret |
+| double | bilangan riil default | `3.14` | ukuran dan statistik |
+| complex | bilangan kompleks | `2 + 3i` | komputasi matematis |
+| character | teks Unicode | `"Jakarta"` | label dan kategori mentah |
+| raw | byte mentah | `charToRaw("A")` | data biner |
+
+`numeric` biasanya berarti double. Periksa penyimpanan internal dengan `typeof()`, dan kelas pemakaian dengan `class()`.
+
+## Membuat Vektor
+
+Ada 4 pembuat vektor yang umum:
+
+```r
+angka <- c(10, 20, 30)
+rentang <- 1:5
+deret <- seq(from = 0, to = 1, by = 0.25)
+ulang <- rep(c("A", "B"), times = 2)
+```
+
+| Fungsi | Hasil |
+| --- | --- |
+| `c()` | menggabungkan nilai |
+| `:` | urutan integer satu langkah |
+| `seq()` | deret dengan batas/langkah terkontrol |
+| `rep()` | pengulangan nilai |
+
+Semua menghasilkan vektor homogen: setiap elemen punya tipe sama.
+
+## Coercion: Saat Tipe Dicampur
+
+```r
+c(TRUE, 2L)          # integer: 1, 2
+c(1L, 2.5)           # double: 1.0, 2.5
+c(1, "dua")          # character: "1", "dua"
+as.integer(c("2", "3"))
+```
+
+Urutan coercion yang perlu diingat: **logical → integer → double → complex → character**. `raw` berdiri terpisah. Konversi eksplisit memakai keluarga `as.integer()`, `as.double()`, `as.character()`, dan `as.logical()`.
+
+## Empat Cara Indexing
+
+R mulai dari index **1**, bukan 0:
+
+```r
+x <- c(a = 4, b = 8, c = 15, d = 16, e = 23)
+x[1]                 # posisi
+x[c(1, 3, 5)]        # beberapa posisi
+x[-c(1, 2)]          # kecualikan posisi
+x[x > 15]            # vektor logis
+x[c("a", "d")]     # nama
+```
+
+Lima bentuk di atas sebenarnya mewakili 4 kategori index: positif, negatif, logis, dan nama. Jangan mencampur index positif dan negatif dalam satu ekspresi.
+
+## Vektorisasi dan Recycling
+
+```r
+a <- c(1, 2, 3)
+b <- c(10, 20, 30)
+a + b                 # 11, 22, 33
+a * 2                 # 2, 4, 6
+a > 1                 # FALSE, TRUE, TRUE
+```
+
+Operator bekerja elemen demi elemen. Vektor panjang 1 direcycle ke semua elemen — ini yang membuat `a * 2` alami. Jika panjang vektor pendek tidak membagi habis panjang vektor panjang, R memberi warning; biasanya itu tanda salah data.
+
+## Nilai Khusus
+
+R punya **4 nilai khusus** yang harus dibedakan:
+
+| Nilai | Arti | Cara menguji |
+| --- | --- | --- |
+| `NA` | nilai hilang/tidak diketahui | `is.na(x)` |
+| `NaN` | hasil numerik tak terdefinisi | `is.nan(x)` |
+| `Inf`, `-Inf` | tak hingga | `is.infinite(x)` |
+| `NULL` | objek tidak ada/panjang nol | `is.null(x)` |
+
+`NA == NA` menghasilkan `NA`, bukan `TRUE`, karena dua hal yang tidak diketahui belum tentu sama. Gunakan `is.na()`.
+
+## Factor untuk Kategori
+
+```r
+kota <- factor(c("Jakarta", "Bandung", "Jakarta", "Surabaya"))
+levels(kota)
+table(kota)
+```
+
+Factor menyimpan label kategori beserta level yang valid. Cocok untuk variabel nominal/ordinal dan digunakan model statistik; bukan pengganti character untuk teks bebas.
+
+## Di Dunia Nyata
+
+1. **Filter pelanggan aktif** — vektor logical `aktif & saldo > 0` langsung memilih seluruh baris yang memenuhi dua syarat.
+2. **Normalisasi sensor** — `(suhu - mean(suhu)) / sd(suhu)` menstandardisasi satu kolom tanpa loop.
+3. **Membersihkan nilai hilang** — `x[!is.na(x)]` menghapus observasi tak diketahui sebelum ringkasan.
+4. **Kategori survei** — factor dengan level `rendah`, `sedang`, `tinggi` menjaga urutan analisis ordinal.
+5. **Konversi impor CSV** — `as.numeric()` mengubah kolom angka yang terbaca character setelah simbol mata uang dibersihkan.
+
+<div class="note">💡 Vektor harus homogen. Jika `c(1, "2", 3)` tiba-tiba tidak bisa dihitung, bukan R kehilangan angka: seluruh vektor telah di-coerce menjadi character. Cek `typeof()` setelah impor data.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`nilai <- c(85, 90, 78, 92, NA)
+nama <- c("Adi", "Budi", "Citra", "Dewi", "Eka")
+print(nilai[!is.na(nilai) & nilai >= 85])
+print(nama[nilai == max(nilai, na.rm = TRUE)])
+print(nilai + 5)
+print(mean(nilai, na.rm = TRUE))
+print(table(factor(c("A", "B", "A", "C"))))`} />

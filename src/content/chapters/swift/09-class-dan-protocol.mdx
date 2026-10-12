@@ -1,0 +1,228 @@
+---
+title: "Class & Protocol"
+description: "Referensi bersama dengan class dan kontrak perilaku dengan protocol"
+order: 9
+quiz:
+  - q: "Perbedaan utama class dibanding struct adalah…"
+    options: ["class tidak punya properti", "class berupa referensi bersama", "struct tidak boleh punya method", "tidak ada perbedaan"]
+    answer: 1
+    explain: "Dua variabel yang menunjuk class yang sama melihat data yang sama."
+  - q: "Protocol pada Swift mirip dengan…"
+    options: ["kelas induk", "variabel", "interface", "komentar"]
+    answer: 2
+    explain: "Protocol menyatakan method dan properti yang wajib dipenuhi."
+  - q: "Sebuah class boleh mewarisi berapa class induk?"
+    options: ["satu", "dua", "tanpa batas", "nol"]
+    answer: 0
+    explain: "Swift memakai pewarisan tunggal, tapi boleh mengadopsi banyak protocol."
+  - q: "deinit dipanggil saat…"
+    options: ["program mulai", "objek dilepas dari memori", "method dipanggil", "berkas dikompilasi"]
+    answer: 1
+    explain: "Tempat membersihkan sumber daya sebelum objek hilang."
+  - q: "Kata kunci untuk mengecek apakah objek mengikuti protocol adalah…"
+    options: ["instanceof", "is", "has", "implements"]
+    answer: 1
+    explain: "is memeriksa kepatuhan, sedangkan as? mengubah tipe secara aman."
+example:
+  code: |
+    protocol DapatDiubah {
+        func perbarui()
+    }
+
+    class Akun: DapatDiubah {
+        var saldo: Int
+
+        init(saldo: Int) {
+            self.saldo = saldo
+        }
+
+        func perbarui() {
+            saldo += 1000
+        }
+    }
+
+    let a = Akun(saldo: 5000)
+    a.perbarui()
+    print("Saldo: \(a.saldo)")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Class memberi referensi bersama, protocol memberi kontrak. Keduanya melengkapi struct dan enum yang kamu pelajari sebelumnya.
+
+## Class Dasar
+
+```swift
+class Akun {
+    var saldo: Int
+
+    init(saldo: Int) {
+        self.saldo = saldo
+    }
+
+    func tambah(_ jumlah: Int) {
+        saldo += jumlah
+    }
+}
+
+let a = Akun(saldo: 5000)
+a.tambah(2000)
+print(a.saldo)
+```
+
+`init` adalah constructor, `self` merujuk ke objek yang sedang berjalan.
+
+## Referensi Bersama
+
+```swift
+class Kursus {
+    var judul = "Swift Dasar"
+}
+
+let kursus = Kursus()
+let salinan = kursus
+
+salinan.judul = "Swift Lanjutan"
+print(kursus.judul)   // ikut berubah
+```
+
+Berbeda dengan struct, perubahan lewat satu referensi terlihat di referensi lain.
+
+## Protocol
+
+```swift
+protocol DapatDiubah {
+    func perbarui()
+}
+
+class Akun: DapatDiubah {
+    func perbarui() {
+        print("Akun diperbarui")
+    }
+}
+
+let akun: DapatDiubah = Akun()
+akun.perbarui()
+```
+
+Protocol dipakai sebagai tipe, sehingga bisa menerima tipe apa pun yang memenuhi kontrak. Inilah inti **protocol-oriented programming**: perilaku dipasang lewat protocol, bukan lewat pewarisan class.
+
+Yang bisa diminta sebuah protocol:
+
+| Bentuk | Contoh | Catatan |
+| --- | --- | --- |
+| Method | `func perbarui()` | tanpa isi — wajib diisi penerimanya |
+| Properti | `var nama: String { get }` | tentukan `get` saja atau `get set` |
+| Init | `init(saldo: Int)` | penerimanya wajib mendefinisikannya |
+| Default implementation | extension protocol di file yang sama | opsional bagi penerima |
+
+```swift
+protocol DapatDiskon {
+    func hargaAkhir() -> Int
+}
+
+extension DapatDiskon {
+    func hargaAkhir() -> Int { 0 }   // nilai bawaan
+}
+
+struct Produk: DapatDiskon {
+    var harga: Int
+}
+```
+
+Dua struct berbeda bisa mengadopsi `DapatDiskon` tanpa punya induk yang sama — hal yang mustahil lewat pewarisan. Untuk berbagi perilaku antar tipe berbeda, protocol menang; pewarisan hanya untuk "adalah turunan dari".
+
+## Pewarisan
+
+```swift
+class Kursus {
+    func info() {
+        print("Kursus umum")
+    }
+}
+
+class KursusPremium: Kursus {
+    func bonus() {
+        print("Ada bonus tambahan")
+    }
+}
+
+let k = KursusPremium()
+k.info()
+k.bonus()
+```
+
+Satu class induk, tetapi boleh mengadopsi banyak protocol sekaligus. Swift memungkinkan pengecekan dan pengubahan tipe secara aman:
+
+```swift
+let objek: Any = Akun(saldo: 1000)
+
+if objek is Akun {
+    print("Ini Akun")
+}
+
+if let akun = objek as? Akun {
+    akun.tambah(500)          // downcast aman, gagal → nil
+}
+```
+
+`is` mengecek kepatuhan, `as?` mengubah tipe dengan aman, `as!` memaksa (crash bila salah). Perbandingan opsi berbagi perilaku di Swift:
+
+| Mekanisme | Jumlah induk | Fleksibilitas | Contoh |
+| --- | --- | --- | --- |
+| Pewarisan class | tepat 1 | terbatas satu rantai | `KursusPremium: Kursus` |
+| 1 protocol | tidak perlu induk | bisa dipenuhi tipe apa pun | `DapatDiubah` |
+| Banyak protocol | tidak perlu induk | komposisi bebas | `DapatDiubah & DapatDiskon` |
+
+## Membersihkan Objek
+
+```swift
+class Sesi {
+    func mulai() {
+        print("Sesi dimulai")
+    }
+
+    deinit {
+        print("Sesi dihapus")
+    }
+}
+
+var s: Sesi? = Sesi()
+s?.mulai()
+s = nil
+```
+
+## Di Dunia Nyata
+
+- **Sumber data yang bisa diganti** — protocol `SumberData` memungkinkan aplikasi berpindah dari mock ke server tanpa mengubah kode pemanggil.
+- **Objek yang diubah banyak tempat** — `class Akun` (bukan struct) dipakai ketika saldo harus terlihat sama di seluruh layar.
+- **Membersihkan koneksi** — `deinit { tutup() }` menutup resource saat objek terakhir dilepas.
+- **Mencetak berbagai tipe** — protocol `DapatDicetak` dipenuhi struct, class, dan enum sekaligus untuk laporan log.
+- **State observer** — banyak tipe mengikuti protocol delegate/callback yang sama agar layar mendapat kabar saat data berubah.
+
+
+<div class="note">💡 Protokol lebih fleksibel daripada pewarisan: satu tipe bisa memenuhi banyak protokol tanpa terikat satu induk. Untuk berbagi perilaku antar tipe berbeda, mulailah dari protocol.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`protocol DapatDiubah {
+    func perbarui()
+}
+
+class Akun: DapatDiubah {
+    var saldo: Int
+
+    init(saldo: Int) {
+        self.saldo = saldo
+    }
+
+    func perbarui() {
+        saldo += 1000
+    }
+}
+
+let a = Akun(saldo: 5000)
+a.perbarui()
+print("Saldo: \\(a.saldo)")
+
+let b = a
+b.perbarui()
+print("Setelah referensi bersama: \\(a.saldo)")`} />

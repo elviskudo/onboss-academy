@@ -1,0 +1,146 @@
+---
+title: "JSONB dan DML di PostgreSQL"
+description: "Data JSON terindeks, INSERT/UPDATE/DELETE RETURNING, dan praktik akhir"
+order: 8
+quiz:
+  - q: "Perbedaan JSON dan JSONB di PostgreSQL adalah…"
+    options: ["JSONB hanya untuk angka", "JSONB disimpan binary terindeks; JSON teks mentah", "JSON lebih cepat selalu", "Tidak ada bedanya"]
+    answer: 1
+    explain: "JSONB membuang spasi/duplikat dan mendukung index — praktis untuk query JSON di produksi."
+  - q: "Operator ->> pada JSONB PostgreSQL mengembalikan…"
+    options: ["Selalu angka", "Nilai sebagai teks (TEXT)", "Struktur JSON mentah", "Index"]
+    answer: 1
+    explain: "->> mengambil nilai sebagai teks; -> mengembalikan node JSON — pilih sesuai kebutuhan."
+  - q: "INSERT ... RETURNING id pada Postgres berguna untuk…"
+    options: ["Menghapus baris", "Membuat index", "Langsung mendapat id otomatis baris baru", "Mengurutkan data"]
+    answer: 2
+    explain: "Satu perintah INSERT sekaligus mengembalikan id SERIAL — tidak perlu SELECT susulan."
+  - q: "UPDATE ... SET ... WHERE ... RETURNING * menampilkan…"
+    options: ["Struktur tabel", "Semua tabel", "Log server", "Baris yang baru diubah, semua kolom"]
+    answer: 3
+    explain: "RETURNING * memunculkan seluruh kolom baris hasil perubahan dalam satu perintah."
+  - q: "Index GIN pada JSONB berfungsi untuk…"
+    options: ["Mempercepat pencarian isi JSON (mis. operator @>)", "Mengompres JSON", "Menghapus JSON", "Mengurutkan JSON"]
+    answer: 0
+    explain: "GIN index membuat query containment @> pada dokumen besar tetap cepat."
+example:
+  code: |
+    INSERT INTO karyawan (nama, jabatan, gaji, dept)
+    VALUES ('Sinta Dewi', 'Analytics Engineer', 10800000, 'Data')
+    RETURNING id, nama;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bab penutup: **JSONB** untuk data fleksibel, **DML RETURNING** untuk umpan balik langsung, dan praktik menyeluruh memakai seluruh yang telah dipelajari.
+
+## Apa itu JSONB dan DML?
+
+JSONB adalah format JSON biner milik Postgres: struktur diparse saat ditulis agar cepat dicari dan bisa di-index. DML (*Data Manipulation Language*) adalah **3 perintah utama** yang mengubah data: INSERT, UPDATE, dan DELETE.
+
+| Konsep | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| JSON | simpan JSON sebagai teks mentah | kolom JSON | menjaga format input persis |
+| JSONB | simpan JSON terurai & terindeks | kolom JSONB | query atribut fleksibel |
+| INSERT | menambah baris | INSERT INTO ... | data baru |
+| UPDATE | mengubah baris | UPDATE ... WHERE ... | koreksi/status |
+| DELETE | menghapus baris | DELETE ... WHERE ... | retensi/penghapusan |
+
+JSON mempertahankan whitespace dan urutan kunci; JSONB membuangnya demi pencarian cepat, deduplikasi kunci, dan dukungan GIN index. Untuk aplikasi, hampir selalu pilih JSONB.
+
+## JSONB: Operator dan Index
+
+Ada **5 operator JSONB inti** yang harus dikenal:
+
+| Operator | Hasil | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `->` | node JSON | data -> 'skills' | array/objek untuk diproses lagi |
+| `->>` | teks | data ->> 'nama' | tampil/filter sebagai string |
+| `@>` | containment | `data @> '{"remote":true}'` | mencari dokumen beratribut |
+| `?` | boolean keberadaan kunci | data ? 'remote' | validasi field ada |
+| `#>>` | teks lewat path | data #>> '{alamat,kota}' | nilai bersarang |
+
+```sql
+CREATE TABLE profil (
+  id    SERIAL PRIMARY KEY,
+  data  JSONB NOT NULL
+);
+
+INSERT INTO profil (data)
+VALUES ('{"nama": "Sari", "skills": ["SQL", "Python"], "remote": true}');
+
+SELECT data ->> 'nama' AS nama,
+       data -> 'skills' AS skills
+FROM profil
+WHERE data @> '{"remote": true}';
+
+CREATE INDEX profil_data_gin ON profil USING GIN (data);
+```
+
+GIN index mempercepat containment dan pencarian key pada ribuan dokumen. Tanpa index, Postgres harus memeriksa JSONB setiap baris.
+
+## DML dengan RETURNING
+
+```sql
+UPDATE karyawan
+SET gaji = gaji + 300000
+WHERE dept = 'Data'
+RETURNING id, nama, gaji, gaji - 300000 AS gaji_sebelumnya;
+```
+
+`RETURNING` bisa menyertai `INSERT`, `UPDATE`, dan `DELETE`. API cukup satu round-trip untuk mengubah dan mengembalikan data terbaru — pola yang disukai ORM modern.
+
+## Mengubah JSONB
+
+```sql
+UPDATE profil
+SET data = jsonb_set(data, '{remote}', 'false'::jsonb)
+WHERE id = 1
+RETURNING data;
+
+UPDATE profil
+SET data = data || '{"level": "senior"}'::jsonb
+WHERE id = 1;
+```
+
+`jsonb_set` mengganti nilai di path tertentu; operator `||` menggabungkan objek. Keduanya menghindari membaca seluruh JSON ke aplikasi hanya untuk mengubah satu atribut.
+
+## Praktik: Laporan Lengkap
+
+```sql
+WITH rata AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata.rata,
+       CASE WHEN k.gaji > rata.rata THEN 'Di atas rata-rata'
+            ELSE 'Di bawah rata-rata' END AS posisi
+FROM karyawan k
+JOIN rata ON k.dept = rata.dept
+ORDER BY k.gaji DESC;
+```
+
+CTE menghitung rata-rata per departemen; CASE memberi label posisi; JOIN menyatukannya ke tiap karyawan — sintaks yang sama persis berjalan di PostgreSQL, MySQL 8, dan SQLite.
+
+## Di Dunia Nyata
+
+- **Katalog e-commerce** — kolom biasa menyimpan SKU/harga, JSONB menyimpan atribut berbeda per kategori seperti warna, RAM, atau ukuran sepatu.
+- **Profil pengguna** — preferensi UI yang sering bertambah disimpan JSONB tanpa migrasi setiap kali ada toggle baru.
+- **API create/update** — RETURNING mengirim ID dan timestamp terbaru dalam satu round-trip database.
+- **Audit penghapusan** — DELETE RETURNING memasok baris lama ke sistem log sebelum benar-benar hilang.
+- **Pencarian metadata AI** — GIN index menyaring dokumen JSONB berdasarkan tenant, bahasa, dan tipe sebelum pencarian vektor.
+
+<div class="note">💡 JSONB cocok untuk atribut fleksibel; tetap gunakan kolom terpisah untuk data yang sering difilter, di-join, atau dijadikan constraint. Keduanya bisa hidup berdampingan dalam satu tabel.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`WITH rata AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata.rata AS rata_dept,
+       CASE WHEN k.gaji > rata.rata THEN 'Di atas rata-rata'
+            ELSE 'Di bawah rata-rata' END AS posisi
+FROM karyawan k
+JOIN rata ON k.dept = rata.dept
+ORDER BY k.gaji DESC;`} />

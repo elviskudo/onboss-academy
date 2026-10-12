@@ -1,0 +1,130 @@
+---
+title: "Filter Data dengan WHERE"
+description: "Menyaring baris dengan operator perbandingan, LIKE, IN, dan BETWEEN"
+order: 2
+quiz:
+  - q: "Klausa untuk menyaring baris adalah…"
+    options: ["WHERE", "ORDER BY", "LIMIT", "AS"]
+    answer: 0
+    explain: "WHERE menyaring baris: hanya baris yang memenuhi kondisi yang ditampilkan."
+  - q: "Berapa operator perbandingan standar yang dipakai di WHERE?"
+    options: ["4", "5", "6", "8"]
+    answer: 2
+    explain: "Ada 6: =, <>, <, >, <=, >= — dengan != sebagai alternatif penulisan <>."
+  - q: "Operator LIKE '%an%' cocok untuk…"
+    options: ["Mencari teks yang mengandung 'an' di posisi mana pun", "Mencari teks yang diawali 'an'", "Mencari teks persis 'an'", "Mencari angka"]
+    answer: 0
+    explain: "% adalah wildcard artinya teks apa saja. '%an%' berarti mengandung 'an' di posisi mana pun."
+  - q: "BETWEEN 7000000 AND 9000000 dengan rentang biasa adalah…"
+    options: ["BETWEEN tidak valid di SQL", "BETWEEN sudah termasuk kedua ujung rentang", "BETWEEN hanya untuk teks", "BETWEEN mengurutkan data"]
+    answer: 1
+    explain: "BETWEEN bersifat inklusif — nilai 7000000 dan 9000000 sendiri ikut masuk."
+  - q: "WHERE gaji = NULL tidak pernah mengembalikan baris karena…"
+    options: ["NULL selalu dianggap 0", "Perbandingan dengan NULL hasilnya selalu tidak diketahui, bukan TRUE", "Kolom gaji bukan angka", "Syaratnya terbalik"]
+    answer: 1
+    explain: "NULL berarti 'tidak diketahui' — karena itu wajib pakai IS NULL / IS NOT NULL."
+example:
+  code: |
+    SELECT nama, gaji
+    FROM karyawan
+    WHERE gaji >= 10000000
+    ORDER BY gaji DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanpa filter, query selalu mengembalikan **semua baris**. `WHERE` menambahkan syarat supaya hanya data yang kita cari yang muncul — dan syarat itu ditulis dengan **operator query**.
+
+## 6 Operator Perbandingan
+
+| Operator | Arti | Contoh | Hasil pada gaji 9.500.000 |
+|----------|------|--------|---------------------------|
+| `=` | sama dengan | `gaji = 9500000` | TRUE |
+| `<>` (atau `!=`) | tidak sama | `gaji <> 9000000` | TRUE |
+| `<` | kurang dari | `gaji < 10000000` | TRUE |
+| `>` | lebih dari | `gaji > 10000000` | FALSE |
+| `<=` | kurang dari atau sama | `gaji <= 9500000` | TRUE |
+| `>=` | lebih dari atau sama | `gaji >= 9500000` | TRUE |
+
+```sql
+SELECT nama, jabatan, gaji
+FROM karyawan
+WHERE gaji >= 9500000 AND dept = 'Engineering';
+```
+
+## 3 Operator Logika
+
+`AND`, `OR`, dan `NOT` menggabungkan beberapa kondisi. `AND` menuntut semuanya benar, `OR` cukup satu yang benar, `NOT` membalik kondisi.
+
+Prioritas baca: `NOT` → `AND` → `OR`. Kalau ragu, tulis kurung — `WHERE (dept = 'Data' OR dept = 'Design') AND gaji > 8000000` jauh lebih jelas daripada mengandalkan ingatan soal precedence.
+
+## 5 Operator Predikat Khusus
+
+| Operator | Fungsi | Contoh |
+|----------|--------|--------|
+| `LIKE` | cocokkan pola teks | `jabatan LIKE '%Developer%'` |
+| `IN` | keanggotaan daftar nilai | `dept IN ('Data','Design')` |
+| `BETWEEN` | rentang inklusif dua ujung | `gaji BETWEEN 7000000 AND 10000000` |
+| `IS NULL` | cek nilai kosong | `dept IS NOT NULL` |
+| `EXISTS` | cek ada-tidaknya baris hasil query lain | `EXISTS (SELECT 1 FROM proyek)` |
+
+```sql
+-- gaji antara 7 juta sampai 10 juta (dua ujung ikut)
+SELECT nama, gaji FROM karyawan
+WHERE gaji BETWEEN 7000000 AND 10000000;
+
+-- dept tertentu saja
+SELECT nama, dept FROM karyawan
+WHERE dept IN ('Data', 'Design', 'Product');
+```
+
+`BETWEEN` mencakup kedua ujung rentang. `IN` memudahkan mengecek keanggotaan daftar nilai — setara dengan bertumpuk-tumpuk `OR`, tapi lebih ringkas dan lebih cepat diproses database.
+
+## Mencari Teks dengan LIKE
+
+```sql
+SELECT nama, jabatan
+FROM karyawan
+WHERE jabatan LIKE '%Developer%';
+```
+
+Ada tepat 2 wildcard dalam LIKE:
+
+- `%` — teks apa saja, termasuk kosong
+- `_` — tepat satu karakter
+
+Jadi `LIKE 'D%'` mencari yang diawali huruf D, dan `LIKE '_udi'` cocok dengan `Budi` tapi bukan `Judi`.
+
+## Menangani NULL
+
+```sql
+SELECT nama, dept FROM karyawan
+WHERE dept IS NOT NULL;
+```
+
+NULL adalah "tidak diketahui" — karena itu tidak bisa dibandingkan dengan `=`. `WHERE dept = NULL` tidak pernah menampilkan apa pun; harus `IS NULL` atau `IS NOT NULL`. Ini salah satu kejatuhan klasik: hasil `NULL` membuat seluruh kondisi jadi tidak pasti, bukan FALSE.
+
+## Urutan Eksekusi Logis
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE dept = 'Engineering'
+ORDER BY gaji DESC;
+```
+
+Urutan logis: `FROM` → `WHERE` (saring) → `SELECT` (pilih kolom) → `ORDER BY` (urutkan). Karena WHERE jalan sebelum ORDER BY, filter di WHERE tidak pernah membuang baris yang belum sempat dihitung — dan query tetap bisa dioptimasi database.
+
+## Di Dunia Nyata
+
+- **Filter produk diskon di toko online**: `WHERE harga BETWEEN 100000 AND 500000 AND status = 'aktif'` untuk halaman kisaran harga.
+- **Validasi form login di sisi database**: `WHERE email = ? AND status = 'aktif'` — hanya akun aktif yang lolos.
+- **Pencarian nama pegawai dengan typo toleran**: `WHERE nama LIKE '%Putri%'` menemukan "Maya Putri" dari kolom mana pun.
+- **Membersihkan data impor**: `WHERE email IS NULL OR email = ''` menandai baris yang belum lengkap sebelum dikirim ke tim data.
+
+<div class="note">💡 Tanda kutip tunggal (' ') dipakai untuk nilai teks — `WHERE dept = 'Data'`. Kutip ganda biasanya tidak diterima sebagai penanda string di SQL standar.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama, jabatan, gaji, dept
+FROM karyawan
+WHERE gaji >= 9500000
+ORDER BY gaji DESC;`} />

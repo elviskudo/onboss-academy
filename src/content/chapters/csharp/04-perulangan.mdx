@@ -1,0 +1,208 @@
+---
+title: "Perulangan"
+description: "for, foreach, while, do-while — 4 bentuk loop plus break/continue dan pola klasik"
+order: 4
+quiz:
+  - q: "Perulangan yang paling sering dipakai saat jumlah iterasi sudah diketahui adalah…"
+    options: ["while", "for", "goto", "switch"]
+    answer: 1
+    explain: "for memuat awal, kondisi, dan penambahan dalam satu baris sehingga paling terkontrol."
+  - q: "foreach dipakai untuk…"
+    options: ["membuat kondisi", "menangkap error", "mengulang elemen satu per satu pada koleksi", "mendefinisikan class"]
+    answer: 2
+    explain: "foreach otomatis mengambil tiap item dari array atau List tanpa index manual."
+  - q: "continue pada perulangan berarti…"
+    options: ["keluar dari perulangan", "mengulang dari awal", "menghentikan program", "lanjut ke iterasi berikutnya"]
+    answer: 3
+    explain: "Sisa blok dilewati, lalu iterasi berikutnya langsung dimulai."
+  - q: "while melakukan pengecekan kondisi…"
+    options: ["sebelum blok dijalankan", "setelah blok dijalankan", "tanpa kondisi", "hanya sekali"]
+    answer: 0
+    explain: "while mengecek dulu; jika false sejak awal, bloknya tidak pernah jalan."
+  - q: "Pada foreach, mengubah isi koleksi yang sedang diiterasi akan…"
+    options: ["berhasil diam-diam", "melempar InvalidOperationException", "mengulang dari awal", "mengabaikan perubahan"]
+    answer: 1
+    explain: "C# melarang modifikasi koleksi selama foreach berjalan — gunakan for bila perlu mengubah."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            for (int i = 1; i <= 3; i++)
+            {
+                Console.WriteLine("Perulangan ke-" + i);
+            }
+
+            string[] buah = { "Apel", "Mangga", "Jeruk" };
+            foreach (string b in buah)
+            {
+                Console.WriteLine(b);
+            }
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Alih-alih menyalin kode sepuluh kali, **perulangan menjalankan blok yang sama berulang** dengan kontrol yang jelas. C# punya **4 bentuk perulangan** utama.
+
+## Perbandingan 4 Bentuk
+
+| Bentuk | Sintaks singkat | Pakai saat | Minimal jalan |
+|---|---|---|---|
+| `for` | `for (int i = 0; i < n; i++)` | jumlah iterasi / butuh index | 0 kali |
+| `foreach` | `foreach (string b in buah)` | menelusuri semua elemen | 0 kali |
+| `while` | `while (kondisi)` | berhenti saat syarat berubah | 0 kali |
+| `do-while` | `do { } while (kondisi);` | isi pasti dijalankan sekali | 1 kali |
+
+Selain keempatnya ada `goto` (menuju label) — hampir selalu diganti dengan `break`, `return`, atau pemecahan fungsi.
+
+## Perulangan for
+
+```csharp
+for (int i = 1; i <= 3; i++)
+{
+    Console.WriteLine("Perulangan ke-" + i);
+}
+
+for (int i = buah.Length - 1; i >= 0; i--)   // mundur
+{
+    Console.WriteLine(buah[i]);
+}
+```
+
+Tiga bagian wajib di dalam kurung: **inisialisasi**, **kondisi berhenti**, dan **penambahan**. Variabel counter dideklarasi di dalam kurung agar hanya hidup di blok perulangan. Selama kondisi bernilai `true`, blok terus dijalankan.
+
+## foreach untuk Koleksi
+
+```csharp
+string[] buah = { "Apel", "Mangga", "Jeruk" };
+
+foreach (string b in buah)
+{
+    Console.WriteLine("Buah: " + b);
+}
+```
+
+Ketika kamu hanya perlu mengunjungi setiap elemen, `foreach` lebih bersih karena tidak butuh index. Kekurangannya: tidak bisa mengakses posisi, dan **tidak boleh mengubah koleksi** selama berjalan.
+
+## while dan do-while
+
+```csharp
+int hitung = 3;
+while (hitung > 0)
+{
+    Console.WriteLine("Sisa " + hitung);
+    hitung--;
+}
+
+int skor = 5;
+do
+{
+    Console.WriteLine("Do-while jalan sekali pun");
+    skor--;
+}
+while (skor > 10);
+```
+
+`while` mengecek kondisi sebelum masuk. `do-while` mengecek di akhir, sehingga bloknya **selalu dieksekusi minimal sekali**: pas untuk menu dan prompt input.
+
+## break dan continue
+
+```csharp
+for (int i = 1; i <= 10; i++)
+{
+    if (i == 4) continue;   // lewati angka 4
+    if (i > 6) break;       // berhenti total
+    Console.WriteLine(i);   // hasil: 1 2 3 5 6
+}
+```
+
+`break` keluar dari perulangan terdekat, `continue` melewati sisa iterasi berjalan.
+
+## 4 Pola Klasik
+
+```csharp
+// 1. Akumulasi
+int total = 0;
+foreach (int n in skor) total += n;
+
+// 2. Cari pertama
+int ketemu = -1;
+for (int i = 0; i < skor.Length; i++)
+{
+    if (skor[i] > 50) { ketemu = i; break; }
+}
+
+// 3. Filter → daftar baru
+List<int> lulus = new List<int>();
+foreach (int n in skor)
+{
+    if (n >= 75) lulus.Add(n);
+}
+
+// 4. Hitung frekuensi
+Dictionary<string, int> hitung = new Dictionary<string, int>();
+foreach (string k in kata)
+{
+    if (hitung.ContainsKey(k)) hitung[k]++;
+    else hitung[k] = 1;
+}
+```
+
+Pola frekuensi di atas kini bisa ditulis lebih singkat dengan LINQ: `kata.GroupBy(k => k).ToDictionary(g => g.Key, g => g.Count())` — dibahas di bab Array & List.
+
+## Di Dunia Nyata
+
+- Menampilkan 100 baris log server dengan `for` ber-nomor agar mudah dilaporkan.
+- Memproses antrian pesanan sampai kosong: `while (antrian.Count > 0)`.
+- Menampilkan menu ATM minimal sekali lalu mengulang sampai pengguna memilih keluar: `do-while`.
+- Menghitung rata-rata nilai hanya untuk siswa yang hadir: filter di `if`, bukan di kondisi loop.
+- Loop bersarang untuk membuat laporan 12 bulan × 5 cabang — 60 sel laporan dari dua `for`.
+
+<div class="note">💡 Hati-hati loop tanpa penambahan: <code>for (int i = 0; i &lt; 3;)</code> tanpa <code>i++</code> akan berputar selamanya. Selalu pastikan ada jalur yang membuat kondisi mendekati nilai berhenti.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        for (int i = 1; i <= 5; i++)
+        {
+            Console.WriteLine("Perulangan ke-" + i);
+        }
+
+        int total = 0;
+        for (int i = 1; i <= 100; i++)
+        {
+            total += i;
+        }
+        Console.WriteLine("Jumlah 1..100 = " + total);
+
+        string[] buah = { "Apel", "Mangga", "Jeruk" };
+        foreach (string b in buah)
+        {
+            Console.WriteLine("Buah: " + b);
+        }
+
+        int hitung = 3;
+        while (hitung > 0)
+        {
+            Console.WriteLine("Sisa " + hitung);
+            hitung--;
+        }
+
+        int percobaan = 0;
+        do
+        {
+            percobaan++;
+        }
+        while (percobaan < 3);
+        Console.WriteLine("Percobaan: " + percobaan);
+    }
+}
+`} />

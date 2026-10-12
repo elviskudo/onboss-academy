@@ -1,0 +1,135 @@
+---
+title: "JOIN dan Relasi di MySQL"
+description: "Menghubungkan tabel dengan JOIN dan menjaga relasi lewat foreign key"
+order: 6
+quiz:
+  - q: "Foreign key pada relasi proyek-ke-karyawan adalah…"
+    options: ["karyawan.id", "proyek.lead_id", "proyek.budget", "karyawan.gaji"]
+    answer: 1
+    explain: "proyek.lead_id menunjuk karyawan.id."
+  - q: "LEFT JOIN dari karyawan menampilkan…"
+    options: ["Hanya ketua proyek", "Semua karyawan; proyek bisa NULL", "Hanya proyek", "Cross product"]
+    answer: 1
+    explain: "Semua baris kiri dipertahankan meski tidak punya pasangan."
+  - q: "Ada berapa aksi referensial utama yang dibahas?"
+    options: ["2", "3", "4", "5"]
+    answer: 2
+    explain: "4 aksi: RESTRICT/NO ACTION, CASCADE, SET NULL, dan SET DEFAULT (tidak didukung InnoDB)."
+  - q: "Cara mencari karyawan tanpa proyek adalah…"
+    options: ["INNER JOIN", "LEFT JOIN lalu WHERE proyek.id IS NULL", "CROSS JOIN", "ORDER BY"]
+    answer: 1
+    explain: "Anti-join mempertahankan semua karyawan lalu memilih yang tidak punya pasangan."
+  - q: "Foreign key InnoDB mensyaratkan kolom…"
+    options: ["Boleh berbeda tipe", "Bertipe kompatibel dan terindeks", "Harus VARCHAR", "Harus nullable"]
+    answer: 1
+    explain: "Ukuran/signedness harus kompatibel dan index dibutuhkan untuk pemeriksaan relasi."
+example:
+  code: |
+    SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+    FROM proyek p
+    JOIN karyawan k ON p.lead_id = k.id;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Relasi memecah fakta ke tabel terpisah agar tidak duplikat. MySQL menjaga relasi dengan **foreign key** dan menyusun kembali datanya memakai **JOIN**.
+
+## 3 Bentuk Relasi
+
+| Relasi | Implementasi | Contoh |
+|--------|--------------|--------|
+| One-to-one | foreign key UNIQUE | pengguna–profil |
+| One-to-many | foreign key di tabel many | karyawan–proyek |
+| Many-to-many | tabel penghubung dengan 2 foreign key | karyawan–keahlian |
+
+Ini padanan pemodelan objek: koleksi `proyek` milik karyawan tidak disimpan sebagai array di satu kolom, melainkan sebagai baris terpisah yang menunjuk `karyawan.id`.
+
+## Membuat Foreign Key
+
+```sql
+CREATE TABLE proyek_mysql (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nama VARCHAR(100) NOT NULL,
+  lead_id INT,
+  budget DECIMAL(15,2) NOT NULL,
+  CONSTRAINT fk_proyek_lead
+    FOREIGN KEY (lead_id) REFERENCES karyawan(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL
+) ENGINE=InnoDB;
+```
+
+InnoDB menolak `lead_id` yang tidak ada di tabel karyawan. Tipe kolom harus kompatibel (termasuk signed/unsigned), dan kolom rujukan harus terindeks.
+
+## 4 Aksi Referensial
+
+| Aksi | Saat Parent Berubah/Dihapus | Kapan Dipakai |
+|------|-----------------------------|---------------|
+| `RESTRICT` / `NO ACTION` | tolak operasi | data anak wajib dipertahankan |
+| `CASCADE` | ubah/hapus anak otomatis | data anak tak bermakna tanpa parent |
+| `SET NULL` | kosongkan foreign key | relasi opsional |
+| `SET DEFAULT` | isi default | bagian SQL standar; InnoDB tidak mendukung |
+
+Hindari CASCADE tanpa memahami jangkauannya: satu DELETE dapat merambat ke banyak tabel.
+
+## 4 JOIN Utama
+
+| JOIN | Hasil |
+|------|-------|
+| `INNER` | hanya pasangan cocok |
+| `LEFT` | seluruh kiri + pasangan kanan |
+| `RIGHT` | seluruh kanan + pasangan kiri |
+| `CROSS` | seluruh kombinasi |
+
+MySQL tidak mendukung FULL OUTER JOIN langsung; gabungkan LEFT dan RIGHT dengan UNION jika benar-benar diperlukan.
+
+```sql
+SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+FROM proyek p
+INNER JOIN karyawan k ON p.lead_id = k.id
+ORDER BY p.budget DESC;
+```
+
+Tiga proyek tampil dengan ketuanya. Alias menjaga nama kolom ambigu (`nama`) tetap jelas.
+
+## LEFT JOIN dan Anti-Join
+
+```sql
+SELECT k.nama, k.dept, p.nama AS proyek
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+ORDER BY k.id;
+```
+
+Semua 8 karyawan tampil; 5 yang tidak memimpin proyek mendapat NULL. Untuk hanya yang tanpa proyek, tambahkan `WHERE p.id IS NULL`. Alternatif setara menggunakan `NOT EXISTS`, sering lebih jelas untuk sekadar mengecek keberadaan.
+
+## Agregasi Setelah JOIN
+
+```sql
+SELECT k.dept, COUNT(p.id) AS jumlah_proyek
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+GROUP BY k.dept;
+```
+
+`COUNT(p.id)` mengabaikan NULL sehingga departemen tanpa proyek bernilai 0. `COUNT(*)` justru menghitung baris hasil LEFT JOIN dan dapat memberi 1 meski tak ada proyek.
+
+## Kejatuhan Umum
+
+- Syarat `p.budget > ...` di WHERE menghapus NULL dan mengubah LEFT menjadi INNER; letakkan di ON bila baris kiri tetap wajib tampil.
+- JOIN one-to-many menggandakan parent; jangan menjumlahkan nilai parent tanpa memahami fan-out.
+- Foreign key tidak otomatis mempercepat semua arah JOIN; index kolom anak (`lead_id`) tetap harus ada.
+
+## Di Dunia Nyata
+
+- Pesanan–pelanggan: RESTRICT penghapusan pelanggan bila histori wajib ada.
+- Blog–komentar: CASCADE menghapus komentar saat posting benar-benar dihapus.
+- Karyawan–manajer: self JOIN pada `manager_id` menampilkan nama atasan.
+- Katalog–kategori: tabel penghubung menangani many-to-many tanpa JSON/array.
+
+<div class="note">💡 FOREIGN KEY bukan pengganti JOIN: constraint menjaga data saat ditulis, sedangkan JOIN membaca relasinya. Keduanya menyelesaikan masalah berbeda.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT k.nama AS ketua, k.dept, p.nama AS proyek, p.budget
+FROM karyawan k
+LEFT JOIN proyek p ON k.id = p.lead_id
+ORDER BY k.id;`} />

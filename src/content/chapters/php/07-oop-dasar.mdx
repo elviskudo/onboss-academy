@@ -1,0 +1,241 @@
+---
+title: "OOP Dasar"
+description: "Class PHP modern — 4 pilar, 3 visibilitas, trait, namespace, dan constructor promotion"
+order: 7
+quiz:
+  - q: "Berapa pilar OOP dan statusnya di PHP?"
+    options: ["4 pilar — semuanya punya mekanisme resmi", "3 pilar, PHP tanpa inheritance", "4 pilar, abstract tidak ada", "2 pilar"]
+    answer: 0
+    explain: "Encapsulation (visibilitas), inheritance (extends), polymorphism (interface/type hint), abstraction (abstract/interface)."
+  - q: "Visibilitas property/method PHP secara default adalah…"
+    options: ["private", "protected", "public", "tergantung versi"]
+    answer: 2
+    explain: "Default public — karena itu tulis private/protected secara sadar agar tidak semua orang mengutak-atik."
+  - q: "Trait dipakai untuk…"
+    options: ["Mengganti namespace", "Membuat database", "Menyampai beberapa method ke banyak class tanpa pewarisan", "Menghapus class"]
+    answer: 2
+    explain: "PHP hanya punya pewarisan tunggal — trait dipakai `use` di dalam class untuk mencampur perilaku."
+  - q: "Keyword untuk mengakses class induk adalah…"
+    options: ["parent", "this", "super", "base"]
+    answer: 0
+    explain: "parent::__construct(...) memanggil constructor induk; PHP tidak punya super."
+  - q: "Namespace dibuat dan diimpor dengan…"
+    options: ["import/export", "namespace lalu use", "package/module", "require/include"]
+    answer: 1
+    explain: "namespace App\\Models; mendeklarasikan; use App\\Models\\Siswa; mengimpor ke file lain."
+example:
+  code: |
+    <?php
+    class Siswa {
+        public $nama;
+        public function __construct($nama) {
+            $this->nama = $nama;
+        }
+        public function sapa() {
+            return "Halo, " . $this->nama;
+        }
+    }
+    echo (new Siswa("Sari"))->sapa(), "\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Object-Oriented Programming membungkus **data dan perilaku** jadi satu unit bernama class. Laravel dan kebanyakan framework PHP modern dibangun penuh di atasnya — chapter ini adalah peta OOP PHP versi modern.
+
+## Class dan Object
+
+```php
+<?php
+class Siswa {
+    public $nama;
+    public $nilai;
+
+    public function __construct($nama, $nilai) {
+        $this->nama = $nama;
+        $this->nilai = $nilai;
+    }
+
+    public function lulus(): bool {
+        return $this->nilai >= 70;
+    }
+}
+
+$s = new Siswa("Sari", 90);
+echo $s->nama;
+echo $s->lulus() ? "LULUS" : "REMED";
+```
+
+PHP punya **1 constructor (`__construct`)** dan **1 destructor (`__destruct`)** — destructor dijalankan otomatis saat object dibuang, tempat yang tepat untuk menutup koneksi. `$this` merujuk object yang sedang berjalan; property diakses dengan `->`, bukan titik.
+
+## 3 Visibilitas
+
+```php
+<?php
+class Produk {
+    public $nama;        // bisa diakses dari mana saja
+    protected $stok;     // class ini dan turunannya
+    private $kode;       // hanya di dalam class
+
+    public function __construct($nama, $stok, $kode) {
+        $this->nama = $nama;
+        $this->stok = $stok;
+        $this->kode = $kode;
+    }
+
+    public function infoStok(): string {
+        return $this->nama . " — stok " . $this->stok;
+    }
+}
+```
+
+## 4 Pilar OOP di PHP
+
+| Pilar | Mekanisme PHP | Contoh |
+| --- | --- | --- |
+| Encapsulation | `public` / `protected` / `private` | `private $kode;` |
+| Inheritance | `extends` (tunggal) + `parent::` | `class Karyawan extends Manusia` |
+| Polymorphism | Interface & type hint — method sama, isi beda | `function bayar(Pembayaran $p)` |
+| Abstraction | `abstract class` dan `interface` | `interface Printable { public function print(); }` |
+
+```php
+<?php
+class Manusia {
+    public function __construct(public string $nama) {}
+
+    public function sapa(): string {
+        return "Halo, " . $this->nama;
+    }
+}
+
+class Programmer extends Manusia {
+    public function __construct(string $nama, public string $bahasa) {
+        parent::__construct($nama);
+    }
+
+    public function sapa(): string {
+        return parent::sapa() . " — " . $this->bahasa;
+    }
+}
+
+echo (new Programmer("Sari", "PHP"))->sapa();
+```
+
+`public string $nama` di parameter constructor (property promotion, PHP 8) menulis property sekaligus — menghemat beberapa baris. Interface butuh `implements`, `abstract method` tidak punya isi dan wajib diisi class anak.
+
+## Trait: Alternatif Pewarisan
+
+PHP juga hanya mengizinkan **satu class induk**. Untuk menyampai method ke banyak class tanpa duplikat, PHP memakai trait — padanan module/mixin di Ruby:
+
+```php
+<?php
+trait DicatatWaktu {
+    public function dicatatPada(): string {
+        return date("Y-m-d H:i:s");
+    }
+}
+
+class Artikel {
+    use DicatatWaktu;
+}
+
+class Komentar {
+    use DicatatWaktu;
+}
+
+echo (new Artikel)->dicatatPada();
+```
+
+## Namespace dan use
+
+```php
+<?php
+namespace App\Models;          // deklarasi — nama unik di seluruh proyek
+
+class Siswa {}
+
+// di file lain:
+namespace App\Http;
+use App\Models\Siswa;          // impor
+use App\Models\Produk as Barang; // alias
+```
+
+2 langkah wajib: `namespace` untuk memberi nama unik, `use` untuk mengimpor (dengan alias `as` bila bentrok). Tanpa namespace, dua library dengan nama class sama akan tabrakan fatal.
+
+## static, Konstanta Class, dan Enum
+
+```php
+<?php
+class Hitung {
+    public const PAJAK = 0.11;
+    public static $jumlah = 0;
+
+    public function __construct() {
+        Hitung::$jumlah++;
+    }
+}
+
+new Hitung();
+new Hitung();
+echo Hitung::$jumlah;                    // 2
+echo Hitung::PAJAK * 100000;             // 11000
+```
+
+Untuk kumpulan nilai tetap, PHP 8.1 punya `enum` — alternatif konstanta yang tipenya aman.
+
+## Di Dunia Nyata
+
+- **Model Eloquent Laravel**: `class Produk extends Model` dengan `protected $fillable` — data dan perilaku database jadi satu.
+- **Keranjang & voucher**: class `Keranjang` menyimpan item, method `total()` menghitung sendiri — tidak ada variabel keranjang global.
+- **Gateway pembayaran**: interface `Pembayaran` diimplementasi `Midtrans` dan `Xendit`; controller cukup menerima `Pembayaran`.
+- **Log lintas model**: trait `DicatatWaktu` dipakai Artikel, Komentar, dan Pengguna sekaligus.
+- **Autoloader PSR-4**: namespace `App\Services` menentukan lokasi file — tanpa `require` manual satu per satu.
+
+<div class="note">💡 Property dan method PHP **default-nya `public`** — tidak menulis visibilitas berarti membuka akses penuh ke seluruh pemanggil. Tulis `private`/`protected` secara eksplisit di setiap property, lalu buka akses lewat method publik yang tugasnya jelas. Enkapsulasi di PHP nyata, asalkan kamu menuliskannya.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+class Produk {
+    public static $jumlah = 0;
+    public $nama;
+    public $harga;
+    private $stok;
+
+    public function __construct($nama, $harga, $stok) {
+        $this->nama = $nama;
+        $this->harga = $harga;
+        $this->stok = $stok;
+        Produk::$jumlah++;
+    }
+
+    public function beli(int $qty = 1): bool {
+        if ($qty > $this->stok) return false;
+        $this->stok -= $qty;
+        return true;
+    }
+
+    public function info(): string {
+        return $this->nama . " - Rp" . $this->harga . " (stok " . $this->stok . ")";
+    }
+}
+
+class ProdukPremium extends Produk {
+    private $biayaKirim;
+
+    public function __construct($nama, $harga, $stok, $biayaKirim) {
+        parent::__construct($nama, $harga, $stok);
+        $this->biayaKirim = $biayaKirim;
+    }
+
+    public function info(): string {
+        return parent::info() . " [premium, kirim Rp" . $this->biayaKirim . "]";
+    }
+}
+
+$kopi = new Produk("Kopi", 25000, 2);
+echo $kopi->info() . "\\n";
+echo "Beli 1: " . var_export($kopi->beli(1), true) . "\\n";
+echo "Beli 5: " . var_export($kopi->beli(5), true) . "\\n";
+echo $kopi->info() . "\\n";
+
+$teh = new ProdukPremium("Teh premium", 40000, 5, 15000);
+echo $teh->info() . "\\n";
+echo "Total produk terdaftar: " . Produk::$jumlah . "\\n";`} />

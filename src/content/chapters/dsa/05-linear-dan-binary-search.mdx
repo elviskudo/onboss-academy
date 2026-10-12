@@ -1,0 +1,158 @@
+---
+title: "Linear & Binary Search"
+description: "Dua cara mencari elemen: telusuri semua atau bagi dua ruang pencarian"
+order: 5
+quiz:
+  - q: "Linear search bekerja dengan…"
+    options: ["Membagi data dua terus menerus", "Memeriksa elemen satu per satu dari awal", "Selalu mulai dari tengah", "Melompati elemen genap"]
+    answer: 1
+    explain: "Tanpa asumsi apa pun tentang data, setiap elemen berpotensi menjadi jawaban."
+  - q: "Binary search hanya bisa dipakai pada data yang…"
+    options: ["Berurutan (terurut)", "Berisi angka saja", "Berjumlah ganjil", "Disimpan di hash table"]
+    answer: 0
+    explain: "Tanpa pengurutan, keputusan membuang separuh data tidak valid."
+  - q: "Kompleksitas binary search adalah…"
+    options: ["O(n)", "O(log n)", "O(n log n)", "O(1)"]
+    answer: 1
+    explain: "Ruang pencarian dibagi dua di setiap langkah — 1 juta data cukup ~20 langkah."
+  - q: "List berisi 1.000.000 elemen terurut, binary search butuh paling banyak sekitar…"
+    options: ["1.000.000 langkah", "1.000 langkah", "20 langkah", "4 langkah"]
+    answer: 2
+    explain: "log2(1.000.000) sekitar 20 — itulah kekuatan pembagian dua."
+  - q: "Jika data tidak terurut dan sering dicari, solusi terbaik adalah…"
+    options: ["Pakai binary search tetap", "Urutkan sekali lalu binary search, atau bangun hash table", "Selalu linear search", "Simpan di linked list"]
+    answer: 1
+    explain: "Sorting O(n log n) sekali + banyak binary search O(log n), atau lookup dict O(1)."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Search adalah operasi paling sering di dunia nyata — dari mencari nama di kontak sampai query di database.
+
+## Linear Search
+
+```python
+def linear_search(data, target):
+    for i, x in enumerate(data):
+        if x == target:
+            return i
+    return -1
+
+angka = [4, 2, 7, 1, 9, 3]
+print(linear_search(angka, 7))   # 2
+print(linear_search(angka, 5))   # -1
+```
+
+- Kompleksitas waktu: **O(n)** — kasus terburuk memeriksa semua
+- Syarat: tidak ada — data boleh acak
+- Kelebihan: sederhana, cocok untuk data kecil atau pencarian sesekali
+
+## Binary Search
+
+```python
+def binary_search(data, target):
+    lo, hi = 0, len(data) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if data[mid] == target:
+            return mid
+        if data[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+
+terurut = [1, 3, 5, 7, 9, 11, 13]
+print(binary_search(terurut, 9))   # 4
+print(binary_search(terurut, 4))   # -1
+```
+
+Prinsip kerja tiap langkah:
+
+```
+cari 9 di [1, 3, 5, 7, 9, 11, 13]
+mid = 7  ->  9 > 7  -> buang kiri
+cari 9 di [9, 11, 13]
+mid = 9  ->  ketemu!
+```
+
+- Kompleksitas: **O(log n)**
+- Syarat: data **terurut**
+- Python juga menyediakan modul `bisect` untuk binary search produksi
+
+## Perbandingan Langsung
+
+```python
+import time
+
+data = list(range(0, 1_000_000, 7))
+target = data[-1]
+
+t0 = time.perf_counter()
+linear_search(data, target)
+t1 = time.perf_counter()
+binary_search(data, target)
+t2 = time.perf_counter()
+
+print(f"linear  : {t1-t0:.6f}s")
+print(f"binary  : {t2-t1:.6f}s")
+```
+
+## Empat Bentuk Pencarian
+
+Ada **4 pola penting**: linear search, exact binary search, lower bound, dan upper bound. Dua pola bound mencari posisi penyisipan, bukan sekadar “ketemu atau tidak”. Modul `bisect` menyediakan `bisect_left` untuk posisi pertama nilai yang sama dan `bisect_right` untuk posisi setelah nilai terakhir.
+
+| Metode | Syarat | Waktu | Kapan dipakai |
+|---|---|---:|---|
+| Linear | tidak ada | O(n) | data kecil atau acak |
+| Binary exact | terurut | O(log n) | mencari satu nilai |
+| `bisect_left` | terurut | O(log n) | batas awal/ranking |
+| Hash lookup | key hashable | O(1) rata-rata | lookup eksak berulang |
+
+Mengurutkan data hanya untuk satu pencarian biasanya rugi: O(n log n) lebih mahal daripada scan O(n). Untuk q pencarian, bandingkan O(qn) dengan O(n log n + q log n). Pada list Python, menemukan posisi dengan bisect O(log n), tetapi menyisipkan tetap O(n) karena elemen harus digeser.
+
+## Di Dunia Nyata
+
+- Linear search memeriksa daftar konfigurasi kecil tanpa biaya indeks tambahan.
+- Binary search mencari harga ambang dalam katalog yang sudah terurut.
+- Lower bound menentukan peringkat pertama yang memenuhi skor minimum.
+- Hash table melayani pencarian user berdasarkan ID yang unik dan sering diakses.
+
+<div class="note">💡 Binary search butuh data terurut. Kalau data sering dicari tapi datanya acak: urutkan sekali (O(n log n)), lalu nikmati O(log n) di setiap pencarian berikutnya — atau pakai dict/hash table kalau kuncinya unik.</div>
+
+## Kapan Pakai Mana?
+
+- Data kecil (< ~100) atau sekali pakai: linear search, cukup.
+- Data besar terurut, pencarian berulang: binary search.
+- Kunci unik, lookup sangat sering: hash table (dict) O(1).
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def linear_search(data, target):
+    for i, x in enumerate(data):
+        if x == target:
+            return i
+    return -1
+
+def binary_search(data, target):
+    lo, hi = 0, len(data) - 1
+    steps = 0
+    while lo <= hi:
+        steps += 1
+        mid = (lo + hi) // 2
+        if data[mid] == target:
+            return mid, steps
+        if data[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1, steps
+
+angka_acak = [4, 2, 7, 1, 9, 3, 8]
+print("linear (acak):", linear_search(angka_acak, 7))
+
+terurut = [1, 3, 5, 7, 9, 11, 13, 15]
+idx, langkah = binary_search(terurut, 13)
+print("binary idx:", idx, "| langkah:", langkah)
+
+besar = list(range(0, 2_000_000, 3))
+idx, langkah = binary_search(besar, besar[-1])
+print("binary di 2 juta data -> langkah:", langkah)`} />

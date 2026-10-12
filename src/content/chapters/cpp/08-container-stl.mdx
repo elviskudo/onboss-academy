@@ -1,0 +1,196 @@
+---
+title: "Container & STL"
+description: "vector, map, set, dan algorithm — 7 container utama + 3 adaptor siap pakai"
+order: 8
+quiz:
+  - q: "std::vector berbeda dari array statis karena…"
+    options: ["Tidak perlu include", "Ukurannya bisa bertambah saat runtime", "Hanya menyimpan char", "Tidak bisa diiterasi"]
+    answer: 1
+    explain: "push_back() menambah elemen; vector mengelola memorinya secara otomatis."
+  - q: "Menambah elemen ke akhir vector disebut…"
+    options: ["append()", "insert_end()", "push_back()", "add()"]
+    answer: 2
+    explain: "push_back(e) menambah di belakang; insert() untuk posisi tertentu."
+  - q: "std::map menyimpan data dalam bentuk…"
+    options: ["Pasangan kunci → nilai, terurut berdasarkan kunci", "Daftar berurutan", "Kumpulan unik tanpa kunci", "Dua dimensi"]
+    answer: 0
+    explain: "map<int,string> cocok untuk ID → nama; kunci unik dan otomatis terurut."
+  - q: "Untuk mengurutkan vector, gunakan…"
+    options: ["v.sortAll()", "order(v)", "quick(v)", "sort(v.begin(), v.end())"]
+    answer: 3
+    explain: "sort dari <algorithm> bekerja pada dua iterator penanda rentang."
+  - q: "Mencari elemen tanpa peduli urutan paling cepat dengan…"
+    options: ["std::list", "std::set", "std::vector tanpa diurutkan", "std::array"]
+    answer: 1
+    explain: "set/map memakai pohon biner sehingga pencarian O(log n) — tanpa harus mensortir dulu."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    #include <map>
+    #include <algorithm>
+    using namespace std;
+
+    int main() {
+        vector<int> nilai = {75, 90, 60};
+        nilai.push_back(85);
+        sort(nilai.begin(), nilai.end());
+
+        for (int n : nilai) cout << n << " ";
+        cout << endl;
+
+        map<string, int> skor;
+        skor["Sari"] = 90;
+        skor["Budi"] = 85;
+        cout << "Sari: " << skor["Sari"] << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**STL (Standard Template Library)** adalah keunggulan terbesar C++: struktur data dan algoritma siap pakai yang sudah diuji jutaan programmer. Bab ini memetakan 10 komponen utamanya dan kapan tiap container menang.
+
+## 10 Komponen STL
+
+STL terbagi menjadi **7 container utama** dan **3 container adaptor**:
+
+| Container | Jenis | Urutan | Cari | Pakai untuk |
+|---|---|---|---|---|
+| `vector<T>` | sequence | ya | O(n) | daftar dinamis, akses indeks |
+| `deque<T>` | sequence | ya | O(n) | sering tambah/hapus di depan & belakang |
+| `list<T>` | sequence | ya | O(n) | sering sisip di tengah |
+| `map<K,V>` | associative | terurut kunci | O(log n) | kunci → nilai |
+| `set<T>` | associative | terurut | O(log n) | data unik terurut |
+| `unordered_map<K,V>` | hash | tidak | O(1) rata-rata | hitung frekuensi cepat |
+| `unordered_set<T>` | hash | tidak | O(1) rata-rata | cek keanggotaan cepat |
+| `stack<T>` | adaptor | LIFO | — | undo, ekspresi |
+| `queue<T>` | adaptor | FIFO | — | antrian tugas |
+| `priority_queue<T>` | adaptor | prioritas | — | tugas terpenting duluan |
+
+`multiset`/`multimap` adalah varian yang mengizinkan kunci duplikat.
+
+## std::vector
+
+```cpp
+#include <vector>
+
+vector<int> v;
+v.push_back(10);
+v.push_back(20);
+v.push_back(30);
+
+cout << v.size() << endl;        // 3
+cout << v[1] << endl;            // 20
+v.pop_back();                    // hapus elemen terakhir
+
+for (int n : v) cout << n << " ";
+cout << endl;
+```
+
+**10 method vector** yang paling sering dipakai: `push_back`, `pop_back`, `insert`, `erase`, `at`, `front`, `back`, `size`, `resize`, `clear`. Akses `v[i]` tanpa cek batas; `v.at(i)` melempar exception bila di luar rentang.
+
+```cpp
+vector<int> v = {1, 2, 3};
+vector<int> salinan = v;                       // salin penuh
+vector<int> kosong(5, 0);                      // 5 elemen bernilai 0
+cout << v.empty();                             // 0 (false)
+```
+
+## std::map & std::set
+
+```cpp
+#include <map>
+#include <set>
+
+map<string, int> skor;
+skor["Sari"] = 90;
+skor.insert({"Budi", 85});
+cout << skor["Sari"] << endl;    // 90
+
+set<int> unik = {5, 3, 3, 7};    // {3, 5, 7} — duplikat hilang
+for (int n : unik) cout << n << " ";
+cout << endl;
+```
+
+`map` untuk data berpasangan, `set` untuk anggota unik — keduanya terurut otomatis berkat pohon biner. Perhatikan: `skor["kunciBaru"]` **membuat** entri baru dengan nilai 0 bila kunci belum ada — gunakan `find()` kalau tidak ingin itu terjadi.
+
+## Algorithm
+
+```cpp
+#include <algorithm>
+#include <numeric>
+
+vector<int> data = {5, 2, 9, 1};
+sort(data.begin(), data.end());                 // 1 2 5 9
+reverse(data.begin(), data.end());               // 9 5 2 1
+int maks = *max_element(data.begin(), data.end());
+int total = accumulate(data.begin(), data.end(), 0);
+
+if (find(data.begin(), data.end(), 5) != data.end()) {
+    cout << "Ketemu" << endl;
+}
+```
+
+`<algorithm>` berisi ratusan fungsi dalam **5 kategori**: mencari (`find`, `find_if`, `binary_search`), mengurutkan (`sort`, `stable_sort`, `partial_sort`), mengubah (`reverse`, `rotate`, `transform`), menghitung (`count`, `accumulate`, `min_element`), dan menghapus (`remove`, `unique` — keduanya bekerja berpasangan dengan `erase`).
+
+Sepasang iterator `begin()`/`end()` menandai rentang yang dikerjakan algoritma. Iterator sendiri punya **5 kategori**: input, output, forward, bidirectional, dan random access.
+
+## Range & Structured Binding
+
+```cpp
+map<string, int> skor = {{"Sari", 90}, {"Budi", 85}};
+for (const auto &[nama, nilai] : skor) {
+    cout << nama << " = " << nilai << endl;
+}
+```
+
+C++17 membiarkan kamu membongkar pasangan data dalam satu baris — kode jauh lebih mudah dibaca.
+
+## Memilih Container
+
+| Kebutuhan | Pilihan |
+|---|---|
+| Daftar berurutan, akses indeks | `vector` |
+| Sering sisip/hapus di depan | `deque` atau `list` |
+| Cari by kunci, kunci unik | `map` / `set` |
+| Cari secepat mungkin, urutan tak penting | `unordered_map` / `unordered_set` |
+| LIFO / FIFO / prioritas | `stack` / `queue` / `priority_queue` |
+
+## Di Dunia Nyata
+
+- Histogram huruf: `map<char,int>` menghitung frekuensi tiap karakter teks dalam satu loop.
+- Kode pos → nama kota: `unordered_map<string,string>` mencari puluhan ribu entri nyaris instan.
+- Antrian print kantor: `queue<Job>` memproses pesanan cetak secara FIFO.
+- Membuang email duplikat peserta: `set<string>` menyaring duplikat otomatis.
+- Leaderboard game: `sort` + `vector<Player>` menampilkan 10 skor tertinggi.
+
+<div class="note">💡 Pilih container sesuai pola aksesnya, bukan kebiasaan. <code>vector</code> menang telak untuk kebanyakan kasus berkat cache-friendly; baru beralih ke <code>map</code>/<code>set</code> ketika pencarian by kunci benar-benar dibutuhkan.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    vector<int> nilai = {75, 90, 60, 85, 70};
+    nilai.push_back(95);
+    sort(nilai.begin(), nilai.end());
+
+    cout << "Terurut: ";
+    for (int n : nilai) cout << n << " ";
+    cout << endl;
+    cout << "Terkecil: " << nilai.front()
+         << " | Terbesar: " << nilai.back() << endl;
+
+    map<string, int> skor;
+    skor["Sari"] = 90;
+    skor["Budi"] = 85;
+    skor["Rina"] = 92;
+    for (const auto &[nama, nilaiAkhir] : skor) {
+        cout << nama << " = " << nilaiAkhir << endl;
+    }
+    cout << "Sari: " << skor["Sari"] << endl;
+    return 0;
+}`} />

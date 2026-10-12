@@ -1,0 +1,129 @@
+---
+title: "Mongoose Lanjutan"
+description: "Relasi populate, virtual, middleware, dan pola desain skala aplikasi"
+order: 8
+quiz:
+  - q: "populate() pada Mongoose digunakan untuk…"
+    options: ["Mengisi field reference dengan dokumen lengkap dari koleksi lain", "Menambah data dummy", "Mengompresi dokumen", "Menghapus relasi"]
+    answer: 0
+    explain: "populate mirip JOIN: mengganti ObjectId dengan dokumen hasil query koleksi yang dirujuk."
+  - q: "Virtual field pada Mongoose adalah…"
+    options: ["Field yang disimpan di database", "Field yang dihitung saat dibaca, tidak disimpan", "Field terenkripsi", "Field yang dihapus otomatis"]
+    answer: 1
+    explain: "Virtual (mis. fullName dari firstName+lastName) dihitung on-the-fly — tidak membebani dokumen."
+  - q: "Middleware (hook) Mongoose yang jalan sebelum save() disebut…"
+    options: ["pre(\"save\")", "beforeInsert()", "on(\"write\")", "hook.create()"]
+    answer: 0
+    explain: "pre(\"save\", fn) dipakai untuk hashing password atau menyetel timestamp sebelum dokumen benar-benar ditulis."
+  - q: "Agar field virtual ikut ter-serialize ke JSON, set…"
+    options: ["schema.set(\"toJSON\", { virtuals: true })", "schema.virtuals = true", "model.enableVirtual()", "Tidak perlu, otomatis"]
+    answer: 0
+    explain: "Secara default virtual tidak muncul di JSON — aktifkan lewat opsi toJSON/toObject."
+  - q: "Untuk data yang sangat sering dibaca bersama dan jarang berubah, pola yang tepat adalah…"
+    options: ["Selalu reference", "Embed", "Hindari keduanya", "Simpan di file"]
+    answer: 1
+    explain: "Embed menghemat query — baca sekali dapat lengkap; cukup embed bila data < beberapa KB dan jarang berubah."
+example:
+  code: |
+    const pesananSchema = new mongoose.Schema({
+      pelanggan: { type: mongoose.Schema.Types.ObjectId, ref: "Pelanggan" },
+      total: { type: Number, required: true }
+    });
+    pesananSchema.virtual("pajak").get(function () {
+      return Math.round(this.total * 0.11);
+    });
+    const Pesanan = mongoose.model("Pesanan", pesananSchema);
+    await Pesanan.find().populate("pelanggan");
+---
+
+Skema kecil sudah cukup untuk prototipe; aplikasi nyata butuh **relasi, turunan field, dan titik kait**. Bab ini melengkapinya.
+
+## Empat Fitur Lanjutan
+
+| Fitur | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| `populate()` | mengganti ObjectId dengan dokumen reference | relasi yang dibaca sesekali |
+| Virtual | field hitungan yang tidak disimpan | nama lengkap, pajak |
+| Middleware | menjalankan logika sebelum/sesudah operasi | hashing, audit |
+| Timestamps | mengelola createdAt/updatedAt | hampir semua entitas produksi |
+
+Keempatnya hidup di lapisan aplikasi, bukan fitur penyimpanan BSON. Query dari klien lain tidak menjalankan virtual atau middleware Mongoose.
+
+## Relasi dan populate()
+
+```javascript
+const pesananSchema = new mongoose.Schema({
+  pelanggan: { type: mongoose.Schema.Types.ObjectId, ref: "Pelanggan" },
+  item: [{ type: mongoose.Schema.Types.ObjectId, ref: "Produk" }],
+  total: Number
+});
+const Pesanan = mongoose.model("Pesanan", pesananSchema);
+
+const hasil = await Pesanan.find()
+  .populate("pelanggan", "nama email")
+  .populate({ path: "item", select: "nama harga" });
+```
+
+Field `ref` mendeklarasikan arah relasi; `populate` mengganti ObjectId dengan dokumen pilihan (dan hanya field yang diminta — hemat bandwidth).
+
+## Virtual
+
+```javascript
+pesananSchema.virtual("pajak").get(function () {
+  return Math.round(this.total * 0.11);
+});
+
+pesananSchema.set("toJSON", { virtuals: true });
+pesananSchema.set("toObject", { virtuals: true });
+```
+
+Virtual menghitung nilai turunan (pajak, diskon akhir, nama lengkap) tanpa menyimpannya — data tetap satu sumber kebenaran.
+
+## Middleware (Hook)
+
+```javascript
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+pesananSchema.pre("validate", function (next) {
+  if (this.total < 0) this.invalidate("total", "total tidak boleh negatif");
+  next();
+});
+```
+
+`pre("save")` berjalan sebelum dokumen ditulis lewat `save()` — tempat klasik untuk hashing password. Hook ini **tidak** berjalan untuk `findOneAndUpdate()`; query middleware harus didaftarkan terpisah. `pre("validate")` menahan data yang melanggar aturan bisnis sebelum validasi skema.
+
+## Timestamp dan Aturan Koleksi
+
+```javascript
+const skema = new mongoose.Schema(
+  { judul: String },
+  { timestamps: true }
+);
+// menambahkan createdAt & updatedAt otomatis setiap create/update
+```
+
+Opsi `timestamps: true` menyetel dua field waktu secara otomatis — hampir selalu aktifkan untuk dokumen produksi.
+
+## Embed, Populate, atau Lookup?
+
+| Pola | Kekuatan | Batas | Pilih ketika |
+| --- | --- | --- | --- |
+| Embed | satu baca, atomik | duplikasi & pertumbuhan dokumen | data kecil, dibaca bersama |
+| Reference + populate | API Mongoose nyaman | query tambahan | relasi sederhana, volume terbatas |
+| Aggregation `$lookup` | join di server | pipeline lebih kompleks | laporan/filter lintas koleksi |
+
+Tidak ada pilihan universal. Mulai dari pola akses: data yang selalu tampil bersama biasanya di-embed; entitas besar yang berubah sendiri-sendiri direferensikan.
+
+## Di Dunia Nyata
+
+- **Detail pesanan** — populate pelanggan dan pilih hanya nama/email agar payload tidak membawa seluruh profil.
+- **Harga dengan pajak** — virtual menghitung nilai saat respons tanpa menyimpan data turunan yang bisa basi.
+- **Password pengguna** — pre-save hashing menjaga string mentah tidak pernah disimpan, dengan pengecekan `isModified` agar tidak di-hash ulang.
+- **Audit dokumen** — timestamps memberi createdAt dan updatedAt konsisten tanpa kode di setiap handler.
+- **Laporan lintas koleksi** — `$lookup` lebih cocok daripada populate saat hasil perlu difilter atau dikelompokkan berdasarkan field koleksi target.
+
+<div class="note">💡 `populate()` nyaman, tetapi tetap menambah pekerjaan query dan materialisasi. Batasi field dengan `select`, ukur daftar besar, lalu beralih ke embed atau aggregation `$lookup` jika pola akses membutuhkannya.</div>

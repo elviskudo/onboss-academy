@@ -1,0 +1,147 @@
+---
+title: "CTE dan Window Function"
+description: "Query bertahap dengan WITH, dan peringkat tanpa merangkum baris"
+order: 7
+quiz:
+  - q: "WITH pada PostgreSQL memperkenalkan…"
+    options: ["Transaksi otomatis", "Common Table Expression — tabel sementara bernama", "Index baru", "User baru"]
+    answer: 1
+    explain: "CTE didefinisikan dengan WITH, lalu dirujuk di query utama seperti tabel biasa."
+  - q: "RANK() OVER (ORDER BY gaji DESC) memberi hasil berupa…"
+    options: ["Nomor baris fisik", "Peringkat berurutan; seri mendapat nilai sama", "Rata-rata kumulatif", "Urutan alfabetis"]
+    answer: 1
+    explain: "RANK = posisi kompetisi: dua gaji sama di peringkat sama, peringkat berikutnya melompat."
+  - q: "PARTITION BY dept pada window function berfungsi untuk…"
+    options: ["Menghitung terpisah per departemen", "Menghapus departemen", "Menggabungkan semua jadi satu", "Mengurutkan kolom"]
+    answer: 0
+    explain: "PARTITION BY memecah jendela per kelompok — peringkat dihitung ulang dari 1 di tiap departemen."
+  - q: "Bedanya ROW_NUMBER dengan RANK saat ada nilai seri…"
+    options: ["Sama persis", "ROW_NUMBER menghapus baris", "ROW_NUMBER selalu unik berurutan; RANK memberi nomor sama untuk seri", "RANK selalu 0"]
+    answer: 2
+    explain: "ROW_NUMBER memecah seri dengan urutan fisik; RANK membiarkannya setara."
+  - q: "WITH disini juga berguna untuk…"
+    options: ["Menghapus CTE", "Membuat tabel permanen", "Mengganti JOIN", "Merapikan query panjang jadi langkah bernama yang bisa dirujuk berulang"]
+    answer: 3
+    explain: "Langkah bernama membuat query terbaca seperti resep: hitung dulu, gunakan kemudian."
+example:
+  code: |
+    WITH rata AS (
+      SELECT dept, ROUND(AVG(gaji)) AS rata
+      FROM karyawan
+      GROUP BY dept
+    )
+    SELECT k.nama, k.gaji, rata.rata
+    FROM karyawan k
+    JOIN rata ON k.dept = rata.dept
+    ORDER BY k.gaji DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL memudahkan query kompleks lewat dua alat: **CTE** (langkah bernama) dan **window function** (hitung per kelompok tanpa merangkum baris).
+
+## Apa Itu CTE dan Window?
+
+CTE (`WITH`) adalah hasil query sementara bernama yang hanya hidup selama satu perintah. Window function menghitung melintasi sekelompok baris sambil mempertahankan setiap baris asli — berbeda dari GROUP BY yang meringkasnya.
+
+| Alat | Bentuk | Fungsi | Kapan dipakai |
+| --- | --- | --- | --- |
+| CTE biasa | WITH nama AS (...) | memecah query jadi langkah | query panjang, reuse blok |
+| CTE rekursif | WITH RECURSIVE ... | berjalan hingga kondisi berhenti | hierarki, deret, graf |
+| Window ranking | RANK() OVER (...) | peringkat tanpa meringkas | leaderboard |
+| Window agregat | SUM(x) OVER (...) | agregat sambil baris utuh | running total |
+| Window offset | LAG/LEAD(x) OVER (...) | melihat baris sebelum/sesudah | analisis tren |
+
+Ada **2 jenis CTE** dan **3 keluarga window utama** di atas.
+
+## CTE dengan WITH
+
+```sql
+WITH rata AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata.rata
+FROM karyawan k
+JOIN rata ON k.dept = rata.dept
+WHERE k.gaji > rata.rata
+ORDER BY k.gaji DESC;
+```
+
+`WITH` membuat tabel sementara bernama `rata` yang bisa dirujuk seperti tabel biasa. Query panjang jadi bertahap dan mudah di-debug: *hitung rata-rata dulu, bandingkan sesudahnya*.
+
+## Banyak CTE Berurutan
+
+```sql
+WITH total AS (
+  SELECT SUM(gaji) AS semua FROM karyawan
+),
+tinggi AS (
+  SELECT SUM(gaji) AS bagian FROM karyawan WHERE gaji >= 11000000
+)
+SELECT ROUND(tinggi.bagian * 100.0 / total.semua, 1) AS persen
+FROM total, tinggi;
+```
+
+Beberapa CTE dipisah koma; setiap blok bisa merujuk blok sebelumnya. Postgres optimizer biasanya menggabungkan CTE ke query utama; gunakan `MATERIALIZED` jika memang ingin hasil perantara dihitung sekali.
+
+## Window Function: Peringkat
+
+```sql
+SELECT nama, dept, gaji,
+       RANK() OVER (PARTITION BY dept ORDER BY gaji DESC) AS peringkat
+FROM karyawan
+ORDER BY dept, peringkat;
+```
+
+`OVER` menentukan "jendela" perhitungan. `PARTITION BY` memecah per departemen; `ORDER BY` di dalam OVER menentukan siapa peringkat 1. Berbeda dengan GROUP BY, **setiap baris tetap utuh** di hasil.
+
+## ROW_NUMBER, RANK, DENSE_RANK
+
+| Fungsi | Nilai seri | Urutan contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| ROW_NUMBER | tetap nomor unik | 1, 2, 3, 4 | satu pemenang pasti per grup |
+| RANK | nomor sama, lalu lompat | 1, 2, 2, 4 | peringkat kompetisi |
+| DENSE_RANK | nomor sama, tetap rapat | 1, 2, 2, 3 | kelompok level/harga |
+
+```sql
+SELECT nama, gaji,
+       ROW_NUMBER() OVER (ORDER BY gaji DESC) AS nomor,
+       RANK() OVER (ORDER BY gaji DESC) AS rank,
+       DENSE_RANK() OVER (ORDER BY gaji DESC) AS dense
+FROM karyawan;
+```
+
+## Running Total dan LAG
+
+```sql
+SELECT nama, gaji,
+       SUM(gaji) OVER (ORDER BY id) AS kumulatif,
+       gaji - LAG(gaji) OVER (ORDER BY id) AS selisih
+FROM karyawan
+ORDER BY id;
+```
+
+`SUM() OVER (ORDER BY ...)` mengakumulasi baris demi baris. `LAG(kolom)` mengambil nilai baris sebelumnya — dasar analisis tren dan delta.
+
+## Di Dunia Nyata
+
+- **Leaderboard per departemen** — RANK + PARTITION BY menghitung peringkat ulang dari satu di tiap departemen tanpa membuang nama karyawan.
+- **Laporan saldo berjalan** — SUM(amount) OVER ORDER BY tanggal menampilkan saldo setelah setiap transaksi bank.
+- **Pertumbuhan bulanan** — LAG(omzet) membandingkan bulan ini dengan bulan lalu dalam satu query.
+- **Struktur organisasi** — WITH RECURSIVE menelusuri manajer → bawahan hingga seluruh pohon selesai.
+- **Query analitik bertahap** — beberapa CTE memisahkan data bersih, agregasi, lalu ranking agar setiap tahap bisa diuji sendiri.
+
+<div class="note">💡 CTE rekursif (WITH RECURSIVE) cocok untuk data hierarki seperti struktur organisasi atau graf. Tetapkan kondisi berhenti yang jelas agar rekursi tidak berjalan tanpa akhir.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`WITH rata AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata.rata AS rata_dept,
+       RANK() OVER (PARTITION BY k.dept ORDER BY k.gaji DESC) AS peringkat
+FROM karyawan k
+JOIN rata ON k.dept = rata.dept
+ORDER BY k.dept, peringkat;`} />

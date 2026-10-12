@@ -1,0 +1,140 @@
+---
+title: "systemd, Log, & Crontab"
+description: "Mengelola layanan, membaca log, dan menjadwalkan tugas berkala"
+order: 8
+quiz:
+  - q: "Perintah melihat status layanan systemd adalah…"
+    options: ["systemctl status nginx", "service-view nginx", "sys status nginx", "systemd info nginx"]
+    answer: 0
+    explain: "systemctl status menampilkan state (active/inactive), PID, dan log terakhir layanan."
+  - q: "systemctl enable nginx berfungsi untuk…"
+    options: ["Memulai nginx sekarang", "Membuat nginx ikut menyala saat boot", "Menghapus nginx", "Mengupdate nginx"]
+    answer: 1
+    explain: "enable membuat symlink unit di target boot; start hanya menjalankan sesi sekarang."
+  - q: "Log layanan via journald dibaca dengan…"
+    options: ["journalctl -u nginx", "cat /var/log/journal", "logread nginx", "syslog nginx"]
+    answer: 0
+    explain: "journalctl -u unit menfilter log per layanan; -f untuk mengikuti real time."
+  - q: "Baris crontab '0 2 * * * /opt/backup.sh' artinya…"
+    options: ["Backup tiap 2 menit", "Backup jam 02:00 setiap hari", "Backup hari ke-2 tiap bulan", "Backup sekali di tahun 2000"]
+    answer: 1
+    explain: "menit jam hari-bulan bulan hari-minggu -> 0 2 = pukul 02:00, * = setiap."
+  - q: "Perintah edit crontab user sekarang adalah…"
+    options: ["crontab -e", "cron --edit", "crontab edit", "nano /etc/crontab"]
+    answer: 0
+    explain: "crontab -e membuka editor crontab user; -l untuk melihat daftar tugas."
+---
+
+Bab penutup Linux: tiga pilar operasional harian — **layanan (systemd)**, **log**, dan **penjadwalan**.
+
+## systemd: Mengelola Layanan
+
+```bash
+sudo systemctl start nginx      # jalankan sekarang
+sudo systemctl stop nginx       # hentikan
+sudo systemctl restart nginx    # restart (ubah konfigurasi)
+sudo systemctl reload nginx     # muat ulang konfigurasi tanpa putus koneksi
+sudo systemctl status nginx     # cek status
+sudo systemctl enable nginx     # aktif otomatis saat boot
+sudo systemctl disable nginx    # matikan saat boot
+```
+
+Perintah universal di distro lama: `sudo service nginx status` — setara satu-satu.
+
+Membuat unit sendiri (contoh: `/etc/systemd/system/aplikasi.service`):
+
+```ini
+[Unit]
+Description=Aplikasi OnBoss
+After=network.target
+
+[Service]
+User=deploy
+WorkingDirectory=/var/www/aplikasi
+ExecStart=/usr/bin/node server.js
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now aplikasi.service
+```
+
+## Log: journalctl & file Log
+
+```bash
+journalctl -u nginx              # log layanan nginx
+journalctl -u nginx -f           # ikuti real time (seperti tail -f)
+journalctl -p err --since today  # hanya error hari ini
+journalctl -b -1                 # log boot sebelumnya
+```
+
+File log klasik tetap ada di `/var/log`:
+
+```bash
+ls /var/log
+tail -f /var/log/nginx/access.log
+grep "Failed password" /var/log/auth.log | tail
+```
+
+## Crontab: Penjadwal Tugas
+
+Format lima field + perintah:
+
+```
+menit jam hari-bulan bulan hari-minggu   perintah
+```
+
+```bash
+crontab -e          # edit crontab user
+crontab -l          # lihat isi
+```
+
+Contoh jadwal:
+
+```
+*/5 * * * *  /opt/cek-sehat.sh            # tiap 5 menit
+0 2 * * *    /opt/backup.sh               # tiap hari jam 02:00
+30 3 * * 0   /opt/backup-mingguan.sh      # Minggu 03:30
+0 9 1 * *    /opt/laporan-bulanan.sh      # tgl 1 tiap bulan 09:00
+```
+
+## Tiga Pilar dan Komponen Intinya
+
+Bab ini memiliki **3 pilar**: lifecycle service, observability log, dan scheduling. Masing-masing harus dapat diperiksa kegagalannya.
+
+| Pilar/komponen | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Unit systemd | Mendefinisikan service dan dependency | `systemctl cat nginx` | Menjalankan daemon konsisten |
+| Target | Mengelompokkan state boot | `systemctl get-default` | Mengatur mode sistem |
+| Journal | Log terindeks unit dan waktu | `journalctl -u nginx -S -1h` | Diagnosis service |
+| Log file | Log aplikasi tradisional | `/var/log/nginx/error.log` | Integrasi tool berbasis file |
+| Cron | Jadwal berulang sederhana | `crontab -e` | Tugas singkat periodik |
+| Timer systemd | Jadwal dengan dependency/status | `systemctl list-timers` | Job terkelola dan dapat diaudit |
+
+`start` menjalankan sekarang, sedangkan `enable` mengatur boot; `enable --now` melakukan keduanya. Setelah mengubah unit, jalankan `systemctl daemon-reload`, lalu verifikasi dengan `systemctl status` dan journal. Gunakan user service non-root, `EnvironmentFile` berpermission ketat, path absolut, serta opsi hardening yang sesuai; jangan menaruh secret langsung di unit yang world-readable.
+
+Cron memiliki environment minimal, sehingga pakai path absolut dan arahkan stdout/stderr ke log. Lindungi job agar tidak tumpang tindih dengan `flock`. Untuk job penting, systemd timer memberi status, dependency, resource control, dan `Persistent=true` agar jadwal yang terlewat saat mati dapat dijalankan setelah boot.
+
+## Di Dunia Nyata
+
+- Restart aplikasi setelah deploy lalu membaca journal jika startup gagal.
+- Mengikuti access log saat menyelidiki lonjakan error HTTP.
+- Menjadwalkan backup dengan lock agar dua proses tidak menulis arsip bersamaan.
+- Memakai systemd timer untuk cleanup yang harus tetap berjalan setelah downtime.
+
+<div class="note">💡 Simpan backup terpisah dari data asal dan uji restore berkala; keberhasilan job serta keberadaan file belum membuktikan bahwa backup dapat dipulihkan.</div>
+
+## Ringkasan Jalur Operasional
+
+```
+layanan bermasalah  -> systemctl status + journalctl -u
+server lemot       -> top/htop, free -h, df -h
+tugas berkala      -> crontab -e
+cek setelah reboot -> systemctl is-enabled <unit>
+```
+
+Dengan delapan bab ini, fondasi Linux kamu lengkap: shell, filesystem, permission, proses, paket, user, jaringan, dan operasional harian.

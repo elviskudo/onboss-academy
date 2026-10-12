@@ -1,0 +1,166 @@
+---
+title: "Variabel & Tipe Data"
+description: "Kata kunci deklarasi, scope, 11 tipe fundamental, konversi, dan jebakan integer division"
+order: 2
+quiz:
+  - q: "Tipe data string modern di C++ adalah…"
+    options: ["char array", "std::string", "text", "str"]
+    answer: 1
+    explain: "std::string menangani panjang, penyalinan, dan concatenation otomatis — jauh lebih aman dari char*."
+  - q: "Nilai default variabel lokal yang belum diisi adalah…"
+    options: ["Selalu 0", "Selalu nullptr", "Belum terdefinisi (undefined)", "Selalu false"]
+    answer: 2
+    explain: "C++ tidak mengisi variabel lokal otomatis — selalu beri nilai awal saat deklarasi."
+  - q: "Hasil dari int a = 7, b = 2; lalu a / b adalah…"
+    options: ["3.5", "3", "4", "error kompilasi"]
+    answer: 1
+    explain: "Pembagian dua int menghasilkan int: pecahannya dibuang. Tulis (double)a / b untuk 3.5."
+  - q: "Konstanta yang nilainya wajib diketahui saat kompilasi dideklarasikan dengan…"
+    options: ["constexpr", "var", "static_val", "final_val"]
+    answer: 0
+    explain: "constexpr menjamin nilai bisa dihitung sebelum program berjalan dan tidak bisa berubah."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    using namespace std;
+
+    int main() {
+        int umur = 20;
+        double tinggi = 1.65;
+        bool aktif = true;
+        char grade = 'A';
+        string nama = "Sari";
+        constexpr double PI = 3.14159;
+
+        cout << nama << " (" << umur << ") " << grade << endl;
+        cout << "PI = " << PI << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C++ memadukan tipe hemat memori dari C dengan **tipe tingkat tinggi yang aman**. Karena dikompilasi dan ber-type, kesalahan tipe tertangkap sebelum program jalan — bukan saat runtime.
+
+## Deklarasi Variabel
+
+```cpp
+int umur = 20;            // tipe eksplisit
+auto skor = 85;           // tipe disimpulkan: int
+static int hitung = 0;    // bertahan selama program berjalan
+```
+
+Setiap deklarasi membutuhkan **3 hal**: tipe, nama, dan (sebaiknya) nilai awal; tipe ditulis sendiri (`int x = 5;`) atau disimpulkan `auto` dari nilai awal. C++ punya **4 spekifier durasi penyimpanan**: `static` (hidup selama program), `extern` (antar-file `.cpp`), `thread_local` (satu salinan per thread), dan default tanpa spekifier — otomatis, dihapus saat keluar blok. (`register` sudah dihapus di C++17.)
+
+## Mutabilitas
+
+| Kata kunci | Arti | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `const` | tidak boleh diubah setelah inisialisasi | `const int BATAS = 75;` | batas, konfigurasi |
+| `constexpr` | `const` + wajib diketahui saat kompilasi | `constexpr int N = 10 * 4;` | ukuran array |
+| `mutable` | pengecualian `const` di dalam class | `mutable int aksesKe;` | hitung akses |
+
+## Scope (Jangkauan)
+
+C++ punya **4 tingkat scope** — setiap blok `{ }` menciptakan scope sendiri:
+
+| Scope | Dibuat di | Hidup sampai |
+|---|---|---|
+| Blok `{ }` | dalam fungsi/if/loop | tanda tutup blok |
+| Fungsi | awal fungsi | fungsi selesai |
+| File (global) | luar semua fungsi | program selesai |
+| Class | deklarasi member | object hidup |
+
+Aturan penamaan: huruf, angka, `_` (tidak boleh diawali angka), **case-sensitive**, bebas dari kata kunci seperti `int`/`class`/`return`. Konvensi: `camelCase` untuk variabel, `UPPER_SNAKE` untuk konstanta.
+
+## Tipe Data Primitif
+
+C++ punya **11 tipe fundamental** — 4 bilangan bulat, 3 pecahan, dan 4 sisanya:
+
+| Tipe | Ukuran | Rentang/sifat | Contoh | Buat apa |
+|---|---|---|---|---|
+| `int` | 4 byte | ±2,1 miliar | `20`, `-7` | hitungan umum |
+| `short` | 2 byte | ±32 ribu | `1234` | hemat memori |
+| `long long` | 8 byte | ±9,2 × 10¹⁸ | `10000000000LL` | ID besar, timestamp |
+| `unsigned int` | 4 byte | 0 … 4,2 miliar | `4000000000u` | selalu ≥ 0 |
+| `float` | 4 byte | ±3,4 × 10³⁸, ~7 digit | `4.5f` | grafis, sensor |
+| `double` | 8 byte | ~15–16 digit | `1.65` | desimal standar |
+| `long double` | 10–16 byte | lebih panjang dari double | `3.14L` | hitungan sensitif |
+| `bool` | 1 byte | `true` / `false` | `aktif = true` | status |
+| `char` | 1 byte | −128 … 127 atau 0 … 255 | `'A'` | satu karakter |
+| `wchar_t` | 2–4 byte | Unicode lebar | `L'A'` | karakter internasional |
+| `void` | — | "tanpa nilai" | `void tampil()` | return kosong |
+
+Selain itu ada `char16_t`/`char32_t`/`char8_t` (C++20) untuk Unicode, plus `auto` dan `decltype`. **Tipe non-primitif/referensi**: `std::string`, `std::vector`, array, pointer, referensi, class, dan enum. Ukuran bisa dicek dengan `sizeof` — umumnya `int` 4 byte, `char` 1 byte, `double` 8 byte.
+
+## Nilai Default
+
+- **Variabel lokal: tidak ada default** — membacanya sebelum diisi adalah perilaku tak terdefinisi. Selalu inisialisasi.
+- **Global & static: di-zero-kan otomatis** (`0`, `0.0`, `false`, `nullptr`).
+- Anggota class: tergantung konstruktor; tanpa konstruktor, tidak dijamin.
+
+## std::string
+
+```cpp
+#include <string>
+
+string nama = "Sari";
+string sapa = "Halo, " + nama;      // concatenation alami
+int panjang = nama.length();        // 4
+nama += "!";                        // ubah langsung
+```
+
+`std::string` mengurus buffer dan null terminator sendiri — tidak perlu `strlen` atau takut overflow.
+
+## Konversi Tipe
+
+C++ punya **5 cara cast**: `static_cast` (umum), `const_cast` (hapus `const`), `reinterpret_cast` (ubah tafsir bit), `dynamic_cast` (cek tipe saat runtime untuk class ber-virtual), dan cast gaya C `(int)x` — hindari yang terakhir karena tidak bisa diperiksa kompilator.
+
+```cpp
+constexpr int a = 7, b = 2;
+double hasil = static_cast<double>(a) / b;   // 3.5
+int bulat = static_cast<int>(3.99);          // 3 — dipotong, tidak dibulatkan
+```
+
+Konversi **otomatis (implicit)** hanya terjadi ke tipe yang lebih luas: `int` mengalir ke `double` tanpa error.
+
+**Jebakan yang sering terjadi:**
+
+| Kode | Hasil | Kenapa |
+|---|---|---|
+| `7 / 2` | `3` | dua int → pembagian int |
+| `7 / 2.0` | `3.5` | salah satu pecahan → pecahan |
+| `0.1f + 0.2f` | `0.30000001` | float biner tidak presisi |
+| `int x = {3.99}` | error kompilasi | brace `{}` menolak penyempitan nilai |
+
+## Di Dunia Nyata
+
+- Konfigurasi game: `constexpr int MAX_PELURU = 999;` — diketahui kompilasi, array dibuat pas.
+- Validasi form: `if (umur > 0 && umur < 150)` menangkap data aneh sebelum dikirim ke server.
+- Perhitungan rupiah pakai `int` supaya `10000 + 15%` tidak menghasilkan `1500.0000000002`.
+- Log sistem: `static int hitungPanggilan = 0;` menghitung pemanggilan selama program hidup.
+<div class="note">💡 Bedakan <code>const</code> dan <code>constexpr</code>: <code>const</code> menjamin nilai tidak diubah saat runtime, <code>constexpr</code> menjamin nilainya sudah diketahui sebelum program berjalan — dan hanya <code>constexpr</code> yang boleh dipakai sebagai ukuran array statis.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int umur = 20;
+    double tinggi = 1.65;
+    bool aktif = true;
+    char grade = 'A';
+    string nama = "Sari";
+    constexpr int BATAS = 100;
+
+    cout << nama << ", umur " << umur << ", tinggi " << tinggi << endl;
+    cout << "Grade " << grade << " | aktif " << aktif << endl;
+    cout << "Panjang nama: " << nama.length() << endl;
+
+    int a = 7, b = 2;
+    cout << "Pembagian int: " << a / b << endl;
+    cout << "Dengan cast: " << static_cast<double>(a) / b << endl;
+    cout << "Di bawah batas: " << (umur < BATAS) << endl;
+    return 0;
+}`} />

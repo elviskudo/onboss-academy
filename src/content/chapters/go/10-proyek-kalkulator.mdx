@@ -1,0 +1,201 @@
+---
+title: "Proyek: Kalkulator Mini"
+description: "Struct, method, switch, dan error digabung jadi satu program Go utuh"
+order: 10
+quiz:
+  - q: "Mengapa logika tiap operasi dipisah jadi method sendiri?"
+    options: ["agar kodenya panjang", "agar mudah diuji dan diperbaiki", "agar butuh lebih banyak file", "agar tidak pakai variabel"]
+    answer: 1
+    explain: "Method per operasi membuat setiap bagian bisa diuji terpisah dan diganti tanpa menyentuh yang lain."
+  - q: "Receiver pointer pada method Kalkulator dipakai agar…"
+    options: ["lebih cepat", "hemat memori", "field struct bisa diubah", "wajib untuk semua method"]
+    answer: 2
+    explain: "Tanpa *Kalker, method hanya menerima salinan dan perubahan field hilang."
+  - q: "Error pembagian nol sebaiknya…"
+    options: ["dikembalikan ke pemanggil", "diabaikan", "di panic-kan", "diganti nol diam-diam"]
+    answer: 0
+    explain: "Pemanggil yang memutuskan cara menanganinya — itu inti error handling Go."
+  - q: "Variabel hasil yang tidak terpakai akan…"
+    options: ["membuat kompilasi gagal", "otomatis dihapus", "jadi nol", "menimbulkan warning saja"]
+    answer: 0
+    explain: "Go melarang variabel lokal yang dideklarasikan tapi tidak dipakai."
+  - q: "Urutan langkah menyusun proyek kecil yang baik adalah…"
+    options: ["tulis semua sekaligus", "duplikasi kode", "pecah masalah, tulis fungsi, uji satu per satu", "mulai dari komentar"]
+    answer: 2
+    explain: "Pemecahan masalah dulu membuat kode terstruktur sejak baris pertama."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    type Kalkulator struct{}
+
+    func (k Kalkulator) Tambah(a, b int) int { return a + b }
+    func (k Kalkulator) Kurang(a, b int) int { return a - b }
+
+    func main() {
+        var k Kalkulator
+        fmt.Println("2 + 3 =", k.Tambah(2, 3))
+        fmt.Println("7 - 4 =", k.Kurang(7, 4))
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Semua materi Go kini dipakai bersama: **struct sebagai wadah, method sebagai perilaku, error sebagai nilai balik**.
+
+## Desain: 4 Operasi
+
+| Operasi | Method | Tipe return | Alasan |
+| --- | --- | --- | --- |
+| Tambah | `Tambah(a, b int)` | `int` | Tidak mungkin gagal |
+| Kurang | `Kurang(a, b int)` | `int` | Tidak mungkin gagal |
+| Kali | `Kali(a, b int)` | `int` | Tidak mungkin gagal |
+| Bagi | `Bagi(a, b int)` | `(float64, error)` | Pembagi nol harus dilaporkan |
+
+## Struktur Kalkulator
+
+```go
+type Kalkulator struct{}
+
+func (k Kalkulator) Tambah(a, b int) int { return a + b }
+func (k Kalkulator) Kurang(a, b int) int { return a - b }
+func (k Kalkulator) Kali(a, b int) int   { return a * b }
+
+func (k Kalkulator) Bagi(a, b int) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("pembagi nol")
+    }
+    return float64(a) / float64(b), nil
+}
+```
+
+Operasi berisiko (pembagian) mengembalikan error, sisanya cukup nilai tunggal.
+
+## Memilih Operasi dengan switch
+
+```go
+func Hitung(op string, a, b int) (int, error) {
+    k := Kalkulator{}
+    switch op {
+    case "+":
+        return k.Tambah(a, b), nil
+    case "-":
+        return k.Kurang(a, b), nil
+    default:
+        return 0, fmt.Errorf("operasi %q tidak dikenal", op)
+    }
+}
+```
+
+`return` langsung keluar dari fungsi, sehingga setiap case tidak perlu `break`.
+
+## Menjalankan Banyak Perhitungan
+
+```go
+ops := []string{"+", "-", "x"}
+for _, op := range ops {
+    hasil, err := Hitung(op, 12, 4)
+    if err != nil {
+        fmt.Println("Gagal:", err)
+        continue
+    }
+    fmt.Println(op, "=>", hasil)
+}
+```
+
+Perulangan `range` membuat kalkulator melayani daftar operasi tanpa menulis kode berulang. Catatan: versi ini memakai `int`, jadi pembagian ditangani method `Bagi` terpisah yang menghasilkan `float64`.
+
+## Menyatukannya
+
+```go
+func main() {
+    k := Kalkulator{}
+    fmt.Println("12 + 4 =", k.Tambah(12, 4))
+
+    h, err := k.Bagi(12, 4)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    fmt.Println("12 / 4 =", h)
+}
+```
+
+Alurnya selalu sama: hitung, cek error, tampilkan. Pola ini akan kamu temui di proyek Go mana pun.
+
+## Di Dunia Nyata
+
+- **Billing**: method per diskon (persen, potong rupiah) di struct `Invoice`
+- **Kalkulator cicilan**: `Bagi` menghitung angsuran per bulan, error saat tenor 0
+- **Service konversi mata uang**: switch memilih rate berdasarkan kode ISO
+- **Otomasi spreadsheet**: proyek nyata berawal persis seperti ini, lalu dibaca dari CSV
+- **Latihan TDD**: tiap method ditulis test-nya dulu (`go test`), implementasi menyusul
+
+<div class="note">💡 Kecil dulu, benar dulu, baru besar. Kalkulator 40 baris yang sudah lolos uji lebih berharga daripada aplikasi 1000 baris yang belum pernah dijalankan.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+type Kalkulator struct{}
+
+func (k Kalkulator) Tambah(a, b int) int { return a + b }
+func (k Kalkulator) Kurang(a, b int) int { return a - b }
+func (k Kalkulator) Kali(a, b int) int   { return a * b }
+
+func (k Kalkulator) Bagi(a, b int) (float64, error) {
+    if b == 0 {
+        return 0, fmt.Errorf("pembagi tidak boleh nol")
+    }
+    return float64(a) / float64(b), nil
+}
+
+func Hitung(op string, a, b int) (int, error) {
+    k := Kalkulator{}
+    switch op {
+    case "+":
+        return k.Tambah(a, b), nil
+    case "-":
+        return k.Kurang(a, b), nil
+    case "*":
+        return k.Kali(a, b), nil
+    default:
+        return 0, fmt.Errorf("operasi %q tidak dikenal", op)
+    }
+}
+
+func main() {
+    var k Kalkulator
+    fmt.Println("12 + 4 =", k.Tambah(12, 4))
+    fmt.Println("12 - 4 =", k.Kurang(12, 4))
+    fmt.Println("12 x 4 =", k.Kali(12, 4))
+
+    h, err := k.Bagi(12, 4)
+    if err != nil {
+        fmt.Println("Error:", err)
+    } else {
+        fmt.Println("12 / 4 =", h)
+    }
+
+    _, err = k.Bagi(12, 0)
+    if err != nil {
+        fmt.Println("Tertangkap:", err)
+    }
+
+    for _, op := range []string{"+", "-", "*"} {
+        hasil, err := Hitung(op, 12, 4)
+        if err != nil {
+            fmt.Println("Gagal:", err)
+            continue
+        }
+        fmt.Println("12", op, "4 =", hasil)
+    }
+
+    total := 0
+    for i := 1; i <= 3; i++ {
+        total = k.Tambah(total, i)
+        fmt.Println("Jumlah 1..", i, "=", total)
+    }
+}`} />

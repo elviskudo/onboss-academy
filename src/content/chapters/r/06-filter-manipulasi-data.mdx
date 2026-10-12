@@ -1,0 +1,153 @@
+---
+title: "Filter & Manipulasi Data"
+description: "Enam operasi base R: pilih, filter, ubah, urutkan, agregasi, dan gabungkan data frame"
+order: 6
+quiz:
+  - q: "Menyaring baris data frame dengan syarat logis ditulis…"
+    options: ["df(nilai > 80)", "filter df where nilai > 80", "df[df$nilai > 80, ]", "df.select(nilai > 80)"]
+    answer: 2
+    explain: "Index logis di posisi baris df[kondisi, ] memilih hanya baris bernilai TRUE."
+  - q: "NA merepresentasikan…"
+    options: ["Nol", "Nilai yang tidak diketahui", "Error pembagian", "String kosong"]
+    answer: 1
+    explain: "NA adalah missing value; nilainya tidak diketahui dan berbeda dari nol atau string kosong."
+  - q: "Mengurutkan data frame berdasarkan nilai menurun memakai…"
+    options: ["df[sort(df$nilai), ]", "df[order(-df$nilai), ]", "sort(df)", "df[-order(df$nilai), ]"]
+    answer: 1
+    explain: "order mengembalikan posisi baris; tanda minus membalik urutan numerik menjadi menurun."
+  - q: "Fungsi untuk menghitung mean per kelompok adalah…"
+    options: ["aggregate()", "merge()", "cbind()", "subset()"]
+    answer: 0
+    explain: "aggregate(nilai ~ kota, data = df, FUN = mean) meringkas nilai per kota."
+  - q: "merge(x, y, by = \"id\", all.x = TRUE) setara dengan…"
+    options: ["Inner join", "Right join", "Full join", "Left join"]
+    answer: 3
+    explain: "all.x mempertahankan seluruh baris x meski pasangan di y tidak ada."
+example:
+  code: |
+    df <- data.frame(
+      nama = c("Adi", "Budi", "Citra", "Dewi"),
+      nilai = c(85, 60, NA, 92)
+    )
+    sum(is.na(df$nilai))
+    df2 <- df[!is.na(df$nilai), ]
+    df2[order(df2$nilai, decreasing = TRUE), ]
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data nyata jarang siap dianalisis: kolom berlebih, nilai hilang, baris tidak relevan, urutan acak, dan tabel terpisah. Base R menyediakan semua operasi manipulasi inti tanpa package eksternal.
+
+## Enam Operasi Inti
+
+Ada **6 operasi** yang mencakup sebagian besar pembersihan data:
+
+| Operasi | Fungsi/sintaks | Tujuan |
+| --- | --- | --- |
+| Pilih kolom | `df[c("a", "b")]` | kurangi variabel |
+| Filter baris | `df[kondisi, ]` | pilih observasi |
+| Ubah/tambah | `df$baru <- ...` | derivasi variabel |
+| Urutkan | `df[order(...), ]` | atur prioritas |
+| Agregasi | `aggregate()` | ringkas per kelompok |
+| Gabungkan | `merge()`, `rbind()`, `cbind()` | satukan tabel |
+
+Urutan kerja yang aman biasanya: periksa → bersihkan tipe/NA → turunkan kolom → filter → agregasi/gabung.
+
+## Memilih dan Menyaring
+
+```r
+df <- data.frame(
+  nama = c("Adi", "Budi", "Citra", "Dewi"),
+  kota = c("Jakarta", "Bandung", "Jakarta", "Surabaya"),
+  nilai = c(85, 60, 88, 72)
+)
+
+df[c("nama", "nilai")]
+df[df$nilai >= 80, ]
+df[df$nilai > 70 & df$kota != "Surabaya", ]
+subset(df, kota == "Jakarta", select = c(nama, nilai))
+```
+
+Gunakan `&`, `|`, dan `!` untuk logika vektor. Operator `&&` dan `||` hanya memeriksa elemen pertama dan cocok untuk kontrol alur `if`, bukan filter kolom.
+
+## Menambah dan Mengubah Kolom
+
+```r
+df$lulus <- df$nilai >= 75
+df$bonus <- ifelse(df$nilai >= 85, 5, 0)
+df$kota <- toupper(df$kota)
+```
+
+Semua ekspresi di kanan bekerja secara vektor. Panjang hasil idealnya sama dengan jumlah baris atau panjang 1 yang sengaja di-recycle.
+
+## Menangani Nilai Hilang
+
+```r
+x <- c(10, NA, 30, NA, 50)
+is.na(x)
+sum(is.na(x))
+mean(x, na.rm = TRUE)
+x[!is.na(x)]
+complete.cases(df)
+na.omit(df)
+```
+
+Empat strategi untuk NA: biarkan, buang baris, hitung dengan `na.rm`, atau imputasi berdasarkan alasan domain. Jangan otomatis mengganti NA menjadi 0 — maknanya berbeda.
+
+## Mengurutkan
+
+```r
+x <- c(40, 10, 30, 20)
+sort(x)                         # nilai terurut
+order(x)                        # posisi urut
+df[order(df$nilai), ]           # baris berdasarkan nilai
+df[order(df$kota, -df$nilai), ] # kota naik, nilai turun
+```
+
+`sort()` mengurutkan vektor itu sendiri; `order()` memberi index yang bisa diterapkan ke seluruh baris data frame.
+
+## Agregasi per Kelompok
+
+```r
+penjualan <- data.frame(
+  kota = c("Jkt", "Jkt", "BDG", "BDG"),
+  nominal = c(100, 150, 80, 120)
+)
+aggregate(nominal ~ kota, data = penjualan, FUN = mean)
+tapply(penjualan$nominal, penjualan$kota, sum)
+```
+
+`aggregate()` menghasilkan data frame dan dapat merangkum banyak kolom. `tapply()` ringkas untuk satu vektor hasil terhadap kelompok factor.
+
+## Menggabungkan Data
+
+```r
+karyawan <- data.frame(id = 1:3, nama = c("Adi", "Budi", "Citra"))
+gaji <- data.frame(id = 2:4, gaji = c(8, 9, 7))
+merge(karyawan, gaji, by = "id")                # inner join
+merge(karyawan, gaji, by = "id", all.x = TRUE) # left join
+rbind(karyawan, data.frame(id = 4, nama = "Dewi"))
+```
+
+`rbind()` menambah baris dan mensyaratkan kolom kompatibel; `cbind()` menambah kolom berdasarkan posisi baris; `merge()` mencocokkan berdasarkan kunci dan lebih aman untuk data dari sumber terpisah.
+
+## Di Dunia Nyata
+
+1. **Segmentasi pelanggan** — filter transaksi aktif lalu tambah kolom kategori belanja dengan `ifelse()`.
+2. **Laporan cabang** — `aggregate(nominal ~ cabang, ..., sum)` menghasilkan total omzet per cabang.
+3. **Rekonsiliasi pembayaran** — `merge(invoice, pembayaran, by = "invoice_id", all.x = TRUE)` menunjukkan invoice yang belum punya pasangan.
+4. **Pembersihan survei** — `complete.cases()` memilih responden dengan semua jawaban wajib sebelum model dijalankan.
+5. **Ranking penjualan** — `order(-df$omzet)` mengurutkan salesperson tertinggi tanpa memisahkan kolom lain dari barisnya.
+
+<div class="note">💡 Jangan pernah mengurutkan satu kolom lalu memasukkannya kembali ke data frame: pasangan antar-kolom akan rusak. Ambil index dengan `order()` lalu terapkan index yang sama ke seluruh baris.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`df <- data.frame(
+  nama = c("Adi", "Budi", "Citra", "Dewi"),
+  kota = c("Jkt", "BDG", "Jkt", "BDG"),
+  nilai = c(85, 60, NA, 92)
+)
+print(sum(is.na(df$nilai)))
+bersih <- df[!is.na(df$nilai), ]
+bersih$lulus <- bersih$nilai >= 75
+print(bersih[order(-bersih$nilai), ])
+print(aggregate(nilai ~ kota, data = bersih, FUN = mean))`} />

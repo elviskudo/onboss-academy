@@ -1,0 +1,180 @@
+---
+title: "String Lanjutan"
+description: "Immutability, 15+ method String, StringBuilder, split/join, dan jebakan pembandingan teks"
+order: 7
+quiz:
+  - q: "String di Java bersifat…"
+    options: ["Mutable — bebas diubah", "Immutable — tidak bisa diubah setelah dibuat", "Bisa jadi null selamanya", "Hanya berupa angka"]
+    answer: 1
+    explain: "Setiap method seperti toUpperCase() menghasilkan String BARU, bukan mengubah yang lama."
+  - q: "Untuk menyusun string ratusan kali dalam loop, kelas terbaik adalah…"
+    options: ["String", "char", "StringBuilder", "Integer"]
+    answer: 2
+    explain: "StringBuilder bersifat mutable sehingga tidak membuat banyak object String sementara."
+  - q: "hasil dari \"abc\".substring(1) adalah…"
+    options: ["ab", "a", "bc", "abc"]
+    answer: 2
+    explain: "substring(n) memotong mulai indeks n sampai akhir — indeks 0 tidak ikut."
+  - q: "Memisahkan teks berdasarkan koma dilakukan dengan…"
+    options: ["split(\",\")", "join(\",\")", "cut(\",\")", "divide(\",\")"]
+    answer: 0
+    explain: "split mengembalikan array String; kebalikannya adalah String.join."
+  - q: "Pembandingan dua String dengan == akan…"
+    options: ["Membandingkan referensi memori, bukan isi teks", "Selalu mengembalikan true", "Menyebabkan compile error", "Mengubah salah satu string"]
+    answer: 0
+    explain: "Gunakan equals() untuk isi dan equalsIgnoreCase() bila huruf besar-kecil diabaikan."
+example:
+  code: |
+    String teks = "  Belajar Java  ";
+    String bersih = teks.trim();
+    System.out.println(bersih.length());
+    System.out.println(bersih.toUpperCase());
+    System.out.println(bersih.contains("Java"));
+    String[] kata = bersih.split(" ");
+    System.out.println(kata[0] + " | " + kata[1]);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hampir setiap program memproses teks — nama file, pesan chat, data CSV. Java punya **ratusan method String**; yang penting hafal yang paling sering dipakai dan memahami sifat immutability-nya.
+
+## String Itu Immutable
+
+```java
+String a = "Halo";
+String b = a.toUpperCase();   // a TETAP "Halo", b = "HALO"
+String c = a + " Dunia";      // object String BARU dibuat
+```
+
+String tidak bisa diubah setelah dibuat. Setiap operasi menghasilkan object baru. Konsekuensi: String aman dipakai bersama (thread-safe, bisa jadi HashMap key), tapi penyusunan berulang dalam loop boros memori — pakai StringBuilder.
+
+## 15 Method String Wajib
+
+```java
+String teks = "Belajar Java";
+teks.length();            // 11
+teks.charAt(0);           // 'B'
+teks.substring(7);        // "Java" — mulai indeks 7
+teks.substring(0, 6);     // "Belajar" — [0, 6)
+teks.indexOf("Java");     // 7, -1 jika tidak ada
+teks.lastIndexOf('a');    // 9
+teks.contains("ava");     // true
+teks.startsWith("Bel");   // true
+teks.endsWith("Java");    // true
+teks.toUpperCase();       // "BELAJAR JAVA"
+teks.toLowerCase();       // "belajar java"
+teks.replace('a', 'o');   // "Belajar Jovo"
+teks.replace("Java", "C");// ganti substring
+teks.isBlank();           // false
+teks.isEmpty();           // false (kosong ≠ blank)
+```
+
+Tabel ringkas pemakaian:
+
+| Method | Fungsi | Kapan dipakai |
+|---|---|---|
+| `length()` | jumlah karakter | validasi panjang PIN/nama |
+| `charAt(i)` | karakter ke-i | cek awalan/huruf pertama |
+| `substring(a,b)` | potong teks | ekstrak tanggal, kode voucher |
+| `indexOf(s)` | posisi substring | cari delimiter, validasi format |
+| `contains/startsWith/endsWith` | cek keberadaan | filter prefix, extension file |
+| `replace(a,b)` | ganti karakter/substring | bersihkan data, mask nomor |
+| `toUpperCase/toLowerCase` | normalisasi huruf | perbandingan case-insensitive |
+| `trim()` | buang spasi ujung | bersihkan input user |
+| `split(regex)` | teks → array | parse CSV, tokenisasi |
+| `equals/equalsIgnoreCase` | bandingkan isi | autentikasi, pencocokan menu |
+
+## Trim, Split & Join
+
+```java
+String data = "Sari,Budi,Rina";
+String[] nama = data.split(",");
+System.out.println(nama[1]);                 // Budi
+System.out.println(nama.length);             // 3
+
+String gabung = String.join(" | ", nama);    // Sari | Budi | Rina
+String berantakan = "  halo  ";
+System.out.println("[" + berantakan.trim() + "]");  // [halo]
+```
+
+`split` menerima **regex** — untuk memisah berdasarkan titik koma atau tanda kurung, sisipkan escape: `split("[.,;]")`.
+
+## equals vs ==
+
+```java
+String a = new String("java");
+String b = new String("java");
+System.out.println(a == b);          // false — dua object berbeda
+System.out.println(a.equals(b));     // true  — isi sama
+System.out.println(a.equalsIgnoreCase("JAVA")); // true
+System.out.println(a.compareTo("jb")); // -1 — urutan leksikografis
+```
+
+`==` membandingkan referensi memori; `equals` membandingkan isi. Untuk String literal interned, hasil `==` bisa kebetulan true — jangan mengandalkannya. `compareTo` dipakai saat mengurutkan daftar nama.
+
+## String.format & Text Block
+
+```java
+String pesan = String.format("Halo %s, umur %d, saldo %.2f", "Sari", 20, 15000.5);
+// "Halo Sari, umur 20, saldo 15000.50"
+
+String sql = """
+        SELECT id, nama
+        FROM siswa
+        WHERE kelas = 'XII'""";        // text block Java 15+, multi-baris rapi
+```
+
+## StringBuilder (Mutable)
+
+```java
+StringBuilder sb = new StringBuilder();
+for (int i = 1; i <= 3; i++) {
+    sb.append("ke-").append(i).append(" ");
+}
+String hasil = sb.toString();   // "ke-1 ke-2 ke-3 "
+sb.reverse();                   // mutasi in-place
+sb.insert(0, ">> ");            // sisipkan di awal
+```
+
+StringBuilder punya `append`, `insert`, `reverse`, `delete`, `substring` — tapi **tidak** punya `equals` (bandingkan via `toString()` dulu). Untuk teks multi-thread, `StringBuffer` (sinkron) lebih aman tapi lebih lambat.
+
+## Di Dunia Nyata
+
+- **Masking nomor rekening**: `noRek.substring(0, 4) + "****" + noRek.substring(noRek.length()-4)` menampilkan hanya 4 digit terakhir.
+- **Validasi email**: `email.contains("@") && email.endsWith(".com") && !email.isBlank()` — penyaringan awal sebelum kirim OTP.
+- **Parsing log server**: `log.split(" ")` memecah `"192.168.1.1 - - [tanggal] \"GET /api\""` menjadi field-field untuk analisis.
+- **Search & replace massal (CMS)**: `konten.replace("produk lama", "produk baru")` saat rename brand di ribuan artikel.
+- **Merakit laporan CSV**: StringBuilder menggabungkan baris demi baris dalam loop 10.000 data — 10× lebih cepat daripada `+=` pada String.
+
+<div class="note">💡 String <b>immutable</b>: setiap method menghasilkan string baru. Loop <code>teks = teks + "x"</code> ratusan kali membuang object lama dan memicu garbage collector — gunakan StringBuilder. Ringkasan aman: <b>baca pakai String, rakit pakai StringBuilder</b>.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    public static void main(String[] args) {
+        String teks = "  Belajar Java di OnBoss  ";
+        String bersih = teks.trim();
+        System.out.println("Bersih: [" + bersih + "]");
+        System.out.println("Panjang: " + bersih.length());
+        System.out.println("Besar: " + bersih.toUpperCase());
+        System.out.println("Ada kata Java? " + bersih.contains("Java"));
+        System.out.println("Potong: " + bersih.substring(8));
+        System.out.println("Mulai Belajar? " + bersih.startsWith("Belajar"));
+
+        String data = "Sari,Budi,Rina";
+        String[] nama = data.split(",");
+        System.out.println("Jumlah nama: " + nama.length);
+        System.out.println("Kedua: " + nama[1]);
+        System.out.println("Gabung: " + String.join(" | ", nama));
+
+        String a = new String("java");
+        String b = new String("java");
+        System.out.println("a == b: " + (a == b));
+        System.out.println("a.equals(b): " + a.equals(b));
+        System.out.println(String.format("Format: %s berumur %d", "Sari", 20));
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i <= 3; i++) {
+            sb.append("ke-").append(i).append(" ");
+        }
+        System.out.println(sb.toString().trim());
+    }
+}`} />

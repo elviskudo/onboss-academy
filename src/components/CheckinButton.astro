@@ -1,0 +1,82 @@
+---
+interface Props {
+  streak: number;
+  total: number;
+  checkedToday: boolean;
+}
+const { streak, total, checkedToday } = Astro.props;
+---
+<div class="checkin-card rounded-2xl border border-line bg-surface p-6 shadow-sm" data-checked={checkedToday ? '1' : '0'}>
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <p class="text-sm font-bold uppercase tracking-wider text-muted">Absensi Harian</p>
+      <p class="mt-1 text-3xl font-extrabold tracking-tight">
+        <span class="checkin-streak">{streak}</span>
+        <span class="text-base font-bold text-muted">hari beruntun 🔥</span>
+      </p>
+      <p class="mt-1 text-sm text-muted">Total kehadiran: <strong class="checkin-total text-ink">{total}</strong> hari</p>
+    </div>
+    <button type="button" class="checkin-btn rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm shadow-primary/30 hover:bg-primary-dark disabled:opacity-60">
+      {checkedToday ? '✔ Sudah Absen Hari Ini' : '📅 Absen Sekarang'}
+    </button>
+  </div>
+  <div class="checkin-msg mt-4 hidden rounded-xl bg-success-soft px-4 py-3 text-sm font-semibold text-success"></div>
+  <div class="mt-6 grid grid-cols-3 gap-3 text-center">
+    <div class="rounded-xl bg-bg p-3">
+      <p class="text-2xl font-extrabold text-primary milestone-7">🔒</p>
+      <p class="text-xs text-muted">Badge 7 hari</p>
+    </div>
+    <div class="rounded-xl bg-bg p-3">
+      <p class="text-2xl font-extrabold text-primary milestone-30">🔒</p>
+      <p class="text-xs text-muted">Badge 30 hari</p>
+    </div>
+    <div class="rounded-xl bg-bg p-3">
+      <p class="text-2xl font-extrabold text-primary milestone-100">🔒</p>
+      <p class="text-xs text-muted">Badge 100 hari</p>
+    </div>
+  </div>
+</div>
+<script>
+  const card = document.querySelector('.checkin-card');
+  if (card) {
+    const btn = card.querySelector('.checkin-btn') as HTMLButtonElement;
+    const msg = card.querySelector('.checkin-msg') as HTMLElement;
+    const setMilestones = (total: number) => {
+      (['7', '30', '100'] as const).forEach((m) => {
+        const el = card.querySelector(`.milestone-${m}`) as HTMLElement;
+        if (el) {
+          const reached = total >= Number(m);
+          el.textContent = reached ? '🏅' : '🔒';
+        }
+      });
+    };
+    btn?.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/attendance/checkin', { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok && data.error?.includes('masuk')) {
+          window.location.href = '/login';
+          return;
+        }
+        msg.classList.remove('hidden');
+        msg.textContent = data.message || (data.already ? 'Sudah absen hari ini.' : 'Absen tercatat!');
+        if (!data.already && data.total != null) {
+          (card.querySelector('.checkin-streak') as HTMLElement).textContent = String(data.streak);
+          (card.querySelector('.checkin-total') as HTMLElement).textContent = String(data.total);
+          setMilestones(data.total);
+        }
+        btn.textContent = '✔ Sudah Absen Hari Ini';
+      } catch {
+        msg.classList.remove('hidden');
+        msg.classList.add('!bg-danger-soft', '!text-danger');
+        msg.textContent = 'Gagal absen. Coba lagi.';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    // initial milestones dari total yang dirender server
+    const totalEl = card.querySelector('.checkin-total');
+    if (totalEl) setMilestones(Number(totalEl.textContent || 0));
+  }
+</script>

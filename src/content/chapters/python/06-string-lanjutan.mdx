@@ -1,0 +1,147 @@
+---
+title: "String Lanjutan & Format"
+description: "47 method string, f-string, dan pola umum"
+order: 6
+quiz:
+  - q: "Hasil \"Halo\".upper() adalah…"
+    options: ["\"halo\"", "\"Halo\"", "\"HALO\"", "Error"]
+    answer: 2
+    explain: "upper() mengubah semua huruf menjadi kapital — menghasilkan string BARU."
+  - q: "\"a,b,c\".split(\",\") menghasilkan…"
+    options: ["['a', 'b', 'c']", "\"abc\"", "['a,b,c']", "Error"]
+    answer: 0
+    explain: "split memecah string berdasarkan pemisah → list."
+  - q: "Cara mengecek awalan string dengan benar…"
+    options: ["s.startswith(\"Halo\")", "s.begin(\"Halo\")", "s.first(\"Halo\")", "s.head(\"Halo\")"]
+    answer: 0
+    explain: "startswith / endswith — jauh lebih jelas daripada slicing manual."
+  - q: "String di Python bersifat…"
+    options: ["Mutable, bisa diganti di tempat", "Immutable, tiap method menghasilkan string baru", "Bisa jadi angka otomatis", "Selalu huruf besar"]
+    answer: 1
+    explain: "s.upper() tidak mengubah s — hasilnya harus ditampung: s = s.upper()."
+  - q: "f-string memungkinkan…"
+    options: ["Membuat file", "Menghapus spasi", "Menyisipkan ekspresi {expr} di dalam string", "Mengubah tipe data"]
+    answer: 2
+    explain: "f\"{a + b}\" — ekspresi Python apa pun bisa di dalam kurung kurawal."
+example:
+  code: |
+    nama = "sari wijaya"
+    print(nama.title())
+    print(f"{nama.upper()} punya {len(nama.split())} kata")
+    print("Harga: Rp{:,}".format(1500000))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah tipe paling sering dipakai di Python: nama, pesan, file, JSON — semuanya teks. Python punya **47 method string bawaan** dan **3 cara format** (`%`, `.format()`, f-string).
+
+## Metode Penting
+
+```python
+s = "  Belajar Python  "
+s.strip()           # "Belajar Python"
+s.lower(), s.upper()
+s.title()           # "Belajar Python"
+s.replace("Python", "JS")
+s.find("Python")    # posisi (atau -1)
+s.count("a")
+s.startswith("  B"), s.endswith("n  ")
+s.split()           # list kata
+"-".join(["a", "b", "c"])  # "a-b-c"
+```
+
+Kelompok method yang paling dipakai sehari-hari:
+
+| Kelompok | Method | Contoh hasil |
+|---|---|---|
+| Bersih-bersih | `strip`, `lstrip`, `rstrip` | hilangkan spasi tepi |
+| Ubah huruf | `lower`, `upper`, `title`, `swapcase` | `"ai".upper()` → `"AI"` |
+| Cari | `find`, `index`, `count`, `startswith`, `endswith` | `"...".find("x")` → `-1` |
+| Pecah/gabung | `split`, `rsplit`, `join`, `partition` | `"a,b".split(",")` → `["a","b"]` |
+| Ganti | `replace`, `removeprefix`, `removesuffix` | versi 3.9+ |
+| Cek | `isalpha`, `isdigit`, `isalnum`, `isspace` | validasi input |
+
+Semua method **mengembalikan string baru** — string immutable, jadi `s.upper()` tanpa `s = ...` tidak mengubah apa pun.
+
+## Operator String
+
+```python
+"a" + "b"        # penggabungan → "ab"
+"Halo" * 3       # pengulangan → "HaloHaloHalo"
+"ae" in "kata"   # keanggotaan → True
+"a" == "A"       # False — beda huruf besar/kecil
+len("Python")    # panjang karakter → 6
+```
+
+String mendukung penggabungan, pengulangan, keanggotaan (`in`), perbandingan (`<` mengurutkan alfabetis), dan indexing `s[0]` — tapi **tidak bisa diubah di tempat**.
+
+## f-string Lanjutan
+
+```python
+harga = 1500000
+print(f"Rp{harga:,}")          # Rp1,500,000
+print(f"{harga:.2f}")          # 1500000.00
+print(f"{'teks':>10}")         # rata kanan lebar 10
+print(f"{'teks':^10}")         # rata tengah
+print(f"{3.14159:.2f}")        # 3.14
+print(f"{harga=}")             # harga=1500000 (debug, Python 3.8+)
+```
+
+3 cara format dan kapan pakai mana:
+
+| Cara | Contoh | Kapan |
+|---|---|---|
+| f-string (3.6+) | `f"Rp{harga:,}"` | **default** — singkat & cepat |
+| `.format()` | `"Rp{:,}".format(harga)` | template string lama |
+| `%` | `"%.2f" % harga` | kode legacy / logging C-style |
+
+Ekspresi di dalam f-string:
+
+```python
+print(f"Jumlah: {sum([1, 2, 3])}")
+print(f"{'ya' if x > 0 else 'tidak'}")
+```
+
+## Multi-line, Raw & Escape
+
+```python
+teks = """Baris pertama
+Baris kedua"""
+
+raw = r"C:\Users\nama"     # backslash literal — path Windows
+esc = "Baris\tbaru"        # \t = tab, \n = baris baru, \\ = backslash
+```
+
+`r"..."` menonaktifkan escape — wajib untuk regex dan path.
+
+## Pola Umum
+
+```python
+# membersihkan input
+nama = input("Nama: ").strip().title()
+
+# validasi
+if not email or "@" not in email:
+    print("Email tidak valid")
+
+# parse
+tanggal = "2026-10-11"
+tahun, bulan, hari = tanggal.split("-")
+```
+
+## Di Dunia Nyata
+
+- Membersihkan input sebelum disimpan: `input().strip()` mencegah `"Sari "` dan `"Sari"` jadi dua data.
+- Cek nama file: `nama.endswith((".jpg", ".png"))` saat batch upload.
+- Merapikan laporan: `", ".join(baris)` mengubah list item jadi satu kalimat.
+- Parsing log `2026-10-11 ERROR` dengan `split()` lalu cabik jadi tanggal, level, pesan.
+
+<div class="note">💡 String immutable: tiap method (`upper`, `strip`, `replace`) membuat string BARU. Tulis `s = s.strip()` — kalau hanya `s.strip()`, hasilnya dibuang dan `s` tetap kotor.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = "sari wijaya; bandung; 90"
+nama, kota, skor = (p.strip().title() for p in data.split(";"))
+print(f"Nama : {nama}")
+print(f"Kota : {kota}")
+print(f"Skor : {skor} → {'LULUS' if int(skor) >= 70 else 'REMEDI'}")
+harga = 1750000
+print(f"Harga coret : Rp{harga:,}".replace(",", "."))`} />

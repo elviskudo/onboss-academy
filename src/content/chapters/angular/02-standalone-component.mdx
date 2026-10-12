@@ -1,0 +1,172 @@
+---
+title: "Standalone Component"
+description: "Unit dasar Angular modern: satu komponen berdiri sendiri lengkap dengan template dan logikanya"
+order: 2
+quiz:
+  - q: "Standalone component berarti…"
+    options: ["Komponen berjalan tanpa server", "Komponen bisa dipakai tanpa harus tergabung NgModule", "Komponen tanpa template", "Komponen yang dihapus dari proyek"]
+    answer: 1
+    explain: "Sejak Angular 14, standalone menjadi default: komponen mengimpor apa yang ia butuhkan sendiri."
+  - q: "Decorator yang menandai komponen adalah…"
+    options: ["@Component", "@Injectable", "@Input", "@Route"]
+    answer: 0
+    explain: "@Component membawa selector, template, dan daftar imports komponen."
+  - q: "imports pada @Component berfungsi untuk…"
+    options: ["Mengambil data dari API", "Menghapus dependensi", "Mendaftarkan direktif/pipa/komponen lain yang dipakai di template-nya", "Mengompilasi TypeScript"]
+    answer: 2
+    explain: "Contoh: butuh CommonModule untuk *ngIf, atau RouterModule untuk routerLink."
+  - q: "Pemisahan class dan template disebut…"
+    options: ["Separation of concerns", "Dependency injection", "Change detection", "Bootstrapping"]
+    answer: 0
+    explain: "Logika di class .ts, tampilan di template — masing-masing fokus pada tanggung jawabnya."
+  - q: "Selector app-produk-card dipakai di template lain sebagai…"
+    options: ["<app-produk-card></app-produk-card>", "<ProdukCard />", "[produk-card]", "#produk-card"]
+    answer: 0
+    explain: "Selector berperan seperti nama tag kustom untuk komponen tersebut."
+example:
+  code: |
+    const komponen = {
+      selector: "app-sapa",
+      template: "Halo, OnBoss!",
+      imports: ["CommonModule"],
+    };
+    console.log(komponen.selector, "->", komponen.template);
+---
+
+Unit terkecil Angular: komponen. Bab ini menulis satu komponen standalone lengkap, dari file baru sampai dipakai di halaman lain.
+
+## Anatomi Komponen
+
+```typescript
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+
+@Component({
+  selector: "app-sapa",
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <h1>Halo, {{ nama }}!</h1>
+    <p *ngIf="aktif">Akun kamu aktif.</p>
+  `,
+})
+class SapaComponent {
+  nama = "Sari";
+  aktif = true;
+}
+```
+
+Empat bagian: selector (nama tag), standalone (komponen mandiri), imports (kebutuhan template), dan template berisi HTML + binding.
+
+## Template Terpisah
+
+Untuk template panjang, pisahkan ke file:
+
+```typescript
+@Component({
+  selector: "app-sapa",
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: "./sapa.component.html",
+  styleUrl: "./sapa.component.css",
+})
+class SapaComponent {
+  nama = "Sari";
+}
+```
+
+```html
+<!-- sapa.component.html -->
+<h1>Halo, {{ nama }}!</h1>
+```
+
+## Memakai Komponen di Tempat Lain
+
+```typescript
+import { Component } from "@angular/core";
+import { SapaComponent } from "./sapa/sapa.component";
+
+@Component({
+  selector: "app-root",
+  standalone: true,
+  imports: [SapaComponent],
+  template: `<app-sapa />`,
+})
+class AppComponent {}
+```
+
+Komponen induk mendaftarkan `SapaComponent` di `imports`-nya, lalu memakainya sebagai tag. Tidak ada pendaftaran global — cukup impor lokal.
+
+## Input dan Output
+
+```typescript
+import { Component, Input, Output, EventEmitter } from "@angular/core";
+
+@Component({
+  selector: "app-kartu",
+  standalone: true,
+  template: `
+    <h3>{{ judul }}</h3>
+    <button (click)="pilih.emit(judul)">Pilih</button>
+  `,
+})
+class KartuComponent {
+  @Input() judul = "";
+  @Output() pilih = new EventEmitter<string>();
+}
+```
+
+`@Input` menerima data dari luar (mirip props di React), `@Output` mengirim event kembali ke induk.
+
+## Lifecycle Singkat
+
+```typescript
+import { OnInit } from "@angular/core";
+
+class ProdukComponent implements OnInit {
+  ngOnInit() {
+    console.log("Komponen tampil — muat data di sini");
+  }
+}
+```
+
+`ngOnInit` adalah salah satu tempat untuk inisialisasi yang membutuhkan lifecycle; hindari logika berat di constructor.
+
+## Empat Jalur Komunikasi
+
+Komponen memiliki **4 jalur komunikasi utama**.
+
+| Jalur | Arah | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Input | induk ke anak | `input.required<Produk>()` | Anak menerima konfigurasi/data |
+| Output | anak ke induk | `output<number>()` | Anak melaporkan aksi |
+| Service | lintas komponen | `inject(KeranjangService)` | State dipakai banyak cabang UI |
+| Content projection | markup ke slot anak | `<ng-content>` | Wrapper menerima konten fleksibel |
+
+API signal modern membuat input dan output bertipe jelas.
+
+```typescript
+import { Component, input, output } from "@angular/core";
+
+@Component({
+  selector: "app-kartu-produk",
+  standalone: true,
+  template: `<button (click)="dipilih.emit(id())">Pilih {{ nama() }}</button>`,
+})
+export class KartuProdukComponent {
+  id = input.required<number>();
+  nama = input.required<string>();
+  dipilih = output<number>();
+}
+```
+
+Induk menggunakannya sebagai `<app-kartu-produk [id]="produk.id" [nama]="produk.nama" (dipilih)="beli($event)" />`. Pertahankan state sedekat mungkin dengan pemiliknya; pindahkan ke service hanya jika beberapa komponen benar-benar membutuhkannya.
+
+## Di Dunia Nyata
+
+- Kartu produk menerima nama dan harga, lalu mengirim event beli.
+- Dialog konfirmasi memproyeksikan isi berbeda lewat `ng-content`.
+- Navbar membaca jumlah keranjang dari service bersama.
+- Halaman analitik menginisialisasi library grafik setelah view siap.
+
+<div class="note">💡 Kebiasaan Angular modern: selalu mulai dengan standalone: true. NgModule hanya kamu temui di proyek lama — proyek baru Angular 17+ praktis tidak memakainya lagi.</div>

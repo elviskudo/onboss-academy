@@ -1,0 +1,151 @@
+---
+title: "Pengenalan JavaScript"
+description: "Bahasa scripting yang menghidupkan web"
+order: 1
+quiz:
+  - q: "JavaScript pada awalnya dibuat untuk…"
+    options: ["Server-side programming", "Menambah interaksi di browser", "Membuat database", "Mengatur styling halaman"]
+    answer: 1
+    explain: "JS lahir (1995) untuk menghidupkan halaman statis di browser. Kini dipakai di mana pun lewat Node.js."
+  - q: "Cara paling dasar menyisipkan JS di HTML adalah…"
+    options: ["<script src=\"app.js\"></script>", "<js>code</js>", "<javascript>", "<code>"]
+    answer: 0
+    explain: "Tag <script> — inline atau dengan atribut src untuk file terpisah."
+  - q: "Perbedaan utama JS vs HTML/CSS adalah…"
+    options: ["JS hanya untuk game", "CSS menjalankan fungsi", "JS mengatur perilaku/logika, HTML struktur, CSS tampilan", "HTML bisa looping"]
+    answer: 2
+    explain: "Pembagian klasik: HTML = konten, CSS = gaya, JS = perilaku."
+  - q: "Console.log() berfungsi untuk…"
+    options: ["Mencetak ke printer", "Menampilkan output di DevTools browser", "Menyimpan ke database", "Mengubah warna"]
+    answer: 1
+    explain: "Console (F12 di browser) adalah alat debug utama programmer JS."
+  - q: "Ekstensi file JavaScript adalah…"
+    options: [".java", ".jsx", ".script", ".js"]
+    answer: 3
+    explain: ".js standar; .jsx/.ts/.mjs dipakai untuk varian tooling tertentu."
+example:
+  code: |
+    console.log("Halo dari JavaScript!");
+    alert("Selamat belajar JS 🎉");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JavaScript adalah **bahasa pemrograman paling populer di dunia** — satu-satunya bahasa yang berjalan natural di browser, plus menguasai server (Node.js), mobile, dan AI.
+
+Dibuat Brendan Eich tahun 1995 dalam kira-kira 10 hari untuk browser Netscape. Kini JS distandardisasi sebagai **ECMAScript** dengan rilis baru setiap tahun, dan hampir semua situs web di dunia memakainya.
+
+## Tiga Fondasi Web
+
+| Teknologi | Fungsi | Contoh | Kapan dipakai |
+|-----------|--------|--------|---------------|
+| HTML | Struktur & konten | `<h1>Judul</h1>` | Menyusun judul, paragraf, gambar |
+| CSS | Tampilan & tata letak | `h1 { color: tomato; }` | Warna, jarak, layout responsif |
+| JavaScript | Perilaku & logika | `btn.addEventListener("click", fn)` | Interaksi, validasi, ambil data API |
+
+## Menyisipkan JS
+
+```html
+<!-- inline -->
+<script>
+  console.log("Halo!");
+</script>
+
+<!-- file terpisah (disarankan) -->
+<script src="app.js" defer></script>
+```
+
+Atribut `defer` membuat script diunduh dulu tanpa memblokir render halaman. Alternatif lain: `async` (langsung jalan begitu sampai, urutan bebas), atau `type="module"` (file ES module dengan `import`/`export`).
+
+## Anatomi Sintaks Dasar
+
+```js
+const skor = 10;   // statement: satu perintah, biasanya diakhiri ;
+skor + 5;          // ekspresi: menghasilkan nilai (15), bukan perintah
+
+if (skor >= 10) {  // blok kurawal { } membatasi scope let/const
+  console.log("Nilai bagus");
+}
+nama;              // ❌ ReferenceError — JS peka huruf besar/kecil (case-sensitive)
+```
+
+Perbedaan statement vs ekspresi penting: `if` butuh statement, ternary `? :` butuh ekspresi. JavaScript menyisipkan titik koma otomatis (*ASI*), tapi menulis `;` eksplisit tetap praktik teraman.
+
+## Ekosistem: Library Populer
+
+| Kategori | Contoh (populasi) | Fungsi |
+|----------|-------------------|--------|
+| Front-end framework | React, Vue, Angular, Svelte (4 besar) | Merangkai UI jadi komponen |
+| Full-stack | Next.js, Nuxt, SvelteKit | Routing + SSR + API |
+| Back-end | Express, NestJS, Fastify (3 utama) | Server, REST, GraphQL |
+| Testing | Jest, Vitest, Playwright | Unit, integrasi, e2e |
+
+## Variabel
+
+```js
+let nama = "Sari";     // bisa diubah
+const umur = 20;       // tidak boleh diubah nilai
+var lama = "hindari";  // gaya lama (var) — pakai let/const saja
+```
+
+## Tipe Data Dasar
+
+```js
+const teks = "Halo";       // string
+const angka = 42;          // number
+const aktif = true;        // boolean
+const kosong = null;       // null (sengaja kosong)
+let belum;                 // undefined (belum diberi nilai)
+const daftar = [1, 2, 3];  // array
+const orang = { nama: "Budi", umur: 25 }; // object
+```
+
+## Interaksi Sederhana
+
+```js
+const nama = prompt("Siapa namamu?");
+alert(`Halo, ${nama}!`);       // template literal pakai backtick
+console.log("Umur kamu:", 20 + 2);
+```
+
+## Komentar
+
+```js
+// komentar satu baris
+/* komentar
+   multi baris */
+```
+
+## 3 Jebakan Pemula
+
+1. `=` memakai nilai, `==` membandingkan dengan koersi (`5 == "5"` → `true`), `===` membandingkan nilai + tipe (`5 === "5"` → `false`). Pakai `===`.
+2. `null` = "sengaja kosong", `undefined` = "belum diberi nilai" — keduanya beda meski sering tertukar.
+3. JS peka huruf besar/kecil: `Nilai` dan `nilai` adalah dua variabel berbeda — `ReferenceError` kalau salah tulis.
+
+## Ekosistem: Di Mana JS Dijalankan
+
+| Lingkungan | Fungsi | Contoh | Kapan dipakai |
+|------------|--------|--------|---------------|
+| Browser | Menjalankan JS di halaman web | `<script src="app.js" defer>` | Interaksi front-end |
+| Node.js | Menjalankan JS di server & terminal | `node app.js` | Backend, script otomasi, CLI |
+| DevTools / REPL | Menjalankan potongan kode cepat | F12 lalu ketik `2 + 2` | Debug & eksperimen |
+| npm | Repositori paket (2 juta+ paket) | `npm install axios` | Memasang library pihak ketiga |
+
+## Di Dunia Nyata
+
+- **Tombol "Tambah ke Keranjang"** di marketplace menampilkan popup konfirmasi tanpa reload halaman.
+- **Form pendaftaran** menolak format email yang salah sebelum data dikirim ke server.
+- **Halaman berita** memuat artikel berikutnya otomatis saat kamu scroll ke bawah.
+- **Game browser** seperti 2048 atau Tetris — seluruh logikanya JavaScript murni.
+- **Script terminal Node.js** yang merename ribuan file foto liburan sekaligus.
+
+<div class="note">💡 Semua framework modern (React, Vue, Next.js) tetap berakhir sebagai JavaScript yang dijalankan browser — mereka mengatur *cara* kamu menulis JS, bukan menggantikannya.</div>
+
+Coba jalankan contoh di bawah — hapus `alert` kalau sudah jengkel 😄
+
+<TryIt lang="javascript" runtime="client-js" code={`const nama = "OnBoss Academy";
+const tahun = 2026;
+console.log("Selamat datang di", nama);
+console.log("Tahun berdiri:", tahun);
+console.log("Usia platform:", new Date().getFullYear() - tahun, "tahun");
+console.log(\`Bahasa: JavaScript, Skor: \${100}/100\`);`} />

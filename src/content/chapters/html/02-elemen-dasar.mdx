@@ -1,0 +1,123 @@
+---
+title: "Elemen-elemen Dasar"
+description: "Heading, paragraf, teks semantik, br/hr, dan komentar"
+order: 2
+quiz:
+  - q: "Elemen mana yang menghasilkan judul terbesar?"
+    options: ["<h6>", "<title>", "<h1>", "<header>"]
+    answer: 2
+    explain: "HTML punya heading <h1> (terbesar) sampai <h6> (terkecil). <title> adalah judul tab, bukan judul konten."
+  - q: "Tag <br> berfungsi untuk…"
+    options: ["Membuat paragraf baru", "Memulai garis baru", "Menebalkan teks", "Membuat daftar"]
+    answer: 1
+    explain: "<br> memaksa teks pindah baris tanpa membuat paragraf baru."
+  - q: "Elemen mana yang cocok untuk teks penting yang perlu ditebalkan secara semantik?"
+    options: ["<b>", "<i>", "<strong>", "<u>"]
+    answer: 2
+    explain: "<strong> menandai penting secara semantik (bagus untuk SEO & pembaca layar), <b> hanya menebalkan secara visual."
+  - q: "Agar spasi dan baris di HTML ditampilkan persis seperti ditulis, gunakan…"
+    options: ["<pre>", "<code>", "<p>", "<span>"]
+    answer: 0
+    explain: "<pre> (preformatted) mempertahankan spasi dan baris apa adanya."
+  - q: "Berapa level heading yang dimiliki HTML?"
+    options: ["3", "5", "6", "Tak terbatas"]
+    answer: 2
+    explain: "HTML punya tepat 6 level heading: <h1> sampai <h6>."
+example:
+  code: |
+    <h1>Judul Utama</h1>
+    <h2>Sub Judul</h2>
+    <p>Paragraf biasa dengan <strong>teks penting</strong> dan <em>teks ditekankan</em>.</p>
+    <p>Baris satu<br>Baris dua</p>
+    <pre>Text   dengan    spasi
+    yang   dipertahankan.</pre>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setelah punya kerangka dokumen, saatnya mengisi halaman dengan teks. Bab ini memuat elemen-elemen dasar yang paling sering dipakai di hampir setiap halaman web.
+
+## Heading (Judul)
+
+HTML punya **tepat 6 level heading**, `<h1>` sampai `<h6>`:
+
+```html
+<h1>Judul Utama</h1>
+<h2>Sub Judul</h2>
+<h3>Sub-sub Judul</h3>
+```
+
+- `<h1>` — judul utama halaman, **hanya sekali** per halaman; mesin pencari menganggapnya sebagai topik halaman
+- `<h2>`–`<h3>` — sub-bagian yang paling umum dipakai
+- `<h4>`–`<h6>` — jarang dibutuhkan; kalau butuh, biasanya struktur heading-mu terlalu dalam
+
+Heading juga membantu pembaca layar memindai halaman seperti daftar isi.
+
+## Paragraf dan Elemen Teks Semantik
+
+```html
+<p>Ini paragraf biasa.</p>
+<p>Teks <strong>penting</strong> dan <em>ditekankan</em>.</p>
+<p>Harga: <s>Rp100.000</s> <mark>Rp75.000</mark></p>
+```
+
+| Elemen | Fungsi | Tampilan Umum |
+|--------|--------|---------------|
+| `<strong>` | Penting secara semantik | Tebal |
+| `<em>` | Penekanan semantik | Miring |
+| `<b>` | Tebal tanpa penekanan makna | Tebal |
+| `<i>` | Miring tanpa penekanan makna | Miring |
+| `<mark>` | Sorotan/relevan dengan konteks | Kuning |
+| `<s>` | Tidak lagi akurat | Dicoret |
+| `<small>` | Catatan sampingan | Lebih kecil |
+| `<code>` | Potongan kode | Monospace |
+
+Pembedaan `<strong>` vs `<b>` penting: pembaca layar membacakan `<strong>` dengan nada berbeda, sedangkan `<b>` hanya visual.
+
+## Elemen `<br>` dan `<hr>`
+
+```html
+<p>Baris satu<br>Baris dua</p>
+<hr>
+<p>Setelah garis pemisah</p>
+```
+
+- `<br>` — memaksa pindah baris (void element, tanpa penutup)
+- `<hr>` — garis pemisah tematik antar bagian konten
+
+Pakai `<br>` seperlunya; untuk jarak antar paragraf, serahkan ke CSS `margin`.
+
+## `<pre>` dan `<code>`
+
+```html
+<pre>fungsi hitung() {
+  return 42;
+}</pre>
+```
+
+`<pre>` mempertahankan spasi dan baris apa adanya — cocok untuk blok kode, ASCII art, atau data mentah.
+
+## Komentar
+
+```html
+<!-- Ini komentar, tidak tampil di halaman -->
+```
+
+Komentar HTML hanya satu bentuk (bukan `//` atau `/* */`). Berguna untuk mencatat bagian kode atau menonaktifkan sementara elemen saat belajar.
+
+## Di Dunia Nyata
+
+- **Judul artikel berita** — penulis memakai `<h1>` untuk berita utama dan `<h2>` untuk sub-bagian supaya pembaca memindai cepat
+- **Katalog menu restoran** — nama menu pakai `<strong>`, harga coret (`<s>`) saat promo, harga baru di `<mark>`
+- **Halaman dokumentasi API** — `<pre><code>` menampilkan potongan kode tanpa spasi berantakan
+- **Draft konten** — komentar HTML dipakai editor untuk menandai bagian yang belum final sebelum publik
+
+<div class="note">💡 Pilih elemen teks berdasarkan MAKNA, bukan tampilan. `<strong>` karena itu penting, bukan karena kamu ingin tebal — kalau mau tebal, CSS `font-weight` yang bekerja. Memisahkan makna (HTML) dan tampilan (CSS) membuat halaman tetap benar meski stylesheet gagal dimuat.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<h1>Resep Nasi Goreng</h1>
+<h2>Bahan-bahan</h2>
+<p><strong>Nasi putih</strong> — 1 porsi</p>
+<p><strong>Telur</strong> — 2 butir</p>
+<hr>
+<h2>Langkah</h2>
+<p>Panaskan minyak, tumis bumbu, masukkan nasi...</p>`} />

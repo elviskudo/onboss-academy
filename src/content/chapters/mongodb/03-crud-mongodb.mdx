@@ -1,0 +1,130 @@
+---
+title: "CRUD MongoDB"
+description: "Insert, update dengan operator, replace, dan delete — operasi harian di mongosh"
+order: 3
+quiz:
+  - q: "Menambah satu dokumen memakai…"
+    options: ["insert()", "addNew()", "insertOne()", "createDoc()"]
+    answer: 2
+    explain: "insertOne(doc) menambah satu dokumen dan mengembalikan acknowledged + insertedId."
+  - q: "updateOne(filter, { $set: {...} }) tanpa operator update akan…"
+    options: ["Menghapus dokumen", "Mengganti seluruh isi dokumen", "Error karena update membutuhkan operator seperti $set", "Menambah kolom baru saja"]
+    answer: 2
+    explain: "Update berbentuk dokumen harus memakai operator seperti $set atau $inc; replaceOne adalah cara eksplisit mengganti seluruh isi dokumen."
+  - q: "Operator $inc pada update berfungsi untuk…"
+    options: ["Mengurangkan", "Menambah nilai numerik secara inkremental", "Menghitung dokumen", "Mengurutkan"]
+    answer: 1
+    explain: "db.keranjang.updateOne({...}, { $inc: { qty: 1 } }) menambah qty sebesar 1 — aman untuk counter."
+  - q: "Agar update membuat dokumen baru bila filter tidak cocok, gunakan…"
+    options: ["upsert: true", "insert: true", "newDoc: true", "force: true"]
+    answer: 0
+    explain: "Opsi upsert: true menggabungkan perilaku insert dan update dalam satu panggilan."
+  - q: "Menghapus semua dokumen yang cocok filter memakai…"
+    options: ["removeAll()", "deleteMany(filter)", "dropDocs()", "eraseMany()"]
+    answer: 1
+    explain: "deleteMany({}) menghapus semua isi koleksi tanpa menghapus koleksinya; drop() menghapus koleksi beserta index."
+example:
+  code: |
+    db.produk.insertOne({ nama: "Keyboard", harga: 350000, stok: 12 })
+    db.produk.updateOne({ nama: "Keyboard" }, { $inc: { stok: -2 } })
+    db.produk.find({ nama: "Keyboard" })
+---
+
+Setiap aplikasi berputar di empat operasi: **create, read, update, delete**. Di MongoDB semuanya berbasis filter dan operator.
+
+## Apa itu CRUD?
+
+CRUD adalah **4 operasi inti** yang memetakan siklus hidup dokumen:
+
+| Operasi | Metode utama | Fungsi | Kapan dipakai |
+| --- | --- | --- | --- |
+| Create | `insertOne`, `insertMany` | menambah dokumen | registrasi, impor batch |
+| Read | `findOne`, `find` | membaca dokumen | detail dan daftar |
+| Update | `updateOne`, `updateMany`, `replaceOne` | mengubah sebagian/semua | edit profil, ubah status |
+| Delete | `deleteOne`, `deleteMany` | menghapus dokumen | retensi, pembatalan |
+
+Setiap method mengembalikan hasil terstruktur: `acknowledged`, ID hasil insert, serta jumlah dokumen yang cocok/berubah/dihapus. Periksa hasil ini; koneksi sukses belum berarti filter menemukan dokumen.
+
+## Create — insertOne & insertMany
+
+```javascript
+db.produk.insertOne({ nama: "Keyboard", harga: 350000, stok: 12 })
+
+db.produk.insertMany([
+  { nama: "Mouse", harga: 150000, stok: 30 },
+  { nama: "Monitor", harga: 2500000, stok: 5 },
+  { nama: "Headset", harga: 450000, stok: 8 }
+])
+```
+
+`insertMany` lebih efisien untuk batch; gunakan opsi `ordered: false` agar satu dokumen gagal tidak menghentikan sisanya.
+
+## Update — $set dan Operator Lain
+
+```javascript
+db.produk.updateOne(
+  { nama: "Keyboard" },
+  { $set: { harga: 320000, kategori: "Aksesoris" } }
+)
+
+db.produk.updateMany(
+  { harga: { $lt: 500000 } },
+  { $inc: { stok: 5 }, $set: { promo: true } }
+)
+```
+
+Operator update bekerja spesifik: `$set` menetapkan nilai, `$inc` menambah numerik, `$unset` menghapus field, `$push` menambah elemen array — dokumen yang tidak disentuh tetap utuh.
+
+## Upsert dan Hasil Update
+
+```javascript
+db.counter.updateOne(
+  { _id: "pesanan" },
+  { $inc: { nilai: 1 } },
+  { upsert: true }
+)
+
+db.produk.findOneAndUpdate(
+  { nama: "Mouse" },
+  { $set: { stok: 25 } },
+  { returnDocument: "after" }
+)
+```
+
+Pola `$inc` + upsert membuat counter atomik: pertama kali dibuat otomatis, tiap panggilan menaikkan nilainya tanpa khawatir race condition.
+
+## Delete dan Replace
+
+```javascript
+db.produk.deleteOne({ nama: "Headset" })
+db.produk.deleteMany({ stok: { $lte: 0 } })
+
+db.produk.replaceOne(
+  { nama: "Mouse" },
+  { nama: "Mouse Wireless", harga: 180000, stok: 25 }
+)
+```
+
+`replaceOne` mengganti total isi dokumen (kecuali `_id`); `deleteMany` menghapus semua yang cocok — waspada dengan filter kosong `{}`.
+
+## Lima Operator Update Utama
+
+| Operator | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `$set` | menetapkan field | `{ $set: { aktif: true } }` | edit nilai |
+| `$inc` | menambah angka atomik | `{ $inc: { stok: -1 } }` | counter/stok |
+| `$unset` | menghapus field | `{ $unset: { promo: "" } }` | membersihkan atribut |
+| `$push` | menambah elemen array | `{ $push: { tags: "sale" } }` | histori/daftar |
+| `$pull` | menghapus elemen cocok | `{ $pull: { tags: "lama" } }` | merapikan array |
+
+Operator mengubah field di server secara atomik. Pola baca nilai → hitung di aplikasi → tulis balik rawan *race condition*; `$inc` menghindarinya.
+
+## Di Dunia Nyata
+
+- **Checkout produk** — `$inc: { stok: -1 }` dengan filter `stok: { $gt: 0 }` mencegah stok negatif secara atomik.
+- **Sinkronisasi profil** — upsert membuat profil saat pertama login dan memperbaruinya pada login berikutnya.
+- **Impor katalog** — `insertMany(..., { ordered: false })` melanjutkan batch meski satu dokumen duplikat.
+- **Moderasi akun** — `updateMany` menonaktifkan semua akun yang melanggar kriteria yang sama.
+- **Retensi log** — `deleteMany({ dibuat: { $lt: batas } })` membersihkan log lama dengan filter waktu eksplisit.
+
+<div class="note">💡 Selalu periksa hasil update: `matchedCount` menunjukkan filter cocok, sedangkan `modifiedCount` menunjukkan isi benar-benar berubah. Nilai modifiedCount 0 bisa berarti nilai baru sama dengan nilai lama, bukan operasi gagal.</div>

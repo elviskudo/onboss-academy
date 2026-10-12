@@ -1,0 +1,181 @@
+---
+title: "Proyek: Aplikasi To-Do"
+description: "Merangkai state, computed, event, dan komponen menjadi aplikasi nyata"
+order: 8
+quiz:
+  - q: "Di aplikasi to-do, daftar tugas sebaiknya disimpan dalam…"
+    options: ["Banyak variabel terpisah", "Satu ref/array tunggal sebagai sumber kebenaran", "localStorage langsung di template", "CSS variable"]
+    answer: 1
+    explain: "Satu state array membuat computed (sisa, selesai) dan render v-for selalu konsisten."
+  - q: "Menambah tugas sebaiknya…"
+    options: ["Memvalidasi input kosong dulu, lalu push ke array", "Langsung push tanpa cek", "Menghapus semua tugas", "Merender ulang halaman"]
+    answer: 0
+    explain: "Validasi di handler event mencegah tugas kosong masuk ke daftar."
+  - q: "computed sisa() pada to-do menghitung…"
+    options: ["Jumlah karakter", "Jumlah tugas yang belum selesai", "Panjang array selalu", "Harga total"]
+    answer: 1
+    explain: "Dihitung ulang otomatis tiap daftar berubah — tidak perlu update manual."
+  - q: "Menandai selesai paling tepat dengan…"
+    options: ["Map array menjadi salinan baru dengan status berubah", "Mengubah object langsung tanpa catatan", "Menghapus seluruh array", "Membuat state baru tiap klik"]
+    answer: 0
+    explain: "Salinan baru (immutability ringan) membuat perubahan mudah dilacak dan diuji."
+  - q: "Bagian mana yang paling mudah dites tanpa Vue?"
+    options: ["Logika tambah/selesai/sisa sebagai function murni", "Template HTML", "Style komponen", "Directive v-for"]
+    answer: 0
+    explain: "Function murni di atas array bisa dijalankan dan diverifikasi langsung di console."
+example:
+  code: |
+    const daftar = [];
+    daftar.push({ id: 1, teks: "Belajar Vue", selesai: false });
+    daftar.push({ id: 2, teks: "Buat to-do", selesai: true });
+    const sisa = daftar.filter((t) => !t.selesai).length;
+    console.log("Sisa:", sisa);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saatnya proyek penutup: **aplikasi to-do** yang memakai seluruh materi Vue — state reaktif, computed, event, percabangan, looping, props, dan emit.
+
+## 6 Bagian Proyek
+
+| Bagian | Konsep Vue | Fungsi |
+|--------|------------|--------|
+| `teks` | `ref("")` | State input tugas baru |
+| `daftar` | `ref([])` | Satu sumber kebenaran array tugas |
+| `sisa` | `computed` | Nilai turunan dari daftar |
+| `tambah/toggle/hapus` | Function handler | Mengubah state saat event |
+| `v-if` / `v-for` | Conditional & list rendering | Pilih dan ulang tampilan |
+| `TugasItem` | Props + emit | Pisahkan item dan komunikasi ke induk |
+
+Tidak diperlukan class OOP: object tugas adalah data, function handler adalah perilaku, dan komponen mengemas tampilan. Ini lebih sederhana daripada membuat class `Todo` untuk data sekecil ini.
+
+## State Aplikasi
+
+```html
+<script setup>
+import { ref, computed } from "vue";
+
+const teks = ref("");
+const daftar = ref([]);
+
+const sisa = computed(() => daftar.value.filter((t) => !t.selesai).length);
+const selesaiSemua = computed(() => daftar.value.length > 0 && sisa.value === 0);
+
+function tambah() {
+  const bersih = teks.value.trim();
+  if (!bersih) return;
+  daftar.value.push({ id: Date.now(), teks: bersih, selesai: false });
+  teks.value = "";
+}
+</script>
+```
+
+Satu `daftar` sebagai **satu sumber kebenaran** — semua tampilan diturunkan dari sana.
+
+## Aksi pada Daftar
+
+```html
+<script setup>
+function toggle(t) {
+  t.selesai = !t.selesai;   // reactive object: perubahan langsung terlihat
+}
+
+function hapus(id) {
+  daftar.value = daftar.value.filter((t) => t.id !== id);
+}
+
+function bersihkanSelesai() {
+  daftar.value = daftar.value.filter((t) => !t.selesai);
+}
+</script>
+```
+
+## Template Lengkap
+
+```html
+<template>
+  <form @submit.prevent="tambah">
+    <input v-model="teks" placeholder="Tugas baru..." />
+    <button type="submit">Tambah</button>
+  </form>
+
+  <p>{{ sisa }} tugas tersisa</p>
+
+  <ul>
+    <li v-for="t in daftar" :key="t.id">
+      <label>
+        <input type="checkbox" v-model="t.selesai" />
+        <span :class="{ coret: t.selesai }">{{ t.teks }}</span>
+      </label>
+      <button @click="hapus(t.id)">Hapus</button>
+    </li>
+  </ul>
+
+  <button v-if="daftar.length" @click="bersihkanSelesai">
+    Hapus yang selesai
+  </button>
+</template>
+
+<style scoped>
+.coret { text-decoration: line-through; opacity: 0.6; }
+</style>
+```
+
+## Pecah Menjadi Komponen
+
+Saat aplikasi membesar, pisahkan `TugasItem.vue`. Induk melakukan `v-for`, mengirim `:tugas="t"`, lalu menangkap `@toggle` dan `@hapus`. Anak hanya menerima props dan emit ID; array tetap dimiliki induk. Pola satu arah ini mencegah state ganda.
+
+## Persistensi dan Filter
+
+Gunakan `watch(daftar, ...)` dengan opsi `{ deep: true }` untuk menyimpan JSON ke `localStorage`. Saat mount, parse data dengan fallback array kosong. Filter **Semua | Aktif | Selesai** cukup berupa satu state `filter` dan satu computed `daftarTampil`; jangan buat tiga salinan array.
+
+## Di Dunia Nyata
+
+- **Task pribadi**: localStorage menjaga daftar setelah browser ditutup.
+- **Tim proyek**: emit dari item mengirim ID; induk menyinkronkan perubahan ke API.
+- **Daftar belanja**: pola sama, status selesai diganti status sudah dibeli.
+- **Antrian support**: computed memfilter tiket aktif/selesai dan menghitung badge sisa.
+- **Checklist onboarding**: conditional rendering menampilkan progres 100% ketika semua item selesai.
+
+## Latihan Pengembangan
+
+- Simpan `daftar` ke `localStorage` dengan `watch` (`JSON.stringify` / `JSON.parse`).
+- Tambah filter: **Semua | Aktif | Selesai** — cukup satu computed tambahan.
+- Pisahkan `<li>` jadi komponen `TugasItem.vue` dengan props `tugas` dan emit `hapus`.
+
+<div class="note">💡 Pola yang kamu pakai di to-do ini identik dengan aplikasi produksi: **state → aksi yang memutasi state → tampilan turunan**. Saat pindah ke React/Svelte/Nuxt, mental model ini tetap berlaku — yang berbeda hanya sintaksnya.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Logika inti to-do — sama persis dengan yang dipakai Vue di atas
+const state = { teks: "", daftar: [] };
+
+function tambah(teksInput) {
+  const bersih = (teksInput || "").trim();
+  if (!bersih) return false;
+  state.daftar.push({ id: state.daftar.length + 1, teks: bersih, selesai: false });
+  return true;
+}
+
+function toggle(id) {
+  const t = state.daftar.find((x) => x.id === id);
+  if (t) t.selesai = !t.selesai;
+}
+
+function hapus(id) {
+  state.daftar = state.daftar.filter((x) => x.id !== id);
+}
+
+function sisa() {
+  return state.daftar.filter((t) => !t.selesai).length;
+}
+
+tambah("Belajar Composition API");
+tambah("Buat proyek to-do");
+tambah("   ");
+toggle(1);
+
+console.log("Ditambah 3 (1 kosong ditolak):", state.daftar.length);
+console.log("Sisa tugas:", sisa());
+console.log(state.daftar.map((t) => (t.selesai ? "[x] " : "[ ] ") + t.teks).join("\\n"));
+
+hapus(2);
+console.log("Setelah hapus ke-2, sisa:", sisa());`} />

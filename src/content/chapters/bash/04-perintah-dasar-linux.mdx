@@ -1,0 +1,138 @@
+---
+title: "Perintah Dasar Linux"
+description: "Menjelajahi filesystem: 4 kelompok perintah navigasi, manipulasi file, baca isi, dan pencarian"
+order: 4
+quiz:
+  - q: "Perintah untuk berpindah direktori adalah…"
+    options: ["cd", "chdir", "pwd", "ls"]
+    answer: 0
+    explain: "cd (change directory) memindahkan posisi kerja shell ke folder lain."
+  - q: "Apa arti perintah ls -la ?"
+    options: ["List file terhapus", "List file tersembunyi + detail", "Load file ke memori", "Lock file agar tidak diubah"]
+    answer: 1
+    explain: "-l memberi detail (izin, ukuran, pemilik) dan -a menampilkan file tersembunyi yang diawali titik."
+  - q: "Perintah untuk melihat isi file teks adalah…"
+    options: ["show", "cat", "read", "open"]
+    answer: 1
+    explain: "cat mencetak isi file ke stdout; head dan tail untuk sebagian."
+  - q: "Perintah untuk menyalin file adalah…"
+    options: ["copy", "cp", "dup", "mv"]
+    answer: 1
+    explain: "cp menyalin; mv memindahkan atau mengganti nama."
+  - q: "Apa fungsi perintah mkdir -p ?"
+    options: ["Menghapus direktori", "Membuat direktori bertingkat tanpa error jika sudah ada", "Mengganti nama direktori", "Melihat isi direktori"]
+    answer: 1
+    explain: "-p membuat seluruh rantai direktori sekaligus dan diam saja bila sudah ada."
+example:
+  code: |
+    ls -la
+    cd /tmp
+    pwd
+    mkdir belajar
+    cd belajar
+    touch catatan.txt
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebagian besar pekerjaan di terminal berpusat pada tiga hal: **berpindah tempat**, **melihat isi**, dan **mengubah file**. Semua perintah di bab ini beroperasi pada filesystem — pohon direktori tunggal yang diawali `/`.
+
+## Anatomi Path
+
+```bash
+pwd                 # di mana saya sekarang
+ls /var/log         # path absolut: dari akar /
+cd ..               # satu level ke atas
+cd ~/Documents      # ~ = home directory user
+ls ../proyek        # relatif: naik satu, masuk proyek
+```
+
+| Jenis | Contoh | Mulai dari |
+| --- | --- | --- |
+| Absolut | `/var/log/syslog` | akar filesystem `/` |
+| Relatif | `../src/app.py` | posisi sekarang |
+| Home | `~/catatan.txt` | direktori user |
+
+## Empat Kelompok Perintah Filesystem
+
+Ada 4 kelompok besar yang menutup hampir seluruh kebutuhan harian:
+
+| Kelompok | Perintah inti | Fungsi |
+| --- | --- | --- |
+| Navigasi | `pwd`, `cd`, `ls` | berpindah dan memantau |
+| Buat & ubah | `mkdir`, `touch`, `cp`, `mv` | membuat, menyalin, memindahkan |
+| Baca isi | `cat`, `head`, `tail`, `less` | melihat isi file |
+| Cari & hapus | `find`, `grep`, `rm` | mencari dan menghapus |
+
+## Navigasi
+
+```bash
+pwd          # cetak direktori kerja
+cd /tmp      # pindah ke path absolut
+cd ..        # satu level ke atas
+cd -         # kembali ke direktori sebelumnya
+ls -la       # daftar file + detail + tersembunyi
+```
+
+Opsi `-l` pada `ls` menghasilkan kolom: izin, jumlah link, pemilik, grup, ukuran, tanggal, nama. Baris pertama hasil `ls -la` selalu `.` (diri sendiri) dan `..` (induk).
+
+## Membuat dan Mengubah
+
+```bash
+mkdir proyek
+mkdir -p proyek/src/util   # buat rantai direktori sekaligus
+touch catatan.txt           # buat file kosong (atau segarkan timestamp)
+cp catatan.txt salinan.txt  # salin
+cp -r proyek backup/        # salin direktori + isinya
+mv salinan.txt pindah.txt   # pindah atau rename
+rm pindah.txt               # hapus file
+```
+
+`mv` sekaligus merangkap dua perintah: memindah dan mengganti nama — bedanya hanya apakah tujuan masih di direktori yang sama.
+
+## Membaca Isi File
+
+```bash
+cat daftar.txt        # seluruh isi sekaligus
+head -n 5 daftar.txt  # 5 baris pertama
+tail -n 5 daftar.txt  # 5 baris terakhir
+tail -f app.log       # ikuti file yang terus bertambah (live)
+less daftar.txt       # scroll; keluar dengan q
+```
+
+`tail -f` adalah andalan monitoring: biarkan terminal terbuka di log, semua baris baru langsung muncul tanpa refresh.
+
+## Mencari File dan Teks
+
+Dua perintah pencarian dengan pembagian tugas jelas:
+
+```bash
+find . -name "*.sh"                    # find: cari berdasarkan NAMA file
+find /var/log -type f -mtime -1        # file log yang berubah < 24 jam
+grep -r "TODO" src/                    # grep: cari ISI teks, -r = rekursif
+```
+
+| Perintah | Mencari berdasarkan | Contoh kunci |
+| --- | --- | --- |
+| `find` | nama, tipe, ukuran, waktu | `-name`, `-type`, `-size` |
+| `grep` | pola teks di dalam file | `-r`, `-i`, `-n`, `-l` |
+
+## Di Dunia Nyata
+
+1. **Menyusun direktori proyek baru** — `mkdir -p proyek/{src,tests,docs}` membuat tiga subtree sekaligus dalam satu perintah.
+2. **Memindahkan hasil build** — `mv dist/* /var/www/html/` menyalin hasil kompilasi ke direktori yang dilayani web server.
+3. **Mengecek konfigurasi lama** — `find /etc -name "*.conf.bak"` menemukan file cadangan konfigurasi yang terlupakan.
+4. **Menelusuri lokasi kode** — `grep -rn "TODO" src/` menampilkan setiap TODO beserta nomor barisnya untuk code review.
+5. **Membersihkan file sementara** — `rm /tmp/proses-*.log` menghapus wildcard file log proses tertentu.
+
+<div class="note">💡 `rm` bersifat permanen — terminal tidak punya tempat sampah. Latih dulu kebiasaan aman: `rm -i` menanyakan konfirmasi per file, dan `rm -rf` (rekursif + paksa) sebaiknya hanya dijalankan pada path yang kamu hafal betul, seperti /tmp/demo.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+pwd
+mkdir -p demo/src
+cd demo
+touch catatan.txt
+ls -la
+echo "isi catatan" > catatan.txt
+cat catatan.txt
+head -n 1 catatan.txt`} />

@@ -1,0 +1,141 @@
+---
+title: "Pengenalan Bash"
+description: "Masuk terminal tanpa takut: anatomi perintah, 5 perintah wajib, skrip pertama, dan kode keluar"
+order: 1
+quiz:
+  - q: "Bash adalah…"
+    options: ["Editor gambar", "Shell teks untuk menjalankan perintah", "Sistem manajemen paket", "Database relasional"]
+    answer: 1
+    explain: "Bash (Bourne Again Shell) adalah program yang membaca perintah teks lalu menjalankannya."
+  - q: "Perintah untuk menampilkan teks ke layar adalah…"
+    options: ["print", "show", "echo", "display"]
+    answer: 2
+    explain: "echo menulis argumennya ke standard output."
+  - q: "Fungsi baris pertama skrip Bash (shebang) adalah…"
+    options: ["Menentukan program interpreter", "Menghias header", "Menambah kecepatan", "Menyimpan password"]
+    answer: 0
+    explain: "#!/usr/bin/env bash memberi tahu sistem bahwa file dijalankan dengan Bash."
+  - q: "Angka yang menandakan perintah terakhir BERHASIL adalah…"
+    options: ["1", "true", "0", "-1"]
+    answer: 2
+    explain: "Di Unix, exit code 0 berarti sukses; angka lain berarti gagal dengan tingkat berbeda."
+  - q: "Apa arti perintah ls -la ?"
+    options: ["Daftar file tersembunyi + detail", "Daftar file terhapus", "Load file ke memori", "Lock file agar tidak diubah"]
+    answer: 0
+    explain: "-l memberi detail (izin, ukuran, pemilik) dan -a menampilkan file tersembunyi yang diawali titik."
+example:
+  code: |
+    #!/usr/bin/env bash
+    echo "Halo dari Bash"
+    echo "User:" $(whoami)
+    echo "Tanggal:" $(date)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bash adalah gerbang paling dasar ke server Linux. Hampir semua deployment, troubleshooting, dan otomasi di dunia kerja — dari restart service sampai backup database — dimulai dari satu baris teks di terminal.
+
+## Apa Itu Bash?
+
+Tiga istilah yang sering tertukar:
+
+- **Terminal** — program jendela teks (GNOME Terminal, iTerm, Alacritty). Ia hanya menampilkan keyboard dan layar.
+- **Shell** — program yang membaca baris perintah kamu lalu meneruskannya ke sistem operasi.
+- **Bash** (Bourne Again Shell) — implementasi shell paling umum di Linux dan macOS. Ubuntu, Debian, dan CentOS memakainya sebagai shell bawaan.
+
+Alurnya sederhana: kamu mengetik `ls -la` → shell memecah teks menjadi perintah dan argumen → shell memanggil program `ls` → output program ditampilkan di layar.
+
+```bash
+echo "Halo, Dunia"
+whoami
+date
+pwd
+```
+
+Kalau tidak ada error, shell kembali menampilkan prompt tanpa pesan apa pun — di Unix, diam adalah tanda sukses.
+
+## Anatomi Sebuah Perintah
+
+Setiap baris perintah punya tiga bagian:
+
+```bash
+ls -la /tmp
+```
+
+| Bagian | Nilai contoh | Fungsi |
+| --- | --- | --- |
+| Perintah | `ls` | program yang dijalankan |
+| Opsi | `-la` | memodifikasi perilaku, diawali strip |
+| Argumen | `/tmp` | target yang diproses |
+
+Opsi boleh digabung: `-la` berarti `-l -a` sekaligus. Hampir semua perintah punya `--help` untuk menampilkan cara pakai singkat.
+
+## Lima Perintah Wajib
+
+| Perintah | Fungsi | Contoh |
+| --- | --- | --- |
+| `echo` | menampilkan teks | `echo "Halo"` |
+| `pwd` | cetak direktori kerja sekarang | `pwd` |
+| `ls` | daftar isi direktori | `ls -la` |
+| `cd` | berpindah direktori | `cd /var/log` |
+| `whoami` | nama user yang sedang login | `whoami` |
+
+Path absolut selalu diawali `/` (dari akar filesystem); path relatif dimulai dari posisi kamu sekarang.
+
+## Komentar dan Bantuan
+
+```bash
+# ini komentar — diabaikan shell
+ls --help    # cara pakai singkat
+man ls       # manual lengkap; keluar dengan tombol q
+```
+
+`man` (manual) tersedia untuk hampir semua perintah. Membaca `man ls` sekali lebih berguna daripada menebak-nebak opsi.
+
+## Menjalankan Skrip
+
+Perintah satu kali diketik langsung. Kumpulan perintah yang disimpan dalam file disebut **skrip**:
+
+```bash
+#!/usr/bin/env bash
+nama="OnBoss"
+echo "Selamat datang di $nama Academy"
+echo "User: $(whoami)"
+```
+
+Simpan sebagai `sapa.sh`, lalu jalankan:
+
+```bash
+bash sapa.sh
+```
+
+Baris pertama `#!/usr/bin/env bash` disebut **shebang**: pemandu sistem memilih interpreter yang tepat. Ekstensi `.sh` hanya konvensi — Linux sendiri tidak mewajibkan ekstensi tertentu.
+
+## Kode Keluar (Exit Code)
+
+Setiap perintah menghasilkan angka status: **0 berarti sukses, selain 0 berarti gagal**. Variabel `$?` menyimpan kode perintah terakhir:
+
+```bash
+ls /tidak/ada    # gagal — path tidak ada
+echo $?          # mencetak angka selain 0, misal 2
+```
+
+Kode keluar adalah jembatan ke percabangan di bab 6: skrip produksi selalu mengecek `$?` atau memakai `set -e` supaya berhenti otomatis saat ada langkah gagal.
+
+## Di Dunia Nyata
+
+1. **Restart service web** — `systemctl restart nginx` dijalankan dari shell setelah file deploy selesai diunggah.
+2. **Diagnosa situs down** — `uptime`, `df -h`, dan `tail -n 50 /var/log/syslog` mempersempit masalah dalam hitungan detik.
+3. **Backup harian terjadwal** — skrip `.sh` berisi `tar` lalu `scp` dipanggil cron jam 3 pagi.
+4. **Install dependensi build** — `apt install -y git curl` dieksekusi shell di dalam container CI.
+5. **Otomasi ratusan file** — satu loop skrip mengganti teks di semua file log sekaligus.
+
+<div class="note">💡 Kalau perintah tidak ditemukan, hampir selalu salah ejaan — Bash sensitif terhadap huruf besar-kecil. `Echo` bukan `echo`. Saat bingung, ketik `ls --help` atau `man ls` sebelum membuka Google.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+nama="OnBoss"
+echo "Halo dari $nama Academy"
+echo "User: $(whoami)"
+echo "Tanggal: $(date)"
+pwd
+ls -la`} />

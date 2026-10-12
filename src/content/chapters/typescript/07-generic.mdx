@@ -1,0 +1,171 @@
+---
+title: "Generic"
+description: "Fungsi dan tipe yang bekerja untuk banyak tipe data, tetap aman"
+order: 7
+quiz:
+  - q: "Generic pada fungsi berguna untuk…"
+    options: ["Mempercepat runtime", "Menjaga tipe data tetap konsisten antara masukan dan keluaran", "Menghapus tipe data", "Mengimpor modul"]
+    answer: 1
+    explain: "T[] mengembalikan t[] yang sama dengan argumen — tanpa generic harus pakai any dan kehilangan keamanan."
+  - q: "Penanda generic biasanya ditulis dengan…"
+    options: ["Huruf kapital di dalam kurung siku, mis. T", "Nama variabel biasa", "Tanda #", "Nama file"]
+    answer: 0
+    explain: "Konvensi: T (type), K (key), V (value) — hanya nama tempat, isinya diisi saat dipakai."
+  - q: "Generic constraint dengan extends berarti…"
+    options: ["T dihapus", "T wajib memenuhi bentuk tertentu", "T selalu number", "Fungsi jadi async"]
+    answer: 1
+    explain: "Contoh: <T extends { id: number }> — T minimal punya properti id."
+  - q: "Apa tipe hasil dari: function ambil<T>(d: T[]): T { return d[0]; } lalu ambil([1,2,3])?"
+    options: ["number", "any", "string", "unknown"]
+    answer: 0
+    explain: "T disimpulkan dari argumen: T = number, jadi hasilnya number."
+  - q: "Generic pada interface/class membuat…"
+    options: ["Satu tipe tetap", "Class jadi abstract", "Satu template yang bisa dipakai banyak tipe", "Runtime lebih lambat"]
+    answer: 2
+    explain: "Interface Wadah<T> memungkinkan Wadah<number> dan Wadah<string> dari definisi yang sama."
+example:
+  code: |
+    function ambilPertama<T>(daftar: T[]): T | undefined {
+      return daftar[0];
+    }
+    console.log(ambilPertama([10, 20, 30]));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Generic adalah **parameter untuk tipe**. Alih-alih menulis fungsi untuk number, string, dan object satu per satu, kamu menulis satu template dan mengisinya saat dipakai — sintaksnya memakai **kurung siku sudut** `<T>`, sama seperti HTML tapi isinya tipe.
+
+## Konvensi Penamaan & Bentuk
+
+| Penanda | Arti | Contoh |
+|---------|------|--------|
+| `<T>` | Tipe utama (type) | `function ambil<T>(…): T` |
+| `<K, V>` | Key & Value | `Map<K, V>`, `Record<K, V>` |
+| `<T extends X>` | Constraint — T wajib mirip X | `T extends { id: number }` |
+| `T[]` vs `Array<T>` | Dua sintaks yang **setara** | `string[]` ≡ `Array<string>` |
+| `=> T` pada generic | Tipe fungsi generik | `<T>(v: T) => T[]` |
+
+## Generic Function
+
+```typescript
+function ambilPertama<T>(daftar: T[]): T | undefined {
+  return daftar[0];
+}
+
+console.log(ambilPertama<number>([10, 20, 30])); // 10
+console.log(ambilPertama(["a", "b"]));           // T disimpulkan: string
+```
+
+Sering kali kamu tidak perlu menulis `<...>` — TS menyimpulkannya dari argumen.
+
+## Generic Object & Map
+
+```typescript
+function buatPasangan<K, V>(k: K, v: V): [K, V] {
+  return [k, v];
+}
+
+console.log(buatPasangan("harga", 25000)); // [string, number]
+
+function dariDaftar<K, V>(entri: [K, V][]): Map<K, V> {
+  return new Map(entri);
+}
+
+const peta = dariDaftar([["satu", 1], ["dua", 2]]);
+console.log(peta.get("dua"));
+```
+
+## Generic Constraint (extends)
+
+```typescript
+interface Berid {
+  id: number;
+}
+
+function cariById<T extends Berid>(daftar: T[], id: number): T | undefined {
+  return daftar.find((item) => item.id === id);
+}
+
+const produk = [
+  { id: 1, nama: "Kopi" },
+  { id: 2, nama: "Teh" },
+];
+
+console.log(cariById(produk, 2)?.nama); // Teh
+```
+
+Constraint memastikan `T` punya `id` sebelum fungsi memakainya.
+
+### Constraint Lanjutan: `keyof` & `Record`
+
+```typescript
+function ambil<T, K extends keyof T>(obj: T, k: K): T[K] {
+  return obj[k];           // tipe hasil mengikuti kunci yang dipilih
+}
+
+const orang = { nama: "Sari", umur: 20 };
+console.log(ambil(orang, "umur")); // number
+
+function pilih<T, K extends keyof T>(daftar: T[], k: K): T[K][] {
+  return daftar.map((x) => x[k]);
+}
+console.log(pilih([orang], "nama")); // ["Sari"]
+```
+
+`keyof T` menghasilkan union dari seluruh kunci (`"nama" | "umur"`) — salah tulis kunci langsung error.
+
+## Di Dunia Nyata
+
+- **`fetchJson<T>(url): Promise<T>`** — satu helper API, tipe hasil mengikuti endpoint yang dipanggil.
+- **Cache `Map<string, T>`** menyimpan data berbagai tipe tanpa kehilangan tipe keluaran.
+- **Repository generik** `class Repo<T extends { id: string }>` dipakai untuk User, Produk, dan Pesanan.
+- **State store** `createStore<State>` adalah pola generik yang dipakai Redux/Zustand.
+- **`first<T>(arr: T[]): T | undefined`** membungkus array apa pun dengan tipe yang benar.
+
+## Generic Interface & Class
+
+```typescript
+class Wadah<T> {
+  private isi: T[] = [];
+  tambah(item: T): void { this.isi.push(item); }
+  semua(): T[] { return [...this.isi]; }
+}
+
+const angka = new Wadah<number>();
+angka.tambah(1);
+angka.tambah(2);
+console.log(angka.semua());
+
+const teks = new Wadah<string>();
+teks.tambah("Halo");
+```
+
+<div class="note">💡 Generic menghilangkan kebutuhan `any` pada utilitas (ambil pertama, buat map, cache). Praktik terbaik: tulis generik hanya saat beberapa tipe benar-benar dipakai — jangan membuat abstraksi untuk satu kasus.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`function ambilPertama<T>(daftar: T[]): T | undefined {
+  return daftar[0];
+}
+
+function buatPasangan<K, V>(k: K, v: V): [K, V] {
+  return [k, v];
+}
+
+class Wadah<T> {
+  private isi: T[] = [];
+  tambah(item: T): void {
+    this.isi.push(item);
+  }
+  semua(): T[] {
+    return this.isi.slice();
+  }
+}
+
+console.log("Pertama:", ambilPertama([10, 20, 30]));
+console.log("Pertama:", ambilPertama(["satu", "dua"]));
+console.log("Pasangan:", buatPasangan("harga", 25000));
+
+const angka = new Wadah<number>();
+angka.tambah(5);
+angka.tambah(8);
+console.log("Wadah:", angka.semua());
+console.log("Jumlah di wadah:", angka.semua().reduce((a, b) => a + b, 0));`} />

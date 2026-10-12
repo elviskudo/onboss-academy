@@ -1,0 +1,174 @@
+---
+title: "Dictionary dan Set"
+description: "Data berlabel dan data unik — menghitung frekuensi serta menghilangkan duplikat"
+order: 3
+quiz:
+  - q: "Dictionary menyimpan data dalam bentuk…"
+    options: ["kunci dan nilai (key-value)", "hanya angka bulat", "gambar piksel", "baris tabel tetap"]
+    answer: 0
+    explain: "Setiap nilai di dict diakses lewat kuncinya, misal data['pendapatan']."
+  - q: "Untuk mengambil nilai dict tanpa error bila kunci tidak ada, gunakan…"
+    options: ["data.at('kunci')", "data.get('kunci', 0)", "data!['kunci']", "data.first('kunci')"]
+    answer: 1
+    explain: "get() mengembalikan nilai default bila kunci tidak ditemukan, sehingga program tidak berhenti."
+  - q: "Set berguna untuk…"
+    options: ["Menyimpan teks panjang", "Menggambar grafik", "Mengompres file", "Menyimpan elemen unik"]
+    answer: 3
+    explain: "Set menghapus duplikat otomatis — cara tercepat menghitung nilai unik."
+  - q: "Melakukan loop ke seluruh pasangan dict dilakukan dengan…"
+    options: ["data.values()", "data.items()", "data.keysOnly()", "data.rows()"]
+    answer: 1
+    explain: "items() menghasilkan pasangan (kunci, nilai) yang bisa langsung di-unpacking di loop."
+  - q: "Jika dict punya kunci 'x' yang diisi ulang data['x'] = 5, maka…"
+    options: ["Dict jadi punya dua kunci x", "Nilai lama tetap ditambah", "Nilai lama tertimpa 5", "Muncul error"]
+    answer: 2
+    explain: "Kunci unik — penulisan ulang kunci yang sama selalu menimpa nilai sebelumnya."
+example:
+  code: |
+    harga = {"apel": 12000, "pisang": 9000}
+    harga["mangga"] = 15000
+    for nama, nilai in harga.items():
+        print(nama, "=", nilai)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Dictionary** menyimpan data berlabel, **set** menyimpan data unik. Keduanya menyelesaikan dua pekerjaan paling sering muncul: menghitung frekuensi dan menghapus duplikat.
+
+## Perbandingan Singkat
+
+| Aspek | Dict `{}` | Set `{}` |
+|-------|-----------|----------|
+| Isi | pasangan kunci-nilai | nilai tunggal |
+| Kunci ada? | ada, unik | tidak ada (elemennya sendiri kunci) |
+| Duplikat | kunci unik, nilai boleh sama | otomatis terhapus |
+| Contoh | `{"kopi": 12}` | `{"kopi", "teh"}` |
+| Kegunaan | laporan berlabel | cari nilai unik, irisan |
+
+## Dasar Dictionary
+
+```python
+pendapatan = {
+    "januari": 12000000,
+    "februari": 14500000,
+    "maret": 13000000,
+}
+
+print(pendapatan["februari"])
+print(pendapatan.get("april", 0))   # kunci tidak ada -> 0
+```
+
+Kunci harus berupa nilai **hashable** (string, angka, tuple), sedangkan nilai boleh apa saja.
+
+## Method Utama Dict
+
+Python punya **11 method dict**; 5 di antaranya paling sering dipakai analis:
+
+| Method | Fungsi | Kapan dipakai |
+|--------|--------|---------------|
+| `get(k, default)` | ambil nilai aman | data bisa belum lengkap |
+| `keys()` | semua kunci | iterasi daftar label |
+| `values()` | semua nilai | langsung dijumlahkan |
+| `items()` | pasangan kunci-nilai | laporan, loop ganda |
+| `setdefault(k, d)` | ambil atau set dengan default | mengelompokkan data |
+
+## Loop dan Ubah Data
+
+```python
+pendapatan["april"] = 15000000      # tambah
+del pendapatan["maret"]             # hapus
+
+for bulan, nilai in pendapatan.items():
+    print(f"{bulan}: {nilai}")
+```
+
+`items()` mengembalikan pasangan kunci-nilai — paling praktis untuk laporan ringkas.
+
+## Menghitung Frekuensi
+
+```python
+kata = ["red", "blue", "red", "green", "blue", "red"]
+hitung = {}
+
+for k in kata:
+    hitung[k] = hitung.get(k, 0) + 1
+
+print(hitung)   # {'red': 3, 'blue': 2, 'green': 1}
+```
+
+Pola `get(k, 0) + 1` adalah cara paling umum menghitung frekuensi tanpa baris percabangan.
+
+## Set: Data Unik
+
+```python
+pengunjung = ["andi", "bia", "andi", "citra", "bia"]
+unik = set(pengunjung)
+
+print(unik)
+print("Jumlah pengunjung unik:", len(unik))
+```
+
+3 operasi himpunan yang paling berguna:
+
+| Operasi | Simbol | Arti | Contoh pakai |
+|---------|--------|------|--------------|
+| Irisan | `a & b` | yang ada di keduanya | pelanggan bulan ini **dan** bulan lalu |
+| Gabungan | `a \| b` | semua anggota | daftar tamu dua acara |
+| Selisih | `a - b` | ada di a, tidak di b | sudah bayar vs belum bayar |
+
+```python
+maret = {"andi", "bia", "citra"}
+april = {"bia", "damar"}
+
+print(maret & april)   # {'bia'}
+print(maret | april)   # semua nama
+print(maret - april)   # yang hilang di april
+```
+
+## Menggabungkan Keduanya
+
+Dataset nyata hampir selalu berbentuk **list of dict** — list berisi baris, tiap dict berisi kolom bernama:
+
+```python
+penjualan = [
+    {"produk": "kopi", "jumlah": 12},
+    {"produk": "teh", "jumlah": 8},
+    {"produk": "kopi", "jumlah": 5},
+]
+
+produk_unik = set(b["produk"] for b in penjualan)
+total = {}
+for b in penjualan:
+    total[b["produk"]] = total.get(b["produk"], 0) + b["jumlah"]
+```
+
+## Di Dunia Nyata
+
+- **Hitung produk terlaris** — `setdefault(k, [])` untuk mengelompokkan transaksi per produk, lalu dijumlahkan.
+- **Cek email ganda pendaftar** — daftar email dimasukkan ke `set`; duplikat hilang otomatis.
+- **Rekomendasi "sering dibeli bersama"** — irisan `&` dua daftar produk dalam keranjang.
+- **Konfigurasi aplikasi** — `{"tema": "gelap", "bahasa": "id"}` dibaca ulang tiap program start.
+- **Laporan bulanan** — dict dipakai untuk memetakan nama kolom ke nilai tiap baris CSV.
+
+<div class="note">💡 Dict mempertahankan urutan sisipan (Python 3.7+), jadi laporan tetap tampil sesuai urutan masuk. Gunakan OrderedDict hanya bila perlu mengurutkan ulang berdasarkan kunci.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`kata = "saya belajar data lalu belajar python dengan data".split()
+
+hitung = {}
+for k in kata:
+    hitung[k] = hitung.get(k, 0) + 1
+
+print("Jumlah kata:", len(kata))
+print("Kata unik:", len(set(kata)))
+for k, v in hitung.items():
+    print(k, "=", v)
+
+penjualan = [
+    {"produk": "kopi", "jumlah": 12},
+    {"produk": "teh", "jumlah": 8},
+    {"produk": "kopi", "jumlah": 5},
+]
+total = {}
+for baris in penjualan:
+    total[baris["produk"]] = total.get(baris["produk"], 0) + baris["jumlah"]
+print("Total per produk:", total)`} />

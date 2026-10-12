@@ -1,0 +1,131 @@
+---
+title: "View & ERB"
+description: "Merender HTML dengan ERB — menanam Ruby ke dalam template secara terkendali"
+order: 6
+quiz:
+  - q: "Kepanjangan ERB adalah…"
+    options: ["Easy Rails Builder", "Embedded Ruby", "External Resource Block", "Encoded Render Body"]
+    answer: 1
+    explain: "ERB menanam kode Ruby di dalam berkas HTML biasa."
+  - q: "Tag ERB untuk menampilkan nilai adalah…"
+    options: ["<?php ?>", "{{ }}", "<%= %>", "<% %>"]
+    answer: 2
+    explain: "Tanda equal mengeluarkan output, tanpa equal hanya menjalankan kode."
+  - q: "View partial diberi nama dengan awalan…"
+    options: ["_", ".", "#", "@"]
+    answer: 0
+    explain: "Contoh _product.html.erb lalu dipanggil render partial:."
+  - q: "Method untuk merender partial dari controller atau view adalah…"
+    options: ["include", "render", "display", "call"]
+    answer: 1
+    explain: "render partial: products/product menggabungkan file parsial."
+  - q: "File layout utama berada di…"
+    options: ["app/views/layouts/application.html.erb", "public/index.html", "config/layout.html", "lib/template.erb"]
+    answer: 0
+    explain: "Semua view otomatis dibungkus layout ini."
+example:
+  code: |
+    <%# app/views/products/index.html.erb %>
+    <h1>Produk</h1>
+
+    <% @products.each do |product| %>
+      <div class="card">
+        <%= product.name %> - Rp<%= product.price %>
+      </div>
+    <% end %>
+
+    <%= link_to "Baru", new_product_path %>
+---
+
+View bertugas merender HTML. ERB memberi dua cara menanam Ruby, dan keduanya punya peran berbeda.
+
+## Dua Tag ERB
+
+```ruby
+<% jumlah = @products.length %>
+<p>Total produk: <%= jumlah %></p>
+```
+
+`<% %>` menjalankan kode tanpa mencetak, `<%= %>` mencetak hasilnya.
+
+## Melooping di View
+
+```ruby
+<ul>
+  <% @products.each do |product| %>
+    <li><%= product.name %> — Rp<%= product.price %></li>
+  <% end %>
+</ul>
+```
+
+Logika seharusnya minimal: mengambil data sudah tugas controller.
+
+## Menghindari Tampilan Kosong
+
+```ruby
+<% if @products.any? %>
+  <%= render partial: "product", collection: @products %>
+<% else %>
+  <p>Belum ada produk.</p>
+<% end %>
+```
+
+Selalu sediakan tampilan untuk keadaan kosong.
+
+## Partial dan Collection
+
+```ruby
+<%# app/views/products/_product.html.erb %>
+<div class="card">
+  <h3><%= product.name %></h3>
+  <p>Rp<%= product.price %></p>
+</div>
+```
+
+Panggil dengan `render partial: "product", collection: @products` — tiap item otomatis jadi variabel `product`.
+
+## Layout
+
+```ruby
+<!DOCTYPE html>
+<html>
+  <head><title><%= content_for(:title) || "Toko" %></title></head>
+  <body>
+    <%= yield %>
+  </body>
+</html>
+```
+
+`yield` diisi oleh view yang sedang dirender.
+
+## Empat Bangunan View
+
+View Rails umumnya tersusun dari **4 bagian**: layout, template action, partial, dan helper.
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Layout | kerangka halaman | `application.html.erb` | header/footer bersama |
+| Template | isi satu action | `products/index` | respons halaman |
+| Partial | potongan berulang | `_product.html.erb` | kartu atau form |
+| Helper | format presentasi | `number_to_currency` | tampilan yang reusable |
+
+ERB memiliki **3 tag penting**: `<% %>` menjalankan Ruby, `<%= %>` mencetak hasil yang di-escape, dan `<%# %>` memberi komentar template. Escape default melindungi dari XSS saat menampilkan input user. Jangan memakai `raw` atau `html_safe` pada data tak tepercaya.
+
+## Form dan Navigasi
+
+`form_with model: @product` memilih URL dan HTTP method dari status record: POST untuk object baru, PATCH untuk object tersimpan. Tampilkan `@product.errors.full_messages` ketika validasi gagal. Gunakan route helper pada `link_to` dan `button_to`; helper mengikuti perubahan route dan menangani method dengan benar.
+
+## Di Dunia Nyata
+
+- Partial kartu produk dipakai ulang di katalog dan hasil pencarian.
+- Layout admin dan publik memisahkan navigasi tanpa menduplikasi halaman.
+- Helper mata uang menjaga format konsisten di invoice dan checkout.
+- Empty state memberi ajakan membuat data ketika collection kosong.
+
+## Performa dan Aksesibilitas
+
+Partial membantu organisasi, tetapi collection besar tetap dapat mahal bila setiap item memicu query association. Muat data di controller dengan `includes`, gunakan collection rendering, lalu periksa log. Fragment caching dapat menyimpan kartu yang jarang berubah; cache key Active Record otomatis berubah bersama `updated_at` sehingga konten lama tidak terus ditampilkan.
+
+HTML yang dihasilkan harus semantik. Hubungkan `label` dengan input, tampilkan error yang dapat dibaca screen reader, pertahankan urutan heading, dan gunakan button untuk aksi alih-alih link palsu. Helper form Rails menghasilkan banyak atribut benar secara default, tetapi developer tetap menentukan teks, fokus, dan struktur. Presentasi server-side yang sederhana bukan alasan mengabaikan keadaan loading, kosong, gagal, serta konfirmasi untuk aksi destruktif.
+
+<div class="note">💡 Hindari logika bisnis di ERB. Kalau template mulai berisi perhitungan panjang dan kondisi bersarang, pindahkan ke model atau helper — view sebaiknya hanya menampilkan apa yang diberikan kepadanya.</div>

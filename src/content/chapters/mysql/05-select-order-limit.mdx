@@ -1,0 +1,135 @@
+---
+title: "SELECT, ORDER BY, dan LIMIT"
+description: "Mengambil, mengurutkan, dan membatasi baris di MySQL"
+order: 5
+quiz:
+  - q: "LIMIT 5 OFFSET 10 menampilkan…"
+    options: ["5 baris pertama", "5 baris setelah melewati 10", "10 baris", "5 terakhir"]
+    answer: 1
+    explain: "OFFSET melewati 10 baris, LIMIT mengambil 5 berikutnya."
+  - q: "Mengapa pagination wajib memakai ORDER BY unik?"
+    options: ["Agar warna berubah", "Agar urutan stabil dan baris tidak lompat antarhalaman", "Agar LIMIT aktif", "Agar DISTINCT bekerja"]
+    answer: 1
+    explain: "Tanpa urutan deterministik, database bebas mengembalikan baris dalam urutan berbeda."
+  - q: "DISTINCT berfungsi untuk…"
+    options: ["Menghapus duplikat hasil", "Mengurutkan data", "Menghitung baris", "Menggabungkan tabel"]
+    answer: 0
+    explain: "SELECT DISTINCT mengembalikan kombinasi nilai unik."
+  - q: "Ada berapa klausa inti dalam alur query chapter ini?"
+    options: ["4", "5", "6", "8"]
+    answer: 2
+    explain: "6 klausa: SELECT, FROM, WHERE, ORDER BY, LIMIT, dan OFFSET."
+  - q: "ORDER BY gaji DESC, id ASC berarti…"
+    options: ["Id diurutkan dulu", "Gaji terbesar dulu, id memecah seri", "Gaji terkecil dulu", "Urutan acak"]
+    answer: 1
+    explain: "Kunci sort dibaca kiri ke kanan; id hanya dipakai saat gaji sama."
+example:
+  code: |
+    SELECT nama, gaji
+    FROM karyawan
+    ORDER BY gaji DESC, id ASC
+    LIMIT 3 OFFSET 0;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`SELECT`, `ORDER BY`, dan `LIMIT` membentuk pola baca yang paling sering dipakai MySQL: pilih data, tentukan urutan, lalu ambil bagian yang diperlukan.
+
+## 6 Klausa Inti
+
+| Klausa | Fungsi | Contoh |
+|--------|--------|--------|
+| `SELECT` | memilih kolom/ekspresi | `SELECT nama, gaji` |
+| `FROM` | menentukan sumber | `FROM karyawan` |
+| `WHERE` | menyaring baris | `WHERE dept = ?` |
+| `ORDER BY` | mengurutkan hasil | `ORDER BY gaji DESC` |
+| `LIMIT` | membatasi jumlah | `LIMIT 10` |
+| `OFFSET` | melewati sejumlah baris | `OFFSET 20` |
+
+Urutan tulis ini berbeda dari urutan logis: `FROM` → `WHERE` → `SELECT` → `ORDER BY` → `LIMIT/OFFSET`.
+
+## Memilih Kolom dan Parameter
+
+```sql
+SELECT nama, jabatan, gaji
+FROM karyawan
+WHERE dept = ?;
+```
+
+Sebut hanya kolom yang dibutuhkan. `SELECT *` menambah transfer jaringan, dapat menggagalkan covering index, dan membuat aplikasi rapuh saat kolom baru ditambahkan. Tanda `?` adalah parameter yang nilainya dikirim driver; jangan menempel input pengguna ke string SQL.
+
+## ORDER BY yang Deterministik
+
+```sql
+SELECT id, nama, gaji
+FROM karyawan
+ORDER BY gaji DESC, id ASC;
+```
+
+Ada 2 arah: `ASC` (menaik, default) dan `DESC` (menurun). Kunci dibaca kiri ke kanan: gaji terbesar dulu, lalu `id` memecah nilai seri. Pemecah seri unik penting agar pagination tidak menampilkan baris yang sama di dua halaman.
+
+Urutan NULL bergantung database dan arah; bila butuh aturan eksplisit, gunakan `ORDER BY kolom IS NULL, kolom`.
+
+## LIMIT dan 2 Sintaks MySQL
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+ORDER BY gaji DESC, id ASC
+LIMIT 3 OFFSET 0;
+```
+
+MySQL mendukung 2 bentuk setara: `LIMIT jumlah OFFSET lewati` dan `LIMIT lewati, jumlah`. Bentuk pertama lebih mudah dibaca dan portabel. `LIMIT 3` berarti maksimum 3 baris; bila hasil hanya 2, tidak dibuat baris tambahan.
+
+## Offset Pagination
+
+Rumus halaman ke-*k* ukuran *u*: `OFFSET (k - 1) × u`. Halaman 3 ukuran 10 memakai `LIMIT 10 OFFSET 20`.
+
+OFFSET nyaman untuk data kecil, tetapi halaman jauh lambat karena MySQL tetap membaca dan membuang baris sebelumnya. Alternatif *keyset pagination*:
+
+```sql
+SELECT id, nama, gaji
+FROM karyawan
+WHERE id > ?
+ORDER BY id
+LIMIT 10;
+```
+
+Kirim id terakhir halaman sebelumnya. Dengan index pada id, MySQL langsung melanjutkan posisi tanpa menghitung ribuan baris yang dilewati.
+
+## DISTINCT dan LIMIT
+
+```sql
+SELECT DISTINCT dept
+FROM karyawan
+ORDER BY dept
+LIMIT 3;
+```
+
+DISTINCT berlaku pada **kombinasi seluruh kolom SELECT**, bukan hanya kolom pertama. Query ini menghasilkan 4 dept unik, lalu LIMIT mengambil 3 pertama secara alfabetis: Data, Design, Engineering.
+
+## EXPLAIN
+
+```sql
+EXPLAIN SELECT id, nama
+FROM karyawan
+WHERE dept = 'Data'
+ORDER BY id
+LIMIT 10;
+```
+
+Periksa `type`, `key`, dan `rows`. Nilai `ALL` menandakan full scan; `ref` atau `range` dengan `key` terisi menunjukkan index kandidat dipakai. EXPLAIN menjelaskan rencana, bukan menjamin query benar secara bisnis.
+
+## Di Dunia Nyata
+
+- **Top 10 produk**: ORDER BY jumlah_terjual DESC, id untuk pemecah seri, LIMIT 10.
+- **API daftar transaksi**: keyset pagination berdasarkan `(created_at, id)` agar halaman jauh tetap cepat.
+- **Dropdown departemen**: SELECT DISTINCT dept ORDER BY dept.
+- **Dashboard mobile**: pilih 3 kolom yang tampil, bukan seluruh payload tabel.
+
+<div class="note">💡 LIMIT tanpa ORDER BY tidak berarti “baris pertama”; tabel tidak punya urutan bawaan. Selalu tentukan ORDER BY yang unik untuk pagination.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT nama, jabatan, gaji, dept
+FROM karyawan
+ORDER BY gaji DESC, id ASC
+LIMIT 3 OFFSET 0;`} />

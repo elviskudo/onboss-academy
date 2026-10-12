@@ -1,0 +1,153 @@
+---
+title: "Array & Hash"
+description: "2 struktur data utama Ruby — 16 method Array, 12 method Hash, dan 4 operator set"
+order: 6
+quiz:
+  - q: "Apa hasil dari [1, 2, 3] + [4] ?"
+    options: ["[1, 2, 3, 4]", "[1, 2, 3, 4] pada array pertama (dimodifikasi)", "[4, 1, 2, 3]", "Error"]
+    answer: 0
+    explain: "+ menggabung dan mengembalikan array BARU — array asli tidak berubah."
+  - q: "data.fetch(:kosong) pada hash tanpa kunci tersebut akan…"
+    options: ["Mengembalikan nil", "Mengembalikan 0", "Mengembalikan default bila diberi, atau error bila tidak", "Menambah kunci baru"]
+    answer: 2
+    explain: "fetch ketat: tanpa default ia melempar KeyError — cocok untuk kunci yang wajib ada."
+  - q: "Cara menghitung frekuensi kata paling idiomatic di Ruby adalah…"
+    options: ["for + if bersarang", "Hash.new(0) lalu hitung[kata] += 1", "Array.new", "Membuat class baru"]
+    answer: 1
+    explain: "Hash.new(0) membuat kunci baru dengan nilai 0 otomatis — tanpa pengecekan nil."
+  - q: "Indeks negatif pada array maksudnya…"
+    options: ["Error", "Menghitung dari belakang, -1 = elemen terakhir", "Menghapus elemen", "Menjadikan absolut"]
+    answer: 1
+    explain: "buah[-1] mengambil elemen terakhir tanpa perlu tahu panjangnya."
+  - q: "Hash menyimpan kunci kembar…"
+    options: ["Semuanya dipertahankan", "Ditambahkan ke array terpisah", "Nilai terakhir menimpa yang lama", "Menyebabkan error"]
+    answer: 2
+    explain: "Kunci unik — memasukkan kunci yang sama dua kali menimpa nilai sebelumnya."
+example:
+  code: |
+    buah = ["apel", "mangga", "jeruk"]
+    buah.push("anggur")
+    puts buah[1]
+    puts buah.length
+
+    skor = { "sari" => 90, "budi" => 85 }
+    skor["budi"] = 88
+    skor.each { |nama, nilai| puts "#{nama}: #{nilai}" }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hampir semua program menyimpan kumpulan data. Ruby punya 2 struktur inti — **Array** untuk daftar berurutan dan **Hash** untuk pasangan kunci–nilai — ditambah 4 operator set ala matematika di atas Array.
+
+## Array: Daftar Berurutan
+
+```ruby
+buah = ["apel", "mangga", "jeruk"]
+
+puts buah[0]        # apel (indeks 0)
+puts buah[-1]       # jeruk (dari belakang)
+puts buah[0..1]     # ["apel", "mangga"] (slice)
+puts buah.first     # apel
+puts buah.length    # 3
+```
+
+Indeks dimulai dari 0, mendukung indeks negatif, dan operasi slicing mengembalikan array baru.
+
+### 16 Method Array Inti
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `push` / `<<` | Tambah ke akhir | 9 | `first` | Elemen pertama |
+| 2 | `pop` | Ambil dari akhir | 10 | `last` | Elemen terakhir |
+| 3 | `shift` | Ambil dari depan | 11 | `sort` | Array baru terurut |
+| 4 | `unshift` | Tambah ke depan | 12 | `reverse` | Array baru terbalik |
+| 5 | `[]` | Ambil / slice | 13 | `uniq` | Buang duplikat |
+| 6 | `[]=` | Timpa indeks | 14 | `join` | Gabung jadi string |
+| 7 | `length` / `size` | Jumlah elemen | 15 | `delete` | Hapus nilai |
+| 8 | `include?` | Cek keanggotaan | 16 | `insert` | Sisipkan di posisi |
+
+Versi dengan `!` (`sort!`, `uniq!`, `map!`) menimpa array asli; versi tanpa `!` mengembalikan salinan baru. Catatan: `push`/`<<`/`pop`/`shift` memang mutasi — Ruby tidak punya varian non-mutasi untuk menambah elemen, gunakan `+` bila butuh salinan. `map`, `select`, dan `reduce` dibahas di chapter Perulangan.
+
+### 4 Operator Set
+
+```ruby
+a = [1, 2, 3]
+b = [3, 4, 5]
+
+puts (a + b).inspect        # [1, 2, 3, 4, 5] gabung
+puts (a - b).inspect        # [1, 2] buang
+puts (a & b).inspect        # [3] irisan
+puts (a | b).inspect        # [1, 2, 3, 4, 5] gabung unik
+```
+
+## Hash: Kunci dan Nilai
+
+```ruby
+siswa = { nama: "Sari", umur: 20, kelas: "A" }
+
+puts siswa[:nama]
+siswa[:umur] = 21
+siswa[:kota] = "Bandung"
+
+puts siswa.fetch(:kelas)            # A
+puts siswa.fetch(:wali, "tak ada")   # tak ada (default)
+```
+
+Kunci memakai Symbol (`:nama`) lebih hemat daripada String.
+
+### 12 Method Hash
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `[]` | Baca nilai | 7 | `each` | Iterasi kunci + nilai |
+| 2 | `[]=` | Tulis nilai | 8 | `merge` | Gabung → hash baru |
+| 3 | `fetch` | Baca ketat + default | 9 | `delete` | Hapus kunci |
+| 4 | `keys` | Daftar kunci | 10 | `key?` | Cek kunci ada |
+| 5 | `values` | Daftar nilai | 11 | `dig` | Akses bertingkat aman |
+| 6 | `size` | Jumlah entri | 12 | `sort` | Entri terurut |
+
+```ruby
+frekuensi = Hash.new(0)
+"to be or not to be".split.each { |kata| frekuensi[kata] += 1 }
+puts frekuensi.inspect
+# {"to"=>2, "be"=>2, "or"=>1, "not"=>1}
+```
+
+## Mutable vs Immutable
+
+Array dan Hash **mutable**: `buah << "x"` mengubah objek yang sama. Struktur immutable alami di Ruby hanyalah nilai skalar (Integer, Float, Symbol, true, false, nil). Untuk melindungi struktur dari perubahan diam-diam, tambahkan `.freeze` — mengubahnya lalu melempar `FrozenError`.
+
+## Kapan Pakai Mana
+
+| Kebutuhan | Struktur | Alasan |
+| --- | --- | --- |
+| Daftar urut, akses per indeks | Array | Urutan dan posisi berarti |
+| Lookup berdasarkan nama/kunci | Hash | Cari `user[:email]` tanpa menyusuri |
+| Data dari API / baris database | Array of Hash | Tiap elemen = satu record |
+| Kumpulan unik tanpa urutan | `Set` (stdlib) | Cek keanggotaan O(1) |
+
+## Di Dunia Nyata
+
+- **Keranjang belanja**: array of Hash `[{ nama: "Kopi", qty: 2 }]` dihitung totalnya saat checkout.
+- **Rekap absensi**: `Hash.new(0)` menghitung berapa kali tiap nama terlambat bulan ini.
+- **Konfigurasi aplikasi**: hash bertingkat `{ db: { host: "localhost" } }` dibaca dengan `dig(:db, :host)`.
+- **Pencarian data**: `daftar.select { |s| s[:kelas] == "A" }` menyaring siswa per kelas.
+- **Filter duplikat**: `url_dikunjungi.uniq.length` menghitung jumlah pengunjung unik dari log.
+
+<div class="note">💡 `h[:kosong]` pada Hash biasa diam-diam mengembalikan `nil` tanpa error — nyaman untuk `h[:x] ||= 0`, tetapi membuat salah ketik kunci (`:harga` vs `:hargaTotal`) lolos sebagai "nilai kosong". Untuk kunci yang wajib ada, pakai `fetch` yang langsung melempar `KeyError`.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`buah = ["apel", "mangga", "jeruk"]
+buah.push("anggur")
+puts buah[1]
+puts buah.length
+puts buah.sort.inspect
+puts (buah & ["mangga", "pepaya"]).inspect
+
+skor = { "sari" => 90, "budi" => 85 }
+skor["budi"] = 88
+skor.each { |nama, nilai| puts "#{nama}: #{nilai}" }
+puts skor.keys.inspect
+
+frek = Hash.new(0)
+"to be or not to be".split.each { |k| frek[k] += 1 }
+puts frek.inspect`} />

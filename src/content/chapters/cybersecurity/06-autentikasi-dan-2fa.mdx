@@ -1,0 +1,132 @@
+---
+title: "Autentikasi dan 2FA"
+description: "Membangun login yang kuat — sesi, TOTP, dan alur pemulihan akun"
+order: 6
+quiz:
+  - q: "Perbedaan autentikasi dan otorisasi adalah…"
+    options: ["Keduanya identik", "Autentikasi = enkripsi; otorisasi = hashing", "Autentikasi = siapa Anda; otorisasi = apa yang boleh Anda lakukan", "Otorisasi = login; autentikasi = logout"]
+    answer: 2
+    explain: "Login membuktikan identitas; otorisasi menentukan hak akses setelah login."
+  - q: "Token sesi yang kuat sebaiknya…"
+    options: ["Berupa nama pengguna", "Acak, panjang, dan kedaluwarsa terbatas", "Tampil di URL", "Tidak pernah kedaluwarsa"]
+    answer: 1
+    explain: "Token dapat diprediksi atau terlalu panjang umurnya memudahkan pengambilalihan sesi."
+  - q: "TOTP (seperti aplikasi authenticator) menghasilkan kode berdasarkan…"
+    options: ["Waktu berjalan dan kunci rahasia bersama", "Cuaca harian", "Alamat IP pengguna", "Nama perangkat"]
+    answer: 0
+    explain: "Kode berubah tiap 30 detik sehingga tangkapan kode lama cepat kedaluwarsa."
+  - q: "Mengirim kode OTP lewat SMS lebih lemah karena…"
+    options: ["SMS terlalu cepat", "SMS tidak tersedia di luar negeri", "Rentan terhadap pengalihan SIM (SIM swap) dan penyadapan", "SMS membuat HP panas"]
+    answer: 2
+    explain: "Oleh karena itu, aplikasi TOTP atau hardware key diprioritaskan bila tersedia."
+  - q: "Alur pemulihan akun yang aman harus…"
+    options: ["Mengirim password asli via email", "Memverifikasi identitas tanpa mempertanyakan data rahasia asli", "Membuka akun hanya dengan panggilan telepon", "Menonaktifkan MFA permanen"]
+    answer: 1
+    explain: "Pertanyaan keamanan lama mudah ditebak/digali; kunci pemulihan sekali pakai lebih aman."
+example:
+  code: |
+    # Konsep token sesi yang baik
+    import os
+
+    token = os.urandom(32).hex()
+    print("token acak   :", token[:16], "... (32 byte)")
+    print("kedaluwarsa  : 30 menit")
+    print("disimpan     : sebagai hash di server, bukan teks biasa")
+---
+
+Login yang lemah membuat semua kontrol lain percuma. Bab ini menyusun **autentikasi yang layak dipakai**.
+
+## Autentikasi vs Otorisasi
+
+```
+"Siapa Anda?"  -> Autentikasi (login)
+"Boleh akses apa?" -> Otorisasi (hak: admin, kasir, tamu)
+```
+
+Keduanya sering tertukar; keduanya wajib dikendalikan terpisah.
+
+## Sesi dan Token
+
+```python
+import os
+
+token = os.urandom(32).hex()
+print("token acak  :", token[:16], "... (32 byte)")
+print("kedaluwarsa : 30 menit untuk sesi sensitif")
+print("disimpan    : sebagai hash di server")
+```
+
+Aturan sesi: token acak dan panjang, kedaluwarsa jelas, bisa dicabut saat logout/perangkat hilang.
+
+## 2FA dengan TOTP
+
+```python
+# Konsep alur TOTP (implementasi penuh memakai library resmi)
+kunci_rahasia = "JBSWY3DPEHPK3PXP"  # dibagikan via QR saat aktivasi
+interval = 30
+
+# kode = f(kunci_rahasia, floor(waktu_unix / interval))
+print(f"Kode berubah tiap {interval} detik")
+print("Input tambahan: kode dari aplikasi authenticator")
+```
+
+Urutan verifikasi: password dulu, baru kode TOTP — keduanya harus lolos.
+
+## Melindungi Token & Kunci Rahasia
+
+```python
+print("Hash token sesi; enkripsi kunci TOTP dengan kunci terpisah")
+```
+
+Token sesi dapat disimpan sebagai hash karena server hanya perlu membandingkannya. Kunci TOTP harus tersedia untuk menghitung kode, sehingga disimpan terenkripsi dengan kunci dari secret manager, bukan di-hash dan bukan sebagai teks biasa.
+
+## Alur Pemulihan yang Aman
+
+1. Sediakan **kunci pemulihan sekali pakai** saat aktivasi 2FA.
+2. Proses pemulihan melewati **verifikasi berlapis** (email + data akun non-rahasia).
+3. **Catat dan laporkan** setiap percobaan pemulihan yang gagal.
+4. Jangan pernah memulihkan akun hanya dengan menebak "nama hewan peliharaan".
+
+## Anti-Brute Force
+
+```python
+percobaan_gagal = 7
+batas = 5
+
+if percobaan_gagal >= batas:
+    print("Kunci sementara + notifikasi ke email pemilik")
+else:
+    print("Izinkan percobaan berikutnya")
+```
+
+Batas percobaan, jeda, dan notifikasi mendeteksi dini upaya menebak password.
+
+## Tiga Faktor Autentikasi
+
+Ada **3 kategori faktor**: sesuatu yang diketahui, dimiliki, dan melekat pada pengguna.
+
+| Faktor | Contoh | Kekuatan | Risiko |
+|---|---|---|---|
+| Pengetahuan | Password, PIN | Mudah diterapkan | Phishing dan reuse |
+| Kepemilikan | TOTP, passkey, security key | Menambah bukti perangkat | Perangkat hilang |
+| Inheren | Sidik jari, wajah | Nyaman | Tidak dapat diganti seperti password |
+
+Dua password bukan 2FA karena masih satu kategori. Passkey atau security key berbasis origin lebih tahan phishing daripada kode yang dapat diketik ke situs palsu. Biometrik biasanya membuka credential pada perangkat; server sebaiknya tidak menyimpan citra biometrik mentah.
+
+Sesi web memakai cookie acak dengan `Secure`, `HttpOnly`, dan `SameSite`. Rotasi ID sesi setelah login atau perubahan privilege, batasi idle dan absolute timeout, serta cabut sesi saat logout, reset password, atau perangkat dilaporkan hilang. Jangan menaruh token sesi di URL.
+
+## Pemulihan adalah Bagian Autentikasi
+
+Recovery yang lemah dapat melewati MFA terbaik. Berikan beberapa recovery code sekali pakai, simpan hash-nya, tampilkan hanya saat dibuat, dan minta autentikasi ulang untuk mengganti faktor. Setiap perubahan faktor memicu notifikasi melalui kanal terpisah dan masa tunggu untuk akun bernilai tinggi.
+
+## Di Dunia Nyata
+
+1. Email perusahaan mewajibkan security key bagi admin karena akun email dapat mereset layanan lain.
+2. Bank meminta autentikasi ulang sebelum menambah penerima transfer, bukan hanya saat login awal.
+3. Marketplace mencabut semua sesi setelah pengguna melaporkan perangkat hilang.
+4. Help desk tidak menonaktifkan MFA hanya berdasarkan data publik seperti tanggal lahir.
+5. Sistem mendeteksi lonjakan login gagal, memberi delay progresif, dan memberi tahu pemilik tanpa membocorkan keberadaan akun.
+
+Rate limit harus mempertimbangkan akun, alamat jaringan, perangkat, dan waktu agar efektif tanpa mudah disalahgunakan untuk denial-of-service. Log hasil autentikasi dan perubahan faktor, tetapi jangan pernah mencatat password, OTP, recovery code, atau token sesi.
+
+<div class="note">💡 Dorong pengguna memakai TOTP atau security key daripada SMS OTP. SIM swap membajak SMS tanpa menyentuh ponsel korban sama sekali.</div>

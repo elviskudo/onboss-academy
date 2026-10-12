@@ -1,0 +1,128 @@
+---
+title: "Tabel"
+description: "Menyusun data baris-kolom: 10 elemen tabel, colspan, rowspan, thead/tbody/tfoot"
+order: 5
+quiz:
+  - q: "Elemen pembungkus baris tabel adalah…"
+    options: ["<tr>", "<td>", "<table>", "<th>"]
+    answer: 0
+    explain: "<tr> (table row) membungkus tiap baris. <td> adalah sel data, <th> sel header."
+  - q: "Perbedaan <th> dan <td> adalah…"
+    options: ["Tidak ada", "<th> adalah header (biasanya tebal, tengah)", "<th> hanya untuk angka", "<td> tidak boleh di <tr>"]
+    answer: 1
+    explain: "<th> = table header, secara default tebal dan rata tengah + semantik header."
+  - q: "Atribut colspan=\"2\" berfungsi untuk…"
+    options: ["Menggabungkan 2 baris", "Menggabungkan 2 kolom jadi satu sel", "Menghapus kolom", "Mengatur lebar tabel"]
+    answer: 1
+    explain: "colspan menggabungkan kolom (horizontal). rowspan menggabungkan baris (vertikal)."
+  - q: "Elemen <thead> digunakan untuk…"
+    options: ["Bagian kepala tabel (baris header)", "Judul tabel", "Kaki tabel", "Caption tabel"]
+    answer: 0
+    explain: "<thead> memuat baris header tabel. <tfoot> untuk kaki, <tbody> untuk isi."
+  - q: "Caption tabel (judul) ditulis dengan tag…"
+    options: ["<caption>", "<title>", "<h3>", "<header>"]
+    answer: 0
+    explain: "<caption> adalah judul semantik tabel."
+example:
+  code: |
+    <table border="1">
+      <caption>Nilai Siswa</caption>
+      <thead>
+        <tr><th>Nama</th><th>Mata Pelajaran</th><th>Nilai</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sari</td><td>Matematika</td><td>92</td></tr>
+        <tr><td>Budi</td><td>Bahasa</td><td>88</td></tr>
+      </tbody>
+    </table>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tabel HTML dipakai untuk **data dua dimensi**: baris dan kolom yang saling terkait (bukan untuk layout halaman). HTML punya **10 elemen tabel**: `table`, `caption`, `colgroup`, `col`, `thead`, `tbody`, `tfoot`, `tr`, `th`, dan `td`.
+
+## Struktur Dasar
+
+```html
+<table>
+  <tr>
+    <th>Nama</th>
+    <th>Nilai</th>
+  </tr>
+  <tr>
+    <td>Sari</td>
+    <td>92</td>
+  </tr>
+</table>
+```
+
+| Elemen | Fungsi | Kapan dipakai |
+|--------|--------|---------------|
+| `<table>` | Pembungkus utama tabel | Selalu |
+| `<caption>` | Judul tabel (semantik) | Hampir selalu |
+| `<tr>` | Satu baris | Selalu |
+| `<th>` | Sel header (tebal, rata tengah) | Baris/kolom judul |
+| `<td>` | Sel data | Semua sel isi |
+| `<thead>` | Kelompok baris header | Tabel multi-bagian |
+| `<tbody>` | Kelompok baris isi | Tabel multi-bagian |
+| `<tfoot>` | Kelompok baris kaki (mis. total) | Jika ada baris ringkasan |
+| `<colgroup>`/`<col>` | Atur lebar kolom dari atas | Lebar kolom seragam |
+
+## thead, tbody, tfoot
+
+```html
+<table>
+  <thead>
+    <tr><th>Produk</th><th>Harga</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Kopi</td><td>Rp20.000</td></tr>
+    <tr><td>Teh</td><td>Rp15.000</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><td><strong>Total</strong></td><td><strong>Rp35.000</strong></td></tr>
+  </tfoot>
+</table>
+```
+
+Browser menggabungkan `<tbody>` secara implisit kalau tidak ditulis, tapi menulisnya eksplisit memudahkan styling (misalnya baris zebra via `tbody tr:nth-child(even)`).
+
+## Colspan dan Rowspan
+
+Untuk sel yang membentang:
+
+```html
+<tr>
+  <td colspan="2">Gabungan dua kolom</td>
+</tr>
+<tr>
+  <td rowspan="2">Gabungan dua baris</td>
+  <td>Sel biasa</td>
+</tr>
+<tr>
+  <td>Sel biasa lagi</td>
+</tr>
+```
+
+Jumlah sel (setelah penggabungan) harus konsisten per baris — kalau salah, tabel langsung berantakan.
+
+## Kapan Tabel, Kapan Bukan?
+
+Pakai `<table>` **hanya** untuk data: laporan nilai, harga produk, jadwal, perbandingan fitur. Untuk tata letak halaman, gunakan CSS Flex/Grid — tabel untuk layout merusak aksesibilitas (pembaca layar membacanya sebagai data) dan sulit dibuat responsif.
+
+## Di Dunia Nyata
+
+- **Rekap nilai akademik** — `<thead>` nama kolom, `<tbody>` baris siswa, `<tfoot>` rata-rata kelas
+- **Daftar harga menu catering** — `colspan` untuk baris kategori makanan yang membentang semua kolom
+- **Jadwal kerja shift** — `<caption>` "Shift Pekan Ini" membantu pembaca layar langsung paham isi tabel
+- **Perbandingan paket SaaS** — tabel fitur vs harga; di HP dibungkus `overflow-x: auto` agar bisa digeser
+
+<div class="note">💡 Untuk tampilan tabel yang cantik (border, warna zebra, responsif) kamu butuh CSS — pelajari di bab-bab tutorial CSS. Markup yang benar dulu, styling menyusul: tabel murni `<table>` sudah terbaca mesin pencari dan pembaca layar dengan sempurna tanpa satu baris CSS pun.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<table border="1" cellpadding="8">
+  <caption>Jadwal Kuliah</caption>
+  <tr><th>Waktu</th><th>Mata Kuliah</th><th>Ruangan</th></tr>
+  <tr><td>08:00</td><td>Algoritma</td><td>A-101</td></tr>
+  <tr><td>10:00</td><td>Basis Data</td><td>B-203</td></tr>
+  <tr><td>13:00</td><td>Web Programming</td><td>C-105</td></tr>
+</table>`} />

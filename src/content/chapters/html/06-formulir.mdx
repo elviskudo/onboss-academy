@@ -1,0 +1,132 @@
+---
+title: "Formulir Input"
+description: "Menerima data pengguna: input, select, textarea, button"
+order: 6
+quiz:
+  - q: "Elemen pembungkus semua field formulir adalah…"
+    options: ["<form>", "<input>", "<fieldset>", "<div>"]
+    answer: 0
+    explain: "<form> membungkus field dan punya atribut action/method untuk pengiriman data."
+  - q: "Elemen mana yang membuat dropdown pilihan?"
+    options: ["<select>", "<option-list>", "<dropdown>", "<input type=\"list\">"]
+    answer: 0
+    explain: "<select> berisi <option> — menghasilkan dropdown."
+  - q: "Input untuk teks multi-baris adalah…"
+    options: ["<input type=\"text\">", "<textarea>", "<multiline>", "<input type=\"long\">"]
+    answer: 1
+    explain: "<textarea> untuk input teks panjang multi-baris."
+  - q: "Tipe input untuk memilih tanggal adalah…"
+    options: ["type=\"date\"", "type=\"time\"", "type=\"calendar\"", "type=\"day\""]
+    answer: 0
+    explain: "type=\"date\" membuka pemilih tanggal bawaan browser."
+  - q: "Atribut required pada input berfungsi untuk…"
+    options: ["Membuat teks tebal", "Mewajibkan input diisi sebelum submit", "Mengunci input", "Membuat input rahasia"]
+    answer: 1
+    explain: "required = wajib diisi. Browser akan menolak submit jika kosong."
+example:
+  code: |
+    <form>
+      <label for="nama">Nama:</label><br>
+      <input type="text" id="nama" name="nama" placeholder="Sari" required><br><br>
+
+      <label for="kota">Kota:</label><br>
+      <select id="kota" name="kota">
+        <option>Jakarta</option>
+        <option>Bandung</option>
+        <option>Surabaya</option>
+      </select><br><br>
+
+      <label for="pesan">Pesan:</label><br>
+      <textarea id="pesan" name="pesan" rows="3"></textarea><br><br>
+
+      <button type="submit">Kirim</button>
+    </form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Formulir adalah cara halaman web menerima data dari pengguna.
+
+## Elemen `<form>` Dasar
+
+```html
+<form action="/kirim" method="post">
+  <label for="nama">Nama:</label>
+  <input type="text" id="nama" name="nama">
+
+  <button type="submit">Kirim</button>
+</form>
+```
+
+- `action` — URL tujuan pengiriman data
+- `method` — `get` (data di URL) atau `post` (data di body)
+
+## Di Dunia Nyata
+
+- **Login akun** — `email` dan `password` divalidasi browser sebelum dikirim dengan POST
+- **Checkout toko** — radio memilih satu kurir, checkbox menerima syarat, number mengatur kuantitas
+- **Pendaftaran acara** — date memilih tanggal, select memilih sesi, file mengunggah bukti
+- **Survei pelanggan** — fieldset mengelompokkan pertanyaan agar mudah dipahami pembaca layar
+
+<div class="note">💡 Selalu beri <code>label</code> yang terhubung ke input lewat atribut <code>for</code> = <code>id</code> input. Ini membuat klik label fokus ke input — penting untuk aksesibilitas.</div>
+
+## Ragam Tipe Input
+
+HTML Living Standard mendefinisikan **22 nilai umum `type` untuk `<input>`**: `button`, `checkbox`, `color`, `date`, `datetime-local`, `email`, `file`, `hidden`, `image`, `month`, `number`, `password`, `radio`, `range`, `reset`, `search`, `submit`, `tel`, `text`, `time`, `url`, dan `week`.
+
+| Tipe | Fungsi | Validasi browser | Contoh nyata |
+|------|--------|------------------|--------------|
+| `text` | Teks satu baris | `required`, `minlength`, `pattern` | Nama lengkap |
+| `email` | Alamat email | Format email | Login/newsletter |
+| `password` | Teks tersamarkan | Panjang/pola | Kata sandi |
+| `number` | Angka | `min`, `max`, `step` | Jumlah barang |
+| `date` | Tanggal | Rentang tanggal | Tanggal lahir |
+| `radio` | Satu dari beberapa | Satu pilihan per `name` | Metode bayar |
+| `checkbox` | Pilihan independen | `required` | Persetujuan syarat |
+| `file` | Unggah file | `accept` | Foto profil |
+
+```html
+<input type="text">        <!-- teks biasa -->
+<input type="email">       <!-- validasi email bawaan -->
+<input type="password">    <!-- teks tersembunyi -->
+<input type="number">      <!-- angka -->
+<input type="date">        <!-- pemilih tanggal -->
+<input type="checkbox">    <!-- kotak centang -->
+<input type="radio">       <!-- pilihan radio -->
+<input type="range">       <!-- slider -->
+<input type="color">       <!-- pemilih warna -->
+```
+
+## Select, Textarea, dan Button
+
+```html
+<select name="hobi">
+  <option value="coding">Coding</option>
+  <option value="membaca">Membaca</option>
+</select>
+
+<textarea name="pesan" rows="4" cols="40"></textarea>
+
+<button type="submit">Kirim</button>
+<button type="reset">Reset</button>
+```
+
+## Fieldset untuk Pengelompokan
+
+```html
+<fieldset>
+  <legend>Data Diri</legend>
+  <input type="text" name="nama">
+  <input type="email" name="email">
+</fieldset>
+```
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<form>
+  <fieldset>
+    <legend>Daftar Akun</legend>
+    <p><label>Email: <input type="email" required placeholder="kamu@email.com"></label></p>
+    <p><label>Password: <input type="password" required minlength="8"></label></p>
+    <p><label>Saya setuju <input type="checkbox" required></label></p>
+    <button type="submit">Daftar</button>
+  </fieldset>
+</form>`} />

@@ -1,0 +1,151 @@
+---
+title: "Operator & String"
+description: "40 operator dalam 7 kategori dan 16 fungsi string PHP yang paling sering dipakai"
+order: 3
+quiz:
+  - q: "Operator penggabung teks dalam PHP adalah…"
+    options: ["plus (+)", "titik (.)", "koma (,)", "ampersand (&)"]
+    answer: 1
+    explain: "\"Halo \" . $nama — plus hanya untuk angka, meski PHP kadang mau mengonversi."
+  - q: "Berapa jumlah operator perbandingan yang didaftarkan (termasuk === dan <=>)?"
+    options: ["6", "8", "10", "12"]
+    answer: 2
+    explain: "==, ===, !=, !==, <>, <, >, <=, >=, dan <=> (spaceship) — sepuluh."
+  - q: "Apa hasil dari \"5\" + 3 di PHP?"
+    options: ["Error", "8", "53", "null"]
+    answer: 1
+    explain: "PHP mengonversi string numerik jadi integer sebelum dijumlahkan; 5 . 3 justru \"53\"."
+  - q: "Operator === membandingkan…"
+    options: ["Nilai dan tipe harus sama", "Hanya nilai", "Hanya tipe", "Nama variabel"]
+    answer: 0
+    explain: "\"10\" == 10 true, sedangkan \"10\" === 10 false karena tipenya beda."
+  - q: "substr(\"OnBoss\", 0, 3) menghasilkan…"
+    options: ["Boss", "OnB", "OnBo", "s"]
+    answer: 1
+    explain: "substr(string, mulai, panjang) — mulai indeks 0 sebanyak 3 karakter."
+example:
+  code: |
+    <?php
+    $nama = "Sari";
+    $sapa = "Halo, " . $nama . "!";
+    echo strtoupper($sapa) . "\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setelah tipe data, kuasai dua hal yang paling sering muncul di kode PHP sehari-hari: **40 operator dalam 7 kategori** dan manipulasi string.
+
+## 7 Kategori Operator
+
+| Kategori | Jumlah | Daftar |
+| --- | --- | --- |
+| Aritmatika | 6 | `+` `-` `*` `/` `%` `**` |
+| Inkrement/decrement | 2 | `++` `--` (4 posisi: pre/post) |
+| Perbandingan | 10 | `==` `===` `!=` `!==` `<>` `<` `>` `<=` `>=` `<=>` |
+| Logika | 6 | `&&` `\|\|` `!` `and` `or` `xor` |
+| Penugasan | 12 | `=` `+=` `-=` `*=` `/=` `%=` `**=` `.=` `??=` `&=` `\|=` `^=` |
+| Gabung teks | 1 | `.` (concatenation) |
+| Ringkas | 3 | `?:` ternary, `?:` elvis, `??` null coalescing |
+
+```php
+<?php
+$a = 10;
+$b = 3;
+
+echo $a + $b, " ", $a - $b, " ", $a * $b, " ", $a / $b, " ", $a % $b, "\n";
+echo 2 ** 10, "\n";        // 1024
+
+$x = 5;
+echo ++$x, " ", $x--;      // 6 6 — post-decrement memakai nilai lama
+```
+
+## Perbandingan: == vs ===
+
+```php
+<?php
+$s = "10";
+var_dump($s == 10);    // bool(true)  — nilai sama setelah konversi
+var_dump($s === 10);   // bool(false) — tipe berbeda
+var_dump($s <=> 10);   // int(0)      — spaceship: -1 / 0 / 1
+```
+
+Sejak PHP 8 konversi tipe saat membandingkan jauh lebih ketat: `0 == ""` dan `"abc" == 0` kini `false` (di PHP 7 masih `true`). Meski begitu `"5" == "5.0"` tetap `true` — keduanya string numerik.
+
+## Concatenation dan Interpolasi
+
+```php
+<?php
+$produk = "Kopi";
+$harga = 25000;
+
+echo $produk . " Rp" . $harga;              // concatenation
+echo "$produk seharga Rp$harga";            // interpolasi kutip ganda
+echo "{$produk}s";                          // kurung untuk kejelasan
+echo "Total: " . ($harga * 2);              // selalu kurung ekspresi
+```
+
+Sejak PHP 8 precedence `.` lebih rendah daripada `+`/`-`, jadi campuran tanpa kurung bisa mengejutkan — tulis `($a + $b)` secara eksplisit.
+
+## 3 Cara Menulis String
+
+| Cara | Contoh | Kapan |
+| --- | --- | --- |
+| Kutip tunggal | `'Halo\n'` | Teks mentah, escape literal |
+| Kutip ganda | `"Halo $nama\n"` | Interpolasi & escape |
+| Heredoc | `<<<Teks ... Teks;` | HTML template, SQL panjang |
+
+## 16 Fungsi String Inti
+
+| # | Fungsi | Fungsi | # | Fungsi | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `strlen` | Jumlah karakter | 9 | `str_contains` | Cek substr (PHP 8) |
+| 2 | `trim` | Buang spasi ujung | 10 | `str_replace` | Ganti semua |
+| 3 | `strtoupper` | Huruf besar semua | 11 | `str_repeat` | Ulangi string |
+| 4 | `strtolower` | Huruf kecil semua | 12 | `explode` | Pecah → array |
+| 5 | `ucfirst` | Besar di awal | 13 | `implode` | Array → string |
+| 6 | `substr` | Potong | 14 | `sprintf` | Format bertempat |
+| 7 | `strpos` | Posisi substr | 15 | `number_format` | Angka berformat |
+| 8 | `str_pad` | Tambah pengisi | 16 | `str_split` | String → array huruf |
+
+```php
+<?php
+$teks = "  OnBoss Academy  ";
+echo strlen(trim($teks)), "\n";                       // 15
+echo substr("OnBoss", 0, 3), "\n";                    // OnB
+echo str_replace("On", "Off", "OnBoss"), "\n";        // OffBoss
+echo implode("-", ["a", "b", "c"]), "\n";             // a-b-c
+echo explode(" ", "Sari Wijaya")[1], "\n";            // Wijaya
+echo number_format(1250000), "\n";                    // 1,250,000
+```
+
+## Di Dunia Nyata
+
+- **Menyusun query pembatas**: `sprintf("SELECT * FROM user WHERE id = %d", $id)` memaksa input jadi angka.
+- **Merapikan nama file**: `trim()` lalu `str_replace(" ", "-", strtolower($nama))` menghasilkan slug.
+- **Menampilkan harga**: `number_format($total, 0, ",", ".")` → `1.250.000` untuk rupiah.
+- **Validasi form cepat**: `strlen($password) >= 8` dan `str_contains($email, "@")` sebelum disimpan.
+- **Menyusun pesan log**: `sprintf("[%s] %s: %s", date("Y-m-d"), $level, $pesan)` agar format konsisten.
+
+<div class="note">💡 PHP punya **7 nilai yang dianggap kosong (falsy)**: `false`, `null`, `0`, `0.0`, `""`, `"0"`, dan `[]`. Artinya `if ($nilai)` lolos juga untuk string `"0"` — sedangkan input form selalu berupa string. Untuk field wajib isi, pakai validasi eksplisit `isset()` + `!== ""`, jangan mengandalkan kefalsifan semata.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$nama = "Sari";
+$produk = "Kopi susu";
+$harga = 25000;
+$qty = 3;
+
+$sapa = "Halo, $nama!";
+echo $sapa . "\\n";
+echo strtoupper($produk) . "\\n";
+
+$total = $harga * $qty;
+echo "Total: Rp" . number_format($total) . "\\n";
+echo "Potongan 10%: Rp" . number_format($total - $total * 0.1) . "\\n";
+
+$teks = "  OnBoss Academy  ";
+$bersih = trim($teks);
+echo "Panjang: " . strlen($bersih) . "\\n";
+echo "Kata kedua: " . explode(" ", $bersih)[1] . "\\n";
+echo str_replace("Academy", "Bootcamp", $bersih) . "\\n";
+echo "Tiga huruf pertama: " . substr($produk, 0, 3) . "\\n";
+echo "Harga pas? " . var_export($harga === 25000, true) . "\\n";`} />

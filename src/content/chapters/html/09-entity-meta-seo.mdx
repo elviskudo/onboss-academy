@@ -1,0 +1,112 @@
+---
+title: "Entity, Meta & SEO Dasar"
+description: "Karakter khusus, meta tag, dan optimasi mesin pencari"
+order: 9
+quiz:
+  - q: "Bagaimana menampilkan karakter < di halaman web?"
+    options: ["<", "&lt;", "<lt>", "\\lt"]
+    answer: 1
+    explain: "&lt; adalah entity untuk karakter kurung sudut kiri. &gt; untuk kanan, &amp; untuk &."
+  - q: "Meta tag paling penting untuk deskripsi hasil pencarian adalah…"
+    options: ["<meta name=\"description\">", "<meta name=\"keywords\">", "<meta charset>", "<meta viewport>"]
+    answer: 0
+    explain: "description dipakai Google sebagai cuplikan (snippet) di hasil pencarian."
+  - q: "Meta tag viewport berguna untuk…"
+    options: ["Kecepatan server", "Tampilan responsif di perangkat mobile", "SEO internasional", "Keamanan"]
+    answer: 1
+    explain: "viewport meta membuat halaman tampil benar di HP (lebar = lebar perangkat)."
+  - q: "Entity untuk tanda & adalah…"
+    options: ["&amp;", "&ampersand;", "&et;", "&plus;"]
+    answer: 0
+    explain: "&amp; menampilkan karakter &."
+  - q: "Elemen <title> yang baik sebaiknya…"
+    options: ["Sama persis di semua halaman", "Unik dan deskriptif per halaman", "Sebuah kalimat panjang 20 kata", "Hanya emoji"]
+    answer: 1
+    explain: "Title unik membantu SEO & pengguna mengenali tab di browser (~50-60 karakter ideal)."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Tutorial HTML Gratis — OnBoss Academy</title>
+      <meta name="description" content="Belajar HTML dari nol dengan contoh yang bisa dijalankan langsung di browser.">
+    </head>
+    <body>
+      <h1>Harga & Kualitas Terbaik</h1>
+      <p>Nilai 5 &lt; 10, dan A &amp; B bersahabat.</p>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## HTML Entity
+
+Karakter seperti `<`, `>`, dan `&` punya makna khusus di HTML. Untuk menampilkannya sebagai teks, gunakan *entity*:
+
+| Tampilan | Entity |
+|----------|--------|
+| `<` | `&lt;` |
+| `>` | `&gt;` |
+| `&` | `&amp;` |
+| `"` | `&quot;` |
+| `©` | `&copy;` |
+| `€` | `&euro;` |
+| (spasi non-breaking) | `&nbsp;` |
+
+HTML mendukung **lebih dari 2.000 named character references**. Dalam praktik pemula, **7 entity** pada tabel di atas sudah menutup kebutuhan paling umum. Pakai entity terutama ketika karakter akan dibaca sebagai sintaks (`<`, `>`, `&`) atau sulit diketik.
+
+## Meta Tags Wajib
+
+```html
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judul Unik Halaman — Nama Situs</title>
+  <meta name="description" content="Ringkasan menarik 150-160 karakter untuk hasil pencarian.">
+</head>
+```
+
+- `charset="UTF-8"` — mendukung semua karakter (termasuk emoji & aksara Indonesia)
+- `viewport` — **wajib** untuk tampilan mobile-friendly
+
+## Judul dan Deskripsi yang Baik
+
+```html
+<title>Belajar Python dari Nol — OnBoss Academy</title>
+<meta name="description" content="Kursus Python gratis berbahasa Indonesia: 10 bab, latihan, dan sertifikat.">
+```
+
+Prinsipnya: **unik, jujur, dan memuat kata kunci utama secara natural**.
+
+## Open Graph (Bonus Share di Sosmed)
+
+```html
+<meta property="og:title" content="Judul Saat Dishare">
+<meta property="og:description" content="Deskripsi singkat saat dishare.">
+```
+
+## Di Dunia Nyata
+
+- **Hasil Google** — title unik dan description jujur meningkatkan peluang klik meski Google dapat memilih snippet lain
+- **Toko online** — Open Graph menampilkan nama, harga, dan gambar produk saat URL dibagikan
+- **Artikel teknis** — `&lt;button&gt;` menampilkan tag sebagai teks tanpa dianggap markup
+- **Situs Indonesia** — `lang="id"` dan UTF-8 membantu pelafalan pembaca layar serta karakter lokal
+
+<div class="note">💡 SEO teknis bukan menjejalkan kata kunci: satu title unik, satu h1 yang jujur, description informatif, struktur semantik, dan konten berguna jauh lebih kuat. Meta description adalah saran snippet, bukan jaminan Google menampilkannya.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kopi Nusantara — Jual Biji Kopi Asli</title>
+  <meta name="description" content="Biji kopi arabika Gayo, Toraja, dan Kintamani. Roasting fresh tiap minggu.">
+</head>
+<body>
+  <h1>Seduh Rasa Nusantara ☕</h1>
+  <p>Harga mulai <b>Rp89.000</b> &amp; gratis ongkir!</p>
+</body>
+</html>`} />

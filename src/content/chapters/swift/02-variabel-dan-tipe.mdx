@@ -1,0 +1,163 @@
+---
+title: "Variabel & Tipe Data"
+description: "let, var, tipe data primitif, dan konversi yang selalu eksplisit di Swift"
+order: 2
+quiz:
+  - q: "Kata kunci untuk membuat variabel yang bisa diubah adalah…"
+    options: ["let", "var", "mut", "static"]
+    answer: 1
+    explain: "var deklarasi nilai berubah, let untuk nilai tetap."
+  - q: "let pada Swift berarti…"
+    options: ["nilai berubah", "konstanta global saja", "nilai tetap", "array"]
+    answer: 2
+    explain: "Setelah diisi, nilai let tidak boleh ditugaskan ulang."
+  - q: "Tipe data bilangan bulat di Swift adalah…"
+    options: ["Double", "Int", "Float", "Number"]
+    answer: 1
+    explain: "Int untuk bulat, Double untuk desimal bawaan."
+  - q: "String interpolation memakai tanda…"
+    options: ["dollar kurung", "backslash kurung", "hash kurung", "percent"]
+    answer: 1
+    explain: "Ditulis \\(nilai) di dalam string."
+  - q: "Tipe data untuk teks adalah…"
+    options: ["String", "Text", "Char", "Line"]
+    answer: 0
+    explain: "String menyimpan teks, Character untuk satu huruf."
+example:
+  code: |
+    let nama = "Sari"
+    var umur = 20
+    umur += 1
+
+    let tinggi = 1.65
+    let aktif = true
+    let huruf: Character = "A"
+
+    print("\(nama) berumur \(umur) tahun")
+    print("Tinggi \(tinggi), aktif \(aktif)")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Swift menuntut tipe yang jelas, tetapi sering menebak tipe untukmu — aman tanpa bertele-tele.
+
+## let dan var
+
+```swift
+let kota = "Bandung"
+var skor = 10
+
+skor += 5
+print("\(kota) skor \(skor)")
+
+// kota = "Jakarta"  // error: tidak boleh diubah
+```
+
+Mulai dengan `let`, ganti ke `var` hanya bila nilai memang berubah. Swift punya **2 kata kunci deklarasi**: `let` (sekali diisi, tidak boleh ditimpa) dan `var` (boleh ditimpa). Tidak ada `const` terpisah — `let` sudah berfungsi sebagai konstanta, bahkan untuk struct yang isinya kompleks.
+
+Aturan dan cakupan:
+
+- camelCase untuk variabel dan fungsi (`jumlahNilai`), PascalCase untuk tipe (`Produk`)
+- nama boleh memakai underscore di tengah angka: `1_000_000` hanya mempercantik pembacaan
+- scope mengikuti blok kurawal: variabel di dalam `{ }` hanya terlihat sampai blok selesai
+- setiap variabel wajib diisi sebelum dipakai — Swift menolak variabel kosong saat kompilasi
+
+```swift
+let maxSkor = 100        // sekali, tidak bisa ditimpa
+var skor = 0             // boleh berubah
+skor = min(skor + 10, maxSkor)
+```
+
+## Tipe Data: 6 Tipe Dasar
+
+Swift punya **6 tipe dasar**: `Int`, `Double`, `Float`, `Bool`, `Character`, `String` — ditambah `Tuple` untuk menggabungkan beberapa nilai tanpa membuat tipe baru.
+
+```swift
+let umur: Int = 20
+let desimal: Double = 3.14
+let kecil: Float = 1.5
+let aktif: Bool = true
+let huruf: Character = "A"
+let nama = "Sari"
+let koordinat = (lat: -6.2, lon: 106.8)   // tuple
+```
+
+| Tipe | Sifat | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| `Int` | bilangan bulat 64 bit | `let n = 42` | hitungan sehari-hari |
+| `Double` | desimal 64 bit | `let pi = 3.14` | default angka desimal |
+| `Float` | desimal 32 bit | `let x: Float = 1.5` | hemat ruang, grafis |
+| `Bool` | `true`/`false` | `let lulus = true` | penanda benar-salah |
+| `Character` | 1 karakter | `let h = "A"` | satu huruf |
+| `String` | teks | `let s = "Halo"` | seluruh teks |
+
+Tipe kebenaran Swift bernama `Bool` dengan nilai `true` dan `false`.
+
+## Type Inference
+
+```swift
+let angka = 42        // Int
+let teks = "Halo"     // String
+let hasil = angka + 1 // Int
+```
+
+Swift menebak tipe dari nilai awal, tetapi tetap mengeceknya saat kompilasi.
+
+## Konversi Selalu Eksplisit
+
+```swift
+let bulat = 3
+let desimal = Double(bulat) + 0.5
+
+let angkaDua = 4.99
+let dibulatkan = Int(angkaDua)   // 4
+
+print(desimal)
+print(dibulatkan)
+```
+
+Swift melarang penjumlahan Int dan Double tanpa konversi — mencegah salah baca satuan. Kejatuhan yang perlu diwaspadai:
+
+- `Int(4.99)` membuang desimal (menuju nol), bukan membulatkan ke 5.
+- `Int.max + 1` membuat program berhenti (overflow trap) — bukan membungkus diam-diam seperti bahasa C.
+- `0.1 + 0.2` tidak persis `0.3` — floating point menyimpan hasil pendekatan; jangan membandingkan nilai desimal dengan `==` untuk uang.
+
+## String Multi Baris
+
+```swift
+let panjang = """
+Baris pertama
+Baris kedua
+"""
+
+print(panjang)
+```
+
+Tiga tanda kutip membuat string multi baris tanpa menyusun `\n` manual.
+
+## Di Dunia Nyata
+
+- **Menyimpan profil pengguna** — `let nama` dan `let umur` dibuat sekali dari data server, tidak perlu `var`.
+- **Menghitung harga** — `Double` untuk uang dan diskon; konversi `Int(...)` dilakukan hanya saat menampilkan hasil bulat.
+- **Konfigurasi aplikasi** — `let maxUploadMB = 25` di satu tempat sebagai sumber kebenaran tunggal.
+- **Membaca hasil form** — input awal `var umurInput = 0` lalu ditimpa setelah pengguna mengisi.
+- **Mengembalikan dua nilai sekaligus** — tuple `(baris: Int, kolom: Int)` menghemat pembuatan struct kecil untuk hasil sementara.
+
+<div class="note">💡 Memakai let sebagai default membuat nilai tidak bisa salah ditimpa di tempat lain. Di Swift, sebagian besar variabel sebenarnya cukup sekali ditugaskan.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`let nama = "Sari"
+var umur = 20
+umur += 1
+
+let tinggi = 1.65
+let aktif = true
+
+print("\\(nama) berumur \\(umur) tahun")
+print("Tinggi \\(tinggi), aktif \\(aktif)")
+
+let bulat = 3
+let desimal = Double(bulat) + 0.5
+print("Hasil konversi: \\(desimal)")
+
+let angkaDua = 4.99
+print("Dibulatkan: \\(Int(angkaDua))")`} />

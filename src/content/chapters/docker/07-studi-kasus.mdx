@@ -1,0 +1,190 @@
+---
+title: "Studi Kasus: Meng-Container-kan Aplikasi Web"
+description: "Praktik lengkap dari Dockerfile Node.js sampai stack compose web + database"
+order: 7
+quiz:
+  - q: "Urutan langkah yang tepat meng-container-kan aplikasi existing adalah…"
+    options: ["Tulis Dockerfile -> build image -> uji container lokal -> compose bila multi-service", "Deploy langsung ke registry -> baru tulis Dockerfile", "Hapus node_modules dulu -> commit -> push", "Install Docker di dalam aplikasi"]
+    answer: 0
+    explain: "Build dan uji lokal dulu — baru pikirkan compose dan push image."
+  - q: "Perintah build image dari Dockerfile dengan tag aplikasi:1.0 adalah…"
+    options: ["docker build -t aplikasi:1.0 .", "docker create aplikasi 1.0", "docker image new aplikasi:1.0", "docker run build aplikasi"]
+    answer: 0
+    explain: "Titik di akhir menunjuk build context folder sekarang tempat Dockerfile berada."
+  - q: "Saat aplikasi Node.js di container gagal start karena port sudah dipakai, langkah pertama…"
+    options: ["Ganti port di EXPOSE Dockerfile", "Pastikan port mapping -p host:container tidak bentrok dengan service lain di host", "Hapus container", "Rebuild image"]
+    answer: 1
+    explain: "EXPOSE hanya dokumentasi; bentrok port terjadi di mapping -p pada docker run/compose."
+  - q: "Cara paling praktis menjalankan app + Postgres bersama saat development adalah…"
+    options: ["Install Postgres manual di host lalu jalankan app di container", "Docker Compose dengan dua service: app dan db", "Dua server terpisah", "Jalankan Postgres di dalam Dockerfile app"]
+    answer: 1
+    explain: "Compose memberi stack lengkap dengan satu perintah dan deterministik untuk seluruh tim."
+  - q: "Setelah docker compose up, app tidak bisa connect ke db, cek dulu…"
+    options: ["Ukuran image", "Log service db dan pastikan DB_HOST memakai nama service compose", "Jumlah layer Dockerfile", "Versi Docker"]
+    answer: 1
+    explain: "Penyebab klasik: DB_HOST=localhost (salah, localhost = container app sendiri) alih-alih nama service."
+---
+
+Teori lengkap — sekarang kita rakit semuanya dalam satu proyek nyata: aplikasi web Node.js + PostgreSQL via Compose.
+
+## Langkah 1: Aplikasi & Dockerfile
+
+Struktur proyek:
+
+```
+aplikasi-web/
+├── server.js
+├── package.json
+├── Dockerfile
+├── compose.yaml
+└── .dockerignore
+```
+
+Dockerfile:
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+`.dockerignore`:
+
+```
+node_modules
+.git
+.env
+*.log
+```
+
+## Langkah 2: Build & Uji Lokal
+
+```bash
+docker build -t aplikasi-web:1.0 .
+docker run -d --name web -p 3000:3000 aplikasi-web:1.0
+curl http://localhost:3000
+docker logs web
+```
+
+Perbaiki error di log sebelum lanjut — log container adalah sumber kebenaran pertama.
+
+## Langkah 3: Tambahkan Database dengan Compose
+
+`compose.yaml`:
+
+```yaml
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=app
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=appdb
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: appdb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
+```
+
+`.env` (tidak masuk Git):
+
+```
+DB_PASSWORD=rahasia-dev-saja
+```
+
+## Langkah 4: Jalankan Stack
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs -f web
+docker compose exec db psql -U app -d appdb
+```
+
+Dari `psql` ini kamu bisa membuat tabel pertama dan menguji koneksi aplikasi end-to-end.
+
+## Empat Lapisan Studi Kasus
+
+Solusi ini memiliki **4 lapisan operasional** yang perlu diuji terpisah.
+
+| Lapisan | Tanggung jawab | Pemeriksaan | Kegagalan umum |
+|---|---|---|---|
+| Image | Runtime dan source aplikasi | `docker build` | Dependency tidak terkunci |
+| Container | Proses aplikasi | `docker compose ps` | PID utama berhenti |
+| Network | Komunikasi web ke DB | nama service `db` | Memakai `localhost` |
+| Volume | Persistensi PostgreSQL | restart dan query ulang | Volume terhapus |
+
+Dockerfile produksi juga sebaiknya menjalankan user non-root. Untuk Node resmi, ubah kepemilikan file yang dibutuhkan dan pilih user bawaan:
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY --chown=node:node package*.json ./
+RUN npm ci --omit=dev
+COPY --chown=node:node . .
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+Jangan memasukkan `.env` ke image. Variabel runtime diteruskan saat container dibuat, sedangkan credential produksi berasal dari secret manager. Aplikasi juga perlu menangani `SIGTERM`, menutup koneksi DB, dan berhenti dalam batas waktu agar deployment tidak memutus request secara kasar.
+
+## Uji Perilaku, Bukan Hanya Status
+
+Container berstatus running belum tentu sehat. Endpoint `/health` ringan dapat memeriksa event loop aplikasi; readiness yang terpisah dapat memeriksa apakah aplikasi siap menerima trafik. Jangan membuat healthcheck mahal yang membebani database setiap beberapa detik.
+
+```yaml
+services:
+  web:
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+```
+
+Lakukan uji persistensi: masukkan satu data, jalankan `docker compose down`, hidupkan stack lagi, lalu pastikan data masih ada. Setelah itu uji backup dan restore ke volume berbeda. Persisten bukan berarti terlindungi dari penghapusan atau korupsi.
+
+## Debugging Checklist
+
+```
+container tidak start   -> docker compose logs <service>
+koneksi db gagal        -> cek DB_HOST nama service, healthcheck db
+port bentrok di host    -> ganti angka kiri mapping -p
+perubahan kode tak muncul -> lupa --build / volume mount dev
+```
+
+## Di Dunia Nyata
+
+1. Developer baru menjalankan stack yang identik tanpa memasang Node dan PostgreSQL langsung di laptop.
+2. CI membangun image, menyalakan database sementara, menjalankan migration serta integration test, lalu membersihkan stack.
+3. Release gagal dikembalikan ke tag image sebelumnya tanpa memodifikasi server secara manual.
+4. Tim operasi memakai healthcheck dan log terstruktur untuk membedakan kegagalan aplikasi dari database.
+5. Data pelanggan dipulihkan dari backup volume teruji setelah simulasi kehilangan host.
+
+Sebelum push, jalankan build dari checkout bersih agar file lokal tersembunyi tidak menjadi dependency. Scan image, pastikan container non-root, batasi resource, dan dokumentasikan migration database. Migration harus kompatibel dengan versi aplikasi lama selama rolling update atau memiliki rencana rollback yang jelas.
+
+<div class="note">💡 Kembangkan kebiasaan membaca log sebelum bertanya: `docker compose logs -f web` hampir selalu memperlihatkan stack trace sebenarnya — error Python/Node di dalam container sama terbacanya seperti error lokal.</div>

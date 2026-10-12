@@ -1,0 +1,121 @@
+---
+title: "Responsif & Media Query"
+description: "Buat tampilan yang menyesuaikan HP, tablet, dan desktop"
+order: 7
+quiz:
+  - q: "Media query untuk layar minimal 768px ditulis…"
+    options: ["@media (min-width: 768px) { }", "@screen (width: 768px) { }", "@media screen > 768 { }", "@responsive 768 { }"]
+    answer: 0
+    explain: "@media (min-width: 768px) aktif saat lebar layar ≥ 768px."
+  - q: "Mobile-first artinya…"
+    options: ["CSS ditulis untuk HP dulu, lalu ditambah gaya layar besar", "HP lebih penting dari desktop", "Tidak perlu media query", "Hanya boleh pakai flex"]
+    answer: 0
+    explain: "Tulis gaya dasar untuk layar kecil, lalu min-width menambah/layout ulang untuk layar besar — paling sehat secara CSS."
+  - q: "Meta tag apa yang wajib agar media query bekerja di HP?"
+    options: ["<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "<meta name=\"mobile\">", "<meta name=\"responsive\">", "<meta name=\"screen\">"]
+    answer: 0
+    explain: "Tanpa viewport meta, HP memakai lebar 980px virtual dan media query tidak akurat."
+  - q: "Breakpoint terbaik ditentukan berdasarkan…"
+    options: ["Angka populer di internet", "Kapan desainmu pecah / butuh berubah", "Selalu 500px", "Jumlah kolom"]
+    answer: 1
+    explain: "Breakpoint mengikuti konten — perbesar viewport sampai desain terlihat buruk, di situ letak breakpoint-mu."
+  - q: "Untuk gambar responsif agar tidak meluber, gunakan…"
+    options: ["max-width: 100%; height: auto;", "width: 100vw;", "scale: responsive;", "overflow: hidden;"]
+    answer: 0
+    explain: "max-width: 100% membuat gambar tidak pernah melebihi lebar induknya."
+example:
+  code: |
+    <div class="kontainer">
+      <div class="kartu">Kartu 1</div>
+      <div class="kartu">Kartu 2</div>
+      <div class="kartu">Kartu 3</div>
+    </div>
+    <style>
+      .kontainer { display: grid; gap: 12px; grid-template-columns: 1fr; }
+      img { max-width: 100%; height: auto; }
+      @media (min-width: 700px) {
+        .kontainer { grid-template-columns: 1fr 1fr 1fr; }
+      }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Aturan Emas Responsif
+
+1. Selalu pakai `meta viewport` (sudah ada di template bab HTML)
+2. Gunakan satuan relatif: `%`, `fr`, `rem`, `vw`
+3. Gambar: `max-width: 100%; height: auto;`
+4. Layout: Flex/Grid dengan wrap/auto-fit dulu, media query sebagai pelengkap
+
+Responsif bertumpu pada **4 alat inti**: viewport meta, unit relatif, layout fleksibel, dan media/container query.
+
+| Alat | Fungsi | Contoh | Prioritas |
+|------|--------|--------|-----------|
+| Viewport meta | Samakan viewport dengan perangkat | `width=device-width` | Wajib di HTML |
+| Unit relatif | Skala mengikuti konteks | `%`, `rem`, `vw` | Default ukuran |
+| Flex/Grid | Layout cair | `auto-fit`, `wrap` | Sebelum breakpoint |
+| Media query | Perubahan pada kondisi | `min-width: 48rem` | Saat desain pecah |
+
+## Sintaks Media Query
+
+```css
+/* lebar layar ≥ 768px */
+@media (min-width: 768px) {
+  .sidebar { width: 280px; }
+}
+
+/* rentang layar */
+@media (min-width: 600px) and (max-width: 900px) {
+  .judul { font-size: 1.5rem; }
+}
+
+/* mode gelap preferensi sistem */
+@media (prefers-color-scheme: dark) {
+  body { background: #17181D; color: #E5E7EB; }
+}
+
+/* kurangi animasi (aksesibilitas) */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+```
+
+## Mobile-First dalam Praktik
+
+```css
+/* dasar: HP */
+.kartu-list { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+/* ≥ 700px: dua kolom */
+@media (min-width: 700px) {
+  .kartu-list { grid-template-columns: 1fr 1fr; }
+}
+
+/* ≥ 1024px: tiga kolom */
+@media (min-width: 1024px) {
+  .kartu-list { grid-template-columns: repeat(3, 1fr); }
+}
+```
+
+Atau tanpa media query sama sekali dengan `repeat(auto-fit, minmax(240px, 1fr))`.
+
+## Di Dunia Nyata
+
+- **Katalog toko** — satu kolom HP berubah menjadi tiga kolom ketika kartu mulai terlalu lebar
+- **Artikel berita** — gambar tidak meluber dan font memakai `clamp()` agar tetap nyaman
+- **Dashboard** — sidebar pindah ke bawah konten pada layar sempit
+- **Aplikasi aksesibel** — animasi dinonaktifkan untuk pengguna `prefers-reduced-motion`
+
+<div class="note">💡 Breakpoint bukan daftar tipe perangkat. Mulai dari layar sempit, lebarkan sampai konten terlihat buruk, lalu tambahkan breakpoint tepat di sana; desain baru tetap aman saat ukuran perangkat masa depan berubah.</div>
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { margin: 0; font-family: system-ui; }
+.layout { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+.layout > div { padding: 24px; border-radius: 10px; color: white; font-weight: 700; }
+.header { background: #4F46E5; }
+.sidebar { background: #8B5CF6; }
+.konten { background: #F59E0B; }
+@media (min-width: 600px) {
+  .layout { grid-template-columns: 1fr 3fr; }
+  .header { grid-column: 1 / -1; }
+}`} />

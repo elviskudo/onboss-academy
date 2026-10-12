@@ -1,0 +1,131 @@
+---
+title: "Multi-Head dan Positional Encoding"
+description: "Menangkap banyak relasi sekaligus dan mengembalikan informasi urutan"
+order: 5
+quiz:
+  - q: "Positional encoding dibutuhkan karena…"
+    options: ["Embedding terlalu kecil", "Attention sendiri tidak mengenal urutan token", "Token terlalu banyak", "GPU kurang memori"]
+    answer: 1
+    explain: "Tanpa sinyal posisi, 'menang kalah' dan 'kalah menang' akan terlihat identik bagi model."
+  - q: "Positional encoding umumnya ditambahkan ke…"
+    options: ["Tokenizer", "Lapisan akhir", "Embedding token", "Data label"]
+    answer: 2
+    explain: "Vektor posisi digabung (biasanya dijumlahkan) ke embedding sebelum masuk blok attention."
+  - q: "Multi-head attention terdiri dari…"
+    options: ["Beberapa attention paralel dengan proyeksi berbeda", "Satu attention tunggal", "Rangkaian LSTM", "Kumpulan tokenizer"]
+    answer: 0
+    explain: "Tiap kepala mempelajari hubungan berbeda: sintaktis, rujukan, gaya, dan lainnya."
+  - q: "Hasil berbagai attention head digabung dengan…"
+    options: ["Penghapusan", "Konkatenasi lalu proyeksi linear", "Perataan rata-rata ke nol", "Pencampuran acak"]
+    answer: 1
+    explain: "Gabungan head diproyeksikan kembali ke dimensi model sebelum dilanjutkan ke FFN."
+  - q: "Urutan dalam satu blok Transformer standar adalah…"
+    options: ["Attention -> embedding", "FFN -> tokenizer -> attention", "Attention -> residual+norm -> FFN -> residual+norm", "Norm -> data loading"]
+    answer: 2
+    explain: "Pola residual + layer norm membantu pelatihan lapisan yang dalam tetap stabil."
+example:
+  code: |
+    # Posisi memberi tahu urutan: token di posisi 0 vs posisi 1
+    embedding = [0.5, 0.2]
+    posisi_0 = [1.0, 0.0]
+    posisi_1 = [0.0, 1.0]
+
+    print("token di posisi 0:", [a + b for a, b in zip(embedding, posisi_0)])
+    print("token di posisi 1:", [a + b for a, b in zip(embedding, posisi_1)])
+---
+
+Dua penyempurna Transformer: **multi-head** untuk kekayaan hubungan, **positional encoding** untuk informasi urutan.
+
+## Attention Tanpa Posisi = Buta Urutan
+
+```python
+vektor = [0.5, 0.2]
+
+# Tanpa posisi, dua kalimat ini terlihat identik bagi model:
+# "Guru memuji murid"  vs  "Murid memuji guru"
+print("Perlu sinyal posisi agar urutan terbaca")
+```
+
+Karena self-attention memproses semua token serentak, sinyal urutan harus disuntikkan dari luar.
+
+## 3 Cara Memberi Informasi Posisi
+
+| Pendekatan | Cara kerja | Sifat |
+|------------|------------|-------|
+| Sinusoidal | sinus/cosinus frekuensi berbeda | tetap, tanpa parameter belajar |
+| Learned absolute | satu vektor dipelajari per posisi | sederhana, terikat panjang training |
+| Relative/rotary | hubungan relatif antar posisi | populer untuk LLM konteks panjang |
+
+Transformer asli memakai sinusoidal. Banyak model modern memakai posisi learned atau rotary (RoPE); tujuannya sama, yaitu membedakan posisi dan jarak token.
+
+## Sketsa Positional Encoding
+
+```python
+embedding = [0.5, 0.2]
+posisi_0 = [1.0, 0.0]
+posisi_1 = [0.0, 1.0]
+
+print("posisi 0:", [a + b for a, b in zip(embedding, posisi_0)])
+print("posisi 1:", [a + b for a, b in zip(embedding, posisi_1)])
+```
+
+Model asli memakai sinus/sinus kosinus pada berbagai frekuensi sehingga posisi jauh tetap bisa dibedakan dengan stabil.
+
+## Multi-Head: Banyak Kepala, Banyak Fokus
+
+```python
+kepala = [
+    {"fokus": "rusak prakoma", "fungsi": "menangkap struktur klausa"},
+    {"fokus": "kata ganti",   "fungsi": "melacak rujukan"},
+    {"fokus": "kata kerja",   "fungsi": "menghubungkan subjek-objek"},
+]
+for i, h in enumerate(kepala):
+    print(f"Head {i}: {h['fokus']} -> {h['fungsi']}")
+```
+
+Setiap kepala punya matriks Query/Key/Value sendiri — didefinisikan secara terpisah saat training.
+
+## Menggabungkan Kepala
+
+```python
+head_0 = [0.8, 0.1]
+head_1 = [0.3, 0.6]
+
+digabung = head_0 + head_1        # konkatenasi
+# hasilnya diproyeksikan dengan matriks W^O kembali ke dimensi model
+print("digabung:", digabung)
+```
+
+Konkatenasi mempertahankan informasi tiap kepala; proyeksi belajar menyeleksi dan mengkombinasikannya.
+
+## Blok Transformer Standar
+
+```
+x -> Multi-Head Attention -> (+ residual) -> LayerNorm
+  -> Feed-Forward Network -> (+ residual) -> LayerNorm -> keluaran
+```
+
+**Residual** (`+ x`) menjaga jalur informasi langsung dari lapisan awal; **LayerNorm** menstabilkan skala aktivasi — keduanya membuat jaringan dalam tetap bisa dilatih.
+
+## Berapa Banyak Kepala?
+
+Kepala berjumlah 8, 16, atau 32 pada banyak konfigurasi, tetapi tidak ada jumlah universal. Jika dimensi model 512 dan ada 8 kepala, tiap kepala biasanya mengolah 64 dimensi (`512 / 8`). Menambah kepala tidak otomatis lebih bagus karena tiap kepala mendapat dimensi lebih sempit dan biaya tetap perlu dipertimbangkan.
+
+## 4 Bagian Blok Transformer
+
+| Bagian | Fungsi |
+|--------|--------|
+| Multi-head attention | mencampur informasi antar token |
+| Residual connection | menjaga jalur informasi asli |
+| Layer normalization | menstabilkan aktivasi |
+| Feed-forward network | transformasi non-linear per token |
+
+## Di Dunia Nyata
+
+- **Resolusi kata ganti** — satu head dapat menangkap hubungan “dia” dengan nama sebelumnya.
+- **Parsing kode** — posisi membedakan parameter pertama dan kedua meskipun tipenya sama.
+- **Terjemahan** — head berbeda dapat menimbang susunan kata, subjek, dan objek secara paralel.
+- **Dokumen panjang** — rotary/relative position membantu model membedakan jarak antar bagian dokumen.
+- **Klasifikasi kalimat** — representasi akhir menggabungkan sinyal isi sekaligus urutan kata.
+
+<div class="note">💡 Transformer tidak membuang urutan — ia memindahkan pemahaman urutan dari pemrosesan berurutan ke representasi posisi. Urutan tetap penting, hanya dipelajari dengan cara berbeda.</div>

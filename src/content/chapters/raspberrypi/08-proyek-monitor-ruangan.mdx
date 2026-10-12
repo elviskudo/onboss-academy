@@ -1,0 +1,199 @@
+---
+title: "Proyek IoT: Monitor Ruangan"
+description: "Mengintegrasikan sensor suhu, LED status, CSV, dan API web menjadi monitor ruangan"
+order: 8
+quiz:
+  - q: "Mengapa proyek dimulai dengan spesifikasi ambang dan interval?"
+    options: ["Agar perilaku sistem dapat diuji dengan jelas", "Agar GPIO menjadi analog", "Agar sensor tidak perlu dikalibrasi", "Agar Flask otomatis aman"]
+    answer: 0
+    explain: "Kriteria terukur menentukan komponen, logika, dan hasil uji yang diharapkan."
+  - q: "Apa status yang tepat ketika sensor tidak dapat dibaca?"
+    options: ["Gunakan angka lama tanpa penanda", "Error atau unknown", "Selalu normal", "Hapus semua log"]
+    answer: 1
+    explain: "Kegagalan sensor harus terlihat dan tidak boleh disamarkan sebagai kondisi normal."
+  - q: "Mengapa fungsi evaluasi dipisahkan dari kontrol LED?"
+    options: ["Untuk menaikkan frekuensi PWM", "Untuk menghemat satu resistor", "Agar aturan dapat diuji tanpa hardware", "Agar SSH tidak diperlukan"]
+    answer: 2
+    explain: "Fungsi murni dapat diuji dengan berbagai input tanpa memasang GPIO."
+  - q: "Apa yang harus dilakukan jika penulisan CSV gagal?"
+    options: ["Menganggap data tersimpan", "Mematikan validasi", "Memberi 5V ke sensor", "Mencatat error dan mempertahankan keadaan perangkat yang aman"]
+    answer: 3
+    explain: "Kegagalan storage harus terlihat tanpa membuat aktuator masuk ke keadaan berbahaya."
+  - q: "Rangkaian mana yang aman untuk dua LED status?"
+    options: ["Setiap GPIO memakai LED dan resistor seri sendiri ke GND", "Kedua GPIO langsung disatukan", "LED dipasang tanpa resistor", "GPIO menerima sinyal 5V"]
+    answer: 0
+    explain: "Setiap LED membutuhkan pembatas arus dan tidak boleh menyatukan dua output GPIO."
+example:
+  code: |
+    AMBANG_C = 30.0
+
+    def evaluasi(suhu):
+        if suhu is None:
+            return "error"
+        return "panas" if suhu > AMBANG_C else "normal"
+
+    assert [evaluasi(x) for x in (28.5, 31.2, None)] == ["normal", "panas", "error"]
+---
+
+Monitor ruangan menggabungkan sensor DS18B20, dua LED status, log CSV, dan endpoint web. Tujuannya bukan sekadar membuat komponen bekerja, tetapi membuat sistem tetap memberi status yang jujur ketika sensor, storage, atau jaringan bermasalah.
+
+## Spesifikasi dan Alur
+
+Proyek memiliki **5 fungsi utama**.
+
+| Fungsi | Masukan | Keluaran | Kapan dijalankan |
+|---|---|---|---|
+| Baca sensor | Berkas 1-Wire | Suhu atau error | Tiap 30 detik |
+| Evaluasi | Suhu dan ambang | normal/panas/error | Setelah pembacaan |
+| Tampilkan | Status | LED hijau/merah | Saat status berubah |
+| Catat | Waktu, suhu, status | Baris CSV | Setiap siklus |
+| Sajikan | State terakhir | JSON HTTP | Saat klien meminta |
+
+Atur ambang contoh pada 30°C dan interval 30 detik. Nilai tersebut bukan standar keselamatan universal; tentukan berdasarkan ruangan, sensor, dan perangkat yang dilindungi. Status proyek ada **3**: `normal`, `panas`, dan `error`. Error tidak boleh dianggap normal.
+
+Alur data:
+
+```text
+DS18B20 → validasi → evaluasi → LED
+                         ├──→ CSV
+                         └──→ state untuk API Flask
+```
+
+## Komponen dan Wiring
+
+Diperlukan **7 kelompok komponen**: Raspberry Pi, DS18B20, resistor pull-up 4,7 kΩ, LED hijau, LED merah, dua resistor LED 330 Ω, serta breadboard/jumper.
+
+| Komponen | Koneksi | Fungsi | Catatan aman |
+|---|---|---|---|
+| DS18B20 data | BCM4 | Membaca suhu | Pull-up ke 3,3V |
+| LED hijau | BCM17 | Status normal | Resistor seri 330 Ω |
+| LED merah | BCM27 | Panas atau error | Resistor seri 330 Ω |
+| Semua GND | GND Pi | Referensi rangkaian | Jangan ke pin 5V |
+
+GPIO Pi hanya menerima logika **3,3V**. Matikan dan cabut daya sebelum merangkai. Jangan menyatukan dua output GPIO. Jika indikator diganti sirene, kipas, atau relay, gunakan driver/transistor dan sumber daya sesuai beban; jangan mengambil arus beban langsung dari GPIO.
+
+Software memerlukan Raspberry Pi OS, antarmuka 1-Wire, `python3-gpiozero`, serta Flask pada virtual environment. Uji sensor dan setiap LED secara terpisah sebelum integrasi.
+
+## Logika yang Dapat Diuji
+
+Pisahkan aturan dari hardware:
+
+```python
+AMBANG_C = 30.0
+
+def evaluasi(suhu):
+    if suhu is None:
+        return "error"
+    return "panas" if suhu > AMBANG_C else "normal"
+
+assert evaluasi(28.5) == "normal"
+assert evaluasi(30.0) == "normal"
+assert evaluasi(30.1) == "panas"
+assert evaluasi(None) == "error"
+```
+
+Empat assert mencakup normal, tepat pada batas, melewati batas, dan sensor gagal. Aturan `>` berarti 30,0°C masih normal. Jika kebutuhan menyatakan batas inklusif, gunakan `>=` dan ubah pengujiannya.
+
+Untuk mencegah LED berkedip ketika suhu berosilasi di sekitar batas, sistem nyata dapat memakai hysteresis, misalnya masuk panas di atas 30°C dan kembali normal di bawah 29°C. Tambahkan hanya bila data menunjukkan masalah tersebut.
+
+## Implementasi Monitor
+
+Contoh inti berikut memerlukan hardware yang telah dijelaskan:
+
+```python
+import csv
+from datetime import datetime, timezone
+from pathlib import Path
+from gpiozero import LED
+
+AMBANG_C = 30.0
+HIJAU = LED(17)
+MERAH = LED(27)
+
+def baca_suhu():
+    paths = list(Path("/sys/bus/w1/devices").glob("28-*/w1_slave"))
+    if not paths:
+        return None
+    lines = paths[0].read_text().splitlines()
+    if not lines[0].endswith("YES"):
+        return None
+    return int(lines[1].split("t=")[1]) / 1000
+
+def evaluasi(suhu):
+    if suhu is None:
+        return "error"
+    return "panas" if suhu > AMBANG_C else "normal"
+
+def tampilkan(status):
+    HIJAU.value = status == "normal"
+    MERAH.value = status != "normal"
+
+def catat(suhu, status):
+    with open("ruangan.csv", "a", newline="") as file:
+        csv.writer(file).writerow([
+            datetime.now(timezone.utc).isoformat(),
+            "" if suhu is None else f"{suhu:.2f}",
+            status,
+        ])
+```
+
+Fungsi baca mengembalikan `None` jika perangkat atau CRC gagal. LED merah menyala untuk panas maupun error; dashboard membedakan penyebabnya. Pada produk nyata, gunakan pola kedip atau indikator ketiga agar error dapat dikenali tanpa web.
+
+Loop utama:
+
+```python
+from time import sleep
+
+while True:
+    suhu = baca_suhu()
+    status = evaluasi(suhu)
+    tampilkan(status)
+    try:
+        catat(suhu, status)
+    except OSError as error:
+        print(f"Gagal mencatat: {error}")
+    sleep(30)
+```
+
+Kegagalan log terlihat tetapi tidak mematikan indikator. Untuk service jangka panjang, gunakan `try/finally` atau lifecycle service agar GPIO ditutup saat proses berakhir.
+
+## Integrasi Web
+
+Server dan loop monitor harus berbagi **state terakhir**: waktu, suhu, status, dan usia data. Endpoint GET hanya membaca state tersebut; ia tidak perlu membaca sensor setiap request.
+
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+state = {"suhu": None, "status": "error", "waktu": None}
+
+@app.get("/status")
+def status_web():
+    return jsonify(state)
+```
+
+Dalam implementasi gabungan, loop pembacaan dapat berjalan pada thread terkendali atau proses terpisah, sedangkan Flask menyajikan data. Lindungi state bersama bila penulisan dan pembacaan menjadi kompleks. Jalankan hanya pada LAN tepercaya, `debug=False`, dan gunakan autentikasi/VPN sebelum akses jarak jauh. Flask merupakan dependency tambahan dan server bawaannya bukan server produksi.
+
+## Pengujian Kegagalan
+
+Uji **5 skenario** sebelum pemasangan permanen.
+
+| Skenario | Hasil yang diharapkan | Cara uji | Risiko yang dicegah |
+|---|---|---|---|
+| Sensor dilepas | status error, LED merah | Lepas saat daya mati, boot ulang | Error disangka normal |
+| Suhu melewati ambang | status panas | Gunakan input fungsi uji | Alarm tidak aktif |
+| Disk penuh/read-only | pesan gagal log | Simulasikan path tak dapat ditulis | Data hilang diam-diam |
+| Wi-Fi putus | monitor dan CSV tetap jalan | Putus jaringan | Fungsi inti tergantung web |
+| Reboot | service kembali aktif | Reboot terkontrol | Sistem mati setelah listrik pulih |
+
+Jangan mencabut sensor ketika Pi menyala untuk pengujian wiring. Simulasikan error di software atau matikan daya dahulu. Periksa juga rotasi log dan ruang disk agar CSV tidak tumbuh tanpa batas.
+
+## Di Dunia Nyata
+
+- **Ruang server kecil:** LED memberi status lokal, sedangkan API dipantau teknisi melalui LAN.
+- **Gudang obat non-kritis:** CSV mendukung audit tren, dengan alat tersertifikasi untuk keputusan keselamatan.
+- **Kelas:** suhu dibandingkan dengan jadwal penggunaan ruangan dan ventilasi.
+- **Rumah kaca:** status panas menjadi masukan driver kipas yang terpisah dari GPIO.
+- **Lemari perangkat:** error sensor dibedakan dari suhu panas agar teknisi mengambil tindakan yang tepat.
+
+<div class="note">💡 Nilai terakhir bukan nilai sekarang: selalu simpan waktu pembacaan dan anggap data kedaluwarsa sebagai error agar dashboard tidak terlihat sehat ketika loop monitor berhenti.</div>

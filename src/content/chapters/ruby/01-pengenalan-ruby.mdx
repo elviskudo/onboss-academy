@@ -1,0 +1,128 @@
+---
+title: "Pengenalan Ruby"
+description: "Bahasa scripting elegan dari Jepang — filosofi, sintaks dasar, dan 4 cara menjalankan kode"
+order: 1
+quiz:
+  - q: "Siapa pencipta Ruby dan kahunya?"
+    options: ["Yukihiro Matsumoto, 1995", "DHH, 2004", "Brendan Eich, 1995", "Rasmus Lerdorf, 1994"]
+    answer: 0
+    explain: "Yukihiro Matsumoto (Matz) merilis Ruby pada 1995 dan menamainya seperti zamrud."
+  - q: "Berapa bentuk komentar yang didukung Ruby?"
+    options: ["Satu, yaitu //", "Dua: # dan blok =begin/=end", "Tiga", "Tidak ada"]
+    answer: 1
+    explain: "Satu baris memakai #, multi baris memakai =begin di awal dan =end di akhir."
+  - q: "Pernyataan yang BENAR tentang titik koma di Ruby adalah…"
+    options: ["Wajib di setiap akhir baris", "Dilarang sama sekali", "Opsional — akhir baris sudah jadi pemisah pernyataan", "Hanya untuk hash"]
+    answer: 2
+    explain: "Ruby memakai newline sebagai pemisah; titik koma hanya dibutuhkan untuk satu baris berisi banyak pernyataan."
+  - q: "Cara membuka REPL Ruby interaktif adalah…"
+    options: ["irb", "ruby-cli", "rbs", "gem run"]
+    answer: 0
+    explain: "irb (Interactive Ruby) membuka sesi interaktif tanpa menulis file."
+  - q: "Ruby on Rails adalah…"
+    options: ["Bahasa baru", "Editor teks", "Framework web yang ditulis dalam Ruby", "Database"]
+    answer: 2
+    explain: "Rails dibuat DHH (Ruby on Rails) dan populerkan Ruby di dunia web."
+example:
+  code: |
+    nama = "OnBoss"
+    puts "Halo, #{nama}!"
+
+    3.times do |i|
+      puts "Baris ke-#{i + 1}"
+    end
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby adalah bahasa scripting yang dirancang untuk programmer: sintaksis ringkas, blok sebagai andalan, dan filosofi Programmer Happiness. Chapter ini memetakan wajah Ruby sebelum kamu menyentuh tipe data dan OOP di bab berikutnya.
+
+## Hello World
+
+```ruby
+puts "Halo, Dunia!"
+```
+
+Satu baris, tanpa deklarasi tipe, tanpa titik koma wajib.
+
+## 4 Filosofi Utama
+
+| Prinsip | Arti | Contoh konkret |
+| --- | --- | --- |
+| Oke programmer | Kode ditulis agar manusia senang membacanya | `(1..5).each { \|n\| puts n }` |
+| Satu cara melakukan sesuatu | Mengurangi pilihan yang membingungkan | Membaca file: `File.read("a.txt")` |
+| Blok sebagai andalan | Kode pendek dibungkus `{ ... }` atau `do ... end` | `3.times { puts "hai" }` |
+| Semuanya objek | Angka, string, true, bahkan class adalah objek | `42.class` → `Integer` |
+
+Keempatnya saling mengunci: karena semua objek, semua punya method, dan karena semua punya method, blok bisa dipasang ke hampir semuanya.
+
+## 3 Fungsi Output
+
+| Fungsi | Perilaku | Kapan dipakai |
+| --- | --- | --- |
+| `puts x` | Cetak + baris baru otomatis, `puts` array cetak per baris | Output normal ke user |
+| `print x` | Cetak tanpa baris baru | Progress bar, prompt |
+| `p x` | Cetak representasi Ruby (`inspect`) + baris baru | Debugging — `p "a"` menampilkan `"a"` termasuk kutip |
+
+## 2 Bentuk Komentar
+
+```ruby
+# komentar satu baris
+
+=begin
+Komentar multi baris memakai =begin
+dan ditutup dengan =end
+=end
+
+nama = "Sari"  # komentar di akhir baris
+```
+
+## Variabel & Interpolasi
+
+```ruby
+nama = "Sari"
+umur = 20
+aktif = true
+kosong = nil
+
+puts "Halo #{nama}, umurmu #{umur}"
+puts "Aktif? #{aktif} | Kosong? #{kosong}"
+```
+
+Tanda `#` di dalam string kutip ganda menyisipkan nilai variabel — disebut interpolasi. String kutip tunggal `'...'` tidak menginterpolasi.
+
+## 4 Cara Menjalankan Kode Ruby
+
+```bash
+ruby belajar.rb          # 1. jalankan file
+ruby -e 'puts 1 + 1'     # 2. langsung dari command line
+irb                      # 3. sesi interaktif (REPL)
+ruby -c belajar.rb       # 4. cek sintaks tanpa menjalankan
+```
+
+Di editor OnBoss kamu cukup menekan tombol jalankan di halaman ini. Di produksi, Ruby umumnya jadi proses panjang (server Rails/Sinatra) yang melayani request HTTP.
+
+## Kapan Ruby Dipilih
+
+Ruby unggul saat kecepatan menulis kode lebih penting daripada kecepatan eksekusi mentah: script otomasi, prototipe API, dan web app dengan framework Rails. Untuk perhitungan berat jutaan angka, bahasa terkompilasi biasanya lebih cepat.
+
+## Di Dunia Nyata
+
+- **Otomasi laporan penjualan** — baca CSV, hitung total per kategori, tulis hasilnya ke file baru tiap pagi.
+- **Bot Telegram/Discord** — `gem telegram-bot-ruby` plus blok `bot.listen do |message|` memproses tiap pesan masuk.
+- **Web app dengan Rails** — scaffold model, view, controller dalam hitungan menit untuk MVP toko online.
+- **Pembersih file log server** — `Dir["/var/log/*.log"]` lalu `File.delete` file yang lebih tua dari 30 hari.
+- **Skrip deploy satu perintah** — gabungkan `system("git pull")`, migrasi database, dan restart server dalam satu file `.rb`.
+
+<div class="note">💡 Ruby sengaja dibuat agar satu masalah punya jalur yang paling terbaca, bukan paling banyak pilihan. Saat ragu antara dua gaya, pilih yang mudah dibaca orang lain enam bulan lagi — itu selaras dengan filosofi bahasanya.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`nama = "Dunia"
+puts "Halo, #{nama}!"
+
+3.times { |i| puts "Baris ke-#{i + 1}" }
+
+kubik = ->(x) { x ** 3 }
+puts "2 pangkat 3 = #{kubik.call(2)}"
+
+print "Output tanpa baris baru: "
+puts "selesai"`} />

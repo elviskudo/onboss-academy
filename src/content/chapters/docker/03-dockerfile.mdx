@@ -1,0 +1,156 @@
+---
+title: "Dockerfile"
+description: "Menulis resep build image: FROM, RUN, COPY, CMD, dan prinsip image minimal"
+order: 3
+quiz:
+  - q: "Dockerfile adalah…"
+    options: ["File berisi instruksi build image step-by-step", "Script menjalankan container", "File konfigurasi jaringan", "Log build"]
+    answer: 0
+    explain: "Setiap baris instruksi (FROM, RUN, COPY) dieksekusi berurutan saat docker build."
+  - q: "Instruksi FROM berfungsi untuk…"
+    options: ["Menyalin file", "Menentukan base image awal", "Membuka port", "Menjalankan perintah shell"]
+    answer: 1
+    explain: "FROM adalah fondasi: ubuntu, alpine, node:20-alpine, python:3.12-slim, dst."
+  - q: "COPY app.py /app/ berguna untuk…"
+    options: ["Menyalin file dari build context ke dalam image", "Menyalin container ke host", "Menyalin image ke registry", "Menyalin log"]
+    answer: 0
+    explain: "COPY/ADD memindahkan file dari mesin build ke filesystem image."
+  - q: "CMD menentukan…"
+    options: ["Perintah build", "Perintah default yang dijalankan saat container start", "Perintah saat image dihapus", "User registry"]
+    answer: 1
+    explain: "CMD bisa ditimpa saat docker run; ENTRYPOINT lebih sulit ditimpa dan bersifat tetap."
+  - q: "Best practice mengecilkan image dimulai dari…"
+    options: ["Base image kecil (alpine/slim) dan hanya install dependensi yang dipakai", "Menyalin seluruh /usr", "Menambah semua tool debugging", "Memakai Ubuntu Desktop"]
+    answer: 0
+    explain: "Image kecil = pull cepat, attack surface kecil, deploy lebih hemat."
+---
+
+Dockerfile adalah **resep otomatis** untuk membangun image: setiap instruksi menghasilkan satu layer, dan seluruh rangkaian dijalankan `docker build`.
+
+## Dockerfile Minimal Pertama
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["python", "app.py"]
+```
+
+Build dan jalankan:
+
+```bash
+docker build -t aplikasi-python:1.0 .
+docker run -d --name api -p 8000:8000 aplikasi-python:1.0
+curl http://localhost:8000
+```
+
+Titik di akhir build command adalah **build context** — folder tempat Docker mencari file untuk `COPY`.
+
+## Instruksi Inti
+
+| Instruksi | Peran |
+|-----------|-------|
+| `FROM` | base image |
+| `WORKDIR` | direktori kerja untuk langkah berikutnya |
+| `COPY` / `ADD` | salin file dari context (ADD bisa tar URL — hindari bila cukup COPY) |
+| `RUN` | jalankan perintah saat build (install paket, compile) |
+| `EXPOSE` | deklarasi port (dokumentasi; port tetap harus `-p` saat run) |
+| `CMD` | perintah default container |
+| `ENTRYPOINT` | perintah tetap yang jarang ditimpa |
+| `ENV` | variabel environment |
+| `USER` | jalankan sebagai user non-root |
+
+## Variabel Environment
+
+```dockerfile
+ENV APP_ENV=production
+ENV PORT=8000
+CMD ["sh", "-c", "python app.py --port $PORT"]
+```
+
+Saat runtime:
+
+```bash
+docker run -e APP_ENV=staging -e SECRET=xxx aplikasi-python:1.0
+```
+
+## ENTRYPOINT + CMD (Kombinasi Umum)
+
+```dockerfile
+ENTRYPOINT ["python", "app.py"]
+CMD ["--workers", "2"]
+```
+
+`docker run image --workers 4` menimpa CMD tanpa mengubah ENTRYPOINT — pola standar image resmi Docker.
+
+## Multi Command dalam Satu RUN
+
+```dockerfile
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+```
+
+Menggabungkan dengan `&&` menghindari layer sampah dari apt cache — image lebih kecil.
+
+## Dua Fase Instruksi
+
+Ada **2 fase** dalam Dockerfile: build dan runtime. `RUN`, `COPY`, serta `WORKDIR` membentuk image saat build; `CMD`, `ENTRYPOINT`, dan konfigurasi seperti `USER` menentukan perilaku container saat runtime.
+
+| Instruksi | Fase | Fungsi | Kapan dipakai |
+|---|---|---|---|
+| `FROM` | Build | Memilih fondasi image | Awal setiap stage |
+| `RUN` | Build | Memasang atau mengompilasi | Membentuk filesystem image |
+| `COPY` | Build | Menyalin dari context | Memasukkan dependency dan source |
+| `USER` | Runtime | Menentukan identitas proses | Menurunkan hak dari root |
+| `CMD` | Runtime | Memberi command default | Menjalankan aplikasi |
+| `HEALTHCHECK` | Runtime | Memeriksa kesehatan | Mendeteksi proses macet |
+
+Untuk aplikasi produksi, buat user tanpa shell dan beri kepemilikan hanya pada direktori yang dibutuhkan:
+
+```dockerfile
+FROM python:3.12-slim
+RUN useradd --system --uid 10001 --create-home appuser
+WORKDIR /app
+COPY --chown=appuser:appuser requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY --chown=appuser:appuser . .
+USER appuser
+CMD ["python", "app.py"]
+```
+
+Gunakan bentuk exec berbasis array agar sinyal diterima proses aplikasi secara langsung. Bentuk shell `CMD python app.py` menambahkan shell sebagai proses perantara dan dapat mengganggu shutdown yang rapi.
+
+Jangan gunakan `ARG` atau `ENV` untuk token build, password, dan private key. Nilai dapat tertinggal pada metadata atau layer. Gunakan secret mount BuildKit saat build dan secret manager saat runtime. `.dockerignore` hanya mencegah file masuk context; ia bukan pengganti pengelolaan secret.
+
+## Di Dunia Nyata
+
+1. API Python mengunci dependency dari `requirements.txt`, berjalan sebagai UID non-root, dan hanya mengekspos port aplikasi.
+2. CI memakai Dockerfile yang sama dengan produksi agar artefak yang diuji identik dengan yang dirilis.
+3. Worker mengganti argumen `CMD` saat runtime tanpa mengganti `ENTRYPOINT` aplikasinya.
+4. Tim mengeluarkan `.git`, `.env`, test fixture besar, dan cache editor melalui `.dockerignore`.
+5. Healthcheck memeriksa endpoint ringan sehingga platform dapat mendeteksi proses hidup yang tidak lagi responsif.
+
+Build dari context sekecil mungkin. `COPY . .` aman hanya setelah `.dockerignore` diperiksa; penyalinan file secara eksplisit lebih mudah diaudit untuk proyek kecil. Pin versi base dan rebuild berkala untuk memperoleh patch keamanan.
+
+<div class="note">💡 Urutan instruksi = urutan cache. Taruh `COPY requirements.txt` + `RUN pip install` SEBELUM `COPY . .` — dependensi jarang berubah, kode sering berubah. Build ulang jadi jauh lebih cepat.</div>
+
+## Build Kontekstual
+
+```bash
+docker build -t app:1.0 .                          # pakai Dockerfile di folder ini
+docker build -f Dockerfile.prod -t app:1.0-prod . # Dockerfile alternatif
+```
+
+Tambahkan `.dockerignore` agar file besar/rahasia tidak ikut masuk context:
+
+```
+.git
+node_modules
+__pycache__
+.env
+*.log
+```

@@ -1,0 +1,162 @@
+---
+title: "String & Formatting"
+description: "String vs &str, makro format!, dan operasi teks sehari-hari"
+order: 7
+quiz:
+  - q: "String yang bisa dimodifikasi (mis. push_str) bertipe…"
+    options: ["&str", "String", "char", "str"]
+    answer: 1
+    explain: "String adalah teks milik sendiri di heap; &str hanya meminjam tampilan teks."
+  - q: "String literal seperti \"Halo\" bertipe…"
+    options: ["String", "char[]", "&str", "bytes"]
+    answer: 2
+    explain: "Literal tertanam di binari sehingga berbentuk pinjaman (&str)."
+  - q: "Menambah teks ke String memakai…"
+    options: ["push_str", "append!", "join", "concat"]
+    answer: 0
+    explain: "Contoh: s.push_str(\" dunia\"); atau s.push('!') untuk satu karakter."
+  - q: "Menggabungkan nilai menjadi string baru memakai makro…"
+    options: ["format!", "to_string!", "sprint!", "join!"]
+    answer: 0
+    explain: "format!(\"{} + {} = {}\", a, b, a + b) menghasilkan String."
+  - q: "Mengubah &str menjadi String paling umum dengan…"
+    options: ["parse()", "cast as String", "to_string() atau String::from()", "clone_str()"]
+    answer: 2
+    explain: "Keduanya menghasilkan String baru yang dimiliki pemanggil."
+example:
+  code: |
+    fn main() {
+        let mut s = String::from("Halo");
+        s.push_str(", Dunia!");
+        s.push('!');
+
+        let tahun = 2026;
+        let pesan = format!("Selamat datang di {}", s);
+
+        println!("{}", s);
+        println!("{}", pesan);
+        println!("panjang: {}", s.len());
+        println!("besar: {}", s.to_uppercase());
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust punya dua tipe teks utama. Memahami perbedaannya menghindari separuh kebingungan saat belajar.
+
+## String dan &str
+
+```rust
+let tetap: &str = "teks literal";
+let mut s: String = String::from("bisa diubah");
+
+s.push_str(" bertambah");
+s.push('!');
+
+println!("{} | {}", tetap, s);
+```
+
+| Tipe | Milik siapa | Bisa diubah | Kapan dipakai |
+| --- | --- | --- | --- |
+| `&str` | Dipinjam | Tidak | Literal, parameter fungsi |
+| `String` | Sendiri (heap) | Ya (`push`, `push_str`) | Teks yang tumbuh/diubah |
+
+## 6 Operasi String Harian
+
+```rust
+let s = String::from(" Belajar Rust ");
+
+println!("{}", s.trim());              // buang spasi
+println!("{}", s.to_uppercase());      // huruf besar
+println!("{}", s.replace("Rust", "Go")); // ganti
+println!("{}", s.contains("Rust"));    // cek keberadaan
+println!("{}", s.len());               // panjang byte
+println!("{}", s.split_whitespace().count()); // jumlah kata
+```
+
+Semua method ini menghasilkan nilai baru — String lama tidak pernah berubah diam-diam.
+
+## Menggabungkan String
+
+```rust
+let a = String::from("OnBoss");
+let b = " Academy";
+
+let gabung = a + b;
+println!("{}", gabung);
+```
+
+Operator `+` memindahkan kepemilikan `a` dan menghasilkan String baru. Gunakan `format!` bila variabel asli masih dibutuhkan.
+
+## Makro format!
+
+```rust
+let nama = "Sari";
+let umur = 20;
+
+let pesan = format!("Halo {}, umurmu {}", nama, umur);
+println!("{}", pesan);
+
+println!("{: >10}", "kanan");   // rata kanan lebar 10
+println!("{:.2}", 3.14159);     // dua desimal
+println!("{:?}", (4, 5));       // debug tuple -> (4, 5)
+```
+
+`format!` mengikuti pola yang sama dengan `println!`, hanya saja hasilnya dikembalikan sebagai `String`. Empat penanda yang paling sering: `{}` tampilan biasa, `{:?}` debug, `{:>10}` perataan lebar 10, `{:.2}` dua desimal.
+
+## Melintasi Karakter dan Byte
+
+```rust
+let teks = "Halo🚀";
+
+for c in teks.chars() {
+    println!("karakter: {}", c);
+}
+
+for b in teks.bytes() {
+    println!("byte: {}", b);
+}
+
+println!("jumlah huruf: {}", teks.chars().count());
+```
+
+`.chars()` memberi satu karakter Unicode utuh, `.bytes()` memberi byte mentah UTF-8. Karena panjang String (`len()`) dihitung dalam byte, jumlah huruf selalu pakai `.chars().count()` — ingat chapter "String & Rune" di Go: konsep byte vs karakternya persis sama.
+
+## Di Dunia Nyata
+
+- **Judul artikel**: `to_uppercase()` membuat headline dari input user
+- **Slug URL**: `replace(" ", "-").to_lowercase()` mengubah "Belajar Rust" jadi "belajar-rust"
+- **Template notifikasi**: `format!("Halo {}, tagihan Rp{}", nama, total)` untuk email massal
+- **Pencarian**: `contains("promo")` memfilter produk yang sedang diskon
+- **Validasi form**: `trim().is_empty()` mendeteksi input hanya berisi spasi
+- **Ekspor laporan**: `format!("{:<12} {:>8}", nama, total)` menyusun kolom rapi di file teks
+- **Log debugging**: `format!("{:?}")` mencetak struct/Vec lengkap beserta isinya
+
+<div class="note">💡 Aturan praktis: tulis parameter teks sebagai &str supaya pemanggil bebas memakai String maupun literal. Rust otomatis mengonversi &String menjadi &str.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let mut s = String::from("Halo");
+    s.push_str(", Dunia!");
+    s.push('!');
+
+    let nama = "OnBoss Academy";
+    let tahun = 2026;
+    let pesan = format!("Selamat datang di {} tahun {}", nama, tahun);
+
+    println!("{}", s);
+    println!("{}", pesan);
+    println!("panjang: {}", s.len());
+    println!("besar: {}", s.to_uppercase());
+    println!("ada kata Dunia: {}", s.contains("Dunia"));
+    println!("ganti: {}", s.replace("Dunia", "Rust"));
+
+    let angka = 3.14159;
+    println!("dua desimal: {:.2}", angka);
+    println!("{: >10}", "kanan");
+    println!("debug: {:?}", (4, 5));
+
+    for c in "Halo🚀".chars() {
+        println!("karakter: {}", c);
+    }
+    println!("jumlah huruf: {}", "Halo🚀".chars().count());
+}`} />

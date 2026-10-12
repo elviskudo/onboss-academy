@@ -1,0 +1,193 @@
+---
+title: "Operator & Percabangan"
+description: "5 kategori operator, if-else, switch modern, ternary — membuat program yang bisa memilih jalan"
+order: 3
+quiz:
+  - q: "Hasil dari 10 % 3 adalah…"
+    options: ["1", "3", "0", "3.33"]
+    answer: 0
+    explain: "% adalah operator sisa bagi: 10 dibagi 3 sisa 1."
+  - q: "Operator && disebut…"
+    options: ["Perbandingan sama dengan", "Logika AND — kedua sisi harus benar", "Logika OR — salah satu cukup", "Negasi"]
+    answer: 1
+    explain: "&& (AND) bernilai true hanya jika kedua operand true; || (OR) cukup satu true."
+  - q: "Blok switch di Java versi modern mendukung String dan…"
+    options: ["Hanya angka 0-9", "Hanya boolean", "enum, angka, dan String", "Tidak bisa menerima teks"]
+    answer: 2
+    explain: "switch bisa membandingkan String, enum, byte, short, int, char — cocok untuk menu atau kategori."
+  - q: "Percabangan if tanpa kurawal hanya berlaku untuk…"
+    options: ["Satu pernyataan di bawahnya", "Seluruh method", "Semua baris berikutnya", "Hanya baris komentar"]
+    answer: 0
+    explain: "Tanpa { } hanya satu statement yang masuk cabang — lebih aman selalu pakai kurawal."
+  - q: "Ternary (a > b ? x : y) setara dengan…"
+    options: ["Perulangan", "Percabangan if-else singkat yang mengembalikan nilai", "Komentar blok", "Deklarasi array"]
+    answer: 1
+    explain: "Kondisi ? nilai_jika_true : nilai_jika_false — praktis untuk nilai singkat."
+example:
+  code: |
+    int nilai = 85;
+    if (nilai >= 90) {
+        System.out.println("A");
+    } else if (nilai >= 80) {
+        System.out.println("B");
+    } else {
+        System.out.println("C atau di bawah");
+    }
+    String status = nilai >= 75 ? "Lulus" : "Remedial";
+    System.out.println(status);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang berguna harus bisa **memilih**: menentukan grade, memvalidasi input, atau membuka menu yang berbeda. Bab ini memetakan seluruh operator Java (dihitung per kategori) lalu semua bentuk percabangan yang didukungnya.
+
+## Operator Aritmatika (5 buah)
+
+Java punya **5 operator aritmatika utama**, ditambah 2 operator inkrement/dekrement:
+
+```java
+int a = 10, b = 3;
+System.out.println(a + b);   // 13
+System.out.println(a - b);   // 7
+System.out.println(a * b);   // 30
+System.out.println(a / b);   // 3 — pembagian int membuang desimal
+System.out.println(a % b);   // 1 — sisa bagi
+a++;                         // a menjadi 11 (post-increment)
+a--;                         // a kembali 10 (decrement)
+```
+
+`%` sering dipakai untuk cek ganjil/genap: `n % 2 == 0` berarti genap.
+
+## Operator Perbandingan (6 buah)
+
+Enam operator perbandingan: `==`, `!=`, `<`, `>`, `<=`, `>=`. Hasilnya selalu `boolean`.
+
+```java
+int usia = 17;
+System.out.println(usia >= 17);  // true
+System.out.println(usia == 17);  // true — dua tanda, bukan =
+System.out.println(usia != 20);  // true
+```
+
+## Operator Logika (3 buah)
+
+```java
+int usia = 20;
+boolean punyaTiket = true;
+boolean bolehMasuk = usia >= 17 && punyaTiket;   // AND: dua-duanya true
+boolean gratis = usia < 5 || usia > 60;          // OR: salah satu cukup
+boolean tidakBoleh = !punyaTiket;                // NOT: membalik nilai
+```
+
+`&&` dan `||` bersifat **short-circuit**: `A && B` berhenti menghitung B begitu A sudah `false`; `A || B` berhenti begitu A sudah `true`. Ini dipakai untuk penjaga aman: `data != null && data.length > 0` — `data.length` tidak akan dievaluasi saat `data` null.
+
+## Operator Assignment (12 buah)
+
+`=` plus 11 gabungan: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `>>>=`. Contoh `total += nilai` identik dengan `total = total + nilai` tapi lebih ringkas dan kadang lebih cepat di-compile.
+
+## Operator Bitwise & Lainnya
+
+Bitwise (`&`, `|`, `^`, `~`, `<<`, `>>`, `>>>`) bekerja pada level bit — dipakai untuk flag, mask, dan kriptografi sederhana. Ada juga ternary `? :` (1 buah) dan `instanceof` untuk cek tipe object.
+
+| Kategori | Jumlah | Contoh | Fungsi |
+|---|---|---|---|
+| Aritmatika | 5 (+ 2 inkrement) | `+ - * / %`, `++ --` | hitung angka |
+| Perbandingan | 6 | `== != < > <= >=` | bandingkan, hasil boolean |
+| Logika | 3 | `&& \|\| !` | gabung kondisi boolean |
+| Assignment | 12 | `= += -= *= /= %= ...` | tugaskan nilai |
+| Bitwise | 7 | `& \| ^ ~ << >> >>>` | manipulasi bit |
+| Conditional | 1 | `? :` | if-else singkat bernilai |
+
+## if-else
+
+```java
+int hari = 3;
+if (hari == 1) {
+    System.out.println("Senin");
+} else if (hari == 6 || hari == 7) {
+    System.out.println("Akhir pekan");
+} else {
+    System.out.println("Hari kerja");
+}
+```
+
+Cabang dievaluasi dari atas ke bawah — cabang pertama yang bernilai `true` yang dijalankan, sisanya dilewati. Urutan penting: cek kondisi paling spesifik dulu sebelum fallback umum.
+
+## Switch
+
+```java
+String menu = "nasi";
+switch (menu) {
+    case "nasi" -> System.out.println("Nasi goreng: Rp25.000");
+    case "mie"  -> System.out.println("Mie goreng: Rp20.000");
+    default     -> System.out.println("Menu tidak tersedia");
+}
+```
+
+Sintaks `->` (Java 14+) membuat switch ringkas dan tanpa risiko lupa `break`. Switch klasik dengan `case ...: break;` masih sah. Penerima switch: `byte, short, int, char, String, enum`. Sejak Java 21, switch eksperimen bahkan mendukung pattern matching penuh — tapi bentuk `->` di atas sudah cukup untuk hampir semua kasus.
+
+## Ternary
+
+```java
+int nilai = 72;
+String hasil = nilai >= 75 ? "Lulus" : "Remedial";
+int absolut = nilai < 0 ? -nilai : nilai;
+```
+
+## instanceof (Cek Tipe)
+
+```java
+Object data = "Halo";
+if (data instanceof String s) {        // pattern matching Java 16+
+    System.out.println(s.length());     // s otomatis bertipe String di dalam blok
+}
+```
+
+## Anti-Pattern: Nesting Terlalu Dalam
+
+```java
+// buruk — 4 level bersarang, sulit dibaca
+if (a) { if (b) { if (c) { if (d) { ... } } } }
+
+// baik — guard clause membalik kondisi cepat
+if (!a) return;
+if (!b) return;
+if (!c) return;
+// ... inti logika di level paling atas
+```
+
+## Di Dunia Nyata
+
+- **Validasi form login sebelum kirim ke server**: `if (username.isEmpty() || password.length() < 8)` menolak input buruk di sisi klien.
+- **Kalkulator tarif ojek online**: switch pada `jenisLayanan` memilih base price, lalu ternary menentukan biaya malam hari.
+- **Penentuan grade ujian**: else-if chain `>=90 A`, `>=80 B`, `>=70 C` — cek dari ambil tertinggi agar rentang tidak tumpang tindih.
+- **Gate kebijakan diskon e-commerce**: `boolean layak = total >= 100_000 && !sedangPromo lain && memberAktif;` memakai short-circuit untuk efisiensi.
+- **Parser konfigurasi**: `instanceof String s` memvalidasi tipe nilai konfigurasi sebelum diproses lebih lanjut.
+
+<div class="note">💡 Selalu bungkus kondisi if dengan kurawal walau hanya satu baris — mencegah bug klasik saat kode nanti ditambahi baris baru. Jebakan terbanyak pemula Java: <code>=</code> (menugaskan) tertulis di kondisi if; Java menolaknya saat kompilasi kalau hasilnya bukan boolean.</div>
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+    public static void main(String[] args) {
+        int nilai = 85;
+        if (nilai >= 90) System.out.println("Grade A");
+        else if (nilai >= 80) System.out.println("Grade B");
+        else System.out.println("Grade C atau di bawah");
+
+        String status = nilai >= 75 ? "Lulus" : "Remedial";
+        System.out.println("Status: " + status);
+
+        int hari = 3;
+        switch (hari) {
+            case 1 -> System.out.println("Senin");
+            case 3 -> System.out.println("Rabu");
+            default -> System.out.println("Hari lain");
+        }
+
+        int total = 150000;
+        boolean member = true;
+        boolean diskon = total >= 100_000 && member;
+        System.out.println("Dapat diskon? " + diskon);
+        System.out.println("10 % 3 = " + (10 % 3));
+        System.out.println("Genap? " + (10 % 2 == 0));
+    }
+}`} />

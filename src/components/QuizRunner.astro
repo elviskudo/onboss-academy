@@ -1,0 +1,145 @@
+---
+interface QuizQ {
+  q: string;
+  options: string[];
+}
+interface Props {
+  langId: string;
+  chapterSlug: string;
+  quiz: QuizQ[];
+  loggedIn: boolean;
+  nextHref?: string | null;
+  nextLabel?: string;
+  isFinal?: boolean;
+}
+const { langId, chapterSlug, quiz, loggedIn, nextHref, nextLabel = 'Lanjut ke Bab Berikutnya', isFinal } = Astro.props;
+---
+<section class="mt-12 rounded-2xl border border-line bg-surface p-6 shadow-sm" id="quiz" data-lang={langId} data-chapter={chapterSlug} data-logged-in={loggedIn ? '1' : '0'}>
+  <div class="flex items-center justify-between gap-3">
+    <h2 class="text-xl font-extrabold tracking-tight">📝 Kuis Bab Ini</h2>
+    <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary-dark">Minimal 70% untuk lulus</span>
+  </div>
+
+  {!loggedIn && (
+    <div class="mt-4 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-sm">
+      <strong>Butuh akun</strong> untuk menyimpan progres & membuka bab berikutnya.
+      <a href="/login" class="ml-1 font-bold text-primary underline">Masuk</a> atau
+      <a href="/register" class="ml-1 font-bold text-primary underline">daftar gratis</a>.
+    </div>
+  )}
+
+  <ol class="quiz-list mt-6 space-y-7">
+    {quiz.map((q, qi) => (
+      <li class="quiz-item" data-index={qi}>
+        <p class="font-bold text-ink"><span class="text-primary">{qi + 1}.</span> {q.q}</p>
+        <div class="mt-3 space-y-2">
+          {q.options.map((opt, oi) => (
+            <label class="quiz-option flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-bg px-4 py-2.5 text-[15px] transition hover:border-primary/40">
+              <input type="radio" name={`q${qi}`} value={oi} class="mt-1 accent-[#4F46E5]" />
+              <span>{opt}</span>
+            </label>
+          ))}
+        </div>
+        <p class="quiz-explain mt-2 hidden rounded-lg bg-primary-soft px-3 py-2 text-sm text-primary-dark"></p>
+      </li>
+    ))}
+  </ol>
+
+  <div class="mt-8 flex flex-wrap items-center gap-3">
+    <button type="button" class="quiz-submit rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-primary/30 hover:bg-primary-dark disabled:opacity-50">
+      Kirim Jawaban
+    </button>
+    <div class="quiz-result hidden items-center gap-3 text-sm font-bold"></div>
+    <a class="quiz-next hidden rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-success/30 hover:opacity-90" href={nextHref || '#'}>{isFinal ? '🎓 Ambil Sertifikat' : nextLabel}</a>
+    <a class="quiz-retry hidden rounded-xl border border-line bg-surface px-5 py-2.5 text-sm font-bold text-ink hover:border-ink/30" href="#quiz">🔄 Coba Lagi</a>
+  </div>
+</section>
+
+<script>
+  const section = document.getElementById('quiz');
+  if (section) {
+    const btn = section.querySelector('.quiz-submit') as HTMLButtonElement;
+    const result = section.querySelector('.quiz-result') as HTMLElement;
+    const next = section.querySelector('.quiz-next') as HTMLAnchorElement;
+    const retry = section.querySelector('.quiz-retry') as HTMLElement;
+    const loggedIn = section.dataset.loggedIn === '1';
+
+    btn?.addEventListener('click', async () => {
+      const items = [...section.querySelectorAll('.quiz-item')] as HTMLElement[];
+      const answers: number[] = [];
+      let allAnswered = true;
+      items.forEach((item) => {
+        const checked = item.querySelector('input:checked') as HTMLInputElement | null;
+        if (!checked) allAnswered = false;
+        answers.push(checked ? Number(checked.value) : -1);
+      });
+      if (!allAnswered) {
+        result.classList.remove('hidden');
+        result.classList.add('flex');
+        result.innerHTML = '<span class="text-warn">Jawab semua soal dulu ya!</span>';
+        return;
+      }
+      if (!loggedIn) {
+        result.classList.remove('hidden');
+        result.classList.add('flex');
+        result.innerHTML = '<span class="text-warn">Masuk / daftar untuk menyimpan hasil kuis.</span>';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Menilai…';
+      try {
+        const res = await fetch('/api/quiz/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ langId: section.dataset.lang, chapterId: section.dataset.chapter, answers }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          result.classList.remove('hidden');
+          result.classList.add('flex');
+          result.innerHTML = `<span class="text-danger">${data.error}</span>`;
+          btn.disabled = false;
+          btn.textContent = 'Kirim Jawaban';
+          return;
+        }
+        // tampilkan penjelasan tiap soal
+        data.detail.forEach((d: { ok: boolean; answer: number; explain?: string }, i: number) => {
+          const item = items[i];
+          const opts = [...item.querySelectorAll('.quiz-option')] as HTMLElement[];
+          opts.forEach((o, oi) => {
+            o.classList.remove('border-line');
+            if (oi === d.answer) o.classList.add('border-success', 'bg-success-soft');
+            else if (item.querySelector(`input[value="${oi}"]:checked`) && !d.ok) o.classList.add('border-danger', 'bg-danger-soft');
+          });
+          const ex = item.querySelector('.quiz-explain') as HTMLElement;
+          if (d.explain) {
+            ex.textContent = (d.ok ? '✔ ' : '✘ ') + d.explain;
+            ex.classList.remove('hidden');
+            ex.classList.toggle('bg-success-soft', d.ok);
+            ex.classList.toggle('text-success', d.ok);
+            ex.classList.toggle('bg-danger-soft', !d.ok);
+            ex.classList.toggle('text-danger', !d.ok);
+          }
+        });
+        result.classList.remove('hidden');
+        result.classList.add('flex');
+        result.innerHTML = data.passed
+          ? `<span class="text-success">🎉 Lulus! Skor kamu ${data.score}% (${data.correct}/${data.total}).</span>`
+          : `<span class="text-danger">Belum lulus — skor ${data.score}%. Minimal 70%. Pelajari lagi materinya, ya.</span>`;
+        if (data.passed && next.getAttribute('href') !== '#') {
+          next.classList.remove('hidden');
+        } else if (!data.passed) {
+          retry.classList.remove('hidden');
+        }
+      } catch {
+        result.classList.remove('hidden');
+        result.classList.add('flex');
+        result.innerHTML = '<span class="text-danger">Gagal mengirim. Periksa koneksi.</span>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kirim Jawaban';
+      }
+    });
+  }
+</script>

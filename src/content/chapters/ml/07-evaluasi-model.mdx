@@ -1,0 +1,129 @@
+---
+title: "Evaluasi Model"
+description: "Train/test split, akurasi, precision-recall, dan confusion matrix"
+order: 7
+quiz:
+  - q: "Menguji model pada data yang sama dengan data latih akan…"
+    options: ["Membuat model lebih realistis", "Membuat hasil evaluasi terlalu optimis", "Menghapus overfitting", "Mempercepat training"]
+    answer: 1
+    explain: "Model bisa 'menghafal' data latih; hasil di data baru bisa jauh lebih buruk."
+  - q: "Split umum untuk data pelatihan dan pengujian adalah…"
+    options: ["100% latih, 0% uji", "50% latih, 50% buang", "80% latih, 20% uji", "99% uji, 1% latih"]
+    answer: 2
+    explain: "Rasio 80/20 adalah titik awal yang lazim; proporsi lain dipakai sesuai ukuran data."
+  - q: "Precision tinggi berarti…"
+    options: ["Dari yang diprediksi positif, sedikit yang salah", "Semua data benar", "Model cepat", "Tidak ada data negatif"]
+    answer: 0
+    explain: "Precision = TP / (TP + FP) — menjawab 'seberapa bersih prediksi positif model'."
+  - q: "Untuk mendeteksi penyakit langka, metrik yang paling diperhatikan adalah…"
+    options: ["Waktu training", "Recall", "Jumlah fitur", "Ukuran file model"]
+    answer: 1
+    explain: "Recall = TP / (TP + FN) — melewatkan kasus positif (false negative) sangat mahal di sini."
+  - q: "Confusion matrix berisi…"
+    options: ["Daftar fitur", "Grafik loss", "Ringkasan prediksi benar/salah per kelas", "Kode model"]
+    answer: 2
+    explain: "Matriks TP/FP/FN/TN menjadi dasar menghitung precision, recall, dan F1."
+example:
+  code: |
+    kenyataan = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0]
+    prediksi  = [1, 0, 0, 1, 0, 1, 1, 0, 1, 0]
+
+    tp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 1)
+    fn = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 0)
+    print("Recall:", tp / (tp + fn))
+---
+
+Model yang tidak dievaluasi dengan benar adalah **anggapan**, bukan fakta. Bab ini membahas cara mengukurnya dengan jujur.
+
+## 3 Bagian Data
+
+| Bagian | Fungsi | Proporsi awal umum |
+|--------|--------|--------------------|
+| Train | mengubah parameter model | 70–80% |
+| Validation | memilih model/hyperparameter | 10–15% |
+| Test | evaluasi final satu kali | 10–20% |
+
+Rasio bukan aturan mutlak; dataset besar bisa memakai persentase test lebih kecil tetapi tetap ribuan baris.
+
+```python
+data = [70, 80, 90, 60, 55, 95, 72, 88, 66, 77]
+
+batas = int(len(data) * 0.8)
+latih, uji = data[:batas], data[batas:]
+print("Latih :", latih)
+print("Uji   :", uji)
+```
+
+Model dilatih pada `latih`, dievaluasi pada `uji` yang **tidak pernah dilihatnya**. Pada data berurutan waktu, split berdasarkan waktu; pada klasifikasi, pertahankan proporsi kelas (stratifikasi).
+
+## 4 Metrik Klasifikasi Umum
+
+| Metrik | Rumus | Cocok ketika |
+|--------|-------|--------------|
+| Accuracy | `(TP + TN) / semua` | kelas seimbang |
+| Precision | `TP / (TP + FP)` | false positive mahal |
+| Recall | `TP / (TP + FN)` | false negative mahal |
+| F1 | `2PR / (P + R)` | precision dan recall sama penting |
+
+```python
+kenyataan = [1, 0, 1, 1, 0, 1, 0, 0]
+prediksi  = [1, 0, 0, 1, 0, 1, 1, 0]
+
+benar = sum(1 for k, p in zip(kenyataan, prediksi) if k == p)
+print("Akurasi:", benar / len(kenyataan))   # 0.75
+```
+
+Akurasi menipu bila kelasnya timpang: model yang selalu menebak "negatif" tetap akurat 95% pada data 95% negatif.
+
+## Precision, Recall, dan F1
+
+```python
+tp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 1)
+fp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 0 and p == 1)
+fn = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 0)
+
+precision = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * precision * recall / (precision + recall)
+
+print(f"Precision: {precision:.2f}")
+print(f"Recall   : {recall:.2f}")
+print(f"F1       : {f1:.2f}")
+```
+
+## Confusion Matrix
+
+```python
+tp = fp = fn = tn = 0
+for k, p in zip(kenyataan, prediksi):
+    if k == 1 and p == 1: tp += 1
+    elif k == 0 and p == 1: fp += 1
+    elif k == 1 and p == 0: fn += 1
+    else: tn += 1
+
+print("TP", tp, "FP", fp)
+print("FN", fn, "TN", tn)
+```
+
+Membaca matriks 2x2 ini lebih informatif daripada satu angka akurasi tunggal.
+
+## Validasi Silang
+
+Pada **k-fold cross-validation**, data dibagi `k` lipatan. Ada 4 langkah:
+
+1. Bagi data menjadi `k` bagian sama besar (umumnya 5 atau 10).
+2. Latih pada `k-1` lipatan.
+3. Uji pada 1 lipatan yang tersisa.
+4. Ulangi sampai semua lipatan pernah menjadi uji; rata-ratakan metrik.
+
+Hasilnya lebih stabil daripada satu split, terutama bila data terbatas. Dataset waktu tidak boleh diacak sembarangan; gunakan validasi maju agar masa depan tidak bocor ke masa lalu.
+
+## Di Dunia Nyata
+
+- **Skrining penyakit** — utamakan recall agar pasien sakit tidak terlewat walau ada pemeriksaan lanjutan.
+- **Filter spam penting** — utamakan precision agar email sah tidak hilang ke folder spam.
+- **Fraud kartu kredit** — pantau precision dan recall per threshold, bukan accuracy transaksi yang sangat timpang.
+- **Prediksi churn** — pisahkan bulan terakhir sebagai test supaya meniru pemakaian produksi.
+- **Moderasi konten** — confusion matrix per kategori menunjukkan jenis pelanggaran mana yang masih lemah.
+
+<div class="note">💡 Selalu simpan satu "data hening" (holdout) yang hanya dibuka sekali di akhir proyek. Bila kamu terus menyesuaikan model berdasarkan hasil uji, data uji itu lambat laun bocor menjadi data latih.</div>

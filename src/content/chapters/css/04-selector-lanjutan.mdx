@@ -1,0 +1,121 @@
+---
+title: "Selector Lanjutan"
+description: "Pseudo-class, combinator, dan atribut selector"
+order: 4
+quiz:
+  - q: "Selector .kartu .harga memilih…"
+    options: ["Elemen dengan id kartu dan harga", "Elemen .harga di dalam .kartu (keturunan)", "Dua elemen berdampingan", "Elemen dengan class kartu-harga"]
+    answer: 1
+    explain: "Spasi = descendant combinator: .harga yang berada di dalam .kartu."
+  - q: "Apa fungsi :hover?"
+    options: ["Elemen saat kursor menyorot", "Elemen pertama", "Elemen terakhir", "Elemen tersembunyi"]
+    answer: 0
+    explain: ":hover adalah pseudo-class untuk kondisi pointer menyorot elemen."
+  - q: "Selector a::before…"
+    options: ["Memilih link sebelumnya", "Menambah konten sebelum isi elemen", "Menghapus link", "Membuat link baru"]
+    answer: 1
+    explain: "::before (dua titik) adalah pseudo-element — membuat konten virtual sebelum isi elemen."
+  - q: "input[type=\"email\"] memilih…"
+    options: ["Semua input", "Input bertipe email", "Elemen dengan atribut email", "Label email"]
+    answer: 1
+    explain: "Attribute selector menyaring berdasarkan nilai atribut."
+  - q: "Perbedaan :hover dan ::before adalah…"
+    options: ["Sama saja", ":hover kondisi (pseudo-class), ::before elemen virtual (pseudo-element)", "::before lebih lama", ":hover hanya untuk link"]
+    answer: 1
+    explain: "Titik tunggal = pseudo-class (kondisi). Dua titik = pseudo-element (bagian virtual elemen)."
+example:
+  code: |
+    <a href="#" class="link">Arahkan kursor ke sini</a>
+    <p class="tips">Paragraf ini pakai selector atribut.</p>
+    <style>
+      .link { color: #4F46E5; text-decoration: none; border-bottom: 2px solid transparent; }
+      .link:hover { border-bottom-color: #4F46E5; }
+      .tips::before { content: "💡 "; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Combinator (Penggabung Selector)
+
+```css
+.kartu .harga { }      /* .harga di dalam .kartu */
+.kartu > .judul { }    /* .judul anak langsung .kartu */
+h2 + p { }             /* p tepat setelah h2 */
+h2 ~ p { }             /* p setelah h2 di level sama */
+```
+
+CSS punya **4 combinator utama**:
+
+| Combinator | Arti | Contoh | Kapan dipakai |
+|------------|------|--------|---------------|
+| Spasi | Semua keturunan | `.card p` | Isi komponen |
+| `>` | Anak langsung | `nav > a` | Struktur satu tingkat |
+| `+` | Saudara tepat berikut | `h2 + p` | Paragraf pembuka |
+| `~` | Semua saudara berikut | `input:checked ~ label` | UI berbasis state |
+
+## Pseudo-class (Kondisi)
+
+```css
+a:hover { }        /* saat disorot */
+a:visited { }      /* sudah dikunjungi */
+li:first-child { } /* anak pertama */
+li:nth-child(2n) { } /* baris genap */
+input:focus { }    /* sedang fokus */
+.disabled { opacity: 0.5; pointer-events: none; }
+```
+
+Contoh zebra table:
+
+```css
+tr:nth-child(even) { background: #F3F4F6; }
+```
+
+## Pseudo-element (Bagian Virtual)
+
+```css
+p::before { content: "→ "; color: #4F46E5; }
+p::first-line { font-weight: bold; }
+p::selection { background: #C7D2FE; }
+```
+
+## Attribute Selector
+
+```css
+input[type="text"]  { }
+a[href^="https"]    { }  /* diawali https */
+a[href$=".pdf"]     { }  /* berakhiran .pdf */
+img[alt*="logo"]    { }  /* mengandung "logo" */
+```
+
+## Specificity
+
+Specificity dihitung dalam **3 kolom**: ID, class/atribut/pseudo-class, lalu elemen/pseudo-element. `#app .card p` bernilai `1-1-1`; `.card p` bernilai `0-1-1`. Nilai lebih kiri menang; jika sama, aturan yang ditulis belakangan menang.
+
+## Di Dunia Nyata
+
+- **Form login** — `input:focus` menampilkan border jelas saat keyboard aktif
+- **Tabel laporan** — `tr:nth-child(even)` membuat baris zebra lebih mudah dibaca
+- **Link PDF** — `a[href$=".pdf"]::after` menambah ikon otomatis
+- **Menu dropdown** — child combinator mencegah gaya submenu bocor ke semua keturunan
+
+<div class="note">💡 Jaga specificity tetap rendah dengan selector class pendek. Jangan tambah ID atau nesting panjang hanya untuk "mengalahkan" aturan lain — itu memulai perang specificity yang berakhir dengan `!important` di mana-mana.</div>
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`nav a {
+  color: #17181D;
+  text-decoration: none;
+  margin-right: 16px;
+  padding: 6px 2px;
+  border-bottom: 2px solid transparent;
+}
+nav a:hover {
+  color: #4F46E5;
+  border-bottom-color: #4F46E5;
+}
+nav a:first-child {
+  font-weight: 700;
+}
+.note::before {
+  content: "★ ";
+  color: #F59E0B;
+}`} />

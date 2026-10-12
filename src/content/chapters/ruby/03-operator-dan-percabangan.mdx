@@ -1,0 +1,164 @@
+---
+title: "Operator & Percabangan"
+description: "27 operator inti Ruby dan 5 bentuk percabangan: if, unless, case, ternary, modifier"
+order: 3
+quiz:
+  - q: "Operator pembanding ruang (spaceship) `<=>` menghasilkan…"
+    options: ["true/false saja", "-1, 0, atau 1", "Selalu 1", "Error jika beda tipe"]
+    answer: 1
+    explain: "<=> mengembalikan -1 (kurang), 0 (sama), 1 (lebih), dan nil bila tidak bisa dibandingkan."
+  - q: "Kebalikan dari `if` di Ruby disebut…"
+    options: ["unless", "until", "case", "when"]
+    answer: 0
+    explain: "unless menjalankan blok hanya saat kondisi bernilai salah — kebalikan murni dari if."
+  - q: "Bagaimana urutan evaluasi `value = a || b` dibanding `value and a || b`?"
+    options: ["Sama saja", "`and` lebih rendah prioritas daripada penugasan `=`", "`||` lebih rendah dari `=`", "`and` error di Ruby"]
+    answer: 1
+    explain: "and/or punya prioritas sangat rendah — karena itu `x = a && b` lebih aman daripada `x = a and b`."
+  - q: "Berapa nilai yang dianggap SALAH (falsy) di Ruby?"
+    options: ["false, nil, dan 0", "Hanya false", "Hanya nil", "false dan nil saja"]
+    answer: 3
+    explain: "Hanya false dan nil yang falsy; angka 0, string kosong, dan [] tetap dianggap benar."
+  - q: "Hasil dari 10 / 3 di Ruby adalah…"
+    options: ["3.3333", "3", "4", "error"]
+    answer: 1
+    explain: "Pembagian dua Integer membuang bagian desimal; tulis 10.0 / 3 untuk hasil pecahan."
+example:
+  code: |
+    nilai = 78
+
+    kategori = if nilai >= 90
+                 "A"
+               elsif nilai >= 75
+                 "B"
+               else
+                 "C"
+               end
+
+    puts kategori
+
+    sisa = case 78 % 2
+           when 0 then "genap"
+           else "ganjil"
+           end
+    puts sisa
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Percabangan menentukan alur program berdasarkan kondisi, operator adalah bahan bakarnya. Ruby memberi 27 operator inti yang relevan sehari-hari dan 5 bentuk percabangan — semuanya bisa dipakai sebagai ekspresi yang menghasilkan nilai.
+
+## 6 Operator Aritmatika
+
+| Operator | Arti | Contoh | Hasil |
+| --- | --- | --- | --- |
+| `+` | Tambah | `10 + 3` | `13` |
+| `-` | Kurang | `10 - 3` | `7` |
+| `*` | Kali | `10 * 3` | `30` |
+| `/` | Bagi | `10 / 3` | `3` (Integer membuang desimal) |
+| `%` | Sisa bagi | `10 % 3` | `1` |
+| `**` | Pangkat | `2 ** 10` | `1024` |
+
+## 7 Operator Perbandingan
+
+| Operator | Arti | Contoh | Hasil |
+| --- | --- | --- | --- |
+| `==` | Sama nilainya | `"a" == "a"` | `true` |
+| `!=` | Tidak sama | `5 != 5` | `false` |
+| `<` `>` | Kurang / lebih | `5 > 3` | `true` |
+| `<=` `>=` | Kurang-lebih / lebih-lebih | `5 >= 5` | `true` |
+| `<=>` | Spaceship: -1 / 0 / 1 | `5 <=> 3` | `1` |
+
+`<=>` adalah kunci pengurutan: `sort` memakainya, dan hasil `nil` berarti kedua objek tidak bisa dibandingkan sehingga pengurutan melempar `ArgumentError`.
+
+## 6 Operator Logika
+
+```ruby
+x = 10
+puts x > 5 && x < 20     # true — AND
+puts x > 20 || x == 10   # true — OR
+puts !x.zero?            # false — NOT
+```
+
+Bentuk kata (`and`, `or`, `not`) punya prioritas lebih rendah daripada penugasan, jadi `a = b and c` membaca sebagai `(a = b) and c`. Untuk logika di dalam kondisi, pakai simbol `&&` dan `||`.
+
+## 8 Operator Penugasan
+
+`=`, `+=`, `-=`, `*=`, `/=`, `%=`, `**=`, dan `||=`. Bentuk `||=` (atau `&&=`) disebut *operator penugasan bersyarat*: `tampilan ||= "default"` hanya mengisi nilai bila belum ada — pola sangat umum untuk konfigurasi lazy.
+
+## 5 Bentuk Percabangan
+
+```ruby
+# 1. if / elsif / else
+umur = 20
+if umur >= 17
+  puts "Boleh ikut"
+elsif umur >= 13
+  puts "Dengan pendampingan"
+else
+  puts "Belum cukup umur"
+end
+
+# 2. unless — kebalikan if
+unless umur < 17
+  puts "Sudah cukup umur"
+end
+
+# 3. case / when (menerima range dan banyak nilai)
+hari = 3
+peran = case hari
+        when 6, 7 then "akhir pekan"
+        when 1..5 then "hari kerja"
+        else "tidak dikenal"
+        end
+puts peran
+
+# 4. ternary
+izin = umur >= 18 ? "ya" : "tidak"
+
+# 5. modifier if/unless — satu baris
+puts "Sudah dewasa" if umur >= 18
+```
+
+`case` bekerja dengan pembanding `===`, sehingga `when 1..5` memeriksa keanggotaan rentang otomatis.
+
+## Kejatuhan dan Anti-Pattern
+
+- `=` adalah penugasan, `==` perbandingan, `===` pembanding case, `equal?` membandingkan **identitas objek** — empat hal berbeda.
+- Nesting if 4 tingkat sulit dibaca; pakai guard clause: `return "tolak" unless syarat_terpenuhi`.
+- Ternary bersarang (`a ? b : c ? d : e`) membingungkan — gunakan if biasa.
+- `10 / 3 == 3.33` itu `false`; faktakan ke Float dulu sebelum membandingkan hasil pembagian.
+
+## Di Dunia Nyata
+
+- **Grade nilai ujian**: rantai if/elsif mengubah 0–100 jadi huruf A–E untuk rapor.
+- **Validasi input sebelum simpan**: `unless harga.positive? && nama.length >= 2` menolak data rusak di lapis pertama.
+- **Ongkos kirim wilayah**: `case provinsi when "DKI", "Banten" then 15_000 when 1..9 then 10_000`.
+- **Fitur premium user**: `akun.plan == :pro || akun.trial_aktif?` menentukan tombol mana yang tampil.
+- **Batch job berkondisi**: `next if baris.kosong?` mempercepat pemrosesan file dengan baris kosong.
+
+<div class="note">💡 Di Ruby hanya `false` dan `nil` yang dianggap salah. Angka `0`, string `""`, dan array `[]` tetap benar — jadi `if jumlah` tetap jalan walau jumlahnya nol. Untuk memastikan benar-benar ada isi, tanyakan secara eksplisit: `if jumlah && jumlah.positive?`.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`nilai = 78
+
+if nilai >= 90
+  puts "A"
+elsif nilai >= 75
+  puts "B"
+else
+  puts "C"
+end
+
+buah = "mangga"
+puts case buah
+      when "mangga" then "buah tropis"
+      else "lainnya"
+      end
+
+umur = 20
+puts umur >= 18 ? "ya" : "tidak"
+puts "dewasa" if umur >= 18
+
+puts 10 / 3
+puts 10.0 / 3
+puts [5, 3, 1].sort.inspect`} />

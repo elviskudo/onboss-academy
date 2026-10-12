@@ -1,0 +1,125 @@
+---
+title: "Pengenalan Ruby on Rails"
+description: "Framework web full-stack yang legendaris — produksi cepat dengan kode yang sedikit"
+order: 1
+quiz:
+  - q: "Ruby on Rails adalah…"
+    options: ["Bahasa pemrograman baru", "Framework web berbasis Ruby", "Database relasional", "Sistem operasi"]
+    answer: 1
+    explain: "Rails adalah framework web yang ditulis dalam Ruby, bukan bahasa terpisah."
+  - q: "Rails dikenalkan publik pada tahun…"
+    options: ["2004", "2010", "1995", "2018"]
+    answer: 0
+    explain: "DHH memperkenalkan Rails pada 2004 saat membangun Basecamp."
+  - q: "Perintah untuk membuat aplikasi Rails baru adalah…"
+    options: ["rails new nama_aplikasi", "npm create rails", "rails init app", "gem rails build"]
+    answer: 0
+    explain: "rails new membuat seluruh struktur folder, file konfigurasi, dan Gemfile."
+  - q: "Manajer dependensi Ruby yang dipakai Rails adalah…"
+    options: ["pip", "Bundler", "composer", "yarn"]
+    answer: 1
+    explain: "Bundler membaca Gemfile lalu mengunci versi gem yang tepat."
+  - q: "Rails memudahkan pengembangan karena…"
+    options: ["Harus menulis semua dari nol", "Konvensi menggantikan konfigurasi manual", "Tidak memakai database", "Hanya untuk HTML statis"]
+    answer: 1
+    explain: "Prinsip konvensi di atas konfigurasi adalah jantung Rails."
+example:
+  code: |
+    # rails new toko
+    # cd toko && bundle install
+    # bin/rails server
+
+    class HalamanController < ApplicationController
+      def index
+        @pesan = "Selamat datang di Rails"
+      end
+    end
+---
+
+Rails adalah framework Ruby yang membuat aplikasi web terasa cepat: sebagian besar keputusan sudah dijawab oleh konvensi, sehingga kamu fokus pada fitur bisnis.
+
+## Apa yang Diberikan Rails?
+
+- **ORM lengkap**: Active Record untuk berbicara dengan database lewat Ruby
+- **Routing dan controller**: pemetaan URL yang rapi dan mudah diuji
+- **View dengan ERB**: template HTML yang menanam kode Ruby
+- **Migrasi database**: skema database hidup di kode versi
+- **Scaffold**: generator CRUD lengkap dalam satu perintah
+
+## Membuat Aplikasi Baru
+
+```bash
+rails new toko
+cd toko
+bundle install
+bin/rails server
+```
+
+Perintah `rails new` menyiapkan folder aplikasi, file konfigurasi, dan database bawaan sekaligus.
+
+## Anatomi Proyek
+
+```ruby
+# struktur inti hasil rails new
+# app/         model, view, controller
+# config/      routing, database, environment
+# db/          migrasi dan skema database
+# test/        pengujian
+# Gemfile      daftar dependensi
+```
+
+Semua folder punya peran tetap — Rails tahu di mana mencari kode kamu.
+
+## Cara Kerja Satu Request
+
+```ruby
+# 1. routing:  GET /produk  ->  products#index
+# 2. controller mengambil data lewat model
+# 3. view merender HTML dari data tersebut
+# 4. browser menerima jawaban
+```
+
+Alur inilah yang disebut pola MVC pada Rails.
+
+## Menjalankan Server
+
+```bash
+bin/rails server
+```
+
+Lalu buka `http://localhost:3000` di browser. Rails juga menyediakan konsol interaktif lewat `bin/rails console`.
+
+## Komponen Rails Modern
+
+Rails modern menyediakan **7 komponen inti** yang dapat dipakai bersama atau dipilih sesuai kebutuhan.
+
+| Komponen | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Active Record | ORM dan migrasi | `Product.where(active: true)` | data relasional |
+| Action Pack | routing dan controller | `resources :products` | request HTTP |
+| Action View | template dan helper | `render @products` | HTML server-rendered |
+| Active Job | antarmuka background job | `ReportJob.perform_later` | kerja lambat |
+| Action Mailer | email aplikasi | reset password | email transaksional |
+| Action Cable | WebSocket | broadcast chat | pembaruan realtime |
+| Active Storage | lampiran file | `has_one_attached` | upload gambar/dokumen |
+
+Rails juga mengintegrasikan Hotwire untuk UI interaktif dengan JavaScript minimal. Turbo memperbarui halaman secara parsial, sedangkan Stimulus memberi perilaku kecil pada HTML. Ini bukan kewajiban: aplikasi JSON API dapat memakai subset Rails tanpa view HTML.
+
+## Siklus Pengembangan
+
+Alur minimum terdiri dari **5 langkah**: buat aplikasi, generate model/controller, migrasikan database, jalankan test, lalu start server. Gunakan perintah `bin/rails` milik proyek agar versi Rails konsisten dengan `Gemfile.lock`. Console cocok untuk eksperimen data, bukan perubahan skema; skema tetap harus melalui migrasi.
+
+## Di Dunia Nyata
+
+- Marketplace memakai Active Record untuk katalog dan pesanan.
+- SaaS memakai Active Job untuk invoice dan email yang tidak boleh menahan request.
+- Dashboard operasional memakai Turbo Streams untuk pembaruan status.
+- Aplikasi dokumen memakai Active Storage untuk lampiran langsung ke object storage.
+
+## Memilih Bentuk Aplikasi
+
+Rails dapat dibuat sebagai aplikasi full-stack atau API-only. Full-stack tepat ketika server menghasilkan HTML, form, email, dan interaksi Hotwire dalam satu codebase. API-only tepat ketika klien mobile atau frontend terpisah menguasai antarmuka. Mulai dari bentuk paling sederhana yang memenuhi kebutuhan; memisahkan frontend menambah kontrak API, autentikasi lintas origin, dan dua proses deployment.
+
+Dalam production, Puma menjalankan request web, Active Job menyerahkan pekerjaan lambat ke queue adapter, dan database menyimpan state permanen. Request sebaiknya singkat: simpan data lalu antrekan email, ekspor, atau pemrosesan gambar. Test bawaan Rails mencakup model, request, system, mailer, dan job. Jalankan suite sebelum deploy agar konvensi yang mempercepat pembuatan aplikasi tidak berubah menjadi asumsi yang tidak diuji.
+
+<div class="note">💡 Rails adalah konvensi di atas konfigurasi: begitu kamu mengikuti cara Rails menamai file dan folder, hampir semuanya bekerja otomatis. Melawan konvensi berarti menulis lebih banyak kode sendiri.</div>

@@ -1,0 +1,138 @@
+---
+title: "Image & Container"
+description: "Memahami hubungan image (cetakan) dan container (hasil cetak), plus manajemen dasar"
+order: 2
+quiz:
+  - q: "Image Docker pada dasarnya adalah…"
+    options: ["Template read-only berisi filesystem + metadata untuk menjalankan container", "File .zip aplikasi", "Database image", "Virtual machine aktif"]
+    answer: 0
+    explain: "Image = blueprint; container = instance berjalan yang dibuat dari image."
+  - q: "docker run redis akan…"
+    options: ["Mengunduh image redis bila belum ada lalu menjalankan container baru", "Menghapus redis", "Membuka editor", "Membuat Dockerfile"]
+    answer: 0
+    explain: "Perilaku pull-if-missing lalu start container baru dari image tersebut."
+  - q: "docker ps -a menampilkan…"
+    options: ["Daftar image", "Log container", "Semua container termasuk yang berhenti", "Container yang sedang berjalan saja"]
+    answer: 2
+    explain: "Tanpa -a, hanya container berjalan; -a menyertakan yang exited/created."
+  - q: "docker exec -it web sh berfungsi untuk…"
+    options: ["Masuk ke shell di dalam container yang sedang berjalan", "Membuat container baru", "Menghapus container", "Mengubah image"]
+    answer: 0
+    explain: "-i menyalakan stdin dan -t memberi terminal — persis seperti SSH ke container."
+  - q: "docker rm container dan docker rmi image dibedakan oleh…"
+    options: ["Keduanya sama", "rmi menghapus image; rm menghapus container", "rm menghapus image", "rmi menjalankan container"]
+    answer: 1
+    explain: "Container harus dihapus dulu sebelum image-nya bisa dihapus (bila tidak dipakai container lain)."
+---
+
+Image adalah **cetakan read-only**; container adalah **hasil cetak yang hidup** — bisa berjalan, ditulis, lalu dibuang tanpa merusak image aslinya.
+
+## Mengambil & Menjalankan
+
+```bash
+docker pull nginx:alpine          # unduh image
+docker run -d --name web -p 8080:80 nginx:alpine   # jalankan di background
+curl http://localhost:8080       # uji dari host
+```
+
+Anatomi perintah run:
+
+```
+docker run [opsi] image [command]
+-d            di background (detached)
+--name web    nama container
+-p 8080:80    port host:port container
+```
+
+## Mengelola Container
+
+```bash
+docker ps                 # container berjalan
+docker ps -a              # semua, termasuk berhenti
+docker logs web           # lihat log
+docker logs -f web        # ikuti log real time
+docker stop web           # hentikan (SIGTERM lalu SIGKILL)
+docker start web          # jalankan lagi
+docker rm web             # hapus container
+docker rm -f web          # hentikan + hapus sekaligus
+```
+
+## Masuk ke Dalam Container
+
+```bash
+docker exec -it web sh     # shell Alpine/Debian
+docker exec -it web bash   # shell yang punya bash
+docker exec web ls /usr/share/nginx/html   # jalankan satu perintah
+```
+
+Sangat berguna untuk menebak konfigurasi dan mendebug isu "kenapa 404?" di lingkungan yang sama persis dengan produksi.
+
+## Mengelola Image
+
+```bash
+docker images              # daftar image lokal + ukuran
+docker image inspect nginx:alpine | head
+docker rmi nginx:alpine    # hapus image
+docker image prune         # hapus image tak terpakai (dangling)
+```
+
+## Tag & Versi
+
+```bash
+docker pull nginx:1.27-alpine   # versi spesifik
+docker pull nginx:latest        # tag default (berubah-ubah!)
+```
+
+<div class="note">💡 Di produksi, hindari bergantung pada :latest — pin versi eksplisit (mis. nginx:1.27-alpine) agar deploy ulang selalu memakai software yang sama dan bisa direproduksi.</div>
+
+## Siklus Hidup Ringkas
+
+```
+pull image -> run container -> exec/logs/stop -> rm container -> rmi image (opsional)
+```
+
+Image bersifat immutable: setiap perubahan nyata dilakukan lewat rebuild image baru, bukan edit container lama.
+
+## Empat Keadaan Container
+
+Ada **4 keadaan yang paling sering ditemui**: created, running, exited, dan paused.
+
+| Keadaan | Arti | Perintah terkait | Kapan ditemui |
+|---|---|---|---|
+| created | Filesystem sudah dibuat, proses belum mulai | `docker create` | Konfigurasi disiapkan sebelum start |
+| running | Proses utama aktif | `docker start` | Layanan sedang melayani trafik |
+| exited | Proses utama selesai atau gagal | `docker logs` | Job selesai atau aplikasi crash |
+| paused | Proses dibekukan sementara | `docker pause` | Diagnosis singkat, bukan operasi rutin |
+
+`docker run` sebenarnya menggabungkan `docker create` dan `docker start`. Container hidup selama proses PID 1 hidup. Jika aplikasi melakukan fork ke background lalu proses utama keluar, container ikut berhenti; jalankan server di foreground.
+
+```bash
+docker inspect web --format '{{.Config.Image}} {{.State.Status}} {{.State.ExitCode}}'
+docker logs --tail 50 web
+docker stats web
+```
+
+Tiga perintah ini menjawab image asal, status dan exit code, log terakhir, serta konsumsi resource. Exit code `0` berarti proses selesai normal; nilai non-nol menandakan kegagalan yang perlu diperiksa di log.
+
+## Identitas Image dan Tag
+
+Image memiliki repository, tag, dan digest. Tag seperti `1.27-alpine` adalah nama yang dapat dipindahkan penerbit, sedangkan digest `sha256:...` menunjuk isi persis. Untuk deployment yang harus identik dan dapat diaudit, pin digest setelah proses pembaruan terkontrol.
+
+| Identitas | Contoh | Sifat | Penggunaan |
+|---|---|---|---|
+| Repository | `nginx` | Nama keluarga image | Memilih aplikasi |
+| Tag | `1.27-alpine` | Label yang dapat berubah | Memilih jalur versi |
+| Digest | `sha256:...` | Identitas content-addressed | Reproduksibilitas produksi |
+| Container ID | `a1b2c3...` | Identitas instance | Operasi dan diagnosis |
+
+Jangan menyimpan perubahan penting memakai `docker commit`. Hasilnya sulit direproduksi dan tidak punya riwayat resep. Ubah Dockerfile, rebuild, uji, lalu ganti container. Data bisnis harus berada di volume atau layanan penyimpanan, bukan writable layer container.
+
+## Di Dunia Nyata
+
+1. Rollback API dilakukan dengan menjalankan kembali digest image rilis sebelumnya, bukan memperbaiki container aktif secara manual.
+2. Worker batch dibiarkan berstatus exited setelah selesai agar exit code dan log dapat diperiksa sebelum dihapus.
+3. Tim dukungan memakai `docker exec` hanya untuk diagnosis; perbaikan permanen tetap masuk source dan image baru.
+4. CI memberi tag commit Git pada image agar artefak dapat dilacak ke kode yang membangunnya.
+5. Server membersihkan container sementara dengan `--rm`, tetapi mempertahankan volume database secara eksplisit.
+
+Saat menarik image publik, pilih penerbit resmi, versi yang masih mendapat patch, dan arsitektur yang cocok. Perlakukan image sebagai software pihak ketiga: inventarisasi, scan, dan perbarui berkala.

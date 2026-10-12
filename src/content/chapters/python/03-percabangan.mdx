@@ -1,0 +1,149 @@
+---
+title: "Percabangan"
+description: "if, elif, else, ternary, match-case dan guard clause"
+order: 3
+quiz:
+  - q: "Blok if di Python ditandai dengan…"
+    options: ["Kurawal { }", "Dua titik (:) lalu indentasi", "Kata kunci then", "Tanda kurung ()"]
+    answer: 1
+    explain: "Python: if kondisi: → baris ber-indentasi di bawahnya."
+  - q: "elif digunakan untuk…"
+    options: ["Kondisi tambahan setelah if", "Mengakhiri if", "Mengulang kondisi", "Menghapus percabangan"]
+    answer: 0
+    explain: "elif = else if. else menangkap sisanya."
+  - q: "Nilai boolean kosong untuk data kosong (list {}, string \"\") adalah…"
+    options: ["True", "None", "False", "Error"]
+    answer: 2
+    explain: "Nilai 'falsy' Python: 0, \"\", [], {}, None — dianggap False dalam kondisi."
+  - q: "Perbandingan Python memakai operator…"
+    options: ["= untuk samakan nilai", "eq untuk samakan", "== untuk assignment", "== untuk samakan nilai, = untuk assignment"]
+    answer: 3
+    explain: "Satu tanda = menempelkan nilai; dua tanda == membandingkan."
+  - q: "Bentuk singkat if dalam satu baris disebut…"
+    options: ["Ternary / conditional expression", "One-liner if", "Mini if", "Compact if"]
+    answer: 0
+    explain: "nilai_a if kondisi else nilai_b."
+example:
+  code: |
+    nilai = 85
+    if nilai >= 90:
+        huruf = "A"
+    elif nilai >= 80:
+        huruf = "B"
+    elif nilai >= 70:
+        huruf = "C"
+    else:
+        huruf = "D"
+    print("Nilai:", huruf)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Percabangan membuat program memilih jalur: Python mendukung **3 bentuk** — `if/elif/else`, ternary satu baris, dan `match/case` (Python 3.10+).
+
+## if / elif / else
+
+```python
+umur = 20
+
+if umur < 13:
+    print("Anak-anak")
+elif umur < 17:
+    print("Remaja")
+else:
+    print("Dewasa")
+```
+
+Perhatikan **dua titik** `:` dan indentasi 4 spasi. Urutan dibaca dari atas: cabang `if`/**`elif` pertama yang bernilai True langsung dieksekusi** — sisanya dilewati, makanya batas nilai harus naik secara berurutan (90 → 80 → 70).
+
+## Operator Perbandingan
+
+**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `<=`
+
+```python
+== != > < >= <=
+x is y          # identitas objek (same object)
+nilai in daftar  # keanggotaan
+```
+
+## Kondisi Kompleks
+
+```python
+if 17 <= umur <= 30 and kota == "Jakarta":
+    print("Target user kita")
+if not aktif or saldo <= 0:
+    print("Akun tidak aktif")
+```
+
+3 operator logika `and` / `or` / `not` bersifat **short-circuit**: `data and data[0]` tidak pernah error walau `data` kosong, karena bagian kanan tidak dievaluasi.
+
+## Truthy & Falsy
+
+Nilai yang dianggap False: `0`, `0.0`, `""`, `[]`, `()`, `{}`, `set()`, `None` — total 8 nilai kosong yang paling sering muncul.
+
+```python
+if daftar:        # lebih pythonic daripada len(daftar) > 0
+    print("Ada isinya")
+```
+
+## Ternary
+
+```python
+status = "dewasa" if umur >= 17 else "anak-anak"
+```
+
+Dipakai saat kedua cabang hanya menghasilkan satu nilai — jangan pakai untuk logika panjang.
+
+## Match-Case (Python 3.10+)
+
+```python
+match command:
+    case "start":
+        print("Menyalakan")
+    case "stop" | "quit":
+        print("Mematikan")
+    case _:
+        print("Perintah tidak dikenal")
+```
+
+`match` seperti `switch` di bahasa lain, tapi mendukung pola: literal, `case [a, b]` untuk list, `case {"kunci": v}` untuk dict, dan `case _` sebagai penangkap semua.
+
+Dua kekeliruan yang sering terjadi: menulis `if umur = 17` (itu penugasan, error), dan membandingkan object dengan `==` vs `is` — `==` membandingkan **nilai**, `is` membandingkan **identitas memori** (paling tepat hanya untuk `is None`).
+
+## Guard Clause (Anti-Nesting)
+
+Sarang `if` 4 tingkat sulit dibaca. Balik kondisi dan keluar lebih dulu:
+
+```python
+def proses(pesanan):
+    if not pesanan:            # guard — keluar cepat
+        return None
+    if pesanan["qty"] <= 0:
+        return "qty tidak valid"
+    # logika utama, tanpa indentasi bertumpuk
+    return pesanan["qty"] * pesanan["harga"]
+```
+
+## Di Dunia Nyata
+
+- Validasi form login: cek username kosong → password kurang dari 8 karakter → role admin, berurutan sebelum kirim ke server.
+- Penentuan ongkos kirim: `if berat <= 1: harga = 10000 elif berat <= 5: ... else: ...`.
+- Filter member: `if poin >= 1000 and aktif` → tampilkan badge VIP di dashboard.
+- Routing perintah bot Telegram: `match perintah` membedakan `/start`, `/help`, dan default.
+
+<div class="note">💡 Jangan bandingkan string dengan `is` — pakai `==` untuk nilai, `is` hanya untuk `is None`. `nama is "admin"` bisa False walau isinya "admin", karena dua objek string bisa berbeda di memori.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def klasifikasi_nilai(n):
+    if n >= 90:
+        return "A"
+    elif n >= 80:
+        return "B"
+    elif n >= 70:
+        return "C"
+    return "D"
+
+for n in [95, 85, 72, 50]:
+    print(f"Skor {n} → Nilai {klasifikasi_nilai(n)}")
+
+suhu = 38
+print("Demam!" if suhu >= 37.5 else "Normal")`} />

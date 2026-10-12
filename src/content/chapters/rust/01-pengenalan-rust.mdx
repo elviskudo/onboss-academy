@@ -1,0 +1,132 @@
+---
+title: "Pengenalan Rust"
+description: "Bahasa sistem yang aman dan cepat — fn main dan println!"
+order: 1
+quiz:
+  - q: "Fungsi utama program Rust adalah…"
+    options: ["func Main()", "fn main()", "def main()", "start()"]
+    answer: 1
+    explain: "Program Rust selalu dimulai dari fn main() — tanpa parameter dan tanpa nilai balik."
+  - q: "Untuk mencetak teks ke layar memakai makro…"
+    options: ["print!", "console.log!", "println!", "echo!"]
+    answer: 2
+    explain: "Tanda seru menandai makro. println! menambah baris baru, print! tanpa baris baru."
+  - q: "Rust disebut bahasa sistem karena…"
+    options: ["mengelola memori tanpa garbage collector", "hanya untuk web", "berjalan di browser", "dinamai dari warna karat"]
+    answer: 0
+    explain: "Rust memakai ownership dan pinjaman (borrowing) alih-alih garbage collector."
+  - q: "Komentar satu baris Rust ditulis dengan…"
+    options: ["//", "#", "--", "<!-- -->"]
+    answer: 0
+    explain: "Satu baris: //. Dokumentasi: ///. Multi baris: /* ... */."
+  - q: "Perintah mengompilasi dan menjalankan file tunggal adalah…"
+    options: ["rustc namafile.rs lalu ./namafile", "rust run", "cargo go", "build rust"]
+    answer: 0
+    explain: "rustc menghasilkan file binari dengan nama sama, lalu dijalankan langsung."
+example:
+  code: |
+    fn main() {
+        let nama = "OnBoss";
+        println!("Halo, {}!", nama);
+        println!("2 + 2 = {}", 2 + 2);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust menjamin **keamanan memori tanpa garbage collector**. Sintaksnya modern, tegas, dan compiler-nya menjelaskan kesalahanmu dengan detail.
+
+## Hello World
+
+```rust
+fn main() {
+    println!("Halo, Dunia!");
+}
+```
+
+Setiap program dimulai dari `fn main()`. Tanda seru `!` menandai bahwa `println!` adalah makro, bukan fungsi biasa.
+
+## Anatomi Program
+
+```rust
+fn hitung() -> i32 {
+    10 + 5
+}
+
+fn main() {
+    let hasil = hitung();
+    println!("Hasil: {}", hasil);
+}
+```
+
+Fungsi didefinisikan di luar `main` lalu dipanggil. Pernyataan terakhir tanpa titik koma menjadi nilai balik fungsi. Perhatikan tidak ada `return` di contoh — cukup ekspresi terakhirnya. Ekspresi adalah semua yang bernilai; pernyataan adalah yang tidak (mis. `let`), dan Rust mengizinkan keduanya di dalam blok.
+
+## Paradigma: Tanpa Class
+
+Rust **bukan bahasa berbasis class**. Yang dipakai:
+
+- **struct dan enum** → menggabungkan data (pengganti class)
+- **trait** → perilaku dan polymorphism (pengganti interface/abstract class)
+- **ownership & borrowing** → aturan memori yang dijaga compiler
+
+Jadi tidak ada `class`, `extends`, atau `new`. Data dideklarasikan dengan `struct`, perilaku ditambahkan lewat blok `impl`, dan kontrak bersama lewat `trait`.
+
+## Komentar
+
+```rust
+// komentar satu baris
+
+/// dokumentasi fungsi
+fn contoh() {}
+
+/*
+Komentar
+multi baris.
+*/
+```
+
+`///` membuat dokumentasi yang bisa dibaca oleh `cargo doc`.
+
+Ada juga komentar dokumen modul `//!` di awal file, yang menjelaskan tujuan seluruh modul.
+
+## Menjalankan Program
+
+Empat perintah yang paling sering dipakai:
+
+| Perintah | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| `rustc nama.rs` | Kompilasi file tunggal | Eksperimen cepat |
+| `cargo new proyek` | Buat proyek baru | Awal proyek |
+| `cargo run` | Build + jalankan | Saat mengembangkan |
+| `cargo test` | Jalankan unit test | Setiap ubah kode |
+
+Cargo adalah manajer paket *dan* build tool Rust — mendownload dependensi, mengompilasi, dan menjalankan test dengan satu perintah.
+
+Di kursus ini kamu tidak perlu menginstal apa pun — editor OnBoss menjalankan kode Rust kamu langsung.
+
+## Kenapa Belajar Rust?
+
+- **Sistem**: OS, driver, dan firmware tanpa gangguan segfault
+- **Performa**: setara C/C++ tanpa kejutan di runtime
+- **WebAssembly**: kode Rust berjalan cepat di browser
+- **Konsentrasi tinggi**: compiler menolak kode berisiko sebelum berjalan
+
+Empat alasan utamanya berpadu pada satu halaman depan: Rust adalah salah satu bahasa paling disukai di survei developer — karena kesalahan memori (use-after-free, data race) sudah tertangkap saat *compile*, bukan di tengah malam di produksi.
+
+## Di Dunia Nyata
+
+- **CLI `ripgrep`/`fd`**: pengganti grep dan find yang berjalan jauh lebih cepat
+- **Browser engine**: komponen Firefox (Stylo) dan Servo ditulis Rust
+- **Sistem operasi**: Android, Windows, dan Linux mulai memakai modul Rust
+- **Jaringan**: Cloudflare memakai Rust untuk proxy di jaringan global
+- **Embedded**: firmware dan driver perangkat keras dengan jejak memori kecil
+
+<div class="note">💡 Compiler Rust adalah guru terbaikmu. Jangan menyalin error begitu saja — baca pesannya, biasanya penyebab dan lokasi masalah sudah disebutkan.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let nama = "OnBoss Academy";
+    let tahun = 2026;
+    println!("Halo dari {}!", nama);
+    println!("Tahun: {}", tahun);
+    println!("2 + 2 = {}", 2 + 2);
+}`} />

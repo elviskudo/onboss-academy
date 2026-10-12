@@ -1,0 +1,225 @@
+---
+interface Props {
+  lang: string;
+  runtime: string;
+  pistonName?: string;
+  code: string;
+  title?: string;
+}
+const { lang = 'html', runtime = 'client-html', pistonName, code, title = 'Coba Contoh' } = Astro.props;
+---
+<div class="tryit my-6 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" data-runtime={runtime} data-lang={lang} data-piston={pistonName || lang}>
+  <div class="flex items-center justify-between border-b border-line bg-primary-soft/60 px-4 py-2.5">
+    <span class="text-sm font-bold text-primary-dark">{title}</span>
+    <button type="button" class="tryit-run inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm shadow-primary/30 hover:bg-primary-dark">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Jalankan
+    </button>
+  </div>
+  <div class="grid lg:grid-cols-2">
+    <div class="tryit-editor-host min-h-[220px] border-b border-line lg:border-b-0 lg:border-r"></div>
+    <div class="tryit-output min-h-[220px] bg-[#1E1E2E] p-4 font-mono text-[13px] leading-6 text-[#E2E8F0]">
+      <div class="tryit-logs whitespace-pre-wrap break-words"><span class="text-[#94A3B8]">▶ Klik “Jalankan” untuk melihat hasil…</span></div>
+      <div class="tryit-sql-result hidden"></div>
+    </div>
+  </div>
+  <textarea class="tryit-source hidden" aria-hidden="true">{code}</textarea>
+</div>
+
+<script>
+  import { basicSetup } from 'codemirror';
+  import { EditorView } from '@codemirror/view';
+  import { EditorState } from '@codemirror/state';
+  import { html } from '@codemirror/lang-html';
+  import { css } from '@codemirror/lang-css';
+  import { javascript } from '@codemirror/lang-javascript';
+  import { python } from '@codemirror/lang-python';
+  import { java } from '@codemirror/lang-java';
+  import { cpp } from '@codemirror/lang-cpp';
+  import { sql } from '@codemirror/lang-sql';
+  import { oneDark } from '@codemirror/theme-one-dark';
+
+  const LANG_EXT: Record<string, any> = {
+    html: html(), css: css(), javascript: javascript(), reactjs: javascript({ jsx: true }),
+    vuejs: javascript(), typescript: javascript({ typescript: true }), python: python(),
+    java: java(), cpp: cpp(), c: cpp(), csharp: cpp(), sql: sql(), mysql: sql(), postgresql: sql(),
+  };
+
+  const editors = new Map<Element, EditorView>();
+
+  function getEditor(root: Element): EditorView {
+    let ed = editors.get(root);
+    if (ed) return ed;
+    const host = root.querySelector('.tryit-editor-host') as HTMLElement;
+    const source = root.querySelector('.tryit-source') as HTMLTextAreaElement;
+    const lang = root.getAttribute('data-lang') || 'javascript';
+    ed = new EditorView({
+      parent: host,
+      state: EditorState.create({
+        doc: source.value,
+        extensions: [basicSetup, oneDark, LANG_EXT[lang] ?? EditorState.readOnly.of(false), EditorView.lineWrapping],
+      }),
+    });
+    editors.set(root, ed);
+    return ed;
+  }
+
+  function logsOf(root: Element) {
+    return root.querySelector('.tryit-logs') as HTMLElement;
+  }
+  function setLogs(root: Element, html: string) {
+    const el = logsOf(root);
+    el.innerHTML = html;
+  }
+  function esc(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function iframeConsoleScript() {
+    return `<script>
+(function(){
+  function post(level, text){ parent.postMessage({ __oba: true, level: level, text: text }, '*'); }
+  function fmt(v){
+    if (typeof v === 'string') return v;
+    try { return JSON.stringify(v, null, 1); } catch(e) { return String(v); }
+  }
+  ['log','info','warn','error'].forEach(function(m){
+    var orig = console[m].bind(console);
+    console[m] = function(){ var t = Array.prototype.map.call(arguments, fmt).join(' '); post(m === 'error' ? 'error' : (m === 'warn' ? 'warn' : 'log'), t); orig.apply(null, arguments); };
+  });
+  window.onerror = function(msg, src, line){ post('error', msg + ' (baris ' + line + ')'); };
+  window.onunhandledrejection = function(e){ post('error', 'Unhandled rejection: ' + (e.reason && e.reason.message || e.reason)); };
+})();
+<\/script>`;
+  }
+
+  function runClient(root: Element, kind: string, code: string) {
+    const token = Math.random().toString(36).slice(2);
+    let inner = '';
+    if (kind === 'client-html') {
+      inner = iframeConsoleScript() + code;
+    } else if (kind === 'client-css') {
+      inner = `<style>${code}</style>` + iframeConsoleScript() + `
+<div class="container" style="padding:16px">
+  <h1>Heading 1</h1>
+  <p>Paragraf contoh untuk melihat efek styling CSS kamu.</p>
+  <button class="btn">Tombol</button>
+  <a href="#" class="link">Link</a>
+  <ul><li>Item 1</li><li>Item 2</li></ul>
+</div>`;
+    } else {
+      inner = iframeConsoleScript() + `<script>try {${code}\n}catch(e){console.error(e.message);}<\/script>`;
+    }
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', 'allow-scripts');
+    iframe.style.width = '100%';
+    iframe.style.minHeight = '200px';
+    iframe.style.border = 'none';
+    iframe.style.background = '#fff';
+    iframe.srcdoc = `<!doctype html><html><head><meta charset="utf-8">${kind === 'client-html' ? '' : `<style>body{font-family:system-ui,sans-serif;color:#17181D}</style>`}</head><body>${inner}</body></html>`;
+
+    const out = logsOf(root);
+    out.innerHTML = '';
+    const holder = document.createElement('div');
+    holder.className = 'tryit-frame';
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        const h = iframe.contentDocument?.body?.scrollHeight || 200;
+        iframe.style.minHeight = Math.min(Math.max(h + 16, 160), 520) + 'px';
+      }, 60);
+    });
+    out.after(iframe);
+
+    const onMsg = (e: MessageEvent) => {
+      if (e.source !== iframe.contentWindow || !e.data || e.data.__oba !== true) return;
+      const line = document.createElement('div');
+      const color = e.data.level === 'error' ? 'text-[#F87171]' : e.data.level === 'warn' ? 'text-[#FBBF24]' : 'text-[#E2E8F0]';
+      line.className = color + ' whitespace-pre-wrap break-words';
+      line.textContent = (e.data.level === 'error' ? '✖ ' : '› ') + e.data.text;
+      out.appendChild(line);
+      void token;
+    };
+    window.addEventListener('message', onMsg);
+    // bersihkan listener lama agar tidak dobel saat run berikutnya
+    (root as any)._obaCleanup?.();
+    (root as any)._obaCleanup = () => window.removeEventListener('message', onMsg);
+  }
+
+  async function runPiston(root: Element, language: string, code: string) {
+    setLogs(root, '<span class="text-[#94A3B8]">⏳ Menjalankan di server…</span>');
+    try {
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, version: 'latest', files: [{ name: 'main', content: code }] }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setLogs(root, `<span class="text-[#F87171]">✖ ${esc(data.error || 'Gagal menjalankan kode.')}</span>`);
+        return;
+      }
+      let html = '';
+      if (data.compile) html += `<div class="text-[#FBBF24] whitespace-pre-wrap">${esc(data.compile)}</div>`;
+      if (data.stdout) html += `<div class="whitespace-pre-wrap break-words">${esc(data.stdout)}</div>`;
+      if (data.stderr) html += `<div class="text-[#F87171] whitespace-pre-wrap break-words">${esc(data.stderr)}</div>`;
+      if (!html) html = '<span class="text-[#94A3B8]">(tidak ada output)</span>';
+      setLogs(root, html);
+    } catch {
+      setLogs(root, '<span class="text-[#F87171]">✖ Runtime tidak bisa dihubungi. Coba lagi.</span>');
+    }
+  }
+
+  async function runSql(root: Element, code: string) {
+    setLogs(root, '<span class="text-[#94A3B8]">⏳ Menjalankan query…</span>');
+    try {
+      const initSqlJs = (await import('sql.js')).default;
+      const SQL = await initSqlJs({ locateFile: (f: string) => `/sql-wasm.wasm` });
+      const db = new SQL.Database();
+      db.run(`CREATE TABLE karyawan (id INTEGER PRIMARY KEY, nama TEXT, jabatan TEXT, gaji INTEGER, dept TEXT);
+INSERT INTO karyawan VALUES
+(1,'Sari Wijaya','Frontend Developer',9500000,'Engineering'),
+(2,'Budi Santoso','Data Analyst',8800000,'Data'),
+(3,'Rina Kartika','UI Designer',7500000,'Design'),
+(4,'Andi Pratama','Backend Developer',10500000,'Engineering'),
+(5,'Dewi Lestari','Product Manager',12000000,'Product'),
+(6,'Joko Susilo','QA Engineer',7000000,'Engineering'),
+(7,'Maya Putri','Data Scientist',11000000,'Data'),
+(8,'Rizky Hidayat','DevOps Engineer',11500000,'Engineering');
+CREATE TABLE proyek (id INTEGER PRIMARY KEY, nama TEXT, lead_id INTEGER, budget INTEGER);
+INSERT INTO proyek VALUES (1,'Redesign App',4,25000000),(2,'Pipeline Data',7,18000000),(3,'Mobile Launch',5,40000000);`);
+      const statements = code.split(';').map((s) => s.trim()).filter(Boolean);
+      let html = '';
+      for (const stmt of statements) {
+        const res = db.exec(stmt);
+        for (const r of res) {
+          html += `<div class="mb-3"><table class="w-full text-[12px]"><thead><tr class="text-[#94A3B8]">${r.columns.map((c) => `<th class="border-b border-[#334155] px-2 py-1 text-left font-semibold">${esc(c)}</th>`).join('')}</tr></thead><tbody>${r.values.map((row) => `<tr>${row.map((v) => `<td class="border-b border-[#1E293B] px-2 py-1">${v === null ? '<span class="text-[#64748B]">NULL</span>' : esc(String(v))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+        }
+      }
+      setLogs(root, html || '<span class="text-[#94A3B8]">(query selesai, tanpa hasil tampilan)</span>');
+    } catch (e: any) {
+      setLogs(root, `<span class="text-[#F87171]">✖ ${esc(e?.message || String(e))}</span>`);
+    }
+  }
+
+  document.querySelectorAll('.tryit').forEach((root) => {
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        getEditor(root);
+        io.disconnect();
+      }
+    }, { rootMargin: '200px' });
+    io.observe(root);
+
+    root.querySelector('.tryit-run')?.addEventListener('click', () => {
+      const runtime = root.getAttribute('data-runtime') || 'client-js';
+      const code = getEditor(root).state.doc.toString();
+      if (runtime === 'piston') {
+        void runPiston(root, root.getAttribute('data-piston') || 'python', code);
+      } else if (runtime === 'sql') {
+        void runSql(root, code);
+      } else {
+        runClient(root, runtime, code);
+      }
+    });
+  });
+</script>

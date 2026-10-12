@@ -1,0 +1,123 @@
+---
+title: "Unsupervised Learning"
+description: "Menemukan struktur tersembunyi dari data tanpa label — clustering dan reduksi dimensi"
+order: 3
+quiz:
+  - q: "Unsupervised learning bekerja pada data…"
+    options: ["Tanpa label", "Dengan label lengkap", "Hanya berupa gambar", "Yang sudah diurutkan manual"]
+    answer: 0
+    explain: "Karena tidak ada kunci jawaban, model mencari pola/struktur internal data."
+  - q: "Contoh paling klasik unsupervised adalah…"
+    options: ["Prediksi harga rumah", "Clustering pelanggan serupa", "Deteksi spam", "Klasifikasi tumor"]
+    answer: 1
+    explain: "Clustering mengelompokkan data yang mirip tanpa kategori yang ditentukan sebelumnya."
+  - q: "Algoritma clustering yang paling terkenal adalah…"
+    options: ["Logistic Regression", "Linear Regression", "K-Means", "Decision Stump"]
+    answer: 2
+    explain: "K-Means mempartisi data menjadi k kelompok berdasarkan jarak ke centroid."
+  - q: "Tujuan reduksi dimensi adalah…"
+    options: ["Merangkum banyak kolom menjadi sedikit komponen utama", "Menambah kolom fitur", "Menghapus label", "Membuat data jadi label"]
+    answer: 0
+    explain: "PCA dan sejenisnya memadatkan fitur sambil mempertahankan variasi penting."
+  - q: "K-Means membutuhkan jumlah kelompok…"
+    options: ["Selalu 2", "Ditentukan sebelumnya (k)", "Selalu 100", "Tidak perlu dihitung sama sekali"]
+    answer: 1
+    explain: "Nilai k adalah keputusan analis; teknik seperti elbow method membantu memilihnya."
+example:
+  code: |
+    titik = [(1, 2), (1, 3), (8, 9), (9, 8)]
+    pusat = [(1, 2), (9, 9)]
+
+    for x, y in titik:
+        jarak = [round((x - a) ** 2 + (y - b) ** 2) for a, b in pusat]
+        kelompok = jarak.index(min(jarak))
+        print(f"({x}, {y}) masuk kelompok {kelompok}")
+---
+
+Tanpa label, tugas model berubah: bukan menebak jawaban, melainkan **menemukan struktur** yang tidak terlihat mata manusia.
+
+## Mengapa Data Tanpa Label?
+
+Data berlabel mahal dan langka: butuh ahli waktu, sementara data mentah dari aplikasi tersedia dalam jumlah besar. Unsupervised membantu memahami data mentah itu sebelum (atau tanpa) labeling.
+
+## 3 Pendekatan Utama Unsupervised
+
+| Pendekatan | Pertanyaan yang dijawab | Contoh algoritma |
+|------------|-------------------------|------------------|
+| Clustering | kelompok mana data ini? | K-Means, DBSCAN |
+| Reduksi dimensi | bagaimana meremas kolom? | PCA |
+| Asosiasi | apa yang sering muncul bersama? | Apriori |
+
+## Clustering dengan K-Means (Konsep)
+
+```python
+titik = [(1, 2), (1, 3), (8, 9), (9, 8)]
+pusat = [(1, 2), (9, 9)]   # inisialisasi 2 centroid
+
+for x, y in titik:
+    jarak = [((x - a) ** 2 + (y - b) ** 2) for a, b in pusat]
+    print((x, y), "-> kelompok", jarak.index(min(jarak)))
+```
+
+Intuisinya: setiap titik masuk ke kelompok centroid terdekat, lalu centroid dihitung ulang dari anggotanya — diulang sampai stabil. 4 langkah K-Means per iterasi:
+
+1. Pusatkan `k` centroid acak.
+2. Setiap titik pilih centroid terdekat.
+3. Hitung ulang tiap centroid dari anggotanya.
+4. Ulangi sampai anggota tidak berpindah lagi.
+
+Jarak yang dipakai paling umum adalah jarak kuadrat:
+
+```
+jarak(a, b) = (a.x - b.x)^2 + (a.y - b.y)^2
+```
+
+## Kasus Penggunaan Clustering
+
+- **Segmentasi pelanggan** — belanja rutin vs musiman.
+- **Pengelompokkan dokumen** — berita olahraga, politik, teknologi.
+- **Deteksi anomali** — titik yang jauh dari semua kelompok.
+
+## Reduksi Dimensi
+
+```python
+# Data 3 kolom -> 2 dimensi untuk visualisasi
+data = [
+    (1, 5, 2),
+    (2, 6, 3),
+    (8, 1, 9),
+    (9, 2, 8),
+]
+# PCA mengubahnya menjadi koordinat (x, y) yang mempertahankan variasi terbesar
+```
+
+Dua kolom hasil kompresi membuat data bisa diplot dan dianalisis secara visual. Reduksi dimensi juga menurunkan biaya komputasi dan mengurangi risiko noise berlebih.
+
+## Asosiasi: Pola yang Sering Muncul Bersama
+
+```python
+# "transaksi yang sering terjadi bersamaan"
+keranjang = [
+    ["roti", "susu"],
+    ["roti", "mentega", "susu"],
+    ["telur", "roti"],
+]
+```
+
+Aturan seperti "yang beli roti cenderung beli susu" ditemukan dengan algoritma asosiasi (market basket analysis).
+
+## Batasan
+
+- Hasil clustering **tidak otomatis bermakna** — interpretasi tetap perlu manusia.
+- Skala fitur berbeda bisa menutupi pola; normalisasi diperlukan sebelum menghitung jarak.
+- Hasil bisa berbeda bila jumlah kelompok k berubah.
+
+## Di Dunia Nyata
+
+- **Segmentasi member toko** — kelompokkan pelanggan berdasarkan frekuensi dan nilai belanja, lalu buat promo per kelompok.
+- **Kompresi gambar** — palet warna dipilih lewat clustering piksel, foto jadi kecil namun tetap mirip.
+- **Deteksi transaksi mencurigakan** — titik yang jauh dari semua cluster belanja ditandai untuk ditinjau.
+- **Organisasi inbox** — surel dikelompokkan otomatis ke promosi, sosial, dan utama.
+- **Riset pasar awal** — clustering ulasan produk menemukan tema keluhan tanpa menyusun kategori manual.
+
+<div class="note">💡 Unsupervised cocok untuk eksplorasi: jalankan clustering dulu untuk memahami bentuk data, baru tentukan apakah supervised learning layak dilanjutkan.</div>

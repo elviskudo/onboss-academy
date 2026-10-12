@@ -1,0 +1,105 @@
+---
+title: "Large Language Model"
+description: "Bagaimana LLM bekerja — prediksi token berikutnya, skala, dan kemampuannya"
+order: 7
+quiz:
+  - q: "LLM secara fundamental belajar untuk…"
+    options: ["Menyimpan file", "Memprediksi token berikutnya yang paling mungkin", "Menghitung matriks tanpa data", "Menulis aturan tata bahasa manual"]
+    answer: 1
+    explain: "Seluruh kemampuan percakapan muncul dari tugas sederhana: menebak token berikutnya."
+  - q: "Fenomena emergent ability adalah…"
+    options: ["Bug tokenizer", "Fitur spreadsheet", "Kemampuan yang muncul pada skala model besar", "Error memori GPU"]
+    answer: 2
+    explain: "Misal kemampuan penalaran berjenjang yang tidak terlihat pada model kecil."
+  - q: "Ukuran model LLM biasanya dinyatakan dalam…"
+    options: ["Jumlah baris kode", "Jumlah parameter", "Ukuran file .exe", "Jumlah developer"]
+    answer: 1
+    explain: "Parameter (miliaran) menentukan kapasitas menyimpan pola dari data."
+  - q: "Suhu (temperature) rendah pada sampling menghasilkan…"
+    options: ["Keluaran selalu acak total", "Model lebih cepat training", "Keluaran lebih konservatif dan deterministik", "Tokenizer berubah"]
+    answer: 2
+    explain: "Temperature rendah menekan probabilitas token tidak lazim — jawaban lebih aman."
+  - q: "Konteks (context window) adalah…"
+    options: ["Jumlah token yang bisa diproses sekali jalan", "Jumlah file di server", "Kecepatan internet", "Nama optimizer"]
+    answer: 0
+    explain: "Makin luas konteks, makin banyak dokumen/riwayat obrolan yang bisa dibaca model."
+example:
+  code: |
+    # Distribusi probabilitas token berikutnya (ilustrasi)
+    kandidat = {"nya": 0.6, " cuaca": 0.3, "xyz": 0.1}
+
+    for token, p in sorted(kandidat.items(), key=lambda x: -x[1]):
+        print(f"{token:8} {p:.2f}")
+    print("Model memilih token dengan probabilitas tertinggi")
+---
+
+**Large Language Model** adalah Transformer berukuran raksasa yang dilatih pada korpus teks internet — lalu di-"haluskan" agar berguna bagi manusia.
+
+## Tunggalnya Tugas: Prediksi Token
+
+```python
+kandidat = {"nya": 0.6, " cuaca": 0.3, " xyz": 0.1}
+
+for token, p in sorted(kandidat.items(), key=lambda x: -x[1]):
+    print(f"{token:10} {p:.2f}")
+
+# Model memilih kandidat dengan probabilitas tertinggi -> "nya"
+```
+
+Dari prediksi token berikutnya berkali-kali, muncul ringkasan, terjemahan, kode, bahkan dialog.
+
+## 4 Komponen Skala
+
+| Komponen | Apa yang diperbesar | Dampak |
+|----------|----------------------|--------|
+| Data | jumlah dan keragaman token | cakupan pola meningkat |
+| Parameter | bobot model | kapasitas representasi meningkat |
+| Komputasi | operasi training | data dan parameter dapat dimanfaatkan |
+| Konteks | token per permintaan | lebih banyak informasi dapat dibaca |
+
+```
+LLM = Transformer + korpus besar + komputasi besar + penyempurnaan
+```
+
+Data, parameter, dan komputasi perlu diseimbangkan. Model besar dengan data terlalu sedikit cenderung menghafal; data besar dengan model terlalu kecil tidak tertampung. Context window berbeda: ia menentukan berapa banyak token yang dibaca sekali jalan, bukan berapa banyak pengetahuan yang pasti digunakan dengan benar.
+
+## 3 Tahap dari Pra-Latih ke Asisten
+
+| Tahap | Data | Hasil |
+|-------|------|-------|
+| Pre-training | teks masif | model dasar yang bisa melanjutkan teks |
+| Supervised fine-tuning | contoh instruksi-jawaban | model mengikuti perintah |
+| Alignment preferensi | perbandingan/umpan balik manusia | respons lebih membantu dan aman |
+
+RLHF adalah salah satu metode alignment; model modern juga dapat memakai optimasi preferensi langsung. Tahap penyelarasan tidak menambahkan kebenaran universal—ia mengubah kecenderungan respons sesuai data preferensi.
+
+## Sampling: Mengontrol Keluaran
+
+```python
+# temperature rendah -> pilihan aman
+# temperature tinggi -> pilihan lebih beragam/berani
+suhu = 0.2
+print(f"temperature={suhu} -> keluaran konservatif")
+
+suhu = 1.2
+print(f"temperature={suhu} -> keluaran lebih variatif")
+```
+
+Penyelarasan ini dipakai menyeimbangkan kreativitas dan keandalan.
+
+## Batasan yang Harus Diingat
+
+- **Halusinasi** — model bisa mengarang fakta dengan nada meyakinkan.
+- **Pengetahuan terpotong** — data latih punya tanggal berhenti.
+- **Perhitungan tidak terjamin** — operasi presisi perlu kalkulator atau alat eksternal.
+- **Bias data** — stereotip dalam korpus dapat muncul kembali pada keluaran.
+
+## Di Dunia Nyata
+
+- **Asisten layanan pelanggan** — LLM menyusun jawaban, tetapi aturan refund diambil dari sistem/RAG.
+- **Coding assistant** — model melengkapi fungsi; developer tetap menjalankan test dan pemeriksaan keamanan.
+- **Ekstraksi dokumen** — invoice diubah menjadi JSON lalu divalidasi terhadap schema.
+- **Ringkasan rapat** — transkrip panjang dipadatkan menjadi keputusan dan action item untuk diperiksa peserta.
+- **Pembuatan konten** — temperature rendah dipakai untuk format konsisten, lebih tinggi untuk brainstorming.
+
+<div class="note">💡 Perlakukan LLM sebagai rekan kerja yang sangat mahir merangkai bahasa tetapi wajib diverifikasi untuk fakta kritis — terutama angka, kutipan, dan referensi hukum atau medis.</div>

@@ -1,0 +1,168 @@
+---
+title: "Sorting: Bubble, Selection, & Merge Sort"
+description: "Tiga algoritma pengurutan paling mengajarkan cara berpikir algoritmik"
+order: 6
+quiz:
+  - q: "Bubble sort bekerja dengan…"
+    options: ["Membagi list dua lalu menggabungkan", "Bertukar elemen bersebelahan yang salah urutan berulang kali", "Memilih minimum lalu menaruhnya di depan", "Membalik seluruh list"]
+    answer: 1
+    explain: "Elemen besar 'mengambang' ke akhir seperti gelembung — makanya bernama bubble."
+  - q: "Kompleksitas bubble sort pada kasus terburuk adalah…"
+    options: ["O(n)", "O(n log n)", "O(n^2)", "O(log n)"]
+    answer: 2
+    explain: "Nested loop: tiap pass membandingkan hampir semua pasangan."
+  - q: "Selection sort memilih…"
+    options: ["Elemen terbesar di sisa list, lalu menukarnya ke posisi akhir sisa", "Elemen acak", "Tengah list terus", "Node linked list"]
+    answer: 0
+    explain: "Di setiap langkah, minimum sisa list dicari lalu diposisikan di depan bagian terurut."
+  - q: "Merge sort memiliki kompleksitas…"
+    options: ["O(n^2)", "O(n log n)", "O(n)", "O(log n)"]
+    answer: 1
+    explain: "Pembagian log n level, tiap level menggabungkan total n elemen — stabil di O(n log n)."
+  - q: "Keunggulan merge sort dibanding dua algoritma sebelumnya adalah…"
+    options: ["Kodenya paling pendek", "Tetap O(n log n) untuk kasus terburuk dan cocok untuk data besar", "Tidak butuh memori tambahan", "Hanya bekerja untuk angka"]
+    answer: 1
+    explain: "Bubble dan selection selalu O(n^2); merge sort konsisten O(n log n) bahkan untuk data terbalik."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Mengurutkan data adalah masalah klasik yang memperkenalkas berbagai strategi algoritma — dari yang intuitif sampai yang efisien.
+
+## Bubble Sort
+
+```python
+def bubble_sort(a):
+    a = list(a)
+    n = len(a)
+    for i in range(n):
+        for j in range(n - 1 - i):
+            if a[j] > a[j + 1]:
+                a[j], a[j + 1] = a[j + 1], a[j]
+    return a
+
+print(bubble_sort([5, 3, 8, 1, 2]))   # [1, 2, 3, 5, 8]
+```
+
+Tiap pass "mengambangkan" elemen terbesar ke posisi akhir yang belum terkunci. Sederhana, tapi O(n^2) — hanya layak untuk data sangat kecil.
+
+## Selection Sort
+
+```python
+def selection_sort(a):
+    a = list(a)
+    n = len(a)
+    for i in range(n):
+        min_idx = i
+        for j in range(i + 1, n):
+            if a[j] < a[min_idx]:
+                min_idx = j
+        a[i], a[min_idx] = a[min_idx], a[i]
+    return a
+
+print(selection_sort([5, 3, 8, 1, 2]))   # [1, 2, 3, 5, 8]
+```
+
+Tiap langkah memilih minimum dari sisa list lalu menukarnya ke posisi depan. Jumlah penukaran minimal, tapi tetap O(n^2).
+
+## Merge Sort
+
+```python
+def merge_sort(a):
+    if len(a) <= 1:
+        return a
+    mid = len(a) // 2
+    kiri = merge_sort(a[:mid])
+    kanan = merge_sort(a[mid:])
+    return gabung(kiri, kanan)
+
+def gabung(kiri, kanan):
+    hasil = []
+    i = j = 0
+    while i < len(kiri) and j < len(kanan):
+        if kiri[i] <= kanan[j]:
+            hasil.append(kiri[i]); i += 1
+        else:
+            hasil.append(kanan[j]); j += 1
+    hasil.extend(kiri[i:])
+    hasil.extend(kanan[j:])
+    return hasil
+
+print(merge_sort([5, 3, 8, 1, 2]))   # [1, 2, 3, 5, 8]
+```
+
+Prinsip **divide & conquer**: pecah list dua, urutkan rekursif, lalu gabungkan dua bagian yang sudah terurut.
+
+## Perbandingan
+
+| Algoritma | Terburuk | Terbaik | Memori tambahan |
+|-----------|----------|---------|-----------------|
+| Bubble | O(n^2) | O(n^2) | O(1) |
+| Selection | O(n^2) | O(n^2) | O(1) |
+| Merge | O(n log n) | O(n log n) | O(n) |
+
+## Sifat Algoritma Sorting
+
+Sorting dinilai lewat **4 sifat**: kompleksitas waktu, memori tambahan, stabilitas, dan kemampuan in-place. Algoritma stabil menjaga urutan relatif elemen berkunci sama; ini penting ketika mengurutkan data beberapa tahap. Bubble dan merge pada implementasi di sini stabil, sedangkan selection tidak stabil secara umum.
+
+| Algoritma | Waktu terbaik/terburuk | Stabil | In-place | Kapan dipakai |
+|---|---|---|---|---|
+| Bubble teroptimasi | O(n) / O(n²) | ya | ya | edukasi atau data sangat kecil |
+| Selection | O(n²) / O(n²) | tidak | ya | saat jumlah write harus sedikit |
+| Merge | O(n log n) / O(n log n) | ya | tidak | data besar dan stabilitas penting |
+| Timsort Python | O(n) / O(n log n) | ya | implementasi internal | hampir semua kode produksi |
+
+Python menerima `key`, sehingga objek tidak perlu diubah. `sorted(produk, key=lambda p: (p["harga"], p["nama"]))` mengurutkan dua kriteria. Opsi `reverse=True` membalik arah. Jangan menulis comparator manual bila key cukup; key dihitung sekali per elemen dan lebih mudah diuji.
+
+## Di Dunia Nyata
+
+- Mengurutkan invoice berdasarkan tanggal lalu nomor untuk laporan stabil.
+- Menampilkan produk berdasarkan harga dan nama sebagai tie-breaker.
+- Merge sort eksternal menggabungkan potongan file yang lebih besar dari RAM.
+- Timsort memanfaatkan run yang sudah hampir terurut pada data aplikasi.
+
+<div class="note">💡 Di produksi Python pakai `sorted(data)` atau `data.sort()` — implementasi Timsort (gabungan merge + insertion) yang sudah dioptimasi C. Tiga algoritma di atas dipelajari untuk memahami prinsip, bukan dipakai ulang.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def bubble_sort(a):
+    a = list(a)
+    n = len(a)
+    for i in range(n):
+        for j in range(n - 1 - i):
+            if a[j] > a[j + 1]:
+                a[j], a[j + 1] = a[j + 1], a[j]
+    return a
+
+def selection_sort(a):
+    a = list(a)
+    n = len(a)
+    for i in range(n):
+        m = i
+        for j in range(i + 1, n):
+            if a[j] < a[m]:
+                m = j
+        a[i], a[m] = a[m], a[i]
+    return a
+
+def merge_sort(a):
+    if len(a) <= 1:
+        return a
+    mid = len(a) // 2
+    kiri = merge_sort(a[:mid])
+    kanan = merge_sort(a[mid:])
+    hasil = []
+    i = j = 0
+    while i < len(kiri) and j < len(kanan):
+        if kiri[i] <= kanan[j]:
+            hasil.append(kiri[i]); i += 1
+        else:
+            hasil.append(kanan[j]); j += 1
+    hasil.extend(kiri[i:])
+    hasil.extend(kanan[j:])
+    return hasil
+
+data = [5, 3, 8, 1, 2, 9, 0, 4]
+print("asli   :", data)
+print("bubble :", bubble_sort(data))
+print("select :", selection_sort(data))
+print("merge  :", merge_sort(data))
+print("python :", sorted(data))`} />

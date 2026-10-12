@@ -1,0 +1,133 @@
+---
+title: "DML: INSERT, UPDATE, DELETE"
+description: "Menambah, mengubah, dan menghapus data — plus praktik laporan lengkap"
+order: 10
+quiz:
+  - q: "Ada berapa perintah DML inti yang dipakai untuk CRUD?"
+    options: ["3", "4", "5", "6"]
+    answer: 1
+    explain: "4 perintah CRUD: INSERT (create), SELECT (read), UPDATE, dan DELETE."
+  - q: "UPDATE tanpa WHERE akan…"
+    options: ["Mengubah satu baris saja", "Mengubah semua baris di tabel", "Error", "Tidak melakukan apa-apa"]
+    answer: 1
+    explain: "UPDATE tanpa WHERE berlaku untuk SEMUA baris — kecelakaan klasik di produksi."
+  - q: "Bedanya DELETE dan DROP adalah…"
+    options: ["DROP menghapus tabel beserta strukturnya, DELETE menghapus isi baris", "Sama saja", "DELETE lebih permanen", "DROP hanya untuk kolom"]
+    answer: 0
+    explain: "DELETE = hapus data di dalam tabel; DROP = hapus tabel (struktur ikut hilang)."
+  - q: "Perintah membatalkan semua perubahan transaksi aktif adalah…"
+    options: ["COMMIT", "ROLLBACK", "DROP", "RESET"]
+    answer: 1
+    explain: "ROLLBACK mengembalikan keadaan sebelum BEGIN selama perubahan belum di-COMMIT."
+  - q: "Praktik terbaik sebelum menjalankan UPDATE besar adalah…"
+    options: ["Langsung eksekusi", "Jalankan SELECT dengan WHERE yang sama", "Matikan WHERE", "Hapus backup"]
+    answer: 1
+    explain: "Uji WHERE dengan SELECT dulu — pastikan hanya baris yang benar yang akan berubah."
+example:
+  code: |
+    UPDATE karyawan
+    SET gaji = gaji * 1.10
+    WHERE dept = 'Design';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+DML (*Data Manipulation Language*) mengelola isi tabel. Empat perintah intinya memetakan langsung ke CRUD: `INSERT` (Create), `SELECT` (Read), `UPDATE`, dan `DELETE`.
+
+## 4 Operasi CRUD
+
+| CRUD | SQL | Fungsi | Risiko Utama |
+|------|-----|--------|---------------|
+| Create | `INSERT` | menambah baris | nilai kolom tertukar |
+| Read | `SELECT` | membaca baris | mengambil data terlalu banyak |
+| Update | `UPDATE` | mengubah baris | lupa WHERE mengubah semua |
+| Delete | `DELETE` | menghapus baris | lupa WHERE menghapus semua |
+
+## INSERT: Menambah Baris
+
+```sql
+INSERT INTO karyawan (id, nama, jabatan, gaji, dept)
+VALUES (9, 'Tono Wijaya', 'Mobile Developer', 9800000, 'Engineering');
+```
+
+Daftar kolom dan nilai harus sejajar jumlah serta tipenya. Menyebut nama kolom membuat query tahan bila urutan kolom tabel berubah. Untuk beberapa baris, gunakan satu INSERT dengan beberapa tuple `VALUES` agar database hanya melakukan satu perjalanan jaringan.
+
+## UPDATE: Mengubah Nilai
+
+```sql
+UPDATE karyawan
+SET gaji = gaji + 500000
+WHERE dept = 'Data';
+```
+
+`SET` menyatakan perubahan; `WHERE` menentukan baris mana yang berubah. Sebelum eksekusi, jalankan `SELECT * FROM karyawan WHERE dept = 'Data'` dan cocokkan jumlah baris. Tanpa WHERE, semua 8 karyawan akan mendapat kenaikan.
+
+## DELETE: Menghapus Baris
+
+```sql
+DELETE FROM karyawan
+WHERE id = 9;
+```
+
+Baris dengan `id = 9` terhapus. Kalau ada tabel lain yang merujuknya lewat foreign key, database dapat menolak DELETE atau menjalankan aksi relasi (`CASCADE`, `SET NULL`) sesuai skema.
+
+## 4 Perintah yang Sering Tertukar
+
+| Perintah | Efek | WHERE? | Struktur Tabel Tetap? |
+|----------|------|--------|-----------------------|
+| `DELETE FROM t` | hapus baris terpilih/semua | Bisa | Ya |
+| `UPDATE t SET ...` | ubah nilai | Bisa | Ya |
+| `TRUNCATE TABLE t` | kosongkan semua baris cepat | Tidak | Ya |
+| `DROP TABLE t` | hapus tabel | Tidak | Tidak |
+
+`TRUNCATE` dan `DROP` adalah DDL, bukan DML. Di beberapa database keduanya melakukan commit otomatis, jadi jangan menganggap ROLLBACK selalu dapat menyelamatkanmu.
+
+## Transaksi: Aman dari Kecelakaan
+
+```sql
+BEGIN;
+UPDATE karyawan SET gaji = gaji * 1.10 WHERE dept = 'Engineering';
+-- periksa dulu hasilnya
+SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering';
+ROLLBACK;
+```
+
+Tiga perintah transaksi inti:
+
+| Perintah | Fungsi |
+|----------|--------|
+| `BEGIN` | mulai unit perubahan |
+| `COMMIT` | simpan semua perubahan |
+| `ROLLBACK` | batalkan sejak BEGIN |
+
+Untuk transfer saldo, UPDATE pengirim dan penerima harus ada dalam transaksi yang sama: keduanya berhasil atau keduanya batal. Itulah sifat **atomic** dalam ACID.
+
+## Praktik Laporan Akhir
+
+```sql
+SELECT dept,
+       COUNT(*) AS jumlah,
+       SUM(gaji) AS total,
+       MAX(gaji) - MIN(gaji) AS rentang
+FROM karyawan
+GROUP BY dept
+ORDER BY total DESC;
+```
+
+Query ini memadukan pemodelan relasi, tipe angka, fungsi agregat, operator aritmatika, GROUP BY, dan pengurutan — pondasi SQL yang dipakai analis maupun backend engineer.
+
+## Di Dunia Nyata
+
+- **Checkout toko online**: INSERT pesanan + kurangi stok dalam satu transaksi agar tidak ada order tanpa stok.
+- **Kenaikan gaji satu divisi**: SELECT target dahulu, UPDATE dengan WHERE dept, cek hasil, lalu COMMIT.
+- **Penghapusan akun**: soft delete memakai UPDATE `deleted_at` agar audit tetap ada; DELETE fisik hanya setelah masa retensi.
+- **Impor data massal**: satu INSERT multi-baris jauh lebih cepat daripada mengirim ribuan INSERT satu per satu.
+
+<div class="note">💡 Di editor OnBoss, database dikembalikan ke data contoh awal setiap kali query dijalankan. INSERT, UPDATE, dan DELETE di sini aman untuk bereksperimen tanpa merusak data tetap.</div>
+
+<TryIt lang="sql" runtime="sql" code={`SELECT p.nama AS proyek, p.budget,
+       k.nama AS ketua, k.gaji,
+       p.budget - k.gaji AS selisih_budget_gaji
+FROM proyek p
+JOIN karyawan k ON p.lead_id = k.id
+ORDER BY selisih_budget_gaji DESC;`} />

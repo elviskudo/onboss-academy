@@ -1,0 +1,150 @@
+---
+title: "Stored Procedure"
+description: "Membungkus query jadi prosedur tersimpan — parameter, OUTPUT, dan EXEC"
+order: 6
+quiz:
+  - q: "Stored procedure disimpan…"
+    options: ["Di file .sql klien", "Di database server, siap dieksekusi berkali-kali", "Di aplikasi saja", "Di memori sementara"]
+    answer: 1
+    explain: "CREATE PROCEDURE menyimpan logika di server; klien cukup memanggilnya dengan EXEC."
+  - q: "Memanggil prosedur dengan parameter posisional ditulis…"
+    options: ["EXEC dbo.ProsesPesanan 10, 'LUNAS'", "RUN Prosos(10)", "CALL dbo.ProsesPesanan", "EXECUTE PROCEDURE Prosos()"]
+    answer: 0
+    explain: "EXEC nama_prosedur nilai1, nilai2 — urutan mengikuti deklarasi parameter."
+  - q: "Parameter OUTPUT pada prosedur berfungsi untuk…"
+    options: ["Mengembalikan nilai ke pemanggil", "Menghapus prosedur", "Menambah kecepatan", "Mengunci tabel"]
+    answer: 0
+    explain: "DECLARE @jumlah INT; EXEC dbo.Hitung @jumlah = @jumlah OUTPUT; — hasil prosedur keluar lewat parameter."
+  - q: "Membungkus beberapa perintah dalam satu transaksi di prosedur dilakukan dengan…"
+    options: ["BATCH", "BEGIN TRANSACTION ... COMMIT / ROLLBACK", "START GROUP", "WRAP"]
+    answer: 1
+    explain: "Transaksi menjamin semua langkah berhasil atau semua batal — konsistensi data saat terjadi kegagalan di tengah."
+  - q: "Menambah parameter baru ke prosedur lama memakai…"
+    options: ["ALTER PROCEDURE", "UPDATE PROCEDURE", "PATCH PROC", "APPEND PROC"]
+    answer: 0
+    explain: "ALTER PROCEDURE ... definisi baru menggantikan versi lama tanpa perlu DROP terlebih dahulu."
+example:
+  code: |
+    CREATE OR ALTER PROCEDURE dbo.TambahPesanan
+        @pelangganId INT,
+        @total DECIMAL(18, 2),
+        @nomor VARCHAR(20) OUTPUT
+    AS
+    BEGIN
+        SET NOCOUNT ON;
+        INSERT INTO dbo.pesanan (pelanggan_id, total, status)
+        VALUES (@pelangganId, @total, 'BARU');
+        SET @nomor = 'P-' + CAST(SCOPE_IDENTITY() AS VARCHAR(12));
+    END;
+---
+
+**Stored procedure** menyimpan batch T-SQL bernama di database, dapat diberi parameter, diberi izin EXECUTE, dan memakai execution plan yang dapat di-cache.
+
+## Lima Bagian Stored Procedure
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Nama + schema | identitas modul | `dbo.DaftarKaryawan` | pemanggilan & permission |
+| Input parameter | menerima nilai | `@divisiId INT` | filter/command |
+| OUTPUT parameter | mengirim nilai skalar | `@jumlah INT OUTPUT` | status/hitungan |
+| Body AS BEGIN | statement T-SQL | SELECT/UPDATE | logika operasi |
+| EXEC | menjalankan prosedur | `EXEC dbo.Daftar...` | aplikasi/admin |
+
+Stored procedure tidak otomatis lebih cepat dari query parameterized biasa dan tidak benar-benar "dikompilasi sekali selamanya"; SQL Server menyimpan execution plan di cache dan dapat mengompilasi ulang saat statistik/skema berubah.
+
+## Membuat dan Memanggil
+
+```sql
+CREATE OR ALTER PROCEDURE dbo.DaftarKaryawan
+    @divisiId INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT id, nama, gaji
+    FROM dbo.karyawan
+    WHERE (@divisiId IS NULL OR divisi_id = @divisiId)
+    ORDER BY nama;
+END;
+GO
+
+EXEC dbo.DaftarKaryawan;
+EXEC dbo.DaftarKaryawan @divisiId = 3;
+```
+
+`SET NOCOUNT ON` menyembunyikan pesan "n rows affected" — kebiasaan baik yang menyeimbangkan protokol. Parameter bernilai default membuat prosedur fleksibel: boleh dipanggil tanpa filter.
+
+## Parameter OUTPUT
+
+```sql
+CREATE OR ALTER PROCEDURE dbo.HitungPesanan
+    @pelangganId INT,
+    @jumlah INT OUTPUT,
+    @omzet DECIMAL(18, 2) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT @jumlah = COUNT(*), @omzet = ISNULL(SUM(total), 0)
+    FROM dbo.pesanan
+    WHERE pelanggan_id = @pelangganId;
+END;
+GO
+
+DECLARE @j INT, @o DECIMAL(18, 2);
+EXEC dbo.HitungPesanan @pelangganId = 10, @jumlah = @j OUTPUT, @omzet = @o OUTPUT;
+SELECT @j AS jumlah_pesanan, @o AS omzet;
+```
+
+OUTPUT adalah jalan keluar data agregat prosedur — berguna saat hasilnya bukan result set, melainkan angka untuk diproses pemanggil.
+
+## Transaksi di Dalam Prosedur
+
+```sql
+CREATE OR ALTER PROCEDURE dbo.TransferSaldo
+    @dari INT,
+    @ke INT,
+    @jumlah DECIMAL(18, 2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        UPDATE dbo.saldo SET saldo = saldo - @jumlah WHERE id = @dari;
+        UPDATE dbo.saldo SET saldo = saldo + @jumlah WHERE id = @ke;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+```
+
+`XACT_ABORT ON` memastikan error apa pun membatalkan transaksi penuh; blok TRY...CATCH menangkap sisa kasus dan meneruskan error dengan `THROW`.
+
+## Keamanan dan Penamaan
+
+```sql
+GRANT EXECUTE ON dbo.DaftarKaryawan TO app_user;
+DENY  EXECUTE ON dbo.HitungPesanan TO guest;
+```
+
+Gunakan nama dua bagian (`dbo.NamaProsedur`) agar resolusi objek dan permission jelas. Hindari spasi di nama; bila mewarisi nama semacam itu, delimit dengan kurung siku: `EXEC [dbo].[Proses Pesanan]`.
+
+## Kapan Dipakai?
+
+Stored procedure tepat untuk operasi multi-langkah dekat data, batas permission sempit, dan API database yang dipakai banyak aplikasi. Query CRUD sederhana tetap boleh tinggal di aplikasi; memindahkan semuanya ke procedure menambah deployment dan testing terpisah.
+
+## Di Dunia Nyata
+
+- **Transfer saldo** — dua UPDATE dibungkus transaksi dan error handling sebagai satu operasi atomik.
+- **Pembuatan pesanan** — input parameter menerima pelanggan/item, OUTPUT mengembalikan nomor pesanan baru.
+- **Laporan terparameter** — satu procedure menerima rentang tanggal dan cabang dengan query yang konsisten.
+- **Akses least privilege** — aplikasi diberi EXECUTE procedure tanpa izin UPDATE langsung pada tabel sensitif.
+- **Job administrasi** — SQL Agent memanggil procedure untuk arsip, agregasi harian, atau rekonsiliasi.
+
+<div class="note">💡 Execution plan procedure dapat mengalami parameter sniffing: nilai pertama yang dikompilasi belum tentu mewakili semua input. Ukur plan aktual dan Query Store sebelum memakai `OPTION (RECOMPILE)` atau optimasi parameter lain.</div>

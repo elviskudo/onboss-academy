@@ -1,0 +1,146 @@
+---
+title: "Error Handling"
+description: "try/except/else/finally, exception bawaan & custom"
+order: 9
+quiz:
+  - q: "Blok except dieksekusi saat…"
+    options: ["Terjadi exception di blok try", "Try sukses", "Program dimulai", "Variabel dideklarasikan"]
+    answer: 0
+    explain: "Exception di try diteruskan ke except yang cocok."
+  - q: "finally dieksekusi…"
+    options: ["Hanya saat error", "Hanya saat sukses", "Selalu, suka atau error", "Tidak pernah"]
+    answer: 2
+    explain: "finally untuk cleanup (tutup file/koneksi) yang wajib jalan."
+  - q: "Kode di blok else dieksekusi…"
+    options: ["Kalau terjadi error", "Selalu", "Kalau tidak ada error di try", "Setelah finally"]
+    answer: 2
+    explain: "else hanya jalan saat try bersih — tempat yang pas untuk logika 'kalau sukses'."
+  - q: "except Exception as e: e berisi…"
+    options: ["Objek exception (punya .message/.args)", "String kosong", "Kode error numerik selalu", "Traceback lengkap"]
+    answer: 0
+    explain: "Objek exception membawa pesan — log e, tampilkan pesan ramah ke user."
+  - q: "Pola mana yang benar saat menangkap error?"
+    options: ["except: pass di mana-mana", "Tangkap spesifik (ValueError, KeyError) dulu, Exception terakhir", "Hapus semua try", "Tangkap lalu raise ulang tanpa pesan"]
+    answer: 1
+    explain: "Spesifik dulu baru umum — except polos menelan error termasuk bug tersembunyi."
+example:
+  code: |
+    try:
+        n = int(input("Masukkan angka: ") or "abc")
+        hasil = 10 / n
+    except ValueError:
+        print("Itu bukan angka!")
+    except ZeroDivisionError:
+        print("Tidak bisa dibagi nol!")
+    else:
+        print("Hasil:", hasil)
+    finally:
+        print("Selesai")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Error handling membuat program bertahan saat hal tak terduga terjadi. Python punya **lebih dari 70 kelas exception bawaan** dalam satu pohon warisan `BaseException` → `Exception`.
+
+## try / except / else / finally
+
+```python
+try:
+    angka = int(input("Angka: "))
+    hasil = 100 / angka
+except ValueError:
+    print("Input harus angka")
+except ZeroDivisionError:
+    print("Tidak boleh nol")
+else:
+    print("Hasil:", hasil)   # hanya saat sukses
+finally:
+    print("Selesai")          # selalu jalan
+```
+
+4 blok, 4 aturan: `except` = jalan saat error cocok, `else` = jalan **tanpa** error, `finally` = **selalu** jalan (walaupun ada `return`).
+
+## Exception Bawaan yang Paling Sering Muncul
+
+| Exception | Kapan muncul | Contoh penyebab |
+|---|---|---|
+| `ValueError` | nilai bertipe benar, isinya salah | `int("abc")` |
+| `TypeError` | operasi ke tipe yang salah | `"a" + 1` |
+| `KeyError` | kunci dict tidak ada | `d["hilang"]` |
+| `IndexError` | index list di luar jangkau | `[1,2][5]` |
+| `AttributeError` | method/atribut tidak ada | `s.lenght()` |
+| `FileNotFoundError` | file tidak ditemukan | `open("x.txt")` |
+| `ZeroDivisionError` | bagi nol | `10 / 0` |
+| `ImportError` | modul tidak ada | `import namaygatidakada` |
+
+## Menangkap Spesifik
+
+```python
+try:
+    nilai = data["kunci"]
+except KeyError:
+    print("Kunci tidak ada — pakai .get()")
+except (TypeError, IndexError):
+    print("Struktur data tidak sesuai")
+except Exception as e:
+    log.error("Tak terduga: %s", e)   # jaring pengaman terakhir
+```
+
+Hindari `except:` polos tanpa tipe — menelan semua error termasuk Ctrl+C dan bug nyata.
+
+## Membuat & Melempar Exception
+
+```python
+class ValidationError(Exception):
+    pass
+
+def set_umur(u):
+    if not 0 <= u <= 150:
+        raise ValidationError(f"Umur {u} tidak wajar")
+    return u
+```
+
+Aturan: (1) buat exception custom turunan `Exception`, beri nama berakhiran `Error`; (2) `raise` di fungsi bisnis (validasi), jangan di dalam blok `except` yang sama; (3) pakai `raise ... from e` bila menyembunyikan error asal — traceback jadi rapi.
+
+## Pola Praktis
+
+```python
+def bagi(a, b):
+    if b == 0:
+        raise ValueError("b tidak boleh 0")
+    return a / b
+
+try:
+    print(bagi(10, 0))
+except ValueError as e:
+    print("Input tidak valid:", e)
+```
+
+Exception dipakai untuk **kondisi yang tidak normal**, bukan alur utama program. Nilai `False`, `0`, atau `None` bukan error — itu data biasa.
+
+## Di Dunia Nyata
+
+- Parsing input user: `int(input(...))` dibungkus try/except ValueError sebelum masuk kalkulator.
+- API call: tangkap `ConnectionError`/`TimeoutError` → coba lagi (retry) 3 kali sebelum menyerah.
+- Form pendaftaran: `raise ValidationError("Email sudah terdaftar")` di layer model, ditangkap controller untuk ditampilkan.
+- Batch proses 1.000 file: try/except per file supaya satu file korup tidak menggugurkan seluruh job.
+
+<div class="note">💡 `except: pass` adalah jebakan klasik: error hilang tanpa jejak, bug jadi tidak ketahuan. Minimal log pesannya (`print(e)` / `logging.exception(e)`) lalu tangkap sesuai kebutuhan.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def konversi(data):
+    try:
+        hasil = int(data)
+    except (TypeError, ValueError):
+        return f"❌ '{data}' bukan angka valid"
+    else:
+        return f"✅ {data} → {hasil}"
+
+for d in ["42", "3.5", "abc", "", None]:
+    print(konversi(d))
+
+try:
+    raise ValueError("sengaja dibuat")
+except ValueError as e:
+    print("Tertangkap:", e)
+finally:
+    print("Blok finally tetap jalan ✔")`} />

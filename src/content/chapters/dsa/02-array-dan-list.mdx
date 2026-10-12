@@ -1,0 +1,134 @@
+---
+title: "Array & List: Struktur Data Paling Dasar"
+description: "Indeks, operasi kunci, dan kompleksitas akses di Python list"
+order: 2
+quiz:
+  - q: "Akses elemen list berdasarkan indeks dalam Python memiliki kompleksitas…"
+    options: ["O(1)", "O(n)", "O(log n)", "O(n^2)"]
+    answer: 0
+    explain: "List Python adalah array dinamis — alamat elemen dihitung langsung dari indeks."
+  - q: "Operasi list.insert(0, x) di awal list bersifat…"
+    options: ["O(1)", "O(log n)", "O(n) — semua elemen geser", "O(n^2)"]
+    answer: 2
+    explain: "Menyisipkan di depan menggeser seluruh isi list satu posisi ke kanan."
+  - q: "list.append(x) pada akhir list rata-rata…"
+    options: ["O(1) amortized", "O(n)", "O(log n)", "O(n^2)"]
+    answer: 0
+    explain: "Kadang alokasi memori ulang terjadi, tapi rata-rata tetap konstan (amortized)."
+  - q: "Mencari elemen dengan `x in my_list` tanpa urutan spesifik rata-rata…"
+    options: ["O(1)", "O(log n)", "O(n)", "O(n!)"]
+    answer: 2
+    explain: "Tanpa pengurutan atau hash, setiap elemen mungkin harus diperiksa satu per satu."
+  - q: "List Python berbeda dari array C karena…"
+    options: ["Hanya boleh berisi angka", "Bisa menyimpan tipe campuran dan berubah ukuran dinamis", "Ukurannya tetap", "Tidak mendukung iterasi"]
+    answer: 1
+    explain: "List Python adalah struktur dinamis bertipe campuran; di balik layar tetap array of pointers."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Array (di Python: **list**) adalah deretan elemen berurutan dalam memori — fondasi hampir semua struktur data lain.
+
+## Membuat & Mengakses
+
+```python
+buah = ["apel", "mangga", "jeruk"]
+
+print(buah[0])    # apel    — O(1)
+print(buah[-1])   # jeruk   — O(1), indeks dari belakang
+print(len(buah))  # 3
+```
+
+Akses indeks adalah O(1): Python menghitung alamat memori `base + indeks * ukuran_elemen` secara langsung.
+
+## Operasi Penambahan & Penghapusan
+
+```python
+buah = ["apel", "mangga"]
+buah.append("jeruk")        # tambah di akhir     — O(1) amortized
+buah.insert(0, "pepaya")    # sisip di depan      — O(n)
+buah.pop()                  # hapus & ambil akhir — O(1)
+buah.pop(0)                 # hapus & ambil depan — O(n)
+del buah[1]                 # hapus berindeks     — O(n)
+```
+
+Ringkasan cepat:
+
+| Operasi | Kompleksitas |
+|---------|--------------|
+| `a[i]` | O(1) |
+| `a.append(x)` | O(1) amortized |
+| `a.insert(i, x)` | O(n) |
+| `a.pop()` | O(1) |
+| `a.pop(0)` / `del a[i]` | O(n) |
+| `x in a` | O(n) |
+
+## Iterasi & Slicing
+
+```python
+angka = [3, 1, 4, 1, 5, 9, 2, 6]
+
+print(angka[2:5])      # [4, 1, 5] — slicing membuat salinan baru O(k)
+jumlah = 0
+for x in angka:
+    jumlah += x        # O(n)
+print(jumlah)
+```
+
+## Kapan List Tepat, Kapan Tidak
+
+Tepat: akses acak berindeks, penambahan di akhir, iterasi berurutan.
+
+Hindari `insert(0, ...)` / `pop(0)` dalam loop besar — cari alternatif `collections.deque` (O(1) di kedua ujung) yang dibahas di bab stack & queue.
+
+## Jenis Urutan dan Biayanya
+
+Python menyediakan **3 urutan umum** untuk kebutuhan berbeda: `list` yang mutable dan dinamis, `tuple` yang immutable, serta `array.array` yang homogen dan lebih rapat untuk nilai numerik. `list` bukan linked list; CPython menyimpan array referensi bersebelahan dan menyediakan kapasitas cadangan. Karena itu `append` sesekali melakukan realokasi O(n), tetapi rangkaian banyak append tetap O(1) amortized per operasi.
+
+| Struktur | Sifat | Operasi unggul | Kapan dipakai |
+|---|---|---|---|
+| `list` | mutable, tipe boleh campur | indeks dan append | koleksi umum yang berubah |
+| `tuple` | immutable | indeks dan hashing bila isinya hashable | record tetap atau key dict |
+| `array.array` | mutable, satu tipe dasar | penyimpanan numerik rapat | data angka tanpa NumPy |
+| `deque` | mutable, blok dua arah | tambah/hapus kedua ujung | antrean dan sliding window |
+
+Slicing `a[i:j]` mengalokasikan k elemen sehingga waktunya O(k) dan memorinya O(k). Assignment `a[i:j] = nilai` juga dapat menggeser elemen. Pengurutan `a.sort()` mengubah list asli, sedangkan `sorted(a)` menghasilkan list baru; keduanya O(n log n) pada kasus umum.
+
+## Di Dunia Nyata
+
+- Menyimpan urutan item keranjang yang sering dibaca berdasarkan posisi.
+- Mengumpulkan hasil parsing dengan append sebelum diproses sekaligus.
+- Memakai tuple untuk koordinat yang tidak boleh berubah.
+- Mengganti `pop(0)` pada antrean job dengan deque agar tidak menggeser semua item.
+
+<div class="note">💡 Python list menyimpan **referensi**, bukan objeknya sendiri. Mengeser `b = a` tidak menyalin data — kedua variabel menunjuk list yang sama. Untuk salinan dangkal pakai `list(a)` atau `a[:]`.</div>
+
+## Perangkap Referensi
+
+```python
+a = [1, 2, 3]
+b = a              # referensi sama!
+b.append(4)
+print(a)           # [1, 2, 3, 4] — a ikut berubah
+
+c = list(a)        # salinan dangkal
+c.append(5)
+print(a)           # tetap [1, 2, 3, 4]
+```
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [3, 1, 4, 1, 5, 9, 2, 6]
+
+print("panjang:", len(data))
+print("indeks 0 dan -1:", data[0], data[-1])
+
+data.append(10)
+data.insert(0, 0)
+print("setelah append+insert:", data)
+
+popped = data.pop()
+print("pop() ->", popped, "| sisa:", data)
+
+total = 0
+for x in data:
+    total += x
+print("jumlah:", total, "| maksimum:", max(data), "| minimum:", min(data))`} />

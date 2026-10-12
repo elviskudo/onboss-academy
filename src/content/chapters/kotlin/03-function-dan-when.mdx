@@ -1,0 +1,174 @@
+---
+title: "Function & When"
+description: "Membuat function dengan parameter dan nilai kembalian, lalu bercabang dengan when"
+order: 3
+quiz:
+  - q: "Kata kunci untuk mendefinisikan function di Kotlin adalah…"
+    options: ["func", "fun", "def", "function"]
+    answer: 1
+    explain: "fun digunakan untuk function dan method."
+  - q: "Fungsi dengan expression body ditulis…"
+    options: ["fun tambah(a: Int, b: Int) = a + b", "fun tambah() { return a + b } only", "function tambah(a, b)", "def tambah(a, b)"]
+    answer: 0
+    explain: "Tanda sama dengan membuat fungsi expression body tanpa blok return."
+  - q: "when menggantikan konstruksi…"
+    options: ["loop", "class", "switch pada Java", "try"]
+    answer: 2
+    explain: "when lebih fleksibel: mendukung rentang, tipe, dan banyak nilai."
+  - q: "when tanpa cabang yang cocok memakai cabang…"
+    options: ["default", "else", "break", "other"]
+    answer: 1
+    explain: "Kotlin memakai else, bukan default seperti switch Java."
+  - q: "Nilai kembalian function dinyatakan dengan…"
+    options: ["yield", "out", "return", "emit"]
+    answer: 2
+    explain: "return mengirim nilai keluar dari function."
+example:
+  code: |
+    fun tambah(a: Int, b: Int): Int = a + b
+
+    fun sapa(nama: String = "Teman"): String {
+        return "Halo, $nama"
+    }
+
+    fun nilaiHuruf(skor: Int): String = when {
+        skor >= 90 -> "A"
+        skor >= 75 -> "B"
+        else -> "C"
+    }
+
+    fun main() {
+        println(tambah(3, 4))
+        println(sapa())
+        println(nilaiHuruf(80))
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Function membagi logika menjadi bagian yang bisa dipakai ulang, sedangkan `when` menyeleksi cabang dengan sangat ringkas.
+
+## Mendefinisikan Function
+
+```kotlin
+fun sapa(nama: String): String {
+    return "Halo, $nama"
+}
+
+fun main() {
+    println(sapa("Sari"))
+}
+```
+
+Tipe parameter wajib, tipe kembalian bisa ditebak otomatis. Kotlin punya **4 bentuk penulisan function**:
+
+| Bentuk | Contoh | Kapan dipakai |
+| --- | --- | --- |
+| Block body | `fun sapa(n: String): String { return "Halo, $n" }` | logika beberapa baris |
+| Expression body | `fun tambah(a: Int, b: Int) = a + b` | satu ekspresi saja |
+| Tanpa nilai kembalian | `fun cetak(p: String) { println(p) }` | tipe `Unit`, disembunyikan |
+| Generic | `fun <T> pertama(daftar: List<T>): T = daftar[0]` | bekerja untuk tipe apa pun |
+
+## Expression Body dan Nilai Bawaan
+
+```kotlin
+fun tambah(a: Int, b: Int) = a + b
+
+fun sapa(nama: String = "Teman") = "Halo, $nama"
+
+fun main() {
+    println(tambah(3, 4))
+    println(sapa())
+    println(sapa("Budi"))
+}
+```
+
+Nilai bawaan membuat argumen opsional tanpa menulis overload. Selain nilai bawaan, Kotlin punya **3 fitur parameter** yang sering dipakai bersama:
+
+- **Default value** — `fun sapa(nama: String = "Teman")`
+- **Named argument** — `sapa(nama = "Sari")` membuat urutan argumen tidak kritis
+- **Vararg** — `fun jaring(vararg angka: Int)` menerima argumen sebanyak apa pun
+
+## when Ekspresi
+
+```kotlin
+fun kategori(usia: Int): String = when {
+    usia >= 17 -> "Dewasa"
+    usia >= 12 -> "Remaja"
+    else -> "Anak"
+}
+
+fun main() {
+    println(kategori(20))
+}
+```
+
+`when` adalah ekspresi — nilainya langsung bisa ditugaskan ke variabel. `when` punya **4 bentuk pemakaian**:
+
+| Bentuk | Contoh | Kapan dipakai |
+| --- | --- | --- |
+| Nilai eksak | `when (x) { 1 -> ...; 2 -> ...; else -> ... }` | memilih dari daftar nilai tetap |
+| Banyak nilai satu cabang | `"apel", "jeruk" -> ...` | beberapa nilai berbagi aksi |
+| Rentang / koleksi | `in 90..100 -> ...`, `in daftar -> ...` | batas atas-bawah atau keanggotaan |
+| Tanpa argumen | `when { a > b -> ...; else -> ... }` | rantai if-else yang panjang |
+
+## when dengan Banyak Kondisi
+
+```kotlin
+fun main() {
+    val buah = "mangga"
+
+    when (buah) {
+        "apel", "jeruk" -> println("Buah umum")
+        "mangga" -> println("Buah tropis")
+        else -> println("Tidak dikenal")
+    }
+
+    val skor = 85
+    when (skor) {
+        in 90..100 -> println("A")
+        in 75..89 -> println("B")
+        else -> println("Perlu latihan")
+    }
+}
+```
+
+`in` memeriksa rentang dan koleksi dalam satu cabang. Cabang `when` juga bisa memeriksa tipe dengan `is` — bab data class & sealed akan memakainya secara penuh.
+
+## Function Tidak Mengembalikan Nilai
+
+```kotlin
+fun cetakPesan(pesan: String) {
+    println(pesan)
+}
+```
+
+Unit dinyatakan sebagai `Unit` dan bisa ditulis implisit.
+
+## Di Dunia Nyata
+
+- **Memetakan status HTTP** — `when (kode) { 200 -> "OK"; 404 -> "Tidak ditemukan"; 500 -> "Server error"; else -> "Lainnya" }` mengubah kode angka jadi pesan yang bisa ditampilkan.
+- **Menentukan nilai huruf ujian** — `when` tanpa argumen mengecek batas skor berurutan dari yang tertinggi.
+- **Menghitung ongkir** — function `ongkir(kategori, berat)` memakai nilai bawaan `beratKg: Double = 1.0` agar pemanggil tidak selalu menulis berat.
+- **Mengurai perintah terminal** — `when (args.firstOrNull()) { "tambah" -> ...; "hapus" -> ...; else -> cetakBantuan() }`.
+- **Validasi form** — function `valid(usia: Int): Boolean = usia in 17..65` mengecek rentang dalam satu ekspresi.
+
+<div class="note">💡 when jauh lebih kuat dari switch: dia bisa memeriksa rentang, tipe data, bahkan kondisi tanpa nilai sama sekali. Kalau melihat if-else panjang berantai, coba tukar dengan when.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun tambah(a: Int, b: Int) = a + b
+
+fun sapa(nama: String = "Teman") = "Halo, $nama"
+
+fun nilaiHuruf(skor: Int): String = when {
+    skor >= 90 -> "A"
+    skor >= 75 -> "B"
+    else -> "C"
+}
+
+fun main() {
+    println(tambah(3, 4))
+    println(sapa())
+    println(sapa("Budi"))
+    println(nilaiHuruf(80))
+    println(nilaiHuruf(95))
+}`} />

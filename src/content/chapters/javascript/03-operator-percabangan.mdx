@@ -1,0 +1,168 @@
+---
+title: "Operator & Percabangan"
+description: "if, else, switch, dan operator perbandingan"
+order: 3
+quiz:
+  - q: "Hasil dari 5 == \"5\" di JavaScript adalah…"
+    options: ["false", "true", "Error", "undefined"]
+    answer: 1
+    explain: "== membandingkan nilai setelah koersi tipe. === (disarankan) membandingkan nilai DAN tipe — 5 === \"5\" false."
+  - q: "Operator && (AND) bernilai true jika…"
+    options: ["Semua operand true", "Minimal satu operand true", "Semua operand false", "Selalu true"]
+    answer: 0
+    explain: "&& butuh semua true. || (OR) butuh minimal satu true."
+  - q: "Bentuk percabangan untuk banyak kondisi berurutan adalah…"
+    options: ["loop", "try / catch", "if / else if / else", "function"]
+    answer: 2
+    explain: "if → else if → else. Atau switch untuk banyak case konstan."
+  - q: "Nilai dari !false adalah…"
+    options: ["false", "true", "null", "0"]
+    answer: 1
+    explain: "Tanda ! membalik nilai boolean: !false = true."
+  - q: "Optional chaining (obj?.prop) berguna untuk…"
+    options: ["Mengakses properti aman saat obj bisa null/undefined", "Membuat properti baru", "Menghapus objek", "Menggabungkan string"]
+    answer: 0
+    explain: "Jika obj null, obj?.prop menghasilkan undefined alih-alih error."
+example:
+  code: |
+    const nilai = 85;
+    if (nilai >= 90) console.log("A");
+    else if (nilai >= 80) console.log("B");
+    else console.log("C");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Operator: 7 Kategori
+
+| Kategori | Jumlah | Anggota | Fungsi |
+|----------|--------|---------|--------|
+| Aritmatika | 8 | `+ - * / % ** ++ --` | Hitung, sisa bagi, pangkat, tambah/kurang sendiri |
+| Perbandingan | 8 | `== != === !== > < >= <=` | Bandingkan dua nilai → `boolean` |
+| Logika | 3 | `&&` `\|\|` `!` | Gabungkan kondisi: AND, OR, NOT |
+| Bitwise | 6 | `& \| ^ ~ << >> >>>` | Operasi per bit — jarang dipakai di web |
+| Assignment | 13 | `=` `+=` `-=` `*=` `/=` `%=` `**=` `<<=` `>>=` `>>>=` `&=` `\|=` `^=` | Tugaskan, sering digabung operasi |
+| Ternary | 1 | `? :` | Percabangan dalam satu ekspresi |
+| Spesial | 6 | `typeof delete void in instanceof new` | Cek tipe, hapus properti, buat object |
+
+### Operator Perbandingan
+
+```js
+5 === 5;    // true  (nilai + tipe sama) ← gunakan ini!
+5 !== "5";  // true
+5 > 3;
+5 <= 5;
+```
+
+<div class="note">💡 Selalu pakai <code>===</code> dan <code>!==</code> kecuali kamu benar-benar butuh koersi tipe.</div>
+
+## Operator Logika
+
+```js
+true && false;  // false (AND)
+true || false;  // true  (OR)
+!true;          // false (NOT)
+
+// short-circuit (umum untuk default value)
+const nama = input || "Tanpa Nama";
+const tampilan = data?.judul || "(kosong)";
+```
+
+## ?? dan || : Beda Filsafat
+
+```js
+0 || "default";   // "default" — 0 dianggap kosong
+0 ?? "default";   // 0       — ?? hanya menolak null/undefined
+
+false ?? "x";     // false
+"" || "x";        // "x" — string kosong ikut tergusur
+```
+
+`||` membuang semua *falsy* (`0`, `""`, `false`, `null`, `undefined`, `NaN`); `??` hanya menolak `null`/`undefined`. Untuk default nilai numerik atau string kosong yang sah, `??` adalah pilihan benar.
+
+## Urutan Prioritas (Precedence)
+
+Dari yang paling kuat: `( )` → unary (`!`, `typeof`) → `**` → `* / %` → `+ -` → perbandingan → `===` → `&&` → `||` → `? :` → `=`.
+
+```js
+2 + 3 * 4;        // 14 — * lebih kuat dari +
+(2 + 3) * 4;      // 20 — paksa urutan dengan kurung
+true || false && false; // true — && "makan" dulu
+```
+
+Kalau harus mikir dua kali untuk membacanya, tambahkan kurung — kode yang jelas mengalahkan kode yang cerdik.
+
+## if / else if / else
+
+```js
+const skor = 85;
+
+if (skor >= 90) {
+  console.log("Nilai A");
+} else if (skor >= 80) {
+  console.log("Nilai B");
+} else {
+  console.log("Perlu belajar lagi");
+}
+```
+
+## Ternary (Singkat)
+
+```js
+const status = umur >= 17 ? "dewasa" : "anak-anak";
+```
+
+Gunakan ternary untuk kondisi singkat; jika percabangan panjang, if-else lebih terbaca. Ternary adalah **ekspresi** (menghasilkan nilai), sehingga bisa bersarang: `x > 0 ? "positif" : x < 0 ? "negatif" : "nol"` — tapi dua tingkat sudah batas wajar.
+
+## switch
+
+```js
+switch (hari) {
+  case "Senin":
+    console.log("Mulai minggu");
+    break;
+  case "Sabtu":
+  case "Minggu":
+    console.log("Libur!");
+    break;
+  default:
+    console.log("Hari biasa");
+}
+```
+
+Jangan lupa `break` — tanpa itu eksekusi "jatuh" ke case berikutnya (*fall-through*).
+
+## 4 Bentuk Percabangan & Guard Clause
+
+JavaScript mendukung **4 bentuk percabangan**: `if` tunggal, `if/else`, `else if` berantai, dan `switch/case` (plus `? :` untuk versi satu baris).
+
+```js
+// Guard clause — balikkan dulu kasus ekstrem, sisanya bersih:
+function kirimNota(total) {
+  if (total <= 0) return "Total tidak valid";
+  if (total > 1_000_000_000) return "Melebihi batas";
+  return "Nota siap dikirim";
+}
+```
+
+Anti-pattern: nesting if 4 tingkat dalam. Balik kondisi pakai `return`/`continue` awal (guard) supaya badan fungsi tetap datar.
+
+## Di Dunia Nyata
+
+- **Nilai huruf ujian**: rentang skor 90/80/70 dengan `else if` berantai.
+- **Ongkos kirim gratis** di atas belanja tertentu: `total >= 100000 ? 0 : 15000`.
+- **Status pembayaran** metode (`"lunas"`, `"pending"`, `"gagal"`) → `switch` dengan `default` untuk nilai tak dikenal.
+- **Validasi form**: `if (!email.includes("@"))` menahan submit sebelum dikirim ke server.
+- **Akses halaman admin**: `user.role === "admin" ? panel : "403 Forbidden"`.
+
+<TryIt lang="javascript" runtime="client-js" code={`function nilaiHuruf(skor) {
+  if (skor >= 90) return "A";
+  if (skor >= 80) return "B";
+  if (skor >= 70) return "C";
+  return "D";
+}
+for (const s of [95, 82, 71, 55]) {
+  console.log(\`Skor \${s} → Nilai \${nilaiHuruf(s)}\`);
+}
+const jam = new Date().getHours();
+console.log(jam >= 22 || jam < 4 ? "🌙 Waktunya tidur" : "☕ Waktunya ngoding");`} />

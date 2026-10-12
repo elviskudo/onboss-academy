@@ -1,0 +1,3 @@
+Belajar variabel Ruby
+Pahami blok dan method
+Buat proyek kecil

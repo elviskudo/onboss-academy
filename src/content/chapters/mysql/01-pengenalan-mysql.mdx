@@ -1,0 +1,114 @@
+---
+title: "Pengenalan MySQL"
+description: "Database relasional open-source populer untuk aplikasi web"
+order: 1
+quiz:
+  - q: "MySQL termasuk kategori database…"
+    options: ["Dokumen", "Relasional (RDBMS)", "Graf", "Key-value"]
+    answer: 1
+    explain: "MySQL adalah RDBMS: data disimpan dalam tabel yang saling berelasi."
+  - q: "Empat komponen LAMP adalah…"
+    options: ["Linux, Apache, MySQL, PHP/Python/Perl", "Linux, Angular, MongoDB, Python", "Laravel, Apache, MySQL, Perl", "Linux, API, MariaDB, PHP"]
+    answer: 0
+    explain: "LAMP menggabungkan Linux, Apache, MySQL, dan PHP/Python/Perl."
+  - q: "Storage engine default MySQL modern adalah…"
+    options: ["MyISAM", "InnoDB", "Memory", "CSV"]
+    answer: 1
+    explain: "InnoDB menjadi default karena mendukung transaksi, foreign key, dan pemulihan crash."
+  - q: "Klien baris perintah resmi MySQL disebut…"
+    options: ["psql", "sqlcmd", "mysql", "mycli-server"]
+    answer: 2
+    explain: "mysql adalah CLI bawaan; psql milik PostgreSQL dan sqlcmd milik SQL Server."
+  - q: "Query SQL standar di MySQL…"
+    options: ["Tidak bisa dipakai", "Tetap berlaku, ditambah ekstensi khas MySQL", "Hanya berlaku untuk SELECT", "Harus diterjemahkan ke PHP"]
+    answer: 1
+    explain: "SELECT, JOIN, GROUP BY, dan subquery standar tetap berlaku; MySQL menambah sintaks khusus."
+example:
+  code: |
+    SELECT nama, gaji
+    FROM karyawan
+    WHERE dept = 'Engineering'
+    ORDER BY gaji DESC
+    LIMIT 3;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**MySQL** adalah *relational database management system* (RDBMS) open-source yang populer untuk aplikasi web. Ia menyimpan data terstruktur, menjalankan SQL, dan menjaga banyak pengguna membaca/menulis bersamaan.
+
+## Arsitektur Ringkas
+
+MySQL memisahkan 4 lapisan utama:
+
+| Lapisan | Fungsi | Contoh |
+|---------|--------|--------|
+| Client | mengirim SQL | CLI `mysql`, aplikasi PHP |
+| Server | autentikasi dan parsing | proses `mysqld` |
+| Optimizer | memilih rencana query | index scan vs full scan |
+| Storage engine | menyimpan/lock data | InnoDB |
+
+Pemisahan server dan client memungkinkan aplikasi di mesin lain terhubung melalui jaringan. Optimizer memutuskan cara tercepat menjalankan SQL deklaratif; kita menjelaskan hasil yang dibutuhkan, bukan langkah membacanya.
+
+## 4 Kelompok SQL di MySQL
+
+| Kelompok | Perintah Inti | Kegunaan |
+|----------|---------------|----------|
+| DDL | `CREATE`, `ALTER`, `DROP` | struktur database |
+| DML | `SELECT`, `INSERT`, `UPDATE`, `DELETE` | isi tabel |
+| DCL | `GRANT`, `REVOKE` | hak akses |
+| TCL | `START TRANSACTION`, `COMMIT`, `ROLLBACK` | transaksi |
+
+MySQL menjalankan SQL standar plus ekstensi khas seperti `AUTO_INCREMENT`, `ENGINE=InnoDB`, `ENUM`, `JSON`, dan `DATE_FORMAT`.
+
+## Warisan LAMP
+
+LAMP punya tepat 4 komponen: Linux (OS), Apache (web server), MySQL (database), PHP/Python/Perl (aplikasi). Request browser masuk ke Apache, kode aplikasi memvalidasi input dan mengirim query berparameter ke MySQL, lalu hasilnya dirender sebagai HTML/JSON.
+
+## Pemodelan Relasional
+
+Tabel adalah padanan koleksi objek, kolom adalah properti, dan baris adalah satu instance. Hubungan antardata disimpan sebagai foreign key, bukan array bersarang.
+
+| Relasi | Implementasi | Contoh |
+|--------|--------------|--------|
+| one-to-one | foreign key UNIQUE | pengguna–profil |
+| one-to-many | foreign key di sisi many | karyawan–proyek |
+| many-to-many | tabel penghubung | produk–kategori |
+
+Normalisasi menjaga satu fakta disimpan sekali; JOIN menyusunnya kembali saat dibaca.
+
+## MySQL, PostgreSQL, dan SQLite
+
+| Database | Model Operasi | Kekuatan Utama | Cocok untuk |
+|----------|---------------|----------------|-------------|
+| MySQL | server | web matang, replikasi luas | API dan CMS |
+| PostgreSQL | server | fitur SQL dan tipe data kaya | analitik/transaksi kompleks |
+| SQLite | satu file, embedded | tanpa administrasi server | mobile, desktop, demo |
+
+MariaDB adalah turunan komunitas yang kompatibel dengan protokol MySQL, tetapi fitur dan perilakunya makin berbeda; baca dokumentasi versi yang benar.
+
+## Alur Query Pertama
+
+```sql
+SELECT nama, jabatan, gaji
+FROM karyawan
+WHERE dept = 'Engineering'
+ORDER BY gaji DESC
+LIMIT 3;
+```
+
+Server mem-parsing query, optimizer memilih cara membaca tabel, storage engine mengambil baris, lalu server mengirim maksimum 3 hasil ke client. Parameter dari pengguna harus dikirim lewat *prepared statement*, bukan dirangkai ke string SQL, untuk mencegah SQL injection.
+
+## Di Dunia Nyata
+
+- **WordPress** menyimpan posting, pengguna, dan metadata di tabel MySQL.
+- **API toko online** membaca katalog dan menyimpan pesanan melalui transaksi InnoDB.
+- **Dashboard operasional** menjalankan GROUP BY untuk omzet harian tanpa memindahkan seluruh data.
+- **Sistem login** mencari email lewat index dan memverifikasi hash password di aplikasi.
+
+<div class="note">💡 Demo MySQL di editor OnBoss dijalankan oleh SQLite. SQL standar seperti SELECT, JOIN, GROUP BY, ORDER BY, dan LIMIT berjalan; sintaks khusus MySQL ditampilkan sebagai contoh untuk server MySQL asli.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT nama, jabatan, gaji, dept
+FROM karyawan
+WHERE dept = 'Engineering'
+ORDER BY gaji DESC
+LIMIT 3;`} />

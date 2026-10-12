@@ -1,0 +1,161 @@
+---
+title: "Function & Array Method"
+description: "map, filter, reduce — cara React mengubah data menjadi daftar tampilan"
+order: 3
+quiz:
+  - q: "Method array yang mengubah tiap elemen dan mengembalikan array baru berisi…"
+    options: ["push()", "splice()", "map()", "sort()"]
+    answer: 2
+    explain: "map() mengubah tiap elemen menjadi nilai baru dan mengembalikan array baru — pola paling umum saat merender daftar."
+  - q: "filter() mengembalikan…"
+    options: ["Array baru berisi elemen yang lolos kondisi", "Nilai tunggal (jumlah)", "Array yang sama tapi urutan terbalik", "Boolean selalu true"]
+    answer: 0
+    explain: "filter menyaring; callback harus mengembalikan true/false."
+  - q: "reduce() dipakai untuk…"
+    options: ["Menghapus elemen", "Menyusutkan array jadi satu nilai (total, akumulator)", "Menyalin array", "Mengurutkan array"]
+    answer: 1
+    explain: "reduce(akumulator, elemen) menghitung kumulatif: total, rata-rata, group-by, dst."
+  - q: "Hasil map([1,2,3], n => n * 2) adalah…"
+    options: ["[2, 4, 6]", "[1, 2, 3, 2]", "6", "undefined"]
+    answer: 0
+    explain: "Panjang array tetap, tiap elemen dikalikan 2 — inilah yang dipakai untuk mengubah data jadi elemen JSX."
+  - q: "Cara paling aman menambah item ke state array di React…"
+    options: ["Salin dulu dengan spread, lalu tambah: [...lama, baru]", "state.push(baru)", "Ubah langsung posisi array", "Hapus array lalu buat baru"]
+    answer: 0
+    explain: "Mutasi langsung (push) tidak memicu React render ulang — selalu buat array baru."
+example:
+  code: |
+    const produk = [
+      { nama: "Kopi", stok: 4 },
+      { nama: "Teh", stok: 0 },
+      { nama: "Roti", stok: 10 },
+    ];
+    const tersedia = produk.filter((p) => p.stok > 0).map((p) => p.nama);
+    console.log(tersedia);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat kamu melihat `daftar.map(item => <li>{item}</li>)` di React, itu murni JavaScript. Bab ini melatih pola array yang menjadi mesin rendering React.
+
+## Fungsi Sebagai Nilai
+
+```js
+function kali2(n) {
+  return n * 2;
+}
+const hasil = [1, 2, 3].map(kali2);
+```
+
+Fungsi bisa disimpan di variabel dan dilempar ke method lain — inilah yang membuat pola map/filter terasa natural. Fungsi yang menerima fungsi disebut **higher-order function**; map, filter, reduce, dan forEach semuanya berjenis itu.
+
+## 4 Method Transformasi Inti
+
+Empat inilah yang paling sering muncul di kode React:
+
+| Method | Bentuk hasil | Contoh singkat | Kapan dipakai di React |
+|--------|--------------|----------------|------------------------|
+| `map(fn)` | array baru, panjang sama | `[1,2].map(n => n*2)` → `[2,4]` | Data → daftar elemen JSX |
+| `filter(fn)` | array baru, isi tersaring | `[1,2,3].filter(n => n>1)` → `[2,3]` | Pencarian, hapus item selesai |
+| `reduce(fn, awal)` | satu nilai tunggal | `[1,2].reduce((a,b)=>a+b,0)` → `3` | Total, jumlah, group-by |
+| `forEach(fn)` | `undefined` (mutasi) | tiap elemen dicetak | Sisi efek, hindari di render |
+
+## map: Mengubah Tiap Elemen
+
+```js
+const angka = [1, 2, 3];
+const kuadrat = angka.map((n) => n * n); // [1, 4, 9]
+
+const produk = ["Kopi", "Teh"];
+const label = produk.map((p) => `Produk: ${p}`);
+```
+
+Di React, map menjadi jembatan data ke tampilan:
+
+```jsx
+<ul>
+  {produk.map((p) => (
+    <li key={p.id}>{p.nama}</li>
+  ))}
+</ul>
+```
+
+## filter: Menyaring
+
+```js
+const nilai = [80, 45, 92, 30];
+const lulus = nilai.filter((n) => n >= 70); // [80, 92]
+
+const aktif = users.filter((u) => u.aktif);
+```
+
+Filter menyelesaikan pekerjaan **conditional rendering** dalam bentuk data: hanya elemen dengan kondisi `true` yang lolos ke tampilan.
+
+## reduce: Mengakumulasi
+
+```js
+const transaksi = [
+  { item: "Kopi", total: 25000 },
+  { item: "Roti", total: 12000 },
+];
+const belanja = transaksi.reduce((akum, t) => akum + t.total, 0);
+```
+
+Kunci reduce: nilai awal kedua argumen (`0` di atas) menentukan bentuk hasil akhir — pakai `{}` kalau mau menghasilkan object, `[]` kalau mau array.
+
+## find, some, every: Menanyakan Satu Pertanyaan
+
+Selain 4 method di atas, tiga method boolean/pencarian ini juga sering dipakai:
+
+- `find(fn)` → elemen **pertama** yang cocok (atau `undefined`) — buka detail produk by id.
+- `some(fn)` → `true` bila **ada** satu yang cocok — "ada item belum selesai?"
+- `every(fn)` → `true` bila **semua** cocok — "semua stok tersedia?"
+
+```js
+const kopi = produk.find((p) => p.nama === "Kopi");
+const adaHabis = produk.some((p) => p.stok === 0);   // true
+const semuaAda = produk.every((p) => p.stok > 0);    // false
+```
+
+## Chain & Immutability
+
+```js
+const total = produk
+  .filter((p) => p.stok > 0)
+  .map((p) => p.nama)
+  .join(", ");
+```
+
+Method-method ini tidak mengubah array asli — setiap langkah menghasilkan array baru. Sifat inilah yang diandalkan React untuk mendeteksi perubahan. Sebaliknya `push`, `splice`, dan `sort` **memutasi** array; dipakai di state, mereka diam-diam merusak data tanpa memicu render ulang.
+
+## Di Dunia Nyata
+
+- **Katalog produk**: `filter` stok > 0 lalu `map` jadi kartu — persis rantai di bab ini.
+- **Keranjang belanja**: `reduce` menghitung total belanja dari daftar item.
+- **Pencarian real-time**: user mengetik "kopi" → `filter` daftar produk lalu render hasilnya.
+- **Kotak masuk**: `some` mengecek apakah ada notifikasi belum dibaca untuk badge angka.
+- **Laporan penjualan**: `reduce` mengelompokkan transaksi per kategori jadi satu object ringkasan.
+
+<div class="note">💡 Ingat pola rantai ini: filter (pilih) lalu map (ubah bentuk). Di React kamu akan memakainya berkali-kali untuk mengubah data API menjadi kartu, baris tabel, atau opsi select.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const produk = [
+  { nama: "Kopi", harga: 25000, stok: 4 },
+  { nama: "Teh", harga: 15000, stok: 0 },
+  { nama: "Roti", harga: 12000, stok: 10 },
+];
+
+const tersedia = produk.filter(function (p) {
+  return p.stok > 0;
+});
+const label = tersedia.map(function (p) {
+  return p.nama + " — Rp" + p.harga;
+});
+console.log(label.join("\\n"));
+
+const totalNilai = produk.reduce(function (akum, p) {
+  return akum + p.harga * p.stok;
+}, 0);
+console.log("Nilai stok: Rp" + totalNilai);
+
+const namaTerurut = produk.map(function (p) { return p.nama; }).sort();
+console.log("Terurut:", namaTerurut.join(", "));`} />

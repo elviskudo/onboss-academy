@@ -1,0 +1,133 @@
+---
+title: "List, Dict & Set Methods"
+description: "Operasi harian pada struktur data Python + kapan pakai mana"
+order: 7
+quiz:
+  - q: "sorted(daftar) vs daftar.sort() — bedanya…"
+    options: ["sorted mengembalikan list baru; .sort() mengubah asli", "Sama saja", "sorted lebih lambat selalu", ".sort() menghapus list"]
+    answer: 0
+    explain: "Jaga-jaga: .sort() mutasi in-place dan mengembalikan None."
+  - q: "dict.get(\"kunci\") mengembalikan…"
+    options: ["Selalu error jika tidak ada", "Nilai kunci atau None jika tidak ada (tanpa error)", "String kosong", "Kunci lain"]
+    answer: 1
+    explain: "dict[\"kunci\"] melempar KeyError; .get aman."
+  - q: "Hasil {1, 2}.union({2, 3}) adalah…"
+    options: ["{2}", "{1, 2, 2, 3}", "{1, 2, 3}", "Error"]
+    answer: 2
+    explain: "Set menggabung tanpa duplikat — union, intersection, difference."
+  - q: "Cara menghapus duplikat dari list paling mudah…"
+    options: ["list.dedupe()", "set(list)", "list.clean()", "list.unique()"]
+    answer: 1
+    explain: "list(set(l)) — catatan: urutan bisa berubah. Untuk urutan terjaga, pakai dict.fromkeys."
+  - q: "Struktur mana yang TIDAK mengizinkan duplikat?"
+    options: ["list", "tuple", "dict", "set"]
+    answer: 3
+    explain: "Set hanya menyimpan nilai unik; list & tuple boleh duplikat."
+example:
+  code: |
+    angka = [5, 3, 8, 1, 3]
+    unik = list(dict.fromkeys(angka))
+    print("Tanpa duplikat:", unik)
+    print("Terurut:", sorted(angka))
+    kata = {}
+    for k in "hello":
+        kata[k] = kata.get(k, 0) + 1
+    print("Frekuensi huruf:", kata)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Python punya **4 struktur data utama** — `list`, `dict`, `tuple`, `set` — plus `range`. Masing-masing punya peran berbeda: urut-boleh-duplikat, kunci-nilai, tetap-diam, atau unik.
+
+## Kapan Pakai Mana
+
+| Struktur | Sifat | Method utama | Contoh pakai |
+|---|---|---|---|
+| `list` | terurut, mutable, boleh duplikat | **11** method (`append`, `sort`, `pop`…) | daftar pesanan yang bertambah |
+| `tuple` | terurut, immutable, cepat | 2 method (`count`, `index`) | koordinat, baris DB |
+| `dict` | kunci-nilai, mutable | **11** method (`get`, `items`…) | pencarian by id/email |
+| `set` | unik, tanpa urutan | **17** method (`union`, `add`…) | hapus duplikat, cek keanggotaan |
+| `range` | deret angka immutable | hemat memori | parameter `for` |
+
+Indexing: `l[0]` pertama, `l[-1]` terakhir, `l[1:4]` irisan (batas kanan eksklusif), `l[::-1]` dibalik. Dict diakses `d["kunci"]` — bukan lewat angka.
+
+## List
+
+```python
+l = [3, 1, 2]
+l.append(4)          # [3,1,2,4]
+l.extend([5, 6])     # gabung list
+l.insert(0, 0)
+l.remove(1)          # hapus by nilai
+l.pop()              # hapus & ambil terakhir
+l.sort()             # urut in-place
+l.reverse()
+sorted(l, reverse=True)  # list baru terurut
+sum(l), min(l), max(l), len(l)
+l.count(3)
+```
+
+`sorted(l)` mengembalikan **list baru**; `l.sort()` mengubah **di tempat** dan mengembalikan `None` — jangan ditulis `l = l.sort()`.
+
+## Dict
+
+```python
+d = {"a": 1, "b": 2}
+d["c"] = 3
+d.get("z", 0)        # aman
+d.pop("a")
+d.update({"d": 4})
+d.keys(), d.values(), d.items()
+for k, v in d.items():
+    print(k, v)
+```
+
+**Mengelompokkan data:**
+
+```python
+kata = ["apel", "anggur", "jeruk", "jambu"]
+grup = {}
+for k in kata:
+    awal = k[0]
+    grup.setdefault(awal, []).append(k)
+# {'a': ['apel','anggur'], 'j': ['jeruk','jambu']}
+```
+
+## Set
+
+```python
+a = {1, 2, 3}
+b = {2, 3, 4}
+a | b    # union {1,2,3,4}
+a & b    # intersection {2,3}
+a - b    # difference {1}
+a ^ b    # symmetric difference {1,4}
+```
+
+Sangat berguna untuk cek keanggotaan unik dengan cepat.
+
+**Mutable vs immutable**: yang boleh diubah — `list`, `dict`, `set`; yang tidak — `str`, `int`, `tuple`, `frozenset`. Kirim tuple/str antar fungsi aman dari perubahan diam-diam.
+
+## Di Dunia Nyata
+
+- Rekap penjualan per kota: loop transaksi → `dict` sebagai akumulator → `sorted(..., key=)` untuk peringkat.
+- Cek email terdaftar: `if email in daftar_email_set` — ribuan data tetap instan karena lookup set O(1).
+- Hapus duplikat peserta webinar: `list(dict.fromkeys(tamu))` — unik sekaligus urutan terjaga.
+- Simpan konfigurasi pelanggan: `dict` dari file JSON, diubah lewat `.update()` saat user edit profil.
+- Antrian antrean: `deque`/list dipakai `pop(0)` — tuple untuk pasangan (x, y) peta.
+
+<div class="note">💡 `list` dan `dict` bisa jadi lambat kalau jadi "database" raksasa: cari di list = O(n), cari di dict/set = O(1). Begitu data > ribuan item dan sering dicari, pindahkan ke dict/set.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`penjualan = [
+    {"kota": "Jakarta", "nominal": 250000},
+    {"kota": "Bandung", "nominal": 150000},
+    {"kota": "Jakarta", "nominal": 100000},
+    {"kota": "Surabaya", "nominal": 200000},
+]
+per_kota = {}
+for t in penjualan:
+    per_kota[t["kota"]] = per_kota.get(t["kota"], 0) + t["nominal"]
+print("Total per kota:", per_kota)
+urut = sorted(per_kota.items(), key=lambda x: x[1], reverse=True)
+print("Peringkat:", urut)
+print("Total semua: Rp{:,}".format(sum(per_kota.values())))`} />

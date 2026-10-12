@@ -1,0 +1,116 @@
+---
+title: "Branch: Bekerja Paralel Tanpa Takut Rusak"
+description: "Membuat, berpindah, dan mengelola branch untuk memisahkan pekerjaan"
+order: 3
+quiz:
+  - q: "Branch dalam Git pada dasarnya adalah…"
+    options: ["Salinan penuh seluruh file project", "Penunjuk (ref) ke satu commit", "Folder terpisah di disk", "Remote repository"]
+    answer: 1
+    explain: "Branch hanya pointer bergerak yang selalu menunjuk ke commit terakhir di jalurnya — pembuatan branch instan."
+  - q: "Perintah membuat dan langsung berpindah ke branch baru adalah…"
+    options: ["git branch baru", "git switch -c baru", "git init baru", "git fork baru"]
+    answer: 1
+    explain: "git switch -c baru membuat branch lalu langsung checkout ke sana."
+  - q: "git branch tanpa argumen menampilkan…"
+    options: ["Daftar branch lokal", "Daftar file", "Riwayat commit", "Daftar remote"]
+    answer: 0
+    explain: "Tanpa argumen, git branch mencetak semua branch lokal dengan tanda * di branch aktif."
+  - q: "Perintah berpindah ke branch yang sudah ada adalah…"
+    options: ["git jump", "git switch nama-branch", "git move", "git open"]
+    answer: 1
+    explain: "git switch nama-branch (dahulu: git checkout nama-branch) memindahkan HEAD dan working directory."
+  - q: "Menghapus branch lokal yang sudah digabung dilakukan dengan…"
+    options: ["git branch -d nama", "git branch --kill nama", "git delete branch nama", "git rm nama"]
+    answer: 0
+    explain: "-d menolak menghapus branch yang belum merge; -D memaksa penghapusan."
+example:
+  code: |
+    git switch -c fitur-login
+    # ... kerja & commit di sini ...
+    git switch main
+    git merge fitur-login
+    git branch -d fitur-login
+---
+
+Branch membuat kamu berani bereksperimen: fitur baru, perbaikan bug, atau coba-coba refactor — semuanya punya jalur sendiri dan `main` tetap stabil.
+
+## Membuat & Berpindah
+
+```bash
+git switch -c fitur-login
+git status
+```
+
+Sekarang kamu di `fitur-login`. Commit di sini tidak memengaruhi `main` sama sekali.
+
+Kembali ke main dan masuk lagi kapan saja:
+
+```bash
+git switch main
+git switch fitur-login
+```
+
+## Daftar & Hapus Branch
+
+```bash
+git branch          # semua branch lokal, * = aktif
+git branch -d fitur-login   # hapus setelah merge (aman)
+git branch -D fitur-login   # paksa hapus (tanpa merge)
+```
+
+## Konvensi Penamaan
+
+Tim biasanya memakai pola agar branch mudah ditebak:
+
+```
+fitur/keranjang-belanja
+bugfix/simpan-profil-500
+hotfix/perbaiki-ssl
+release/v1.4.0
+```
+
+```bash
+git switch -c fitur/keranjang-belanja
+```
+
+## Bagaimana Branch Bekerja di Balik Layar
+
+```
+* f3a91c2 (HEAD -> fitur-login) Tambah form login
+| * 8d1e0a4 (main) Perbaiki README
+|/
+* 1c0f77b commit awal
+```
+
+Kedua branch berbagi commit leluhur yang sama; masing-masing maju sendiri-sendiri sampai digabung lewat merge (bab berikutnya).
+
+## Enam Operasi Branch
+
+| Operasi | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Daftar | Melihat branch lokal | `git branch` | Memastikan konteks kerja |
+| Buat dan pindah | Memulai jalur baru | `git switch -c bugfix/login` | Sebelum mengubah fitur terisolasi |
+| Pindah | Mengganti jalur aktif | `git switch main` | Beralih tugas |
+| Rename | Memperbaiki nama branch aktif | `git branch -m fitur/auth` | Nama lama tidak jelas |
+| Hapus aman | Menghapus branch yang sudah merge | `git branch -d fitur/auth` | Setelah integrasi selesai |
+| Lacak remote | Membuat branch dari remote | `git switch --track origin/release` | Melanjutkan branch rekan |
+
+Branch adalah referensi ringan, bukan salinan folder. `HEAD` biasanya menunjuk branch aktif; commit baru menggerakkan branch itu. Working tree ikut berubah ketika `switch`, sehingga Git akan menolak perpindahan jika perubahan lokal berpotensi tertimpa. Commit, stash, atau batalkan perubahan secara sadar terlebih dahulu.
+
+`git branch -D` bersifat destruktif karena menghapus referensi walau commit belum merge. Commit biasanya masih sementara di reflog, tetapi jangan mengandalkannya. Pastikan `git log main..nama-branch` kosong sebelum menghapus paksa.
+
+## Di Dunia Nyata
+
+- Branch `fitur/checkout` memisahkan pekerjaan beberapa hari dari `main` yang siap deploy.
+- Branch `hotfix/token-expired` mengisolasi perbaikan produksi untuk review cepat.
+- Branch release menahan stabilisasi versi sementara fitur berikutnya terus berjalan.
+- Branch eksperimen memungkinkan benchmark dibuang tanpa mencemari riwayat utama.
+
+<div class="note">💡 Branch di Git sangat murah — buatlah untuk setiap fitur/bug yang sedang dikerjakan. Menumpuk banyak perubahan di satu branch membuat riwayat sulit dibaca dan konflik makin besar.</div>
+
+## Menyesuaikan Branch Lama
+
+```bash
+git switch main
+git switch -   # kembali ke branch sebelumnya (seperti Alt-Tab)
+```

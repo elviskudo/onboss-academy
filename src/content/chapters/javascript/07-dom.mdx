@@ -1,0 +1,199 @@
+---
+title: "DOM: Mengubah Halaman"
+description: "querySelector, createElement, mengubah konten HTML dari JS"
+order: 7
+quiz:
+  - q: "DOM adalah singkatan dari…"
+    options: ["Document Object Model", "Data Object Method", "Dynamic Output Mode", "Document Order Map"]
+    answer: 0
+    explain: "DOM adalah representasi objek dari struktur HTML yang bisa dimanipulasi JS."
+  - q: "Cara paling umum memilih elemen adalah…"
+    options: ["document.get(\"judul\")", "document.querySelector(\".judul\")", "HTML.select(judul)", "window.find(judul)"]
+    answer: 1
+    explain: "querySelector menerima selektor CSS apa pun. querySelectorAll untuk banyak elemen."
+  - q: "Apa beda textContent dan innerHTML?"
+    options: [
+      "textContent lebih lambat",
+      "innerHTML hanya untuk gambar",
+      "textContent teks murni (aman), innerHTML membaca interpretasi HTML",
+      "Tidak ada bedanya",
+    ]
+    answer: 2
+    explain: "Pakai textContent untuk teks biasa (aman dari XSS). innerHTML hanya untuk konten tepercaya."
+  - q: "Untuk menambahkan elemen baru ke <body> yang sudah dibuat via createElement, gunakan…"
+    options: ["document.body.render(el)", "document.add(el)", "body.new(el)", "document.body.append(el)"]
+    answer: 3
+    explain: "append/prepend/appendChild memasukkan node ke DOM."
+  - q: "classList.add(\"aktif\") berfungsi untuk…"
+    options: ["Menambah class CSS ke elemen", "Menghapus elemen", "Mengubah teks", "Menambah style inline"]
+    answer: 0
+    explain: "classList: add, remove, toggle, contains — cara bersih mengelola class."
+example:
+  code: |
+    <h1 class="judul">Judul Lama</h1>
+    <button id="ubah">Ubah!</button>
+    <script>
+      document.getElementById("ubah").addEventListener("click", () => {
+        document.querySelector(".judul").textContent = "Judul Baru 🎉";
+      });
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+DOM (*Document Object Model*) adalah "peta objek" dari HTML-mu. Setelah browser memuat halaman, semua elemen menjadi objek JS yang bisa diubah.
+
+Strukturnya berbentuk pohon: `window` → `document` → `html` → `head`/`body` → turunan. Setiap simpul = satu objek dengan properti dan method.
+
+## 4 Cara Memilih Elemen
+
+| Method | Mengembalikan | Kapan dipakai |
+|--------|---------------|---------------|
+| `document.querySelector(".judul")` | 1 elemen atau `null` | Selektor CSS apa pun — paling umum |
+| `document.querySelectorAll("li")` | NodeList (bisa di-`forEach`) | Banyak elemen sekaligus |
+| `document.getElementById("cta")` | 1 elemen | ID — paling cepat, spesifik |
+| `document.getElementsByClassName("kartu")` | HTMLCollection (hidup) | Legacy; pilih querySelectorAll |
+
+```js
+document.querySelector(".judul");   // satu elemen pertama
+document.querySelectorAll("li");    // NodeList semua elemen
+document.getElementById("cta");     // by id
+```
+
+## Mengubah Konten & Atribut
+
+```js
+const judul = document.querySelector("h1");
+judul.textContent = "Judul Baru";
+judul.innerHTML = "<em>versi miring</em>";
+judul.style.color = "tomato";
+judul.style.backgroundColor = "#EEF0FF";
+
+const link = document.querySelector("a");
+link.setAttribute("href", "https://example.com");
+link.classList.add("aktif");
+link.classList.toggle("sembunyi");
+```
+
+## Membuat & Menambah Elemen
+
+```js
+const li = document.createElement("li");
+li.textContent = "Item baru";
+document.querySelector("ul").append(li);
+// atau hapus:
+li.remove();
+```
+
+## Traversal: Naik, Turun, Samping
+
+| Properti | Arah | Kegunaan |
+|----------|------|----------|
+| `el.parentElement` | Naik | Cari induk |
+| `el.children` | Turun | Semua anak elemen (HTMLCollection) |
+| `el.nextElementSibling` | Samping | Elemen sesudahnya |
+| `el.closest(".kartu")` | Naik terus | Cari induk terdekat yang cocok selektor — kunci delegation |
+
+```js
+// Atribut vs property
+link.setAttribute("href", "/tentang"); // atribut HTML
+input.value = "teks";                  // property DOM (yang dibaca JS)
+console.log(input.getAttribute("placeholder"));
+```
+
+## Style, Dataset & Computed Style
+
+```js
+const baris = document.querySelector(".baris");
+baris.style.width = "80%";          // inline style (camelCase: backgroundColor)
+baris.dataset.index = "3";          // jadi <div data-index="3">
+console.log(baris.dataset.index);   // "3"
+
+// baca nilai akhir setelah CSS diterapkan
+const warna = getComputedStyle(baris).color;
+console.log(warna); // "rgb(79, 70, 229)"
+```
+
+`data-*` lewat `dataset` adalah tempat menyimpan state kecil per elemen tanpa merusak struktur HTML.
+
+## Pola: Render Daftar dari Array
+
+```js
+const data = ["Sari", "Budi", "Rina"];
+const ul = document.querySelector("ul");
+ul.innerHTML = ""; // kosongkan dulu agar tidak dobel
+for (const nama of data) {
+  const li = document.createElement("li");
+  li.textContent = nama;       // aman dari XSS
+  ul.append(li);
+}
+console.log("Render", ul.children.length, "item");
+```
+
+Ini resep dasar semua daftar dinamis: data → loop → `createElement` → `append`.
+
+## Looping NodeList
+
+```js
+document.querySelectorAll(".tombol").forEach((btn, i) => {
+  btn.textContent = `Tombol ${i + 1}`;
+});
+```
+
+## Kapan DOM Siap Diakses?
+
+```html
+<script src="app.js" defer></script> <!-- aman: jalan setelah HTML selesai -->
+```
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  // elemen sudah ada — baru aman disentuh JS
+});
+```
+
+Script tanpa `defer` yang ditaruh di `<head>` berjalan **sebelum** `<body>` ada — `querySelector` akan `null`. Solusi: `defer`, `DOMContentLoaded`, atau taruh `<script>` di akhir `<body>`.
+
+## Mengubah Dengan Aman vs Berisiko
+
+| Properti | Fungsi | Keamanan |
+|----------|--------|----------|
+| `textContent` | Ganti teks murni | Aman — markup ditampilkan apa adanya |
+| `innerHTML` | Ganti jadi HTML baru | Berisiko XSS kalau sumbernya input user |
+| `dataset` | Baca/tulis `data-*` | Aman — cocok untuk state kecil per elemen |
+| `classList` | `add/remove/toggle/contains` | Aman — cara bersih mengelola class CSS |
+
+<div class="note">💡 Hindari <code>innerHTML</code> dengan input user — bisa jadi celah XSS. Untuk teks biasa, <code>textContent</code> selalu lebih aman.</div>
+
+## Di Dunia Nyata
+
+- **Dark mode toggle**: `document.body.classList.toggle("gelap")` dari satu tombol.
+- **Live search produk**: ketik di input → `querySelectorAll(".produk")` disaring lalu tiap kartu disembunyikan.
+- **Modal login**: ubah `style.display` container dari `none` jadi `flex` tanpa reload.
+- **Infinite scroll**: `createElement("img")` + `append` ke daftar saat scroll mendekati bawah.
+- **Counter to-do**: `textContent` tombol diperbarui tiap kali item ditambah/dihapus.
+
+<TryIt lang="javascript" runtime="client-js" code={`const app = document.querySelector(".app") || (() => {
+  const d = document.createElement("div");
+  d.className = "app";
+  d.style.cssText = "display:grid;gap:8px;max-width:280px";
+  document.body.prepend(d);
+  return d;
+})();
+const judul = document.createElement("h3");
+judul.textContent = "Daftar Tugas";
+const input = document.createElement("input");
+input.placeholder = "Tulis tugas lalu Enter…";
+input.style.cssText = "padding:8px;border:1px solid #ccc;border-radius:8px";
+const ul = document.createElement("ul");
+app.append(judul, input, ul);
+input.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || !input.value.trim()) return;
+  const li = document.createElement("li");
+  li.textContent = input.value;
+  li.style.cursor = "pointer";
+  li.onclick = () => li.remove();
+  ul.append(li);
+  input.value = "";
+  console.log("Ditambahkan:", li.textContent, "| Sisa:", ul.children.length);
+});`} />

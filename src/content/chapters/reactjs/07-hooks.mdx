@@ -1,0 +1,164 @@
+---
+title: "Hooks: useState & useEffect"
+description: "State, efek samping, dan ref — alat utama komponen fungsional modern"
+order: 7
+quiz:
+  - q: "useState mengembalikan…"
+    options: ["Object berisi value dan method", "Array berisi [nilai, fungsi setter]", "Nilai tunggal", "Promise"]
+    answer: 1
+    explain: "Destruktur: const [count, setCount] = useState(0) — elemen pertama nilai, kedua setter."
+  - q: "Nilai awal useState(5)…"
+    options: ["Dipakai hanya saat komponen pertama kali dirender", "Dijalankan tiap render", "Menghapus state lama", "Menjadi string"]
+    answer: 0
+    explain: "Argumen useState hanya default saat inisialisasi; render berikutnya mengabaikannya."
+  - q: "useEffect dipakai untuk…"
+    options: ["Mengubah HTML", "Membuat komponen baru", "Menjalankan kode setelah render (efek samping)", "Mengimpor CSS"]
+    answer: 2
+    explain: "Efek samping: fetch data, langganan event, manipulasi DOM setelah tampilan muncul."
+  - q: "Apa fungsi fungsi cleanup yang dikembalikan useEffect?"
+    options: ["Membersihkan langganan/efek sebelumnya sebelum efek baru berjalan", "Menghapus state", "Menghentikan seluruh aplikasi", "Mengembalikan nilai ke default"]
+    answer: 0
+    explain: "Return function dari useEffect dijalankan saat komponen unmount atau sebelum efek berikutnya."
+  - q: "Dependency array kosong [] pada useEffect artinya…"
+    options: ["Efek hanya berjalan saat komponen mount", "Efek berjalan setiap render", "Efek tidak pernah jalan", "Efek jalan dua kali"]
+    answer: 0
+    explain: "Tanpa dependensi, efek berjalan sekali di awal — pola umum untuk fetch data awal."
+example:
+  code: |
+    let count = 0;
+    function setCount(v) {
+      count = v;
+      console.log("Render ulang, count =", count);
+    }
+    setCount(count + 1);
+    setCount(count * 10);
+---
+
+Setelah memahami state dan props, saatnya memakai API resmi React untuk state, efek samping, dan referensi: hooks.
+
+## 4 Hook Inti di Track Ini
+
+| Hook | Menyimpan/melakukan | Memicu render? | Kapan dipakai |
+|------|---------------------|----------------|---------------|
+| `useState` | State lokal | Ya, saat setter dipanggil | Input, toggle, counter |
+| `useEffect` | Sinkronisasi ke sistem luar | Tidak langsung | Fetch, listener, timer |
+| `useRef` | Nilai/DOM yang bertahan | Tidak | Fokus input, timer ID |
+| Custom hook | Gabungan hook reusable | Mengikuti isi hook | Logika fitur berulang |
+
+Hooks adalah fungsi khusus; bukan object OOP dan bukan lifecycle class. Dua aturan kerasnya: panggil hanya di top-level, dan hanya dari komponen React atau custom hook.
+
+## useState
+
+```jsx
+import { useState } from "react";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Klik: {count}
+    </button>
+  );
+}
+```
+
+Aturan main useState:
+
+- Panggil di top-level komponen — jangan di dalam if/perulungan
+- Ubah nilai hanya lewat setter; langsung mengubah `count` tidak berefek apa pun
+- Update berbasis nilai lama: `setCount((prev) => prev + 1)` lebih aman saat update berantai
+
+## State Berbentuk Object & Array
+
+```jsx
+const [user, setUser] = useState({ nama: "", email: "" });
+setUser({ ...user, nama: "Sari" }); // salin dulu, baru ubah
+
+const [items, setItems] = useState([]);
+setItems([...items, itemBaru]);
+```
+
+Pola immutable dari bab logika state vanilla kembali dipakai — kini lewat setter React.
+
+## useEffect: Efek Samping
+
+```jsx
+import { useEffect, useState } from "react";
+
+function Profil({ userId }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let aktif = true;
+
+    fetch("/api/users/" + userId)
+      .then((res) => res.json())
+      .then((data) => {
+        if (aktif) setUser(data);
+      });
+
+    return () => { aktif = false; };
+  }, [userId]);
+
+  if (!user) return <p>Memuat…</p>;
+  return <h1>{user.nama}</h1>;
+}
+```
+
+Daftar dependensi `[userId]` membuat efek berjalan ulang hanya saat `userId` berubah. Fungsi cleanup mencegah update dari request lama.
+
+## useRef
+
+```jsx
+import { useRef } from "react";
+
+function Fokus() {
+  const inputRef = useRef(null);
+
+  return (
+    <>
+      <input ref={inputRef} />
+      <button onClick={() => inputRef.current.focus()}>Fokus</button>
+    </>
+  );
+}
+```
+
+Ref menyimpan nilai yang tidak memicu render — pas untuk DOM node, timer, atau nilai lama terakhir.
+
+## Custom Hook
+
+```jsx
+function useJumlah(list) {
+  const [total, setTotal] = useState(0);
+  useEffect(() => {
+    setTotal(list.length);
+  }, [list]);
+  return total;
+}
+```
+
+Nama diawali `use` menandakan hook — di dalamnya boleh memanggil hook lain selama mengikuti aturan urutan pemanggilan.
+
+## Conditional & List Rendering dengan Hooks
+
+Hook tidak boleh dipanggil di dalam `if` atau `map`, tetapi **hasilnya** boleh menentukan percabangan dan daftar:
+
+```jsx
+const [items, setItems] = useState([]);
+if (items.length === 0) return <p>Belum ada data</p>;
+return items.map((item) => <Kartu key={item.id} item={item} />);
+```
+
+Urutan hook harus sama di setiap render agar React tahu slot state mana milik pemanggilan mana.
+
+## Di Dunia Nyata
+
+- **Form login**: `useState` menyimpan email/password dan pesan error validasi.
+- **Halaman profil**: `useEffect` fetch ulang ketika `userId` props berubah; cleanup mengabaikan request lama.
+- **Pencarian**: state menyimpan query, effect dengan timer debounce memanggil API dan membersihkan timer sebelumnya.
+- **Pemutar video**: `useRef` mengakses node `<video>` untuk play/pause tanpa merender ulang.
+- **Status koneksi**: custom `useOnlineStatus` membungkus listener browser agar banyak komponen bisa memakai logika sama.
+
+<div class="note">💡 Daftar dependensi bukan formalitas. Lupa menyertakan nilai yang dipakai di dalam efek adalah bug React paling umum; sertakan semua nilai reaktif yang dibaca, dan bungkus fungsi di useCallback bila perlu.</div>

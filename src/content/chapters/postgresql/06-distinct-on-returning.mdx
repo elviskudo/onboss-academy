@@ -1,0 +1,130 @@
+---
+title: "DISTINCT ON dan RETURNING"
+description: "Dua fitur khas PostgreSQL yang memperpendek query sehari-hari"
+order: 6
+quiz:
+  - q: "DISTINCT ON (dept) pada PostgreSQL memilih…"
+    options: ["Semua baris unik", "Semua dept duplikat", "Satu baris pertama per kelompok dept sesuai ORDER BY", "Baris dengan dept NULL"]
+    answer: 2
+    explain: "DISTINCT ON mengambil satu baris per nilai yang disebut — urutan dalam ORDER BY menentukan mana yang menang."
+  - q: "DISTINCT ON (dept) ... ORDER BY dept, gaji DESC menghasilkan…"
+    options: ["Karyawan termahal tiap departemen", "Karyawan termurah", "Semua karyawan", "Departemen unik saja"]
+    answer: 0
+    explain: "Urutan gaji DESC di dalam tiap grup membuat baris pertama = gaji tertinggi departemen itu."
+  - q: "RETURNING pada UPDATE PostgreSQL mengembalikan…"
+    options: ["Jumlah baris terpengaruh saja", "Nilai kolom baris yang baru diubah", "Backup tabel", "Struktur tabel"]
+    answer: 1
+    explain: "UPDATE ... RETURNING memunculkan baris hasil perubahan — tanpa query SELECT tambahan."
+  - q: "Pada database lain, padanan umum DISTINCT ON adalah…"
+    options: ["ORDER BY saja", "LIMIT tanpa syarat", "UNION ALL", "GROUP BY + MAX/MIN"]
+    answer: 3
+    explain: "Polanya: agregasi per grup (GROUP BY dengan MAX/MIN) lalu join balik untuk mengambil nama baris."
+  - q: "RETURNING juga bisa dipakai bersama…"
+    options: ["Hanya SELECT", "INSERT dan DELETE", "Hanya CREATE", "Tidak bisa sama sekali"]
+    answer: 1
+    explain: "INSERT ... RETURNING id memudahkan mengambil id otomatis; DELETE ... RETURNING menampilkan baris yang dihapus."
+example:
+  code: |
+    -- Postgres asli
+    SELECT DISTINCT ON (dept) dept, nama, gaji
+    FROM karyawan
+    ORDER BY dept, gaji DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua fitur PostgreSQL berikut menghemat banyak baris kode: **DISTINCT ON** untuk "satu yang terbaik per grup", dan **RETURNING** untuk melihat baris yang baru diubah.
+
+## Apa Itu Keduanya?
+
+- `DISTINCT ON (kolom)` — memilih **satu baris per nilai kolom**, sesuai kriteria ORDER BY. PostgreSQL-only.
+- `RETURNING` — menampilkan baris hasil `INSERT`, `UPDATE`, atau `DELETE` dalam perintah yang sama. PostgreSQL-only (SQLite 3.35+ menyusul).
+
+Keduanya menghapus boilerplate: tidak perlu subquery panjang untuk "yang terbaik", tidak perlu SELECT susulan untuk melihat hasil tulis.
+
+## DISTINCT ON: Satu Baris per Kelompok
+
+```sql
+-- Postgres asli
+SELECT DISTINCT ON (dept) dept, nama, gaji
+FROM karyawan
+ORDER BY dept, gaji DESC;
+```
+
+`DISTINCT ON (kolom)` memilih **satu baris per nilai kolom** — yang menang ditentukan ORDER BY sesudahnya. Karena diurutkan gaji DESC, yang keluar adalah karyawan dengan gaji tertinggi tiap departemen. Tanpa ORDER BY yang sesuai, hasilnya tidak menentu — DISTINCT ON selalu butuh pasangan ORDER BY.
+
+Pemakaian ganda pun sah: `DISTINCT ON (dept, jabatan)` memilih satu baris per kombinasi keduanya.
+
+## Padanan di Database Lain
+
+```sql
+-- padanan GROUP BY + MAX, lintas database
+SELECT k.dept, k.nama, k.gaji
+FROM karyawan k
+JOIN (
+  SELECT dept, MAX(gaji) AS gaji_max
+  FROM karyawan
+  GROUP BY dept
+) m ON k.dept = m.dept AND k.gaji = m.gaji_max
+ORDER BY k.dept;
+```
+
+Pola subquery MAX + JOIN ini menghasilkan "satu teratas per grup" di SQLite dan MySQL — karena demo editor kita berbasis SQLite, gunakan pola ini untuk mencoba hasil yang setara.
+
+## RETURNING: Melihat Baris yang Diubah
+
+```sql
+-- Postgres asli
+UPDATE karyawan
+SET gaji = gaji + 500000
+WHERE dept = 'Design'
+RETURNING id, nama, gaji, gaji - 500000 AS gaji_lama;
+```
+
+Alih-alih UPDATE lalu SELECT terpisah, `RETURNING` menampilkan baris hasil perubahan **dalam satu perintah** — sangat praktis untuk API yang perlu mengembalikan data terbaru, atau menangkap `id` hasil INSERT tanpa langkah tambahan.
+
+| Pemakaian | Mengembalikan | Kapan dipakai |
+| --- | --- | --- |
+| INSERT ... RETURNING id | id SERIAL baris baru | API POST yang langsung balik detail |
+| UPDATE ... RETURNING * | baris hasil perubahan | PATCH yang merespons data terbaru |
+| DELETE ... RETURNING * | baris yang dihapus | audit log, undo ringkas |
+
+## RETURNING dengan INSERT
+
+```sql
+-- Postgres asli
+INSERT INTO proyek (nama, lead_id, budget)
+VALUES ('Analytics Platform', 2, 30000000)
+RETURNING id, nama;
+```
+
+Mengambil `id` otomatis dari `SERIAL` langsung di perintah INSERT — tidak perlu `nextval` sequence atau SELECT terpisah.
+
+## RETURNING dengan DELETE
+
+```sql
+-- Postgres asli
+DELETE FROM proyek WHERE id = 3
+RETURNING *;
+```
+
+Baris yang dihapus tampil sekaligus — audit ringkas tanpa log manual. SQLite modern (3.35+) juga mendukung RETURNING, jadi konsepnya bisa langsung dicoba di editor.
+
+## Di Dunia Nyata
+
+- **Endpoint POST REST** — `INSERT ... RETURNING id, created_at` membuat API cukup satu round-trip untuk menyimpan lalu membalikkan entitas baru.
+- **Leaderboard tiap tim** — `DISTINCT ON (dept) ... ORDER BY dept, gaji DESC` menampilkan karyawan termahal per departemen untuk laporan HR.
+- **Promosi massal** — `UPDATE ... RETURNING` menampilkan daftar karyawan yang gajinya naik — bahan email notifikasi tanpa query tambahan.
+- **Keranjang belanja** — setelah DELETE item, RETURNING menampilkan sisa keranjang terbaru untuk dikirim balik ke UI.
+- **Deduplikasi data** — DISTINCT ON memilih "satu yang paling baru per pelanggan" untuk daftar unik, lebih singkat daripada window function.
+
+<div class="note">💡 DISTINCT ON = "satu yang terbaik per kelompok" dalam satu baris klausa; RETURNING = umpan balik langsung dari UPDATE/INSERT/DELETE. Keduanya menghapus boilerplate query di lapisan aplikasi.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT k.dept, k.nama, k.gaji
+FROM karyawan k
+JOIN (
+  SELECT dept, MAX(gaji) AS gaji_max
+  FROM karyawan
+  GROUP BY dept
+) m ON k.dept = m.dept AND k.gaji = m.gaji_max
+ORDER BY k.dept;`} />

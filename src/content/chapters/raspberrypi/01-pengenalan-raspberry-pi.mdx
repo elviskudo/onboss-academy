@@ -1,0 +1,115 @@
+---
+title: "Pengenalan Raspberry Pi"
+description: "Komputer papan tunggal, bagian utama, model, kebutuhan, dan cara memilihnya"
+order: 1
+quiz:
+  - q: "Apa pembeda utama Raspberry Pi dari komputer desktop biasa untuk proyek IoT?"
+    options: ["Memiliki GPIO untuk berinteraksi dengan rangkaian", "Tidak membutuhkan sistem operasi", "Selalu memakai baterai", "Hanya menjalankan satu program"]
+    answer: 0
+    explain: "GPIO memungkinkan program Linux membaca sensor dan mengendalikan aktuator secara langsung."
+  - q: "Model mana yang tepat untuk pengendali kecil tanpa Linux dan dengan waktu respons stabil?"
+    options: ["Raspberry Pi 5", "Raspberry Pi 4", "Raspberry Pi Pico", "Raspberry Pi 400"]
+    answer: 2
+    explain: "Pico adalah papan mikrokontroler, bukan komputer Linux, sehingga cocok untuk kontrol sederhana dan real-time."
+  - q: "Apa fungsi microSD pada Raspberry Pi standar?"
+    options: ["Menurunkan tegangan GPIO", "Menyimpan sistem operasi dan data", "Menambah pin GPIO", "Menggantikan adaptor daya"]
+    answer: 1
+    explain: "Raspberry Pi biasanya melakukan boot dan menyimpan berkas pada sistem operasi di microSD."
+  - q: "Mengapa adaptor harus sesuai spesifikasi model?"
+    options: ["Agar warna layar berubah", "Agar GPIO menjadi 5V", "Agar microSD lebih besar", "Agar tegangan tetap stabil saat beban meningkat"]
+    answer: 3
+    explain: "Catu daya lemah dapat menyebabkan throttling, reset, dan kerusakan data saat beban naik."
+  - q: "Tindakan mana yang aman sebelum mengubah kabel GPIO?"
+    options: ["Memberi 5V ke semua pin", "Mematikan Pi dan melepas daya", "Menjalankan pembaruan OS", "Menyentuh pin untuk menguji suhu"]
+    answer: 1
+    explain: "Rangkaian sebaiknya diubah tanpa daya untuk menghindari korsleting dan salah sambung."
+example:
+  code: |
+    model = "Raspberry Pi 4"
+    ram_gb = 4
+    print(f"{model}, RAM {ram_gb} GB, siap untuk server IoT")
+---
+
+Raspberry Pi adalah **single-board computer (SBC)**: komputer lengkap dalam satu papan yang dapat menjalankan Linux sekaligus berhubungan dengan perangkat elektronik. Kemampuan ganda ini penting karena satu perangkat bisa membaca sensor, mengambil keputusan, menyimpan data, dan menyediakan layanan jaringan.
+
+## Bagian Utama Raspberry Pi
+
+Ada **8 bagian utama** yang perlu dikenali sebelum menyalakan papan. Letak dan konektornya berbeda antar-model, tetapi fungsinya tetap serupa.
+
+| Bagian | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| SoC | Menyatukan CPU, GPU, dan pengendali utama | Broadcom BCM2711 | Menjalankan OS dan program |
+| RAM | Menyimpan data kerja sementara | 2 GB, 4 GB, 8 GB | Menjalankan banyak proses |
+| microSD | Media boot dan penyimpanan | Kartu 32 GB | Menyimpan Raspberry Pi OS dan log |
+| GPIO | Input/output digital dan bus komunikasi | Header 40 pin | Sensor, LED, tombol, buzzer |
+| USB | Menghubungkan periferal | Keyboard, SSD, kamera USB | Input, storage, dan perangkat tambahan |
+| HDMI | Mengirim video dan audio digital | Monitor micro-HDMI | Setup dengan layar atau dashboard |
+| Jaringan | Menghubungkan Wi-Fi, Ethernet, Bluetooth | LAN lokal | SSH, web server, dan IoT |
+| Daya | Memasok tegangan operasi | USB-C 5V | Menyalakan papan secara stabil |
+
+SoC menentukan kemampuan komputasi, sedangkan RAM menentukan ruang kerja aplikasi. microSD berperan seperti disk sistem; kualitas buruk atau pencabutan daya mendadak dapat merusak filesystem. GPIO bukan sumber daya umum: pin logika bekerja pada **3,3V** dan tidak tahan masukan 5V.
+
+## Keluarga dan Cara Memilih
+
+Untuk jalur pemula, terdapat **4 keluarga praktis** yang sering dibandingkan.
+
+| Keluarga | Sifat | Kekuatan | Kapan dipakai |
+|---|---|---|---|
+| Zero | Sangat kecil dan hemat daya | Bentuk ringkas | Sensor jaringan sederhana |
+| Model B | SBC serbaguna dengan banyak port | Linux, USB, Ethernet, GPIO | Belajar, server, otomasi |
+| 400 | Komputer di dalam keyboard | Setup desktop mudah | Kelas dan belajar Linux |
+| Pico | Mikrokontroler tanpa Linux | Respons cepat, konsumsi rendah | Kontrol perangkat sederhana |
+
+Pilih berdasarkan beban, bukan hanya model terbaru. Zero cukup untuk pembacaan sensor berkala. Pi 4 atau Pi 5 lebih sesuai bagi dashboard, kamera, database lokal, atau beberapa layanan. Pico bukan pengganti Pi OS; ia menjalankan firmware MicroPython atau C/C++ dan tidak menyediakan lingkungan Linux lengkap.
+
+## Fungsi dalam Sistem IoT
+
+Raspberry Pi dapat menjalankan **4 fungsi sistem** sekaligus: pengumpul data, pengendali, penyimpan, dan gateway jaringan. Sebagai pengumpul, Pi membaca suhu atau status tombol. Sebagai pengendali, Pi mengaktifkan LED atau driver. Sebagai penyimpan, Pi menulis CSV atau database. Sebagai gateway, Pi menyajikan data melalui HTTP atau meneruskannya ke layanan lain.
+
+Kombinasi tersebut membuat Pi cocok untuk prototipe dan sistem skala kecil. Namun Linux tidak menjamin timing real-time. Kontrol motor berkecepatan tinggi atau pulsa yang sangat presisi lebih tepat diserahkan ke mikrokontroler, sedangkan Pi menangani antarmuka dan jaringan.
+
+## Kebutuhan Awal dan Keselamatan
+
+Siapkan **5 kebutuhan dasar**: Raspberry Pi, adaptor sesuai spesifikasi, microSD berkualitas, akses jaringan, serta komputer untuk memasang OS. Case dan pendingin bersifat opsional, tetapi berguna pada beban lama. Gunakan Raspberry Pi Imager untuk menulis OS dan mengatur pengguna, Wi-Fi, serta SSH.
+
+Aturan keselamatan GPIO harus dipahami sejak awal:
+
+1. Matikan Pi dan lepaskan daya sebelum memindahkan kabel.
+2. Jangan pernah memasukkan sinyal 5V ke pin GPIO 3,3V.
+3. Gunakan resistor pembatas untuk LED.
+4. Gunakan transistor, relay, atau driver untuk motor dan beban berarus besar.
+5. Satukan GND saat Pi berkomunikasi dengan rangkaian eksternal yang kompatibel.
+
+GPIO hanya menyediakan arus kecil. Pin 5V pada header adalah jalur catu, bukan pin logika. Kesalahan antara nomor fisik header dan nomor BCM juga dapat mengaktifkan pin yang tidak dimaksud, jadi gunakan satu skema penomoran secara konsisten.
+
+## Contoh Identifikasi Sistem
+
+Setelah Raspberry Pi OS berjalan, periksa perangkat tanpa mengubah konfigurasi:
+
+```bash
+uname -m
+cat /proc/device-tree/model
+free -h
+hostname -I
+```
+
+`uname -m` menunjukkan arsitektur, berkas model menunjukkan nama papan, `free -h` menampilkan RAM, dan `hostname -I` menampilkan alamat jaringan. Contoh Python yang tidak memerlukan hardware tambahan:
+
+```python
+model = "Raspberry Pi 4"
+ram_gb = 4
+peran = ["sensor", "kontrol", "log", "web"]
+print(f"{model} ({ram_gb} GB): {', '.join(peran)}")
+```
+
+Outputnya menjelaskan perangkat dan empat peran yang akan dipelajari. Contoh GPIO pada bab berikutnya menggunakan Python dan `gpiozero`; library tersebut biasanya tersedia di Raspberry Pi OS dan hanya bekerja penuh ketika hardware serta pin terpasang benar.
+
+## Di Dunia Nyata
+
+- **Monitor lemari server:** Pi membaca suhu, menyimpan riwayat, lalu menyalakan indikator ketika melewati ambang.
+- **Kiosk informasi:** Pi menjalankan browser layar penuh dan mengambil konten dari jaringan lokal.
+- **Gateway kebun:** beberapa sensor mengirim data ke Pi, lalu Pi meneruskannya ke dashboard.
+- **Kamera satwa:** Pi mengendalikan kamera berdasarkan gerakan dan menyimpan foto bertimestamp.
+- **Laboratorium belajar:** satu papan dipakai untuk Linux, Python, jaringan, dan elektronika dasar.
+
+<div class="note">💡 Perlakukan GPIO sebagai logika 3,3V yang rapuh, bukan sebagai sumber daya: satu koneksi 5V yang salah dapat merusak SoC secara permanen.</div>

@@ -1,0 +1,126 @@
+---
+title: "Prompt, RAG, dan Fine-Tuning"
+description: "Tiga cara memakai LLM di aplikasi nyata — dari prompt hingga penyesuaian model"
+order: 8
+quiz:
+  - q: "Prompt yang baik seharusnya…"
+    options: ["Memberi konteks, peran, dan contoh output yang diinginkan", "Hanya satu kata", "Memakai huruf kapital semua", "Tanpa instruksi apa pun"]
+    answer: 0
+    explain: "Struktur konteks-peran-tugas-contoh menghasilkan output yang jauh lebih konsisten."
+  - q: "RAG (Retrieval-Augmented Generation) bertujuan…"
+    options: ["Melatih ulang seluruh model tiap hari", "Memberi dokumen relevan sebagai konteks tambahan saat menjawab", "Menghapus kebutuhan data", "Mengompres prompt"]
+    answer: 1
+    explain: "RAG mengurangi halusinasi dengan menyertakan sumber faktual dari basis dokumen sendiri."
+  - q: "Kapan fine-tuning lebih cocok daripada prompt panjang?"
+    options: ["Saat tidak ada data sama sekali", "Saat data hanya 3 baris", "Saat gaya/format harus konsisten di banyak permintaan berbeda", "Saat model harus selalu salah"]
+    answer: 2
+    explain: "Fine-tuning memindahkan pola dari prompt berulang menjadi perilaku bawaan model."
+  - q: "Risiko utama memasukkan data sensitif ke prompt layanan pihak ketiga adalah…"
+    options: ["Data bisa disimpan atau diproses di infrastruktur pihak lain", "Prompt jadi lebih pendek", "Model menjadi lebih cepat", "Token jadi gratis"]
+    answer: 0
+    explain: "Kebijakan privasi tiap layanan berbeda — jangan pernah mengirim rahasia tanpa dasar jelas."
+  - q: "Langkah paling awal sebelum memakai output LLM untuk keputusan penting adalah…"
+    options: ["Langsung tayangkan", "Verifikasi fakta dan angka secara independen", "Menghapus catatan audit", "Meminta model menghapus kesalahan"]
+    answer: 1
+    explain: "Verifikasi manusia adalah pengaman terakhir dari halusinasi dan kesalahan konteks."
+example:
+  code: |
+    # Prompt terstruktur (contoh teks yang dikirim ke LLM)
+    prompt = """
+    Peran: asisten dukungan pelanggan toko buku.
+    Konteks: kebijakan return 14 hari, belum termasuk ongkir.
+    Tugas: jawab singkat, sopan, dalam bahasa Indonesia.
+    Pertanyaan: "Bisa return buku yang sudah dibuka?"
+    """
+    print(prompt)
+---
+
+Transformer sudah paham teks. Bab terakhir membahas **cara memakainya di produk** dengan bertanggung jawab.
+
+## Prompt Engineering
+
+```python
+prompt = """
+Peran: asisten dukungan pelanggan toko buku.
+Konteks: kebijakan return 14 hari sejak tanggal terima, belum termasuk ongkir.
+Aturan: jawab maksimal 3 kalimat, sopan, bahasa Indonesia.
+Pertanyaan pelanggan: "Bisa return buku yang sudah dibuka?"
+"""
+print(prompt)
+```
+
+Ada **4 elemen prompt praktis**:
+
+| Elemen | Fungsi | Contoh |
+|--------|--------|--------|
+| Peran | menetapkan sudut pandang | “asisten dukungan” |
+| Konteks | memberi fakta relevan | kebijakan return |
+| Tugas | menjelaskan pekerjaan | jawab pertanyaan |
+| Format | membatasi bentuk hasil | maksimal 3 kalimat |
+
+Contoh input-output (**few-shot**) dapat menambah konsistensi untuk format yang sulit dijelaskan, tetapi juga menambah token dan biaya.
+
+## RAG: Menyuntik Dokumen
+
+```
+Pertanyaan user
+   -> cari dokumen relevan (pencarian vektor/kata)
+   -> sisipkan dokumen ke prompt
+   -> LLM menjawab berdasarkan dokumen tersebut
+   -> sertakan kutipan sumber
+```
+
+RAG membuat jawaban berpijak pada dokumen organisasi — tanpa melatih ulang model.
+
+## 5 Tahap Pipeline RAG
+
+| Tahap | Fungsi |
+|-------|--------|
+| Ingest | mengambil dokumen sumber |
+| Chunk | memotong dokumen menjadi bagian |
+| Index | menyimpan embedding/kata kunci |
+| Retrieve | mencari chunk relevan untuk pertanyaan |
+| Generate | menjawab memakai chunk dan memberi sumber |
+
+Kualitas RAG bergantung pada retrieval. Jika chunk yang benar tidak ditemukan, LLM tidak punya fakta yang diperlukan. Evaluasi retrieval (apakah sumber benar masuk) terpisah dari evaluasi jawaban.
+
+## Fine-Tuning vs Prompt vs RAG
+
+| Pendekatan | Mengubah apa | Cocok ketika | Biaya relatif |
+|------------|--------------|--------------|---------------|
+| Prompt | instruksi per permintaan | tugas dan konteks sederhana | rendah |
+| RAG | konteks dari dokumen | fakta privat/sering diperbarui | sedang |
+| Fine-tuning | bobot/perilaku model | gaya/format berulang | tinggi |
+
+Mulailah dari yang paling murah: prompt dulu, lalu RAG, baru fine-tuning bila memang diperlukan. Fine-tuning bukan database fakta: memperbarui satu kebijakan lewat dokumen RAG jauh lebih mudah daripada melatih ulang model.
+
+## Keamanan dan Etika
+
+- **Jangan kirim** data pribadi/kredensial ke layaran pihak ketiga tanpa dasar yang jelas.
+- **Risiko prompt injection** — instruksi jahat bisa tersembunyi dalam dokumen yang dibaca model; perlakukan konten eksternal sebagai data, bukan instruksi.
+- **Simpan log** prompt dan output untuk audit, khususnya di bidang ter-regulasi.
+
+## Monitoring Setelah Rilis
+
+```python
+# Sketsa ringkas kualitas layanan
+metrik = {
+    "ulasan_negatif_per_minggu": 12,
+    "timeout_rate": 0.02,
+    "halusinasi_terlapor": 3,
+}
+if metrik["halusinasi_terlapor"] > 0:
+    print("Perlu evaluasi sumber RAG dan instruksi sistem")
+```
+
+Pantau keluhan pengguna, keterlambatan, dan kasus halusinasi — lalu perbaiki sumber daya (dokumen, prompt, atau model). Sedikitnya ukur 4 hal: kualitas jawaban, ketepatan sumber, latensi, dan biaya per permintaan.
+
+## Di Dunia Nyata
+
+- **FAQ kebijakan perusahaan** — RAG mengambil aturan terbaru dan mencantumkan dokumen sumber.
+- **Ekstraksi invoice** — prompt menetapkan schema JSON; validator menolak keluaran yang tidak sesuai.
+- **Asisten support** — fine-tuning dipertimbangkan bila ribuan jawaban harus konsisten dalam nada dan format.
+- **Pencarian manual teknis** — retrieval memilih bagian manual yang relevan sebelum LLM merangkum langkah.
+- **Aplikasi legal internal** — izin dokumen diperiksa sebelum retrieval agar pengguna tidak melihat data terlarang.
+
+<div class="note">💡 Jalur paling hemat dalam praktik: prompt yang jelas -> RAG bila butuh dokumen -> fine-tuning hanya untuk pola yang tidak bisa dicapai keduanya.</div>

@@ -1,0 +1,199 @@
+---
+title: "Array & List"
+description: "4 koleksi utama C#, 10 method List, dan singgah singkat ke LINQ"
+order: 7
+quiz:
+  - q: "Panjang array di C#…"
+    options: ["bisa diubah kapan saja", "tetap setelah dibuat", "otomatis bertambah", "selalu 10"]
+    answer: 1
+    explain: "Ukuran array ditentukan saat pembuatan dan tidak bisa ditambah lagi."
+  - q: "Untuk menambah data ke List dipakai method…"
+    options: ["Add()", "push()", "insertEnd()", "append()"]
+    answer: 0
+    explain: "List punya Add() dan AddRange() untuk menambah elemen di akhir."
+  - q: "Jumlah elemen List diketahui lewat properti…"
+    options: ["Length", "Size", "Count", "Total"]
+    answer: 2
+    explain: "List memakai Count, sedangkan array memakai Length."
+  - q: "Method LINQ untuk menyaring data berdasarkan syarat adalah…"
+    options: ["Print()", "Skip()", "Append()", "Where()"]
+    answer: 3
+    explain: "Where() menerima fungsi predikat dan mengembalikan hanya elemen yang lolos."
+  - q: "Dictionary<TKey, TValue> menyimpan…"
+    options: ["elemen berurutan bernomor", "pasangan kunci → nilai dengan kunci unik", "hanya angka", "karakter Unicode"]
+    answer: 1
+    explain: "Kunci unik dan cepat dicari — cocok untuk ID → nama, email → pengguna."
+example:
+  code: |
+    using System;
+    using System.Collections.Generic;
+
+    class Program
+    {
+        static void Main()
+        {
+            int[] skor = { 90, 85, 78 };
+            Console.WriteLine("Skor pertama: " + skor[0]);
+
+            List<string> siswa = new List<string>();
+            siswa.Add("Sari");
+            siswa.Add("Budi");
+            Console.WriteLine("Jumlah: " + siswa.Count);
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat datanya banyak, menyimpan satu per satu bikin ribet. **Array dan List menyimpan rangkaian nilai** dalam satu variabel — dan C# punya **4 koleksi utama** untuk memilih dari.
+
+## 4 Koleksi Utama
+
+| Koleksi | Ukuran | Urutan | Akses | Pakai untuk |
+|---|---|---|---|---|
+| `T[]` (array) | tetap | ya | `arr[i]` O(1) | jumlah pasti, performa maksimal |
+| `List<T>` | dinamis | ya | `list[i]` O(1) | daftar yang tumbuh |
+| `Dictionary<TKey,TValue>` | dinamis | kunci unik | `dict[k]` cepat | pencarian by key |
+| `HashSet<T>` | dinamis | unik, tanpa urutan | `set.Contains` cepat | buang duplikat |
+
+Varian lain (`Queue`, `Stack`, `LinkedList`, `SortedList`) dipakai untuk kasus khusus — hampir semua kode harian hidup di 4 di atas.
+
+## Array Tetap
+
+```csharp
+int[] skor = { 90, 85, 78 };
+string[] nama = new string[3];
+
+nama[0] = "Sari";
+nama[1] = "Budi";
+nama[2] = "Ani";
+
+Console.WriteLine(skor.Length);      // 3
+Console.WriteLine(nama[0]);          // Sari
+```
+
+Ukuran ditentukan saat dibuat. Mengakses index di luar rentang memunculkan exception `IndexOutOfRangeException`.
+
+## Melintasi Array
+
+```csharp
+int[] skor = { 90, 85, 78 };
+
+for (int i = 0; i < skor.Length; i++)
+{
+    Console.WriteLine("Index " + i + " = " + skor[i]);
+}
+
+foreach (int s in skor)
+{
+    Console.WriteLine(s);
+}
+```
+
+Pakai `for` jika butuh index, `foreach` jika hanya perlu isi elemennya.
+
+## List yang Dinamis
+
+`List<T>` punya **10 method** paling sering dipakai:
+
+| Method | Fungsi | Contoh |
+|---|---|---|
+| `Add(x)` | tambah di akhir | `angka.Add(10)` |
+| `AddRange(koleksi)` | tambah banyak sekaligus | `angka.AddRange(lain)` |
+| `Insert(i, x)` | sisip di index i | `angka.Insert(0, 5)` |
+| `Remove(x)` | hapus berdasarkan nilai | `angka.Remove(10)` |
+| `RemoveAt(i)` | hapus berdasarkan index | `angka.RemoveAt(0)` |
+| `Contains(x)` | ada/tidak elemen | `true` |
+| `IndexOf(x)` | posisi elemen, −1 bila tak ada | `0` |
+| `Sort()` | urutkan isi | menaik |
+| `Clear()` | kosongkan semua | `Count = 0` |
+| `Count` | jumlah elemen | `2` |
+
+```csharp
+List<int> angka = new List<int>();
+
+angka.Add(10);
+angka.Add(20);
+angka.Add(30);
+angka.RemoveAt(0);          // buang index 0
+
+Console.WriteLine(angka.Count);   // 2
+Console.WriteLine(angka[0]);      // 20
+```
+
+## Array vs List vs Dictionary
+
+```csharp
+int[] tetap = { 1, 2, 3 };            // ukuran mati
+List<int> hidup = new List<int>();    // ukuran fleksibel
+hidup.Add(4);
+
+Dictionary<string, int> harga = new Dictionary<string, int>();
+harga["kopi"] = 25000;
+```
+
+Aturan praktis: data berukuran tetap (koordinat, hari, 12 bulan) pakai array; data yang tumbuh (daftar belanja, hasil pencarian) pakai `List`; data yang dicari by nama/ID pakai `Dictionary`.
+
+## Singgah ke LINQ
+
+`using System.Linq;` membuka **5 method LINQ** yang paling berguna — memproses koleksi dalam satu ekspresi:
+
+```csharp
+using System.Linq;
+
+int[] skor = { 75, 90, 60, 85, 70 };
+
+var lulus   = skor.Where(n => n >= 75).ToArray();   // saring
+var terbesar = skor.OrderByDescending(n => n).ToArray(); // urut
+var jumlah  = skor.Count(n => n >= 75);             // hitung
+var namaKota = new[] { "Jakarta", "Bandung" }.Select(k => k.ToUpper()).ToArray(); // ubah
+int top3    = skor.Take(3).Count();                 // ambil 3 pertama
+```
+
+`Where` → saring, `Select` → ubah, `OrderBy` → urutkan, `Count` → hitung, `Take` → ambil sebagian. Cukup 5 ini untuk 80% kebutuhan harian.
+
+## Di Dunia Nyata
+
+- Menyimpan 12 nilai penjualan bulanan: `double[] penjualan = new double[12]` — ukurannya memang mati.
+- Daftar belanja yang bertambah tiap saat: `List<string>` + `Add`/`Remove`.
+- Menyimpan harga menu kantin: `Dictionary<string, decimal>` — tanya by nama, jawab angka.
+- Membuang email duplikat peserta webinar: `new HashSet<string>(daftarEmail)`.
+- Laporan siswa lulus: `siswa.Where(s => s.Nilai >= 75).OrderBy(s => s.Nilai)` tanpa menulis loop.
+
+<div class="note">💡 List butuh <code>using System.Collections.Generic;</code> di bagian atas file (dan <code>using System.Linq;</code> untuk LINQ). Project modern biasanya sudah menyertakannya otomatis lewat implicit usings.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Program
+{
+    static void Main()
+    {
+        int[] skor = { 90, 85, 78 };
+        Console.WriteLine("Skor pertama: " + skor[0]);
+
+        int total = 0;
+        foreach (int s in skor)
+        {
+            total += s;
+        }
+        Console.WriteLine("Rata-rata: " + (double)total / skor.Length);
+
+        List<string> siswa = new List<string>();
+        siswa.Add("Sari");
+        siswa.Add("Budi");
+        siswa.Add("Ani");
+        Console.WriteLine("Jumlah siswa: " + siswa.Count);
+
+        List<int> angka = new List<int> { 30, 10, 20 };
+        angka.Sort();
+        Console.WriteLine("Terurut: " + string.Join(" ", angka));
+
+        int[] semua = { 75, 90, 60, 85, 70 };
+        var lulus = semua.Where(n => n >= 75).OrderByDescending(n => n).ToArray();
+        Console.WriteLine("Lulus: " + string.Join(", ", lulus));
+        Console.WriteLine("Jumlah lulus: " + lulus.Length);
+    }
+}
+`} />

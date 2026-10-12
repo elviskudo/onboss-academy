@@ -1,0 +1,157 @@
+---
+title: "Linked List"
+description: "Node, traversing, dan memasukkan elemen tanpa geser memori"
+order: 4
+quiz:
+  - q: "Linked list tersusun dari…"
+    options: ["Blok memori berurutan", "Node yang saling tertaut lewat referensi", "Tabel hash", "Array dua dimensi"]
+    answer: 1
+    explain: "Setiap node menyimpan data plus referensi ke node berikutnya."
+  - q: "Akses elemen ke-n pada singly linked list berkompleksitas…"
+    options: ["O(1)", "O(log n)", "O(n) — harus menelusuri dari head", "O(n^2)"]
+    answer: 2
+    explain: "Tidak ada indeks — Python harus melewati n-1 node dari depan."
+  - q: "Menyisipkan node setelah node yang diketahui posisinya bersifat…"
+    options: ["O(1)", "O(n)", "O(n^2)", "O(log n)"]
+    answer: 0
+    explain: "Cukup ubah dua referensi next — tanpa menggeser elemen seperti list biasa."
+  - q: "Kelemahan utama linked list dibanding array adalah…"
+    options: ["Tidak bisa menyimpan angka", "Akses acak berindeks lambat dan overhead memori per node", "Tidak mendukung iterasi", "Hanya boleh berisi string"]
+    answer: 1
+    explain: "Setiap node butuh pointer tambahan; akses ke-n harus telusuri dari depan."
+  - q: "Doubly linked list menyimpan…"
+    options: ["Satu referensi next", "Referensi next dan previous", "Referensi ke semua node sekaligus", "Tidak ada referensi"]
+    answer: 1
+    explain: "Dua arah memungkinkan penelusuran mundur dan penghapusan node tanpa pointer prev."
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Linked list adalah rantai **node**: masing-masing menyimpan data dan referensi ke node berikutnya. Berbeda dari list Python, elemennya tidak harus bersebelahan di memori.
+
+## Node Pertama
+
+```python
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+head = Node(10)
+head.next = Node(20)
+head.next.next = Node(30)
+```
+
+Strukturnya: `10 -> 20 -> 30 -> None`
+
+## Menelusuri (Traversal)
+
+```python
+cur = head
+while cur:
+    print(cur.data, end=" -> ")
+    cur = cur.next
+print("None")
+```
+
+Setiap langkah mengikuti `next` — O(n) untuk n node.
+
+## Menyisipkan di Depan
+
+```python
+def push_front(head, data):
+    node = Node(data)
+    node.next = head
+    return node       # node baru menjadi head
+
+head = push_front(head, 0)   # 0 -> 10 -> 20 -> 30
+```
+
+O(1) — tanpa menggeser elemen apa pun, keunggulan utama linked list.
+
+## Menyisipkan Setelah Node Tertentu
+
+```python
+def sisip_setelah(node, data):
+    baru = Node(data)
+    baru.next = node.next
+    node.next = baru
+
+sisip_setelah(head.next, 15)   # 0 -> 10 -> 15 -> 20 -> 30
+```
+
+## Menghapus Node
+
+```python
+def hapus_setelah(node):
+    if node.next:
+        node.next = node.next.next
+
+hapus_setelah(head.next)   # hapus 15: 0 -> 10 -> 20 -> 30
+```
+
+## Kapan Memakai Linked List?
+
+- Operasi dominan sisip/hapus di tengah ketika posisi node sudah diketahui
+- Stream data tanpa tahu ukuran total di awal
+- Implementasi stack/queue/deque di bahasa rendah level
+
+Di Python praktisnya: pakai `list` untuk akses indeks, `deque` untuk ujung ganda — linked list murni jarang dipakai langsung, tapi konsepnya mendasari banyak struktur data lanjutan.
+
+## Tiga Jenis Linked List
+
+Ada **3 bentuk utama**: singly linked list memiliki `next`, doubly linked list memiliki `next` dan `prev`, sedangkan circular linked list menautkan node terakhir kembali ke awal. Doubly linked list memakai memori lebih banyak, tetapi dapat bergerak dua arah dan menghapus node yang sudah diketahui tanpa mencari pendahulunya.
+
+| Jenis | Referensi per node | Kelebihan | Kapan dipakai |
+|---|---:|---|---|
+| Singly | 1 | paling sederhana dan hemat | traversal satu arah |
+| Doubly | 2 | hapus dan bergerak dua arah | cache LRU, deque |
+| Circular | 1 atau 2 | akhir langsung kembali ke awal | round-robin scheduler |
+
+Kompleksitas O(1) untuk sisip/hapus hanya berlaku bila referensi node atau pendahulunya sudah tersedia. Jika harus mencari berdasarkan nilai atau indeks, pencarian O(n) mendominasi. Setiap node juga membawa overhead objek dan pointer, sehingga locality cache lebih buruk daripada array.
+
+## Di Dunia Nyata
+
+- Doubly linked list bersama dict membentuk cache LRU dengan get dan update O(1).
+- Circular list merotasi giliran pemain atau proses secara terus-menerus.
+- Free list pada allocator melacak blok memori yang tersedia.
+- Playlist memakai tautan dua arah untuk tombol sebelumnya dan berikutnya.
+
+<div class="note">💡 Linked list menukar akses acak O(1) dengan sisip/hapus O(1). Pilih berdasarkan pola pemakaian: banyak dibaca berindeks = array; banyak disisip/dihapus di tengah = linked list.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+def cetak(head):
+    cur = head
+    hasil = []
+    while cur:
+        hasil.append(str(cur.data))
+        cur = cur.next
+    print(" -> ".join(hasil) + " -> None")
+
+def push_front(head, data):
+    node = Node(data)
+    node.next = head
+    return node
+
+head = Node(10)
+head.next = Node(20)
+head.next.next = Node(30)
+cetak(head)
+
+head = push_front(head, 5)
+cetak(head)
+
+# balik linked list
+prev = None
+cur = head
+while cur:
+    nxt = cur.next
+    cur.next = prev
+    prev = cur
+    cur = nxt
+head = prev
+cetak(head)`} />

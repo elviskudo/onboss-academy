@@ -1,0 +1,175 @@
+---
+title: "Extension & Scope Function"
+description: "Menambah method ke class yang bukan milikmu dan mengelompokkan aksi dengan let, run, apply"
+order: 9
+quiz:
+  - q: "Extension function memungkinkan…"
+    options: ["menghapus class", "menambah method ke class tanpa mewarisi", "mengompilasi ulang", "mengubah tipe data"]
+    answer: 1
+    explain: "Dideklarasi di luar class namun dipanggil seperti method biasa."
+  - q: "Cara mendeklarasikan extension adalah…"
+    options: ["fun String.panjang(): Int", "extend String { }", "String.new()", "add String.panjang"]
+    answer: 0
+    explain: "Tipe receiver ditulis sebelum titik nama method."
+  - q: "let menjalankan blok bila objek…"
+    options: ["selalu null", "berupa angka", "tidak null", "berupa list"]
+    answer: 2
+    explain: "let adalah pasangan aman untuk safe call ?.let."
+  - q: "apply mengembalikan…"
+    options: ["String hasil cetak", "objek itu sendiri", "Boolean", "array kosong"]
+    answer: 1
+    explain: "Cocok untuk menginisialisasi objek dalam satu blok."
+  - q: "run berguna untuk…"
+    options: ["menjalankan blok dan mengambil hasil terakhir", "menghapus file", "menjalankan server", "membuat migrasi"]
+    answer: 0
+    explain: "run menggabungkan aksi pada objek dengan nilai kembalian blok."
+example:
+  code: |
+    fun String.sapa(): String = "Halo, $this!"
+
+    data class Konfigurasi(val host: String = "localhost", val port: Int = 8080)
+
+    fun main() {
+        println("Dunia".sapa())
+
+        val k = Konfigurasi().apply {
+            println("port disetel: $port")
+        }
+        println(k)
+
+        val hasil = run { 6 * 7 }
+        println("Hasil: $hasil")
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua fitur ini yang membuat Kotlin terasa ringkas: menambah perilaku dari luar class, dan menjalankan beberapa aksi dalam satu blok.
+
+## Extension Function
+
+```kotlin
+fun String.sapa(): String = "Halo, $this!"
+
+fun Int.apakahGanjil(): Boolean = this % 2 == 1
+
+fun main() {
+    println("Dunia".sapa())
+    println(7.apakahGanjil())
+}
+```
+
+`this` di dalam extension merujuk ke objek penerima. Aturan yang perlu diingat:
+
+1. Extension tidak bisa mengakses `private`/`protected` member dari class penerima.
+2. Resolusi bersifat compile-time mengikuti tipe deklarasi, bukan tipe objek sebenarnya — extension tidak bisa di-override.
+3. Method asli selalu menang: bila class sudah punya method dengan nama dan signature yang sama, versi asli yang dipakai.
+4. Satu file boleh berisi banyak extension; tidak ada class turunan yang dibuat.
+
+Extension berguna untuk menambah kenyamanan pada API pihak ketiga tanpa mewarisi apa pun.
+
+## Extension berguna untuk API asing
+
+```kotlin
+fun String.jadiJudul(): String =
+    split(" ").joinToString(" ") { it.capitalize() }
+
+fun main() {
+    println("belajar kotlin di onboss".jadiJudul())
+}
+```
+
+Class pihak ketiga bisa dibuat lebih nyaman tanpa mewarisi apa pun.
+
+## let
+
+```kotlin
+fun main() {
+    val nama: String? = "Sari"
+
+    nama?.let {
+        println("Panjang: " + it.length)
+    }
+
+    val kosong: String? = null
+    kosong?.let {
+        println("Tidak dicetak")
+    }
+}
+```
+
+`let` berjalan hanya bila nilai tidak null. Kotlin punya **5 scope function** — `let`, `run`, `with`, `apply`, `also` — semuanya menjalankan blok pada konteks tertentu. Perbedaannya cuma dua hal: siapa yang jadi `this`/`it`, dan apa yang dikembalikan:
+
+| Function | Penerima blok | Nilai kembalian | Contoh khas |
+| --- | --- | --- | --- |
+| `let` | argumen sebagai `it` | hasil blok | `nama?.let { cetak(it) }` |
+| `run` | objek sebagai `this` | hasil blok | `kalkulator.run { hitung() }` |
+| `with` | objek sebagai `this` (dipanggil dari luar) | hasil blok | `with(daftar) { size }` |
+| `apply` | objek sebagai `this` | objek itu sendiri | `Pengguna().apply { ... }` |
+| `also` | argumen sebagai `it` | objek itu sendiri | `daftar.also { log(it) }` |
+
+## run dan with
+
+```kotlin
+fun main() {
+    val hasil = run { 6 * 7 }
+    println("Hasil: $hasil")
+
+    val teks = "kotlin"
+    val panjang = teks.run { length }
+    println(panjang)
+}
+```
+
+`run` cocok bila aksi menghasilkan nilai yang perlu dipakai setelahnya.
+
+## apply dan also
+
+```kotlin
+data class Pengguna(var nama: String = "", var aktif: Boolean = false)
+
+fun main() {
+    val u = Pengguna().apply {
+        nama = "Sari"
+        aktif = true
+    }
+    println(u)
+
+    listOf(1, 2, 3).also { println("isi: $it") }
+}
+```
+
+`apply` mengubah objek dan mengembalikannya, `also` memberi aksi sampingan sembari tetap mengembalikan objek.
+
+## Di Dunia Nyata
+
+- **Format rupiah** — `fun Int.rupiah() = "Rp" + this.toLocaleString()` (atau format manual) membuat `25000.rupiah()` terbaca di UI.
+- **Membangun konfigurasi** — `Config().apply { host = "..." ; port = 8080 }` menggantikan banyak parameter constructor.
+- **Log sementara** — `query.also { println("SQL: $it") }` mencetak query tanpa mengubah nilai yang dipakai.
+- **Menangani respons API** — `respons?.let { parse(it) } ?: tampilkanError()` menggabungkan let dan Elvis dalam satu baris.
+- **Menyederhanakan API asing** — extension `String.jadiJudul()` membuat method bawaan pihak ketiga terasa milik sendiri.
+
+<div class="note">💡 Peta singkat: let untuk null-safe, apply untuk inisialisasi, run untuk aksi plus hasil, also untuk log sementara. Pilih yang membuat maksud kode terbaca, bukan yang paling pendek.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun String.sapa(): String = "Halo, $this!"
+
+fun Int.apakahGanjil(): Boolean = this % 2 == 1
+
+data class Pengguna(var nama: String = "", var aktif: Boolean = false)
+
+fun main() {
+    println("Dunia".sapa())
+    println("Ganjil: " + 7.apakahGanjil())
+
+    val hasil = run { 6 * 7 }
+    println("Hasil: " + hasil)
+
+    val u = Pengguna().apply {
+        nama = "Sari"
+        aktif = true
+    }
+    println(u)
+
+    val nama: String? = "OnBoss"
+    nama?.let { println("Panjang: " + it.length) }
+}`} />

@@ -1,0 +1,146 @@
+---
+title: "Statistik Deskriptif"
+description: "Merangkum data dengan 3 kelompok ukuran: pusat, sebaran, posisi, plus frekuensi dan missing value"
+order: 5
+quiz:
+  - q: "Ukuran pusat yang paling tahan terhadap pencilan adalah…"
+    options: ["Mean", "Median", "Variance", "Range"]
+    answer: 1
+    explain: "Median memakai posisi tengah sehingga satu nilai ekstrem tidak menariknya seperti mean."
+  - q: "Simpangan baku dihitung dengan…"
+    options: ["var()", "sd()", "spread()", "dev()"]
+    answer: 1
+    explain: "sd() adalah akar varian dan memiliki unit yang sama dengan data asli."
+  - q: "Jika x memuat NA, mean(x) secara default menghasilkan…"
+    options: ["0", "Mean dari nilai yang ada", "NA", "Error"]
+    answer: 2
+    explain: "Gunakan mean(x, na.rm = TRUE) hanya setelah memutuskan bahwa nilai hilang boleh dikeluarkan."
+  - q: "Ukuran sebaran tengah 50% data adalah…"
+    options: ["Range", "Standard deviation", "Variance", "IQR"]
+    answer: 3
+    explain: "IQR = Q3 - Q1 dan relatif tahan terhadap pencilan."
+  - q: "Tabel proporsi kategori dibuat dengan…"
+    options: ["prop.table(table(x))", "mean(table(x))", "percent(x)", "summary(table(x))"]
+    answer: 0
+    explain: "table menghitung frekuensi; prop.table membaginya dengan total."
+example:
+  code: |
+    tinggi <- c(160, 165, 170, 172, 175, 180, 190)
+    cat("Mean  :", mean(tinggi), "\n")
+    cat("Median:", median(tinggi), "\n")
+    cat("SD    :", round(sd(tinggi), 2), "\n")
+    print(quantile(tinggi, probs = c(0.25, 0.5, 0.75)))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Statistik deskriptif merangkum apa yang ada di data tanpa membuat klaim sebab-akibat. Sebelum memilih model, pahami pusat, sebaran, bentuk distribusi, frekuensi kategori, dan kelengkapan observasi.
+
+## Tiga Kelompok Ukuran Numerik
+
+Ada **3 kelompok ukuran** yang menjawab pertanyaan berbeda:
+
+| Kelompok | Fungsi utama | Pertanyaan |
+| --- | --- | --- |
+| Pusat | `mean()`, `median()` | nilai tipikalnya berapa? |
+| Sebaran | `sd()`, `var()`, `range()`, `IQR()` | seberapa bervariasi? |
+| Posisi | `quantile()` | nilai ini berada di bagian mana? |
+
+Tidak ada satu angka yang cukup. Mean 75 tanpa simpangan baku bisa berasal dari nilai yang rapat di 74–76 atau tersebar di 20–100.
+
+## Ukuran Tendensi Sentral
+
+```r
+x <- c(12, 15, 18, 18, 21, 25, 100)
+mean(x)
+median(x)
+tabel <- table(x)
+as.numeric(names(tabel)[which.max(tabel)])
+```
+
+| Ukuran | Cara kerja | Kapan dipakai |
+| --- | --- | --- |
+| Mean | jumlah dibagi n | distribusi relatif simetris tanpa pencilan berat |
+| Median | nilai tengah terurut | pendapatan, waktu respons, data skewed |
+| Modus | nilai paling sering | kategori atau nilai diskret |
+
+R tidak punya fungsi `mode()` statistik — `mode()` di R berarti mode penyimpanan objek. Modus numerik perlu dihitung dari `table()`.
+
+## Empat Ukuran Sebaran
+
+```r
+sd(x)
+var(x)
+range(x)
+diff(range(x))
+IQR(x)
+```
+
+| Ukuran | Arti | Ketahanan outlier |
+| --- | --- | --- |
+| `sd()` | jarak tipikal dari mean | rendah |
+| `var()` | kuadrat simpangan baku | rendah |
+| `range()` | minimum dan maksimum | sangat rendah |
+| `IQR()` | Q3 − Q1 | tinggi |
+
+Simpangan baku memakai unit asli; varian memakai unit kuadrat. Untuk komunikasi bisnis, SD biasanya lebih mudah dijelaskan.
+
+## Kuartil dan Persentil
+
+```r
+quantile(x, probs = c(0, 0.25, 0.5, 0.75, 1))
+quantile(x, probs = 0.9)
+```
+
+Lima angka pertama adalah minimum, Q1, median/Q2, Q3, maksimum. Persentil ke-90 adalah batas yang 90% observasi berada di bawah atau sama dengannya — misalnya target latency P90.
+
+## Frekuensi Kategori
+
+```r
+kota <- c("Jkt", "BDG", "Jkt", "SBY", "Jkt", "BDG")
+frekuensi <- table(kota)
+frekuensi
+round(prop.table(frekuensi) * 100, 1)
+```
+
+`table()` menghitung jumlah per kategori. `prop.table()` menghasilkan proporsi 0–1; kalikan 100 untuk persentase.
+
+## Missing Value dan Ringkasan Kelompok
+
+```r
+nilai <- c(80, NA, 90, 70)
+sum(is.na(nilai))
+mean(nilai, na.rm = TRUE)
+
+kelas <- c("A", "A", "B", "B")
+tapply(nilai, kelas, mean, na.rm = TRUE)
+```
+
+`na.rm = TRUE` bukan tombol ajaib: ia mengubah denominator dengan membuang observasi. Selalu laporkan jumlah NA agar pembaca tahu berapa data yang mendasari ringkasan.
+
+## summary() sebagai Pemeriksaan Awal
+
+```r
+summary(x)
+```
+
+Untuk numerik, `summary()` memberi 6 angka: Min, Q1, Median, Mean, Q3, Max (ditambah jumlah NA bila ada). Untuk factor, ia memberi frekuensi level. Ini titik awal, bukan akhir analisis.
+
+## Di Dunia Nyata
+
+1. **SLA API** — median dan P90 latency menunjukkan pengalaman normal sekaligus kasus lambat; mean saja tertarik lonjakan ekstrem.
+2. **Gaji karyawan** — median lebih representatif karena sejumlah eksekutif bergaji tinggi menarik mean ke atas.
+3. **Quality control** — mean diameter komponen dibandingkan bersama SD untuk mendeteksi proses produksi yang mulai tidak stabil.
+4. **Survei pelanggan** — `table()` dan proporsi merangkum distribusi skala kepuasan per kategori.
+5. **Audit kelengkapan** — `sum(is.na())` per kolom menentukan apakah data cukup untuk laporan atau perlu dikembalikan ke sumber.
+
+<div class="note">💡 Selalu pasangkan ukuran pusat dengan ukuran sebaran: mean + SD untuk data simetris, median + IQR untuk data skewed. Angka pusat tanpa sebaran menyembunyikan apakah observasi konsisten atau kacau.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`penjualan <- c(12, 15, 18, 18, 21, 25, 100, NA)
+print(summary(penjualan))
+cat("Mean:", round(mean(penjualan, na.rm = TRUE), 2), "\n")
+cat("Median:", median(penjualan, na.rm = TRUE), "\n")
+cat("SD:", round(sd(penjualan, na.rm = TRUE), 2), "\n")
+cat("IQR:", IQR(penjualan, na.rm = TRUE), "\n")
+kota <- c("Jkt", "BDG", "Jkt", "SBY", "Jkt", "BDG")
+print(round(prop.table(table(kota)), 2))`} />

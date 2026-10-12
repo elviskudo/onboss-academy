@@ -1,0 +1,180 @@
+---
+title: "App Router"
+description: "Struktur folder app/: page, layout, loading, dan error — konvensi file yang menggantikan daftar rute"
+order: 2
+quiz:
+  - q: "File yang menjadi halaman di App Router adalah…"
+    options: ["page.tsx", "route.ts", "index.html", "main.ts"]
+    answer: 0
+    explain: "Folder mana pun yang berisi page.tsx menjadi URL yang bisa dikunjungi."
+  - q: "layout.tsx berfungsi untuk…"
+    options: ["Menyimpan data database", "Membungkus banyak halaman: navbar, footer, provider — tidak hilang saat navigasi", "Mengompilasi CSS", "Menjadi halaman 404"]
+    answer: 1
+    explain: "Layout persisten antar navigasi client-side sehingga state dan tampilan luar tidak ikut render ulang."
+  - q: "File loading.tsx menampilkan…"
+    options: ["Tampilan sementara saat halaman atau children masih dimuat", "Error 500", "Form login", "Halaman kosong permanen"]
+    answer: 0
+    explain: "Berkat streaming server, loading.tsx tampil lebih dulu sambil data disiapkan di belakang."
+  - q: "Untuk halaman yang tidak ditemukan, file konvensinya…"
+    options: ["404.html", "missing.tsx", "not-found.tsx", "empty.ts"]
+    answer: 2
+    explain: "not-found.tsx dipakai baik untuk rute tak dikenal maupun saat notFound() dipanggil di kode."
+  - q: "Folder di dalam app/ yang bukan file konvensi…"
+    options: ["folder fitur biasa seperti produk/", "page", "layout", "loading"]
+    answer: 0
+    explain: "Hanya nama file khusus (page, layout, loading, error, route) yang punya makna framework."
+example:
+  code: |
+    const konvensi = [
+      { file: "page.tsx", peran: "halaman URL" },
+      { file: "layout.tsx", peran: "pembungkus" },
+      { file: "loading.tsx", peran: "fallback muat" },
+      { file: "not-found.tsx", peran: "404" },
+      { file: "route.ts", peran: "endpoint API" },
+    ];
+    console.log(konvensi.map((k) => k.file + " → " + k.peran).join("\\n"));
+---
+
+Bab ini membedah folder `app/` — tempat seluruh struktur URL Next.js ditentukan.
+
+## Layout Global
+
+```typescript
+// app/layout.tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "OnBoss Toko",
+  description: "Belanja kebutuhan harian",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="id">
+      <body>
+        <Navbar />
+        <main>{children}</main>
+        <Footer />
+      </body>
+    </html>
+  );
+}
+```
+
+Root layout wajib ada dan membungkus `<html>` serta `<body>`. Navbar di sini tetap utuh saat user berpindah halaman.
+
+## Halaman
+
+```typescript
+// app/page.tsx → URL "/"
+export default function Beranda() {
+  return <h1>Selamat datang di OnBoss Toko</h1>;
+}
+
+// app/produk/page.tsx → URL "/produk"
+export default function ProdukPage() {
+  return <h1>Katalog Produk</h1>;
+}
+```
+
+Setiap `page.tsx` mengekspor komponen default — itulah isi halaman tersebut.
+
+## Loading dan Error
+
+```typescript
+// app/produk/loading.tsx
+export default function Loading() {
+  return <p>Memuat produk…</p>;
+}
+```
+
+```typescript
+// app/produk/error.tsx
+"use client";
+
+export default function ErrorProduk({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <p>Gagal memuat produk.</p>
+      <button onClick={reset}>Coba lagi</button>
+    </div>
+  );
+}
+```
+
+Error boundary wajib berupa client component karena memakai handler klik — satu-satunya bagian dari file ini yang menyentuh browser.
+
+## Segment URL Dinamis dan Statis
+
+```
+app/
+  produk/
+    page.tsx              /produk
+    [id]/page.tsx         /produk/123
+  keranjang/
+    page.tsx              /keranjang
+```
+
+Folder dalam kurung siku = parameter dinamis. Nilainya dibaca lewat params pada props halaman.
+
+## Nested Layout
+
+```typescript
+// app/admin/layout.tsx
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="admin">
+      <SidebarAdmin />
+      {children}
+    </div>
+  );
+}
+```
+
+Layout bersarang membuat panel admin membungkus semua halaman di bawah `/admin` tanpa mengulang markup.
+
+## Enam Konvensi Dasar
+
+Bab ini memakai **6 file konvensi dasar** berikut; Next.js juga menyediakan konvensi lanjutan seperti `template`, `default`, dan metadata files.
+
+| File | Fungsi | Contoh hasil | Kapan dipakai |
+|---|---|---|---|
+| `page.tsx` | Membuka segmen sebagai halaman | `/produk` | Setiap URL tampilan |
+| `layout.tsx` | Membungkus segmen secara persisten | navbar | UI bersama |
+| `loading.tsx` | Fallback streaming | skeleton | Data lambat |
+| `error.tsx` | Menangkap error render | tombol coba lagi | Pemulihan per segmen |
+| `not-found.tsx` | Tampilan resource hilang | 404 produk | `notFound()` atau URL salah |
+| `route.ts` | Menangani HTTP | `/api/produk` | API dan webhook |
+
+`page.tsx` dan `route.ts` tidak boleh berada pada segmen rute yang sama karena keduanya menguasai URL tersebut. `error.tsx` harus client component karena boundary menyediakan fungsi `reset`; error pada root layout ditangani oleh `global-error.tsx`.
+
+## Route Group dan Private Folder
+
+Dua bentuk folder membantu organisasi tanpa selalu mengubah URL.
+
+```text
+app/
+  (marketing)/tentang/page.tsx  → /tentang
+  _components/hero.tsx          → bukan rute
+```
+
+Route group `(marketing)` tidak masuk URL dan dapat memiliki layout sendiri. Private folder `_components` diabaikan router sehingga aman untuk menaruh komponen pendukung dekat halaman.
+
+## Di Dunia Nyata
+
+- Toko mempertahankan navbar dan keranjang di root layout saat navigasi.
+- Admin memakai nested layout untuk sidebar khusus `/admin`.
+- Katalog menyediakan skeleton lewat `loading.tsx` selama query lambat.
+- Segmen produk menangkap kegagalan API tanpa menjatuhkan seluruh situs.
+
+<div class="note">💡 Jangan menghafal folder sebagai rute: folder baru menjadi URL publik hanya ketika segmennya memiliki page.tsx atau route.ts; folder pendukung boleh tinggal berdampingan.</div>

@@ -1,0 +1,207 @@
+---
+title: "Function"
+description: "Parameter default, pass by reference, overload, lambda, dan recursive"
+order: 5
+quiz:
+  - q: "Pass by reference (&) memungkinkan fungsi…"
+    options: ["Hanya membaca nilai", "Mengubah nilai variabel asli di pemanggil", "Membuat variabel global", "Menghapus variabel pemanggil"]
+    answer: 1
+    explain: "Parameter bertipe & menerima referensi ke data asli — tanpa salinan, perubahan langsung terlihat."
+  - q: "Parameter default dideklarasikan dengan…"
+    options: ["keyword default", "Tanda ?", "Tanda &", "Tanda = di deklarasi fungsi, misal int b = 0"]
+    answer: 3
+    explain: "Pemanggil boleh mengosongkannya: hitung(5) memakai b = 0, hitung(5, 2) mengesampingkannya."
+  - q: "Lambda expression dalam C++ ditulis dengan…"
+    options: ["def", "function", "Kurung siku dan kurung lancip: [](){ }", "=>"]
+    answer: 2
+    explain: "[](int x){ return x * 2; } — lambda adalah fungsi anonim yang bisa disimpan di variabel."
+  - q: "Dua fungsi bernama sama dengan parameter berbeda disebut…"
+    options: ["Overloading", "Overriding", "Inlining", "Templating"]
+    answer: 0
+    explain: "Kompilator memilih versi berdasarkan jumlah dan tipe argument."
+  - q: "Base case pada fungsi rekursif berfungsi untuk…"
+    options: ["Menghapus memori", "Menghentikan pemanggilan berulang", "Mengganti return", "Membuat overload"]
+    answer: 1
+    explain: "Tanpa base case, fungsi memanggil dirinya sendiri tanpa batas sampai stack overflow."
+example:
+  code: |
+    #include <iostream>
+    using namespace std;
+
+    int tambah(int a, int b = 0) {   // b default 0
+        return a + b;
+    }
+
+    void gandakan(int &x) {          // pass by reference
+        x *= 2;
+    }
+
+    int main() {
+        cout << tambah(4) << " " << tambah(4, 6) << endl;
+        int nilai = 21;
+        gandakan(nilai);
+        cout << nilai << endl;
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi C++ lebih ekspresif dari C: **nilai default, referensi, overload, dan lambda** membuat kode ringkas sekaligus tetap cepat.
+
+## Deklarasi & Return
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int luasPersegi(int sisi) {
+    return sisi * sisi;
+}
+
+void tampilkan(int nilai) {          // void: tanpa nilai kembalian
+    cout << "Nilai: " << nilai << endl;
+}
+
+auto jumlahkan(int a, int b) -> int { // trailing return type (C++11)
+    return a + b;
+}
+
+int main() {
+    cout << luasPersegi(5) << endl;
+    tampilkan(90);
+    return 0;
+}
+```
+
+C++ punya **4 cara menulis callable**: fungsi biasa (seperti di atas), fungsi `template`, lambda (lihat di bawah), dan function pointer — semuanya bisa dipakai di mana pun sebuah "fungsi" dibutuhkan.
+
+Aturan `return`:
+
+- `void` boleh punya `return;` tanpa nilai.
+- Tipe selain `void` wajib mengembalikan nilai di setiap jalur.
+- Mengembalikan referensi (`int &f()`) hanya aman jika datanya masih hidup setelah fungsi selesai.
+
+## Parameter
+
+C++ **tidak punya parameter bernamed** (seperti Python) maupun destructuring — urutan dan tipe argument wajib cocok. Yang tersedia:
+
+| Jenis | Sintaks | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Pass by value | `T x` | `int a` | tipe kecil, salinan aman |
+| Pass by reference | `T &x` | `int &a` | perlu diubah |
+| Const reference | `const T &x` | `const string &s` | data besar, hanya dibaca |
+| Pointer | `T *x` | `int *a` | boleh `nullptr` |
+| Default | `T x = v` | `int b = 10` | opsi yang sering sama |
+| Variadic (template) | `Ts... args` | fungsi variadic modern | argumen jumlah tak tetap |
+
+```cpp
+int hitung(int a, int b = 10) {
+    return a + b;
+}
+// hitung(5)  → 15 (memakai default)
+// hitung(5, 2) → 7
+```
+
+Parameter default harus diletakkan **paling kanan** agar pemanggilan tetap jelas.
+
+## Pass by Value vs Reference
+
+```cpp
+void gagal(int x)  { x = 999; }      // salinan — asli tidak berubah
+void berhasil(int &x) { x = 999; }   // referensi — asli berubah
+
+const string &tanpaSalinan(const string &teks) {  // tanpa salinan, tanpa ubah
+    return teks;
+}
+```
+
+Aturan praktis: data besar atau yang perlu diubah → `&`; data kecil yang hanya dibaca → `const &`; `int`, `bool`, `double` cukup by value karena lebih murah daripada mengelola referensi.
+
+## Overloading & Lambda
+
+```cpp
+int tambah(int a, int b) { return a + b; }
+double tambah(double a, double b) { return a + b; }
+
+auto ganda = [](int x) { return x * 2; };   // lambda anonim
+cout << tambah(2, 3) << " " << ganda(21) << endl;
+```
+
+Kompilator memilih overload dari **jumlah dan tipe parameter** — bukan dari tipe kembalian. Lambda punya **5 mode capture**: `[]` (tanpa), `[&]` (semua referensi), `[=]` (semua salinan), `[&x]` (x saja referensi), `[=, &x]` (campuran).
+
+```cpp
+int faktor = 3;
+auto kaliFaktor = [faktor](int x) { return x * faktor; };   // salinan faktor
+cout << kaliFaktor(4) << endl;                              // 12
+```
+
+Lambda yang menangkap variabel berumur pendek dengan `[&]` adalah jebakan klasik: referensinya mati bersama scope — simpan salinan kalau lambda dipakai setelah scope tutup.
+
+## Rekursi & Higher-Order
+
+```cpp
+int faktorial(int n) {
+    if (n <= 1) return 1;              // base case — wajib ada
+    return n * faktorial(n - 1);
+}
+```
+
+Fungsi higher-order menerima fungsi lain sebagai argumen — contoh paling umum adalah pembanding di `sort`:
+
+```cpp
+vector<int> v = {5, 2, 9};
+sort(v.begin(), v.end(),
+     [](int a, int b) { return a > b; });   // descending
+```
+
+## Kapan Memecah Kode Jadi Fungsi
+
+Pecah menjadi fungsi ketika: (1) blok yang sama dipakai di 2+ tempat, (2) logikanya bisa diberi nama (`hitungPajak`, `validasiEmail`), (3) fungsi utama sudah lebih dari ±30 baris, atau (4) potongan kode itu perlu diuji terpisah.
+
+## Di Dunia Nyata
+
+- Fungsi `double celsiusKeFahrenheit(double c)` dipanggil dari laporan sensor dan dari UI sekaligus.
+- `bool validasiUsia(int umur)` mengembalikan true/false sehingga bisa dipakai di banyak form.
+- Lambda pembanding: `sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga < b.harga; });`
+- Fungsi rekursi menelusuri struktur folder atau pohon direktori.
+- Parameter default `void kirim(const string &ke, bool urgent = false)` memangkas penulisan untuk kasus biasa.
+
+<div class="note">💡 Fungsi kecil dengan satu tanggung jawab lebih mudah diuji dan dipakai ulang. Jika satu fungsi sudah menangani benda berbeda-beda — menghitung sekaligus mencetak sekaligus menyimpan — saatnya dipecah menjadi tiga.</div>
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+using namespace std;
+
+int tambah(int a, int b = 0) {
+    return a + b;
+}
+
+double tambah(double a, double b) {
+    return a + b;
+}
+
+void gandakan(int &x) {
+    x *= 2;
+}
+
+int faktorial(int n) {
+    if (n <= 1) return 1;
+    return n * faktorial(n - 1);
+}
+
+int main() {
+    cout << "4 + 0 = " << tambah(4) << endl;
+    cout << "4 + 6 = " << tambah(4, 6) << endl;
+    cout << "2.5 + 3.1 = " << tambah(2.5, 3.1) << endl;
+
+    int nilai = 21;
+    gandakan(nilai);
+    cout << "Setelah digandakan: " << nilai << endl;
+
+    cout << "5! = " << faktorial(5) << endl;
+
+    auto ganda = [](int x) { return x * 2; };
+    cout << "Lambda ganda(21) = " << ganda(21) << endl;
+    return 0;
+}`} />

@@ -1,0 +1,121 @@
+---
+title: "Perintah Sistem dan Jaringan"
+description: "Memantau 3 area server: proses, resource (disk/memori), dan koneksi jaringan"
+order: 5
+quiz:
+  - q: "Perintah untuk melihat proses yang berjalan adalah…"
+    options: ["ps", "run", "jobs", "list"]
+    answer: 0
+    explain: "ps menampilkan snapshot proses; top atau htop menampilkannya secara live."
+  - q: "Perintah df digunakan untuk…"
+    options: ["Melihat memori", "Melihat penggunaan disk", "Melihat proses", "Melihat user login"]
+    answer: 1
+    explain: "df (disk free) menampilkan kapasitas dan sisa space tiap partisi."
+  - q: "Perintah untuk mengirim paket ke sebuah host adalah…"
+    options: ["ping", "tel", "check", "net"]
+    answer: 0
+    explain: "ping mengirim paket ICMP echo untuk menguji konektivitas dasar."
+  - q: "Sinyal apa yang dikirim kill tanpa opsi, dan apa artinya?"
+    options: ["SIGKILL — langsung paksa mati", "SIGSTOP — jeda proses", "SIGTERM — permintaan berhenti sopan", "SIGHUP — reload konfigurasi"]
+    answer: 2
+    explain: "Default-nya SIGTERM (15): permintaan berhenti yang bisa ditangani aplikasi untuk menutup data dengan rapi."
+  - q: "Perintah top berfungsi untuk…"
+    options: ["Menghapus proses", "Mengubah permission", "Memantau CPU dan memori secara live", "Mengkompres file"]
+    answer: 2
+    explain: "top menampilkan daftar proses terurut pemakaian resource, keluar dengan q."
+example:
+  code: |
+    ps aux
+    df -h
+    free -h
+    ping -c 3 8.8.8.8
+    curl -I https://example.com
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setelah terbiasa dengan file, langkah berikutnya adalah memahami apa yang terjadi di balik layar server. Semua monitoring darurat berpusat pada **3 area**: proses, resource mesin, dan jaringan.
+
+## Area 1: Memantau Proses
+
+```bash
+ps aux                     # snapshot semua proses
+ps aux | grep nginx        # saring proses tertentu
+top                        # tampilan live, keluar dengan q
+pgrep -fl python           # cari PID tanpa grep manual
+```
+
+| Kolom `ps aux` | Arti |
+| --- | --- |
+| `%CPU` | persentase CPU terpakai |
+| `%MEM` | persentase memori terpakai |
+| `PID` | nomor identitas proses |
+| `COMMAND` | nama program |
+
+`ps aux` memberi daftar sekali jalan; `top` memperbarui berkala. Keduanya wajib dikuasai sebelum menyentuh `htop` atau `systemctl status`.
+
+## Menghentikan Proses
+
+```bash
+kill 1234        # SIGTERM (15): permintaan berhenti sopan
+kill -9 1234     # SIGKILL: paksa mati, tidak bisa ditolak
+kill -HUP 1234   # SIGHUP: biasanya dipakai untuk reload konfigurasi
+```
+
+| Sinyal | Nomor | Sifat |
+| --- | --- | --- |
+| `SIGTERM` | 15 | default `kill`; aplikasi bisa menutup koneksi dan flush data |
+| `SIGKILL` | 9 | kernel langsung mematikan; buffer bisa hilang |
+| `SIGHUP` | 1 | konvensi: reload konfigurasi tanpa mati |
+
+Urutan keputusan yang benar: coba `kill` biasa dulu; kalau 10 detik kemudian masih hidup, baru `kill -9`.
+
+## Area 2: Resource Mesin
+
+```bash
+df -h           # kapasitas dan sisa tiap partisi
+free -h         # pemakaian RAM dan swap
+uptime         # load average 1, 5, 15 menit terakhir
+du -sh /var/*   # ukuran folder satu per satu
+```
+
+`-h` membuat satuan mudah dibaca (G, M). Ini empat perintah pertama yang dijalankan saat server terasa lambat — load tinggi, disk penuh, dan memori habis punya gejala sama dari sisi pengguna tapi obatnya berbeda.
+
+## Area 3: Jaringan
+
+```bash
+ping -c 3 8.8.8.8              # konektivitas dasar (ICMP)
+ss -tulnp                      # port yang mendengarkan + proses pemiliknya
+curl -I https://example.com    # cek header respons HTTP
+wget https://example.com/f.zip # unduh file
+dig example.com                # resolving DNS
+```
+
+| Perintah | Fungsi | Pertanyaan yang dijawab |
+| --- | --- | --- |
+| `ping` | uji paket bolak-balik | "host ini hidup?" |
+| `ss` | daftar socket aktif | "port 8080 sudah dibuka belum?" |
+| `curl` | ambil respons HTTP | "API-nya menjawab apa?" |
+| `dig` | query DNS | "namanya resolve ke IP apa?" |
+
+`ss -tulnp` menggantikan `netstat` yang sudah deprecated: `-t` TCP, `-u` UDP, `-l` listening, `-n` angka mentah, `-p` pemilik proses.
+
+## Di Dunia Nyata
+
+1. **Situs terasa lambat** — jalankan `uptime` (load), `df -h` (disk hampir 100% bikin DB macet), `free -h` (swap terpakai berarti memori kritis) berurutan sebelum menyalahi kode.
+2. **Service tidak mau nyala** — `journalctl -u nginx -n 50` atau `systemctl status nginx` menunjukkan pesan kegagalan terakhir.
+3. **Mencari pemboros resource** — `ps aux --sort=-%cpu | head -n 5` menampilkan 5 proses pemakan CPU terbesar.
+4. **Deploy gagal karena koneksi** — `curl -I https://api.partner.com` mengungkap timeout vs error 401 dalam satu detik.
+5. **Port bentrok saat install aplikasi baru** — `ss -tulnp | grep :3000` menunjukkan PID mana yang sudah memegang port itu.
+
+<div class="note">💡 Selalu coba `kill` tanpa opsi dulu. Banyak aplikasi menangani SIGTERM dengan bersih — menutup koneksi dan flush data. `kill -9` memotong proses di tengah jalan; dipakai hanya untuk proses yang membandel.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+echo "Proses berjalan:"
+ps aux | head -n 5
+echo "Penggunaan disk:"
+df -h
+echo "Memori:"
+free -h
+echo "Uptime:"
+uptime`} />

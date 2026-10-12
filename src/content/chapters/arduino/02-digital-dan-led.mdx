@@ -1,0 +1,147 @@
+---
+title: "Digital Output dan LED"
+description: "digitalWrite, pinMode, dan mengontrol LED dari program"
+order: 2
+quiz:
+  - q: "pinMode(pin, OUTPUT) menyiapkan pin untuk…"
+    options: ["Membaca sensor analog", "Menyimpan variabel", "Mengirim sinyal keluar (menyalakan beban)", "Menghubungkan USB"]
+    answer: 2
+    explain: "Pin harus dideklarasikan sebagai OUTPUT sebelum digitalWrite dapat mengendalikannya."
+  - q: "digitalWrite(pin, HIGH) menghasilkan…"
+    options: ["Tegangan 220V", "Tegangan logika penuh (5V di UNO)", "Nilai analog acak", "Sinyal Wi-Fi"]
+    answer: 1
+    explain: "HIGH = tegangan Vcc board; LOW = 0V (tanah)."
+  - q: "Resistor 220-330 ohm pada LED seri berfungsi untuk…"
+    options: ["Membatasi arus", "Menambah tegangan", "Memperlambat kompilasi", "Sebagai antena"]
+    answer: 0
+    explain: "Tanpa resistor, arus berlebih memperpendek umur LED dan membebani pin."
+  - q: "delay(1000) dalam kode Arduino artinya…"
+    options: ["Jeda 1 milidetik", "Jeda 1 menit", "Jeda 1 detik", "Reset board"]
+    answer: 2
+    explain: "Satuan delay adalah milidetik."
+  - q: "LED_BUILTIN merujuk ke…"
+    options: ["Sensor cahaya eksternal", "Pin LED bawaan pada board", "Pin USB", "Buzzer internal"]
+    answer: 1
+    explain: "LED kecil menempel di papan — praktis untuk uji cepat tanpa rangkaian."
+example:
+  code: |
+    const int LED = 8;
+
+    void setup() {
+      pinMode(LED, OUTPUT);
+    }
+
+    void loop() {
+      digitalWrite(LED, HIGH);
+      delay(250);
+      digitalWrite(LED, LOW);
+      delay(250);
+    }
+---
+
+Pin digital Arduino hanya mengenal **2 keadaan**: `HIGH` (sekitar 5 V pada UNO) dan `LOW` (0 V). Dua keadaan ini cukup untuk mengontrol lampu, buzzer aktif, relay, dan sinyal logika perangkat lain.
+
+## 3 Mode Pin Digital
+
+| Mode | Fungsi | Kapan dipakai | Catatan |
+| --- | --- | --- | --- |
+| `OUTPUT` | Arduino mengirim HIGH/LOW | LED, buzzer, sinyal driver | Maksimum arus pin terbatas |
+| `INPUT` | Arduino membaca tegangan luar | Tombol dengan resistor eksternal | Jangan dibiarkan floating |
+| `INPUT_PULLUP` | Input + resistor pull-up internal | Tombol sederhana ke GND | Ditekan terbaca `LOW` |
+
+`pinMode()` dipanggil sekali di `setup()`; `digitalWrite()` atau `digitalRead()` dipanggil berulang di `loop()`.
+
+## Rangkaian LED yang Aman
+
+```text
+Pin digital 8 -- resistor 220–330 Ω -- anoda LED (kaki panjang)
+                                          katoda (kaki pendek) -- GND
+```
+
+Resistor membatasi arus dengan hukum Ohm: `(5 V - 2 V LED) / 220 Ω ≈ 13,6 mA`. Tanpa resistor, LED mencoba mengambil arus sebanyak mungkin dan bisa merusak LED maupun pin. Target aman untuk latihan adalah **5–15 mA**, jauh di bawah batas absolut 40 mA per pin ATmega328P.
+
+## Program Blink di Pin Eksternal
+
+```cpp
+const int LED = 8;
+
+void setup() {
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(LED, HIGH);
+  delay(250);
+  digitalWrite(LED, LOW);
+  delay(250);
+}
+```
+
+`const int` membuat nomor pin tidak bisa berubah saat program berjalan. Dalam satu putaran `loop`, LED hidup 250 ms + mati 250 ms, sehingga periode lengkap 500 ms dan frekuensi kedipnya **2 Hz**.
+
+## Membaca Tombol dan Mengontrol LED
+
+```text
+Pin 2 ---- tombol ---- GND     (memakai INPUT_PULLUP, tanpa resistor tambahan)
+Pin 8 ---- 220 Ω ---- LED ---- GND
+```
+
+```cpp
+const int TOMBOL = 2;
+const int LED = 8;
+
+void setup() {
+  pinMode(TOMBOL, INPUT_PULLUP);
+  pinMode(LED, OUTPUT);
+}
+
+void loop() {
+  bool ditekan = digitalRead(TOMBOL) == LOW;
+  digitalWrite(LED, ditekan ? HIGH : LOW);
+}
+```
+
+Logikanya terbalik karena pull-up: tombol lepas terbaca HIGH, ditekan menghubungkan pin ke GND sehingga LOW. Ini lebih stabil daripada `INPUT` tanpa resistor, yang nilainya bisa berubah sendiri akibat gangguan listrik.
+
+## Beberapa LED Sekaligus
+
+```cpp
+const int leds[] = {8, 9, 10};
+const int JUMLAH_LED = 3;
+
+void setup() {
+  for (int i = 0; i < JUMLAH_LED; i++) {
+    pinMode(leds[i], OUTPUT);
+  }
+}
+
+void loop() {
+  for (int i = 0; i < JUMLAH_LED; i++) {
+    digitalWrite(leds[i], HIGH);
+    delay(200);
+    digitalWrite(leds[i], LOW);
+  }
+}
+```
+
+Array 3 pin + loop menggantikan 6 pemanggilan berulang. Ingat: setiap LED tetap perlu resistor sendiri karena tiap jalur memiliki arus sendiri.
+
+## Checklist Jika LED Tidak Menyala
+
+| Pemeriksaan | Gejala | Perbaikan |
+| --- | --- | --- |
+| `pinMode(LED, OUTPUT)` ada? | Tegangan lemah/tidak stabil | Tambahkan di `setup()` |
+| Polaritas LED benar? | Tidak menyala | Balik kaki; panjang ke resistor |
+| GND tersambung? | Rangkaian mati | Satukan semua GND |
+| Nomor pin sama dengan kabel? | LED lain bereaksi/tidak ada | Cocokkan konstanta |
+| Sketch sudah di-upload? | Perilaku versi lama | Compile dan upload ulang |
+
+## Di Dunia Nyata
+
+1. **Lampu status mesin** — hijau = siap, merah = gangguan, kuning = proses; 3 pin output.
+2. **Indikator pintu terbuka** — reed switch sebagai `INPUT_PULLUP`, LED menyala saat magnet menjauh.
+3. **Lampu lalu lintas mini** — 3 LED berjalan berdasarkan urutan waktu tetap.
+4. **Kode SOS visual** — pola delay pendek/panjang membentuk Morse `... --- ...`.
+5. **Tes board produksi** — LED bawaan berkedip dua kali setelah semua self-test lulus.
+
+<div class="note">💡 Pin digital Arduino hanya mampu mengalirkan puluhan miliampere. Untuk strip LED, motor, atau lampu 12 V, gunakan transistor/MOSFET atau modul relay — jangan pernah sambungkan beban besar langsung ke pin.</div>

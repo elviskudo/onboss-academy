@@ -1,0 +1,122 @@
+---
+title: "Sprite dan Panggung"
+description: "Pahlawan proyek Scratch — mengubah tampilan, kostum, dan latar"
+order: 2
+quiz:
+  - q: "Sprite adalah…"
+    options: ["Kategori blok", "Nama proyek", "Objek di panggung yang bisa bergerak dan diprogram", "Tipe data"]
+    answer: 2
+    explain: "Setiap sprite punya posisi, arah, kostum, suara, dan skripnya sendiri."
+  - q: "Kostum (costume) sprite berfungsi untuk…"
+    options: ["Mengubah bunyi", "Mengganti tampilan untuk membuat animasi", "Menghapus sprite", "Mengunci posisi"]
+    answer: 1
+    explain: "Berganti-ganti kostum cepat menciptakan ilusi gerakan seperti kartun."
+  - q: "Panggung (stage) berbeda dari sprite karena…"
+    options: ["Panggung adalah latar; tidak punya arah seperti sprite", "Panggung bisa melompat", "Panggung selalu berbunyi", "Panggung bisa disembunyikan"]
+    answer: 0
+    explain: "Panggung hanya punya posisi dan kostum (sebagai latar), tanpa arah."
+  - q: "Koordinat (0, 0) pada panggung Scratch berada di…"
+    options: ["Pojok kiri atas", "Pojok kanan bawah", "Tengah panggung", "Semua sudut sekaligus"]
+    answer: 2
+    explain: "Sumbu X dari -240..240 dan Y dari -180..180 dengan pusat di (0,0)."
+  - q: "Blok 'berputar 15 derajat' mengubah…"
+    options: ["Nama sprite", "Arah sprite", "Skor permainan", "Volume suara"]
+    answer: 1
+    explain: "Arah (direction) menentukan sprite menghadap ke mana saat bergerak 'ke depan'."
+example:
+  code: |
+    // Alur animasi sederhana:
+    // [ketika bendera diklik]
+    // [ke x: -180 y: 0]                <- mulai dari kiri
+    // [ulangi 24 [ke depan 15 langkah; tunggu 0.05 detik]]
+    // Sprite bergerak dari kiri ke kanan dengan langkah kecil
+---
+
+Setiap proyek Scratch hidup di atas **panggung** yang dihuni **sprite**. Panggung adalah layar pertunjukan, sprite adalah aktor yang punya posisi, arah, kostum, suara, dan skrip sendiri-sendiri.
+
+## 6 Properti Inti Setiap Sprite
+
+Sprite bukan sekadar gambar — ia objek dengan keadaan (state) yang bisa dibaca dan diubah lewat blok:
+
+| Properti | Rentang/Arti | Blok untuk membaca | Blok untuk mengubah |
+| --- | --- | --- | --- |
+| Posisi X | -240 s/d 240 | `(posisi x)` | `geser x sebesar 10` |
+| Posisi Y | -180 s/d 180 | `(posisi y)` | `geser y sebesar -10` |
+| Arah | -180..180 derajat (90 = kanan) | `(arah)` | `berputar 15 derajat` |
+| Ukuran | persen dari kostum asli | `(ukuran)` | `ubah ukuran sebesar 10` |
+| Kostum | indeks atau nama | `(kostum)` | `ganti kostum ke [kostum-a]` |
+| Visibilitas | tampil/sembunyi | — | `tampil` / `sembunyi` |
+
+Titik pusat panggung adalah **(0, 0)**. Sumbu X positif ke kanan, Y positif ke atas — bukan seperti layar komputer biasa yang berpusat di kiri atas. Sistem koordinat inilah yang akan kamu temui lagi di CSS, game engine, dan grafis komputer.
+
+## Menambah dan Mengatur Sprite
+
+```text
+Pustaka sprite : [Sprite Costum] [Sprite Fosil] [Sprite Cari]
+Buat sendiri   : [Sprite Baru] [Sprite Saya] [Sprite Vektor]
+Acak           : [Sprite Acak]
+```
+
+Klik salah satu untuk menambahkan; sprite baru muncul di tengah panggung dengan nama `Sprite1`. Panel di bawah daftar sprite berisi 5 tab properti: **Info** (nama, titik tengah, arah), **Kostum**, **Suara**, **Kode**, dan **Ekstensi**. Beri nama deskriptif (Pemain, Musuh, Jaring) sejak awal — nama baku menyulitkan saat proyek berisi 10 sprite.
+
+## Kostum dan Animasi
+
+Kostum adalah varian gambar milik sprite. Dua atau tiga kostum bergantian dengan cepat menghasilkan animasi berjalan, membuka mulut, atau berkedip:
+
+```text
+[ketika bendera diklik]
+[ulangi 10 [
+   ganti kostum ke [kostum-a]
+   tunggu 0.1 detik
+   ganti kostum ke [kostum-b]
+   tunggu 0.1 detik
+]]
+```
+
+Aturan praktis: buat 2–4 kostum yang **mirip** (hanya berbeda sedikit), jaga jeda tetap, dan gunakan **bentuk vektor** bila ingin ukuran besar tetap tajam. Kostum juga bisa dipakai sebagai penanda status — misalnya sprite "bintang" berubah dari utuh menjadi pecah saat tertangkap.
+
+## Suara Sprite
+
+```text
+[mainkan suara [meong] sampai selesai]   <- blokir skrip sampai selesai
+[mainkan suara [pop] di sepanjang [samping]]   <- jalan paralel
+[ubah volume sebesar -10]
+```
+
+Blok suara berada di kategori **Suara**; Scratch menyediakan pustaka bawaan dan perekam suara. Perbedaan penting: `sampai selesai` menahan skrip (setara `await`), sedangkan varian tanpa `sampai selesai` membiarkan skrip lanjut — dipakai saat musik latar harus berjalan bersama animasi.
+
+## Posisi dan Arah
+
+```text
+[ke x: [-180] y: [0]]                 <- teleport ke kiri
+[bergerak [10] langkah]               <- maju sesuai arah saat ini
+[berputar [searah jarum jam] [15] derajat]
+[tunjuk ke [sprite-b]]
+[pantul jika menyentuh tepi]          <- pantulan di batas panggung
+```
+
+`bergerak` selalu mengikuti **arah**, bukan sumbu. Karena itu `tunjuk ke [0]` (arah 0 = atas) membuat sprite bergerak vertikal. Bila sprite sering keluar layar, aktifkan mode **"jangan biarkan terlewat"** di panel properti agar ia otomatis dipantulkan di tepi.
+
+## Panggung dan Latar
+
+Panggung punya daftar latar sendiri yang berfungsi seperti kostumnya sprite:
+
+```text
+[berganti latar ke [pagi]]
+[ulangi 3 [
+   tunggu 1 detik
+   berganti latar ke [malam]
+]]
+```
+
+Latar berganti perlahan menciptakan pergantian waktu; latar juga bisa menjadi kondisi — blok `ketika latar berganti ke [x]` menjadi kepala skrip yang memulai babak baru permainan.
+
+## Di Dunia Nyata
+
+1. **Animasi intro kelas** — guru menggeser sprite narator dari kiri ke kanan sambil kostum bicara berganti.
+2. **Simulasi percobaan kimia** — dua sprite "ion" didekatkan dengan `tunjuk ke` untuk memvisualisasikan ikatan.
+3. **Karakter RPG dengan 3 status emosi** — kostum senang/sedih/kaget dipakai sebagai penanda keadaan.
+4. **Layar perubahan musim** — 4 latar diganti otomatis tiap 2 detik sebagai latar presentasi.
+5. **Uji koordinat untuk pelajaran matematika** — siswa memasukkan sprite ke titik yang diminta guru untuk belajar sumbu cartesius.
+
+<div class="note">💡 Selalu atur posisi, arah, dan ukuran awal sprite pada blok "ketika bendera diklik". Dengan begitu proyek bisa diulang dari kondisi semula tanpa mereset manual — setiap klik bendera selalu memulai dari state yang sama.</div>

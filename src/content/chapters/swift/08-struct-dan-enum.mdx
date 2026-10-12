@@ -1,0 +1,209 @@
+---
+title: "Struct & Enum"
+description: "Tipe nilai yang ringan dan aman — struct untuk data, enum untuk pilihan"
+order: 8
+quiz:
+  - q: "Struct di Swift bersifat…"
+    options: ["referensi bersama", "nilai (value type)", "abstract", "singleton"]
+    answer: 1
+    explain: "Salinan struct tidak berbagi memori dengan aslinya."
+  - q: "Enum paling cocok dipakai untuk…"
+    options: ["list data panjang", "file teks", "kumpulan kasus terbatas", "server web"]
+    answer: 2
+    explain: "Status, warna, dan pilihan tetap adalah kasus ideal enum."
+  - q: "Menambah case baru pada enum membuat switch tanpa default menjadi…"
+    options: ["error kompilasi", "error runtime", "tidak berpengaruh", "file korup"]
+    answer: 0
+    explain: "Compiler menuntut seluruh case ditangani."
+  - q: "Method struct yang mengubah properti harus ditandai…"
+    options: ["static", "mutating", "final", "override"]
+    answer: 1
+    explain: "Karena struct adalah nilai, perubahan butuh mutating."
+  - q: "Associated value memungkinkan…"
+    options: ["menghapus enum", "case membawa data tambahan", "mengubah nama file", "membuat perulangan"]
+    answer: 1
+    explain: "Contoh case berhasil(data: String)."
+example:
+  code: |
+    struct Produk {
+        let nama: String
+        var harga: Int
+
+        func ringkas() -> String {
+            return "\(nama) Rp\(harga)"
+        }
+    }
+
+    enum Kategori {
+        case makanan
+        case minuman
+    }
+
+    let p = Produk(nama: "Kopi", harga: 25000)
+    print(p.ringkas())
+    print(Kategori.minuman)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Struct adalah pilihan utama untuk data di Swift, sedangkan enum memodelkan pilihan yang tidak mungkin salah.
+
+## Struct Dasar
+
+```swift
+struct Produk {
+    let nama: String
+    var harga: Int
+}
+
+var p = Produk(nama: "Kopi", harga: 25000)
+p.harga = 30000
+
+print("\(p.nama) Rp\(p.harga)")
+```
+
+Constructor dibuat otomatis dari seluruh properti — namanya *memberwise initializer*, dan otomatis hilang bila kamu menulis `init` sendiri.
+
+## Kapan struct, kapan class — jujur
+
+Swift adalah bahasa **struct-first**: default komunitas Swift (termasuk Apple di framework barunya) memakai struct untuk hampir semua model data. Bandingkan keduanya:
+
+| Sifat | Struct | Class |
+| --- | --- | --- |
+| Penyimpanan | nilai (disalin) | referensi (bersama) |
+| Pewarisan | tidak ada | satu class induk |
+| `deinit` | tidak ada | ada |
+| Identitas (`===`) | tidak ada | ada |
+| Kecepatan | cenderung lebih ringan | sedikit lebih berat |
+
+Pakai class hanya bila kamu benar-benar butuh salah satu dari tiga ini: **satu sumber kebenaran yang diubah banyak tempat** (koneksi, state global), **pewarisan**, atau **deinit** untuk membersihkan sumber daya. Selain itu, struct — dan hampir semua model data di aplikasi nyata berhenti di sini.
+
+## Struct adalah Nilai
+
+```swift
+struct Saldo {
+    var jumlah: Int
+}
+
+let asli = Saldo(jumlah: 1000)
+var salinan = asli
+
+salinan.jumlah = 500
+print(asli.jumlah)     // 1000
+print(salinan.jumlah)   // 500
+```
+
+Mengubah salinan tidak menyentuh data asli — inilah yang membuat struct aman.
+
+## Method pada Struct
+
+```swift
+struct Persegi {
+    var sisi: Int
+
+    func luas() -> Int {
+        return sisi * sisi
+    }
+
+    mutating func perbesar(_ tambah: Int) {
+        sisi += tambah
+    }
+}
+
+var q = Persegi(sisi: 4)
+print(q.luas())
+q.perbesar(2)
+print(q.luas())
+```
+
+Method yang mengubah properti wajib bertanda `mutating`.
+
+## Enum Sederhana
+
+```swift
+enum Kategori {
+    case makanan
+    case minuman
+    case alat
+}
+
+let pilihan = Kategori.minuman
+
+switch pilihan {
+case .makanan:
+    print("Makanan")
+case .minuman:
+    print("Minuman")
+case .alat:
+    print("Alat")
+}
+```
+
+Tanpa `default`, compiler menuntut semua case ditangani. Sebuah enum juga bisa membawa **nilai mentah** (raw value) berupa `Int` atau `String`:
+
+```swift
+enum Prioritas: Int, CaseIterable {
+    case rendah = 1
+    case sedang = 2
+    case tinggi = 3
+}
+
+print(Prioritas.tinggi.rawValue)        // 3
+print(Prioritas.allCases.count)         // 3
+```
+
+`CaseIterable` membuat `allCases` tersedia otomatis — berguna untuk menampilkan semua pilihan di form.
+
+## Di Dunia Nyata
+
+- **Model data pesanan** — `struct Pesanan` disalin aman antara lapisan view dan service tanpa efek samping tak terduga.
+- **Status pengiriman** — `enum Status { case menunggu, dikirim, diterima }` membuat switch wajib lengkap.
+- **Hasil pembayaran** — enum associated value `case berhasil(reff: String)` mengirim data tambahan per kasus.
+- **Konfigurasi layar** — struct dengan properti `let` menjadi konfigurasi yang tidak bisa salah ditimpa.
+- **Daftar pilihan form** — `Prioritas.allCases` menghasilkan daftar case untuk picker tanpa menulis ulang daftar.
+
+## Enum dengan Associated Value
+
+```swift
+enum Hasil {
+    case sukses(data: String)
+    case gagal(pesan: String)
+}
+
+func tangani(_ h: Hasil) {
+    switch h {
+    case .sukses(let data):
+        print("Berhasil: \(data)")
+    case .gagal(let pesan):
+        print("Gagal: \(pesan)")
+    }
+}
+
+tangani(.sukses(data: "data tersimpan"))
+```
+
+<div class="note">💡 Mulai dari struct, pindah ke class hanya bila kamu benar-benar butuh referensi bersama atau pewarisan. Kebanyakan model data di Swift tidak memerlukan keduanya.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`struct Produk {
+    let nama: String
+    var harga: Int
+
+    func ringkas() -> String {
+        return "\\(nama) Rp\\(harga)"
+    }
+
+    mutating func diskon(_ persen: Int) {
+        harga = harga - harga * persen / 100
+    }
+}
+
+enum Kategori {
+    case makanan
+    case minuman
+}
+
+var p = Produk(nama: "Kopi", harga: 25000)
+print(p.ringkas())
+p.diskon(10)
+print(p.ringkas())
+print(Kategori.minuman)`} />

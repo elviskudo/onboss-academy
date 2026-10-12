@@ -1,0 +1,185 @@
+---
+title: "Struct & Method"
+description: "Mengelompokkan data dengan struct dan perilakunya dengan impl"
+order: 8
+quiz:
+  - q: "Perilaku sebuah struct ditambahkan lewat…"
+    options: ["fungsi global", "blok impl", "trait anonim", "komentar"]
+    answer: 1
+    explain: "impl NamaStruct { fn metode(&self) { ... } } menempatkan method pada struct."
+  - q: "Parameter &self pada method berarti…"
+    options: ["method statis", "method menerima pinjaman mutabel selalu", "method membaca instance ini", "method tanpa parameter"]
+    answer: 2
+    explain: "&self adalah pinjaman biasa; &mut self untuk mengubah, self untuk mengambil alih milik."
+  - q: "Membuat instance struct paling singkat dengan…"
+    options: ["NamaStruct { field: nilai }", "new NamaStruct()", "NamaStruct.new", "create NamaStruct"]
+    answer: 0
+    explain: "Contoh: let s = Siswa { nama: String::from(\"Sari\"), skor: 90 };"
+  - q: "Konstruktor khas Rust ditulis sebagai…"
+    options: ["constructor(...)", "fn init()", "fn baru(...) -> Self di dalam impl", "new struct()"]
+    answer: 2
+    explain: "Konvensi Rust: fn baru() mengembalikan Self, dipanggil dengan NamaStruct::baru()."
+  - q: "Inheritance kelas di Rust…"
+    options: ["ada via extends", "ada via impl", "tidak ada — pakai trait + komposisi", "ada via inherit"]
+    answer: 2
+    explain: "Rust tidak punya class turunan; perilaku bersama dibagikan lewat trait."
+example:
+  code: |
+    struct Siswa {
+        nama: String,
+        skor: i32,
+    }
+
+    impl Siswa {
+        fn baru(nama: &str, skor: i32) -> Self {
+            Siswa { nama: nama.to_string(), skor }
+        }
+
+        fn perkenalan(&self) {
+            println!("Halo, saya {} (skor {})", self.nama, self.skor);
+        }
+
+        fn tambah_skor(&mut self, n: i32) {
+            self.skor += n;
+        }
+    }
+
+    fn main() {
+        let mut s = Siswa::baru("Sari", 80);
+        s.tambah_skor(10);
+        s.perkenalan();
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanpa kata kunci class, Rust menggabungkan **struct untuk data** dan **impl untuk perilaku**.
+
+## Mendefinisikan Struct
+
+```rust
+struct Siswa {
+    nama: String,
+    skor: i32,
+}
+```
+
+Setiap field punya tipe. Semua field wajib diisi saat instance dibuat.
+
+## Membuat Instance
+
+```rust
+let s = Siswa {
+    nama: String::from("Sari"),
+    skor: 90,
+};
+
+println!("{} - {}", s.nama, s.skor);
+```
+
+Akses field memakai titik `.`. Struktur literal menulis semua field sekaligus.
+
+## 3 Bentuk Method
+
+| Bentuk | Sintaks | Untuk apa |
+| --- | --- | --- |
+| Baca | `fn m(&self)` | Method hanya membaca field |
+| Ubah | `fn m(&mut self)` | Method mengubah field — instance wajib `mut` |
+| Ambil milik | `fn m(self)` | Method memakai habis instance (mis. ke `Vec`) |
+
+```rust
+impl Siswa {
+    fn perkenalan(&self) {
+        println!("Halo, saya {}", self.nama);
+    }
+
+    fn tambah_skor(&mut self, n: i32) {
+        self.skor += n;
+    }
+}
+
+fn main() {
+    let mut s = Siswa { nama: String::from("Ani"), skor: 70 };
+    s.tambah_skor(15);
+    println!("skor = {}", s.skor);
+}
+```
+
+## Konstruktor dan Method Statis
+
+```rust
+impl Siswa {
+    fn baru(nama: &str, skor: i32) -> Self {
+        Siswa { nama: nama.to_string(), skor }
+    }
+}
+
+let s = Siswa::baru("Sari", 90);
+```
+
+Method tanpa `self` dipanggil lewat tipe: `Siswa::baru(...)` — inilah konstruktor gaya Rust (tidak ada kata kunci `constructor`).
+
+## Enum, Trait, dan Kenapa Tanpa Class
+
+```rust
+enum Warna { Merah, Hijau, Biru }
+
+trait Hitung {
+    fn nilai(&self) -> i32;
+}
+```
+
+`struct`+`enum` untuk data, `trait` untuk kontrak perilaku — inilah padanan OOP di Rust. **4 pilar OOP** dan statusnya:
+
+| Pilar | Status di Rust | Mekanismenya |
+| --- | --- | --- |
+| Encapsulation | ✅ Ada | Field privat per-default; `pub` untuk membuka |
+| Inheritance | ❌ Tidak ada | Digantikan trait + komposisi (menanam struct) |
+| Polymorphism | ✅ Ada | Generik (`T: Hitung`) dan trait object (`dyn Hitung`) |
+| Abstraction | ✅ Ada | Trait menyembunyikan implementasi |
+
+Tidak ada `class Kucing extends Hewan` — kalau butuh perilaku bersama, tulis trait `Hewan` lalu `impl Hewan untuk Kucing` dan `impl Hewan untuk Anjing`.
+
+## Di Dunia Nyata
+
+- **Model database**: struct `Pengguna` dengan `fn simpan(&self)` ke SQLite
+- **State machine**: enum `Status` (Draft/Review/Terbit) dengan method per transisi
+- **Game**: struct `Pemain` dengan `gerak(&mut self, arah)` dan `darah(&self)`
+- **Kalkulator harga**: `impl` terpisah per tipe — `DiskonPersen`, `DiskonRupiah`
+- **Validator form**: trait `Validasi { fn lolos(&self) -> bool }` dipakai semua tipe input
+
+<div class="note">💡 Pisahkan data (struct) dan perilaku (impl) membuat kode mudah ditelusuri. Beri nama method dengan kata kerja: perkenalan(), tambah_skor(), hitung_total().</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`struct Siswa {
+    nama: String,
+    skor: i32,
+}
+
+impl Siswa {
+    fn baru(nama: &str, skor: i32) -> Self {
+        Siswa { nama: nama.to_string(), skor }
+    }
+
+    fn perkenalan(&self) {
+        println!("Halo, saya {} (skor {})", self.nama, self.skor);
+    }
+
+    fn tambah_skor(&mut self, n: i32) {
+        self.skor += n;
+    }
+}
+
+#[derive(Debug)]
+enum Warna { Merah, Hijau, Biru }
+
+fn main() {
+    let mut s = Siswa::baru("Sari", 80);
+    s.tambah_skor(10);
+    s.perkenalan();
+
+    let t = Siswa::baru("Budi", 75);
+    t.perkenalan();
+    println!("skor Budi: {}", t.skor);
+
+    println!("warna: {:?}", Warna::Hijau);
+}`} />

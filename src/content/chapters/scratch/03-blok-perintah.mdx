@@ -1,0 +1,127 @@
+---
+title: "Blok Perintah"
+description: "Kategori blok utama — aksi, tampilan, suara, dan operator"
+order: 3
+quiz:
+  - q: "Blok dengan warna biru tua dalam kategori Gerak berfungsi untuk…"
+    options: ["Menggerakkan dan memutar sprite", "Mengubah skor", "Menyimpan proyek", "Mengedit latar"]
+    answer: 0
+    explain: "Blok gerak mengatur langkah, arah, posisi x/y, dan pantulan di tepi panggung."
+  - q: "Blok 'bergeser x sebesar 10' menggeser sprite ke…"
+    options: ["Arah kiri", "Atas", "Arah kanan", "Bawah"]
+    answer: 2
+    explain: "Nilai positif ke kanan, negatif ke kiri; sumbu Y ke atas bila positif."
+  - q: "Blok 'tunggu 1 detik' berada di kategori…"
+    options: ["Gerak", "Kontrol", "Tampilan", "Operator"]
+    answer: 1
+    explain: "Kategori kontrol berisi blok yang mengatur alur dan jeda waktu program."
+  - q: "Blok 'ucap [Halo!] selama 2 detik' memunculkan…"
+    options: ["Gelembung percakapan di atas sprite", "Layar penuh", "Jendela konsol", "Pesan ke sprite lain"]
+    answer: 0
+    explain: "Gelembung teks adalah cara paling umum menampilkan dialog."
+  - q: "Untuk mengubah ukuran sprite, gunakan blok di kategori…"
+    options: ["Suara", "Kejadian", "Tampilan", "Data"]
+    answer: 2
+    explain: "Kategori tampilan juga mengatur efek warna, lapisan, dan visibilitas."
+example:
+  code: |
+    // Skrip contoh (ditulis sebagai blok):
+    // [ketika bendera diklik]
+    // [ucap [Mari jalan-jalan!] selama 2 detik]
+    // [ulangi 10 [gerak 10 langkah; tunggu 0.1 detik]]
+    // [ucap [Sampai jumpa!] selama 1 detik]
+---
+
+Kategori blok adalah "kamus" kamu. Bab ini memetakan blok yang paling sering dipakai, lalu menjelaskan tiga hal yang menentukan perilaku program: **urutan eksekusi, lubang C-blok, dan jenis nilai yang bisa dimasukkan**.
+
+## Blok yang Paling Sering Dipakai
+
+| Kategori | Blok andalan | Fungsi | Kapan dipakai |
+| --- | --- | --- | --- |
+| Kejadian | `ketika bendera diklik` | Kepala skrip, titik mulai | Setiap program |
+| Gerak | `ke depan 10 langkah` | Menggeser sesuai arah | Gerakan karakter |
+| Gerak | `ke x: 0 y: 0` | Teleport ke koordinat | Reset posisi |
+| Tampilan | `ucap [...] selama 2 detik` | Gelembung dialog | Narasi |
+| Tampilan | `ganti kostum ke [...]` | Ganti gambar | Animasi |
+| Suara | `mainkan suara [...] sampai selesai` | Bunyi sambil menunggu | Efek, musik |
+| Kontrol | `tunggu 1 detik` | Jeda eksekusi | Ritme animasi |
+| Kontrol | `ulangi 10 [...]` | Perulangan tetap | Gerak berulang |
+| Peraba | `menyentuh [musuh]?` | Deteksi tabrakan | Game |
+| Operator | `acak dari 1 sampai 10` | Nilai acak | variasi |
+| Data | `ubah [skor] sebesar 1` | Ubah variabel | Skor, nyawa |
+
+## 3 Aturan Urutan Eksekusi
+
+```text
+1. Blok dieksekusi dari atas ke bawah, satu per satu, tanpa dilewati
+2. Saat masuk ke lubang C-blok, seluruh isi dieksekusi dulu sampai lubang habis
+3. Setelah lubang habis, eksekusi lanjut ke blok di bawah C-blok tersebut
+```
+
+Konsekuensinya: satu blok `ulangi 10` yang berisi 3 blok setara dengan 30 blok yang dieksekusi berurutan. Blok tanpa lubang "berjalan seketika" lalu menyatu dengan blok berikutnya — tidak ada jeda otomatis, jadi animasi cepat wajib diberi `tunggu`.
+
+```text
+[ketika bendera diklik]          <- 1. kepala skrip
+[ke x: [-180] y: [0]]            <- 2. reset posisi
+[ucap [Siap...] selama 1 detik]  <- 3. blokir 1 detik
+[ulangi 36 [                     <- 4. isi dieksekusi 36x
+   gerak 10 langkah
+   tunggu 0.05 detik
+]]                               <- 5. selesai lubang, lanjut ke bawah
+[ucap [Selesai!] selama 1 detik] <- 6.
+```
+
+## 4 Jenis Masukan Nilai
+
+Hampir semua blok punya slot masukan, dan ada 4 jenis isian yang diterima:
+
+| Jenis | Penampilan | Diisi dari | Contoh |
+| --- | --- | --- | --- |
+| Angka/teks bebas | Persegi putih, bisa diklik | Ketikan langsung | `gerak [10] langkah` |
+| Pelapor (oval) | Bulat, disarangkan | Kategori Operator/Data | `gerak (acak dari 5 ke 15) langkah` |
+| Boolean (segienam) | Segi enam | Kategori Peraba/Operator | `jika <menyentuh tepi?>` |
+| Dropdown | Panah bawah | Pilihan yang sudah disediakan | `ke arah [arah acak]` |
+
+Pelapor bisa **bersarang**: `(tambah (skor) (kalikan (2) (nyawa)))` sama dengan `skor + 2 * nyawa`. Perhatikan bahwa Scratch tidak punya aturan prioritas operator seperti bahasa teks — bentuk sarangnya yang menentukan, jadi kalau bingung, pasang kurung virtual dengan menumpuk blok dengan benar.
+
+## Contoh Rangkaian Lengkap
+
+```text
+[ketika tombol [spasi] ditekan]
+[ulangi 4 [
+   [gerak 50 langkah]
+   [berputar 90 derajat]
+   [tunggu 0.1 detik]
+]]
+[ucap [Selesai gambar persegi!] selama 2]
+```
+
+Sprite menggambar persegi 200×200 piksel dengan 4 sisi — membuktikan bahwa perulangan menggantikan penyalinan blok secara manual.
+
+## Mode Tersembunyi pada Blok Abu-abu
+
+Blok variabel seperti `ganti [skor] sebesar 1` adalah blok **drop-down mode**: klik panahnya untuk berpindah antara `set [skor] ke 0` (sekali, nilai tetap) dan `ganti [skor] sebesar 1` (akumulasi). Pemula sering salah pakai karena keduanya tampak mirip. Perbedaannya persis seperti `=` dan `+=` di bahasa teks.
+
+| Mode | Blok | Analogi bahasa teks | Contoh pakai |
+| --- | --- | --- | --- |
+| Set | `set [skor] ke 0` | `skor = 0` | Reset di awal game |
+| Change | `change [skor] by 1` | `skor += 1` | Poin bertambah |
+
+## Kebiasaan yang Membantu
+
+```text
+- Uji tiap 2-3 blok yang ditambahkan, jangan menumpuk 20 lalu baru klik bendera
+- Beri nama variabel deskriptif (skor, nyawa, level) — hindari a, b, x1
+- Klik kanan blok lalu "Tambahkan Komentar" untuk mencatat ide
+- Saat men-debug, jalankan satu skrip saja dengan menonaktifkan skrip lain sementara
+```
+
+## Di Dunia Nyata
+
+1. **Merangkai lampu Natal berkedip** — `ulangi 12` berisi ganti efek warna + `tunggu 0.2`.
+2. **Peragaan gerak lompat kanguru** — kejadian spasi → lompat pakai perubahan Y negatif-balik-positif.
+3. **Dialog narasi presentasi** — urutan `ucap ... selama 2` menggantikan speaker yang menekan slide.
+4. **Ulang tahun hitung mundur** — `ulangi 10` dengan `ubah [sisa] sebesar -1` dan `tunggu 1`.
+5. **Lempar dadu virtual** — nilai `acak dari 1 sampai 6` diumumkan lewat `ucap (gabung ...)`.
+
+<div class="note">💡 Blok abu-abu tua (seperti "ganti [v] sebesar 1") bisa diklik untuk memilih mode "set ke" atau "tambah" — sering tidak disadari pemula, dan ini sumber bug skor paling umum di proyek pertama.</div>

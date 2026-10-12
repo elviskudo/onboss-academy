@@ -1,0 +1,208 @@
+---
+title: "File & Proyek Mini"
+description: "fopen/fprintf/fgets/fscanf, mode file, CSV, dan proyek absensi multi-file — data yang bertahan"
+order: 10
+quiz:
+  - q: "Mode fopen untuk MENULIS file (menimpa isinya) adalah…"
+    options: ["\"r\"", "\"w\"", "\"a\"", "\"x\""]
+    answer: 1
+    explain: "\"w\" menulis sekaligus menghapus isi lama; \"a\" menambah di akhir; \"r\" hanya membaca."
+  - q: "Fungsi menulis teks ke file adalah…"
+    options: ["fscanf()", "fclose()", "fprintf()", "fremove()"]
+    answer: 2
+    explain: "fprintf(fp, ...) bekerja seperti printf tetapi ditujukan ke file pointer fp."
+  - q: "Setelah selesai memakai file, wajib memanggil…"
+    options: ["free(fp)", "reset(fp)", "fclose(fp)", "delete(fp)"]
+    answer: 2
+    explain: "fclose menutup dan menyimpan perubahan — tanpa ini data bisa tidak tertulis."
+  - q: "fgets berguna untuk…"
+    options: ["Membaca satu baris teks dari file dengan aman", "Menulis angka", "Menghapus file", "Mengompilasi file"]
+    answer: 0
+    explain: "fgets membatasi jumlah karakter sesuai ukuran buffer, sehingga lebih aman daripada gets."
+  - q: "Pada proyek, data disimpan dalam array of struct karena…"
+    options: ["Satu baris file = satu record data yang saling terkait", "Lebih cepat dikompilasi", "Menghindari penggunaan pointer", "Agar program tidak perlu main"]
+    answer: 0
+    explain: "Struct merepresentasikan satu record, array menyimpan banyaknya — pola database sederhana."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        FILE *fp = fopen("catatan.txt", "w");
+        if (fp == NULL) return 1;
+
+        fprintf(fp, "Halo dari C\n");
+        fprintf(fp, "Baris kedua\n");
+        fclose(fp);
+
+        fp = fopen("catatan.txt", "r");
+        char baris[100];
+        while (fgets(baris, sizeof(baris), fp) != NULL) {
+            printf("%s", baris);
+        }
+        fclose(fp);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang hanya mencetak ke layar **kehilangan datanya saat ditutup**. File membuat hasil kerja bertahan. Bab ini menutup kurikulum C: dari file I/O sampai proyek mini yang memadukan struct, array, function, dan file.
+
+## Membuka & Menutup File
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    FILE *fp = fopen("data.txt", "w");   // buat/tulis
+    if (fp == NULL) {
+        printf("Gagal membuka file\n");
+        return 1;
+    }
+    fprintf(fp, "Baris pertama\n");
+    fclose(fp);                          // WAJIB ditutup
+    return 0;
+}
+```
+
+`FILE *` adalah pointer ke struktur internal stdio yang menyimpan posisi baca/tulis. **4 mode fopen** yang wajib hafal:
+
+| Mode | Arti | File harus ada? | Isi lama |
+|---|---|---|---|
+| `"r"` | baca | ya | dipertahankan |
+| `"w"` | tulis | tidak (dibuat) | **dihapus/hangus** |
+| `"a"` | tambah di akhir | tidak (dibuat) | dipertahankan |
+| `"r+"` | baca dan tulis | ya | dipertahankan |
+
+Selalu periksa `fp == NULL` — file bisa gagal dibuka karena izin, path salah, atau disk penuh.
+
+## Membaca File
+
+```c
+FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) return 1;
+
+char baris[100];
+while (fgets(baris, sizeof(baris), fp) != NULL) {
+    printf("%s", baris);      // fgets menyimpan newline di akhir
+}
+fclose(fp);
+```
+
+`fgets` membaca per baris, membatasi sesuai ukuran buffer (aman), dan mengembalikan `NULL` di akhir file. **Jangan pernah pakai `gets`** — sudah dihapus dari standar C karena tanpa batas buffer.
+
+## fscanf & Membaca Terstruktur
+
+```c
+FILE *fp = fopen("siswa.csv", "r");
+char nama[30];
+int nim, nilai;
+while (fscanf(fp, " %29[^,],%d,%d", nama, &nim, &nilai) == 3) {
+    printf("%s (NIM %d): %d\n", nama, nim, nilai);
+}
+fclose(fp);
+```
+
+`%[^,]` membaca semua karakter sampai koma — trik CSV sederhana. Return value = jumlah field yang berhasil dibaca; loop berhenti saat tidak lagi 3.
+
+## Menulis Data Terstruktur
+
+```c
+fprintf(fp, "%s,%d,%d\n", m.nama, m.nim, m.nilai);
+// hasil di file: Sari,12345,90
+```
+
+Format CSV seperti ini mudah dibaca kembali dengan `fscanf`. Untuk angka desimal gunakan `%.2f`, untuk lebar kolom `%10d` — sama seperti printf.
+
+## Pola Lengkap: Tulis → Tutup → Buka → Baca
+
+```c
+// tulis
+FILE *w = fopen("nilai.txt", "w");
+fprintf(w, "80\n90\n75\n");
+fclose(w);                       // flush & tutup
+
+// baca
+FILE *r = fopen("nilai.txt", "r");
+int v, total = 0;
+while (fscanf(r, "%d", &v) == 1) total += v;
+fclose(r);
+printf("Total: %d\n", total);    // Total: 245
+```
+
+Urutan kerja file yang benar: **buka → periksa NULL → proses → tutup**. Lupa `fclose` membuat buffer stdio belum tertulis ke disk.
+
+## Proyek Mini: Absensi dengan Persistensi
+
+Rancangan program — memadukan seluruh materi bab 1–9:
+
+1. **Struct** `Peserta { nama, hadir }` merepresentasikan satu record.
+2. **Array of struct** menyimpan daftar peserta di memori.
+3. **Function** `tambah`, `tampilkan`, `hitungKehadiran` mengoperasikannya (data lewat pointer).
+4. **File CSV** menyimpan hasil — program bisa membacanya kembali setelah dijalankan ulang.
+
+Jalankan contoh di bawah, lalu lanjutkan dengan fitur **membaca kembali file** ke array of struct saat program dimulai. Untuk proyek multi-file: pisahkan struct ke `peserta.h`, function ke `peserta.c`, dan `main` ke `main.c`, lalu kompilasi bersama: `gcc main.c peserta.c -o absensi`.
+
+## Di Dunia Nyata
+
+- **Log monitoring server**: program menulis timestamp + status ke `monitor.log` dengan mode `"a"` — insinyur memeriksa riwayat kegagalan.
+- **Konfigurasi aplikasi**: file `config.txt` dibaca saat startup dengan `fscanf` — port, path, dan timeout diubah tanpa mengompilasi ulang.
+- **Backup data klinik**: array of struct pasien diserialisasi ke CSV tiap malam — data aman walau listrik padam.
+- **Sistem kasir POS**: struk thermal dicetak lewat `fprintf` ke file perangkat (`/dev/usb/lp0`) — pola yang sama dengan file biasa.
+- **Leaderboard game offline**: skor pemain ditambah (`"a"`) ke `skor.txt`, lalu dibaca ulang dan diurutkan saat game dibuka.
+
+<div class="note">💡 Urutan kerja file yang benar: <b>buka → periksa NULL → proses → tutup</b>. Lupa <code>fclose</code> membuat data belum tertulis dan file terkunci oleh proses. Untuk menulis, ingat mode <code>"w"</code> menghapus isi lama seketika — untuk menambah data gunakan <code>"a"</code>.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    char nama[30];
+    int hadir;
+} Peserta;
+
+void tampilkan(Peserta daftar[], int n) {
+    for (int i = 0; i < n; i++) {
+        printf("%d. %-8s %s\\n", i + 1, daftar[i].nama,
+               daftar[i].hadir ? "Hadir" : "Absen");
+    }
+}
+
+int main(void) {
+    Peserta kelas[3] = {
+        {"Sari", 1}, {"Budi", 0}, {"Rina", 1}
+    };
+    int n = 3;
+
+    tampilkan(kelas, n);
+
+    int hadir = 0;
+    for (int i = 0; i < n; i++) hadir += kelas[i].hadir;
+    printf("Hadir: %d/%d (%.0f%%)\\n", hadir, n, 100.0 * hadir / n);
+
+    FILE *fp = fopen("absensi.txt", "w");
+    if (fp == NULL) {
+        printf("Gagal menulis file\\n");
+        return 1;
+    }
+    for (int i = 0; i < n; i++) {
+        fprintf(fp, "%s,%d\\n", kelas[i].nama, kelas[i].hadir);
+    }
+    fclose(fp);
+    printf("Data tersimpan ke absensi.txt\\n");
+
+    fp = fopen("absensi.txt", "r");
+    if (fp == NULL) return 1;
+    char nama[30];
+    int status, baris = 0, jumlahHadir = 0;
+    printf("Membaca kembali:\\n");
+    while (fscanf(fp, " %29[^,],%d", nama, &status) == 2) {
+        baris++;
+        if (status) jumlahHadir++;
+        printf("  %s -> %d\\n", nama, status);
+    }
+    fclose(fp);
+    printf("Total baris: %d, hadir: %d\\n", baris, jumlahHadir);
+    return 0;
+}`} />

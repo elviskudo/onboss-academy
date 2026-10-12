@@ -1,0 +1,169 @@
+---
+title: "Route Handler (API Bawaan)"
+description: "Membuat endpoint REST di app/api/route.ts — GET, POST, params, dan respons terkontrol"
+order: 6
+quiz:
+  - q: "File route.ts di App Router berfungsi untuk…"
+    options: ["Menyediakan endpoint HTTP (API) di lokasi rute tersebut", "Menampilkan halaman HTML", "Mengatur layout", "Menyimpan komponen client"]
+    answer: 0
+    explain: "Folder mana pun dengan route.ts menjadi API — mis. app/api/produk/route.ts → /api/produk."
+  - q: "Method HTTP ditulis sebagai…"
+    options: ["Export function bernama metode, mis. export async function POST()", "export function handle()", "export default api()", "export const methods = [...]"]
+    answer: 0
+    explain: "Next.js memetakan nama export (GET, POST, PUT, PATCH, DELETE) ke method request."
+  - q: "Request masuk pada route handler berupa…"
+    options: ["Astro.Request", "Objek Request standar Web (bisa .json(), .headers)", "HttpContext", "Buffer"]
+    answer: 1
+    explain: "Route handler mengikuti Web Fetch API — sama dengan apa yang kamu kenal di fetch."
+  - q: "Respons JSON yang benar ditulis…"
+    options: ["return data", "res.send(data)", "NextResponse.json(data, { status: 201 })", "echo json"]
+    answer: 2
+    explain: "Atau cukup Response.json(data) bila tidak perlu header/status khusus."
+  - q: "Kenapa secret API tidak boleh ditulis di komponen client?"
+    options: ["Kode client dikirim ke browser dan bisa dibaca siapa pun", "Karena client tidak boleh async", "Agar TypeScript error", "Biar loading lebih cepat"]
+    answer: 0
+    explain: "Route handler berjalan di server — tempat yang aman memakai API key dan kredensial."
+example:
+  code: |
+    const produk = [
+      { id: 1, nama: "Kopi Susu" },
+      { id: 2, nama: "Roti Bakar" },
+    ];
+
+    function GET() {
+      return { status: 200, body: produk };
+    }
+    function POST(body) {
+      produk.push({ id: produk.length + 1, nama: body.nama });
+      return { status: 201, body: produk.at(-1) };
+    }
+
+    console.log("GET →", GET().status, GET().body.length, "item");
+    console.log("POST →", POST({ nama: "Es Krim" }).body);
+---
+
+Selain halaman, App Router juga bisa menjadi API. Route handler memungkinkan satu proyek Next.js melayani frontend dan backend endpoint sekaligus.
+
+## GET Pertama
+
+```typescript
+// app/api/produk/route.ts → GET /api/produk
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  const produk = await db.produk.findMany();
+  return NextResponse.json(produk);
+}
+```
+
+Nama export menentukan method. Tidak perlu router eksternal — lokasi file = URL endpoint.
+
+## POST dengan Body
+
+```typescript
+import { NextResponse } from "next/server";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  if (!body.nama || typeof body.harga !== "number") {
+    return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
+  }
+
+  const baru = await db.produk.create({ data: body });
+  return NextResponse.json(baru, { status: 201 });
+}
+```
+
+`request` adalah objek Request standar — `request.json()`, `request.headers.get("authorization")`, semuanya familiar.
+
+## Route Dinamis
+
+```typescript
+// app/api/produk/[id]/route.ts → /api/produk/42
+import { NextResponse } from "next/server";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const produk = await db.produk.findUnique({ where: { id } });
+
+  if (!produk) {
+    return NextResponse.json({ error: "Tidak ditemukan" }, { status: 404 });
+  }
+  return NextResponse.json(produk);
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  await db.produk.delete({ where: { id } });
+  return new NextResponse(null, { status: 204 });
+}
+```
+
+Satu file bisa mengekspor beberapa method untuk rute yang sama.
+
+## Membaca Query dan Header
+
+```typescript
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const q = searchParams.get("q") ?? "";
+  const token = request.headers.get("authorization");
+
+  const hasil = await cariProduk(q, token);
+  return NextResponse.json(hasil);
+}
+```
+
+## Kapan Pakai Route Handler?
+
+- Webhook pembayaran dan notifikasi eksternal
+- Endpoint yang dipakai aplikasi lain (mobile, integrasi)
+- Proxy aman ke API pihak ketiga
+
+Untuk interaksi dalam halaman React murni, server action (bab berikutnya) biasanya lebih ringkas.
+
+## Tujuh Method HTTP
+
+Route handler mendukung **7 method standar**: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, dan `OPTIONS`.
+
+| Method | Fungsi | Respons umum | Kapan dipakai |
+|---|---|---|---|
+| GET | Membaca resource | 200 | Daftar atau detail |
+| POST | Membuat resource | 201 | Pesanan baru |
+| PUT | Mengganti penuh | 200/204 | Sinkronisasi object |
+| PATCH | Mengubah sebagian | 200/204 | Status pesanan |
+| DELETE | Menghapus | 204 | Hapus item |
+| HEAD | Membaca header saja | 200 | Cek metadata |
+| OPTIONS | Menjelaskan method/CORS | 204 | Preflight browser |
+
+Endpoint adalah trust boundary: parse JSON dapat gagal, tipe harus divalidasi, autentikasi diperiksa sebelum query, dan pesan internal jangan dibocorkan.
+
+```typescript
+export async function POST(request: Request) {
+  try {
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object" || !("nama" in body) || typeof body.nama !== "string") {
+      return Response.json({ error: "Nama wajib berupa teks" }, { status: 400 });
+    }
+    return Response.json({ id: crypto.randomUUID(), nama: body.nama }, { status: 201 });
+  } catch {
+    return Response.json({ error: "JSON tidak valid" }, { status: 400 });
+  }
+}
+```
+
+## Di Dunia Nyata
+
+- Payment gateway mengirim webhook POST yang diverifikasi tanda tangannya.
+- Aplikasi mobile membaca katalog melalui GET berformat JSON.
+- Backend mem-proxy API vendor agar secret tidak pernah tiba di browser.
+- Integrasi status pesanan memakai PATCH idempotent dan autentikasi server.
+
+<div class="note">💡 Route handler berjalan di server — semua rahasia aman di sini. Manfaatkan juga Web API standar (Request, Response, Headers) sehingga keterampilanmu di route handler langsung bisa dipakai di edge runtime atau lingkungan server modern lain.</div>

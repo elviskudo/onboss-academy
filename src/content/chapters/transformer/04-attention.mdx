@@ -1,0 +1,138 @@
+---
+title: "Mekanisme Attention"
+description: "Query, Key, Value — cara Transformer menimbang hubungan antar token"
+order: 4
+quiz:
+  - q: "Inti self-attention adalah…"
+    options: ["Setiap token menimbang relevansinya terhadap token lain", "Mengurutkan token secara alfabetis", "Menghapus token penting", "Menambahkan tanda baca"]
+    answer: 0
+    explain: "Self-attention memungkinkan tiap posisi melihat seluruh posisi lain dalam sekuens."
+  - q: "Pada attention, Query dipahami sebagai…"
+    options: ["Bobot akhir model", "Daftar semua token", "Pertanyaan dari token saat ini", "Fungsi aktivasi"]
+    answer: 2
+    explain: "Query mencari 'apa yang saya butuhkan dari konteks lain'."
+  - q: "Key dan Value berperan sebagai…"
+    options: ["Key untuk menghapus, Value untuk menambah", "Key untuk mencocokkan, Value untuk diambil nilainya", "Key sebagai label file, Value sebagai output", "Keduanya identik dengan Query"]
+    answer: 1
+    explain: "Key dipakai menghitung skor kecocokan; Value membawa informasi yang benar-benar dialirkan."
+  - q: "Skor attention dihaluskan dengan fungsi…"
+    options: ["Softmax", "ReLU", "Sigmoid biner", "Logaritma dasar 10"]
+    answer: 0
+    explain: "Softmax mengubah skor mentah menjadi bobot yang berjumlah 1 — mudah diinterpretasikan."
+  - q: "Multi-head attention bermanfaat untuk…"
+    options: ["Menghapus kebutuhan data", "Mempercepat tokenizer", "Menangkap berbagai jenis hubungan sekaligus", "Mengganti positional encoding"]
+    answer: 2
+    explain: "Tiap 'kepala' attention bisa fokus ke pola berbeda: sintaksis, rujukan, gaya, dan lainnya."
+example:
+  code: |
+    def softmax(skor):
+        m = max(skor)
+        eks = [2.718281828 ** (s - m) for s in skor]
+        total = sum(eks)
+        return [e / total for e in eks]
+
+    print(softmax([2.0, 1.0, 0.1]))
+---
+
+Attention adalah jantung Transformer. Bab ini membedah konsep **Query, Key, Value** tanpa rumus berat.
+
+## Analogi Pencarian
+
+Bayangkan mencari resep nasi goreng di buku:
+
+- **Query** = "nasi goreng" (yang sedang kamu cari).
+- **Key** = judul tiap resep (dipakai mencocokkan).
+- **Value** = isi resep (yang benar-benar dibaca).
+
+Self-attention memakai prinsip sama, di mana setiap token bertanya sekaligus menjawab untuk token lain.
+
+Ada **3 peran vektor** untuk setiap token:
+
+| Vektor | Analogi perpustakaan | Fungsi |
+|--------|----------------------|--------|
+| Query (Q) | pertanyaan pengunjung | menyatakan informasi yang dicari |
+| Key (K) | label katalog buku | dicocokkan dengan Query |
+| Value (V) | isi buku | informasi yang akhirnya diambil |
+
+## Sketsa Perhitungan
+
+```python
+# Skor kecocokan token i terhadap token j
+def skor(q, k):
+    return sum(a * b for a, b in zip(q, k))
+
+query = [1.0, 0.5]
+key_1 = [0.9, 0.4]
+key_2 = [0.1, 0.2]
+
+print("skor ke token 1:", skor(query, key_1))
+print("skor ke token 2:", skor(query, key_2))
+```
+
+Skor tinggi berarti token itu dianggap relevan bagi Query.
+
+## Softmax: Skor menjadi Bobot
+
+```python
+def softmax(skor):
+    m = max(skor)
+    eks = [2.718281828 ** (s - m) for s in skor]
+    total = sum(eks)
+    return [e / total for e in eks]
+
+bobot = softmax([4.0, 1.0, 0.5])
+print(bobot)              # jumlah bobot = 1.0
+print("Token 1 paling dominan")
+```
+
+Pengurangan `m` menjaga perhitungan tetap stabil saat skor sangat besar.
+
+## Menggabungkan Value
+
+```python
+bobot = [0.85, 0.10, 0.05]
+value = [
+    [1.0, 0.0],   # informasi token 1
+    [0.0, 1.0],   # informasi token 2
+    [0.5, 0.5],   # informasi token 3
+]
+
+hasil = [
+    sum(b * v[i] for b, v in zip(bobot, value))
+    for i in range(2)
+]
+print(hasil)   # representasi baru = gabungan Value berbobot
+```
+
+## Rumus Scaled Dot-Product Attention
+
+Prosesnya terdiri dari **4 operasi**:
+
+```
+1. skor   = Q * K^T
+2. skala  = skor / sqrt(d_k)
+3. bobot  = softmax(skala + mask)
+4. hasil  = bobot * V
+```
+
+Pembagian `sqrt(d_k)` mencegah dot product membesar seiring dimensi vektor. Mask opsional menutup padding atau token masa depan. Kompleksitas matriks attention standar terhadap panjang sekuens `n` adalah kuadratik (`n²` pasangan), sehingga konteks panjang membutuhkan memori besar.
+
+## Multi-Head: Banyak Sudut Pandang
+
+```python
+# 8 kepala attention = 8 representasi paralel
+kepala = 8
+print(f"{kepala} kepala, masing-masing fokus pada hubungan berbeda")
+```
+
+Hasil semua kepala digabung dan diproyeksikan kembali — kapasitas menangkap pola jauh lebih kaya daripada satu attention tunggal. Kepala tidak diberi tugas secara manual; fokus sintaksis atau rujukan muncul dari training.
+
+## Di Dunia Nyata
+
+- **Penerjemahan kata ganti** — “dia” menimbang subjek yang relevan sebelum dipindahkan ke bahasa tujuan.
+- **Ringkasan kontrak** — kalimat kesimpulan mengakses definisi istilah yang muncul jauh di awal.
+- **Pelengkap kode** — pemanggilan fungsi memperhatikan signature dan variabel yang tersedia sebelumnya.
+- **Analisis sentimen** — kata “tidak” memberi bobot besar pada kata sifat setelahnya sehingga makna berbalik.
+- **Chatbot** — causal mask memastikan jawaban hanya memakai prompt dan token yang sudah dihasilkan.
+
+<div class="note">💡 Attention bersifat dua arah (bidirectional) pada BERT, sedangkan GPT memakai attention autoregresif: hanya melihat token sebelumnya — inilah yang membuat GPT pandai melanjutkan teks.</div>

@@ -1,0 +1,115 @@
+---
+title: "Remote: Push, Pull, dan Clone"
+description: "Menghubungkan repo lokal dengan GitHub/GitLab dan menyinkronkan kerja tim"
+order: 5
+quiz:
+  - q: "Perintah menambahkan remote baru bernama origin adalah…"
+    options: ["git remote add origin URL", "git connect origin URL", "git remote set origin", "git link origin URL"]
+    answer: 0
+    explain: "origin adalah nama konvensional untuk remote utama; URL menunjuk repo di server."
+  - q: "Perintah mengunggah commit lokal ke remote adalah…"
+    options: ["git pull", "git push", "git upload", "git send"]
+    answer: 1
+    explain: "git push mengirim commit lokal ke branch remote yang sesuai."
+  - q: "Perintah mengunduh repo dari remote beserta riwayatnya adalah…"
+    options: ["git fetch", "git clone URL", "git download", "git import"]
+    answer: 1
+    explain: "git clone membuat salinan lokal lengkap dari repo remote, termasuk seluruh riwayat."
+  - q: "git pull pada dasarnya melakukan…"
+    options: ["Push lalu tag", "Fetch lalu merge", "Rebase lalu push", "Clone lalu hapus"]
+    answer: 1
+    explain: "git pull = git fetch (unduh) + git merge (gabungkan ke branch lokal)."
+  - q: "Opsi -u saat pertama kali push dipakai untuk…"
+    options: ["Mengunci password", "Menyetel upstream tracking branch", "Menghapus remote", "Membuat branch tersembunyi"]
+    answer: 1
+    explain: "git push -u origin main mengaitkan main lokal dengan origin/main supaya push/pull berikutnya cukup `git push`."
+example:
+  code: |
+    git remote add origin git@github.com:username/proyek-pertama.git
+    git push -u origin main
+    git pull
+    git clone git@github.com:username/repo-lain.git
+---
+
+Repo lokal baru berguna sepenuhnya saat dihubungkan ke **remote** — salinan repo di server seperti GitHub, GitLab, atau Bitbucket.
+
+## Menambahkan Remote
+
+```bash
+git remote -v                          # lihat remote yang ada
+git remote add origin git@github.com:username/proyek-pertama.git
+```
+
+`origin` hanyalah nama; konvensi luas memakainya untuk remote utama.
+
+## Push Pertama Kali
+
+```bash
+git push -u origin main
+```
+
+- `-u` (upstream) mengaitkan `main` lokal dengan `origin/main` — push/pull berikutnya cukup `git push` / `git pull`.
+- Setelah ini, orang lain bisa mengambil kerjamu dengan `git pull`.
+
+## Mengambil Perubahan Orang
+
+```bash
+git fetch origin   # unduh saja, belum digabung
+git pull           # unduh + merge ke branch aktif
+```
+
+`fetch` aman dipakai kapan saja untuk melihat apa yang berubah di remote tanpa menyentuh kerjaan lokal:
+
+```bash
+git fetch
+git log HEAD..origin/main --oneline
+```
+
+## Mengkloning Repo yang Sudah Ada
+
+```bash
+git clone git@github.com:tim/proyek-kantor.git
+cd proyek-kantor
+```
+
+`clone` melakukan semuanya sekaligus: membuat folder, menambah remote `origin`, mengunduh riwayat, dan checkout branch default.
+
+## Gambaran Alur Tim
+
+```
+komputer A --push--> origin (GitHub) --pull--> komputer B
+```
+
+Semua berbagi lewat remote; tidak ada file yang saling ditimpa langsung antar komputer.
+
+## Enam Operasi Remote
+
+| Operasi | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Clone | Membuat salinan lengkap | `git clone URL` | Pertama bergabung ke project |
+| Remote | Mengelola alamat server | `git remote -v` | Memeriksa tujuan push |
+| Fetch | Mengunduh ref tanpa integrasi | `git fetch origin` | Inspeksi perubahan secara aman |
+| Pull | Fetch lalu merge/rebase | `git pull --ff-only` | Menyinkronkan branch aktif |
+| Push | Mengirim commit dan ref | `git push origin main` | Membagikan commit lokal |
+| Prune | Membersihkan ref remote usang | `git fetch --prune` | Branch remote sudah dihapus |
+
+Remote-tracking branch seperti `origin/main` adalah catatan lokal tentang keadaan remote saat fetch terakhir, bukan branch yang diedit langsung. Bandingkan dengan `git log --oneline HEAD..origin/main` sebelum integrasi. `git pull --ff-only` menolak merge tak terduga; jika ditolak, periksa divergensi lalu pilih merge atau rebase sesuai aturan tim.
+
+Gunakan SSH key atau credential manager, jangan menaruh token dalam URL atau file repo. `git push --force` dapat menimpa commit orang lain. Bila rewrite branch pribadi memang perlu, gunakan `git push --force-with-lease`: operasi gagal jika remote telah berubah sejak fetch terakhir.
+
+## Di Dunia Nyata
+
+- Fetch sebelum review untuk membandingkan branch lokal dengan `origin/main` terbaru.
+- Push branch fitur agar CI berjalan dan rekan dapat membuka pull request.
+- Menambah remote `upstream` untuk menyinkronkan fork tanpa mengubah `origin` pribadi.
+- Menjalankan prune setelah branch PR yang selesai dihapus dari server.
+
+<div class="note">💡 Hindari `git push --force` ke branch bersama (terutama main). Force push menimpa riwayat remote dan dapat menghapus commit yang sudah dikerjakan orang lain. Pakai hanya untuk branch pribadi milikmu sendiri.</div>
+
+## Menyinkronkan Fork (Opsional)
+
+```bash
+git remote add upstream git@github.com:proyek-asli/repo.git
+git fetch upstream
+git merge upstream/main
+```

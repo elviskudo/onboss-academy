@@ -1,0 +1,194 @@
+---
+title: "Pointer"
+description: "Alamat memori, dereference, pointer arithmetic, dynamic memory — jantung bahasa C"
+order: 8
+quiz:
+  - q: "Pointer adalah variabel yang menyimpan…"
+    options: ["Nilai string", "Alamat memori variabel lain", "Ukuran array", "Nama file"]
+    answer: 1
+    explain: "Dideklarasi dengan tipe *, misal int *p = &x; — p berisi alamat dari x."
+  - q: "Operator untuk mengambil alamat variabel adalah…"
+    options: ["*", "->", "&", "#"]
+    answer: 2
+    explain: "&x mengambil alamat x; *p membaca nilai pada alamat yang disimpan p."
+  - q: "Dereference pointer *p membaca…"
+    options: ["Alamat p sendiri", "Nama variabel", "Nilai pada alamat yang ditunjuk p", "Ukuran pointer"]
+    answer: 2
+    explain: "*p adalah kebalikan dari & — keduanya saling membatalkan."
+  - q: "malloc mengembalikan…"
+    options: ["Pointer ke memori yang dialokasikan, atau NULL jika gagal", "Langsung berupa int", "Alamat file", "Tidak mengembalikan apa-apa"]
+    answer: 0
+    explain: "Karena itu selalu cek hasil malloc sebelum memakainya, lalu bebaskan dengan free()."
+  - q: "Memori dari malloc harus dilepas dengan…"
+    options: ["free()", "delete", "remove()", "close()"]
+    answer: 0
+    explain: "free() mengembalikan memori ke sistem — memori C tidak punya garbage collector."
+example:
+  code: |
+    #include <stdio.h>
+
+    void gandakan(int *x) {
+        *x = *x * 2;
+    }
+
+    int main(void) {
+        int a = 21;
+        int *p = &a;
+        printf("Alamat: %p\n", (void *) p);
+        printf("Nilai: %d\n", *p);
+        gandakan(&a);
+        printf("Setelah digandakan: %d\n", a);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Pointer adalah fitur yang membuat C **cepat dan berbahaya sekaligus**: kamu bekerja langsung dengan alamat memori. Tanpa pointer tidak ada dynamic memory, tidak ada function pointer, tidak ada struktur data bertingkat.
+
+## Alamat & Dereference
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    int a = 42;
+    int *p = &a;          // p menyimpan alamat a
+
+    printf("Alamat a: %p\n", (void *) &a);
+    printf("Isi p:    %p\n", (void *) p);
+    printf("Nilai a:  %d\n", a);
+    printf("*p:       %d\n", *p);   // baca nilai lewat alamat
+
+    *p = 100;             // menulis lewat pointer → a berubah
+    printf("a sekarang: %d\n", a);  // 100
+    return 0;
+}
+```
+
+Dua sisi dari koin yang sama: `&` mengambil alamat, `*` membaca/menulis isi alamat. Dideklarasi `int *p` — tipe di depan menjelaskan **apa yang ditunjuk**, bukan apa isinya. Pointer tak terinisialisasi berisi alamat acak — mendereference-nya = undefined behavior. Selalu set `NULL` saat belum menunjuk apa pun.
+
+## Pointer sebagai Parameter (Output Parameter)
+
+```c
+void tukar(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main(void) {
+    int x = 1, y = 2;
+    tukar(&x, &y);        // kirim alamat, bukan nilai
+    printf("%d %d\n", x, y);  // 2 1
+    return 0;
+}
+```
+
+Inilah cara satu-satunya agar function C mengubah nilai variabel pemanggil — menggantikan pola "return banyak nilai" yang tidak ada di bahasa ini.
+
+## Pointer & Array
+
+```c
+int arr[3] = {10, 20, 30};
+int *p = arr;            // arr = &arr[0] — nama array jatuh (decay) jadi pointer
+
+printf("%d\n", *p);       // 10
+printf("%d\n", *(p + 1)); // 20 — pointer arithmetic (melompat 1 int = 4 byte)
+printf("%d\n", p[2]);     // 30 — notasi array tetap berlaku pada pointer
+p++;                      // p kini menunjuk arr[1]
+```
+
+`*(p + i)` dan `p[i]` adalah hal yang sama — array di C memang didefinisikan lewat pointer. Inilah mengapa fungsi menerima `int arr[]` bisa mengubah isi array pemanggil.
+
+## Pointer ke Pointer
+
+```c
+int a = 10;
+int *p = &a;
+int **pp = &p;           // pointer ke pointer
+
+printf("%d\n", **pp);    // 10 — dua kali dereference
+```
+
+Dipakai function yang perlu **mengubah pointer milik pemanggil** — kasus paling sering: mengalokasikan memori lewat function (`void alokasi(int **p, int n)`), atau parameter `argv` (`char **argv` = array of string).
+
+## Alokasi Memori Dinamis
+
+```c
+#include <stdlib.h>
+
+int *data = malloc(5 * sizeof(int));   // 5 slot int
+if (data == NULL) return 1;            // WAJIB cek: NULL jika gagal
+
+for (int i = 0; i < 5; i++) data[i] = (i + 1) * 10;
+printf("%d\n", data[4]);               // 50
+
+free(data);                            // WAJIB dikembalikan
+data = NULL;                           // cegah double free / dangling pointer
+```
+
+Empat fungsi alokasi dari `<stdlib.h>`:
+
+| Fungsi | Fungsi | Perbedaan |
+|---|---|---|
+| `malloc(n)` | alokasikan n byte | isi TIDAK dijamin (garbage) |
+| `calloc(jumlah, ukuran)` | alokasikan dan **isi nol** | aman untuk array bersih |
+| `realloc(p, n)` | ubah ukuran alokasi lama | perbesar/kecilkan, isi lama terjaga |
+| `free(p)` | lepaskan alokasi | satu-satunya cara memori kembali ke sistem |
+
+C **tidak punya garbage collector**. Setiap `malloc`/`calloc`/`realloc` yang sukses wajib punya pasangan `free` — lupa = memory leak; `free` dua kali atau mendereference setelah free = crash.
+
+## Di Dunia Nyata
+
+- **Dynamic array untuk input tak terduga**: program membaca semua baris file log — `realloc` memperbesar buffer 2x saat penuh (pola amortized growth ala ArrayList).
+- **Struktur data berantai (linked list)**: setiap node di-`malloc`, disambung lewat pointer `next`, di-`free` satu per satu saat program selesai.
+- **Swap nilai dalam sorting**: bubble sort menukar elemen array lewat pointer — inti algoritma sort standar C.
+- **Menjalankan fungsi sesuai pilihan user**: function pointer disimpan dalam array menu — dasar shell dan interpreter kecil.
+- **Mengubah pointer pemanggil**: function `gantiBuffer(char **buf)` mengalokasikan buffer baru dan menyerahkannya ke pemanggil tanpa return value.
+
+<div class="note">💡 Dua aturan emas pointer: (1) jangan dereference pointer yang belum diisi, sudah <code>free</code>, atau bernilai <code>NULL</code>; (2) selalu <code>free</code> setiap <code>malloc</code>. Melanggar keduanya = memory leak atau crash yang baru terasa jauh setelah kodenya ditulis.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+
+void gandakan(int *x) {
+    *x = *x * 2;
+}
+
+void tukar(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int main(void) {
+    int a = 21;
+    int *p = &a;
+    printf("Alamat a: %p\\n", (void *) p);
+    printf("Nilai via pointer: %d\\n", *p);
+
+    gandakan(&a);
+    printf("Setelah digandakan: %d\\n", a);
+
+    int x = 1, y = 2;
+    tukar(&x, &y);
+    printf("Tukar: x=%d y=%d\\n", x, y);
+
+    int arr[3] = {10, 20, 30};
+    int *pa = arr;
+    printf("pa[0]=%d *(pa+1)=%d pa[2]=%d\\n", pa[0], *(pa + 1), pa[2]);
+
+    int *data = malloc(5 * sizeof(int));
+    if (data == NULL) return 1;
+    int total = 0;
+    for (int i = 0; i < 5; i++) {
+        data[i] = (i + 1) * 10;
+        total += data[i];
+    }
+    printf("Isi array dinamis: ");
+    for (int i = 0; i < 5; i++) printf("%d ", data[i]);
+    printf("\\nTotal: %d\\n", total);
+    free(data);
+    return 0;
+}`} />

@@ -1,0 +1,137 @@
+---
+title: "GPIO dan LED Pertama"
+description: "Memahami header GPIO 3,3V dan mengendalikan LED dengan Python gpiozero"
+order: 3
+quiz:
+  - q: "Apa arti penomoran BCM 17?"
+    options: ["Nomor jalur GPIO pada SoC", "Pin fisik ke-17 selalu", "Tegangan 17 volt", "Arus maksimum 17 ampere"]
+    answer: 0
+    explain: "BCM merujuk nomor sinyal GPIO, bukan urutan fisik header."
+  - q: "Mengapa LED memerlukan resistor seri?"
+    options: ["Untuk memperbesar kapasitas microSD", "Untuk membatasi arus melalui LED dan GPIO", "Untuk mengaktifkan SSH", "Untuk mengubah sinyal menjadi analog"]
+    answer: 1
+    explain: "Resistor mencegah arus berlebih yang dapat merusak LED atau pin."
+  - q: "Rangkaian mana yang benar untuk LED aktif-HIGH?"
+    options: ["5V langsung ke GPIO17", "GPIO17 ke GND tanpa beban", "GPIO17–resistor–LED–GND", "HDMI–LED–USB"]
+    answer: 2
+    explain: "Arus aman mengalir dari GPIO melalui resistor dan LED menuju GND."
+  - q: "Apa yang dilakukan led.off() pada gpiozero?"
+    options: ["Menghapus Python", "Mengubah pin menjadi 5V", "Mematikan jaringan", "Membuat output tidak aktif"]
+    answer: 3
+    explain: "gpiozero mengatur pin sehingga LED pada rangkaian standar tidak dialiri arus."
+  - q: "Apa tindakan pertama sebelum memindahkan LED ke pin lain?"
+    options: ["Mematikan daya Pi", "Menambah duty cycle", "Membuka port internet", "Menghapus resistor"]
+    answer: 0
+    explain: "Perubahan rangkaian tanpa daya mengurangi risiko korsleting dan salah sambung."
+example:
+  code: |
+    from gpiozero import LED
+    from time import sleep
+
+    led = LED(17)
+    for _ in range(5):
+        led.on()
+        sleep(0.5)
+        led.off()
+        sleep(0.5)
+---
+
+GPIO atau **General Purpose Input/Output** adalah pin digital yang dapat dikendalikan program. LED menjadi latihan pertama karena hasilnya terlihat langsung, tetapi latihan ini juga mengajarkan penomoran pin, polaritas, pembatasan arus, dan cleanup perangkat.
+
+## Kelompok Pin pada Header
+
+Header 40-pin modern memiliki **4 kelompok fungsi utama**. Tidak semua dari 40 posisi merupakan GPIO umum.
+
+| Kelompok | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Daya 3,3V | Menyuplai perangkat 3,3V kecil | Pin fisik 1 | Sensor kompatibel |
+| Daya 5V | Menyuplai perangkat 5V | Pin fisik 2 dan 4 | Modul yang memang menerima 5V |
+| GND | Referensi nol volt | Pin fisik 6 dan 9 | Menutup rangkaian |
+| GPIO | Input/output dan bus digital | BCM17, BCM27 | LED, tombol, I2C, SPI, UART |
+
+GPIO memakai logika **3,3V**. Masukan 5V tidak aman dan dapat merusak SoC. Pin daya 5V tersedia pada header, tetapi bukan berarti GPIO tahan 5V. Untuk sinyal perangkat 5V, gunakan level shifter atau pembagi yang dirancang dengan benar.
+
+## Penomoran dan Fungsi
+
+Ada **2 sistem penomoran** yang sering ditemui: BCM dan BOARD. BCM memakai nama kanal SoC seperti GPIO17; BOARD memakai posisi fisik 1–40. `gpiozero` memakai BCM secara default. Rangkaian bab ini memakai BCM17, yang berada pada pin fisik 11.
+
+Fungsi GPIO digital juga hanya memiliki **2 arah dasar**: input membaca level, output menulis level. Pada output terdapat dua keadaan, LOW mendekati 0V dan HIGH mendekati 3,3V. Pin tidak menghasilkan tegangan analog kontinu; PWM hanya meniru rata-rata melalui pulsa cepat.
+
+| Istilah | Arti | Contoh | Kapan dipakai |
+|---|---|---|---|
+| BCM | Nomor kanal GPIO | `LED(17)` | Kode gpiozero |
+| BOARD | Nomor posisi fisik | Pin 11 | Memasang jumper |
+| HIGH | Logika aktif 3,3V | LED menyala | Mengaktifkan output |
+| LOW | Logika 0V | LED mati | Menonaktifkan output |
+
+Selalu periksa pinout untuk model papan. Jangan menebak posisi berdasarkan nomor BCM karena BCM17 bukan pin fisik 17.
+
+## Komponen dan Rangkaian LED
+
+Ada **4 komponen minimum**: Pi, LED, resistor 220–330 Ω, dan jumper/breadboard. LED memiliki polaritas. Kaki panjang umumnya anoda positif; sisi datar dan kaki pendek menandai katoda negatif.
+
+```text
+BCM17 (fisik 11) ── resistor 330 Ω ── anoda LED
+                                          katoda ── GND (fisik 9)
+```
+
+Resistor boleh ditempatkan sebelum atau sesudah LED selama tetap seri. Nilai 330 Ω merupakan pilihan konservatif untuk LED indikator biasa. Jangan menghubungkan LED langsung antara GPIO dan GND karena arus tidak lagi dibatasi.
+
+Sebelum merangkai, jalankan shutdown, tunggu Pi berhenti, lalu cabut daya. Periksa kembali bahwa jumper tidak mengenai pin 5V. Sambungkan daya hanya setelah rangkaian selesai.
+
+## Mengendalikan dengan gpiozero
+
+`gpiozero` adalah library Python tingkat tinggi untuk perangkat GPIO. Pada Raspberry Pi OS, pasang bila belum tersedia:
+
+```bash
+sudo apt update
+sudo apt install python3-gpiozero
+```
+
+Program kedip lengkap:
+
+```python
+from gpiozero import LED
+from time import sleep
+
+led = LED(17)
+
+for _ in range(5):
+    led.on()
+    sleep(0.5)
+    led.off()
+    sleep(0.5)
+
+led.close()
+```
+
+Jalankan pada Pi dengan `python3 blink.py`. Program memerlukan LED fisik sesuai rangkaian; runtime situs ini tidak mengakses GPIO. `LED(17)` mengonfigurasi BCM17 sebagai output. `on()` dan `off()` mengubah level, sedangkan `sleep()` menentukan durasi. `close()` melepaskan resource pin.
+
+gpiozero juga menyediakan metode `blink()`:
+
+```python
+from gpiozero import LED
+from signal import pause
+
+led = LED(17)
+led.blink(on_time=0.5, off_time=0.5)
+pause()
+```
+
+`pause()` menjaga proses tetap hidup tanpa loop polling rapat. Hentikan dengan Ctrl+C; gpiozero akan menutup perangkat saat proses berakhir normal.
+
+## Kapan Memakai Output GPIO
+
+Output langsung tepat untuk sinyal kecil seperti LED tunggal atau input logika modul kompatibel 3,3V. Output langsung tidak tepat untuk motor, strip LED, relay coil, solenoid, atau buzzer besar. Beban tersebut memerlukan transistor/MOSFET, diode pelindung bila induktif, sumber daya terpisah, dan GND bersama sesuai rancangan.
+
+Jika LED tidak menyala, lakukan **4 pemeriksaan** berurutan: nomor pin, polaritas LED, nilai resistor/koneksi, dan program. Uji satu perubahan setiap kali. LED terbalik tidak biasanya rusak, tetapi tidak akan menyala pada tegangan tersebut.
+
+## Di Dunia Nyata
+
+- **Indikator koneksi:** LED menunjukkan gateway sedang online atau kehilangan jaringan.
+- **Lampu status mesin:** warna berbeda menandai siap, bekerja, atau error melalui driver yang sesuai.
+- **Simulasi kehadiran:** LED meja berkedip menurut jadwal sebelum sistem mengendalikan lampu berdaya besar.
+- **Alarm visual suhu:** LED merah menyala ketika pembacaan sensor melewati ambang.
+- **Pengujian prototipe:** teknisi memakai LED untuk memastikan suatu cabang program benar-benar dieksekusi.
+
+<div class="note">💡 Pisahkan nomor BCM dalam kode dan nomor fisik saat merangkai: `LED(17)` berarti GPIO17 pada pin fisik 11, bukan posisi header 17.</div>

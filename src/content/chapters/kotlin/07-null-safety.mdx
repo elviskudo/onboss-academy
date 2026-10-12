@@ -1,0 +1,177 @@
+---
+title: "Null Safety"
+description: "Menangani nilai kosong secara eksplisit — ?. ?: !! dan smart cast"
+order: 7
+quiz:
+  - q: "Tipe String? pada Kotlin artinya…"
+    options: ["wajib null", "boleh berisi null", "string panjang", "string terenkripsi"]
+    answer: 1
+    explain: "Tanda tanya menandai tipe nullable yang bisa menerima null."
+  - q: "Elvis operator ditulis…"
+    options: ["->", "?:", "!!", "?."]
+    answer: 1
+    explain: "x ?: y mengembalikan x bila tidak null, kalau tidak y."
+  - q: "Operator ?. digunakan untuk…"
+    options: ["menghapus objek", "membuat string", "mengakses anggota bila objek tidak null", "mengompilasi"]
+    answer: 2
+    explain: "Akses dibatalkan dan menghasilkan null, bukan error."
+  - q: "Operator !! dipakai saat…"
+    options: ["kamu yakin nilainya tidak null", "nilai pasti null", "ingin membuat list", "ingin mengubah tipe"]
+    answer: 0
+    explain: "Bila ternyata null, Kotlin melempar NullPointerException."
+  - q: "Setelah pengecekan if (x != null), x akan…"
+    options: ["di-cast otomatis ke tipe non-null", "tetap nullable", "dihapus dari memori", "berubah jadi 0"]
+    answer: 0
+    explain: "Mekanisme ini disebut smart cast."
+example:
+  code: |
+    fun main() {
+        val nama: String? = null
+        val panjang = nama?.length ?: 0
+        println("Panjang: $panjang")
+
+        val teks: String = nama ?: "Tanpa nama"
+        println(teks)
+
+        val aman = "Kotlin"
+        if (aman != null) {
+            println("Panjang aman: " + aman.length)
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Billion dollar mistake menurut penciptanya adalah izin null tanpa kontrol. Kotlin menjadikan null sebagai hal yang harus dinyatakan.
+
+## Tipe Nullable
+
+```kotlin
+fun main() {
+    var aman: String = "Halo"
+    // aman = null   // gagal kompilasi
+
+    var rawan: String? = "Halo"
+    rawan = null     // diperbolehkan
+    println(rawan)
+}
+```
+
+Tanpa tanda tanya, null tidak akan pernah masuk ke variabel. Kotlin punya **4 mekanisme** untuk menangani nilai yang bisa null:
+
+| Mekanisme | Contoh | Perilaku | Kapan dipakai |
+| --- | --- | --- | --- |
+| Safe call `?.` | `nama?.length` | akses batal, hasil `null` | rantai akses yang panjang |
+| Elvis `?:` | `nama ?: "Tanpa"` | nilai pengganti bila null | memberi default |
+| Force `!!` | `nama!!.length` | paksa; bila null → exception | hanya bila pasti tidak null |
+| Smart cast | `if (nama != null) nama.length` | tipe otomatis menyempit | pengecekan sederhana |
+
+## Safe Call dan Elvis
+
+```kotlin
+fun main() {
+    val nama: String? = null
+
+    println(nama?.length)        // null, tanpa error
+    println(nama?.length ?: 0)   // 0
+}
+```
+
+`?.` menghentikan akses bila null, `?:` memberi nilai pengganti.
+
+## Menyediakan Nilai Default
+
+```kotlin
+fun panjang(teks: String?): Int = teks?.length ?: 0
+
+fun main() {
+    println(panjang("Kotlin"))
+    println(panjang(null))
+}
+```
+
+Gabungan keduanya membuat penanganan null singkat dan aman.
+
+## Smart Cast
+
+```kotlin
+fun tampilkan(teks: String?) {
+    if (teks != null) {
+        println(teks.length)   // teks sudah String biasa
+    } else {
+        println("kosong")
+    }
+}
+
+fun main() {
+    tampilkan("Halo")
+    tampilkan(null)
+}
+```
+
+Setelah pengecekan, Kotlin tahu nilai tidak mungkin null dan meng-cast otomatis. Catatan: smart cast tidak berlaku untuk `var` yang bisa ditulis ulang dari tempat lain — karena nilainya bisa berubah di antara pengecekan dan pemakaian.
+
+## Rantai Aman dan let
+
+Safe call bisa dirantai, dan `let` membantu mengeksekusi blok hanya saat nilai ada:
+
+```kotlin
+fun main() {
+    data class Alamat(val kota: String?)
+    val alamat: Alamat? = Alamat(kota = "Bandung")
+
+    println(alamat?.kota?.uppercase())   // BANDUNG
+
+    alamat?.let {
+        println("Kota ditemukan: ${it.kota}")
+    }
+}
+```
+
+`alamat?.kota?.uppercase()` — bila salah satu rantai null, seluruh ekspresi langsung menjadi null tanpa exception.
+
+Koleksi pun bisa nullable per elemennya: `listOf(1, null, 3)` bertipe `List<Int?>`, dan `listOf(null)` bertipe `List<Int?>` yang isinya bukan null — perhatikan letak tanda tanyanya.
+
+## Ketika Terpaksa Menggunakan !!
+
+```kotlin
+fun main() {
+    val teks: String? = "siap"
+    val wajib: String = teks!!
+    println(wajib.length)
+}
+```
+
+Pakai `!!` hanya bila kamu benar-benar yakin — kalau salah, program berhenti dengan error jelas. Di produksi, `!!` yang melempar NullPointerException justru membuktikan bahwa mekanisme null safety bekerja: kesalahanmu tertangkap, bukan diam-diam merusak data.
+
+## Di Dunia Nyata
+
+- **Membaca field JSON opsional** — `data?.alamat?.kota ?: "-"` menampilkan "-" ketika API tidak mengirim alamat.
+- **Intent/parameter aplikasi** — nilai yang dikirim komponen lain bisa hilang; `getStringExtra("id")` bertipe `String?` dan wajib ditangani.
+- **Konfigurasi dengan default** — `portServer ?: 8080` memberi nilai bawaan bila konfigurasi tidak diisi.
+- **Mengambil elemen list** — `daftar.firstOrNull()` menghasilkan nullable; memakai `[0]` langsung berisiko IndexOutOfBounds.
+- **Menghentikan rantai aman** — `user?.profil?.avatar?.let { tampilkan(it) }` menggantikan tiga kali pengecekan if bertingkat.
+
+<div class="note">💡 Utamakan ?. lalu ?: dengan nilai default. Simpan !! untuk data yang memang tidak pernah null — lebih sedikit ! berarti lebih sedikit potensi crash di produksi.</div>
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun panjang(teks: String?): Int = teks?.length ?: 0
+
+fun tampilkan(teks: String?) {
+    if (teks != null) {
+        println("Panjang: " + teks.length)
+    } else {
+        println("kosong")
+    }
+}
+
+fun main() {
+    val nama: String? = null
+    println(nama?.length ?: -1)
+    println(panjang("Kotlin"))
+    println(panjang(null))
+    tampilkan("Halo")
+    tampilkan(null)
+
+    val teks: String? = "siap"
+    println(teks!!.length)
+}`} />

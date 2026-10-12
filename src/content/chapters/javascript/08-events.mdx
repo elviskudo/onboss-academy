@@ -1,0 +1,192 @@
+---
+title: "Events"
+description: "addEventListener, event umum, dan event object"
+order: 8
+quiz:
+  - q: "Cara modern menambahkan event adalah…"
+    options: ["addEventListener(\"click\", fn)", "onclick = fn di HTML", "document.listen()", "new Event()"]
+    answer: 0
+    explain: "addEventListener bisa memuat banyak listener & opsi (once, passive)."
+  - q: "Event yang terjadi saat user menekan Enter di input adalah…"
+    options: ["click", "keydown", "hover", "submit"]
+    answer: 1
+    explain: "keydown (atau khusus e.key === 'Enter')."
+  - q: "e.preventDefault() pada event submit berfungsi untuk…"
+    options: ["Menghapus form", "Mengirim data", "Mencegah reload halaman default browser", "Menambah validasi"]
+    answer: 2
+    explain: "Form HTML default-nya me-reload halaman; preventDefault memungkinkan penanganan via JS (AJAX)."
+  - q: "addEventListener(\"click\", fn, { once: true }) artinya…"
+    options: ["Event dipicu 1× per detik", "Listener hanya aktif sekali lalu dilepas", "fn dijalankan 100 kali", "Menonaktifkan event"]
+    answer: 1
+    explain: "once: true otomatis removeEventListener setelah dipanggil sekali."
+  - q: "Event delegation berguna untuk…"
+    options: ["Menangani event elemen anak dengan satu listener di induk", "Mengganti nama event", "Menambah performa rendering", "Membuat animasi"]
+    answer: 0
+    explain: "Satu listener di container + cek e.target — penting untuk daftar dinamis."
+example:
+  code: |
+    <button id="hitung">Klik aku!</button>
+    <p id="info">Klik: 0</p>
+    <script>
+      let n = 0;
+      document.getElementById("hitung").addEventListener("click", () => {
+        n++;
+        document.getElementById("info").textContent = "Klik: " + n;
+      });
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Dasar addEventListener
+
+```js
+const btn = document.querySelector("button");
+
+btn.addEventListener("click", () => {
+  console.log("Diklik!");
+});
+
+// dengan parameter event
+btn.addEventListener("click", (e) => {
+  console.log("Target:", e.target);
+});
+```
+
+Bisa memuat lebih dari satu listener pada elemen yang sama. Alternatif gaya lama `btn.onclick = fn` masih berjalan, tapi menimpa listener sebelumnya — karena itu `addEventListener` menang.
+
+```js
+// klik dua kali dalam 300ms → abaikan (debounce sederhana)
+let klikTerakhir = 0;
+btn.addEventListener("click", () => {
+  const now = Date.now();
+  if (now - klikTerakhir < 300) return;
+  klikTerakhir = now;
+  console.log("Klik valid");
+});
+```
+
+## Opsi & Melepas Listener
+
+```js
+// opsi ke-3 addEventListener
+btn.addEventListener("click", fn, { once: true });   // sekali lalu lepas sendiri
+btn.addEventListener("wheel", fn, { passive: true }); // tak memanggil preventDefault → scroll lebih mulus
+list.addEventListener("click", fn, { capture: true }); // fase turun (capture) lebih dulu
+
+btn.removeEventListener("click", fn); // wajib referensi fungsi yang sama
+```
+
+PENTING: `removeEventListener` butuh **referensi fungsi yang sama** — `(e) => console.log("x")` yang ditulis dua kali adalah dua fungsi berbeda.
+
+## 4 Fase Event
+
+| Fase | Alur | Kegunaan |
+|------|------|----------|
+| Capturing | `window` → turun ke target | Intercept lebih awal (jarang) |
+| Target | Elemen pemicu | Penanganan normal di sini |
+| Bubbling | Target → naik ke `window` | Dasar event delegation |
+| Default | Aksi bawaan browser | Dibatasi dengan `preventDefault()` |
+
+## Event Umum
+
+| Event | Kapan terjadi |
+|-------|---------------|
+| `click` | Klik mouse / tap |
+| `keydown` / `keyup` | Tekan tombol keyboard |
+| `input` | Nilai input berubah |
+| `submit` | Form dikirim |
+| `mouseenter` / `mouseleave` | Kursor masuk/keluar |
+| `scroll` | Halaman/element di-scroll |
+| `DOMContentLoaded` | HTML selesai di-parse |
+
+## Event Object
+
+```js
+input.addEventListener("input", (e) => {
+  console.log(e.target.value);  // nilai saat ini
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") tutupModal();
+});
+```
+
+Properti penting `event`: `target` (elemen pemicu), `currentTarget` (elemen tempat listener dipasang), `key`/`code` (keyboard), `clientX`/`clientY` (mouse), `preventDefault()` (batal aksi bawaan), `stopPropagation()` (hentikan bubbling).
+
+## Event Sering Dipakai Bersama Form
+
+| Skenario | Event | Catatan |
+|----------|-------|---------|
+| Deteksi ketikan | `input` | Berubah tiap karakter |
+| Submit Enter | `keydown` + `e.key === "Enter"` | Bukan menunggu klik tombol |
+| Kirim form | `submit` + `preventDefault` | Wajib, kalau tidak reload |
+| Validasi blur | `focusout` | Cek saat user meninggalkan field |
+| Pilih opsi | `change` | Berubah setelah selesai memilih |
+
+## Form Tanpa Reload
+
+```js
+form.addEventListener("submit", (e) => {
+  e.preventDefault(); // cegah reload
+  const data = new FormData(form);
+  console.log(Object.fromEntries(data));
+});
+```
+
+## Membatasi Perilaku Bawaan Browser
+
+```js
+link.addEventListener("click", (e) => {
+  e.preventDefault();     // batal navigasi
+  e.stopPropagation();    // berhenti menyebar ke induk
+});
+document.addEventListener("contextmenu", (e) => e.preventDefault()); // blokir klik kanan
+window.addEventListener("scroll", () => { /* catat posisi */ }, { passive: true });
+```
+
+`preventDefault` membatalkan aksi bawaan (navigasi link, submit form, scroll momentum); `stopPropagation` menghentikan event menyebar — dua hal berbeda yang sering tertukar.
+
+## Delegation (Satu Listener untuk Banyak Anak)
+
+```js
+list.addEventListener("click", (e) => {
+  const item = e.target.closest("li");
+  if (item) item.classList.toggle("selesai");
+});
+```
+
+Listener di induk — anak baru yang ditambahkan nanti otomatis ikut terdeteksi.
+
+## Di Dunia Nyata
+
+- **Validasi form realtime**: event `input` mengecek format email tiap ketikan dan menampilkan error merah.
+- **Modal tutup dengan Escape**: listener `keydown` global mengecek `e.key === "Escape"`.
+- **Simpan otomatis (auto-save)**: `debounce` pada event `input` → PATCH ke server tiap 800ms jeda.
+- **Drag & drop pindah kartu**: gabungan `mousedown`, `mousemove`, `mouseup` (atau API Drag and Drop).
+- **Infinite scroll**: `scroll` + `IntersectionObserver` memicu muat halaman berikutnya.
+
+<div class="note">💡 Event berbusa (*bubbling*): klik tombol di dalam kartu juga dianggap klik kartu. Itulah sebabnya delegation bekerja — dan sebabnya listener di induk kadang terpicu dua kali kalau kamu juga pasang di anak.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const box = document.createElement("div");
+box.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap";
+const btn = document.createElement("button");
+btn.textContent = "Tambah Item";
+btn.style.cssText = "padding:8px 16px;border:none;background:#4F46E5;color:white;border-radius:8px;font-weight:700;cursor:pointer";
+const ul = document.createElement("ul");
+box.append(btn, ul);
+document.body.prepend(box);
+let n = 0;
+btn.addEventListener("click", () => {
+  n++;
+  const li = document.createElement("li");
+  li.textContent = "Item " + n;
+  ul.append(li);
+  console.log("Total item:", n);
+});
+ul.addEventListener("click", (e) => {
+  if (e.target.tagName === "LI") {
+    e.target.style.textDecoration = "line-through";
+    console.log("Diselesaikan:", e.target.textContent);
+  }
+});`} />

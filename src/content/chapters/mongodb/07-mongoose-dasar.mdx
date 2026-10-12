@@ -1,0 +1,130 @@
+---
+title: "Mongoose Dasar"
+description: "ODM untuk Node.js — schema, model, validasi, dan CRUD berbasis dokumen JavaScript"
+order: 7
+quiz:
+  - q: "Mongoose adalah…"
+    options: ["Database baru", "ODM (Object Document Mapper) untuk MongoDB di Node.js", "Shell resmi MongoDB", "Bahasa query baru"]
+    answer: 1
+    explain: "Mongoose duduk antara aplikasi Node.js dan MongoDB: mendefinisikan skema, validasi, dan API model."
+  - q: "Schema pada Mongoose berfungsi untuk…"
+    options: ["Mengecek tipe & validasi saat simpan", "Mengganti index", "Menghapus dokumen lama", "Mengubah port database"]
+    answer: 0
+    explain: "Field bertipe String, Number, dll divalidasi sebelum dikirim ke MongoDB — dokumen liar ditolak."
+  - q: "Model dibuat dari schema dengan cara…"
+    options: ["Model.new(Schema)", "mongoose.model(\"Produk\", schema)", "Schema.compile()", "db.model()"]
+    answer: 1
+    explain: "const Produk = mongoose.model(\"Produk\", schema) — koleksi \"produk\" (jamak huruf kecil) dibuat otomatis."
+  - q: "Menyimpan dokumen baru dari model memakai…"
+    options: ["Produk.saveDoc()", "new Produk({...}).save() atau Produk.create({...})", "Produk.insert()", "mongoose.write()"]
+    answer: 1
+    explain: "Keduanya valid; create() merangkum new + save dalam satu langkah dan mendukung banyak dokumen."
+  - q: "Method statis paling umum untuk mencari dokumen adalah…"
+    options: ["Produk.search()", "Produk.find()", "Produk.get()", "Produk.scan()"]
+    answer: 1
+    explain: "find(), findOne(), findById() — mirip query MongoDB asli, tapi hasilnya terisi ke dokumen model."
+example:
+  code: |
+    const produkSchema = new mongoose.Schema({
+      nama: { type: String, required: true },
+      harga: { type: Number, min: 0, required: true },
+      stok: { type: Number, default: 0 }
+    });
+    const Produk = mongoose.model("Produk", produkSchema);
+    await Produk.create({ nama: "Keyboard", harga: 350000 });
+---
+
+MongoDB menerima dokumen apa pun. **Mongoose** menambahkan disiplin di sisi aplikasi Node.js: skema, validasi, tipe, dan relasi — dengan API JavaScript yang nyaman.
+
+## Apa itu Mongoose?
+
+Mongoose adalah ODM (*Object Document Mapper*) yang memetakan objek JavaScript ke dokumen MongoDB. Empat komponen dasarnya:
+
+| Komponen | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Connection | membuka pool koneksi | `mongoose.connect(uri)` | startup aplikasi |
+| Schema | mendefinisikan tipe/aturan | `new Schema({...})` | kontrak data |
+| Model | API collection | `mongoose.model(...)` | query CRUD |
+| Document | instance satu data | `new Produk(...)` | validasi/save instance |
+
+Schema Mongoose hanya menegakkan aturan pada operasi yang melewati Mongoose. Tulis langsung melalui mongosh atau driver asli tidak otomatis divalidasi; gunakan MongoDB schema validation jika aturan harus berlaku untuk semua klien.
+
+## Koneksi dan Skema
+
+```javascript
+const mongoose = require("mongoose");
+
+await mongoose.connect("mongodb://127.0.0.1:27017/toko");
+
+const produkSchema = new mongoose.Schema({
+  nama: { type: String, required: true, trim: true },
+  harga: { type: Number, required: true, min: 0 },
+  stok: { type: Number, default: 0 },
+  tags: [String],
+  dibuatPada: { type: Date, default: Date.now }
+});
+```
+
+Setiap field dideklarasikan dengan tipe dan aturan: `required`, `min/max`, `enum`, `trim`, `default` — pelanggaran akan menghasilkan error validasi, bukan data kotor.
+
+## Model dan CRUD
+
+```javascript
+const Produk = mongoose.model("Produk", produkSchema);
+
+const baru = await Produk.create({ nama: "Mouse", harga: 150000, stok: 25 });
+
+await Produk.findByIdAndUpdate(id, { $inc: { stok: -1 } }, { new: true });
+
+await Produk.deleteOne({ nama: "Mouse" });
+```
+
+Nama model "Produk" otomatis dipetakan ke koleksi `produk`. Method create/find/update/delete tersedia langsung dari model tanpa menulis sintaks MongoDB mentah.
+
+## Query dan Casting
+
+```javascript
+await Produk.find({ harga: { $gt: 100000 } }).sort({ harga: 1 }).limit(10);
+await Produk.findOne({ nama: "Keyboard" });
+await Produk.findById("6512ab34cd77aa0012345678");
+```
+
+Mongoose melakukan **casting** otomatis: string yang cocok dengan skema Number otomatis dikonversi, string yang diharapkan Date diparse — mengurangi bug tipe di aplikasi.
+
+## Validasi Error
+
+```javascript
+try {
+  await Produk.create({ nama: "", harga: -5 });
+} catch (err) {
+  if (err.name === "ValidationError") {
+    console.log(err.errors.nama.message);
+    console.log(err.errors.harga.message);
+  }
+}
+```
+
+Error validasi Mongoose terstruktur per field — tinggal dipetakan ke form pengguna tanpa membocorkan stack trace atau detail koneksi.
+
+## Enam Validator Inti
+
+| Validator/opsi | Fungsi | Contoh |
+| --- | --- | --- |
+| `required` | field wajib ada | nama produk |
+| `min` / `max` | batas angka/tanggal | harga ≥ 0 |
+| `minLength` / `maxLength` | batas panjang teks | nama 2–100 karakter |
+| `enum` | nilai dari daftar | status BARU/LUNAS |
+| `match` | pola regex | format kode |
+| custom `validate` | aturan sendiri | tanggal akhir > awal |
+
+Validator update tidak selalu berjalan secara default; aktifkan `{ runValidators: true }` pada operasi update bila aturan schema harus diterapkan.
+
+## Di Dunia Nyata
+
+- **Form produk** — required, min, dan enum menolak payload invalid sebelum mencapai database.
+- **Endpoint daftar** — query chaining `find().sort().limit()` membentuk filter API yang singkat.
+- **Pembuatan akun** — model `create()` menjalankan casting dan validation sebelum menyimpan dokumen.
+- **Pengurangan stok** — operator `$inc` tetap atomik, dengan filter stok untuk mencegah nilai negatif.
+- **Respons API baca-saja** — `.lean()` mengembalikan objek JavaScript biasa dan mengurangi overhead dokumen Mongoose untuk daftar besar.
+
+<div class="note">💡 Gunakan mode `strict` bawaan agar field di luar schema dibuang. Jika perlu fleksibilitas, letakkan atribut dinamis di satu field `Mixed`/Map yang jelas, bukan mematikan kontrak seluruh dokumen.</div>

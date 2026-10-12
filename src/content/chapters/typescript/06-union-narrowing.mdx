@@ -1,0 +1,183 @@
+---
+title: "Union Type & Narrowing"
+description: "Satu variabel banyak tipe — dan cara menyaringnya dengan aman"
+order: 6
+quiz:
+  - q: "Tipe string | number disebut…"
+    options: ["Union type", "Intersection", "Generic", "Tuple"]
+    answer: 0
+    explain: "Union = nilai boleh satu dari beberapa tipe, dipisah tanda |."
+  - q: "Narrowing adalah…"
+    options: ["Menghapus tipe", "Menyempitkan tipe union menjadi satu tipe yang pasti", "Mengubah JS jadi TS", "Menambah variabel"]
+    answer: 1
+    explain: "Setelah if (typeof x === \"string\"), di blok itu x bertipe string."
+  - q: "Type guard paling umum untuk tipe primitif memakai…"
+    options: ["typeof", "instanceof yang pertama", "Object.keys", "JSON.parse"]
+    answer: 0
+    explain: "typeof mengembalikan \"string\", \"number\", \"boolean\", dst."
+  - q: "Discriminant union membedakan anggota lewat…"
+    options: ["Properti penanda seperti kind atau type", "Nama file", "Jumlah baris", "Komentar"]
+    answer: 0
+    explain: "Properti literal (kind: \"lingkaran\" | \"persegi\") membuat narrowing otomatis dan rapi."
+  - q: "Apa hasil dari: let x: string | number = 5; console.log((x as string).length)?"
+    options: ["5", "undefined", "Error runtime pasti", "0"]
+    answer: 1
+    explain: "Number tidak punya length; assertion menipu kompilator, hasilnya undefined saat runtime."
+example:
+  code: |
+    function panjang(data: string | string[]): number {
+      if (typeof data === "string") return data.length;
+      return data.length;
+    }
+    console.log(panjang("Halo"));
+    console.log(panjang(["a", "b"]));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data di dunia nyata tidak selalu satu tipe. Union type menerimanya; **narrowing** memastikan kamu hanya memakainya setelah tipe pasti diketahui.
+
+## 6 Type Guard untuk Narrowing
+
+| Guard | Untuk | Contoh |
+|-------|-------|--------|
+| `typeof` | Primitif | `typeof x === "string"` |
+| `instanceof` | Class instance | `e instanceof Error` |
+| `in` | Keberadaan properti | `"nama" in obj` |
+| `Array.isArray()` | Array | `Array.isArray(v)` |
+| Discriminant literal | Union object | `b.kind === "lingkaran"` |
+| Truthiness | `null`/`undefined` | `if (x)` |
+
+Tanpa guard, `tsc` menolak akses: `(x as string).length` bisa lolos kompilasi tapi `undefined` saat runtime.
+
+## Dasar Union
+
+```typescript
+let id: string | number = "ABC-1";
+id = 1024;             // ✔
+id = true;             // ✖ boolean tidak ada di union
+
+console.log(id);
+```
+
+Fungsi juga bisa menerima union:
+
+```typescript
+function formatId(id: string | number): string {
+  return "ID: " + id;
+}
+```
+
+## Narrowing dengan typeof
+
+```typescript
+function panjang(data: string | string[]): number {
+  if (typeof data === "string") {
+    return data.trim().length; // data: string di sini
+  }
+  return data.length;          // data: string[] di sini
+}
+
+console.log(panjang(" Halo "));
+console.log(panjang(["a", "b", "c"]));
+```
+
+## Narrowing dengan in dan instanceof
+
+```typescript
+interface Keyboard { jenis: "keyboard"; tombol: number }
+interface Mouse { jenis: "mouse"; tombol: number }
+
+type Perangkat = Keyboard | Mouse;
+
+function namaPerangkat(p: Perangkat): string {
+  return p.jenis === "keyboard" ? "Keyboard" : "Mouse";
+}
+
+console.log(namaPerangkat({ jenis: "keyboard", tombol: 104 }));
+
+function panjangNilai(v: string | number[]): number {
+  if (Array.isArray(v)) return v.length;
+  return v.length;
+}
+```
+
+## Discriminant Union
+
+```typescript
+type Bentuk =
+  | { kind: "lingkaran"; r: number }
+  | { kind: "persegi"; sisi: number };
+
+function luas(b: Bentuk): number {
+  if (b.kind === "lingkaran") return Math.PI * b.r * b.r;
+  return b.sisi * b.sisi;
+}
+
+console.log(luas({ kind: "persegi", sisi: 4 })); // 16
+```
+
+Properti `kind` sebagai penanda membuat cabang if otomatis menyempitkan tipe.
+
+## Percabangan + Narrowing
+
+TypeScript mendukung semua bentuk percabangan JavaScript — `if`, `else if`, `switch/case`, dan ternary — dan **tiap cabang mempersempit tipe secara terpisah**:
+
+```typescript
+function keterangan(v: string | number | boolean): string {
+  if (typeof v === "string") return v.toUpperCase(); // v: string
+  else if (typeof v === "number") return v.toFixed(2); // v: number
+  return v ? "ya" : "tidak";                          // v: boolean
+}
+
+function statusHTTP(code: 200 | 404 | 500): string {
+  switch (code) {
+    case 200: return "OK";       // code: 200
+    case 404: return "Tidak ada";
+    case 500: return "Server error";
+  }
+}
+
+const label = nilaiPanjang > 0 ? "ada isi" : "kosong";
+```
+
+Pola baca: urutkan kondisi dari yang **paling spesifik** ke yang paling umum, dan tutup setiap cabang dengan `return`/`else` supaya tidak ada celah tipe yang belum tersempitkan.
+
+## Di Dunia Nyata
+
+- **Respons API** `User | ApiError` dipisah dengan `in`: `"message" in res` berarti error.
+- **Upload file** `string | File` diverifikasi `typeof` sebelum dikirim ke server.
+- **Widget dinamis** memakai discriminant union `{ kind: "chart" } | { kind: "table" }` untuk merender komponen berbeda.
+- **Input form** bertipe `string | number` dari HTML — `Number()` hanya dipanggil setelah guard.
+- **Catch error** `unknown` wajib `e instanceof Error` sebelum membaca `e.message`.
+
+<div class="note">💡 Jangan memaksa tipe dengan `as` hanya untuk membungkus error kompilasi. `as` menyembunyikan masalah; narrowing menghadapinya dan mencegah bug saat runtime.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Bentuk =
+  | { kind: "lingkaran"; r: number }
+  | { kind: "persegi"; sisi: number };
+
+function luas(b: Bentuk): number {
+  if (b.kind === "lingkaran") return Math.PI * b.r * b.r;
+  return b.sisi * b.sisi;
+}
+
+const daftar: Bentuk[] = [
+  { kind: "lingkaran", r: 5 },
+  { kind: "persegi", sisi: 4 },
+  { kind: "persegi", sisi: 2.5 },
+];
+
+let total = 0;
+for (const b of daftar) {
+  const l = luas(b);
+  total += l;
+  console.log(b.kind, "luas =", l.toFixed(2));
+}
+console.log("Total luas:", total.toFixed(2));
+
+function panjang(data: string | string[]): number {
+  if (typeof data === "string") return data.length;
+  return data.length;
+}
+console.log(panjang("Halo TS"), panjang(["a", "b", "c"]));`} />

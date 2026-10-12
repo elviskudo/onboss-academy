@@ -1,0 +1,167 @@
+---
+title: "Emit & Slot"
+description: "Anak memberi tahu induk lewat event, induk menaruh konten fleksibel lewat slot"
+order: 6
+quiz:
+  - q: "$emit(\"simpan\") pada komponen anak…"
+    options: ["Menyimpan ke database", "Memicu event simpan yang bisa ditangkap induk", "Menghapus komponen", "Merender ulang template"]
+    answer: 1
+    explain: "Anak tidak boleh mengubah props; ia memberi sinyal lewat emit, induk yang bertindak."
+  - q: "Induk menangkap event anak dengan…"
+    options: ["@simpan=\"handler\" pada tag komponen", "v-model", "v-if", ":key"]
+    answer: 0
+    explain: "<Anak @simpan=\"onSimpan\" /> — fungsi onSimpan dipanggil saat anak emit."
+  - q: "defineEmits dipakai untuk…"
+    options: ["Mengimpor komponen", "Mendeklarasikan daftar event yang boleh di-emit", "Mendefinisikan props", "Membuat reactive state"]
+    answer: 1
+    explain: "Mirip defineProps: mendeklarasikan kontrak event antara anak dan induk."
+  - q: "Slot memungkinkan…"
+    options: ["Induk menaruh konten (children) ke dalam komponen anak", "Anak mengubah database", "Menghapus styling", "Mengirim HTTP"]
+    answer: 0
+    explain: "<slot /> di template anak menjadi tempat konten dari induk dirender."
+  - q: "Named slot ditandai dengan…"
+    options: ["v-slot:nama (atau #nama)", "v-if", "v-for", ":nama saja"]
+    answer: 0
+    explain: "Contoh: <template #header> di induk masuk ke <slot name=\"header\" /> di anak."
+example:
+  code: |
+    const listeners = [];
+    function on(ev, fn) { listeners.push({ ev, fn }); }
+    function emit(ev, payload) {
+      listeners.filter((l) => l.ev === ev).forEach((l) => l.fn(payload));
+    }
+    on("simpan", (d) => console.log("diterima:", d));
+    emit("simpan", { judul: "Tugas" });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Komponen anak sebaiknya **murni dan fokus**: menerima props, menampilkan, lalu memberi tahu induk lewat event. Konten fleksibel disalurkan lewat slot.
+
+## 4 Jalur Komunikasi Komponen
+
+| Jalur | Arah | Bentuk | Kapan dipakai |
+|-------|------|--------|---------------|
+| Props | Induk → anak | data read-only | Judul, produk, konfigurasi |
+| Emit | Anak → induk | event + payload | Klik hapus, submit, pilih |
+| Default slot | Induk → isi anak | fragmen template | Isi panel/modal |
+| Named slot | Induk → area tertentu | `#header`, `#footer` | Layout kartu fleksibel |
+
+State tetap dimiliki komponen yang membutuhkan keputusan. Anak tidak mengubah props; ia menjalankan function `emit`, lalu induk mengubah state reaktifnya.
+
+## $emit dari Anak
+
+```html
+<!-- TombolBeli.vue -->
+<template>
+  <button @click="klik">Beli sekarang</button>
+</template>
+
+<script setup>
+const emit = defineEmits(["klik"]);
+
+function klik() {
+  emit("klik", { produkId: 1 });
+}
+</script>
+```
+
+## Menangkap di Induk
+
+```html
+<template>
+  <TombolBeli @klik="tambahKeKeranjang" />
+</template>
+
+<script setup>
+import TombolBeli from "./TombolBeli.vue";
+
+function tambahKeKeranjang(payload) {
+  console.log("Ditambahkan:", payload.produkId);
+}
+</script>
+```
+
+Pola ini disebut **lifting state up**: anak melaporkan, induk memutuskan.
+
+## Slot (Konten Transclusion)
+
+```html
+<!-- KartuLayout.vue -->
+<template>
+  <div class="kartu">
+    <header><slot name="header" /></header>
+    <main><slot /></main>
+    <footer><slot name="footer" /></footer>
+  </div>
+</template>
+```
+
+```html
+<!-- Induk -->
+<KartuLayout>
+  <template #header>
+    <h2>Judul Kartu</h2>
+  </template>
+
+  default slot → konten di sini
+
+  <template #footer>
+    <small>© 2026</small>
+  </template>
+</KartuLayout>
+```
+
+## Pola JavaScript-nya
+
+```javascript
+// Sistem event sederhana ala $emit
+function buatEmittable() {
+  const listeners = {};
+  return {
+    on(ev, fn) { (listeners[ev] ||= []).push(fn); },
+    emit(ev, payload) { (listeners[ev] || []).forEach((fn) => fn(payload)); },
+  };
+}
+
+const bus = buatEmittable();
+bus.on("simpan", (d) => console.log("diterima:", d.judul));
+bus.emit("simpan", { judul: "Tugas Vue" });
+```
+
+Pada list, payload ID membuat induk tahu item mana yang berubah: `<TugasItem @hapus="hapus" />`, lalu anak `emit("hapus", props.tugas.id)`. Induk dapat memakai `filter` untuk membuat array baru tanpa item tersebut.
+
+## Di Dunia Nyata
+
+- **Item keranjang**: anak emit `ubah-jumlah` dengan `{ id, qty }`; induk menghitung ulang total.
+- **Modal konfirmasi**: modal emit `konfirmasi` atau `batal`; slot mengisi pesan dan detail bebas.
+- **Tabel reusable**: named slot menyediakan header dan format sel khusus tanpa tabel mengetahui domain data.
+- **Upload file**: komponen anak emit `terpilih` dengan metadata file, induk memutuskan kapan upload.
+- **Todo item**: checkbox emit `toggle(id)` dan tombol emit `hapus(id)` ke pemilik array.
+
+<div class="note">💡 `$emit` membuat komponen **reusable**: TombolBeli tidak tahu apa yang terjadi setelah diklik — tambah keranjang, checkout, atau analitik, semuanya ditentukan induk. Inilah alasan Vue disebut progresif: pola kecil yang tetap masuk akal saat aplikasi membesar.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Meniru pola $emit dengan event emitter mini
+function buatEmittable(nama) {
+  const listeners = {};
+  return {
+    on(ev, fn) {
+      (listeners[ev] = listeners[ev] || []).push(fn);
+    },
+    emit(ev, payload) {
+      (listeners[ev] || []).forEach((fn) => fn(payload));
+      console.log(nama + " emit " + ev, JSON.stringify(payload));
+    },
+  };
+}
+
+const tombol = buatEmittable("TombolBeli");
+const induk = buatEmittable("App");
+
+tombol.on("klik", (p) => induk.emit("tambah-keranjang", p));
+induk.on("tambah-keranjang", (p) => {
+  console.log("Keranjang +1 untuk produk", p.produkId);
+});
+
+tombol.emit("klik", { produkId: 7 });
+tombol.emit("klik", { produkId: 9 });`} />

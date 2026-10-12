@@ -1,0 +1,120 @@
+---
+title: "ENGINE di MySQL"
+description: "InnoDB dan storage engine yang menentukan transaksi, locking, dan penyimpanan"
+order: 4
+quiz:
+  - q: "Storage engine menentukan…"
+    options: ["Warna client", "Cara data disimpan, dikunci, dan dipulihkan", "Sintaks SELECT", "Password user"]
+    answer: 1
+    explain: "Lapisan engine menangani penyimpanan fisik, locking, transaksi, dan pemulihan."
+  - q: "Engine default MySQL modern adalah…"
+    options: ["MyISAM", "InnoDB", "MEMORY", "CSV"]
+    answer: 1
+    explain: "InnoDB default sejak MySQL 5.5 karena transaksi dan foreign key."
+  - q: "Keunggulan InnoDB dibanding MyISAM adalah…"
+    options: ["Tanpa disk", "Transaksi ACID dan row-level locking", "Tidak butuh index", "Selalu lebih kecil"]
+    answer: 1
+    explain: "InnoDB mendukung COMMIT/ROLLBACK dan mengunci baris yang relevan."
+  - q: "Berapa engine bawaan yang dibandingkan di chapter ini?"
+    options: ["3", "4", "5", "6"]
+    answer: 2
+    explain: "5 engine: InnoDB, MyISAM, MEMORY, CSV, dan ARCHIVE."
+  - q: "Perintah melihat engine tabel adalah…"
+    options: ["SHOW TABLE STATUS", "SELECT ENGINE()", "EXPLAIN TABLE", "SHOW USERS"]
+    answer: 0
+    explain: "SHOW TABLE STATUS atau SHOW CREATE TABLE menampilkan engine tabel."
+example:
+  code: |
+    CREATE TABLE pesanan (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      total DECIMAL(15,2) NOT NULL
+    ) ENGINE=InnoDB;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Storage engine adalah lapisan MySQL yang menangani penyimpanan fisik, index, locking, transaksi, dan pemulihan. Query SQL tetap sama, tetapi jaminan datanya dapat berbeda menurut engine tabel.
+
+## 5 Storage Engine yang Perlu Dikenal
+
+| Engine | Transaksi | Foreign Key | Penyimpanan | Kapan Dipakai |
+|--------|-----------|-------------|--------------|---------------|
+| InnoDB | Ya | Ya | disk + buffer pool | hampir semua tabel produksi |
+| MyISAM | Tidak | Tidak | disk | sistem legacy/read-only |
+| MEMORY | Tidak | Tidak | RAM | tabel sementara kecil |
+| CSV | Tidak | Tidak | file CSV | pertukaran sederhana |
+| ARCHIVE | Tidak | Tidak | disk terkompresi | arsip append-only |
+
+MySQL punya engine lain, tetapi 5 ini menjelaskan pilihan utama. Praktik modern: gunakan InnoDB kecuali ada alasan terukur untuk memilih selainnya.
+
+## Mengapa InnoDB Menjadi Default
+
+```sql
+CREATE TABLE pembayaran (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  jumlah DECIMAL(15,2) NOT NULL,
+  dibuat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+```
+
+InnoDB menyediakan 4 kemampuan inti:
+
+1. transaksi ACID (`COMMIT`/`ROLLBACK`);
+2. row-level locking untuk penulisan bersamaan;
+3. foreign key untuk integritas relasi;
+4. crash recovery melalui redo log.
+
+Dalam transfer saldo, dua UPDATE berada dalam satu transaksi. Bila proses mati setelah debit tetapi sebelum kredit, recovery/rollback mencegah saldo setengah berubah.
+
+## Locking dan Concurrency
+
+InnoDB menggunakan MVCC (*multi-version concurrency control*): pembaca umumnya tidak memblokir penulis, dan penulis mengunci baris relevan. MyISAM memakai table-level locking; satu penulisan dapat menahan semua penulisan lain pada tabel itu.
+
+```sql
+START TRANSACTION;
+SELECT total FROM pesanan WHERE id = 42 FOR UPDATE;
+UPDATE pesanan SET total = total + 50000 WHERE id = 42;
+COMMIT;
+```
+
+`FOR UPDATE` mengunci baris pesanan 42 sampai transaksi selesai. Gunakan transaksi sesingkat mungkin supaya antrean lock tidak tumbuh.
+
+## MyISAM dan Engine Khusus
+
+MyISAM dulu populer untuk baca cepat, tetapi tidak punya transaksi, foreign key, atau crash recovery InnoDB. MEMORY hilang saat server restart; CSV tidak mendukung index; ARCHIVE mengutamakan kompresi dan INSERT, bukan query interaktif.
+
+Engine khusus bukan optimasi gratis. Pilih hanya setelah kebutuhan cocok dengan batasannya dan benchmark membuktikannya.
+
+## Melihat dan Mengubah Engine
+
+```sql
+SHOW TABLE STATUS;
+SHOW CREATE TABLE karyawan;
+ALTER TABLE tabel_lama ENGINE=InnoDB;
+```
+
+`SHOW TABLE STATUS` menampilkan engine, jumlah perkiraan baris, dan ukuran. Konversi tabel besar dapat membutuhkan ruang sementara, memakan I/O, dan menahan operasi; backup, uji di salinan, dan rencanakan maintenance window.
+
+## ACID dalam 4 Sifat
+
+| Sifat | Arti | Contoh |
+|-------|------|--------|
+| Atomicity | semua berhasil atau batal | debit + kredit |
+| Consistency | constraint selalu valid | foreign key tidak yatim |
+| Isolation | transaksi paralel tidak saling merusak | dua checkout stok sama |
+| Durability | hasil commit bertahan setelah crash | pesanan tidak hilang |
+
+## Di Dunia Nyata
+
+- **Pembayaran**: InnoDB memastikan pesanan dan mutasi saldo commit bersama.
+- **Checkout serentak**: row lock mencegah stok terakhir terjual ke dua pembeli.
+- **Migrasi aplikasi lama**: audit tabel MyISAM sebelum menambah foreign key.
+- **Import sementara**: MEMORY hanya cocok bila data boleh hilang saat restart dan ukurannya dibatasi.
+
+<div class="note">💡 Demo editor memakai SQLite, jadi klausa ENGINE tidak dapat dijalankan di sini. Pada MySQL produksi, pilih InnoDB; engine lain adalah pengecualian yang harus punya alasan terukur.</div>
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT k.nama AS ketua, p.nama AS proyek, p.budget
+FROM proyek p
+JOIN karyawan k ON p.lead_id = k.id
+ORDER BY p.budget DESC
+LIMIT 3;`} />

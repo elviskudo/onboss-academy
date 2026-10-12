@@ -1,0 +1,136 @@
+---
+title: "Sensor Suhu dan Pembacaan Data"
+description: "Memilih sensor suhu, membaca DS18B20 1-Wire, memvalidasi data, dan mencatat CSV"
+order: 5
+quiz:
+  - q: "Mengapa DS18B20 dapat dibaca tanpa ADC eksternal?"
+    options: ["Sensor mengirim data digital melalui 1-Wire", "Sensor menghasilkan HDMI", "Pi memiliki input analog", "Sensor hanya memiliki GND"]
+    answer: 0
+    explain: "DS18B20 melakukan konversi suhu sendiri lalu mengirim hasil digital."
+  - q: "Apa fungsi resistor pull-up 4,7 kΩ pada bus DS18B20?"
+    options: ["Memanaskan sensor", "Menjaga jalur data pada level default HIGH", "Mengubah data menjadi CSV", "Menaikkan GPIO ke 5V"]
+    answer: 1
+    explain: "Bus 1-Wire memerlukan pull-up agar jalur kembali HIGH saat tidak ditarik LOW."
+  - q: "Mengapa status CRC harus diperiksa sebelum memakai nilai suhu?"
+    options: ["Untuk mengubah satuan", "Untuk mempercepat CPU", "Untuk menolak pembacaan yang gagal", "Untuk mengaktifkan SSH"]
+    answer: 2
+    explain: "Penanda CRC valid membantu mencegah data rusak dianggap sebagai suhu nyata."
+  - q: "Sensor analog seperti LM35 memerlukan komponen apa pada Pi?"
+    options: ["LED", "Adaptor HDMI", "Buzzer", "ADC eksternal"]
+    answer: 3
+    explain: "Raspberry Pi tidak menyediakan input analog bawaan sehingga sinyal harus dikonversi ADC."
+  - q: "Mengapa timestamp disimpan bersama suhu?"
+    options: ["Agar tren dan waktu kejadian dapat dianalisis", "Agar sensor mendapat daya", "Agar GPIO tahan 5V", "Agar file selalu kecil"]
+    answer: 0
+    explain: "Nilai tanpa waktu tidak dapat ditempatkan dengan benar dalam riwayat perubahan."
+example:
+  code: |
+    from pathlib import Path
+
+    path = next(Path("/sys/bus/w1/devices").glob("28-*/w1_slave"))
+    lines = path.read_text().splitlines()
+    if lines[0].endswith("YES"):
+        suhu = int(lines[1].split("t=")[1]) / 1000
+        print(f"Suhu: {suhu:.2f} °C")
+---
+
+Sensor suhu mengubah kondisi termal menjadi data yang dapat diproses. Raspberry Pi kemudian dapat menampilkan nilai, membandingkannya dengan ambang, menyimpan riwayat, atau memicu alarm.
+
+## Jenis Sensor Suhu
+
+Untuk proyek Pi pemula ada **4 pilihan umum**, masing-masing dengan antarmuka berbeda.
+
+| Sensor | Antarmuka | Fungsi/karakter | Kapan dipakai |
+|---|---|---|---|
+| DS18B20 | Digital 1-Wire | Suhu, beberapa sensor satu bus | Probe ruangan atau cairan |
+| DHT22 | Digital khusus | Suhu dan kelembapan | Monitor kenyamanan ruangan |
+| BME280 | I2C/SPI | Suhu, kelembapan, tekanan | Stasiun cuaca dalam ruang |
+| LM35 | Analog | Tegangan sebanding suhu | Belajar ADC eksternal |
+
+Raspberry Pi tidak memiliki ADC bawaan. Karena itu LM35 memerlukan ADC seperti MCP3008. DS18B20 cocok untuk bab ini karena konversi analog dilakukan di sensor dan hasil tersedia melalui driver 1-Wire Linux.
+
+DS18B20 memiliki identitas unik 64-bit, sehingga beberapa probe dapat berbagi satu jalur data. Probe tahan air hanya melindungi bagian logam; sambungan kabel dan papan Pi tetap harus dijaga dari air.
+
+## Komponen dan Rangkaian 1-Wire
+
+Ada **4 koneksi penting**: VDD sensor ke 3,3V, GND ke GND, data ke BCM4, dan resistor pull-up 4,7 kΩ antara data dan 3,3V.
+
+```text
+3,3V ───────── VDD DS18B20
+  │
+  └── 4,7 kΩ ── DATA ── BCM4 (fisik 7)
+GND ────────── GND DS18B20
+```
+
+Warna kabel probe tidak selalu standar; baca datasheet penjual sebelum memberi daya. Salah menukar VDD dan GND dapat merusak sensor. Gunakan 3,3V pada rangkaian ini agar jalur data tidak ditarik ke 5V, karena GPIO Pi hanya aman pada logika **3,3V**. Matikan Pi sebelum memasang atau memindahkan kabel.
+
+Resistor pull-up menjaga bus HIGH ketika tidak ada perangkat yang menariknya LOW. Mode parasite power memang didukung sensor, tetapi suplai tiga kabel lebih mudah dan andal untuk pemula.
+
+## Mengaktifkan dan Menemukan Sensor
+
+Aktifkan antarmuka 1-Wire melalui `sudo raspi-config`, lalu reboot. Pada sistem tertentu overlay yang setara adalah `dtoverlay=w1-gpio` di konfigurasi boot. Setelah boot, driver Linux mengekspos sensor sebagai berkas:
+
+```bash
+ls /sys/bus/w1/devices/
+cat /sys/bus/w1/devices/28-*/w1_slave
+```
+
+Awalan `28-` adalah family code DS18B20. Isi berkas biasanya memiliki **2 baris**: baris pertama berakhir `YES` jika CRC valid, dan baris kedua memuat `t=` dalam seperseribu derajat Celsius.
+
+## Membaca dan Memvalidasi Data
+
+Contoh berikut memakai standard library Python dan memerlukan sensor fisik serta 1-Wire aktif:
+
+```python
+from pathlib import Path
+
+sensors = list(Path("/sys/bus/w1/devices").glob("28-*/w1_slave"))
+if not sensors:
+    raise RuntimeError("DS18B20 tidak ditemukan")
+
+lines = sensors[0].read_text().splitlines()
+if not lines[0].endswith("YES"):
+    raise RuntimeError("CRC pembacaan gagal")
+
+celsius = int(lines[1].split("t=")[1]) / 1000
+if not -55 <= celsius <= 125:
+    raise ValueError("Nilai di luar rentang DS18B20")
+
+print(f"Suhu: {celsius:.2f} °C")
+```
+
+Ada **3 validasi dasar**: sensor ditemukan, CRC valid, dan nilai berada dalam rentang perangkat. Untuk monitor ruangan, tambahkan rentang operasional yang lebih sempit, misalnya -10 sampai 60°C, agar kabel lepas atau nilai awal yang mencurigakan tidak langsung memicu keputusan.
+
+## Sampling dan Logging CSV
+
+Interval sampling harus mengikuti kebutuhan, bukan secepat mungkin. Suhu ruangan berubah lambat; interval 30–60 detik biasanya cukup. Sampling terlalu rapat menambah penulisan microSD tanpa memberi informasi berarti.
+
+```python
+import csv
+from datetime import datetime, timezone
+
+suhu = 27.4
+with open("suhu.csv", "a", newline="") as file:
+    writer = csv.writer(file)
+    writer.writerow([datetime.now(timezone.utc).isoformat(), f"{suhu:.2f}"])
+```
+
+Simpan **2 kolom minimum**: timestamp dan nilai. UTC memudahkan penggabungan data lintas zona waktu. Untuk proses terus-menerus, tangani kegagalan baca dan tulis secara terpisah: satu pembacaan gagal sebaiknya dicatat sebagai error, bukan menggunakan nilai lama seolah-olah baru.
+
+Perhatikan umur microSD. Jangan menulis setiap milidetik; gunakan interval, buffer, rotasi log, atau storage yang lebih tahan jika volume tinggi. Pantau ruang dengan `df -h`.
+
+## Interpretasi Pembacaan
+
+Suhu sensor bukan selalu suhu udara. Panas SoC, sinar matahari, casing tertutup, aliran udara, dan kontak dengan permukaan dapat menimbulkan bias. Letakkan probe menjauh dari Pi dan sumber panas. Bandingkan dengan termometer referensi pada beberapa titik sebelum memakai ambang penting.
+
+Ada **3 kualitas data** yang harus dipantau: validitas, ketepatan waktu, dan kewajaran. Nilai valid tetapi berumur satu jam tidak cocok untuk alarm langsung. Nilai baru tetapi melonjak 20°C dalam satu detik kemungkinan masalah pemasangan.
+
+## Di Dunia Nyata
+
+- **Lemari jaringan:** tren suhu memperingatkan kipas mati sebelum perangkat overheat.
+- **Akuarium:** probe kedap air memantau perubahan lambat, dengan sambungan listrik tetap kering.
+- **Cold storage:** timestamp menunjukkan kapan suhu keluar dari batas dan berapa lama.
+- **Rumah kaca:** suhu menjadi input untuk kipas, dengan driver terpisah untuk bebannya.
+- **Ruang kelas:** data harian dibandingkan dengan waktu penggunaan AC dan jumlah penghuni.
+
+<div class="note">💡 Pembacaan yang memiliki CRC benar belum tentu mewakili ruangan; posisi sensor dan panas dari Raspberry Pi sering lebih berpengaruh daripada ketelitian angka desimal.</div>

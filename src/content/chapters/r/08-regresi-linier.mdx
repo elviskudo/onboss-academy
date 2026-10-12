@@ -1,0 +1,157 @@
+---
+title: "Regresi Linier & Korelasi"
+description: "Mengukur hubungan dengan 3 korelasi dan memodelkan garis melalui lm, diagnostik, prediksi, dan interval"
+order: 8
+quiz:
+  - q: "Korelasi Pearson berada pada rentang…"
+    options: ["0 sampai 1", "-1 sampai 1", "-100 sampai 100", "0 sampai tak hingga"]
+    answer: 1
+    explain: "Nilai -1 adalah linear negatif sempurna, 0 tanpa hubungan linear, dan +1 positif sempurna."
+  - q: "Nilai R-squared (R²) model menunjukkan…"
+    options: ["Kemungkinan model benar", "Proporsi variasi y yang dijelaskan prediktor", "Jumlah baris data", "Besar slope"]
+    answer: 1
+    explain: "R² = 0.75 berarti model menjelaskan 75% variasi y pada data sampel."
+  - q: "Fungsi fitting model linier base R adalah…"
+    options: ["linreg()", "fit()", "lm()", "regress()"]
+    answer: 2
+    explain: "lm(y ~ x, data = df) menghasilkan objek model yang bisa diringkas dan diprediksi."
+  - q: "Interval yang memperkirakan satu observasi baru adalah…"
+    options: ["interval = \"mean\"", "interval = \"confidence\"", "interval = \"prediction\"", "interval = \"residual\""]
+    answer: 2
+    explain: "Prediction interval lebih lebar karena mencakup ketidakpastian garis dan variasi individu."
+  - q: "Korelasi tinggi membuktikan bahwa x menyebabkan y?"
+    options: ["Tidak; confounder, arah terbalik, atau kebetulan tetap mungkin", "Ya, jika di atas 0.8", "Ya, bila p-value kecil", "Ya, untuk Pearson saja"]
+    answer: 0
+    explain: "Korelasi dan regresi observasional mengukur asosiasi, bukan mekanisme sebab-akibat."
+example:
+  code: |
+    berat <- c(50, 55, 60, 65, 70, 75)
+    tinggi <- c(155, 160, 165, 168, 172, 175)
+    cor(berat, tinggi)
+    model <- lm(tinggi ~ berat)
+    summary(model)
+    predict(model, newdata = data.frame(berat = 62))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Korelasi mengukur arah dan kekuatan asosiasi dua variabel; regresi linier menyatakan hubungan itu sebagai persamaan untuk penjelasan dan prediksi. Keduanya membutuhkan inspeksi grafik dan asumsi, bukan hanya satu angka output.
+
+## Tiga Jenis Korelasi
+
+Base R menyediakan **3 metode** melalui `cor()`:
+
+| Metode | Mengukur | Kapan dipakai |
+| --- | --- | --- |
+| Pearson | hubungan linear | dua variabel numerik, pola mendekati garis |
+| Spearman | hubungan monoton berbasis peringkat | data ordinal atau outlier |
+| Kendall | keselarasan pasangan peringkat | sampel kecil/ordinal, banyak ties |
+
+```r
+berat <- c(50, 55, 60, 65, 70, 75)
+tinggi <- c(155, 160, 165, 168, 172, 175)
+cor(berat, tinggi, method = "pearson")
+cor(berat, tinggi, method = "spearman")
+cor.test(berat, tinggi)
+```
+
+Koefisien berada pada -1 sampai 1. Nilai dekat 0 berarti hubungan **linear** lemah; pola U yang kuat pun bisa punya Pearson mendekati 0. Karena itu selalu lihat scatter plot.
+
+## Model Linier dengan lm()
+
+Model sederhana mengikuti persamaan `y = β0 + β1x + ε`:
+
+| Komponen | Arti |
+| --- | --- |
+| `β0` intercept | prediksi y saat x = 0 |
+| `β1` slope | perubahan rata-rata y untuk kenaikan 1 unit x |
+| `ε` residual | selisih observasi dari garis |
+
+```r
+data <- data.frame(berat, tinggi)
+model <- lm(tinggi ~ berat, data = data)
+coef(model)
+fitted(model)
+residuals(model)
+```
+
+Formula dibaca "tinggi dijelaskan oleh berat". Slope positif berarti prediksi tinggi naik ketika berat naik; makna intercept hanya masuk akal jika x = 0 relevan dalam domain.
+
+## Membaca summary()
+
+```r
+ringkasan <- summary(model)
+ringkasan$coefficients
+ringkasan$r.squared
+```
+
+Empat angka penting:
+
+| Output | Interpretasi |
+| --- | --- |
+| Estimate | perkiraan intercept dan slope |
+| Std. Error | ketidakpastian koefisien |
+| Pr(>\|t\|) | p-value uji koefisien = 0 |
+| R-squared | proporsi variasi y yang dijelaskan model |
+
+P-value kecil bukan ukuran efek dan bukan bukti sebab-akibat. Pada sampel besar, efek sangat kecil pun bisa signifikan; selalu laporkan estimate dan interval.
+
+## Prediksi dan Dua Interval
+
+```r
+baru <- data.frame(berat = c(58, 62, 72))
+predict(model, newdata = baru)
+predict(model, newdata = baru, interval = "confidence")
+predict(model, newdata = baru, interval = "prediction")
+```
+
+Ada **2 interval**: confidence interval mengestimasi rata-rata respons, sedangkan prediction interval mengestimasi satu observasi baru dan selalu lebih lebar karena memuat variasi individu.
+
+Jangan prediksi jauh di luar rentang 50–75 kg; extrapolation mengasumsikan garis tetap berlaku di wilayah yang belum pernah diamati.
+
+## Empat Asumsi Utama
+
+Regresi linier mengandalkan **4 asumsi**:
+
+| Asumsi | Cara periksa awal |
+| --- | --- |
+| Linearitas | scatter dan residual vs fitted tanpa pola |
+| Independensi | desain pengambilan data |
+| Homoskedastisitas | sebaran residual relatif konstan |
+| Normalitas residual | Q-Q plot, terutama untuk inferensi sampel kecil |
+
+```r
+par(mfrow = c(2, 2))
+plot(model)
+```
+
+Plot diagnostik bawaan menampilkan residual, Q-Q, scale-location, dan leverage. Dengan enam observasi contoh, interpretasi inferensial masih rapuh; contoh ini fokus pada mekanika.
+
+## Banyak Prediktor dan Kategori
+
+```r
+# Contoh sintaks; gunakan data yang cukup sebelum interpretasi
+# model2 <- lm(harga ~ luas + kamar + lokasi, data = rumah)
+```
+
+Setiap slope dibaca sebagai perubahan y untuk satu unit prediktor itu **dengan prediktor lain tetap**. Factor otomatis diubah menjadi indikator terhadap satu level referensi.
+
+## Di Dunia Nyata
+
+1. **Prediksi harga rumah** — `lm(harga ~ luas + kamar + lokasi)` mengukur kontribusi tiap karakteristik sambil mengontrol yang lain.
+2. **Kalibrasi sensor** — slope dan intercept mengubah pembacaan mentah menjadi satuan standar, sementara residual mengungkap drift.
+3. **Hubungan dosis-respons awal** — scatter dan model memeriksa apakah respons berubah konsisten terhadap dosis sebelum model lebih kompleks.
+4. **Forecast permintaan sederhana** — tren linear waktu menjadi baseline yang harus dikalahkan model forecasting lanjutan.
+5. **Audit marketing** — regresi mengaitkan belanja iklan dengan penjualan, tetapi desain observasional belum membuktikan iklan sebagai penyebab.
+
+<div class="note">💡 Korelasi, R², dan p-value bisa terlihat hebat pada hubungan yang salah bentuk. Plot data mentah dan residual sebelum percaya pada ringkasan model; satu pencilan berpengaruh dapat memutar slope secara drastis.</div>
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`berat <- c(50, 55, 60, 65, 70, 75)
+tinggi <- c(155, 160, 165, 168, 172, 175)
+cat("Korelasi:", round(cor(berat, tinggi), 3), "\n")
+model <- lm(tinggi ~ berat)
+print(coef(model))
+cat("R-squared:", round(summary(model)$r.squared, 3), "\n")
+baru <- data.frame(berat = c(58, 62, 72))
+print(predict(model, newdata = baru, interval = "prediction"))
+cat("Residual:", round(residuals(model), 2), "\n")`} />

@@ -1,0 +1,101 @@
+---
+title: "Div, Span, Class & ID"
+description: "Membungkus dan menandai elemen untuk keperluan styling & skrip"
+order: 8
+quiz:
+  - q: "Perbedaan utama <div> dan <span> adalah…"
+    options: ["div untuk blok (multi baris), span untuk inline (sebaris)", "span lebih besar", "div sudah usang", "Tidak ada bedanya"]
+    answer: 0
+    explain: "div = block-level (memulai baris baru), span = inline (mengikat teks dalam satu baris)."
+  - q: "Beri tanda pengenal yang valid untuk atribut id"
+    options: ["2card", "card-1", "card 1", "card#1"]
+    answer: 1
+    explain: "ID harus diawali huruf/underscore, tanpa spasi dan karakter khusus. card-1 valid."
+  - q: "Bolehkah satu class dipakai banyak elemen?"
+    options: ["Boleh — justru itu gunanya", "Tidak boleh", "Maksimal 2 elemen", "Hanya di <div>"]
+    answer: 0
+    explain: "Class dirancang untuk dipakai berulang. ID hanya satu per halaman."
+  - q: "Elemen mana yang punya atribut class dan id?"
+    options: ["Hampir semua elemen HTML", "Hanya <div>", "Hanya <p>", "Hanya heading"]
+    answer: 0
+    explain: "class dan id adalah atribut global — boleh dipasang di elemen mana pun."
+  - q: "Untuk styling CSS yang dipakai berulang, lebih baik memakai…"
+    options: ["id", "class", "style inline terus", "tag name saja"]
+    answer: 1
+    explain: "Class untuk gaya yang dipakai banyak elemen; id lebih spesifik & biasanya untuk JS/anchor."
+example:
+  code: |
+    <div class="kartu" id="kartu-promo">
+      <h3>Promo Spesial</h3>
+      <p>Diskon <span class="badge">50%</span> untuk semua kursus!</p>
+    </div>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat styling dan JavaScript masuk permainan, kamu perlu penanda elemen.
+
+## `<div>` dan `<span>`
+
+```html
+<div class="kartu">
+  <h3>Judul Kartu</h3>
+  <p>Isi dengan <span class="tebal">penekanan</span> di tengah teks.</p>
+</div>
+```
+
+- `<div>` — kontainer *block* (memakan lebar penuh, mulai baris baru)
+- `<span>` — pembungkus *inline* (hanya membungkus potongan teks)
+
+Keduanya **tidak bermakna apa pun** secara semantik — sekadar kotak.
+
+## Atribut `class` dan `id`
+
+```html
+<div class="kartu kartu-gelap" id="promo-lebaran">
+  ...
+</div>
+```
+
+| | `class` | `id` |
+|---|---------|------|
+| Jumlah | Boleh banyak elemen | **Unik**, satu per halaman |
+| Dipakai untuk | Styling berulang (CSS) | Target skrip (JS), anchor, label form |
+| Di CSS | `.kartu` | `#promo-lebaran` |
+
+Satu elemen boleh punya banyak class (pisahkan dengan spasi), tapi hanya satu id.
+
+HTML memiliki **sekitar 20 atribut global**; `class` dan `id` adalah dua yang paling sering menghubungkan HTML ke CSS dan JavaScript.
+
+| Penanda | Boleh berulang? | Jumlah per elemen | Target CSS | Kegunaan nyata |
+|---------|-----------------|-------------------|------------|----------------|
+| `class` | Ya | Banyak, dipisah spasi | `.kartu` | Gaya dan kelompok komponen |
+| `id` | Tidak, harus unik | Satu | `#promo` | Anchor, label, target JS |
+| `data-*` | Ya | Banyak | `[data-status]` | Data khusus untuk skrip |
+
+## Praktik yang Baik
+
+```html
+<!-- ✔ deskriptif -->
+<div class="product-card product-card--sale">
+
+<!-- ✗ ambigu -->
+<div class="box1 red big-text">
+```
+
+Nama class yang menjelaskan **peran**, bukan tampilan, akan memudahkanmu saat proyek membesar.
+
+## Di Dunia Nyata
+
+- **Katalog produk** — semua kartu berbagi class `product-card`; produk promo mendapat class tambahan `sale`
+- **Navigasi satu halaman** — link `#kontak` melompat ke elemen unik `id="kontak"`
+- **Dashboard** — `data-status="paid"` menyimpan status yang dibaca JavaScript tanpa mengubah teks
+- **Artikel** — `<span class="highlight">` menandai beberapa kata tanpa memutus paragraf
+
+<div class="note">💡 Mulai dari elemen semantik; gunakan `<div>` atau `<span>` hanya saat tidak ada elemen HTML yang menjelaskan maknanya. Class adalah kontrak gaya yang bisa dipakai ulang, sedangkan id adalah alamat unik.</div>
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<div class="kartu" style="border:2px solid #4F46E5;border-radius:12px;padding:16px">
+  <h3 style="margin-top:0">Produk: Keyboard Mekanik</h3>
+  <p>Harga: <span style="background:#F59E0B;color:white;padding:2px 8px;border-radius:99px;font-weight:bold">Rp450.000</span></p>
+  <p id="deskripsi">Switch clicky, cocok untuk ngetik seharian.</p>
+</div>`} />

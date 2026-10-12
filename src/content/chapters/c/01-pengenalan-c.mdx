@@ -1,0 +1,145 @@
+---
+title: "Pengenalan C"
+description: "Bahasa prosedural fundamental sistem operasi — dari sejarah, pipeline kompilasi 4 tahap, sampai executable"
+order: 1
+quiz:
+  - q: "Siapa pencipta bahasa C?"
+    options: ["Dennis Ritchie di Bell Labs", "James Gosling di Sun Microsystems", "Bjarne Stroustrup di AT&T", "Guido van Rossum di Belanda"]
+    answer: 0
+    explain: "Dennis Ritchie menciptakan C pada awal 1970-an untuk mengembangkan sistem operasi UNIX."
+  - q: "Hasil kompilasi program C adalah…"
+    options: ["Bytecode yang dijalankan virtual machine", "File executable berisi kode mesin", "Script yang dibaca interpreter", "Dokumen HTML"]
+    answer: 1
+    explain: "Kompilator C menerjemahkan langsung ke kode mesin target — tidak ada lapisan VM di tengah."
+  - q: "Header yang berisi printf adalah…"
+    options: ["<string.h>", "<stdio.h>", "<stdlib.h>", "<math.h>"]
+    answer: 1
+    explain: "stdio.h (standard input/output) menyediakan printf, scanf, fopen, dan fclose."
+  - q: "Titik masuk program C adalah function…"
+    options: ["main()", "start()", "run()", "begin()"]
+    answer: 0
+    explain: "Eksekusi program selalu dimulai dari main(), biasanya mengembalikan 0 jika sukses."
+  - q: "Paradigma utama bahasa C adalah…"
+    options: ["Berorientasi objek penuh", "Prosedural — program = kumpulan function", "Deklaratif murni", "Berbasis prototype seperti JavaScript"]
+    answer: 1
+    explain: "C prosedural: tidak ada class — program = function-function yang memanggil satu sama lain."
+example:
+  code: |
+    #include <stdio.h>
+
+    int main(void) {
+        printf("Halo, Dunia!\n");
+        printf("2 + 2 = %d\n", 2 + 2);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C adalah bahasa **prosedural, ringan, dan dekat dengan perangkat keras** — bahasa di balik Linux, SQLite, dan sebagian besar sistem operasi. Memahami C berarti memahami apa yang sesungguhnya terjadi di bawah semua bahasa modern.
+
+## Sekilas Sejarah
+
+C lahir di Bell Labs awal 1970-an dari evolusi bahasa B (dan BCPL sebelumnya), dikembangkan Dennis Ritchie bersama Ken Thompson untuk menulis ulang UNIX. Standarisasi formalnya keluar sebagai **ANSI C (C89)** lalu **C99**, **C11**, dan **C17**. Sintaks C menjadi dasar C++, Java, C#, dan JavaScript — belajar C membuat transisi ke bahasa-bahasa itu jauh lebih cepat.
+
+## Hello World
+
+```c
+#include <stdio.h>
+
+int main(void) {
+    printf("Halo, Dunia!\n");
+    return 0;
+}
+```
+
+- `#include <stdio.h>` — preprocessor menyertakan deklarasi fungsi input/output
+- `int main(void)` — fungsi utama, `void` berarti tanpa parameter
+- `return 0` — kode keluar ke sistem operasi, 0 berarti sukses (non-zero = kegagalan)
+
+## Paradigma Prosedural — Jujur, Tanpa OOP
+
+C **bukan** bahasa berorientasi objek. Tidak ada `class`, `interface`, `extends`, `new`, maupun method. Program C adalah **kumpulan function** yang saling memanggil, berbagi data lewat parameter dan variabel global. Untuk menyatukan data terkait ada `struct`; untuk memodelkan "perilaku berbeda per tipe" ada **function pointer**. Pola inilah yang kelak ditiru banyak bahasa OOP — dan akan dirinci di chapter Struct dan Pointer.
+
+| Konsep | Java (OOP) | C (Prosedural) |
+|---|---|---|
+| Wadah data + perilaku | `class` | `struct` + function biasa |
+| Pemanggilan perilaku | `obj.method()` | `fungsi(&obj)` |
+| Perilaku bervariasi per tipe | method override | function pointer di struct |
+| Pembagian unit | class per file | function per file + `.h` |
+
+## Kompilasi 4 Tahap
+
+```bash
+gcc halaman.c -o halaman
+./halaman
+```
+
+Di balik satu perintah `gcc`, ada **4 tahap**: (1) **preprocessor** — ekspansi `#include` dan `#define`; (2) **compiler** — ubah ke assembly; (3) **assembler** — ubah ke object code `.o`; (4) **linker** — gabung object + library jadi executable. Tambahkan flag `-Wall -Wextra` untuk peringatan ketat: `gcc -Wall halaman.c -o halaman`. Beda dengan Java: tidak ada VM di tengah — hasil kompilasi langsung kode mesin untuk CPU target.
+
+## Anatomi Program
+
+```c
+#include <stdio.h>        // preprocessor: sertakan header
+
+int main(void) {          // deklarasi function
+    int umur = 20;        // variabel bertipe int
+    double tinggi = 1.65; // desimal memakai double
+    printf("Umur %d, tinggi %.2f\n", umur, tinggi);
+    return 0;
+}
+```
+
+Setiap pernyataan diakhiri titik koma, dan kurawal `{ }` membatasi blok kode. Tidak seperti Java, variabel boleh dideklarasi di mana saja dalam blok — termasuk langsung di header `for`.
+
+## 4 Header Standar Paling Sering Dipakai
+
+| Header | Fungsi utama | Contoh |
+|---|---|---|
+| `<stdio.h>` | input/output | `printf`, `scanf`, `fopen`, `fgets` |
+| `<stdlib.h>` | utilitas & memori | `malloc`, `free`, `rand`, `atoi`, `exit` |
+| `<string.h>` | operasi teks | `strlen`, `strcpy`, `strcmp`, `strcat` |
+| `<math.h>` | matematika | `sqrt`, `pow`, `sin`, `ceil` |
+
+Cara pakai: tulis `#include <nama.h>` di paling atas file. Header menyediakan **prototipe function** — kompilator perlu tahu signature sebelum function dipanggil.
+
+## Komentar
+
+```c
+// komentar satu baris
+/* komentar
+   multi baris */
+```
+
+## Kenapa C Masih Penting?
+
+- **Sistem operasi**: Linux, Windows bagian kernel, Android (via NDK)
+- **Performa**: tanpa garbage collector, alokasi memori manual, dekat assembly
+- **Portabilitas**: kompilator tersedia di hampir semua platform sejak 40+ tahun lalu
+- **Fondasi**: sintaks C menjadi dasar C++, Java, C#, dan JavaScript
+- **Embedded & IoT**: mikrokontroler dengan RAM kilobyte tetap memakai C
+
+## Di Dunia Nyata
+
+- **Kernel Linux**: jutaan baris C mendasari server cloud tempat website ini berjalan.
+- **Database SQLite**: library database paling terpasang di dunia (ponsel, browser, aplikasi) ditulis C murni.
+- **Runtime Python & PHP**: interpreter Python (CPython) dan PHP juga ditulis C — bahasa ini memakai bahasa yang membangunnya.
+- **Firmware perangkat**: modem, smart TV, dan controller AC memakai C karena kendali memori presisi.
+- **Game engine**: loop render dan fisika engine klasik (dan sebagian Unreal) memakai C/C++ demi frame rate.
+
+<div class="note">💡 C tidak punya built-in string seperti Python — teks adalah kumpulan karakter <code>char</code> yang berakhir dengan karakter nol <code>'\0'</code>. Itulah sebabnya library <code>&lt;string.h&gt;</code> begitu penting, dan salah satu sumber bug paling umum di bahasa ini.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+int main(void) {
+    printf("Halo dari OnBoss Academy!\\n");
+    int a = 7, b = 5;
+    printf("%d + %d = %d\\n", a, b, a + b);
+    printf("Sisa %d / %d = %d\\n", a, b, a % b);
+    printf("Rata-rata = %.1f\\n", (double) (a + b) / 2);
+    for (int i = 1; i <= 3; i++) {
+        printf("Perulangan ke-%d\\n", i);
+    }
+    printf("%s\\n", "Sampai jumpa!");
+    return 0;
+}`} />

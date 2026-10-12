@@ -1,0 +1,204 @@
+---
+title: "Percabangan"
+description: "if, else, dan switch khas Go — tanpa kurung di sekitar kondisi"
+order: 3
+quiz:
+  - q: "Kondisi if di Go tidak perlu dibungkus…"
+    options: ["kurawal", "kurung", "titik koma", "komentar"]
+    answer: 1
+    explain: "Go menulis if x > 10 { ... } — tanpa kurung, sesuai gaya gofmt."
+  - q: "Go mengizinkan kondisi inisialisasi pada if berbentuk…"
+    options: ["if (x = ambil()) {", "if x > 0 then {", "if x := ambil(); x > 0 {", "if x : ambil() {"]
+    answer: 2
+    explain: "Variabel yang dibuat di if hanya hidup di dalam blok if-else tersebut."
+  - q: "switch di Go secara default berhenti di setiap case (tanpa…)"
+    options: ["break", "return", "case", "default"]
+    answer: 0
+    explain: "Berbeda dengan C, tiap case Go otomatis berhenti sehingga break sering tidak perlu."
+  - q: "Operator untuk membandingkan dua nilai sama adalah…"
+    options: ["=", "==", "eq", "=>"]
+    answer: 1
+    explain: "= memberi nilai, == membandingkan."
+  - q: "Go tidak memiliki operator ternary…"
+    options: ["?:", "&&", "||", "!="]
+    answer: 0
+    explain: "Untuk pilihan singkat pakai if-else biasa atau fungsi kecil — Go sengaja tidak punya ?:"
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func main() {
+        nilai := 85
+
+        if nilai >= 90 {
+            fmt.Println("A")
+        } else if nilai >= 80 {
+            fmt.Println("B")
+        } else {
+            fmt.Println("C")
+        }
+
+        switch nilai {
+        case 85:
+            fmt.Println("Tepat di ambang")
+        default:
+            fmt.Println("Nilai lain")
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Percabangan Go terlihat ringkas: **tanpa kurung, tanpa break**, dan kondisi selalu bernilai bool.
+
+## 6 Operator Perbandingan
+
+Go punya tepat **6 operator perbandingan**: `==`, `!=`, `<`, `<=`, `>`, `>=` — semuanya menghasilkan `bool`.
+
+| Kategori | Jumlah | Anggota | Fungsi |
+| --- | --- | --- | --- |
+| Perbandingan | 6 | `==` `!=` `<` `<=` `>` `>=` | Bandingkan dua nilai → bool |
+| Logika | 3 | `&&` `\|\|` `!` | Gabungkan kondisi (short-circuit) |
+| Aritmatika | 5 | `+` `-` `*` `/` `%` | Hitung nilai untuk dibandingkan |
+| Ternary | 0 | — | Tidak ada; pakai if-else |
+
+```go
+a := 5
+b := 10
+
+fmt.Println(a < b)              // true
+fmt.Println(a >= b)             // false
+fmt.Println(a != b)             // true
+fmt.Println(a < b && b < 20)    // true
+fmt.Println(a > b || a == 5)    // true
+```
+
+Di luar itu ada **3 operator logika** (`&&`, `||`, `!`) yang bekerja short-circuit: kalau `&&` sudah ketemu `false`, evaluasi kanan dihentikan.
+
+## if dan else
+
+```go
+suhu := 35
+
+if suhu > 30 {
+    fmt.Println("Panas sekali")
+} else if suhu > 25 {
+    fmt.Println("Hangat")
+} else {
+    fmt.Println("Nyaman")
+}
+```
+
+Kurawal buka `{` harus menempel di baris `if`, bukan pindah ke baris berikutnya.
+
+## Kondisi dengan Inisialisasi
+
+```go
+if skor := 78; skor >= 75 {
+    fmt.Println("Lulus, skor", skor)
+} else {
+    fmt.Println("Remedial")
+}
+```
+
+Variabel `skor` hanya berlaku di dalam blok tersebut — pola ini sangat sering dipakai saat menangani error (`if err := ...; err != nil`).
+
+## switch
+
+```go
+hari := "Senin"
+
+switch hari {
+case "Senin":
+    fmt.Println("Awal minggu")
+case "Jumat":
+    fmt.Println("Hari terakhir")
+default:
+    fmt.Println("Hari biasa")
+}
+```
+
+Case boleh menampung beberapa nilai dengan koma: `case "Sabtu", "Minggu":`. Tambahkan `fallthrough` hanya jika ingin jatuh ke case berikutnya.
+
+## switch Tanpa Kondisi
+
+```go
+umur := 17
+
+switch {
+case umur >= 17:
+    fmt.Println("Boleh mengemudi")
+case umur >= 13:
+    fmt.Println("Remaja")
+default:
+    fmt.Println("Anak-anak")
+}
+```
+
+Bentuk ini menggantikan rangkaian `else if` panjang dan lebih mudah dibaca.
+
+## Tidak Ada Ternary
+
+Go sengaja **tidak punya `?:`**. Pilihan dibuat dengan if-else biasa:
+
+```go
+status := "Lulus"
+if nilai < 75 {
+    status = "Remedial"
+}
+```
+
+Keputusan model juga tegas: **if** untuk 2–3 cabang, **switch** untuk mencocokkan satu nilai ke banyak kemungkinan. Anti-pattern yang harus dihindari: bersarang `if` lebih dari 3 level — pecah jadi fungsi `if ... { return ... }` agar keluar lebih awal.
+
+## Di Dunia Nyata
+
+- **Grade ujian**: rentang 90–100 → A, 80–89 → B, dst. dengan `else if` berurutan dari batas terbesar
+- **Validasi input**: cek panjang password, karakter khusus, lalu `switch` untuk tipe user (admin/member/guest)
+- **Routing HTTP**: `switch r.Method` memilih GET/POST/PUT/OPTIONS di server
+- **Klasifikasi suhu**: manajemen datacenter menentukan alarm bila suhu > 30°C
+- **Kalkulator**: `switch op` memilih `+`, `-`, `*`, `/` dari input pengguna
+
+<div class="note">💡 Go memakai blok kurawal, bukan indentasi, sebagai penanda blok. Tapi tetap gunakan tab sesuai gofmt — format standar Go ini dihormati seluruh ekosistem.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import "fmt"
+
+func main() {
+    nilai := 85
+
+    if nilai >= 90 {
+        fmt.Println("Nilai: A")
+    } else if nilai >= 80 {
+        fmt.Println("Nilai: B")
+    } else {
+        fmt.Println("Nilai: C")
+    }
+
+    if skor := nilai; skor >= 75 {
+        fmt.Println("Lulus dengan skor", skor)
+    }
+
+    switch nilai {
+    case 85:
+        fmt.Println("Tepat di ambang batas")
+    default:
+        fmt.Println("Nilai lain")
+    }
+
+    umur := 17
+    switch {
+    case umur >= 17:
+        fmt.Println("Boleh mengemudi")
+    default:
+        fmt.Println("Belum boleh")
+    }
+
+    status := "Lulus"
+    if nilai < 75 {
+        status = "Remedial"
+    }
+    fmt.Println("Status:", status)
+}`} />

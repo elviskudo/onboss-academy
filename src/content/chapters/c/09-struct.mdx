@@ -1,0 +1,240 @@
+---
+title: "Struct"
+description: "Menggabungkan data terkait, typedef, array of struct, dan pola struct + function pointer sebagai pengganti OOP"
+order: 9
+quiz:
+  - q: "Struct berfungsi untuk…"
+    options: ["Mengulang kode", "Menggabungkan beberapa variabel bertipe berbeda dalam satu nama", "Membuat file baru", "Mengompilasi program"]
+    answer: 1
+    explain: "Misal struct Mahasiswa { char nama[30]; int nim; int nilai; }; — satu wadah untuk satu entitas."
+  - q: "Akses anggota struct memakai operator…"
+    options: ["* untuk semua kasus", "#", ". (titik) untuk objek, -> untuk pointer", "::"]
+    answer: 2
+    explain: "mahasiswa.nilai untuk objek langsung; ptr->nilai jika ptr adalah pointer ke struct."
+  - q: "typedef pada struct berguna untuk…"
+    options: ["Menghapus struct", "Mengubah tipe data menjadi int", "Memberi nama singkat sehingga tidak perlu menulis struct berulang", "Mengompilasi ulang"]
+    answer: 2
+    explain: "typedef struct { ... } Mahasiswa; membuat Mahasiswa menjadi alias yang ringkas."
+  - q: "Array of struct dipakai ketika…"
+    options: ["Menyimpan banyak data sejenis, misal daftar 30 mahasiswa", "Membuat pointer", "Menghitung luas", "Mengurutkan teks"]
+    answer: 0
+    explain: "data[i].nilai mengakses nilai mahasiswa ke-i — pola dasar database sederhana di memori."
+  - q: "C tidak punya class; pengganti polimorfisme di C adalah…"
+    options: ["Function pointer di dalam struct", "Keyword virtual", "Interface resmi", "Method override"]
+    answer: 0
+    explain: "Struct berisi pointer function = 'method' yang bisa ditukar per tipe — pola vtable ala C."
+example:
+  code: |
+    #include <stdio.h>
+
+    typedef struct {
+        char nama[30];
+        int nilai;
+    } Siswa;
+
+    void tampil(Siswa s) {
+        printf("%s: %d\n", s.nama, s.nilai);
+    }
+
+    int main(void) {
+        Siswa s = {"Sari", 90};
+        tampil(s);
+        return 0;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ketika data saling berkaitan — nama, NIM, nilai — menyimpannya dalam variabel terpisah membuat kode berantakan. **Struct** menyatukannya. Bab ini juga menjelaskan jujur: bagaimana C mensiasati OOP tanpa class.
+
+## Mendefinisikan Struct
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+struct Mahasiswa {
+    char nama[30];
+    int nim;
+    int nilai;
+};
+
+int main(void) {
+    struct Mahasiswa m1;
+    strcpy(m1.nama, "Budi");   // butuh <string.h> — array char, bukan String
+    m1.nim = 12345;
+    m1.nilai = 88;
+
+    printf("%s (NIM %d): %d\n", m1.nama, m1.nim, m1.nilai);
+    return 0;
+}
+```
+
+Setiap anggota diakses lewat operator `.` — struktur datanya eksplisit dan mudah dibaca. Struct adalah **kumpulan variabel bertipe beda dalam satu nama**, tersusun berurutan di memori.
+
+## typedef agar Lebih Ringkas
+
+```c
+typedef struct {
+    char nama[30];
+    int nilai;
+} Siswa;
+
+Siswa s1 = {"Sari", 90};      // tidak perlu menulis struct lagi
+printf("%s: %d\n", s1.nama, s1.nilai);
+```
+
+`typedef` membuat alias — sintaks ini sangat umum di proyek C nyata (lihat `FILE`, `size_t`, `uint8_t`). Tanpa typedef, setiap deklarasi harus `struct Nama ...`.
+
+## Struct sebagai Parameter
+
+```c
+int rataRata(Siswa daftar[], int n) {
+    int total = 0;
+    for (int i = 0; i < n; i++) total += daftar[i].nilai;
+    return total / n;
+}
+
+void beriBonus(Siswa *s, int tambahan) {   // pointer: efisien & bisa mengubah
+    s->nilai += tambahan;                  // s->nilai == (*s).nilai
+}
+```
+
+Struct besar sebaiknya dikirim **lewat pointer** — pass by value menyalin seluruh isi struct ke stack. Pointer ke struct memakai `->` untuk akses anggota.
+
+## Array of Struct
+
+```c
+Siswa kelas[3] = {
+    {"Sari", 90},
+    {"Budi", 78},
+    {"Rina", 85}
+};
+
+for (int i = 0; i < 3; i++) {
+    printf("%-8s %d\n", kelas[i].nama, kelas[i].nilai);
+}
+```
+
+`%-8s` meratakan nama ke kiri dalam lebar 8 karakter — output tabel langsung rapi. Array of struct + function = modul pengolahan data yang rapi — inilah "database sederhana" ala C sebelum masuk chapter file.
+
+## Struct Bersarang & Bit Field
+
+```c
+typedef struct {
+    char jalan[40];
+    char kota[30];
+} Alamat;
+
+typedef struct {
+    char nama[30];
+    Alamat alamat;          // struct bersarang
+} Pelanggan;
+
+typedef struct {
+    unsigned int aktif : 1;   // bit field: hanya 1 bit!
+    unsigned int admin : 1;
+    unsigned int mode  : 2;   // 2 bit → nilai 0..3
+} HakAkses;
+```
+
+Bit field menghemat memori untuk flag — `HakAkses` hanya memakai 4 bit.
+
+## C Tidak Punya OOP — Pengganti Jujurnya
+
+C adalah bahasa **prosedural**. Tidak ada `class`, `extends`, `interface`, `new`, `virtual`, maupun method. Tapi keempat pilar OOP bisa disiasati:
+
+| Pilar OOP | Padanan di C | Mekanisme |
+|---|---|---|
+| **Encapsulation** | opaque struct + function | struct didefinisikan di `.c`, `.h` hanya menyimpan pointer (`typedef struct X X;`) |
+| **Inheritance** | embedding struct | struct anak memuat struct parent sebagai anggota pertama |
+| **Polymorphism** | function pointer di struct | tiap "tipe" mengisi pointer function dengan implementasinya sendiri |
+| **Abstraction** | header + static | function internal diberi `static` — tak terlihat dari file lain |
+
+Pola polymorphism-nya:
+
+```c
+#include <stdio.h>
+
+typedef struct Bentuk Bentuk;
+struct Bentuk {
+    double sisi;                 // data (bisa berbeda makna per "tipe")
+    double (*luas)(Bentuk *b);   // pointer function — "method virtual"
+};
+
+double luasPersegi(Bentuk *b)    { return b->sisi * b->sisi; }
+double luasLingkaran(Bentuk *b)  { return 3.14159 * b->sisi * b->sisi; }
+
+Bentuk daftar[2] = {
+    { 3.0, luasPersegi },
+    { 2.0, luasLingkaran }
+};
+// daftar[0].luas(&daftar[0]) → 9.0
+// daftar[1].luas(&daftar[1]) → 12.56...
+```
+
+Di proyek nyata (misal driver Linux), pola ini persis dipakai: `struct file_operations` berisi puluhan pointer function (`read`, `write`, `open`) yang diisi berbeda oleh tiap jenis file system. Inilah "interface + override" versi C — bukan mengarang sintaks class, tapi memakai kemampuan bahasa yang memang ada.
+
+## Di Dunia Nyata
+
+- **Model mahasiswa satu kelas**: `Siswa kelas[40]` + function `rataRata`, `cariNilaiTertinggi`, `urutkanNilai`.
+- **Entri kontak buku telepon**: struct `Kontak { nama, telepon, email }` — array of struct menyimpan 100 kontak.
+- **Driver perangkat Linux**: `struct file_operations` (function pointer collection) — jantung arsitektur modular kernel.
+- **Entity game**: struct `Pemain { posisi, skor, nyawa }` + function `pindah(Pemain *p, int dx, int dy)`.
+- **Protokol jaringan**: struct header paket dengan bit field meniru layout byte persis di kabel.
+
+<div class="note">💡 Struct adalah model data kamu. Rancang dulu field apa saja yang dibutuhkan — menambah kolom baru jauh lebih mudah daripada merombak puluhan variabel terpisah. Untuk "perilaku", tambahkan function biasa yang menerima pointer struct; untuk "perilaku bervariasi per tipe", isi function pointer di dalam struct.</div>
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    char nama[30];
+    int nilai;
+} Siswa;
+
+void tampil(Siswa s, int indeks) {
+    printf("%d. %-8s %d\\n", indeks, s.nama, s.nilai);
+}
+
+void beriBonus(Siswa *s, int tambahan) {
+    s->nilai += tambahan;
+}
+
+typedef struct {
+    const char *nama;
+    double (*luas)(double sisi);
+} Bentuk;
+
+double luasPersegi(double s) { return s * s; }
+double luasLingkaran(double r) { return 3.14159 * r * r; }
+
+int main(void) {
+    Siswa kelas[3] = {
+        {"Sari", 90},
+        {"Budi", 78},
+        {"Rina", 85}
+    };
+
+    int total = 0, tertinggi = 0;
+    for (int i = 0; i < 3; i++) {
+        tampil(kelas[i], i + 1);
+        total += kelas[i].nilai;
+        if (kelas[i].nilai > kelas[tertinggi].nilai) tertinggi = i;
+    }
+    printf("Rata-rata: %.1f\\n", (double) total / 3);
+    printf("Juara: %s (%d)\\n", kelas[tertinggi].nama, kelas[tertinggi].nilai);
+
+    beriBonus(&kelas[1], 15);
+    printf("Budi setelah bonus: %d\\n", kelas[1].nilai);
+    printf("Ukuran struct: %lu byte\\n", (unsigned long) sizeof(Siswa));
+
+    Bentuk bentuk[2] = {
+        {"Persegi (sisi 3)", luasPersegi},
+        {"Lingkaran (r 2)", luasLingkaran}
+    };
+    double sisi = 3.0, r = 2.0;
+    printf("%s = %.2f\\n", bentuk[0].nama, bentuk[0].luas(sisi));
+    printf("%s = %.2f\\n", bentuk[1].nama, bentuk[1].luas(r));
+    return 0;
+}`} />

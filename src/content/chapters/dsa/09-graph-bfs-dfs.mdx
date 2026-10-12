@@ -1,0 +1,203 @@
+---
+
+title: "Graph: BFS & DFS"
+description: "Representasi adjacency list dan dua penelusuran paling fundamental"
+order: 9
+quiz:
+  - q: "Graph direpresentasikan dengan adjacency list artinya…"
+    options: ["Matriks n x n penuh", "Setiap node menyimpan daftar tetangganya", "Node disimpan berurutan di array", "Hanya menyimpan jumlah node"]
+    answer: 1
+    explain: "Hemat memori untuk graph jarang: hanya edge yang disimpan, bukan seluruh matriks."
+  - q: "BFS (Breadth-First Search) menelusuri…"
+    options: ["Sedalam-dalamnya dulu", "Per level, dari dekat ke jauh", "Acak", "Hanya node genap"]
+    answer: 1
+    explain: "BFS memakai queue — menjelajah semua tetangga level 1, lalu level 2, dst."
+  - q: "Struktur data utama BFS adalah…"
+    options: ["Stack", "Queue (deque)", "Hash table", "Heap"]
+    answer: 1
+    explain: "FIFO queue menjamin node terdekat dari start dikunjungi lebih dulu."
+  - q: "DFS (Depth-First Search) menelusuri…"
+    options: ["Per level", "Sedalam mungkin ke satu cabang dulu, lalu mundur", "Dari kanan ke kiri saja", "Tanpa struktur data"]
+    answer: 1
+    explain: "DFS memakai stack (eksplisit) atau rekursi (implisit) untuk menyelam ke satu cabang."
+  - q: "BFS cocok untuk…"
+    options: ["Mencari jalur terpendek pada graph tak berbobot", "Mengurutkan data", "Kompressi file", "Enkripsi"]
+    answer: 0
+    explain: "Level-order BFS menjamin pertama kali sampai ke target adalah jalur paling pendek (jumlah edge)."
+example:
+  code: |
+    from collections import deque
+
+    graph = {
+        "A": ["B", "C"],
+        "B": ["A", "D", "E"],
+        "C": ["A", "F"],
+        "D": ["B"],
+        "E": ["B", "F"],
+        "F": ["C", "E"],
+    }
+
+    def bfs(graph, start):
+        dikunjungi = {start}
+        antre = deque([start])
+        urutan = []
+        while antre:
+            node = antre.popleft()
+            urutan.append(node)
+            for tetangga in graph[node]:
+                if tetangga not in dikunjungi:
+                    dikunjungi.add(tetangga)
+                    antre.append(tetangga)
+        return urutan
+
+    print(bfs(graph, "A"))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Graph = **kumpulan node (vertex) + hubungan (edge)**. Jaringan sosial, peta, dependency package, dan web semuanya berbentuk graph.
+
+## Representasi Adjacency List
+
+```python
+from collections import deque
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D", "E"],
+    "C": ["A", "F"],
+    "D": ["B"],
+    "E": ["B", "F"],
+    "F": ["C", "E"],
+}
+```
+
+Setiap key punya daftar tetangga. Untuk graph jarang, ini jauh lebih hemat memori daripada matriks.
+
+## BFS: Telusuri Per Level
+
+```python
+def bfs(graph, start):
+    dikunjungi = {start}
+    antre = deque([start])
+    urutan = []
+    while antre:
+        node = antre.popleft()
+        urutan.append(node)
+        for tetangga in graph[node]:
+            if tetangga not in dikunjungi:
+                dikunjungi.add(tetangga)
+                antre.append(tetangga)
+    return urutan
+
+print(bfs(graph, "A"))
+# ['A', 'B', 'C', 'D', 'E', 'F']
+```
+
+Pakai **queue**: node yang ditemukan duluan dieksplor duluan — hasilnya penelusuran per level.
+
+## DFS: Selam ke Satu Cabang
+
+```python
+def dfs_iteratif(graph, start):
+    dikunjungi = {start}
+    tumpukan = [start]
+    urutan = []
+    while tumpukan:
+        node = tumpukan.pop()
+        urutan.append(node)
+        for tetangga in graph[node]:
+            if tetangga not in dikunjungi:
+                dikunjungi.add(tetangga)
+                tumpukan.append(tetangga)
+    return urutan
+
+print(dfs_iteratif(graph, "A"))
+```
+
+Versi rekursi lebih ringkas:
+
+```python
+def dfs_rekursif(graph, node, dikunjungi=None):
+    if dikunjungi is None:
+        dikunjungi = set()
+    dikunjungi.add(node)
+    urutan = [node]
+    for tetangga in graph[node]:
+        if tetangga not in dikunjungi:
+            urutan.extend(dfs_rekursif(graph, tetangga, dikunjungi))
+    return urutan
+```
+
+## BFS vs DFS
+
+| Aspek | BFS | DFS |
+|-------|-----|-----|
+| Struktur | Queue | Stack / rekursi |
+| Pola | Per level | Per cabang |
+| Jalur terpendek | ya (tak berbobot) | tidak dijamin |
+| Kedalaman/cycle | boros memori untuk graph dalam | hemat memori |
+
+Keduanya O(V + E): V node, E edge.
+
+## Jenis dan Representasi Graph
+
+Graph dibedakan lewat **4 sifat utama**: directed/undirected dan weighted/unweighted. Representasi adjacency list memakai O(V + E) memori; adjacency matrix memakai O(V²), tetapi pengecekan edge langsung O(1). Pilihan bergantung pada kepadatan graph.
+
+| Representasi/Traversal | Waktu | Memori | Kapan dipakai |
+|---|---:|---:|---|
+| Adjacency list | bangun O(V+E) | O(V+E) | graph jarang |
+| Adjacency matrix | bangun O(V²) | O(V²) | graph padat |
+| BFS | O(V+E) | O(V) | jarak edge minimum |
+| DFS | O(V+E) | O(V) | cycle, komponen, topologi |
+
+Untuk graph directed, edge A→B tidak otomatis berarti B→A. Untuk graph weighted, BFS hanya benar bila semua bobot setara; bobot nonnegatif membutuhkan Dijkstra. Agar jalur dapat direkonstruksi, simpan `parent[tetangga] = node` saat tetangga pertama ditemukan, lalu berjalan mundur dari target.
+
+## Di Dunia Nyata
+
+- BFS mencari jumlah perpindahan minimum pada peta grid tanpa bobot.
+- DFS mendeteksi cycle dependency sebelum deployment.
+- Connected components mengelompokkan akun atau perangkat yang saling terkait.
+- Topological sort menyusun urutan build dari dependency directed acyclic graph.
+
+<div class="note">💡 Tandai node saat pertama kali dimasukkan antrean/tumpukan — bukan saat dieksplor. Tanpa ini, node yang sama bisa masuk berkali-kali dan BFS/DFS tidak akan pernah selesai pada graph ber-cycle.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from collections import deque
+
+graph = {
+    "A": ["B", "C"],
+    "B": ["A", "D", "E"],
+    "C": ["A", "F"],
+    "D": ["B"],
+    "E": ["B", "F"],
+    "F": ["C", "E"],
+}
+
+def bfs(graph, start):
+    dikunjungi = {start}
+    antre = deque([start])
+    urutan = []
+    while antre:
+        node = antre.popleft()
+        urutan.append(node)
+        for tetangga in graph[node]:
+            if tetangga not in dikunjungi:
+                dikunjungi.add(tetangga)
+                antre.append(tetangga)
+    return urutan
+
+def dfs(graph, start):
+    dikunjungi = {start}
+    tumpukan = [start]
+    urutan = []
+    while tumpukan:
+        node = tumpukan.pop()
+        urutan.append(node)
+        for tetangga in graph[node]:
+            if tetangga not in dikunjungi:
+                dikunjungi.add(tetangga)
+                tumpukan.append(tetangga)
+    return urutan
+
+print("BFS:", bfs(graph, "A"))
+print("DFS:", dfs(graph, "A"))`} />

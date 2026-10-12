@@ -1,0 +1,159 @@
+---
+title: "Computed & Watch"
+description: "Nilai turunan yang otomatis dan pengawas perubahan state"
+order: 4
+quiz:
+  - q: "computed dipakai untuk…"
+    options: ["Menghapus state", "Nilai turunan yang di-cache dari state lain", "Mengirim request", "Membuat komponen baru"]
+    answer: 1
+    explain: "Contoh: total = computed(() => harga * qty) — dihitung ulang hanya saat dependensi berubah."
+  - q: "Keunggulan computed dibanding method biasa di template…"
+    options: ["Hasil di-cache selama dependensi tidak berubah", "Tidak butuh fungsi", "Selalu lebih cepat menulis", "Bisa dipanggil tanpa this"]
+    answer: 0
+    explain: "Method dievaluasi ulang tiap render; computed hanya menghitung ulang saat inputnya berubah."
+  - q: "watch berguna ketika…"
+    options: ["Menghitung total", "Kamu ingin menjalankan aksi saat sebuah nilai berubah", "Membuat template", "Mengurutkan array"]
+    answer: 1
+    explain: "Contoh nyata: watch id → fetch data baru dari API."
+  - q: "computed yang mengembalikan object/array sebaiknya…"
+    options: ["Tidak dimutasi langsung; buat salinan baru", "Di-push elemennya", "Dihapus setelah dipakai", "Dibuat ulang tiap render"]
+    answer: 0
+    explain: "Mutasi computed melanggar pola satu arah data dan bikin bug sulit dilacak."
+  - q: "watchEffect berbeda dari watch karena…"
+    options: ["Otomatis melacak semua dependensi yang dipakai di dalamnya", "Tidak butuh dependensi", "Hanya jalan sekali", "Bisa async selalu"]
+    answer: 0
+    explain: "Kamu daftarkan dependensi secara eksplisit di watch; watchEffect mendeteksinya otomatis."
+example:
+  code: |
+    const state = { harga: 25000, qty: 2 };
+    const total = () => state.harga * state.qty;
+    console.log(total());
+    state.qty = 3;
+    console.log(total());
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data sering punya **nilai turunan**. Vue menyediakan `computed` untuk menghitungnya secara efisien, dan `watch` untuk menjalankan efek saat state berubah.
+
+## 3 Alat Reaksi terhadap State
+
+| Alat | Hasil | Cache | Kapan dipakai |
+|------|-------|-------|---------------|
+| `computed` | Nilai turunan | Ya | Total, filter, label status |
+| `watch` | Efek dari sumber eksplisit | Tidak relevan | Fetch, simpan, log |
+| `watchEffect` | Efek dari dependensi otomatis | Tidak relevan | Efek ringkas dengan banyak dependency |
+
+Aturan praktis: bila kamu ingin **nilai**, gunakan computed; bila ingin **melakukan sesuatu ke luar** karena nilai berubah, gunakan watch.
+
+## computed
+
+```html
+<template>
+  <p>Harga: Rp{{ harga }}</p>
+  <p>Jumlah: {{ qty }}</p>
+  <p>Total: Rp{{ total }}</p>
+  <p v-if="mahal">Diskon 10% otomatis</p>
+</template>
+
+<script setup>
+import { ref, computed } from "vue";
+
+const harga = ref(25000);
+const qty = ref(2);
+
+const total = computed(() => harga.value * qty.value);
+const mahal = computed(() => total.value >= 50000);
+</script>
+```
+
+`total` di-cache: berubah hanya ketika `harga` atau `qty` berubah — tidak dihitung ulang tiap render.
+
+## computed vs Method
+
+```html
+<script setup>
+// Method — dievaluasi ulang setiap render
+function totalMethod() { return harga.value * qty.value; }
+
+// Computed — di-cache
+const totalComputed = computed(() => harga.value * qty.value);
+</script>
+```
+
+Untuk nilai yang tampil di template dan bergantung pada state, selalu pilih computed.
+
+## watch
+
+```html
+<script setup>
+import { ref, watch } from "vue";
+
+const id = ref(1);
+
+watch(id, (nilaiBaru, nilaiLama) => {
+  console.log("id berubah:", nilaiLama, "->", nilaiBaru);
+  // di aplikasi nyata: muat data dari API di sini
+});
+
+// watch object
+const user = reactive({ nama: "Sari" });
+watch(() => user.nama, (v) => console.log("nama jadi", v));
+</script>
+```
+
+## watchEffect
+
+```javascript
+import { watchEffect } from "vue";
+
+watchEffect(() => {
+  // dependensi (mis. query.value) dilacak otomatis
+  console.log("mencari...");
+});
+```
+
+## Pola JavaScript-nya
+
+```javascript
+const state = { harga: 25000, qty: 2 };
+const total = () => state.harga * state.qty;
+
+console.log(total());   // 50000
+state.qty = 3;
+console.log(total());   // 75000 — dihitung ulang dari state terbaru
+```
+
+Computed juga cocok untuk list rendering: `produkTampil = computed(() => produk.value.filter(...))`. Template cukup melakukan `v-for` atas hasilnya; jangan menyimpan array hasil filter sebagai state kedua karena keduanya mudah tidak sinkron.
+
+## Di Dunia Nyata
+
+- **Keranjang**: computed menghitung subtotal dan jumlah item dari array, tanpa setter manual.
+- **Pencarian katalog**: computed memfilter produk berdasarkan query dan kategori reaktif.
+- **Autocomplete API**: watch query, batalkan timer lama, lalu request setelah debounce.
+- **Persistensi preferensi**: watch object pengaturan lalu simpan JSON ke localStorage.
+- **Halaman detail**: watch `route.params.id` dan fetch data baru saat URL berubah.
+
+<div class="note">💡 computed bersifat **getter saja**. Jangan menulis `total.value = ...` — computed dibentuk dari state lain. Jika butuh nilai turunan yang bisa diubah, simpan di `ref` biasa dan perbarui lewat method.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Meniru computed (getter ber-cache) dan watch dengan JS biasa
+const state = { harga: 25000, qty: 2, diskon: 0 };
+
+function hitungTotal() {
+  const sub = state.harga * state.qty;
+  return sub - (sub * state.diskon) / 100;
+}
+
+function watchState(label, fn) {
+  console.log(label + ":", fn());
+}
+
+watchState("Total", hitungTotal);
+state.qty = 3;
+watchState("Total setelah qty=3", hitungTotal);
+state.diskon = 10;
+watchState("Total setelah diskon 10%", hitungTotal);
+
+// Turunan lain, gaya computed
+const mahal = () => hitungTotal() >= 50000;
+console.log("Kategori mahal?", mahal());`} />

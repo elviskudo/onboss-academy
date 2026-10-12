@@ -1,0 +1,126 @@
+---
+title: "Jaringan di Linux"
+description: "IP, port, firewall, dan perintah diagnostik jaringan paling sering dipakai"
+order: 7
+quiz:
+  - q: "Perintah melihat IP address interface adalah…"
+    options: ["ip addr", "net show", "ifconfig-all", "ipconfig"]
+    answer: 0
+    explain: "ip addr (modern) atau ifconfig (legacy) menampilkan IP publik/lokal tiap interface."
+  - q: "Port bawaan layanan SSH adalah…"
+    options: ["22", "80", "443", "3306"]
+    answer: 0
+    explain: "22 = SSH; 80 = HTTP; 443 = HTTPS; 3306 = MySQL."
+  - q: "Untuk menguji apakah port web server terbuka dipakai…"
+    options: ["ping example.com", "curl http://localhost:80 atau telnet localhost 80", "ls -l /var/www", "df -h"]
+    answer: 1
+    explain: "ping menguji jaringan dasar; menguji port butuh curl/nc/telnet ke port spesifik."
+  - q: "Firewall default di banyak distro modern adalah…"
+    options: ["iptables saja", "firewalld atau ufw (wrapper iptables/nftables)", "windows defender", "selalu mati"]
+    answer: 1
+    explain: "ufw (Ubuntu) dan firewalld (RHEL) menyederhanakan aturan nftables/iptables."
+  - q: "dns resolver sistem berada di…"
+    options: ["/etc/hosts dan /etc/resolv.conf", "/etc/network", "/var/dns", "/opt/hosts"]
+    answer: 0
+    explain: "/etc/hosts untuk mapping statis lokal; /etc/resolv.conf menunjuk server DNS."
+---
+
+Linux server hidup di jaringan — deploy, SSH, dan akses database semuanya melewati lapisan ini.
+
+## Identitas Jaringan
+
+```bash
+ip addr           # IP tiap interface
+ip route          # tabel routing (gateway default)
+hostname -I       # IP lokal ringkas
+```
+
+Interface penting: `lo` (loopback, selalu 127.0.0.1) dan `eth0`/`ens3` (kartu jaringan utama).
+
+## Konektivitas & DNS
+
+```bash
+ping -c 3 example.com          # uji host reachable (ICMP)
+cat /etc/resolv.conf           # server DNS aktif
+getent hosts example.com       # resolusi DNS lewat sistem
+```
+
+Mapping statis (tanpa DNS):
+
+```bash
+sudo nano /etc/hosts
+# 127.0.0.1  app.local
+```
+
+## Port & Layanan
+
+```bash
+ss -tulpn            # port yang listening + proses pemiliknya
+ss -tunap | grep 22  # siapa yang memakai SSH
+```
+
+| Port | Layanan |
+|------|---------|
+| 22 | SSH |
+| 80 | HTTP |
+| 443 | HTTPS |
+| 3306 | MySQL |
+| 5432 | PostgreSQL |
+| 6379 | Redis |
+
+## Menggunakan Port
+
+```bash
+curl -I https://example.com     # header HTTP
+curl http://localhost:3000/health
+nc -zv localhost 5432           # uji port TCP terbuka/tidak
+```
+
+## Firewall (ufw di Ubuntu)
+
+```bash
+sudo ufw status
+sudo ufw allow 22/tcp
+sudo ufw allow 80,443/tcp
+sudo ufw enable
+sudo ufw delete allow 80/tcp
+```
+
+Prinsip: **default deny, allow spesifik** — hanya port yang memang melayani trafik yang dibuka.
+
+## Lima Lapisan Diagnosis Praktis
+
+Untuk operasi server, pecah masalah menjadi **5 lapisan praktis** agar diagnosis tidak melompat-lompat.
+
+| Lapisan | Fungsi | Perintah | Kapan diperiksa |
+|---|---|---|---|
+| Link/interface | Koneksi dan alamat lokal | `ip link`, `ip addr` | Interface down atau IP hilang |
+| Routing | Memilih jalur/gateway | `ip route get 1.1.1.1` | Host luar tidak tercapai |
+| DNS | Nama menjadi IP | `getent ahosts example.com` | IP bisa, nama gagal |
+| Transport/port | Koneksi TCP/UDP | `ss -lntup`, `nc -zv host 443` | Connection refused/timeout |
+| Aplikasi | Protokol dan respons | `curl -v https://example.com` | Port terbuka tetapi layanan gagal |
+
+`ping` hanya menguji ICMP; host dapat memblokir ICMP sementara HTTPS tetap sehat. `connection refused` biasanya berarti host tercapai tetapi tidak ada listener atau ada reject aktif. `timeout` lebih sering menunjukkan routing, firewall drop, atau service yang tidak merespons. Bedakan alamat bind `127.0.0.1` dari `0.0.0.0`: yang pertama hanya menerima koneksi lokal.
+
+Terapkan default deny dan buka port paling sempit berdasarkan protokol serta sumber. Sebelum mengaktifkan firewall via SSH, izinkan SSH terlebih dahulu dan pertahankan sesi kedua untuk pemulihan. Jangan mengekspos database langsung ke internet; gunakan private network, VPN, atau tunnel dengan autentikasi kuat.
+
+## Di Dunia Nyata
+
+- Menemukan API hanya bind ke loopback sehingga load balancer tidak dapat masuk.
+- Membedakan kegagalan DNS dari outage internet dengan query resolver sistem.
+- Memeriksa listener dan firewall ketika SSH timeout setelah provisioning.
+- Menguji endpoint health dengan curl untuk melihat status HTTP dan TLS.
+
+<div class="note">💡 Server cloud biasanya memiliki firewall host dan firewall provider. Aturan keduanya harus konsisten, tetapi tetap buka hanya sumber dan port yang diperlukan.</div>
+
+## Diagnostik Bertahap
+
+```
+1. ip addr           -> interface & IP benar?
+2. ip route          -> gateway default ada?
+3. ping gateway      -> jaringan lokal hidup?
+4. ping 8.8.8.8      -> internet (tanpa DNS)?
+5. curl https://...  -> DNS + port + layanan OK?
+```
+
+Langkah mana yang gagal menunjuk lapisan mana yang bermasalah.

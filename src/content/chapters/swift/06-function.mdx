@@ -1,0 +1,164 @@
+---
+title: "Function"
+description: "Membuat fungsi di Swift — parameter berlabel, nilai kembalian, dan fungsi bersarang"
+order: 6
+quiz:
+  - q: "Kata kunci untuk mendefinisikan fungsi adalah…"
+    options: ["fun", "func", "def", "function"]
+    answer: 1
+    explain: "func dipakai untuk fungsi sekaligus method."
+  - q: "Agar pemanggilan lebih terbaca, Swift menyediakan…"
+    options: ["komentar", "return type", "label parameter", "global variable"]
+    answer: 2
+    explain: "Label parameter tampil saat fungsi dipanggil, misalnya sapa(nama:)."
+  - q: "Fungsi tanpa nilai kembalian menyatakan tipe…"
+    options: ["Void", "Null", "Unit", "None"]
+    answer: 0
+    explain: "Tulis -> Void atau cukup tulis tanpa panah sama sekali."
+  - q: "Fungsi bisa mengembalikan banyak nilai sekaligus melalui…"
+    options: ["array saja", "tuple", "global", "class"]
+    answer: 1
+    explain: "Tuple menggabungkan beberapa nilai dalam satu kembalian."
+  - q: "Fungsi di dalam fungsi disebut…"
+    options: ["nested function", "inner class", "subroutine", "callback only"]
+    answer: 0
+    explain: "Fungsi bersarang berguna menyembunyikan logika pembantu."
+example:
+  code: |
+    func tambah(a: Int, b: Int) -> Int {
+        return a + b
+    }
+
+    func sapa(nama: String = "Teman") -> String {
+        return "Halo, \(nama)"
+    }
+
+    print(tambah(a: 3, b: 4))
+    print(sapa(nama: "Sari"))
+    print(sapa())
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi membagi logika menjadi bagian yang bisa dipakai ulang. Swift menambahkan label parameter agar setiap panggilan terbaca seperti kalimat.
+
+## Mendefinisikan Fungsi
+
+```swift
+func sapa() {
+    print("Selamat belajar Swift!")
+}
+
+sapa()
+```
+
+Panggil dengan tanda kurung kosong: `sapa()` — fungsi tanpa argumen tetap memakai `()`.
+
+## Parameter dan Nilai Kembalian
+
+```swift
+func tambah(a: Int, b: Int) -> Int {
+    return a + b
+}
+
+let hasil = tambah(a: 3, b: 4)
+print(hasil)
+```
+
+Tanda panah `->` menyatakan tipe nilai yang dikembalikan.
+
+## Label Parameter
+
+```swift
+func sapa(nama: String) {
+    print("Halo, \(nama)")
+}
+
+sapa(nama: "Sari")
+```
+
+Gunakan `_` bila label ingin dibuang: `func sapa(_ nama: String)`.
+
+Ada **4 fitur parameter Swift** yang membuat panggilan fleksibel:
+
+| Fitur | Contoh | Efek |
+| --- | --- | --- |
+| Label eksternal | `func sapa(nama: String)` → `sapa(nama: "Sari")` | panggilan terbaca seperti kalimat |
+| Tanpa label | `func sapa(_ nama: String)` → `sapa("Sari")` | lebih ringkas |
+| Nilai bawaan | `func sapa(nama: String = "Teman")` | argumen boleh dihilangkan |
+| Variadic | `func total(_ angka: Int...)` | menerima argumen sebanyak apa pun |
+
+## Nilai Bawaan dan Tuple
+
+```swift
+func kalkulasi(a: Int, b: Int, operator op: String = "+") -> String {
+    let hasil = op == "+" ? a + b : a - b
+    return "\(a) \(op) \(b) = \(hasil)"
+}
+
+func posisi() -> (baris: Int, kolom: Int) {
+    return (baris: 3, kolom: 7)
+}
+
+print(kalkulasi(a: 10, b: 4))
+print(kalkulasi(a: 10, b: 4, operator: "*"))
+print(posisi().baris)
+```
+
+Tuple memungkinkan fungsi mengirim lebih dari satu hasil sekaligus.
+
+## Fungsi sebagai Nilai
+
+Function di Swift adalah tipe biasa: `(Int, Int) -> Int`. Bisa disimpan di variabel, dioper, dan ditulis singkat sebagai closure.
+
+```swift
+func tambah(_ a: Int, _ b: Int) -> Int { a + b }
+
+var operasi: (Int, Int) -> Int = tambah
+print(operasi(2, 3))            // 5
+
+let kuadrat = { (n: Int) -> Int in n * n }
+print(kuadrat(5))               // 25
+```
+
+`in` menandai batas parameter dan badan closure — setelah `in`, tulis logikanya saja.
+
+## Fungsi Bersarang
+
+```swift
+func ringkas(_ nilai: Int) -> String {
+    func label(_ n: Int) -> String {
+        return n > 0 ? "positif" : "nol atau negatif"
+    }
+    return "Angka \(nilai) tergolong \(label(nilai))"
+}
+
+print(ringkas(5))
+```
+
+## Di Dunia Nyata
+
+- **Menghitung total belanja** — `func total(_ harga: [Int]) -> Int` mengemas logika yang dipakai keranjang dan kasir.
+- **Membuat pesan sapaan** — default parameter `nama: String = "Teman"` membuat fungsi tetap berguna tanpa argumen.
+- **Mengembalikan posisi kursor** — tuple `(baris:kolom:)` mengirim dua angka sekaligus dari satu pencarian teks.
+- **Memecah logika rumit** — fungsi bersarang `label(_:)` menyembunyikan pembantu dari pemanggil.
+- **Memformat hasil** — closure `{ n in "Rp\(n)" }` dipassing ke method koleksi seperti `map` untuk menampilkan daftar harga.
+
+<div class="note">💡 Label parameter membuat pemanggilan self-documenting: sapa(nama: "Sari") terbaca jelas tanpa membaca isi fungsi. Beri label yang berarti, jangan sekadar mencerminkan tipe datanya.</div>
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`func tambah(a: Int, b: Int) -> Int {
+    return a + b
+}
+
+func sapa(nama: String = "Teman") -> String {
+    return "Halo, \\(nama)"
+}
+
+func posisi() -> (baris: Int, kolom: Int) {
+    return (baris: 3, kolom: 7)
+}
+
+print(tambah(a: 3, b: 4))
+print(sapa(nama: "Sari"))
+print(sapa())
+print("Baris: \\(posisi().baris)")`} />

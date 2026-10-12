@@ -1,0 +1,163 @@
+---
+title: "ES6+ untuk React"
+description: "const/let, arrow function, template literal, destructuring, dan spread — bahasa sehari-hari React"
+order: 2
+quiz:
+  - q: "Perbedaan utama const, let, dan var adalah…"
+    options: ["var paling aman", "const dan let punya block scope, var tidak", "const tidak bisa diisi nilai", "let hanya untuk angka"]
+    answer: 1
+    explain: "const/let diikat pada kurung kurawal {}, sedangkan var bocor keluar function."
+  - q: "Apa yang terjadi bila nilai const diubah?"
+    options: ["Error di konsol", "Berhasil diam-diam", "Menjadi let otomatis", "Nilai lama dihapus dari memori"]
+    answer: 0
+    explain: "const dilarang di-assign ulang. Isi object/array di dalamnya tetap boleh dimodifikasi."
+  - q: "Arrow function yang mengembalikan object literal harus…"
+    options: ["Ditulis biasa tanpa kurung", "Memakai titik koma di dalam kurung", "Dibungkus kurung, mis. () => ({ a: 1 })", "Menggunakan keyword return dua kali"]
+    answer: 2
+    explain: "Tanpa kurung, kurung kurawal dibaca sebagai blok function, bukan object."
+  - q: "Destructuring const { nama } = user; artinya…"
+    options: ["Membuat object baru bernama user", "Mengambil properti bernama nama dari user", "Menghapus properti nama", "Mengecek tipe data"]
+    answer: 1
+    explain: "Destructuring adalah cara singkat mengeluarkan properti dari object atau elemen dari array."
+  - q: "Spread operator ... pada array berfungsi untuk…"
+    options: ["Menyalin dan menggabungkan elemen", "Menghapus semua elemen", "Membagi angka", "Mengubah tipe data array jadi object"]
+    answer: 0
+    explain: "...[a, b] menyalin elemen. React memakainya untuk update state secara immutable."
+example:
+  code: |
+    const user = { nama: "Sari", peran: "Admin" };
+    const { nama, peran } = user;
+    const baru = { ...user, aktif: true };
+    console.log(nama, peran, baru.aktif);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setiap contoh React modern memakai JavaScript modern. Bab ini memastikan kamu nyaman dengan 7 fitur ES6+ yang muncul berulang di seluruh track React.
+
+## 7 Fitur ES6+ yang Wajib Dikuasai
+
+| Fitur | Contoh singkat | Peran di React |
+|-------|----------------|----------------|
+| `const` / `let` | `const nama = "Sari"` | Deklarasi state, props, konfigurasi |
+| Arrow function | `(a, b) => a + b` | Handler, callback, isi map/filter |
+| Template literal | `` `Halo ${nama}` `` | Teks dinamis, className bersyarat |
+| Destructuring | `const { judul } = props` | Membongkar props & hasil hooks |
+| Spread / rest | `...state` | Update state immutable |
+| Default parameter | `(aktif = true)` | Props dengan nilai bawaan |
+| Modules | `import { useState }` | Impor hook & komponen |
+
+## const dan let
+
+```js
+const judul = "OnBoss"; // tidak boleh di-assign ulang
+let hitung = 0;         // boleh berubah
+hitung = hitung + 1;
+
+for (let i = 0; i < 3; i++) {
+  console.log(i); // i hilang di akhir tiap iterasi
+}
+```
+
+Kebiasaan React: hampir semua deklarasi memakai `const`; `let` hanya saat nilai benar-benar berubah. `var` praktis tidak dipakai lagi karena scope-nya membocor keluar function.
+
+## Arrow Function
+
+```js
+const tambah = (a, b) => a + b;
+const kuadrat = (n) => n * n;
+const sapa = (nama) => `Halo ${nama}`;
+const halo = () => console.log("halo");
+
+// multi baris perlu kurung kurawal + return
+const nilaiTertinggi = (daftar) => {
+  const maks = Math.max(...daftar);
+  return maks;
+};
+```
+
+Arrow function ringkas dan tidak membuat `this` baru — dua alasan React hooks memakainya. Satu jebakan: arrow yang mengembalikan object literal wajib dibungkus kurung, `() => ({ a: 1 })`, karena `{` tanpa kurung dibaca sebagai blok.
+
+## Template Literal
+
+```js
+const nama = "Sari";
+console.log(`Halo, ${nama}!`);
+console.log(`Hasil: ${2 + 3 * 4}`);
+```
+
+Tanda kutip backtick membuat string multi-baris dan interpolasi variabel jadi mudah — sangat sering dipakai di className dinamis, mis. `` className={`kartu ${aktif ? "aktif" : ""}`} ``.
+
+## Destructuring
+
+```js
+const user = { nama: "Budi", umur: 25, kota: "Bandung" };
+const { nama, umur } = user;
+
+const [pertama, kedua] = ["a", "b"];
+
+function sapa({ nama, umur }) {
+  return `${nama} (${umur})`;
+}
+sapa(user);
+```
+
+React hooks punya pola sama: `const [count, setCount] = useState(0);` — destructuring array hasil hook. Props juga hampir selalu dibongkar langsung di parameter.
+
+## Spread dan Rest
+
+```js
+const asli = { judul: "Kartu", aktif: false };
+const disalin = { ...asli, aktif: true }; // immutable update
+const digabung = { ...asli, label: "Baru" };
+
+const angka = [1, 2, 3];
+const ditambah = [...angka, 4, 5];
+
+const jumlah = (...semua) => semua.reduce((a, b) => a + b, 0);
+```
+
+React melarang mutasi state langsung. Pola salin-lalu-ubah dengan spread adalah cara standarnya — baik untuk object maupun array.
+
+## Default Parameter & Modules
+
+```js
+// default parameter — pola props bersifat bawaan
+function sapa2(nama, sapaan = "Kak") {
+  return `${sapaan} ${nama}`;
+}
+
+// modules — cara React membagi file
+import { useState, useEffect } from "react";
+import Kartu from "./Kartu.jsx";
+export default function App() { /* ... */ }
+```
+
+Setiap komponen React adalah modul: `import` untuk memakai, `export default` untuk menyediakan.
+
+## Di Dunia Nyata
+
+- **Update state user**: `{ ...user, nama: "Baru" }` — bukan `user.nama = "Baru"` yang dilarang React.
+- **Menyusun filter produk**: `filter((p) => p.stok > 0)` memakai arrow function langsung di argumen.
+- **Menampilkan nama dari props**: `function Profil({ nama })` — destruktur di parameter, bukan `props.nama` berulang.
+- **className dinamis**: `` `btn ${utama ? "btn-primary" : "btn-ghost"}` `` untuk tombol dua gaya.
+- **Impor komponen lintas file**: `import Navbar from "./components/Navbar"` — satu file satu komponen.
+
+<div class="note">💡 Tanda ... punya dua wajah: spread (menyalin isi array/object) dan rest (mengumpulkan sisa argumen). Di React, spread lebih sering muncul — terutama saat meng-update state array tanpa merusak data lama.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const user = { nama: "Sari", peran: "Admin" };
+const { nama, peran } = user;
+console.log("Destructuring:", nama, "|", peran);
+
+const angka = [1, 2, 3];
+const ditambah = [...angka, 4, 5];
+console.log("Spread array:", ditambah);
+
+const disalin = { ...user, aktif: true };
+console.log("Spread object:", disalin);
+
+const sapa = (u) => "Halo " + u.nama + "!";
+console.log(sapa(user));
+
+const jumlah = (...semua) => semua.reduce((a, b) => a + b, 0);
+console.log("Rest args:", jumlah(10, 20, 30, 40));`} />

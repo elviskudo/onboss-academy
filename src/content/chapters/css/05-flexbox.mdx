@@ -1,0 +1,133 @@
+---
+title: "Flexbox"
+description: "Layout satu dimensi yang fleksibel — align dan distribute elemen"
+order: 5
+quiz:
+  - q: "Property untuk menjadikan elemen kontainer flex adalah…"
+    options: ["display: flex;", "flex: true;", "layout: flex;", "position: flex;"]
+    answer: 0
+    explain: "display: flex; mengaktifkan flex layout pada anak-anaknya (flex items)."
+  - q: "justify-content: center; menyusun item…"
+    options: ["Vertikal tengah", "Horizontal tengah (sumbu utama)", "Acak", "Ke bawah"]
+    answer: 1
+    explain: "justify-content di sumbu utama (row default = horizontal). align-items untuk silang (vertikal)."
+  - q: "Property agar item flex membesar mengisi ruang sisa adalah…"
+    options: ["grow: 1", "flex-grow: 1", "width: 100%", "auto: true"]
+    answer: 1
+    explain: "flex-grow: 1 membuat item ikut membagi ruang kosong kontainer."
+  - q: "flex-direction: column; membuat item tersusun…"
+    options: ["Berjajar horizontal", "Vertikal (turun)", "Dibungkus", "Di tengah"]
+    answer: 1
+    explain: "Default row (horizontal). column = menumpuk ke bawah."
+  - q: "align-items: stretch; adalah nilai default yang…"
+    options: ["Meregangkan item penuh sumbu silang", "Memampatkan item", "Menengahkan item", "Membungkus item"]
+    answer: 0
+    explain: "Stretch membuat item setara tinggi kontainer — inilah kenapa kolom flex otomatis sama tinggi."
+example:
+  code: |
+    <div class="bar">
+      <div class="kotak">1</div>
+      <div class="kotak">2</div>
+      <div class="kotak">3</div>
+    </div>
+    <style>
+      .bar { display: flex; gap: 12px; padding: 16px; background: #EEF0FF; border-radius: 12px; }
+      .kotak { background: #4F46E5; color: white; padding: 24px; border-radius: 8px; font-weight: bold; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Flexbox menyelesaikan 90% kebutuhan layout sehari-hari: navbar, card sejajar, form rapi, footer bawah.
+
+## Dasar
+
+```css
+.container {
+  display: flex;
+  justify-content: space-between; /* sumbu utama */
+  align-items: center;            /* sumbu silang */
+  gap: 16px;
+}
+```
+
+```
+main axis (justify-content)  →
+┌──────────────────────────────┐ ↕ cross (align-items)
+│  [A]      [B]      [C]       │
+└──────────────────────────────┘
+```
+
+## Properti Kontainer
+
+```css
+display: flex;
+flex-direction: row | column;
+flex-wrap: wrap;
+justify-content: flex-start | center | space-between | space-around;
+align-items: stretch | center | flex-start | flex-end;
+align-content: /* saat wrap, jarak antar baris */;
+gap: 12px;
+```
+
+Ada **6 properti kontainer inti** pada contoh di atas: `flex-direction`, `flex-wrap`, `justify-content`, `align-items`, `align-content`, dan `gap` (selain pengaktif `display`).
+
+| Properti | Sumbu/objek | Fungsi | Kapan dipakai |
+|----------|-------------|--------|---------------|
+| `flex-direction` | Utama | Menentukan row/column | Navbar vs stack |
+| `justify-content` | Utama | Distribusi ruang | Kiri-kanan/center |
+| `align-items` | Silang | Alignment satu baris | Center vertikal |
+| `flex-wrap` | Kontainer | Pindah baris saat sempit | Chip/kartu |
+| `gap` | Antara item | Jarak konsisten | Semua layout flex |
+
+## Properti Item
+
+```css
+flex-grow: 1;   /* ikut tumbuh makan ruang sisa */
+flex-shrink: 0; /* tidak boleh menyusut */
+flex-basis: 200px;
+flex: 1 0 200px; /* shorthand grow shrink basis */
+order: 2;       /* ubah urutan tampil */
+```
+
+## Pola Umum
+
+**Kartu sejajar otomatis sama tinggi:**
+
+```css
+.cards { display: flex; gap: 20px; }
+.card  { flex: 1; display: flex; flex-direction: column; }
+```
+
+**Nav kiri-kanan:**
+
+```css
+nav { display: flex; justify-content: space-between; align-items: center; }
+```
+
+## Di Dunia Nyata
+
+- **Navbar** — logo dan menu dipisahkan `space-between`, seluruhnya center vertikal
+- **Kartu harga** — item flex tumbuh sama lebar dan tombol didorong ke bawah
+- **Toolbar editor** — tombol dibungkus dengan `flex-wrap` ketika layar menyempit
+- **Form pencarian** — input `flex: 1` mengambil sisa ruang di samping tombol
+
+<div class="note">💡 `justify-content` selalu mengikuti main axis, bukan selalu horizontal. Begitu `flex-direction: column`, justify menjadi vertikal dan align menjadi horizontal — ini sumber kebingungan flexbox paling umum.</div>
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`.cards { display: flex; gap: 16px; }
+.card {
+  flex: 1;
+  background: white;
+  border: 1px solid #E8E5DF;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card h3 { margin: 0; font-size: 1rem; color: #17181D; }
+.card p { margin: 0; font-size: 0.85rem; color: #6B7280; flex: 1; }
+.card button {
+  background: #4F46E5; color: white; border: none;
+  padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer;
+}`} />

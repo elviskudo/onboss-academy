@@ -1,0 +1,109 @@
+---
+title: "Pengenalan PostgreSQL"
+description: "Database objek-relasional paling canggih dan paling standar-compliant"
+order: 1
+quiz:
+  - q: "PostgreSQL dikenal sebagai database…"
+    options: ["Objek-relasional dengan standar SQL paling ketat", "NoSQL dokumen", "Kolom sederhana", "Hanya untuk analitik"]
+    answer: 0
+    explain: "PostgreSQL (Postgres) menggabungkan relasional klasik dengan fitur objek — JSONB, array, tipe kustom, ekstensi C."
+  - q: "Asal nama PostgreSQL adalah…"
+    options: ["Dari nama pendirinya", "Ingin melanjutkan proyek Ingres", "Post + greSQL", "Posterior SQL"]
+    answer: 1
+    explain: "Postgres awalnya proyek riset Ingres di UC Berkeley; 'Post' = Post-Ingres, lalu jadi PostgreSQL."
+  - q: "Ciri khas PostgreSQL dibanding MySQL klasik adalah…"
+    options: ["Dukungan fitur lanjutan: JSONB, array, CTE rekursif, ekstensi", "Tidak mendukung JOIN", "Hanya jalan di Windows", "Tanpa transaksi"]
+    answer: 0
+    explain: "Postgres unggul pada ekspresivitas: tipe data kaya, ekstensi (PostGIS, pgvector), dan kepatuhan standar."
+  - q: "Klien baris perintah resmi PostgreSQL disebut…"
+    options: ["mysql", "psql", "sqlite3", "sqlplus"]
+    answer: 1
+    explain: "psql menyediakan SQL plus meta-command seperti \\dt (daftar tabel) dan \\d nama_tabel."
+  - q: "PostgreSQL berlisensi…"
+    options: ["Open-source permissive (PostgreSQL License)", "GPL saja", "Proprietary Oracle", "MIT tanpa syarat tambahan"]
+    answer: 3
+    explain: "Lisensinya sangat permisif — bebas dipakai, dimodifikasi, bahkan dijual ulang tanpa syarat viral."
+example:
+  code: |
+    SELECT nama, gaji,
+           gaji * 12 AS gaji_tahunan
+    FROM karyawan
+    WHERE gaji >= 10000000
+    ORDER BY gaji_tahunan DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**PostgreSQL** adalah database objek-relasional yang dipakai untuk sistem yang butuh ketepatan standar dan fitur kaya — dari aplikasi keuangan sampai basis data ilmiah.
+
+## Apa itu PostgreSQL?
+
+PostgreSQL adalah RDBMS open-source yang dikembangkan komunitas global sejak proyek riset **Ingres** di UC Berkeley (1980-an). Ia dikenal sangat **taat standar SQL**, jarang memberi kejutan proprietary, dan menjadi pilihan utama ketika integritas data lebih penting daripada sekadar kecepatan sederhana.
+
+Sekali kamu bisa PostgreSQL, dialect lain terasa sebagai variasi: klausa SELECT, JOIN, GROUP BY, dan subquery di sini persis standar ISO SQL.
+
+## Ciri Objek-Relasional
+
+Selain tabel dan relasional klasik, PostgreSQL mendukung objek: **tipe data kustom**, **JSONB** (JSON terindeks), **array bawaan**, fungsi dengan bahasa berbeda (SQL, PL/pgSQL, Python, JavaScript), bahkan *table inheritance*. Praktisnya, kamu bisa memodelkan data sesulit apa pun tanpa memaksa semuanya jadi string.
+
+Tiga keputusan desain yang membedakan Postgres dari kebanyakan database:
+
+| Ciri | Arti | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| Tipe ketat | Kolom menolak nilai asing, error sebelum data kotor masuk | kolom INTEGER menolak teks | sistem keuangan, data riset |
+| Ekstensi | Fitur baru dipasang tanpa mengubah inti database | PostGIS, pgvector | spasial, AI/vektor |
+| SQL standar | Kueri portabel ke database lain | CTE, window function, JOIN | multi-vendor, migrasi |
+
+## Ekosistem Ekstensi
+
+Keunggulan Postgres ada di ekosistemnya. Empat ekstensi paling sering ditemui di produksi:
+
+| Ekstensi | Fungsi | Kapan dipakai |
+| --- | --- | --- |
+| PostGIS | geometri & spasial | peta, logistik, geocoding |
+| pgvector | pencarian vektor | rekomendasi, RAG AI |
+| pg_stat_statements | statistik query | monitoring & tuning |
+| TimescaleDB | time-series di atas tabel | metrik, IoT, monitoring |
+
+Ekstensi ini dipasang lewat `CREATE EXTENSION` tanpa mengubah skema inti — alasan Postgres dipakai luas di fintech, riset, dan startup AI.
+
+## psql: Klien Resmi
+
+`psql` memadukan eksekusi SQL dengan 6 meta-command backslash yang paling sering dipakai:
+
+```text
+\l                 daftar database
+\c nama_db         pindah database
+\dt                daftar tabel
+\d karyawan        struktur tabel karyawan
+\x                 tampilan geser (expanded) untuk baris lebar
+\q                 keluar
+```
+
+Meta-command hanya dipahami psql; driver aplikasi (libpq, JDBC, psycopg) tidak mengenalnya. Banyak pengembang juga memakai GUI seperti pgAdmin atau DBeaver.
+
+## Postgres vs MySQL vs SQLite
+
+| Database | Karakter | Cocok untuk |
+| --- | --- | --- |
+| PostgreSQL | standar ketat, fitur kaya, objek-relasional | sistem kompleks, keuangan, riset |
+| MySQL | sederhana, web-oriented, sering lebih cepat untuk baca ringan | CMS, aplikasi web CRUD |
+| SQLite | database file tunggal, tanpa server | aplikasi lokal, mobile, demo |
+
+Pilihan yang paling umum: SQLite untuk belajar dan prototipe, MySQL untuk web standar, Postgres ketika model data makin rumit dan integritas tidak bisa ditawar.
+
+## Di Dunia Nyata
+
+- **Ledger transaksi fintech** — setiap perubahan saldo wajib tercatat utuh dan bisa diaudit: transaksi + constraint ketat Postgres menjaga angka tidak pernah setengah jalan.
+- **Basis data geospasial logistik** — PostGIS menghitung rute, radius pengiriman, dan titik terdekat langsung di dalam database, tanpa memindahkan data ke aplikasi.
+- **Katalog produk dengan atribut berubah-ubah** — kolom JSONB menyimpan atribut fleksibel (ukuran, warna) sementara kolom tetap (harga, stok) tetap terindeks rapat.
+- **Pipeline data ilmiah** — array bawaan dan tipe kustom memodelkan deret pengukuran tanpa memaksa semuanya jadi baris-baris kecil.
+- **Layanan AI berbasis vektor** — pgvector menyimpan embedding dokumen sehingga pencarian kemiripan berjalan satu server dengan data utamanya.
+
+<div class="note">💡 Di editor OnBoss, demo Postgres-mu dijalankan di SQLite. SQL standar — SELECT, JOIN, GROUP BY, CTE, window function — dijamin jalan. Sintaks khas Postgres (DISTINCT ON, RETURNING, JSONB) dijelaskan di bab tersendiri dengan padanan demo-nya.</div>
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT nama, jabatan, gaji,
+       gaji * 12 AS gaji_tahunan
+FROM karyawan
+WHERE gaji >= 10000000
+ORDER BY gaji_tahunan DESC;`} />

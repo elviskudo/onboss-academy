@@ -1,0 +1,151 @@
+---
+title: "Praktik Terbaik & Registry"
+description: "Image aman dan efisien di produksi: tagging, registry, scan, dan kebersihan"
+order: 8
+quiz:
+  - q: "Registry Docker berfungsi untuk…"
+    options: ["Menyimpan dan mendistribusikan image (Docker Hub, GHCR, ECR)", "Menyimpan source code", "Monitor server", "Backup volume"]
+    answer: 0
+    explain: "Registry adalah gudang image; docker push/pull berbicara dengannya."
+  - q: "Tag image produksi sebaiknya…"
+    options: ["Selalu :latest", "Versi eksplisit, mis. :1.4.2 atau :1.4", "Nama developer", "Tanggal acak tanpa pola"]
+    answer: 1
+    explain: "latest berpindah isi tanpa pemberitahuan — versi eksplisit membuat deploy bisa direproduksi dan rollback jelas."
+  - q: "Menjalankan container sebagai root di produksi berisiko…"
+    options: ["Container lebih lambat", "Jika container bocor, penyerang mendapat kontrol penuh atas container", "Image jadi besar", "Port tidak terbuka"]
+    answer: 1
+    explain: "Buat user non-root di Dockerfile (instruksi USER) untuk memperkecil dampak kebocoran."
+  - q: "Mencari vulnerability pada image dilakukan dengan…"
+    options: ["docker scan / trivy image", "docker ping", "docker top", "docker stats"]
+    answer: 0
+    explain: "Trivy atau docker scout memindai paket bawaan image terhadap database CVE."
+  - q: "Perintah membersihkan semua yang tidak terpakai (image, container berhenti, network) sekaligus adalah…"
+    options: ["docker system prune -a", "docker clean all", "docker wipe", "docker gc --full"]
+    answer: 0
+    explain: "prune menampilkan daftar yang akan dihapus dan meminta konfirmasi — hemat disk server."
+---
+
+Membangun image yang jalan itu mudah; membangun image yang **aman, kecil, dan bisa dipercaya tim produksi** adalah level berikutnya.
+
+## Docker Hub & Registry Lain
+
+```bash
+docker login                       # Docker Hub
+docker login ghcr.io               # GitHub Container Registry
+docker tag aplikasi:1.0 username/aplikasi:1.0
+docker push username/aplikasi:1.0
+```
+
+Produksi umumnya memakai registry privat: **GHCR** (GitHub), **ECR** (AWS), **GCR/Artifact Registry** (Google), **ACR** (Azure). Pola penamaan konsisten:
+
+```
+registry.example.com/tim/aplikasi:1.4.2
+```
+
+## Tagging yang Bertanggung Jawab
+
+```bash
+docker build -t aplikasi:1.4.2 .
+docker tag aplikasi:1.4.2 aplikasi:1.4
+docker tag aplikasi:1.4.2 aplikasi:latest
+docker push aplikasi:1.4.2
+docker push aplikasi:1.4
+docker push aplikasi:latest
+```
+
+- `1.4.2` — pin pasti, dipakai deploy & rollback
+- `1.4` — channel minor, mengikuti patch terbaru
+- `latest` — convenience saja, jangan jadi satu-satunya sandaran
+
+## Checklist Image Produksi
+
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+USER node                      # jangan root!
+EXPOSE 3000
+HEALTHCHECK --interval=30s CMD wget -qO- http://localhost:3000/health || exit 1
+CMD ["node", "server.js"]
+```
+
+- Base image di-pin (idealnya digest `image@sha256:...`)
+- Non-root user (`USER`)
+- Hanya dependency produksi (`--omit=dev`)
+- Healthcheck untuk orkestrator
+- `.dockerignore` untuk context bersih
+
+## Keamanan: Scan & Update
+
+```bash
+trivy image aplikasi:1.4.2         # scan vulnerability
+docker scout cves aplikasi:1.4.2   # alternatif (Docker Scout)
+```
+
+Jadwalkan rebuild berkala: vulnerability paling sering datang dari **dependency bawaan base image**, bukan kode kamu sendiri.
+
+## Kebersihan Disk
+
+```bash
+docker system df                   # ringkasan pemakaian
+docker system prune -a             # hapus semua yang tidak terpakai
+docker builder prune               # hanya cache build
+```
+
+Di server produksi, tanpa pruning berkala image lama menumpuk sampai disk penuh — salah satu penyebab downtime paling membosankan.
+
+## Empat Tahap Rantai Pasok Image
+
+Ada **4 tahap utama** yang harus dijaga dari source sampai runtime.
+
+| Tahap | Kontrol | Bukti | Risiko yang dikurangi |
+|---|---|---|---|
+| Build | Lockfile, base terpin, build bersih | Log CI | Hasil tidak konsisten |
+| Scan | Pemeriksaan CVE dan secret | Laporan scanner | Dependency rentan |
+| Publish | Registry privat dan hak minimum | Digest image | Push tidak sah |
+| Deploy | Verifikasi digest dan policy | Catatan rilis | Image tertukar |
+
+Login registry dari CI harus memakai token berumur pendek dan hak hanya ke repository tujuan. Jangan menulis password di command history; gunakan mekanisme credential helper atau input standar yang disediakan platform. Registry produksi perlu retention policy, audit log, immutable tag bila tersedia, dan pemindaian otomatis.
+
+## Least Privilege saat Runtime
+
+Selain `USER`, kurangi capability, cegah privilege escalation, gunakan filesystem read-only, dan beri resource limit:
+
+```bash
+docker run -d --name aplikasi \
+  --user 10001:10001 \
+  --read-only --tmpfs /tmp \
+  --cap-drop=ALL --security-opt=no-new-privileges \
+  --memory=512m --cpus=1 \
+  registry.example.com/tim/aplikasi@sha256:DIGEST
+```
+
+Aplikasi yang membutuhkan bind ke port rendah atau capability tertentu harus mendapat tambahan paling kecil, bukan `--privileged`. Secret runtime tidak boleh dipanggang melalui `COPY`, `ARG`, atau `ENV` di Dockerfile; ambil dari secret manager dan rotasi bila bocor.
+
+## Tag, Digest, dan Rollback
+
+Tag mudah dibaca manusia, digest memastikan byte yang dijalankan. Pipeline dapat mempromosikan digest yang sama dari staging ke produksi tanpa rebuild. Simpan pasangan commit, tag, digest, hasil scan, dan waktu deploy. Rollback berarti menunjuk digest lama yang telah diuji, bukan membuat image baru dari source lama dengan dependency yang mungkin sudah berubah.
+
+## Di Dunia Nyata
+
+1. CI menolak image dengan kerentanan kritis yang memiliki patch dan menyimpan laporan sebagai artefak.
+2. Tim mempromosikan digest identik dari staging ke produksi agar pengujian benar-benar mewakili artefak rilis.
+3. Registry privat membatasi developer ke pull, sedangkan hanya service account CI yang boleh push.
+4. Insiden dependency ditangani dengan rebuild base image terpatch, scan ulang, lalu rollout bertahap.
+5. Rollback memakai digest rilis sebelumnya dan diverifikasi lewat healthcheck serta metrik error.
+
+Kebersihan disk tidak boleh membabi buta. Periksa `docker system df`, pastikan image rollback tidak sedang dibutuhkan, dan jangan gunakan `--volumes` tanpa backup. Otomatiskan pruning dengan batas umur dan monitoring kapasitas, bukan menghapus seluruh cache saat disk sudah penuh.
+
+<div class="note">💡 Alur aman satu baris: pin versi base image, build deterministik dengan lockfile, scan sebelum push, deploy dengan tag eksplisit, dan catat digest image yang berjalan di produksi. Rollback kapan pun hanya butuh docker pull digest yang sama.</div>
+
+## Ringkasan Perjalanan Docker
+
+```
+Container vs VM -> Image & Container -> Dockerfile
+-> Layer/Cache/Multi-stage -> Volume & Network -> Compose
+-> Studi kasus -> Registry & best practice (kamu di sini!)
+```
+
+Kamu kini punya fondasi lengkap: dari konsep isolasi sampai distribusi image ke registry tim.

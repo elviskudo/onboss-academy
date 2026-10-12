@@ -1,0 +1,190 @@
+---
+title: "Class & Access Modifier"
+description: "Class modern TypeScript: constructor, modifier, static, dan implements"
+order: 8
+quiz:
+  - q: "private pada properti artinya…"
+    options: ["Bisa diakses siapa saja", "Hanya bisa diakses dari dalam class", "Tidak bisa diakses sama sekali", "Hanya untuk method static"]
+    answer: 1
+    explain: "Di luar class, akses private diblokir kompilator. Gunakan private untuk detail internal."
+  - q: "readonly pada properti…"
+    options: ["Boleh dibaca, tetapi tidak boleh diubah setelah dibuat", "Tidak bisa dibaca", "Bisa diubah dari mana saja", "Membuat properti jadi method"]
+    answer: 0
+    explain: "Cocok untuk ID dan konfigurasi yang memang tidak boleh berubah."
+  - q: "Parameter constructor public nama: string otomatis…"
+    options: ["Membuat variabel global", "Menghapus properti", "Membuat method get", "Membuat properti this.nama sekaligus parameter"]
+    answer: 3
+    explain: "Shorthand parameter property — menulis this.nama = nama tidak diperlukan."
+  - q: "Method static dipanggil melalui…"
+    options: ["Nama class, tanpa new", "Object hasil new", "Konstruktor", "Super class"]
+    answer: 0
+    explain: "Contoh: Math.max(1,2) — static menempel pada class, bukan instance."
+  - q: "implements pada class berfungsi…"
+    options: ["Memaksa class memenuhi kontrak interface", "Mewarisi class lain", "Menghapus class", "Mengubah class jadi object"]
+    answer: 0
+    explain: "implements mengecek bahwa semua properti/method interface tersedia di class."
+example:
+  code: |
+    class Siswa {
+      constructor(public nama: string, private nilai: number) {}
+      lulus(): boolean {
+        return this.nilai >= 70;
+      }
+    }
+    console.log(new Siswa("Sari", 90).lulus());
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Class membungkus data dan perilaku jadi satu unit. TypeScript menambahkan **access modifier** supaya kamu bisa menyembunyikan detail internal.
+
+## 6 Modifier TypeScript
+
+| Modifier | Akses | Kapan dipakai |
+|----------|-------|---------------|
+| `public` | Dari mana saja (default) | API class yang memang untuk luar |
+| `private` | Hanya dalam class | Detail internal: stok, saldi, koneksi |
+| `protected` | Class & turunannya | Kebutuhan subclass |
+| `readonly` | Baca saja setelah konstruktor | ID, konfigurasi |
+| `static` | Menempel di class, bukan instance | Penghitung, helper `Math.max`-style |
+| `?` (opsional) | Boleh `undefined` | Properti yang belum tentu diisi |
+
+Tambah angle-bracket typing: class bisa digenerik — `class Wadah<T> { tambah(item: T) }` — supaya wadah angka dan wadah teks tidak bercampur.
+
+## Class Dasar
+
+```typescript
+class Siswa {
+  nama: string;
+  nilai: number;
+
+  constructor(nama: string, nilai: number) {
+    this.nama = nama;
+    this.nilai = nilai;
+  }
+
+  lulus(): boolean {
+    return this.nilai >= 70;
+  }
+}
+
+const s = new Siswa("Sari", 90);
+console.log(s.nama, s.lulus() ? "LULUS" : "REMED");
+```
+
+## Parameter Property (Shorthand)
+
+```typescript
+class Produk {
+  constructor(public nama: string, public harga: number, private stok: number) {}
+
+  jual(): void {
+    if (this.stok > 0) this.stok--;
+  }
+  sisa(): number { return this.stok; }
+}
+
+const kopi = new Produk("Kopi", 25000, 3);
+kopi.jual();
+console.log(kopi.nama, "sisa stok:", kopi.sisa());
+// kopi.stok = 10; // ✖ private
+```
+
+## Access Modifier
+
+- `public` — bisa diakses dari mana saja (default).
+- `private` — hanya dari dalam class itu sendiri.
+- `protected` — dari class itu dan class turunannya.
+- `readonly` — bisa dibaca, tidak bisa diubah setelah konstruktor.
+
+## static
+
+```typescript
+class Hitung {
+  static jumlah = 0;
+  static tambah(): void { Hitung.jumlah++; }
+}
+
+Hitung.tambah();
+Hitung.tambah();
+console.log("Dibuat:", Hitung.jumlah); // 2
+```
+
+## Extends & implements
+
+```typescript
+class Manusia {
+  constructor(public nama: string) {}
+  sapa(): string { return "Halo, " + this.nama; }
+}
+
+class Programmer extends Manusia {
+  constructor(nama: string, public bahasa: string) {
+    super(nama);
+  }
+  sapa(): string { return super.sapa() + " — " + this.bahasa; }
+}
+
+console.log(new Programmer("Sari", "TypeScript").sapa());
+```
+
+## 4 Pilar OOP di TypeScript
+
+| Pilar | Status | Bukti di kode |
+|-------|--------|---------------|
+| Encapsulation | Kuat | `private`/`protected`/`readonly` + getter-setter |
+| Inheritance | Kuat | `class B extends A`, `super()` |
+| Polymorphism | Kuat | Method sama, isi beda di subclass & `implements` |
+| Abstraction | Kuat | `interface` + `abstract class` (wajib diisi turunan) |
+
+```typescript
+abstract class Bentuk {
+  abstract luas(): number;           // wajib diimplementasi turunan
+  cetak(): string { return "Luas: " + this.luas(); }
+}
+class Persegi extends Bentuk {
+  constructor(private sisi: number) { super(); }
+  luas(): number { return this.sisi * this.sisi; }
+}
+console.log(new Persegi(4).cetak()); // Luas: 16
+```
+
+Kapan OOP vs prosedural? Pakai class saat ada **state yang diubah lewat method** (Kasir, Rekening); pakai fungsi murni saat logikanya input → output (hitung pajak, format tanggal).
+
+## Di Dunia Nyata
+
+- **Model database** (`class User extends Model`) — setiap baris tabel jadi satu instance dengan validasi di constructor.
+- **Service transaksi** menyimpan `private saldo` — luar tidak bisa mengubah angka langsung, hanya lewat `transfer()`.
+- **Pewarisan UI**: `class TombolUtama extends Tombol` menambah gaya tanpa menyalin kode tombol dasar.
+- **`implements interface Kontrak`** memaksa service memenuhi 6 method yang disepakati tim.
+- **Penghitung** `static jumlah` mencatat berapa instance dibuat, seperti `Produk.jumlah`.
+
+<div class="note">💡 TypeScript menghapus class saat kompilasi menjadi fungsi JavaScript biasa. Modifier seperti private dan protected **hanya berlaku saat kompilasi** — di runtime JS lama, tetap bisa diakses lewat bracket notation. Jangan mengandalkannya untuk keamanan.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`class Produk {
+  static jumlah = 0;
+
+  constructor(public nama: string, public harga: number, private stok: number) {
+    Produk.jumlah++;
+  }
+
+  jual(): boolean {
+    if (this.stok <= 0) return false;
+    this.stok--;
+    return true;
+  }
+
+  info(): string {
+    return this.nama + " - Rp" + this.harga + " (stok " + this.stok + ")";
+  }
+}
+
+const kopi = new Produk("Kopi", 25000, 2);
+const teh = new Produk("Teh", 15000, 1);
+
+console.log(kopi.info());
+console.log("Jual kopi:", kopi.jual());
+console.log("Jual kopi lagi:", kopi.jual());
+console.log("Jual kopi lagi:", kopi.jual());
+console.log(teh.info());
+console.log("Total produk terdaftar:", Produk.jumlah);`} />

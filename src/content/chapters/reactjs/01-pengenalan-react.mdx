@@ -1,0 +1,149 @@
+---
+title: "Pengenalan React"
+description: "Library UI dari Meta — komponen, JSX, dan cara berpikir React"
+order: 1
+quiz:
+  - q: "React dirawat dan dirilis oleh…"
+    options: ["Meta (dulu Facebook)", "Google", "Microsoft", "Oracle"]
+    answer: 0
+    explain: "React dibuat tim Facebook pada 2013 dan tetap open source sampai sekarang."
+  - q: "React adalah…"
+    options: ["Bahasa pemrograman baru", "Library UI untuk membangun antarmuka berbasis komponen", "Database untuk web", "Server web"]
+    answer: 1
+    explain: "React hanya menangani lapisan tampilan. Untuk routing atau state global dipakai pustaka tambahan."
+  - q: "JSX adalah kepanjangan dari…"
+    options: ["JSON Syntax Extension", "JavaScript XML", "Java Syntax X", "JS Extra"]
+    answer: 1
+    explain: "JSX = JavaScript XML — sintaks mirip HTML di dalam JavaScript yang dikompilasi menjadi fungsi React."
+  - q: "Model dasar komponen React paling mirip…"
+    options: ["Fungsi yang menerima input dan menghasilkan tampilan", "Tabel database", "File gambar", "Proses sistem operasi"]
+    answer: 0
+    explain: "Komponen = fungsi murni: props masuk, UI keluar. Konsep ini dilatih langsung lewat editor JS di bawah."
+  - q: "Ekstensi file komponen React umumnya…"
+    options: [".jsx atau .tsx", ".rb", ".py", ".php"]
+    answer: 0
+    explain: ".jsx untuk JavaScript, .tsx bila memakai TypeScript."
+example:
+  code: |
+    function Kartu(user) {
+      return user.nama + " — " + user.peran;
+    }
+    const sari = { nama: "Sari", peran: "Admin" };
+    console.log("Halo dari track React!");
+    console.log(Kartu(sari));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+React adalah library JavaScript dari Meta untuk membangun antarmuka berbasis komponen. Ia tidak mereduksi seluruh aplikasi jadi satu file besar — aplikasi dipecah menjadi **komponen-komponen kecil** yang bisa dipakai ulang.
+
+## React vs Alternatif Lain
+
+React bukan satu-satunya pilihan. Bandingkan cepat sebelum memutuskan belajar:
+
+| Pilihan | Bentuk | Routing & state | Karakter |
+|---------|--------|-----------------|----------|
+| **React** | Library UI | Pustaka tambahan (react-router, Redux/Zustand) | Fleksibel, ekosistem terbesar |
+| **Vue** | Framework progresif | Vue Router & Pinia (resmi) | Kurva belajar landai, SFC |
+| **Angular** | Framework lengkap | Router & services bawaan | Opinionated, cocok enterprise |
+| **jQuery** | Library DOM | Tidak ada | Manipulasi DOM manual, era lama |
+
+React hanya menangani **satu hal**: bagaimana tampilan diperbarui saat data berubah.
+
+## 3 Konsep Inti React
+
+Kalau mengingat hanya tiga hal dari bab ini, ingat ini:
+
+1. **Komponen** — UI dipecah jadi potongan kecil (tombol, kartu, navbar) berupa fungsi JavaScript.
+2. **JSX** — menulis tampilan dengan sintaks mirip HTML di dalam JavaScript.
+3. **Declarative** — kamu deskripsikan *tampilan akhir* untuk suatu data; React yang menghitung perubahan DOM. Bandingkan dengan jQuery yang imperative: "cari elemen ini, sisipkan itu".
+
+Dibuat tim Facebook (2013), dipakai Instagram, Netflix, WhatsApp Web, dan ribuan produk lain.
+
+## UI adalah Fungsi dari Data
+
+Inti cara berpikir React: **tampilan = fungsi dari data**.
+
+```jsx
+function Greeting(nama) {
+  return <h1>Halo, {nama}!</h1>;
+}
+```
+
+Ganti `nama`, maka tampilan ikut berubah. Tidak ada kode yang "menyisip" elemen satu per satu — React me-render ulang berdasarkan data terbaru. Pola ini sama dengan fungsi murni biasa: input masuk, output keluar, tanpa kejutan.
+
+## Virtual DOM & Rekonsiliasi
+
+React tidak langsung menyentuh DOM sungguhan setiap kali data berubah. Alurnya:
+
+1. State berubah → React membuat representasi tampilan baru (virtual DOM / fiber).
+2. React **membandingkan** (diff) tampilan baru dengan yang lama.
+3. Hanya **bagian yang benar-benar berbeda** yang ditulis ke DOM sungguhan.
+
+Konsekuensi praktisnya: update murah dan terprediksi. Itulah alasan React minta daftar `key` yang unik saat merender list — supaya perbandingan tiap item akurat.
+
+## Komponen: Fungsi, Bukan Class
+
+React klasik (pre-2019) menulis komponen sebagai class — gaya OOP dengan `this`, `state`, dan lifecycle method. React modern hampir selalu memakai **function component + hooks**:
+
+```jsx
+// Gaya modern — function component
+function Sapa({ nama }) {
+  return <p>Halo {nama}</p>;
+}
+
+// Gaya lama — class component (jarang dipakai sekarang)
+class SapaLama extends React.Component {
+  render() {
+    return <p>Halo {this.props.nama}</p>;
+  }
+}
+```
+
+Kapan class masih perlu? Hanya untuk **error boundary** (penangkap error render) dan membaca kode lama — bukan untuk menulis fitur baru.
+
+## JSX: HTML di Dalam JavaScript
+
+```jsx
+const elemen = <button className="cta">Beli Sekarang</button>;
+```
+
+Tiga aturan JSX yang sering bikin salah paham:
+
+- Attribute HTML kelas ditulis `className`, bukan `class`
+- JSX harus punya satu root; untuk banyak elemen bungkus dengan fragment `<>...</>`
+- Ekspresi JavaScript ditaruh di dalam kurung kurawal `{ }`, mis. `<h2>{judul}</h2>`
+
+JSX hanya sintaks gula. Di balik layar ia berubah jadi pemanggilan fungsi JavaScript biasa (`createElement` / `_jsx`).
+
+## Kenapa React Populer?
+
+- **Komponen**: logika dan tampilan hidup bersama di satu tempat
+- **Ekosistem**: React Native (mobile), Next.js (SSR/routing), jutaan library
+- **Performa**: React hanya memperbarui bagian DOM yang benar-benar berubah
+- **Komunitas**: pencarian kerja frontend terbanyak meminta React
+- **Migrasi mudah**: skill React dipakai juga di React Native dan banyak framework turunan
+
+## Di Dunia Nyata
+
+- **Dashboard admin**: sidebar, header, dan tabel data masing-masing komponen terpisah — ubah satu tidak merusak yang lain.
+- **Keranjang belanja e-commerce**: tombol "Tambah" memperbarui state; daftar item dan total harga dirender ulang otomatis.
+- **Feed sosial (Instagram/LinkedIn)**: satu komponen `Post` dipakai ulang ratusan kali lewat data berbeda.
+- **Form multi-step**: tiap langkah form adalah komponen; navigasi antar langkah = tukar state.
+- **UI mobile**: kode komponen React dipakai ulang di React Native untuk iOS/Android.
+
+<div class="note">💡 Catatan editor OnBoss: pada track React, editor di halaman ini menjalankan JavaScript murni saja — kode JSX tidak dieksekusi di browser kamu. Jadi bab-bab awal berlatih logika JS (ES6, array method, props sebagai argumen, state) yang jadi fondasi React; sintaks React sendiri dipelajari lewat contoh di teks.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`function Kartu(user) {
+  return "[" + user.peran + "] " + user.nama;
+}
+console.log(Kartu({ nama: "Sari", peran: "Admin" }));
+
+function daftar(items) {
+  const baris = [];
+  for (let i = 0; i < items.length; i++) {
+    baris.push((i + 1) + ". " + items[i]);
+  }
+  return baris.join("\\n");
+}
+console.log(daftar(["Pahami props", "Latihan state", "Bangun proyek"]));`} />

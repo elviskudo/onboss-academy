@@ -1,0 +1,177 @@
+---
+title: "Array & Object Methods"
+description: "Method penting: map, filter, reduce, spread, destructuring"
+order: 6
+quiz:
+  - q: "map() menghasilkan…"
+    options: ["Array asli berubah", "Satu nilai agregat", "Array baru berisi hasil transformasi tiap elemen", "Elemen pertama saja"]
+    answer: 2
+    explain: "map meng- transform seluruh elemen → array baru dengan panjang sama."
+  - q: "filter() menyimpan elemen yang…"
+    options: ["Paling kecil", "Mengembalikan true di predicate-nya", "Bertipe string", "Berada di awal"]
+    answer: 1
+    explain: "filter menjalankan fungsi predicate; elemen dengan hasil true dipertahankan."
+  - q: "reduce() dipakai untuk…"
+    options: ["Menghapus data", "Mengurutkan array", "Menyalin array", "Mengubah data jadi satu nilai (jumlah, objek, dst.)"]
+    answer: 3
+    explain: "reduce mengakumulasi: sum, average, group-by, dsb."
+  - q: "Apa itu spread operator (...)?"
+    options: ["Menyalin/menggabungkan elemen secara dangkal", "Membuat array 2D", "Menghapus elemen", "Membagi angka"]
+    answer: 0
+    explain: "...arr menyebar elemen: [...arr1, ...arr2], { ...obj }."
+  - q: "Destructuring const { nama } = orang; berarti…"
+    options: ["Membuat object baru", "Menghapus properti", "Mengambil properti nama dari orang ke variabel nama", "Menyalin seluruh object"]
+    answer: 2
+    explain: "Singkatan dari const nama = orang.nama."
+example:
+  code: |
+    const harga = [10000, 25000, 15000];
+    const total = harga.reduce((a, b) => a + b, 0);
+    console.log("Total:", total);
+    const mahal = harga.filter((h) => h > 12000);
+    console.log("Di atas 12rb:", mahal);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Array (berurutan, diakses dengan index) dan object (berpasangan `kunci: nilai`) adalah dua struktur data utama JavaScript. Array menyediakan **30+ method bawaan**, yang wajib dikuasai dikelompokkan jadi 5 kategori:
+
+| Kategori | Jumlah inti | Anggota | Fungsi |
+|----------|-------------|---------|--------|
+| Mutasi (mengubah asli) | 8 | `push pop shift unshift splice reverse sort fill` | Tambah/hapus/ubah isi array di tempat |
+| Pencarian | 6 | `indexOf includes find findIndex at lastIndexOf` | Cari posisi/nilai |
+| Iterasi | 7 | `forEach map filter reduce some every findLast` | Telusuri & transformasi |
+| Transformasi (array baru) | 4 | `slice concat join flat` | Salin, gabung, ratakan |
+| Lain-lain | 3 | `length flatMap toSorted` | Panjang, map + rata, salinan terurut |
+
+**Mutable vs immutable**: metode mutasi (`push`, `splice`, `sort`) mengubah array asli; metode transformasi (`map`, `filter`, `slice`) menghasilkan array baru dan membiarkan asli utuh. Untuk data yang tidak boleh berubah (state React, konfigurasi), pakai yang immutable.
+
+**Kapan array vs object**: array untuk daftar berurutan yang diiterasi dan diurutkan (`daftarUser`); object untuk entri bernama (`user`, `{ nama, email }`); object vs Map — Map unggul kalau kuncinya dinamis/banyak operasi `set/get` cepat.
+
+## Method Array Wajib
+
+```js
+const angka = [5, 3, 8, 1];
+
+angka.push(9);          // tambah di akhir → [5,3,8,1,9]
+angka.pop();            // hapus akhir
+angka.includes(3);      // true
+angka.indexOf(8);       // 2
+angka.join(", ");       // "5, 3, 8, 1"
+[...angka].sort();      // salinan terurut
+```
+
+## map / filter / reduce
+
+```js
+const produk = [
+  { nama: "Kopi", harga: 20000 },
+  { nama: "Teh", harga: 15000 },
+  { nama: "Jus", harga: 25000 },
+];
+
+const nama = produk.map((p) => p.nama);          // ["Kopi","Teh","Jus"]
+const murah = produk.filter((p) => p.harga < 22000);
+const total = produk.reduce((sum, p) => sum + p.harga, 0);
+```
+
+## chained (Berantai)
+
+```js
+const hasil = produk
+  .filter((p) => p.harga > 15000)
+  .map((p) => p.nama)
+  .join(", ");
+```
+
+## Spread & Rest
+
+```js
+const a = [1, 2];
+const b = [...a, 3, 4];        // [1,2,3,4]
+const user = { ...data, aktif: true };
+
+function jumlah(...angka) {    // rest: kumpulkan sisa argumen
+  return angka.reduce((x, y) => x + y, 0);
+}
+```
+
+## Destructuring
+
+```js
+const orang = { nama: "Sari", umur: 20, kota: "Bandung" };
+const { nama, umur } = orang;
+
+const [x, y] = [10, 20];
+
+function sapa({ nama, umur }) {
+  return `${nama} (${umur})`;
+}
+```
+
+## OOP di JavaScript: Prototype + Class ES6
+
+JavaScript **bukan bahasa berbasis class** secara historis — ia berbasis **prototype**: setiap object punya `[[Prototype]]` (induk) yang diwarisi lewat rantai. Method yang tidak ada di object dicari naik ke induknya sampai `Object.prototype`.
+
+```js
+// Gaya asli JS — deklarasi object literal + prototype
+const hewan = {
+  suara() { return "..."; },
+};
+const kucing = Object.create(hewan); // kucing prototipe-nya hewan
+kucing.nama = "Miu";
+console.log(kucing.suara());   // "..." — diwarisi dari hewan
+console.log(kucing.hasOwnProperty("suara")); // false — bukan miliknya sendiri
+```
+
+Sejak ES6 (2015) JavaScript punya sintaks `class` — **sugar sintaks di atas prototype**, bukan sistem tipe baru:
+
+```js
+class Hewan {
+  constructor(nama) { this.nama = nama; }
+  suara() { return "..."; }
+}
+class Kucing extends Hewan {
+  suara() { return "Meong"; }   // polymorphism
+}
+const k = new Kucing("Miu");
+console.log(k.nama, k.suara()); // "Miu Meong"
+console.log(Kucing.prototype.hasOwnProperty("suara")); // true
+```
+
+Status **4 pilar OOP** di JavaScript:
+
+| Pilar | Status di JS | Cara |
+|-------|--------------|------|
+| Encapsulation | Lemah (sebelum ES2022) | `#privat` atau closure; `private` TS hanya saat kompilasi |
+| Inheritance | Ada | `class B extends A` → prototype chain |
+| Polymorphism | Ada | Method sama, perilaku beda di subclass |
+| Abstraction | Sebagian | Tidak ada `abstract`; tiru dengan class dasar yang mengecualikan diri |
+
+Kapan OOP vs prosedural/functional? Pakai class saat ada **state bersama yang diubah lewat method** (Keranjang, Akun Bank); pakai fungsi murni saat logikanya murni input → output (hitung total, format tanggal). Keduanya sah di JS — React modern bahkan cenderung ke functional.
+
+## Di Dunia Nyata
+
+- **Keranjang belanja**: `push` item baru, `filter` buang yang dibatalkan, `reduce` jadi total bayar.
+- **Daftar pengguna API** di-*map* jadi kartu profil: `users.map(u => u.name)`.
+- **State aplikasi React** wajib immutable — spread `{ ...state, ...payload }`, bukan `state.x = …`.
+- **Model database** seperti `class User extends Model` memakai pewarisan class ES6.
+- **Merge konfigurasi** `({ ...defaultConfig, ...userConfig })` dengan spread object.
+
+<div class="note">💡 `class` di JS bukan bukti JS "berbasis class" — hapus sintaksnya dan yang tersisa tetap prototype chain. Pahami `Object.create` dan `Kucing.prototype`, sekali paham tidak ada lagi "magic" di balik `extends`.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`const transaksi = [
+  { item: "Kopi susu", nominal: 25000 },
+  { item: "Croissant", nominal: 30000 },
+  { item: "Air mineral", nominal: 5000 },
+  { item: "Roti bakar", nominal: 20000 },
+];
+const total = transaksi.reduce((s, t) => s + t.nominal, 0);
+const termahal = transaksi.reduce((m, t) => t.nominal > m.nominal ? t : m);
+const daftar = transaksi
+  .filter((t) => t.nominal >= 20000)
+  .map((t) => \`\${t.item} (Rp\${t.nominal})\`)
+  .join("; ");
+console.log("Total belanja: Rp" + total.toLocaleString("id-ID"));
+console.log("Termahal:", termahal.item);
+console.log("Item ≥ 20rb:", daftar);`} />

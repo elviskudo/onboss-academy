@@ -1,0 +1,168 @@
+---
+title: "Function & Tipe"
+description: "Parameter opsional, nilai default, tipe kembalian, dan function type"
+order: 4
+quiz:
+  - q: "Tanda ? pada parameter fungsi (nama?: string) berarti…"
+    options: ["Parameter itu boleh tidak diisi", "Nilainya selalu null", "Fungsi jadi async", "Nama paramen wajib string"]
+    answer: 0
+    explain: "Parameter opsional bertipe string | undefined — boleh dilewati saat memanggil."
+  - q: "Fungsi yang tidak menulis tipe kembalian biasanya…"
+    options: ["Selalu void", "Tipe kembaliannya di-infer otomatis", "Selalu any", "Error kompilasi"]
+    answer: 1
+    explain: "TS menebal tipe dari nilai yang dikembalikan — hanya beri anotasi kalau ingin memaksa tertentu."
+  - q: "Fungsi dengan return type void dipakai untuk…"
+    options: ["Mengembalikan teks", "Tidak mengembalikan nilai", "Mengembalikan error", "Mengembalikan array"]
+    answer: 1
+    explain: "void biasanya dipakai fungsi yang hanya menjalankan aksi: console.log, render, event handler."
+  - q: "Apa kesalahan pada: function hitung(a: number, b: number) { return a + b } lalu hitung(5)?"
+    options: ["Tipe a salah", "Kurang argumen kedua", "Return type kurang titik koma", "Tidak ada kesalahan"]
+    answer: 1
+    explain: "Parameter b bukan opsional (tanpa ? dan tanpa default), jadi wajib diisi."
+  - q: "Default parameter ditulis dengan…"
+    options: ["nama = nilai", "nama: nilai", "nama ? nilai", "nama -> nilai"]
+    answer: 0
+    explain: "function sapa(nama = \"Tamu\") — nilai dipakai saat argumen tidak dikirim."
+example:
+  code: |
+    function luasPersegi(sisi: number): number {
+      return sisi * sisi;
+    }
+    console.log(luasPersegi(5));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi adalah unit kerja terkecil. Di TypeScript, kamu menjelaskan **apa yang masuk** (parameter) dan **apa yang keluar** (return type).
+
+## 5 Jenis Parameter
+
+| Jenis | Sintaks | Contoh panggilan |
+|-------|---------|------------------|
+| Wajib | `(a: number)` | `f(1)` — salah satu argumen hilang = error |
+| Opsional | `(a?: string)` | `f()` atau `f("x")` |
+| Default | `(a = "x")` | `f()` memakai default |
+| Rest (variadic) | `(...n: number[])` | `f(1, 2, 3)` |
+| Destructuring | `({ nama }: Orang)` | `f({ nama: "Sari" })` |
+
+Urutan wajib: **wajib → opsional/default → rest**. Parameter bertanda `?` bertipe `string | undefined` di dalam fungsi — siapkan diri untuk `undefined`.
+
+## Parameter & Return Type
+
+```typescript
+function tambah(a: number, b: number): number {
+  return a + b;
+}
+
+const kurang = (a: number, b: number): number => a - b;
+
+console.log(tambah(2, 3)); // 5
+console.log(kurang(10, 4)); // 6
+```
+
+Tanpa anotasi, TS menyimpulkan tipe kembalian dari nilai yang benar-benar dikembalikan.
+
+## Parameter Opsional & Default
+
+```typescript
+function sapa(nama: string, gelar?: string): string {
+  return gelar ? "Halo " + gelar + " " + nama : "Halo " + nama;
+}
+
+function salam(nama: string = "Tamu"): string {
+  return "Selamat datang, " + nama;
+}
+
+console.log(sapa("Sari"));            // tanpa gelar
+console.log(sapa("Sari", "Dr."));     // dengan gelar
+console.log(salam());                  // pakai default
+console.log(salam("Budi"));            // default tergantikan
+```
+
+## Rest Parameter
+
+```typescript
+function jumlah(...angka: number[]): number {
+  return angka.reduce((a, b) => a + b, 0);
+}
+
+console.log(jumlah(1, 2, 3, 4)); // 10
+```
+
+## Function Type sebagai Tipe
+
+```typescript
+function terapkan(fn: (x: number) => number, nilai: number): number {
+  return fn(nilai);
+}
+
+const kuadrat = (n: number): number => n * n;
+
+console.log(terapkan(kuadrat, 5)); // 25
+```
+
+Nilai berupa fungsi bisa disimpan di variabel dan dikirim sebagai argumen — inilah dasar callback dan event handler.
+
+## void vs undefined
+
+```typescript
+function logPesan(pesan: string): void {
+  console.log(">", pesan);
+}
+```
+
+Fungsi yang hanya mencetak tanpa mengembalikan apa pun diberi tipe `void`.
+
+| Return type | Arti | Contoh |
+|-------------|------|--------|
+| `number` | Mengembalikan nilai | `(a, b) => a + b` |
+| `void` | Tidak mengembalikan nilai | fungsi log, render, event handler |
+| `never` | Tidak pernah selesai | fungsi yang selalu `throw` |
+| infer (ditulis kosong) | TS menyimpulkan sendiri | `(a) => a * 2` → `number` |
+
+## Function Overload (Khusus TS)
+
+```typescript
+function panjang(v: string): number;
+function panjang(v: number[]): number;
+function panjang(v: string | number[]): number {
+  return v.length;
+}
+
+console.log(panjang("Halo"));   // 3
+console.log(panjang([1, 2]));   // 2
+```
+
+Beberapa **signature publik** di atas, satu **implementasi** di bawahnya — berguna kalau tipe kembalian berbeda tergantung bentuk argumen.
+
+## Di Dunia Nyata
+
+- **`hitungDiskon(harga, persen = 0)`** dipanggil keranjang dan halaman produk — default menghapus if-else basa-basi.
+- **Formatter `formatRupiah(n): string`** dipakai ulang di 12 tempat; kalau ada yang mengembalikan angka, kompilator menolak.
+- **Callback event** `(e: Event) => void` menjamin handler tidak mengembalikan nilai yang membingungkan.
+- **API client `get<T>(url): Promise<T>`** — satu fungsi, tipe keluar mengikuti pemanggil.
+- **Parser input** memberi overload `parse(v: string): object` vs `parse(v: Buffer): object`.
+
+<div class="note">💡 Jangan beri return type `any` seenaknya — satu-satunya jalan pintas yang menghapus semua manfaat tipe. Biarkan TS menyimpulkan, atau tulis tipe yang spesifik.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`function luasPersegi(sisi: number): number {
+  return sisi * sisi;
+}
+
+function sapa(nama: string, gelar?: string): string {
+  return gelar ? "Halo " + gelar + " " + nama : "Halo " + nama;
+}
+
+function jumlah(...angka: number[]): number {
+  return angka.reduce((a, b) => a + b, 0);
+}
+
+function terapkan(fn: (x: number) => number, nilai: number): number {
+  return fn(nilai);
+}
+
+console.log("Luas:", luasPersegi(5));
+console.log(sapa("Sari"));
+console.log(sapa("Sari", "Dr."));
+console.log("Jumlah:", jumlah(1, 2, 3, 4, 5));
+console.log("Kuadrat 6:", terapkan((n) => n * n, 6));`} />

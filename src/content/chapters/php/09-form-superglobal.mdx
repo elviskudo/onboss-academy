@@ -1,0 +1,169 @@
+---
+title: "Form & Superglobal"
+description: "9 superglobal PHP, 5 langkah validasi input, dan pertahanan XSS/SQL injection"
+order: 9
+quiz:
+  - q: "Berapa jumlah superglobal bawaan PHP?"
+    options: ["4", "6", "9", "12"]
+    answer: 2
+    explain: "$_GET, $_POST, $_REQUEST, $_SERVER, $_SESSION, $_COOKIE, $_FILES, $_ENV, dan $GLOBALS."
+  - q: "Data dari URL ?nama=Sari masuk ke…"
+    options: ["$_POST['nama']", "$_GET['nama']", "$_SERVER['nama']", "$_COOKIE['nama']"]
+    answer: 1
+    explain: "Query string dibaca lewat superglobal $_GET dengan nama parameter sebagai kunci."
+  - q: "Atribut pada elemen form yang menentukan kunci di $_POST adalah…"
+    options: ["id", "value", "name", "class"]
+    answer: 2
+    explain: "Tanpa atribut name, input tidak ikut terkirim — id hanya untuk CSS/JS di sisi klien."
+  - q: "fungsi htmlspecialchars() dipakai untuk…"
+    options: ["Menetralkan karakter HTML saat teks user ditampilkan", "Menghapus file", "Mengubah teks jadi angka", "Mengirim email"]
+    answer: 0
+    explain: "< jadi &lt; — teks tampil sebagai teks, bukan dieksekusi browser sebagai tag."
+  - q: "Membaca nilai form numerik paling aman dengan…"
+    options: ["(int) $_POST['qty'] langsung", "filter_var($_POST['qty'] ?? 0, FILTER_VALIDATE_INT)", "echo $_POST['qty']", "string concatenation"]
+    answer: 1
+    explain: "filter_var menolak nilai yang bukan angka sama sekali, bukan sekadar memotong."
+example:
+  code: |
+    <?php
+    $nama = isset($_POST["nama"]) ? trim($_POST["nama"]) : "";
+    if ($nama === "") {
+        echo "Nama wajib diisi";
+    } else {
+        echo "Halo, " . htmlspecialchars($nama);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Formulir adalah pintu masuk data user ke aplikasi PHP. Di sinilah kamu berhadapan dengan **superglobal** — variabel bawaan PHP yang selalu tersedia di seluruh scope, sekaligus sumber utama celah keamanan bila dipercaya mentah-mentah.
+
+## $_GET dan $_POST
+
+```php
+<?php
+// URL: pencarian.php?kopi=kopi%20susu
+$kopi = $_GET["kopi"] ?? "";           // "kopi susu"
+
+// form dengan method="post"
+$nama = $_POST["nama"] ?? "";
+$umur = $_POST["umur"] ?? 0;
+```
+
+Operator `??` (null coalescing) mencegah notice saat kunci tidak ada.
+
+| Metode | Data dikirim | Cocok untuk |
+| --- | --- | --- |
+| `GET` | Di URL (query string) | Pencarian, filter, pagination — bisa dibookmark |
+| `POST` | Di badan request | Data sensitif & mengubah status: login, pembayaran |
+
+## Form HTML ke PHP
+
+```html
+<form method="post" action="proses.php">
+  <input type="text" name="nama" />
+  <input type="number" name="umur" />
+  <button type="submit">Kirim</button>
+</form>
+```
+
+Nama atribut `name` menjadi kunci di `$_POST` — tanpa `name`, data tidak terkirim sama sekali.
+
+## 9 Superglobal
+
+| # | Superglobal | Isi | Kapan dipakai |
+| --- | --- | --- | --- |
+| 1 | `$_GET` | Parameter query string | Pencarian, link pagination |
+| 2 | `$_POST` | Isi form bermetode POST | Login, registrasi, checkout |
+| 3 | `$_REQUEST` | Gabungan GET + POST + COOKIE | **Hindari** untuk aksi penting |
+| 4 | `$_SERVER` | Info request & lingkungan server | Metode, IP, path, user-agent |
+| 5 | `$_SESSION` | Data per sesi user | Keranjang, status login |
+| 6 | `$_COOKIE` | Cookie dari browser | Preferensi, token ingat saya |
+| 7 | `$_FILES` | Metadata unggahan | Upload foto/dokumen |
+| 8 | `$_ENV` | Variabel lingkungan | Kunci API dari konfigurasi server |
+| 9 | `$GLOBALS` | Semua variabel global | Scope global — hindari |
+
+```php
+<?php
+echo $_SERVER["REQUEST_METHOD"];   // GET atau POST
+echo $_SERVER["REMOTE_ADDR"];      // IP pengunjung
+echo $_SERVER["HTTP_USER_AGENT"];  // browser pengunjung
+```
+
+## 5 Langkah Validasi & Sanitasi
+
+```php
+<?php
+$nama  = trim($_POST["nama"] ?? "");                 // 1. rapikan
+$umur  = (int) ($_POST["umur"] ?? 0);                // 3. cast tipe
+$email = filter_var($_POST["email"] ?? "", FILTER_VALIDATE_EMAIL); // 4. validasi format
+
+if ($nama === "") {                                  // 2. cek kosong
+    $error = "Nama wajib diisi";
+} elseif ($umur < 1 || $umur > 120) {                // 4. validasi rentang
+    $error = "Umur tidak valid";
+} elseif ($email === false) {
+    $error = "Email tidak valid";
+} else {
+    $aman = htmlspecialchars($nama, ENT_QUOTES, "UTF-8"); // 5. escape saat tampil
+    echo "Selamat datang, $aman";
+}
+```
+
+Urutan emas: **trim → cek kosong → cast/validate → cek rentang → escape saat ditampilkan**.
+
+## 3 Ancaman yang Dicegah
+
+| Ancaman | Celah | Pertahanan |
+| --- | --- | --- |
+| SQL injection | String disisipkan ke query | Prepared statement PDO, bukan konkat query |
+| XSS | Teks user ditampilkan mentah | `htmlspecialchars()` saat render |
+| Unggahan berbahaya | Nama & isi file dipercaya | Cek ukuran, ekstensi, `is_uploaded_file()` |
+
+```php
+<?php
+// aman — data dikirim terpisah dari struktur query
+$stmt = $pdo->prepare("SELECT * FROM user WHERE email = :email");
+$stmt->execute(["email" => $email]);
+$user = $stmt->fetch();
+```
+
+## Di Dunia Nyata
+
+- **Form login**: `$_POST` + `password_verify()` — tanpa validasi, kolom jadi pintu brute-force.
+- **Pencarian katalog**: `$_GET["q"]` sehingga hasil bisa dibagikan lewat URL dan tombol back browser.
+- **Keranjang belanja**: id produk disimpan di `$_SESSION`, bukan dikirim ulang tiap request.
+- **Unggahan foto profil**: periksa `$_FILES["avatar"]["size"] < 2MB` dan ekstensi gambar sebelum dipindahkan.
+- **Halaman admin**: cek `$_SESSION["peran"] === "admin"` — kalau hanya menyembunyikan tombol di HTML, pengguna bisa mengakses URL langsung.
+
+<div class="note">💡 `$_REQUEST` menggabungkan `$_GET`, `$_POST`, dan `$_COOKIE` — kamu tidak pernah tahu datanya datang dari mana, dan cookie bisa diubah pengguna. Untuk aksi penting (hapus data, ganti password), baca superglobal yang sesuai metode form secara eksplisit.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+// Simulasi data form yang dikirim user (tanpa server web)
+$_POST = [
+    "nama" => "  Sari <script>alert(1)</script>  ",
+    "umur" => "20",
+    "email" => "sari@mail.com",
+];
+
+$nama = trim($_POST["nama"] ?? "");
+$umur = (int) ($_POST["umur"] ?? 0);
+$email = filter_var($_POST["email"] ?? "", FILTER_VALIDATE_EMAIL);
+
+$errors = [];
+if ($nama === "") $errors[] = "Nama wajib diisi";
+if ($umur < 1 || $umur > 120) $errors[] = "Umur tidak valid";
+if ($email === false) $errors[] = "Email tidak valid";
+
+if ($errors) {
+    echo "Form tidak valid:\\n";
+    foreach ($errors as $e) echo " - $e\\n";
+} else {
+    $aman = htmlspecialchars($nama, ENT_QUOTES, "UTF-8");
+    echo "Selamat datang, $aman\\n";
+    echo "Umur: $umur\\n";
+    echo "Email: $email\\n";
+}
+
+echo "Jumlah superglobal: 9\\n";
+echo "Metode: " . ($_SERVER["REQUEST_METHOD"] ?? "(CLI)") . "\\n";`} />

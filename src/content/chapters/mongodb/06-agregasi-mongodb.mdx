@@ -1,0 +1,141 @@
+---
+title: "Agregasi MongoDB"
+description: "Aggregation pipeline — $match, $group, $sort, $project untuk analisis data dokumen"
+order: 6
+quiz:
+  - q: "Aggregation pipeline bekerja dengan cara…"
+    options: ["Menjalankan query SQL penuh", "Melewatkan dokumen berantai tahap (stage) transformasi", "Menghapus data duplikat saja", "Menjalankan JavaScript acak"]
+    answer: 1
+    explain: "Dokumen mengalir dari stage ke stage: $match memfilter, $group mengelompokkan, $sort mengurutkan, dst."
+  - q: "Stage untuk mengelompokkan dokumen mirip GROUP BY adalah…"
+    options: ["$filter", "$group", "$lookup", "$unwind"]
+    answer: 1
+    explain: "$group: { _id: \"$kategori\", total: { $sum: \"$harga\" } } — _id adalah kunci kelompok."
+  - q: "Pada $group, menjumlahkan field ditulis…"
+    options: ["{ total: 1 }", "{ total: { $sum: \"$harga\" } }", "{ total: SUM(harga) }", "{ total: { amount: harga } }"]
+    answer: 1
+    explain: "Tanda $ di depan nama field mengambil nilai field tiap dokumen; $sum adalah akumulator."
+  - q: "Stage $unwind pada field array berfungsi…"
+    options: ["Menghapus array", "Memecah array menjadi satu dokumen per elemen", "Menggabungkan dokumen", "Mengurutkan array"]
+    answer: 1
+    explain: "Setelah $unwind, tiap elemen tags menjadi dokumen tersendiri — memudahkan hitung frekuensi per elemen."
+  - q: "Urutan $match di awal pipeline daripada $group menguntungkan karena…"
+    options: ["Pipeline jadi lebih pendek — dokumen lebih sedikit diproses tahap berat", "Lebih banyak memori", "Menghindari error", "Wajib aturan MongoDB"]
+    answer: 0
+    explain: "Prinsip pipeline: filter sesegera mungkin, seperti WHERE sebelum GROUP BY pada SQL."
+example:
+  code: |
+    db.pesanan.aggregate([
+      { $match: { status: "lunas" } },
+      { $group: {
+          _id: "$kota",
+          totalPenjualan: { $sum: "$total" },
+          jumlahPesanan: { $sum: 1 }
+      } },
+      { $sort: { totalPenjualan: -1 } }
+    ])
+---
+
+Saat pertanyaan analitik tidak bisa dijawab `find()` biasa, MongoDB punya **aggregation pipeline** — konsepnya mirip GROUP BY SQL, tapi berantai dan kaya operator.
+
+## Apa itu Aggregation Pipeline?
+
+Pipeline melewatkan dokumen melalui stage berurutan; output satu stage menjadi input stage berikutnya. Delapan stage pondasi mencakup sebagian besar kebutuhan aplikasi:
+
+| Stage | Fungsi | Contoh penggunaan | Kapan dipakai |
+| --- | --- | --- | --- |
+| `$match` | menyaring dokumen | status lunas | sedini mungkin |
+| `$project` | memilih/membentuk field | sembunyikan `_id` | bentuk respons |
+| `$set` / `$addFields` | menambah field hitungan | pajak = total × 11% | nilai turunan |
+| `$group` | mengelompokkan + akumulator | omzet per kota | ringkasan |
+| `$sort` | mengurutkan | omzet menurun | ranking |
+| `$limit` | membatasi hasil | top 5 | dashboard/paginasi |
+| `$unwind` | memecah array | satu baris per tag | analisis array |
+| `$lookup` | menggabungkan koleksi | pesanan + pelanggan | data reference |
+
+`$set` adalah alias `$addFields`; keduanya dihitung sebagai satu fungsi stage di daftar delapan ini.
+
+## Anatomi Pipeline
+
+```javascript
+db.pesanan.aggregate([
+  { $match: { status: "lunas" } },
+  { $group: {
+      _id: "$kota",
+      totalPenjualan: { $sum: "$total" }
+  } },
+  { $sort: { totalPenjualan: -1 } },
+  { $limit: 5 }
+])
+```
+
+Setiap tahap adalah objek. `$match` menyaring, `$group` mengelompokkan dengan `_id` sebagai kunci, `$sort` dan `$limit` merapikan hasil — persis urutan logis pertanyaan bisnis.
+
+## Akumulator Populer
+
+```javascript
+db.nilai.aggregate([
+  { $group: {
+      _id: null,
+      rata: { $avg: "$skor" },
+      tertinggi: { $max: "$skor" },
+      terendah: { $min: "$skor" },
+      banyak: { $sum: 1 }
+  } }
+])
+```
+
+`$avg`, `$sum`, `$min`, `$max`, `$push` (kumpulkan ke array), dan `$addToSet` (kumpulkan unik). `_id: null` menggabungkan semua dokumen jadi satu baris hasil.
+
+## $unwind dan Hitung Frekuensi
+
+```javascript
+db.artikel.aggregate([
+  { $unwind: "$tags" },
+  { $group: { _id: "$tags", jumlah: { $sum: 1 } } },
+  { $sort: { jumlah: -1 } }
+])
+```
+
+`$unwind` melebarkan array menjadi banyak dokumen — pola standar untuk menghitung kemunculan tiap elemen array (tag populer, produk sering dibeli, dst.).
+
+## $project, $addFields, dan Lookup
+
+```javascript
+db.pesanan.aggregate([
+  { $match: { status: "lunas" } },
+  { $addFields: { pajak: { $multiply: ["$total", 0.11] } } },
+  { $project: { kota: 1, total: 1, pajak: 1, _id: 0 } },
+  { $lookup: {
+      from: "pelanggan",
+      localField: "pelangganId",
+      foreignField: "_id",
+      as: "pelanggan"
+  } }
+])
+```
+
+`$addFields` menambah field hitungan, `$project` memilih/membentuk ulang, `$lookup` = LEFT JOIN ke koleksi lain — berguna saat data direferensikan.
+
+## Enam Akumulator Utama
+
+| Akumulator | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| `$sum` | total atau jumlah (`$sum: 1`) | omzet, hitungan |
+| `$avg` | rata-rata | nilai/skor |
+| `$min` | nilai terendah | harga minimum |
+| `$max` | nilai tertinggi | puncak transaksi |
+| `$push` | array semua nilai | daftar anggota |
+| `$addToSet` | array nilai unik | kategori/tag unik |
+
+Akumulator bekerja di `$group`; ekspresi seperti `$multiply` dan `$cond` bekerja per dokumen di `$project`/`$set` atau di dalam akumulator.
+
+## Di Dunia Nyata
+
+- **Omzet per kota** — `$match` transaksi lunas, `$group` kota, `$sort` total membentuk laporan penjualan.
+- **Produk terlaris** — `$unwind` item pesanan lalu `$group` SKU menghitung kuantitas lintas semua pesanan.
+- **Detail pesanan** — `$lookup` mengisi referensi pelanggan saat laporan butuh nama/email lengkap.
+- **Retensi pelanggan** — `$group` per pelanggan dengan `$min/$max` tanggal mengukur transaksi pertama dan terakhir.
+- **Tag populer** — `$unwind` tags + `$sum: 1` menghitung frekuensi tanpa memindahkan array ke aplikasi.
+
+<div class="note">💡 Stage pemblokir seperti `$sort` dan `$group` dapat memakai memori besar. Filter dengan `$match` sedini mungkin, dukung `$match/$sort` dengan index, lalu aktifkan `allowDiskUse` hanya bila pipeline memang melebihi batas memori server.</div>

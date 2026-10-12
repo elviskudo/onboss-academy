@@ -1,0 +1,134 @@
+---
+title: "API & Deploy"
+description: "Membangun API JSON dengan Rails lalu membawanya ke server publik"
+order: 8
+quiz:
+  - q: "Rails mode API dibuat dengan perintah…"
+    options: ["rails api create", "rails new nama --api", "gem install rails api", "rails init --json"]
+    answer: 1
+    explain: "Flag --api membuat aplikasi tanpa aset dan session bawaan HTML."
+  - q: "Metode umum untuk merespons JSON di Rails adalah…"
+    options: ["render json:", "send_html", "echo_json", "return body"]
+    answer: 0
+    explain: "render json: @products mengubah objek menjadi JSON otomatis."
+  - q: "Endpoint REST untuk membuat data biasanya memakai metode HTTP…"
+    options: ["GET", "HEAD", "POST", "TRACE"]
+    answer: 2
+    explain: "GET membaca, POST membuat, PATCH mengubah, DELETE menghapus."
+  - q: "Perintah merilis aplikasi ke server produksi umumnya diawali…"
+    options: ["rails stop", "rails db:migrate RAILS_ENV=production", "gem push", "rails new deploy"]
+    answer: 1
+    explain: "Skema produksi harus dimigrasikan dengan environment production."
+  - q: "Secret key Rails sebaiknya…"
+    options: ["Disimpan di environment variable", "Ditulis di repo publik", "Dibagikan ke user", "Dihapus total"]
+    answer: 0
+    explain: "Kunci rahasia tidak boleh masuk ke version control."
+example:
+  code: |
+    class Api::ProductsController < ApplicationController
+      def index
+        render json: Product.all.select(:id, :name, :price)
+      end
+
+      def create
+        product = Product.new(product_params)
+        if product.save
+          render json: product, status: :created
+        else
+          render json: { errors: product.errors }, status: :unprocessable_entity
+        end
+      end
+    end
+---
+
+Banyak aplikasi Rails berjalan sebagai API yang dilayani aplikasi mobile atau frontend terpisah.
+
+## Membuat Aplikasi API
+
+```bash
+rails new toko_api --api
+cd toko_api
+```
+
+Mode API membuang session, cookie, dan helper aset — cukup untuk JSON.
+
+## Controller JSON
+
+```ruby
+class Api::ProductsController < ApplicationController
+  def index
+    render json: Product.all
+  end
+
+  def show
+    render json: Product.find(params[:id])
+  end
+end
+```
+
+`render json:` mengubah objek Ruby menjadi JSON dengan header yang tepat.
+
+## Status HTTP yang Benar
+
+```ruby
+# 200 OK           data ditemukan
+# 201 Created      data berhasil dibuat
+# 404 Not Found    id tidak ada
+# 422 Unprocessable Entity  data gagal validasi
+```
+
+Kode status membuat klien tahu persis apa yang terjadi.
+
+## Rute Bertingkat
+
+```ruby
+namespace :api do
+  namespace :v1 do
+    resources :products, only: [:index, :show, :create]
+  end
+end
+```
+
+Versi API di URL (`/api/v1/`) memudahkan perubahan di kemudian hari.
+
+## Menuju Produksi
+
+```bash
+RAILS_ENV=production bundle install
+RAILS_ENV=production rails db:migrate
+RAILS_ENV=production rails assets:precompile
+rails server -e production
+```
+
+## Kontrak API
+
+API REST memakai **5 verb utama**: GET, POST, PATCH, PUT, dan DELETE. Respons perlu body terstruktur, status HTTP tepat, serta error yang konsisten.
+
+| Status | Arti | Respons | Kapan dipakai |
+|---:|---|---|---|
+| 200 | berhasil | data JSON | read/update |
+| 201 | dibuat | resource baru | create |
+| 204 | tanpa body | kosong | delete berhasil |
+| 404 | tidak ditemukan | error | ID tidak ada |
+| 422 | validasi gagal | daftar error | input tidak valid |
+
+Batasi field dengan serializer atau `as_json(only:)`; jangan mengirim token, digest password, atau kolom internal. Autentikasi membuktikan identitas, sedangkan otorisasi menentukan resource yang boleh diakses. Terapkan pagination pada collection dan versioning hanya ketika kontrak publik memang perlu berubah tidak kompatibel.
+
+## Deploy Modern
+
+Deploy minimum memiliki **6 kebutuhan**: image/runtime reproducible, database produksi, secrets, migrasi, health check, dan observability. Jalankan proses web di belakang TLS/reverse proxy, background worker terpisah, serta backup database yang diuji restore-nya. `assets:precompile` hanya relevan bila aplikasi menyajikan aset; API-only murni biasanya tidak membutuhkannya.
+
+## Di Dunia Nyata
+
+- Mobile app memakai endpoint versi stabil dan pagination cursor.
+- Health check mencegah instance belum siap menerima traffic.
+- Rolling deploy menjaga versi lama aktif sampai instance baru sehat.
+- Log terstruktur dan error tracking mempercepat diagnosis kegagalan produksi.
+
+## Operasi Produksi
+
+Sebelum menerima traffic, proses release menjalankan migrasi satu kali, bukan dari setiap web instance. Perubahan database harus kompatibel dengan versi lama dan baru selama rolling deploy: tambahkan kolom dahulu, deploy kode yang memakainya, lalu hapus kolom lama pada release berikutnya. Strategi bertahap ini menghindari instance lama membaca skema yang sudah tidak cocok.
+
+Tetapkan timeout request, batas ukuran body, rate limit, dan pool koneksi berdasarkan kapasitas nyata. Health check liveness menjawab apakah proses hidup, sedangkan readiness memastikan dependency penting siap. Jangan memasukkan query berat ke health check karena pemeriksaan sering dapat membebani database. Simpan log ke stdout, sertakan request ID, pantau latency serta error rate, dan siapkan rollback aplikasi. Backup baru bernilai setelah proses restore pernah diuji.
+
+<div class="note">💡 Jangan pernah menyimpan kunci rahasia dan kredensial database di dalam repo. Simpan sebagai environment variable di server — itu perbedaan antara aplikasi aman dan kebocoran data.</div>

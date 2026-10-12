@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import LanguageCard from '../components/LanguageCard.astro';
+import { LANGUAGES } from '../data/languages';
+
+const popular = LANGUAGES.filter((l) => l.popular);
+const total = LANGUAGES.length;
+---
+<Base>
+  <!-- Hero -->
+  <section class="relative overflow-hidden border-b border-line">
+    <div class="pointer-events-none absolute inset-0">
+      <div class="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/10 blur-3xl"></div>
+      <div class="absolute -right-20 top-20 h-80 w-80 rounded-full bg-warn/10 blur-3xl"></div>
+    </div>
+    <div class="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
+      <div>
+        <span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-soft px-4 py-1.5 text-xs font-bold text-primary-dark">
+          🎓 {total}+ teknologi · GRATIS selamanya
+        </span>
+        <h1 class="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+          Belajar coding dari <span class="text-primary">nol sampai mahir</span> — langsung praktik
+        </h1>
+        <p class="mt-6 max-w-xl text-lg leading-8 text-muted">
+          Materi ringkas berbahasa Indonesia, editor <strong class="text-ink">Coba Contoh</strong> yang bisa langsung dijalankan, kuis per bab, dan sertifikat resmi. Tanpa video, tanpa ribet.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/belajar/html" class="rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-dark">Mulai dari HTML →</a>
+          <a href="/register" class="rounded-xl border border-line bg-surface px-6 py-3.5 text-sm font-bold text-ink hover:border-ink/30">Daftar Gratis</a>
+        </div>
+        <div class="mt-10 flex flex-wrap gap-8 text-sm">
+          <div><p class="text-2xl font-extrabold">{total}+</p><p class="text-muted">Bahasa & teknologi</p></div>
+          <div><p class="text-2xl font-extrabold">300+</p><p class="text-muted">Halaman materi</p></div>
+          <div><p class="text-2xl font-extrabold">1.500+</p><p class="text-muted">Soal kuis</p></div>
+        </div>
+      </div>
+      <div class="relative hidden lg:block">
+        <div class="rounded-3xl border border-line bg-surface p-6 shadow-2xl shadow-primary/10">
+          <div class="flex items-center gap-1.5 border-b border-line pb-4">
+            <span class="h-3 w-3 rounded-full bg-[#FF5F57]"></span>
+            <span class="h-3 w-3 rounded-full bg-[#FEBC2E]"></span>
+            <span class="h-3 w-3 rounded-full bg-[#28C840]"></span>
+            <span class="ml-3 text-xs font-semibold text-muted">coba-contoh.py</span>
+          </div>
+          <pre class="mt-4 overflow-x-auto rounded-xl bg-[#1E1E2E] p-5 font-mono text-[13px] leading-6 text-[#E2E8F0]"><code><span class="text-[#C792EA]">def</span> <span class="text-[#82AAFF]">sapa</span>(nama):
+    <span class="text-[#C3E88D]">return</span> <span class="text-[#FFCB6B]">f"Halo, {'{nama}'}! Selamat belajar 🎉"</span>
+
+<span class="text-[#C792EA]">for</span> teman <span class="text-[#C792EA]">in</span> [<span class="text-[#FFCB6B]">"Sari"</span>, <span class="text-[#FFCB6B]">"Budi"</span>, <span class="text-[#FFCB6B]">"Rina"</span>]:
+    <span class="text-[#82AAFF]">print</span>(sapa(teman))</code></pre>
+          <div class="mt-4 rounded-xl bg-[#10B981]/10 p-4 font-mono text-[13px] leading-6 text-[#065F46]">
+            <span class="font-sans text-xs font-bold uppercase text-success">Output</span><br/>
+            Halo, Sari! Selamat belajar 🎉<br/>
+            Halo, Budi! Selamat belajar 🎉<br/>
+            Halo, Rina! Selamat belajar 🎉
+          </div>
+        </div>
+        <div class="absolute -bottom-6 -left-6 rounded-2xl border border-line bg-surface px-5 py-4 shadow-xl">
+          <p class="text-xs text-muted">Skor kuis Bab 1</p>
+          <p class="text-xl font-extrabold text-success">100% 🎉</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Populer -->
+  <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+    <div class="flex items-end justify-between">
+      <div>
+        <h2 class="text-2xl font-extrabold tracking-tight sm:text-3xl"> jalur populer </h2>
+        <p class="mt-2 text-muted">Pilih teknologi yang paling banyak dipelajari</p>
+      </div>
+      <a href="/belajar" class="hidden text-sm font-bold text-primary hover:underline sm:block">Lihat semua →</a>
+    </div>
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {popular.map((lang) => <LanguageCard lang={lang} />)}
+    </div>
+  </section>
+
+  <!-- Cara kerja -->
+  <section class="border-y border-line bg-surface">
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <h2 class="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">Bagaimana cara belajarnya?</h2>
+      <div class="mt-10 grid gap-8 md:grid-cols-3">
+        <div class="rounded-2xl border border-line bg-bg p-6">
+          <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-2xl">📚</span>
+          <h3 class="mt-4 font-extrabold">1. Baca materi ringkas</h3>
+          <p class="mt-2 text-sm leading-6 text-muted">Setiap bab disusun padat: penjelasan + contoh kode nyata. Rata-rata 5 menit per bab.</p>
+        </div>
+        <div class="rounded-2xl border border-line bg-bg p-6">
+          <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-2xl">▶️</span>
+          <h3 class="mt-4 font-extrabold">2. Jalankan contohnya</h3>
+          <p class="mt-2 text-sm leading-6 text-muted">Editor bawaan menjalankan HTML/CSS/JS langsung di browser, dan Python/Java/dll di server runtime.</p>
+        </div>
+        <div class="rounded-2xl border border-line bg-bg p-6">
+          <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-2xl">🏆</span>
+          <h3 class="mt-4 font-extrabold">3. Kuis & dapat sertifikat</h3>
+          <p class="mt-2 text-sm leading-6 text-muted">Lulus kuis tiap bab (min. 70%) untuk membuka bab berikutnya. Selesai semua = sertifikat + absensi harian.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+    <div class="relative overflow-hidden rounded-3xl bg-primary px-8 py-14 text-center text-white shadow-2xl shadow-primary/30 sm:px-16">
+      <div class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"></div>
+      <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Siap mulai petualangan coding-mu?</h2>
+      <p class="mx-auto mt-4 max-w-2xl text-primary-100/90">Buat akun gratis, absen tiap hari untuk menjaga streak, kumpulkan sertifikat dari setiap bahasa yang kamu kuasai.</p>
+      <a href="/register" class="mt-8 inline-block rounded-xl bg-white px-8 py-3.5 text-sm font-bold text-primary hover:bg-primary-soft">Daftar Sekarang — Gratis</a>
+    </div>
+  </section>
+</Base>

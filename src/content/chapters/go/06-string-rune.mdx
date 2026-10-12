@@ -1,0 +1,156 @@
+---
+title: "String & Rune"
+description: "Teks di Go: indexing, len, range, dan membedakan byte dengan karakter"
+order: 6
+quiz:
+  - q: "len(s) pada string Go menghitung…"
+    options: ["jumlah huruf", "jumlah byte", "jumlah kata", "jumlah baris"]
+    answer: 1
+    explain: "String Go adalah rangkaian byte (UTF-8), jadi huruf non-ASCII bisa memakai lebih dari satu byte."
+  - q: "S[i] pada string mengembalikan…"
+    options: ["rune utuh", "karakter unicode selalu", "byte pada index i", "string baru"]
+    answer: 2
+    explain: "Untuk karakter non-ASCII, konversi ke []rune dulu agar tidak terpotong."
+  - q: "Mengulang karakter per huruf (bukan per byte) memakai…"
+    options: ["range pada []rune", "for i := 0; i < len(s)", "split", "cut"]
+    answer: 0
+    explain: "for _, r := range s memberi rune utuh untuk tiap karakter Unicode."
+  - q: "Konstanta rune ditulis dengan…"
+    options: ["tanda kutip tunggal", "tanda kutip ganda", "kurung siku", "koma"]
+    answer: 0
+    explain: "Contoh: r := 'A' — sedangkan string memakai kutip ganda."
+  - q: "Untuk menggabungkan teks memakai…"
+    options: ["concat()", "append teks", "fmt.Sprintf atau +", "join teks"]
+    answer: 2
+    explain: "fmt.Sprintf menghasilkan string terformat, cocok untuk menyusun pesan."
+example:
+  code: |
+    package main
+
+    import "fmt"
+
+    func main() {
+        teks := "Halo Go"
+        fmt.Println("Panjang byte:", len(teks))
+        fmt.Println("Karakter pertama:", teks[0])
+
+        for i, r := range teks {
+            fmt.Printf("%d %c\n", i, r)
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah tipe yang paling sering kamu sentuh. Di Go, ia punya satu rahasia: **di balik layar, string adalah byte**.
+
+## Panjang dan Index
+
+```go
+teks := "OnBoss"
+
+fmt.Println(len(teks))  // 6
+fmt.Println(teks[0])    // 79 (kode byte 'O')
+fmt.Println(teks[5])    // 115 (kode byte 's')
+```
+
+Indexing menghasilkan `byte`, bukan huruf. Untuk teks Latin biasa hasilnya sama saja, tapi berhati-hatilah pada teks berbahasa Indonesia beraksen atau emoji.
+
+## byte, rune, dan String
+
+Tiga tipe yang saling berkaitan:
+
+| Tipe | Nilai contoh | Representasi | Buat apa |
+| --- | --- | --- | --- |
+| `byte` (uint8) | `teks[0]` | 1 byte, 0–255 | Per byte mentah, protokol |
+| `rune` (int32) | `'A'`, `'🚀'` | Kode Unicode utuh | Satu karakter |
+| `string` | `"Halo"` | Rangkaian byte UTF-8, tak berubah | Teks pada umumnya |
+
+Satu karakter Unicode bisa memakai 1–4 byte: `"Halo"` = 4 byte, tapi `"🚀" ` = 4 byte untuk **satu** karakter.
+
+## Membaca per Karakter
+
+```go
+teks := "Belajar Go"
+
+for i, r := range teks {
+    fmt.Println(i, string(r))
+}
+```
+
+`range` pada string menghasilkan rune (karakter Unicode utuh), sehingga huruf multi-byte tidak terpotong. Untuk tahu jumlah hurufnya, konversi dulu: `len([]rune(teks))`.
+
+## Operasi String
+
+```go
+nama := "Sari"
+
+fmt.Println(len(nama))                    // 4
+fmt.Println(nama[0:2])                    // "Sa" (substring)
+fmt.Println(nama + "!")                   // concatenation
+fmt.Println(strings.ToUpper(nama))        // "SARI"
+fmt.Println(strings.Contains(nama, "ar")) // true
+```
+
+Substring memakai rentang `[awal:akhir]` — akhir tidak ikut diambil. String Go **immutable**: setiap operasi (`+`, `ToUpper`, `Replace`) menghasilkan string baru, tidak pernah mengubah aslinya.
+
+Lima fungsi `strings` yang paling sering dipakai sehari-hari:
+
+| Fungsi | Contoh hasil | Buat apa |
+| --- | --- | --- |
+| `strings.Split(s, ",")` | `["a","b","c"]` | Pecah CSV / daftar |
+| `strings.Join(arr, " ")` | `"a b c"` | Gabung array jadi teks |
+| `strings.TrimSpace(s)` | teks tanpa spasi tepi | Bersihkan input user |
+| `strings.ReplaceAll(a, b, c)` | teks hasil ganti | Template massal |
+| `strings.HasPrefix(s, "usr_")` | `true` | Validasi format ID |
+
+## fmt untuk Format
+
+```go
+umur := 20
+tinggi := 1.65
+
+pesan := fmt.Sprintf("Umur %d, tinggi %.2f", umur, tinggi)
+fmt.Println(pesan)
+
+fmt.Printf("Nama: %s\n", "Budi")
+fmt.Printf("Benar: %t\n", true)
+```
+
+Empat verb paling sering: `%d` bilangan, `%s` teks, `%f` pecahan, `%t` boolean — semuanya dipakai `Printf` dan `Sprintf`.
+
+## Di Dunia Nyata
+
+- **Log server**: memecah `2026-10-12 08:15:00 GET /api` dengan `strings.Split` jadi field
+- **Validasi username**: cek `len(s) >= 3` dan `strings.HasPrefix(s, "usr_")`
+- **Template pesan**: `Sprintf("Halo %s, tagihan Rp%d", nama, total)` untuk email massal
+- **Pencarian**: `Contains`/`Index` mencari kata kunci di deskripsi produk
+- **Parsing CSV**: `bufio.Scanner` + `strings.Split` membaca tiap baris jadi kolom
+
+<div class="note">💡 len(s) menghitung byte, bukan huruf. Untuk teks multi-bahasa selalu pakai len([]rune(s)) atau range — kalau tidak, potongan substring bisa menghasilkan byte setengah jadi yang merusak UTF-8.</div>
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+
+import (
+    "fmt"
+    "strings"
+)
+
+func main() {
+    teks := "Halo Go"
+    fmt.Println("Panjang byte:", len(teks))
+    fmt.Println("Karakter pertama:", string(teks[0]))
+    fmt.Println("Sub:", teks[0:4])
+    fmt.Println("Besar:", strings.ToUpper(teks))
+    fmt.Println("Ada kata Go:", strings.Contains(teks, "Go"))
+
+    umur := 20
+    fmt.Println(fmt.Sprintf("Umur %d, benar: %t", umur, true))
+
+    emoji := "🚀"
+    fmt.Println("byte emoji:", len(emoji), "rune:", len([]rune(emoji)))
+
+    for i, r := range teks {
+        fmt.Println(i, string(r))
+    }
+}`} />

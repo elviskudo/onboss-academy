@@ -1,0 +1,184 @@
+---
+title: "Pipe & Data Asinkron"
+description: "Mengubah tampilan dengan pipe, lalu menampilkan data API memakai HttpClient dan async pipe"
+order: 5
+quiz:
+  - q: "Pipe dalam template Angular dipakai untuk…"
+    options: ["Mengubah format nilai saat ditampilkan, mis. tanggal dan mata uang", "Mengirim request HTTP", "Membuat komponen baru", "Menyimpan data ke localStorage"]
+    answer: 0
+    explain: "Pipe memproses nilai di pipeline tampilan tanpa mengubah data aslinya."
+  - q: "Cara memakai pipe di template…"
+    options: ["{{ pipe(harga) }}", "{{ harga -> currency }}", "{{ harga | currency: 'IDR' }}", "= currency(harga)"]
+    answer: 2
+    explain: "Simbol pipa | meneruskan nilai di sebelah kirinya ke pipe di sebelah kanan."
+  - q: "Untuk HTTP di Angular, layanan yang dipakai adalah…"
+    options: ["HttpClient dari @angular/common/http", "fetch bawaan tanpa setup", "XMLHttpRequest manual", "Node http"]
+    answer: 0
+    explain: "HttpClient dibungkus provider di app.config.ts lalu di-inject ke service."
+  - q: "Respons Observable di template paling praktis ditampilkan dengan…"
+    options: ["await di dalam template", "async pipe", "setTimeout", "for loop biasa"]
+    answer: 1
+    explain: "Async pipe subscribe otomatis dan membersihkan langganan saat komponen hancur."
+  - q: "Pipe async berguna karena…"
+    options: ["Menangani nilai Promise/Observabel: subscribe, unsubscribe, dan render ulang otomatis", "Mempercepat internet", "Mengompilasi TypeScript", "Menghapus data kosong"]
+    answer: 0
+    explain: "Tanpa async pipe kamu harus subscribe manual di ngOnInit dan mengurus cleanup."
+example:
+  code: |
+    const rupiah = (n) => "Rp" + n.toLocaleString("id-ID");
+    const produk = [
+      { nama: "Kopi", harga: 25000 },
+      { nama: "Roti", harga: 18000 },
+    ];
+    console.log(produk.map((p) => p.nama + " — " + rupiah(p.harga)).join("\\n"));
+---
+
+Data jarang tampil apa adanya: tanggal perlu diformat, harga perlu prefix mata uang, dan data API datang secara asinkron. Angular menyelesaikan keduanya dengan **pipe**.
+
+## Pipe Bawaan
+
+```html
+<p>{{ nama | uppercase }}</p>
+<p>{{ tanggal | date: "dd MMM yyyy" }}</p>
+<p>{{ harga | currency: "IDR" : "symbol" : "1.0-0" }}</p>
+<p>{{ panjangDaftar | number }}</p>
+@if ((jumlah | async) !== null) {
+  <p>{{ jumlah }}</p>
+}
+```
+
+```typescript
+import { UpperCasePipe, CurrencyPipe } from "@angular/common";
+
+@Component({
+  standalone: true,
+  imports: [UpperCasePipe, CurrencyPipe],
+  template: `<p>{{ nama | uppercase }} — {{ harga | currency: "IDR" }}</p>`,
+})
+export class RingkasComponent {
+  nama = "kopi susu";
+  harga = 25000;
+}
+```
+
+Sejak Angular 15+, pipe bawaan tidak lagi butuh CommonModule — cukup impor pipe spesifik yang dipakai.
+
+## Pipe Kustom
+
+```typescript
+import { Pipe, PipeTransform } from "@angular/core";
+
+@Pipe({ name: "rp", standalone: true })
+export class RupiahPipe implements PipeTransform {
+  transform(nilai: number): string {
+    return "Rp" + nilai.toLocaleString("id-ID");
+  }
+}
+```
+
+```html
+<p>{{ produk.harga | rp }}</p>
+```
+
+## Menyiapkan HttpClient
+
+```typescript
+// app.config.ts
+import { provideHttpClient } from "@angular/common/http";
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideHttpClient()],
+};
+```
+
+Lalu buat service yang menggunakannya:
+
+```typescript
+import { Injectable, inject } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+
+@Injectable({ providedIn: "root" })
+export class ProdukService {
+  private http = inject(HttpClient);
+
+  semua() {
+    return this.http.get<Produk[]>("/api/produk");
+  }
+}
+```
+
+`get<T>()` mengembalikan Observable berisi data bertipe `Produk[]`.
+
+## Menampilkan Observable: async
+
+```typescript
+@Component({
+  standalone: true,
+  imports: [AsyncPipe, NgFor],
+  template: `
+    @if (produk$ | async; as daftar) {
+      <ul>
+        @for (p of daftar; track p.id) {
+          <li>{{ p.nama }}</li>
+        }
+      </ul>
+    } @else {
+      <p>Memuat…</p>
+    }
+  `,
+})
+export class DaftarProdukComponent {
+  produk$ = inject(ProdukService).semua();
+}
+```
+
+`async` subscribe saat tampilan dibutuhkan dan unsubscribe otomatis — tidak ada kebocoran langganan.
+
+## Error dan Loading
+
+```typescript
+import { catchError, of } from "rxjs";
+
+this.produk$ = this.http.get<Produk[]>("/api/produk").pipe(
+  catchError((err) => {
+    console.error(err);
+    return of<Produk[]>([]);
+  })
+);
+```
+
+Operator `rxjs` seperti `map`, `switchMap`, dan `catchError` menyusun alur data yang deklaratif.
+
+## Lima Pipe yang Sering Dipakai
+
+Ada **5 pipe bawaan utama** untuk kebutuhan tampilan sehari-hari.
+
+| Pipe | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| `date` | Memformat tanggal | `tanggal \| date` | Jadwal dan riwayat |
+| `currency` | Memformat mata uang | `harga \| currency:"IDR"` | Harga dan laporan |
+| `number` | Memformat angka | `nilai \| number` | Statistik |
+| `percent` | Memformat rasio | `rasio \| percent` | Progres dan konversi |
+| `async` | Membuka Observable/Promise | `produk$ \| async` | Data asinkron di template |
+
+Pipe seharusnya hanya mengubah representasi, bukan menyimpan data atau memanggil API. Pure pipe dijalankan kembali ketika referensi input berubah, sehingga update immutable lebih mudah dideteksi.
+
+Untuk request bergantung input, `switchMap` membatalkan hasil request lama yang tidak lagi relevan.
+
+```typescript
+hasil$ = this.kata.valueChanges.pipe(
+  debounceTime(300),
+  distinctUntilChanged(),
+  switchMap((kata) => this.http.get<Produk[]>("/api/produk", { params: { q: kata } })),
+  catchError(() => of([]))
+);
+```
+
+## Di Dunia Nyata
+
+- Halaman invoice memakai `currency` dan `date` tanpa mengubah data sumber.
+- Autocomplete pencarian memakai `switchMap` agar respons lama tidak menimpa kata baru.
+- Dasbor memakai `async` supaya langganan berhenti saat widget ditutup.
+- Tabel API menampilkan state kosong saat `catchError` mengembalikan array aman.
+
+<div class="note">💡 Kebiasaan Angular modern: simpan Observable di property komponen (produk$), tampilkan dengan async pipe, dan biarkan Angular yang mengurus subscribe/unsubscribe. Hindari subscribe manual kecuali kamu butuh side effect khusus.</div>

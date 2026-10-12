@@ -1,0 +1,118 @@
+---
+title: "Tipe Data & Tabel T-SQL"
+description: "NVARCHAR, DECIMAL, DATETIME2, IDENTITY, dan CREATE TABLE gaya SQL Server"
+order: 2
+quiz:
+  - q: "Tipe data untuk teks Unicode di SQL Server adalah…"
+    options: ["VARCHAR2", "NVARCHAR", "TEXT_ONLY", "CLOB"]
+    answer: 1
+    explain: "NVARCHAR menyimpan Unicode (2 byte/karakter); VARCHAR non-Unicode. VARCHAR2 adalah milik Oracle."
+  - q: "IDENTITY pada kolom berarti…"
+    options: ["Nilai wajib unik manual", "Nomor urut otomatis naik tiap insert", "Kolom terenkripsi", "Kolom boleh NULL"]
+    answer: 1
+    explain: "INT IDENTITY(1,1) membuat angka otomatis 1, 2, 3, ... — setara AUTO_INCREMENT di MySQL."
+  - q: "Tipe yang tepat untuk nilai rupiah presisi adalah…"
+    options: ["FLOAT", "DECIMAL(18, 2)", "REAL", "BIGINT"]
+    answer: 1
+    explain: "DECIMAL(18, 2) presisi desimal eksak; FLOAT/REAL memiliki pembulatan biner yang berbahaya untuk uang."
+  - q: "Tipe tanggal modern yang disarankan SQL Server adalah…"
+    options: ["DATETIME", "SMALLDATETIME", "DATETIME2", "DATESTRING"]
+    answer: 2
+    explain: "DATETIME2 presisi lebih tinggi dan rentang lebih luas dari DATETIME lama — gunakan ini untuk tabel baru."
+  - q: "Menambah kolom baru ke tabel yang sudah ada memakai…"
+    options: ["ALTER TABLE t ADD kolom TYPE", "UPDATE TABLE t NEW", "APPEND COLUMN t kolom", "INSERT COLUMN t"]
+    answer: 0
+    explain: "ALTER TABLE dbo.karyawan ADD email NVARCHAR(150) NULL — standar SQL yang berlaku di SQL Server."
+example:
+  code: |
+    CREATE TABLE dbo.karyawan (
+        id INT IDENTITY(1, 1) PRIMARY KEY,
+        nama NVARCHAR(100) NOT NULL,
+        gaji DECIMAL(18, 2) NOT NULL,
+        aktif BIT NOT NULL DEFAULT 1,
+        bergabung DATETIME2 NOT NULL DEFAULT SYSDATETIME()
+    );
+---
+
+T-SQL punya pilihan tipe data khas Microsoft. Memilih yang tepat sejak awal menghemat migrasi dan bug pemformatan di kemudian hari.
+
+## Sebelas Tipe Data Utama
+
+| Kategori | Tipe | Sifat | Kapan dipakai |
+| --- | --- | --- | --- |
+| Bilangan bulat | `INT` | ±2,1 miliar | counter, ID umum |
+| Bilangan bulat | `BIGINT` | rentang sangat besar | ID/event masif |
+| Desimal eksak | `DECIMAL(18,2)` | presisi tetap | uang |
+| Floating | `FLOAT` | aproksimasi biner | sains/statistik |
+| Teks Unicode | `NVARCHAR(n)` | karakter Unicode | nama/deskripsi |
+| Teks non-Unicode | `VARCHAR(n)` | bergantung collation/code page | kode ASCII besar |
+| Boolean | `BIT` | 0, 1, NULL | flag |
+| Tanggal | `DATE` | tanggal saja | lahir/jatuh tempo |
+| Waktu | `DATETIME2` | tanggal+waktu presisi | timestamp aplikasi |
+| ID global | `UNIQUEIDENTIFIER` | GUID 16 byte | ID lintas sistem |
+| Biner | `VARBINARY(MAX)` | byte variabel | hash/file kecil |
+
+Sebelas tipe di atas mencakup kebutuhan tabel harian. SQL Server punya tipe lain seperti SMALLINT, TINYINT, TIME, DATETIMEOFFSET, XML, dan spatial — pilih bila kebutuhan rentang/semantiknya memang cocok.
+
+`NVARCHAR(n)` membatasi panjang maksimum — `NVARCHAR(MAX)` mendukung nilai sangat panjang, tetapi sebaiknya hanya untuk teks panjang. Untuk waktu lintas zona, pertimbangkan `DATETIMEOFFSET`; `DATETIME2` sendiri tidak membawa offset.
+
+## CREATE TABLE & CONSTRAINT
+
+```sql
+CREATE TABLE dbo.pelanggan (
+    id INT IDENTITY(1, 1) PRIMARY KEY,
+    nama NVARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    lahir DATE NULL,
+    total_belanja DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    CONSTRAINT ck_total CHECK (total_belanja >= 0)
+);
+```
+
+PRIMARY KEY menjamin keunikan + menjadi clustered index bawaan; UNIQUE mencegah email ganda; CHECK menolak nilai melanggar aturan; DEFAULT mengisi saat nilai tidak disebut.
+
+## Mengubah Struktur Tabel
+
+```sql
+ALTER TABLE dbo.pelanggan
+    ADD telepon VARCHAR(20) NULL;
+
+ALTER TABLE dbo.pelanggan
+    ALTER COLUMN nama NVARCHAR(150) NOT NULL;
+
+ALTER TABLE dbo.pelanggan
+    DROP COLUMN telepon;
+```
+
+`ALTER COLUMN` punya syarat ketat: kolom tidak boleh sedang dipakai index/constraint yang bentrok, dan perubahan harus kompatibel (varchar(100) -> varchar(150) aman; kebalikannya berisiko gagal).
+
+## IDENTITY dan nilai otomatis
+
+```sql
+INSERT INTO dbo.pelanggan (nama, email) VALUES (N'Sari', 'sari@contoh.com');
+
+SELECT SCOPE_IDENTITY() AS id_baru;
+```
+
+`SCOPE_IDENTITY()` mengambil IDENTITY yang baru saja dibuat pada scope INSERT-mu — kunci untuk menulis ke tabel anak setelah insert induk. Gunakan klausa `OUTPUT inserted.id` bila memasukkan banyak baris karena ia mengembalikan seluruh set ID baru.
+
+## Empat Constraint Inti
+
+| Constraint | Fungsi | Contoh | Kapan dipakai |
+| --- | --- | --- | --- |
+| PRIMARY KEY | identitas unik, non-NULL | `id INT PRIMARY KEY` | setiap entitas |
+| FOREIGN KEY | menjaga reference | pelanggan_id → pelanggan.id | relasi tabel |
+| UNIQUE | mencegah duplikat | email UNIQUE | kunci bisnis |
+| CHECK | membatasi nilai | total >= 0 | aturan domain |
+
+`NOT NULL` dan `DEFAULT` melengkapi constraint tersebut: yang pertama mewajibkan nilai, yang kedua mengisi nilai saat kolom tidak disebut.
+
+## Di Dunia Nyata
+
+- **Ledger pembayaran** — DECIMAL menyimpan uang eksak dan CHECK menolak nilai negatif yang tidak sah.
+- **Nama multibahasa** — NVARCHAR + literal N mempertahankan karakter Indonesia, Jepang, dan Arab.
+- **Timestamp API** — DATETIME2 untuk waktu presisi; DATETIMEOFFSET bila offset asal perlu disimpan.
+- **Sinkronisasi perangkat** — UNIQUEIDENTIFIER memungkinkan ID dibuat di banyak node sebelum data bertemu di server.
+- **Insert pesanan** — IDENTITY menghasilkan kunci lokal, lalu OUTPUT inserted.id memasok ID bagi item anak.
+
+<div class="note">💡 Untuk uang selalu DECIMAL, jangan FLOAT. FLOAT adalah representasi biner: 0.1 + 0.2 tidak akan pernah persis 0.3 — selisih kecil yang berbahaya di laporan keuangan.</div>

@@ -1,0 +1,120 @@
+---
+title: "Transisi, Animasi & Proyek"
+description: "Efek halus plus merangkum semua jadi komponen kartu modern"
+order: 8
+quiz:
+  - q: "Property untuk transisi halus perubahan CSS adalah…"
+    options: ["transition: all 0.3s ease;", "animate: true;", "animation-fast", "smooth: 1"]
+    answer: 0
+    explain: "transition: property durasi easing; membuat perubahan value bergerak halus."
+  - q: "@keyframes digunakan untuk…"
+    options: ["Membuat animasi berulang dengan tahapan sendiri", "Memilih elemen", "Mengatur font", "Membuat grid"]
+    answer: 0
+    explain: "@keyframes mendefinisikan tahap animasi, lalu dipakai via animation-name."
+  - q: "transform: translateY(-4px); berfungsi untuk…"
+    options: ["Menggeser elemen ke atas 4px", "Mengubah warna", "Memutar elemen", "Memperbesar font"]
+    answer: 0
+    explain: "translate menggeser. rotate memutar. scale memperbesar/mengecilkan."
+  - q: "Efek hover tombol yang umum adalah…"
+    options: ["Mengubah background & transform scale", "Menghapus tombol", "Mengganti font system", "Memindahkan halaman"]
+    answer: 0
+    explain: "Praktik umum: ubah warna + sedikit translate/scale + shadow."
+  - q: "cursor: pointer; berfungsi untuk…"
+    options: ["Menampilkan kursor tangan pada elemen klik", "Menghapus kursor", "Mengunci mouse", "Menambah animasi kursor"]
+    answer: 0
+    explain: "Beri tahu pengguna elemen bisa diklik — penting untuk UX tombol non-<button>."
+example:
+  code: |
+    <button class="btn">Hover aku!</button>
+    <style>
+      .btn {
+        background: #4F46E5; color: white; border: none;
+        padding: 12px 24px; border-radius: 10px; font-weight: 700;
+        cursor: pointer; transition: all 0.25s ease;
+      }
+      .btn:hover { background: #4338CA; transform: translateY(-2px); box-shadow: 0 8px 20px rgb(79 70 229 / 0.35); }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Transisi
+
+```css
+.tombol {
+  transition: background-color 0.25s ease, transform 0.25s ease;
+}
+.tombol:hover {
+  background-color: #4338CA;
+  transform: translateY(-2px);
+}
+```
+
+Singkatnya: `transition: properti durasi easing;`
+
+Transisi punya **4 komponen**:
+
+| Komponen | Fungsi | Contoh | Praktik baik |
+|----------|--------|--------|--------------|
+| Property | Nilai yang dianimasikan | `transform` | Hindari `all` |
+| Duration | Lama perubahan | `200ms` | UI umumnya 150–300ms |
+| Timing function | Kurva kecepatan | `ease-out` | Cocokkan dengan gerak |
+| Delay | Jeda sebelum mulai | `50ms` | Pakai hemat |
+
+## Animasi dengan Keyframes
+
+```css
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.judul {
+  animation: fadeInUp 0.6s ease both;
+}
+```
+
+## Transform
+
+```css
+.rotate  { transform: rotate(8deg); }
+.scaling { transform: scale(1.05); }
+.moving  { transform: translateX(20px); }
+.skewing { transform: skewX(-10deg); }
+```
+
+## Di Dunia Nyata
+
+- **Tombol checkout** — transisi warna memberi respons visual tanpa menghambat aksi
+- **Accordion FAQ** — animasi tinggi/opasitas menjelaskan konten sedang membuka
+- **Notifikasi** — keyframe singkat masuk lalu berhenti; bukan bergerak terus menerus
+- **Skeleton loading** — animasi halus memberi tanda proses sambil data dimuat
+
+<div class="note">💡 Animasikan `transform` dan `opacity` bila memungkinkan karena browser dapat memprosesnya tanpa menghitung ulang layout. Selalu hormati `prefers-reduced-motion` untuk pengguna yang sensitif terhadap gerakan.</div>
+
+## Proyek Akhir: Kartu Profil Modern
+
+Rangkum Flex/Grid, warna, shadow, border-radius, dan transisi jadi satu komponen siap pakai — lihat editor di bawah, lalu kembangkan sesuai seleramu.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { margin:0; display:grid; place-items:center; min-height:100vh; background:#FBFAF8; font-family:system-ui; }
+.kartu {
+  width: 260px; background: white; border-radius: 20px;
+  border: 1px solid #E8E5DF; padding: 28px; text-align: center;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.kartu:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgb(79 70 229 / 0.18); }
+.avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: linear-gradient(135deg, #4F46E5, #8B5CF6);
+  margin: 0 auto 14px; display: grid; place-items: center;
+  color: white; font-size: 1.8rem;
+}
+.kartu h3 { margin: 0 0 4px; color: #17181D; }
+.kartu p { margin: 0 0 16px; color: #6B7280; font-size: 0.88rem; }
+.kartu button {
+  width: 100%; padding: 10px; border: none; border-radius: 10px;
+  background: #EEF0FF; color: #4338CA; font-weight: 700; cursor: pointer;
+  transition: background 0.2s ease;
+}
+.kartu button:hover { background: #4F46E5; color: white; }`} />

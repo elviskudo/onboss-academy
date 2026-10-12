@@ -1,0 +1,144 @@
+---
+title: "SQL Injection dan Pencegahannya"
+description: "Memahami cara kerja serangan query secara konseptual dan menutupnya dengan parameterized query"
+order: 3
+quiz:
+  - q: "Penyebab utama SQL injection adalah…"
+    options: ["Input pengguna digabung langsung ke string query", "Query terlalu panjang", "Server terlalu cepat", "Kolom terlalu banyak"]
+    answer: 0
+    explain: "Menggabungkan input mentah ke query membuat batas antara 'data' dan 'perintah' hilang."
+  - q: "Pencegahan paling andal terhadap SQL injection adalah…"
+    options: ["Parameterized query / prepared statement", "Menghapus semua kolom", "Menyembunyikan pesan error", "Mengganti bahasa pemrograman"]
+    answer: 0
+    explain: "Dengan parameter, database memperlakukan input sebagai data — bukan potongan SQL."
+  - q: "Prepared statement bekerja dengan…"
+    options: ["Memisahkan template query dari nilai parameter", "Menyembunyikan query dari user", "Mengenkripsi seluruh database", "Menonaktifkan SQL"]
+    answer: 1
+    explain: "Query dikompilasi dulu dengan placeholder, baru nilainya diisi terpisah."
+  - q: "Prinsip least privilege untuk akun database berarti…"
+    options: ["Akun aplikasi hanya punya hak seminimal kebutuhan", "Semua akun memakai root", "Hak ditambah saat ada insiden", "Password database boleh publik"]
+    answer: 0
+    explain: "Bila akun aplikasi bocor, kerusakan dibatasi oleh hak yang dimilikinya."
+  - q: "Menampilkan pesan error database mentah kepada pengguna berbahaya karena…"
+    options: ["Membocorkan struktur skema yang memudahkan penyerang", "Membuat layar jadi penuh teks", "Memperlambat query", "Melanggar estetika"]
+    answer: 0
+    explain: "Pesan detail untuk log internal; pesan umum untuk pengguna."
+example:
+  code: |
+    # Konsep parameterized query (pseudocode bahasa Python)
+    nama = "O'Neil"   # teks biasa, tanpa perlu khawatir kutip
+
+    # Salah (gabung string):
+    # query = "SELECT * FROM users WHERE name = '" + nama + "'"
+
+    # Benar (parameter):
+    # cursor.execute("SELECT * FROM users WHERE name = %s", (nama,))
+    print("Input diperlakukan sebagai data, bukan perintah SQL")
+---
+
+SQL injection tetap masuk daftar risiko paling sering ditemui — dan **sepenuhnya bisa dicegah** dengan kebiasaan koding yang benar.
+
+## Bagaimana Serangannya Bekerja (Konsep)
+
+```python
+# Pola berbahaya: query = f"SELECT * FROM users WHERE id = '{user_input}'"
+# Bila user_input berupa teks yang menutup kutip lalu menyambung perintah SQL,
+# batas antara data dan perintah hilang -> penyerang "menyisipkan" klausa tambahan.
+
+print("Selalu perlakukan input pengguna sebagai DATA, bukan potongan query")
+```
+
+Cukup dipahami secara konsep — fokus kita adalah pencegahannya.
+
+## Pencegahan #1: Parameterized Query
+
+```python
+# Pseudocode driver database yang benar
+user_input = "10"
+
+# template dengan placeholder, nilai dikirim terpisah
+sql = "SELECT nama FROM produk WHERE id = %s"
+# cursor.execute(sql, (user_input,))
+print(sql, "-> parameter:", user_input)
+```
+
+Database mengikat nilai ke placeholder secara aman — upaya menyisipkan klausa SQL dianggap teks biasa.
+
+## Pencegahan #2: Input Validation
+
+```python
+def id_valid(nilai):
+    return nilai.isdigit() and 1 <= int(nilai) <= 9999
+
+print(id_valid("123"))    # True
+print(id_valid("1 OR 1")) # False
+```
+
+Validasi ketat (tipe, rentang, format) mengurangi permukaan kesalahan — bukan pengganti parameterized query.
+
+## Pencegahan #3: Hak Minimum
+
+```python
+# Hak yang biasanya cukup untuk aplikasi web
+hak_aplikasi = {"SELECT", "INSERT", "UPDATE"}
+hak_terlarang = {"DROP", "ALTER", "GRANT"}
+
+print("Nonaktifkan hak berbahaya pada akun aplikasi")
+```
+
+Akun aplikasi tidak boleh punya hak DDL penghancur skema.
+
+## Pencegahan #4: Pesan Error yang Aman
+
+```python
+try:
+    # operasi basis data
+    pass
+except Exception:
+    # log detail untuk tim internal
+    print("Terjadi kesalahan. Silakan coba lagi.")   # pesan untuk pengguna
+```
+
+Detail pengecualian masuk log server, tidak ke layar pengguna.
+
+## Pemeriksaan Kode (Code Review Checklist)
+
+- [ ] Tidak ada string query yang menyisipkan variabel dengan `f-string`/konkatenasi.
+- [ ] Semua query lewat layer ORM/query builder yang parametrik.
+- [ ] Akun DB produksi tanpa hak admin.
+- [ ] Error detail hanya di log, bukan respons API.
+
+## Empat Lapisan Pertahanan
+
+Ada **4 lapisan defensif** yang saling melengkapi.
+
+| Lapisan | Fungsi | Contoh | Batas |
+|---|---|---|---|
+| Parameter query | Memisahkan data dan sintaks | Placeholder driver | Tidak untuk nama kolom dinamis |
+| Allowlist | Membatasi pilihan struktural | Urutan `asc` atau `desc` | Harus eksplisit |
+| Least privilege | Membatasi dampak akun DB | Tanpa `DROP` | Tidak mencegah pembacaan sah |
+| Monitoring | Mendeteksi pola aneh | Lonjakan error query | Bekerja setelah percobaan terjadi |
+
+Placeholder hanya berlaku untuk nilai. Nama tabel, nama kolom, dan arah pengurutan tidak dapat diparameterkan pada kebanyakan driver; petakan pilihan pengguna ke konstanta yang telah disetujui. Stored procedure juga tidak otomatis aman bila tetap membangun SQL dinamis dari input.
+
+```python
+kolom_aman = {"nama": "name", "harga": "price"}
+pilihan = "harga"
+kolom = kolom_aman.get(pilihan, "name")
+sql = f"SELECT name, price FROM products ORDER BY {kolom} LIMIT %s"
+print(sql, "parameter:", 20)
+```
+
+Variabel yang masuk f-string berasal dari allowlist internal, sedangkan nilai batas tetap dikirim sebagai parameter. Dalam aplikasi nyata, gunakan API placeholder yang sesuai driver (`?`, `%s`, atau `$1`) karena sintaks berbeda.
+
+## Di Dunia Nyata
+
+1. Form login memakai prepared statement untuk email dan tidak pernah menggabungkan input ke SQL.
+2. Endpoint produk memetakan opsi sorting publik ke tiga nama kolom yang diizinkan.
+3. Akun aplikasi laporan hanya memiliki `SELECT` pada view tertentu sehingga kompromi tidak dapat mengubah data.
+4. API mengembalikan error umum dengan correlation ID, sementara detail query hanya masuk log terbatas.
+5. Code review mencari query dinamis dan test integrasi memasukkan apostrof sah seperti `O'Neil` untuk memastikan binding benar.
+
+ORM mengurangi risiko, tetapi fungsi raw query tetap harus diparameterkan. WAF dapat menjadi sinyal tambahan, bukan pengganti perbaikan kode. Jangan menguji payload ofensif pada sistem yang bukan milik atau tanpa izin; verifikasi pertahanan di lingkungan test terisolasi.
+
+<div class="note">💡 Filter WAF atau "membersihkan input" dengan menghapus kata tertentu bukan pengaman utama — pola serangan terus berevolusi. Parameterized query menutup akar masalahnya.</div>

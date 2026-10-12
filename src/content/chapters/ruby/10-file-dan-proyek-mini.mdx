@@ -1,0 +1,158 @@
+---
+title: "File & Proyek Mini"
+description: "8 mode file, 10 method berkas, dan program daftar tugas yang datanya bertahan"
+order: 10
+quiz:
+  - q: "Mode pembukaan file yang MENIMPA seluruh isi lama adalah…"
+    options: ["a", "r", "w", "r+"]
+    answer: 2
+    explain: "w membuat file baru bila belum ada dan mengosongkan yang sudah ada; a hanya menambah di akhir."
+  - q: "Mode \"x\" berbeda dari \"w\" karena…"
+    options: ["Selalu menambah di akhir", "Ikut menimpa isi lama", "Melempar error bila file sudah ada", "Membuka file jaringan"]
+    answer: 2
+    explain: "x = create eksklusif; cocok untuk kunci/token yang tidak boleh menimpa file lama."
+  - q: "Keuntungan File.open(...) do |f| dibanding File.open tanpa blok adalah…"
+    options: ["Lebih cepat", "File ditutup otomatis meski terjadi error", "Isi file jadi lebih kecil", "Tidak perlu nama file"]
+    answer: 1
+    explain: "Blok menjamin close di akhir blok — termasuk saat blok melempar exception."
+  - q: "Untuk file log berukuran besar, cara membaca yang hemat memori adalah…"
+    options: ["File.read seluruhnya lalu dipotong", "Memori selalu cukup", "File.foreach / each_line per baris", "Menyalin dulu ke file lain"]
+    answer: 2
+    explain: "Membaca per baris hanya memuat satu baris ke memori, bukan seluruh isi file."
+  - q: "Fungsi File.exist?(\"data.txt\") mengembalikan…"
+    options: ["true bila file ada", "isi file", "ukuran file", "izin file"]
+    answer: 0
+    explain: "Cek dulu sebelum membaca agar program tidak berhenti karena Errno::ENOENT."
+example:
+  code: |
+    daftar = ["Belajar Ruby", "Membuat proyek"]
+
+    File.open("daftar.txt", "w") do |f|
+      daftar.each { |tugas| f.puts tugas }
+    end
+
+    isi = File.read("daftar.txt")
+    puts isi
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang berguna perlu menyimpan data antar kali jalan. Ruby menawarkan API file yang sangat ringkas — dan proyek mini di bagian akhir merangkai seluruh materi: array, method, blok, dan file.
+
+## 8 Mode Pembukaan File
+
+| Mode | Baca | Tulis | Perilaku saat file sudah ada |
+| --- | --- | --- | --- |
+| `"r"` | ya | tidak | Default — baca apa adanya |
+| `"r+"` | ya | ya | Baca/tulis, isi lama utuh kecuali ditimpa |
+| `"w"` | tidak | ya | **Kosongkan seluruh isi lama** |
+| `"w+"` | ya | ya | Kosongkan, lalu boleh baca |
+| `"a"` | tidak | ya | Menambah di akhir file |
+| `"a+"` | ya | ya | Menambah di akhir, isi lama tetap terbaca |
+| `"x"` | tidak | ya | Error bila file sudah ada (buat eksklusif) |
+| `"x+"` | ya | ya | Sama, untuk file yang belum boleh ada |
+
+## 10 Method Berkas yang Paling Sering Dipakai
+
+| # | Method | Fungsi | # | Method | Fungsi |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `File.read` | Baca seluruh isi → String | 6 | `File.size` | Ukuran dalam byte |
+| 2 | `File.write` | Tulis/timpa dalam satu baris | 7 | `File.delete` | Hapus berkas |
+| 3 | `File.open` | Buka dengan blok (auto-close) | 8 | `File.rename` | Ganti nama / pindah |
+| 4 | `File.exist?` | Cek keberadaan | 9 | `File.foreach` | Iterasi per baris |
+| 5 | `File.readlines` | Baca → array of String | 10 | `File.expand_path` | Path absolut |
+
+```ruby
+if File.exist?("data.txt")
+  puts File.read("data.txt")
+else
+  puts "File tidak ditemukan"
+end
+
+File.write("keluaran.txt", "Baris pertama\nBaris kedua\n")
+
+File.open("berita.txt", "a") do |f|
+  f.puts "Baris ketiga — mode append"
+end
+```
+
+Blok pada `File.open` **menutup file otomatis**, termasuk saat terjadi error di dalamnya — tanpa blok, kamu wajib memanggil `close` sendiri di `ensure`.
+
+## Membaca Per Baris
+
+```ruby
+File.foreach("data.txt").with_index(1) do |baris, nomor|
+  puts "#{nomor}: #{baris}"
+end
+```
+
+`foreach`/`each_line` cocok untuk file log puluhan megabyte: hanya satu baris yang berada di memori pada satu waktu.
+
+## 3 Penanganan Kegagalan Berkas
+
+```ruby
+# 1. Cek keberadaan dulu
+puts File.read("konfigurasi.yml") if File.exist?("konfigurasi.yml")
+
+# 2. Tangkap error eksplisit
+begin
+  File.read("wajib.txt")
+rescue Errno::ENOENT
+  puts "File tidak ditemukan"
+end
+
+# 3. Beri nilai cadangan
+isi = File.exist?("cache.txt") ? File.read("cache.txt") : "{}"
+```
+
+## Proyek Mini: Daftar Tugas Bertahan
+
+```ruby
+require "json"
+
+FILE = "daftar.json"
+
+def muat
+  File.exist?(FILE) ? JSON.parse(File.read(FILE)) : []
+end
+
+def simpan(daftar)
+  File.write(FILE, JSON.pretty_generate(daftar))
+end
+
+daftar = muat
+daftar << "Belajar variabel Ruby" unless daftar.include?("Belajar variabel Ruby")
+daftar << "Pahami blok dan method"
+daftar << "Buat proyek kecil"
+
+simpan(daftar)
+
+puts "Tersimpan #{daftar.length} tugas:"
+daftar.each_with_index { |t, i| puts "#{i + 1}. #{t}" }
+```
+
+Alurnya: **baca → ubah di memori → tulis kembali**. Saat program dijalankan ulang, `JSON.parse` mengembalikan daftar persis seperti terakhir disimpan.
+
+## Di Dunia Nyata
+
+- **Backup database harian**: salin `db.sqlite3` ke folder `backup/2026-10-12.sqlite3` memakai `FileUtils.cp`, lalu hapus backup yang lebih tua dari 30 hari.
+- **Parser log server**: `File.foreach` menyaring baris berisi `ERROR` tanpa memuat file 2 GB ke memori.
+- **Skrip konversi CSV → JSON**: baca CSV per baris, ubah jadi hash, tulis hasilnya sebagai JSON pretty.
+- **Penyimpanan sesi CLI**: hasil kerja user disimpan ke `.app_session.json` supaya bisa dilanjutkan setelah terminal ditutup.
+- **Generator laporan**: menulis laporan penjualan ke `laporan-2026-10.txt` dengan mode `"w"`, menambah catatan revisi dengan `"a"`.
+
+<div class="note">💡 Pisahkan logika program dari logika berkas: simpan metode `muat` dan `simpan` dalam module khusus, sehingga bagian inti program hanya bekerja dengan array di memori. Begitu penyimpanan pindah ke database, kamu hanya menukar isi dua method itu tanpa menyentuh logika bisnis.</div>
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`daftar = []
+daftar << "Belajar variabel Ruby"
+daftar << "Pahami blok dan method"
+daftar << "Buat proyek kecil"
+
+File.open("daftar.txt", "w") do |f|
+  daftar.each { |tugas| f.puts tugas }
+end
+
+puts "Tersimpan #{daftar.length} tugas:"
+puts File.read("daftar.txt")
+puts File.exist?("daftar.txt")
+puts File.size("daftar.txt")`} />

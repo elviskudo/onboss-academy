@@ -1,0 +1,169 @@
+---
+title: "Looping"
+description: "for, while, for...of, for...in — mengulang pekerjaan"
+order: 4
+quiz:
+  - q: "Loop mana yang cocok mengiterasi isi array?"
+    options: ["for...of", "for...in", "repeat", "each"]
+    answer: 0
+    explain: "for...of mengambil VALUE array. for...in mengambil KEY/INDEX (lebih cocok untuk object)."
+  - q: "Apa fungsi break di dalam loop?"
+    options: ["Melanjutkan ke iterasi berikutnya", "Menghentikan loop sepenuhnya", "Mengulang loop", "Menghapus loop"]
+    answer: 1
+    explain: "break keluar dari loop. continue melompati sisa iterasi berjalan."
+  - q: "while loop berjalan selama…"
+    options: ["Kondisi di dalam kurung bernilai true", "Variabel genap", "10 iterasi", "User menekan tombol"]
+    answer: 0
+    explain: "while (kondisi) { … } — dicek sebelum tiap iterasi. Pastikan kondisi bisa jadi false agar tidak infinite loop!"
+  - q: "for (const b of [1,2,3]) — nilai b pada iterasi kedua adalah…"
+    options: ["1", "2", "index 2", "undefined"]
+    answer: 1
+    explain: "for...of memberikan VALUE: 1, lalu 2, lalu 3."
+  - q: "Hasil loop yang tak terbatas (infinite loop) paling umum disebabkan…"
+    options: ["Kondisi loop yang tidak pernah false", "Pakai const", "Console.log terlalu banyak", "Nama variabel panjang"]
+    answer: 0
+    explain: "Selalu pastikan ada update variabel kondisi di dalam loop."
+example:
+  code: |
+    for (let i = 1; i <= 5; i++) {
+      console.log("Perulangan ke-" + i);
+    }
+    const buah = ["apel", "jeruk", "mangga"];
+    for (const b of buah) console.log(b);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Looping membuat komputer mengulang pekerjaan membosankan jadi satu baris. JavaScript punya **5 bentuk loop** plus metode `forEach` sebagai alternatif:
+
+| Bentuk | Kapan dipakai | Contoh |
+|--------|---------------|--------|
+| `for` | Jumlah iterasi diketahui / perlu index | `for (let i = 0; i < 5; i++)` |
+| `while` | Iterasi berhenti saat kondisi berubah | `while (saldo > 0)` |
+| `do...while` | Minimal sekali jalan (dicek di akhir) | `do { … } while (kondisi)` |
+| `for...of` | Iterasi **nilai** array/iterable | `for (const b of buah)` |
+| `for...in` | Iterasi **key** object | `for (const k in orang)` |
+| `forEach` | Alternatif ringkas untuk array | `[1,2].forEach(fn)` |
+
+## for Klasik
+
+```js
+for (let i = 0; i < 5; i++) {
+  console.log(i); // 0,1,2,3,4
+}
+```
+
+Tiga bagian: inisialisasi; kondisi; update.
+
+## while
+
+```js
+let saldo = 100;
+while (saldo > 0) {
+  saldo -= 30;
+  console.log("Sisa:", saldo);
+}
+```
+
+Cek dulu kondisinya, baru jalankan isi — bisa jadi tidak pernah jalan sama sekali.
+
+## do...while (Minimal Sekali)
+
+```js
+let pilihan;
+do {
+  pilihan = "ya";             // isi jalan dulu baru dicek
+} while (pilihan !== "ya");
+console.log("Selesai:", pilihan);
+```
+
+## for...of (Array & Iterable)
+
+```js
+const nilai = [80, 90, 100];
+for (const n of nilai) {
+  console.log(n);
+}
+```
+
+## for...in (Object)
+
+```js
+const orang = { nama: "Sari", umur: 20 };
+for (const kunci in orang) {
+  console.log(kunci, "→", orang[kunci]);
+}
+```
+
+`for...of` juga bekerja pada string (tiap karakter) dan NodeList hasil `querySelectorAll`; `for...in` khusus kunci enumerable — dipakai untuk object, bukan array (urutan array tidak dijamin).
+
+## break dan continue
+
+```js
+for (let i = 0; i < 10; i++) {
+  if (i === 3) continue; // lompati 3
+  if (i === 6) break;    // berhenti di 6
+  console.log(i);        // 0,1,2,4,5
+}
+```
+
+## 4 Pola Loop Klasik
+
+```js
+// 1. Akumulasi — jumlah semua nilai
+let total = 0;
+for (const n of [10, 20, 30]) total += n;          // 60
+
+// 2. Cari pertama — berhenti segera ketemu
+const angka = [3, 7, 9, 12];
+let ganjilPertama = null;
+for (const n of angka) {
+  if (n % 2 !== 0) { ganjilPertama = n; break; }   // 3
+}
+
+// 3. Filter → baru — bangun array tanpa mengubah asli
+const baru = [];
+for (const n of angka) if (n > 5) baru.push(n);    // [7, 9, 12]
+
+// 4. Hitung frekuensi — berapa kali tiap kata muncul
+const hitung = {};
+for (const kata of ["a", "b", "a"]) hitung[kata] = (hitung[kata] ?? 0) + 1;
+// { a: 2, b: 1 }
+```
+
+## Array Method Alternatif (Modern)
+
+```js
+[1, 2, 3].forEach((n) => console.log(n));
+
+const hasil = [1, 2, 3].map((n) => n * 2);   // [2,4,6]
+const genap = [1, 2, 3, 4].filter((n) => n % 2 === 0);
+const total = [1, 2, 3].reduce((a, b) => a + b, 0);
+```
+
+`forEach` **tidak bisa dihentikan** dengan `break` — kalau butuh berhenti di tengah, pakai `for...of` biasa atau `array.some()` (berhenti saat callback mengembalikan `true`):
+
+```js
+const ketemu = [1, 2, 3].some((n) => n > 2); // true — berhenti di 3
+```
+
+## Di Dunia Nyata
+
+- **Tampilan tabel leaderboard**: loop `for...of` membaca 100 baris data lalu menulis `<tr>` satu per satu.
+- **Menunggu input valid PIN** user: `do...while` menanyakan ulang sampai PIN benar — minimal sekali tanya.
+- **Menyaring transaksi batal** dari daftar pembayaran: pola filter → baru.
+- **Auto-save draft** tiap 5 detik dengan `setInterval` (loop berbasis waktu) sampai user menutup tab.
+- **Menghitung stok per kategori** gudang: pola hitung frekuensi.
+
+<div class="note">💡 Loop tak terbatas (*infinite loop*) membekukan tab browser. Aturan emas: setiap `while` wajib punya baris yang mengubah kondisi menuju `false` — kalau ragu, pakai `for` yang batasnya eksplisit.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Tabel perkalian
+for (let i = 1; i <= 5; i++) {
+  let baris = "";
+  for (let j = 1; j <= 5; j++) baris += (i * j).toString().padStart(4);
+  console.log(baris);
+}
+// Deret bilangan ganjil sampai 15
+const ganjil = [];
+for (let n = 1; n <= 15; n += 2) ganjil.push(n);
+console.log("Ganjil:", ganjil.join(", "));`} />

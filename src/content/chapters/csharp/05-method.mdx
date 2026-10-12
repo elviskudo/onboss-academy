@@ -1,0 +1,202 @@
+---
+title: "Method (Function)"
+description: "6 jenis parameter, overload, recursion, dan method expression-bodied"
+order: 5
+quiz:
+  - q: "Method yang tidak mengembalikan nilai memakai tipe return…"
+    options: ["int", "string", "void", "bool"]
+    answer: 2
+    explain: "void berarti method hanya menjalankan tugas, tidak mengirim nilai balik."
+  - q: "Agar method bisa dipanggil dari Main tanpa membuat objek, method tersebut harus…"
+    options: ["public", "static", "virtual", "async"]
+    answer: 1
+    explain: "Method statis milik class, bukan instance, sehingga langsung bisa dipanggil."
+  - q: "Nilai yang dikirim ke method disebut…"
+    options: ["parameter", "return", "field", "namespace"]
+    answer: 0
+    explain: "Parameter adalah variabel penerima di definisi method; saat dipanggil disebut argumen."
+  - q: "out dipakai ketika…"
+    options: ["argumen wajib ada", "method ingin cepat", "parameter mau diberi nilai awal", "method perlu mengirim lebih dari satu nilai keluar"]
+    answer: 3
+    explain: "out mengisi variabel milik pemanggil dari dalam method — idiom TryParse."
+  - q: "Dua method dengan nama sama tetapi daftar parameter berbeda disebut…"
+    options: ["override", "overrun", "overload", "inherit"]
+    answer: 2
+    explain: "Overload memungkinkan satu nama dipakai untuk beberapa versi parameter."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static int Jumlah(int a, int b)
+        {
+            return a + b;
+        }
+
+        static void Sapa(string nama)
+        {
+            Console.WriteLine("Halo, " + nama + "!");
+        }
+
+        static void Main()
+        {
+            Console.WriteLine("3 + 4 = " + Jumlah(3, 4));
+            Sapa("Sari");
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Method adalah **blok kode bernama yang bisa dipanggil berulang**. Dengan ini kamu menulis logika sekali dan memakainya di mana saja — diuji sekali, dipakai seribu kali.
+
+## Anatomi Method
+
+```csharp
+static int Jumlah(int a, int b)
+{
+    int hasil = a + b;
+    return hasil;
+}
+```
+
+| Bagian | Fungsi | Contoh |
+|---|---|---|
+| modifier akses | siapa yang boleh memanggil | `public`, `private` |
+| `static` | milik class, tanpa objek | dipanggil `Jumlah(...)` |
+| tipe return | jenis nilai kembalian | `int`, `string`, `void` |
+| nama method | PascalCase | `HitungTotal` |
+| daftar parameter | input method | `(int a, int b)` |
+| badan `{ }` | logika + `return` | isi pekerjaan |
+
+C# punya **5 modifier akses** yang paling dipakai: `public`, `private`, `protected`, `internal`, dan `protected internal`. Tipe sebelum nama method harus sama dengan nilai yang dikirim `return` — jika tertulis `int`, method wajib mengembalikan bilangan bulat di setiap jalur.
+
+## void vs Value
+
+```csharp
+static void Sapa(string nama)
+{
+    Console.WriteLine("Halo, " + nama + "!");
+}
+// dipakai: Sapa("Budi");  — tanpa menyimpan hasil
+
+static double Rata(int[] data)
+{
+    int total = 0;
+    foreach (int n in data) total += n;
+    return (double)total / data.Length;
+}
+// dipakai: double r = Rata(nilai);
+```
+
+`void` untuk tugas (mencetak, menyimpan), tipe nilai untuk perhitungan yang hasilnya dipakai lagi.
+
+## 6 Jenis Parameter
+
+| Jenis | Sintaks | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Biasa | `T x` | `int a` | input standar |
+| Default | `T x = v` | `int e = 2` | opsi sering sama |
+| Params | `params T[]` | `params int[]` | argumen jumlah leluasa |
+| Ref | `ref T x` | `ref int total` | ubah nilai pemanggil |
+| Out | `out T x` | `out int hasil` | kirim hasil keluar |
+| In | `in T x` | `in long id` | baca saja, jangan salin |
+
+```csharp
+static int Pangkat(int basis, int eksponen = 2)
+{
+    int hasil = 1;
+    for (int i = 0; i < eksponen; i++)
+        hasil *= basis;
+    return hasil;
+}
+
+static int JumlahBanyak(params int[] angka)
+{
+    int total = 0;
+    foreach (int n in angka) total += n;
+    return total;
+}
+```
+
+Saat memanggil, kamu juga bisa memakai **named argument**: `Pangkat(basis: 3, eksponen: 4)` — urutan tidak lagi penting dan maksudnya terlihat jelas.
+
+## Overload, Recursion, Expression-Body
+
+```csharp
+static int Kali(int a, int b) { return a * b; }
+static double Kali(double a, double b) { return a * b; }   // overload
+
+static int Faktorial(int n)
+{
+    if (n <= 1) return 1;          // base case
+    return n * Faktorial(n - 1);   // recursion
+}
+
+static int Kuadrat(int x) => x * x;   // expression-bodied (C# 6)
+```
+
+Overload dibedakan dari **jumlah dan tipe parameter**, bukan dari tipe kembalian. Local function (method di dalam method) juga didukung: cukup tulis fungsi bersarang di badan method yang membutuhkannya.
+
+## Kapan Memecah Jadi Method
+
+Pecah menjadi method ketika: (1) blok yang sama dipakai di 2+ tempat, (2) logikanya bisa diberi nama (`HitungPajak`, `ValidasiEmail`), (3) method utama sudah lebih dari ±30 baris, atau (4) potongan kode perlu diuji terpisah.
+
+## Di Dunia Nyata
+
+- `static bool ValidasiEmail(string email)` dipakai di form registrasi, edit profil, dan API.
+- `static void KirimNotif(string ke, string pesan)` mengemas logika email yang dipakai 6 layanan berbeda.
+- `int.TryParse(input, out int angka)` — pola out paling terkenal di seluruh ekosistem .NET.
+- Fungsi rekursi menelusuri struktur folder atau pohon organisasi perusahaan.
+- Method `HitungOngkir(decimal berat, bool darat = true)` memangkas penulisan untuk kasus paling sering.
+
+<div class="note">💡 Satu method sebaiknya mengerjakan satu hal. Method pendek dengan nama jelas (HitungTotal, ValidasiEmail) jauh lebih mudah diuji daripada method raksasa berisi seratus baris yang mencetak, menghitung, dan menyimpan sekaligus.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static int Jumlah(int a, int b)
+    {
+        return a + b;
+    }
+
+    static int Pangkat(int basis, int eksponen = 2)
+    {
+        int hasil = 1;
+        for (int i = 0; i < eksponen; i++)
+        {
+            hasil *= basis;
+        }
+        return hasil;
+    }
+
+    static int JumlahBanyak(params int[] angka)
+    {
+        int total = 0;
+        foreach (int n in angka)
+        {
+            total += n;
+        }
+        return total;
+    }
+
+    static int Kuadrat(int x) => x * x;
+
+    static void Sapa(string nama)
+    {
+        Console.WriteLine("Halo, " + nama + "!");
+    }
+
+    static void Main()
+    {
+        Console.WriteLine("3 + 4 = " + Jumlah(3, 4));
+        Console.WriteLine("5 pangkat 3 = " + Pangkat(5, 3));
+        Console.WriteLine("7 pangkat 2 = " + Pangkat(7));
+        Console.WriteLine("Jumlah 1+2+3+4 = " + JumlahBanyak(1, 2, 3, 4));
+        Console.WriteLine("Kuadrat 6 = " + Kuadrat(6));
+        Sapa("OnBoss Academy");
+    }
+}
+`} />

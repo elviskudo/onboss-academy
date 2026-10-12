@@ -1,0 +1,212 @@
+---
+title: "Percabangan"
+description: "if, else if, switch, ternary, dan pattern matching — membuat program yang memilih"
+order: 3
+quiz:
+  - q: "Operator untuk mengecek sama dengan nilai adalah…"
+    options: ["=", "==", "!=", "=>"]
+    answer: 1
+    explain: "= untuk memberi nilai, == untuk membandingkan dua nilai."
+  - q: "Blok yang dieksekusi saat kondisi if bernilai true adalah…"
+    options: ["else", "semuanya selalu jalan", "kurung kurawal setelah if", "komentar"]
+    answer: 2
+    explain: "Isi if (antara { }) hanya dijalankan jika kondisinya benar."
+  - q: "Kata kunci yang menutup cabang standar di switch adalah…"
+    options: ["break", "exit", "stop", "return"]
+    answer: 0
+    explain: "break mencegah execution fall-through ke case berikutnya — beda dengan C++ yang bisa jatuh."
+  - q: "Rangkaian else if paling tepat dipakai ketika…"
+    options: ["hanya ada satu kondisi", "cuma butuh perulangan", "ingin mengulang kode", "ada banyak kondisi berurutan dengan prioritas"]
+    answer: 3
+    explain: "else if mengecek kondisi satu per satu dari atas ke bawah sampai ada yang true."
+  - q: "if (obj is int n) pada C# disebut…"
+    options: ["casting paksa", "pattern matching dengan deklarasi variabel", "operator logika", "looping"]
+    answer: 1
+    explain: "Selain mengecek tipe, pola ini sekaligus membuat variabel n bertipe int yang siap dipakai."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            int nilai = 85;
+
+            if (nilai >= 90)
+                Console.WriteLine("A");
+            else if (nilai >= 80)
+                Console.WriteLine("B");
+            else
+                Console.WriteLine("C");
+
+            string status = nilai >= 75 ? "Lulus" : "Remedial";
+            Console.WriteLine(status);
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Program yang hanya menjalankan kode berurutan pasti membosankan. **Percabangan membuat program memilih tindakan** berdasarkan kondisi — dan C# punya **5 bentuk** utamanya: `if`, `if-else`, rantai `else if`, `switch`, dan ternary `?:`.
+
+## Operator Perbandingan & Logika
+
+```csharp
+int a = 5, b = 10;
+
+Console.WriteLine(a < b);    // true
+Console.WriteLine(a >= b);   // false
+Console.WriteLine(a != b);   // true
+
+bool benar = a < b && b < 20;   // dan: keduanya harus benar
+bool salah = a > b || a == 5;   // atau: salah satu cukup
+bool balik = !(a == b);         // negasi
+```
+
+| Kategori | Jumlah | Operator | Kapan dipakai |
+|---|---|---|---|
+| Perbandingan | 6 | `==` `!=` `<` `>` `<=` `>=` | validasi, filter |
+| Logika | 3 | `&&` `\|\|` `!` | gabung syarat |
+| Penugasan | 1 + gabungan | `=`, `+=`, `-=` | tulis + ubah |
+
+`&&` dan `||` **short-circuit**: `x != 0 && 10 / x > 1` tidak akan membagi nol karena sisi kanan dilewati saat `x == 0`.
+
+## if dan else
+
+```csharp
+int suhu = 35;
+
+if (suhu > 30)
+{
+    Console.WriteLine("Panas sekali");
+}
+else
+{
+    Console.WriteLine("Cuaca nyaman");
+}
+```
+
+Kondisi harus menghasilkan `bool` — C# tidak mengubah angka menjadi kondisi seperti C (`if (suhu)` → error kompilasi). Boleh tanpa kurawal jika hanya satu baris, tapi simpan kurawal agar kode tetap aman saat nanti ditambah baris.
+
+## Rangkaian else if
+
+```csharp
+int nilai = 85;
+
+if (nilai >= 90)
+    Console.WriteLine("A");
+else if (nilai >= 80)
+    Console.WriteLine("B");
+else if (nilai >= 70)
+    Console.WriteLine("C");
+else
+    Console.WriteLine("D");
+```
+
+Kondisi dicek dari atas ke bawah. Begitu ada yang `true`, cabang lain dilewati — jadi urutan rentang harus dari yang paling ketat ke paling longgar.
+
+**Anti-pattern**: nesting `if` 4 tingkat ke dalam. Solusinya *guard clause* — cek kondisi gagal di awal lalu `return`, supaya logika utama tetap dangkal:
+
+```csharp
+if (data == null) return;
+if (data.Count == 0) return;
+// logika utama tanpa nesting
+```
+
+## switch
+
+```csharp
+string hari = "Senin";
+
+switch (hari)
+{
+    case "Senin":
+        Console.WriteLine("Awal minggu");
+        break;
+    case "Jumat":
+        Console.WriteLine("Hari terakhir kerja");
+        break;
+    default:
+        Console.WriteLine("Hari biasa");
+        break;
+}
+```
+
+`switch` lebih rapi daripada else if panjang saat membandingkan satu variabel dengan banyak nilai tetap. **Setiap `case` wajib diakhiri `break`, `return`, atau `throw`** — C# tidak mengizinkan fall-through senyap seperti C++. Untuk menyambung dua cabang: `case "A": case "B": ... break;`.
+
+C# 8 menambah **switch expression** yang lebih ringkas:
+
+```csharp
+string golongan = nilai switch
+{
+    >= 90 => "A",
+    >= 80 => "B",
+    _     => "C"
+};
+```
+
+## Pattern Matching
+
+```csharp
+object data = 42;
+
+if (data is int n && n > 0)
+{
+    Console.WriteLine("Angka positif: " + n);   // n bertipe int
+}
+```
+
+`is` mengecek tipe sekaligus membuat variabel baru — dasar penanganan input dinamis tanpa cast manual.
+
+## Ternary
+
+```csharp
+int nilai = 70;
+string status = nilai >= 75 ? "Lulus" : "Remedial";
+Console.WriteLine(status);
+```
+
+Bentuknya `kondisi ? nilai1 : nilai2` — tepat untuk menghasilkan nilai singkat, bukan untuk menjalankan aksi.
+
+## Di Dunia Nyata
+
+- Validasi form login: cek `email != "" && password.Length >= 8` sebelum request dikirim.
+- Menentukan biaya kirim: ternary `berat > 1 ? berat * 10000 : 5000`.
+- Menu aplikasi: `switch (pilihan)` memilih transaksi, laporan, atau keluar.
+- Pemetaan kode HTTP: switch expression `statusCode switch { 200 => "OK", 404 => "Not Found", _ => "Error" }`.
+- Membaca tipe data hasil deserialisasi: `if (obj is string s)` langsung pakai `s`.
+
+<div class="note">💡 Kesalahan klasik: menulis <code>=</code> (memberi nilai) saat seharusnya <code>==</code> (membandingkan). C# bahkan menolak <code>if (x = 5)</code> sebagai error kompilasi — lebih baik daripada diam-diam jalan seperti C++.</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        int nilai = 85;
+
+        if (nilai >= 90)
+            Console.WriteLine("Nilai: A");
+        else if (nilai >= 80)
+            Console.WriteLine("Nilai: B");
+        else
+            Console.WriteLine("Nilai: C");
+
+        int umur = 17;
+        string izin = umur >= 17 ? "Boleh" : "Belum boleh";
+        Console.WriteLine("Izin mengemudi: " + izin);
+
+        switch (nilai)
+        {
+            case 85:
+                Console.WriteLine("Tepat di ambang batas");
+                break;
+            default:
+                Console.WriteLine("Nilai lain");
+                break;
+        }
+    }
+}
+`} />

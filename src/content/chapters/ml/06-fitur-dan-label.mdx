@@ -1,0 +1,132 @@
+---
+title: "Fitur dan Label"
+description: "Menyiapkan data untuk belajar — feature engineering dan kualitas label"
+order: 6
+quiz:
+  - q: "Fitur dalam machine learning adalah…"
+    options: ["Ciri/input yang dipakai model untuk memprediksi", "Hasil prediksi akhir", "Nama file dataset", "Jumlah epoch"]
+    answer: 0
+    explain: "Kolom seperti luas, usia, atau jumlah klik adalah fitur."
+  - q: "Label adalah…"
+    options: ["Ukuran error", "Fitur tambahan", "Jawaban/target yang ingin diprediksi", "Bobot model"]
+    answer: 2
+    explain: "Label dipakai sebagai kunci jawaban dalam supervised learning."
+  - q: "Feature scaling bertujuan…"
+    options: ["Menghapus kolom kosong", "Menyamakan rentang fitur agar tidak ada yang mendominasi", "Mengubah label jadi teks", "Membuat data jadi acak"]
+    answer: 1
+    explain: "Tanpa scaling, fitur berskala besar (mis. rupiah) mendominasi fitur kecil (mis. umur)."
+  - q: "Data leakage terjadi ketika…"
+    options: ["Informasi masa depan ikut masuk ke fitur pelatihan", "Data disimpan di cloud", "Kolom terlalu sedikit", "Model dilatih terlalu cepat"]
+    answer: 0
+    explain: "Leakage membuat evaluasi terlihat bagus secara palsu — di lapangan hasilnya jauh lebih buruk."
+  - q: "Nilai hilang (missing) sebaiknya ditangani dengan…"
+    options: ["Dibiarkan agar model 'kreatif'", "Diisi angka acak tanpa catatan", "Imputasi atau penghapusan yang terencana", "Diganti dengan teks motivasi"]
+    answer: 2
+    explain: "Pilih strategi eksplisit: median/mean imputasi, kategori 'tidak diketahui', atau drop bila jumlahnya kecil."
+example:
+  code: |
+    # Fitur dan label dipisah secara eksplisit
+    baris = [
+        {"luas": 60, "kamar": 2, "harga": 900},
+        {"luas": 85, "kamar": 3, "harga": 1400},
+    ]
+    fitur = [(b["luas"], b["kamar"]) for b in baris]
+    label = [b["harga"] for b in baris]
+    print(fitur, label)
+---
+
+"Data lebih penting daripada algoritma" — pepatah lama di ML. Bab ini membahas dua komponen yang menentukan nasib model: **fitur** dan **label**.
+
+## Fitur vs Label
+
+| Bagian | Fungsi | Contoh harga rumah |
+|--------|--------|--------------------|
+| Fitur (`X`) | informasi yang tersedia saat prediksi | luas, kamar, lokasi |
+| Label (`y`) | jawaban yang ingin diprediksi | harga jual |
+
+```python
+baris = [
+    {"luas": 60, "kamar": 2, "harga": 900},
+    {"luas": 85, "kamar": 3, "harga": 1400},
+]
+
+fitur = [(b["luas"], b["kamar"]) for b in baris]
+label = [b["harga"] for b in baris]
+print(fitur)
+print(label)
+```
+
+Saat melatih, fitur = pertanyaan, label = jawaban. Jangan pernah menyelipkan label ke dalam fitur.
+
+## 4 Jenis Fitur Umum
+
+| Jenis | Contoh | Persiapan umum |
+|-------|--------|----------------|
+| Numerik | umur, harga, jarak | scaling, imputasi |
+| Kategorikal | kota, jenis produk | encoding |
+| Teks | ulasan, email | tokenisasi/embedding |
+| Waktu | tanggal, jam | pecah hari/bulan/musim |
+
+## Feature Engineering: Membuat Ciri Baru
+
+```python
+# Dari data mentah menjadi fitur bermakna
+transaksi = {"nilai": 750000, "jam": 22, "jarak": 45}
+
+fitur = {
+    "nilai": transaksi["nilai"],
+    "malam_hari": 1 if transaksi["jam"] >= 21 else 0,
+    "jarak_km": transaksi["jarak"],
+}
+print(fitur)
+```
+
+Mengubah "jam 22" menjadi fitur "malam_hari" sering kali membantu model lebih mudah menangkap pola.
+
+## Scaling
+
+```python
+# Sebelum: luas (45-120) dan kamar (1-4) beda rentang jauh
+data = [(60, 2), (85, 3), (120, 4), (45, 1)]
+
+min_luas, max_luas = 45, 120
+ternormalisasi = [((luas - min_luas) / (max_luas - min_luas), kamar) for luas, kamar in data]
+print(ternormalisasi)
+```
+
+2 teknik scaling umum:
+
+| Teknik | Rumus | Hasil |
+|--------|-------|-------|
+| Min-max | `(x - min) / (max - min)` | rentang 0..1 |
+| Standardisasi | `(x - mean) / std` | rerata 0, deviasi 1 |
+
+Penting: hitung `min`, `max`, `mean`, dan `std` hanya dari data latih lalu gunakan angka yang sama pada data uji. Menghitungnya dari seluruh data menyebabkan leakage.
+
+## Menangani Nilai Hilang
+
+```python
+nilai = [78, None, 92, None, 85]
+tersedia = [v for v in nilai if v is not None]
+median_fallback = sorted(tersedia)[len(tersedia) // 2]
+terisi = [median_fallback if v is None else v for v in nilai]
+print(terisi)
+```
+
+3 strategi yang valid: hapus baris bila sedikit, imputasi mean/median untuk numerik, atau beri kategori "tidak diketahui" untuk data kategorikal. Catat strategi karena perbedaan imputasi bisa mengubah hasil evaluasi.
+
+## Kualitas Label
+
+- Label diberi **panduan anotasi** yang jelas dan konsisten.
+- Ukur **kesepakatan antar pemberi label** — bila dua ahli sering beda definisi, labelnya bermasalah.
+- Jangan mencampur label dari periode berbeda tanpa menyadarinya (konsep label bisa berubah).
+
+## Di Dunia Nyata
+
+- **Fraud kartu kredit** — buat fitur jumlah transaksi 1 jam terakhir, bukan hanya nominal saat ini.
+- **Model harga rumah** — encoding kota dan scaling luas dilakukan setelah train/test split untuk mencegah leakage.
+- **Prediksi churn** — fitur "jumlah komplain 30 hari" hanya memakai data sebelum tanggal prediksi.
+- **Klasifikasi ulasan** — teks ditokenisasi; rating bintang menjadi label sentimen.
+- **Diagnosis medis** — label diverifikasi dua dokter agar kesalahan anotasi tidak menjadi pola model.
+
+<div class="note">💡 Buat sketsa fitur sebelum mengumpulkan data. Fitur yang tidak tersedia saat model dipakai di produksi (mis. "kepuasan setelah pembelian") akan membuat model mustahil dideploy.</div>

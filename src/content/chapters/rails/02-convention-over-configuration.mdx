@@ -1,0 +1,123 @@
+---
+title: "Convention over Configuration"
+description: "Keajaiban Rails: mengikuti penamaan yang benar membuat semuanya terhubung otomatis"
+order: 2
+quiz:
+  - q: "Prinsip utama Rails adalah…"
+    options: ["Convention over configuration", "Configuration over convention", "Zero convention", "Manual setup only"]
+    answer: 0
+    explain: "Rails memilihkan default terbaik sehingga konfigurasi manual jauh berkurang."
+  - q: "Model Product pada Rails biasanya tersimpan di file…"
+    options: ["lib/Product.java", "app/models/product.rb", "models/product.py", "src/product.go"]
+    answer: 1
+    explain: "Nama class diubah jadi snake_case lalu diletakkan di app/models."
+  - q: "Kelas model Product mewarisi dari…"
+    options: ["ApplicationRecord", "BaseModel", "ActiveRecord", "Model"]
+    answer: 0
+    explain: "ApplicationRecord adalah induk bersama seluruh model aplikasi."
+  - q: "File konfigurasi untuk rute terletak di…"
+    options: ["app/urls.rb", "routes.json", "config/routes.rb", "public/route.rb"]
+    answer: 2
+    explain: "Satu file routes.rb memetakan seluruh URL aplikasi."
+  - q: "Folder yang menyimpan migrasi database adalah…"
+    options: ["db/migrate", "data/sql", "app/database", "config/schema"]
+    answer: 0
+    explain: "Setiap perubahan skema menjadi file migrasi berversi di db/migrate."
+example:
+  code: |
+    # app/models/product.rb
+    class Product < ApplicationRecord
+    end
+
+    # app/controllers/products_controller.rb
+    class ProductsController < ApplicationController
+      def index
+        @products = Product.all
+      end
+    end
+---
+
+Rails membangun aplikasi dari pola yang sudah teruji. Kamu tinggal mengisi tempat yang sudah disiapkan.
+
+## Satu Nama, Banyak Koneksi
+
+```ruby
+# nama class Product
+# -> file      app/models/product.rb
+# -> tabel     products
+# -> rute      /products
+# -> controller ProductsController
+```
+
+Cukup tulis class dengan nama yang benar, Rails menautkannya ke tabel, rute, dan view.
+
+## Penamaan yang Konsisten
+
+- Class `Product` → file `product.rb` → tabel `products`
+- Class `OrderItem` → file `order_item.rb` → tabel `order_items`
+- Controller `Admin::ProductsController` → rute `/admin/products`
+
+Kata jamak pada nama tabel adalah konvensi yang diandalkan Active Record.
+
+## File yang Selalu Ada di Tempat Sama
+
+```ruby
+app/models/product.rb          # model
+app/controllers/..._controller.rb
+app/views/products/index.html.erb
+config/routes.rb               # semua rute
+db/migrate/20260101_create_products.rb
+```
+
+Tidak perlu mendaftarkan file ke framework — lokasinya sudah cukup.
+
+## Environment Otomatis
+
+```ruby
+# config/environments/development.rb  -> bin/rails server
+# config/environments/test.rb         -> rails test
+# config/environments/production.rb   -> server publik
+```
+
+Perilaku aplikasi berubah hanya dengan memilih environment, tanpa mengubah kode.
+
+## Konfigurasi Minim
+
+```ruby
+# config/database.yml cukup menyebut adapter dan nama database,
+# sisanya Rails isi sendiri dengan default yang wajar.
+```
+
+## Konvensi Inti
+
+Ada **6 konvensi utama** yang paling sering menghubungkan bagian aplikasi secara otomatis.
+
+| Konvensi | Bentuk | Fungsi | Kapan dipakai |
+|---|---|---|---|
+| Model | `Product` / `product.rb` | class domain | setiap tabel utama |
+| Tabel | `products` | plural snake_case | penyimpanan model |
+| Foreign key | `customer_id` | menghubungkan model | `belongs_to` |
+| Controller | `ProductsController` | menerima request | resource produk |
+| View | `products/show.html.erb` | mengikuti action | respons HTML |
+| Route helper | `product_path(product)` | membuat URL | link dan redirect |
+
+Autoloading Zeitwerk memetakan konstanta ke path: `Admin::ProductsController` harus berada di `app/controllers/admin/products_controller.rb`. Jangan memakai `require` untuk kode aplikasi normal; penamaan dan lokasi yang benar membuat Rails memuatnya otomatis.
+
+## Kapan Mengonfigurasi
+
+Convention over Configuration bukan “tanpa konfigurasi”. Ubah default bila kebutuhan nyata menuntutnya, misalnya database PostgreSQL, locale Indonesia, timezone aplikasi, atau queue adapter produksi. Simpan konfigurasi environment di credentials atau environment variable, bukan hard-code. Hindari mengubah nama tabel dan primary key tanpa alasan karena setiap pengecualian menambah beban pemeliharaan.
+
+## Di Dunia Nyata
+
+- Tim baru menemukan model, controller, dan view tanpa dokumentasi path tambahan.
+- Generator menghasilkan foreign key yang dikenali asosiasi otomatis.
+- Route helper tetap benar ketika host atau prefix deployment berubah.
+- Environment memisahkan logging development, test yang terisolasi, dan cache production.
+
+## Default yang Dapat Diprediksi
+
+Konvensi juga berlaku pada waktu dan lifecycle. `created_at` dan `updated_at` diperbarui otomatis, primary key default bernama `id`, serta environment dipilih lewat `RAILS_ENV`. Association bernama singular pada `belongs_to` dan plural pada `has_many`. Memahami default ini mengurangi konfigurasi sekaligus membuat query dan migrasi mudah ditebak.
+
+Gunakan `bin/rails zeitwerk:check` ketika autoloading gagal. Periksa kecocokan namespace, nama konstanta, kapitalisasi, dan path sebelum menambahkan `require`. Untuk infleksi domain yang tidak biasa, Rails menyediakan initializer inflector; gunakan hanya bila istilah bisnis memang tidak dapat mengikuti pluralisasi standar. Dokumentasikan penyimpangan dekat konfigurasi karena developer berikutnya tidak bisa lagi menyimpulkan perilaku hanya dari nama file.
+
+<div class="note">💡 Saat error aneh muncul, tanyakan dulu: apakah nama file, class, dan tabelku sudah sesuai konvensi Rails? Sebagian besar masalah pemula bukan bug framework, melainkan penamaan yang menyimpang.</div>

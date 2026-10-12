@@ -1,0 +1,151 @@
+---
+title: "Interpolasi & Directive"
+description: "v-bind, v-if, v-for — menampilkan dan menyembunyikan data di template"
+order: 2
+quiz:
+  - q: "Sintaks interpolasi di template Vue memakai…"
+    options: ["<%= %>", "{{ ekspresi }}", "${}", "console.log()"]
+    answer: 1
+    explain: "Contoh: <h1>{{ judul }}</h1> — isinya ekspresi JavaScript yang dievaluasi Vue."
+  - q: "v-bind:src (atau :src) berfungsi…"
+    options: ["Mengikat atribut HTML ke data Vue", "Menambah style", "Menghapus elemen", "Membuat event"]
+    answer: 0
+    explain: "Tanpa :, src=\"{{ x }}\" tidak bekerja di atribut; :src mengevaluasi ekspresi."
+  - q: "v-if vs v-show bedanya…"
+    options: ["Tidak ada bedanya", "v-if menambah/menghapus elemen; v-show hanya menampilkan/menyembunyikan", "v-show menghapus DOM", "v-if selalu cepat"]
+    answer: 1
+    explain: "v-if cocok untuk tampilan jarang muncul; v-show lebih murah untuk toggle sering."
+  - q: "v-for=\"item in daftar\" akan…"
+    options: ["Mengulang elemen untuk tiap item daftar", "Membuat variabel", "Menghapus daftar", "Mengurutkan otomatis"]
+    answer: 0
+    explain: "Selalu beri :key unik agar Vue melacak tiap node dengan benar."
+  - q: "Apa gunanya atribut :key pada v-for?"
+    options: ["Membantu Vue mengenali tiap item secara unik", "Menambah warna", "Menghapus item", "Mengurutkan daftar"]
+    answer: 0
+    explain: "Tanpa key, Vue bisa salah mencocokkan node saat daftar berubah — bug tampilan sulit ditebak."
+example:
+  code: |
+    const daftar = ["Kopi", "Teh", "Jus"];
+    daftar.forEach((item, i) => console.log(i + 1 + ". " + item));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Template Vue diperluas oleh **directive** — atribut khusus yang diawali `v-`. Directive membawa state, percabangan, dan looping JavaScript ke HTML secara deklaratif.
+
+## 6 Directive Inti
+
+| Directive | Singkatan | Fungsi | Kapan dipakai |
+|-----------|-----------|--------|---------------|
+| `v-bind` | `:` | Ikat atribut ke ekspresi | URL, class, disabled |
+| `v-on` | `@` | Dengarkan event | Klik, submit, keyboard |
+| `v-if` | — | Tambah/hapus elemen kondisional | Konten jarang toggle |
+| `v-show` | — | Toggle CSS `display` | Konten sering toggle |
+| `v-for` | — | Ulangi array/object | List, tabel, opsi |
+| `v-model` | — | Binding input dua arah | Form |
+
+Bab ini fokus pada interpolasi, `v-bind`, `v-if`/`v-show`, dan `v-for`; event serta form dibahas bab berikutnya.
+
+## Interpolasi
+
+```html
+<template>
+  <h1>Halo, {{ nama }}!</h1>
+  <p>Umur: {{ umur + 1 }} tahun</p>
+  <p>{{ aktif ? "Online" : "Offline" }}</p>
+</template>
+```
+
+Ekspresi di dalam `{{ }}` adalah JavaScript biasa — boleh aritmetika, kondisi, bahkan pemanggilan fungsi (tanpa side effect).
+
+## v-bind untuk Atribut
+
+```html
+<template>
+  <img v-bind:src="urlGambar" :alt="namaProduk" />
+  <a :href="tautan">Buka</a>
+  <button :disabled="stok === 0">Beli</button>
+</template>
+```
+
+Singkatan `:src` adalah bentuk paling umum dari `v-bind:src`.
+
+## v-if / v-else-if / v-else
+
+```html
+<template>
+  <p v-if="umur >= 18">Dewasa</p>
+  <p v-else-if="umur >= 12">Remaja</p>
+  <p v-else>Anak-anak</p>
+</template>
+```
+
+Elemen benar-benar hilang dari DOM saat kondisi false.
+
+## v-for
+
+```html
+<template>
+  <ul>
+    <li v-for="(item, i) in daftar" :key="item.id">
+      {{ i + 1 }}. {{ item.nama }} — Rp{{ item.harga }}
+    </li>
+  </ul>
+</template>
+```
+
+Bisa juga menyusuri object: `v-for="(nilai, kunci) in obj"`.
+
+## v-show
+
+```html
+<template>
+  <div v-show="tampil">Pesan terlihat</div>
+</template>
+```
+
+Elemen tetap ada di DOM, hanya `display: none` — pergantian tampilan jadi lebih murah.
+
+## Pola di Balik Layar (JavaScript)
+
+Di balik setiap `v-for` dan `v-if`, Vue memproses array/object seperti ini:
+
+```javascript
+const daftar = [
+  { id: 1, nama: "Kopi", harga: 25000 },
+  { id: 2, nama: "Teh", harga: 15000 },
+];
+
+const tampil = daftar.filter((d) => d.harga >= 15000);
+const baris = tampil.map((d, i) => (i + 1) + ". " + d.nama);
+console.log(baris.join(" | "));
+```
+
+## Di Dunia Nyata
+
+- **Status pesanan**: `v-if` menampilkan tombol bayar hanya ketika status `menunggu`.
+- **Dropdown profil**: `v-show` ideal karena panel dibuka-tutup berkali-kali dalam satu sesi.
+- **Tabel transaksi**: `v-for` merender baris dari array API dengan `:key="transaksi.id"`.
+- **Galeri produk**: `:src`, `:alt`, dan `:class` berubah mengikuti produk aktif.
+- **Empty state**: `v-if="items.length"` menampilkan list; `v-else` menampilkan "Belum ada data".
+
+<div class="note">💡 Sembunyikan elemen berat (tabel besar, form kompleks) dengan `v-if` supaya benar-benar tidak dirender. Gunakan `v-show` untuk tombol/panel yang sering bolak-balik tampil — menghapus dan menambah DOM lebih mahal daripada menyembunyikan.</div>
+
+<TryIt lang="javascript" runtime="client-js" code={`// Logika yang dijalankan Vue di balik v-for & v-if
+const daftar = [
+  { id: 1, nama: "Kopi susu", harga: 25000, stok: 5 },
+  { id: 2, nama: "Teh", harga: 15000, stok: 0 },
+  { id: 3, nama: "Jus", harga: 20000, stok: 3 },
+];
+
+const tampil = daftar.filter((d) => d.stok > 0);
+const baris = tampil.map((d, i) => (i + 1) + ". " + d.nama + " (Rp" + d.harga + ")");
+console.log("v-for hasil:");
+console.log(baris.join("\\n"));
+
+console.log("\\nv-if stok kosong:");
+for (const d of daftar) {
+  if (d.stok === 0) console.log(d.nama + " -> habis, disembunyikan");
+}
+
+console.log("\\nTotal item tampil:", tampil.length);`} />

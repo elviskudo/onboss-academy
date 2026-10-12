@@ -1,0 +1,119 @@
+---
+title: "Lanskap Keamanan Siber"
+description: "CIA triad, ancaman, dan cara berpikir seperti seorang pembela"
+order: 1
+quiz:
+  - q: "Tiga pilar keamanan informasi (CIA triad) adalah…"
+    options: ["Confidentiality, Integrity, Availability", "Coding, Internet, Access", "Cache, Index, Volume", "Control, Identity, Authorization"]
+    answer: 0
+    explain: "Kerahasiaan, integritas, dan ketersediaan — kerangka penilai dampak setiap insiden."
+  - q: "Contoh pelanggaran confidentiality adalah…"
+    options: ["Data pelanggan bocor ke pihak tak berwenang", "Server mati listrik", "Website gagal update", "Kode penuh komentar"]
+    answer: 0
+    explain: "Kebocoran data pribadi menyangkut kerahasiaan; downtime menyangkut ketersediaan."
+  - q: "Ancaman (threat) berbeda dari kerentanan (vulnerability) karena…"
+    options: ["Ancaman = pelaku/potensi; kerentanan = kelemahan yang dieksploitasi", "Ancaman = file rusak; kerentanan = password", "Keduanya identik", "Ancaman hanya untuk negara"]
+    answer: 1
+    explain: "Kelemahan adalah lubang; ancaman adalah pihak yang berpotensi memanfaatkannya."
+  - q: "Pendekatan zero trust mengasumsikan…"
+    options: ["Tidak ada pengguna yang otomatis tepercaya, termasuk di dalam jaringan", "Semua di dalam jaringan aman", "Hanya perangkat mobile yang perlu dijaga", "Firewall sudah cukup"]
+    answer: 0
+    explain: "Setiap akses diverifikasi ulang berdasarkan identitas, perangkat, dan konteks."
+  - q: "Tahap pertama incident response yang paling kritis adalah…"
+    options: ["Deteksi dan klasifikasi insiden", "Menyalahkan orang", "Menghapus semua log", "Menunda selama seminggu"]
+    answer: 0
+    explain: "Deteksi cepat membatasi kerusakan; kemudian penanganan, pemulihan, dan pembelajaran."
+example:
+  code: |
+    # Menilai risiko: dampak x kemungkinan
+    risiko = []
+    for item in [
+        {"nama": "phishing", "dampak": 4, "kemungkinan": 5},
+        {"nama": "gempa", "dampak": 3, "kemungkinan": 1},
+    ]:
+        skor = item["dampak"] * item["kemungkinan"]
+        risiko.append((skor, item["nama"]))
+
+    for skor, nama in sorted(risiko, reverse=True):
+        print(f"{nama}: skor risiko {skor}")
+---
+
+Keamanan siber bukan sekadar "memasang antivirus", melainkan **cara berpikir**: apa yang harus dilindungi, dari siapa, dan bagaimana bila gagal.
+
+## CIA Triad
+
+- **Confidentiality (Kerahasiaan)** — hanya pihak berwenang yang boleh membaca.
+- **Integrity (Integritas)** — data tidak diubah tanpa izin.
+- **Availability (Ketersediaan)** — layanan tetap dapat diakses saat dibutuhkan.
+
+Setiap kontrol keamanan pada dasarnya melindungi setidaknya satu pilar ini.
+
+## Ancaman, Kerentanan, Risiko
+
+```python
+ancaman = [
+    {"nama": "phishing",        "dampak": 4, "kemungkinan": 5},
+    {"nama": "password lemah",  "dampak": 3, "kemungkinan": 4},
+    {"nama": "bencana alam",    "dampak": 3, "kemungkinan": 1},
+]
+
+for item in sorted(ancaman, key=lambda a: a["dampak"] * a["kemungkinan"], reverse=True):
+    print(f"{item['nama']:15} risiko={item['dampak'] * item['kemungkinan']}")
+```
+
+**Risiko = dampak x kemungkinan** — urutan perbaikan mengikuti skor ini, bukan perasaan.
+
+## Attack Surface dan Permukaan Serangan
+
+Setiap endpoint yang bisa diakses (website, API, SSH, USB) menambah permukaan serangan. Prinsipnya: **kurangi yang tidak perlu**.
+
+```python
+layanan_aktif = {"web", "ssh", "ftp", "admin-panel"}
+layanan_perlu = {"web", "ssh"}
+
+matikan = layanan_aktif - layanan_perlu
+print("Nonaktifkan:", matikan)
+```
+
+## Pembela: Mindset yang Ditanam
+
+- **Asumsikan pasti ada yang mencoba** — desain sistem dengan asumsi musuh sudah berada di dalam.
+- **Prinsip hak minimum (least privilege)** — beri akses seminimal yang dibutuhkan pekerjaan.
+- **Defense in depth** — beberapa lapis pengaman, bukan satu tembok raksasa.
+- **Bersiap untuk gagal** — backup, logging, dan rencana pemulihan disiapkan sebelum insiden.
+
+## Peta Perjalanan Belajar
+
+```
+Dasar jaringan & OS -> Autentikasi & kriptografi -> Aplikasi aman (OWASP)
+        -> Deteksi & respons -> Hardening & backup
+```
+
+Delapan bab berikutnya mengikuti alur ini.
+
+## Empat Unsur Risiko
+
+Ada **4 unsur** yang perlu dicatat sebelum memilih kontrol.
+
+| Unsur | Arti | Contoh | Tindakan defensif |
+|---|---|---|---|
+| Aset | Sesuatu yang bernilai | Data pelanggan | Klasifikasi dan enkripsi |
+| Ancaman | Potensi penyebab kerugian | Phishing | Pelatihan dan MFA |
+| Kerentanan | Kelemahan yang dapat dimanfaatkan | Software usang | Patch |
+| Dampak | Kerugian jika terjadi | Layanan berhenti | Redundansi dan backup |
+
+Risiko tidak pernah menjadi nol. Organisasi dapat mengurangi, menghindari, mentransfer, atau menerima risiko secara sadar. Keputusan harus punya pemilik, tenggat, dan bukti kontrol; daftar risiko tanpa tindak lanjut tidak melindungi apa pun.
+
+## Di Dunia Nyata
+
+1. Toko online memprioritaskan kebocoran data pembayaran karena dampak dan kewajiban hukumnya tinggi.
+2. Rumah sakit menjaga availability sistem klinis dengan redundansi sekaligus confidentiality rekam medis melalui kontrol akses.
+3. Tim remote menghadapi phishing dengan MFA tahan-phishing, filter email, dan prosedur pelaporan cepat.
+4. Startup menutup panel admin publik dan membatasi akses lewat VPN untuk mengecilkan attack surface.
+5. Perusahaan menguji restore backup setelah simulasi ransomware, bukan sekadar melihat status job hijau.
+
+Defense in depth berarti kegagalan satu kontrol tidak langsung menjadi insiden besar. Password kuat dilapisi MFA; endpoint dilapisi otorisasi server; data dilapisi enkripsi dan backup. Logging memberi deteksi, sedangkan rencana respons membatasi dampak setelah pencegahan gagal.
+
+Inventaris aset adalah langkah praktis pertama: catat pemilik, sensitivitas, lokasi, akses, ketergantungan, serta kebutuhan pemulihan. Tanpa inventaris, tim tidak tahu sistem mana yang harus dipatch dahulu atau data apa yang wajib diberitahukan saat insiden.
+
+<div class="note">💡 Keamanan adalah proses, bukan produk. Tidak ada tombol ajaib "aktifkan keamanan" — yang ada adalah kebiasaan baik yang dijalankan konsisten.</div>

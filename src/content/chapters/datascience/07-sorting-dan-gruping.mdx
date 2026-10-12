@@ -1,0 +1,155 @@
+---
+title: "Sorting, Gruping, dan Visualisasi Teks"
+description: "Mengurutkan, mengelompokkan, dan menampilkan data sebagai grafik teks"
+order: 7
+quiz:
+  - q: "sorted(data, key=len) mengurutkan berdasarkan…"
+    options: ["Urutan masuk", "Abjad mutlak", "Panjang tiap elemen", "Acak"]
+    answer: 2
+    explain: "Parameter key menentukan fungsi penentu urutan — di sini panjang string."
+  - q: "Untuk mengelompokkan data penjualan per kota, struktur yang paling tepat adalah…"
+    options: ["list berisi string", "dict berisi list", "set berisi float", "tuple berisi boolean"]
+    answer: 1
+    explain: "Kunci dict menjadi nama grup, nilainya berisi anggota grup tersebut."
+  - q: "reverse=True pada sorted digunakan untuk…"
+    options: ["Mengurutkan dari besar ke kecil", "Membalik urutan warna", "Menghapus data", "Mengacak data"]
+    answer: 0
+    explain: "sorted dengan reverse=True menghasilkan urutan menurun."
+  - q: "Bentuk visualisasi data paling sederhana yang bisa dicetak di terminal adalah…"
+    options: ["Peta geografis", "Grafik 3D", "Batang teks dengan karakter #", "Video animasi"]
+    answer: 2
+    explain: "Bar chart berbasis teks cukup informatif tanpa library grafis apa pun."
+  - q: "Menyimpan hasil analisis ke file teks dilakukan dengan…"
+    options: ["print.to('laporan.txt')", "open('laporan.txt', 'w')", "save.laporan()", "csv.export()"]
+    answer: 1
+    explain: "open dengan mode 'w' membuka file untuk menulis — tutup otomatis dengan blok with."
+example:
+  code: |
+    penjualan = {"Bandung": 120, "Jakarta": 300, "Medan": 80}
+    for kota in sorted(penjualan, key=penjualan.get, reverse=True):
+        bar = "#" * (penjualan[kota] // 20)
+        print(f"{kota:8} {bar} {penjualan[kota]}")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Angka mentah sulit dibaca. Bab ini mengubahnya menjadi **urutan**, **grup**, dan **visualisasi teks** yang langsung bisa dipahami.
+
+## 3 Alat Presentasi Data
+
+| Alat | Fungsi | Contoh hasil |
+|------|--------|--------------|
+| Sorting | mengurutkan | peringkat penjualan |
+| Gruping | mengelompokkan | total per kota |
+| Visualisasi | menampilkan | batang `#` di terminal |
+
+## Sorting dengan Kunci
+
+```python
+produk = [("kopi", 120), ("teh", 80), ("jus", 200)]
+
+urut_nilai = sorted(produk, key=lambda x: x[1], reverse=True)
+print(urut_nilai)
+
+urut_nama = sorted(produk, key=lambda x: x[0])
+print(urut_nama)
+```
+
+`key` menerima fungsi yang menentukan "bahan" pengurutan. `lambda x: x[1]` berarti urut berdasarkan angka kedua.
+
+2 fungsi pengurutan yang perlu diingat:
+
+| Fungsi | Hasil | Data asli |
+|--------|-------|-----------|
+| `sorted(data)` | list baru | tidak berubah |
+| `data.sort()` | list yang sama | berubah (in place) |
+
+Parameter penting `sorted()`: `key=` (kriteria urut) dan `reverse=True` (menurun).
+
+## Gruping: Mengelompokkan Data
+
+```python
+baris = [
+    ("Bandung", 45), ("Jakarta", 120), ("Bandung", 30),
+    ("Medan", 60), ("Jakarta", 80),
+]
+
+grup = {}
+for kota, unit in baris:
+    grup.setdefault(kota, []).append(unit)
+
+print(grup)
+```
+
+`setdefault(kunci, [])` memastikan selalu ada list siap pakai — pola gruping paling ringkas di Python murni.
+
+## Agregasi Tiap Grup
+
+```python
+total_grup = {}
+jumlah_grup = {}
+for kota, unit in baris:
+    total_grup[kota] = total_grup.get(kota, 0) + unit
+    jumlah_grup[kota] = jumlah_grup.get(kota, 0) + 1
+
+print(total_grup)
+rata = {k: total_grup[k] / jumlah_grup[k] for k in total_grup}
+print(rata)
+```
+
+Inti hampir semua "pivot table" sederhana ada di pola 3 langkah: **kumpulkan -> jumlahkan -> tampilkan** (untuk rata-rata, bagikan juga dengan jumlah anggotanya).
+
+## Visualisasi Teks
+
+```python
+penjualan = {"Bandung": 120, "Jakarta": 300, "Medan": 80}
+
+for kota in sorted(penjualan, key=penjualan.get, reverse=True):
+    panjang = penjualan[kota] // 20
+    print(f"{kota:8} | {'#' * panjang} {penjualan[kota]}")
+```
+
+Setiap `#` merepresentasikan 20 unit. Format `{kota:8}` memberi lebar tetap agar label rapi.
+
+## Menyimpan Laporan
+
+```python
+with open("laporan.txt", "w") as f:
+    for kota, unit in penjualan.items():
+        f.write(f"{kota},{unit}\n")
+```
+
+Blok `with` menutup file otomatis, bahkan bila terjadi error di tengah penulisan.
+
+## Di Dunia Nyata
+
+- **Leaderboard toko online** — 10 produk dengan `sorted(..., reverse=True)[:10]` untuk ditampilkan di beranda.
+- **Rekap absensi per departemen** — dict `setdefault` mengelompokkan log jam kerja lalu dijumlahkan per divisi.
+- **Laporan terminal harian** — bar chart `#` untuk melihat sekilas kota mana yang paling aktif.
+- **Log error server** — diurutkan lalu 20 baris terakhir disimpan ke `error.txt` sebelum di-ticketing.
+- **Daftar prioritas bantuan** — sorting berdasarkan skor kerentanan agar tim tahu mana yang dikerjakan dulu.
+
+<div class="note">💡 Urutkan berdasarkan nilai, bukan indeks, saat menyusun ranking. Dan pastikan kolom angka benar-benar bertipe angka — sorting string "9" > "10" karena dibandingkan sebagai teks.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`baris = [("Bandung", 45), ("Jakarta", 120), ("Bandung", 30), ("Medan", 60), ("Jakarta", 80)]
+
+grup = {}
+for kota, unit in baris:
+    grup.setdefault(kota, []).append(unit)
+
+total = {}
+for kota, unit in baris:
+    total[kota] = total.get(kota, 0) + unit
+
+print("Grup per kota:", grup)
+print("Total per kota:", total)
+print()
+
+print("Peringkat penjualan:")
+for kota in sorted(total, key=total.get, reverse=True):
+    panjang = total[kota] // 20
+    batang = "#" * panjang
+    print(f"{kota:8} | {batang} {total[kota]}")
+
+rata_per_kota = {k: round(sum(v) / len(v), 1) for k, v in grup.items()}
+print("Rata-rata per transaksi:", rata_per_kota)`} />

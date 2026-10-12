@@ -1,0 +1,160 @@
+---
+title: "Variabel & Tipe Data"
+description: "8 tipe data PHP, 4 jenis scope, 6 casting, dan jebakan type juggling"
+order: 2
+quiz:
+  - q: "Berapa tipe data resmi PHP dan mana yang termasuk khusus (special)?"
+    options: ["6, hanya array dan object", "8; resource dan null yang khusus", "8; string dan int yang khusus", "10"]
+    answer: 1
+    explain: "8 tipe: string, int, float, bool, array, object (compound), resource, dan null (special)."
+  - q: "Scope variabel yang hanya berlaku di dalam method dan bertahan antar pemanggilan disebut…"
+    options: ["local", "global", "static", "magic"]
+    answer: 2
+    explain: "static $jumlah — nilainya tidak hilang walau method selesai dipanggil."
+  - q: "Apa hasil (int) \"12abc\" di PHP?"
+    options: ["12abc", "null", "0", "12"]
+    answer: 3
+    explain: "PHP mengambil angka di awal teks lalu membuang sisanya."
+  - q: "Hasil dari \"10\" + 5 di PHP adalah…"
+    options: ["\"105\"", "15", "Error", "null"]
+    answer: 1
+    explain: "PHP mengonversi string numerik menjadi angka sebelum dijumlahkan — type juggling."
+  - q: "Cara membuat konstanta di PHP ada…"
+    options: ["1, yaitu define() saja", "3", "2: define() dan const", "Tidak ada — pakai variabel saja"]
+    answer: 2
+    explain: "define(\"PPN\", 0.11) saat runtime; const PPN = 0.11 di scope file — keduanya tidak bisa diubah."
+example:
+  code: |
+    <?php
+    $harga = 15000;
+    $qty = 2;
+    $total = $harga * $qty;
+    echo "Total: Rp$total\n";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP tidak mewajibkan deklarasi tipe, tetapi tetap punya 8 tipe data yang jelas di balik layar. Memahaminya mencegah bug perhitungan dan konversi yang menyesatkan — terutama karena PHP suka mengonversi otomatis.
+
+## 8 Tipe Data PHP
+
+| # | Tipe | Kelompok | Contoh | Kapan dipakai |
+| --- | --- | --- | --- | --- |
+| 1 | `string` | scalar | `"Halo"`, `'Halo'` | Teks, JSON, HTML |
+| 2 | `int` | scalar | `42`, `-7` | Hitungan bulat, id, kuantitas |
+| 3 | `float` | scalar | `3.14` | Desimal, rata-rata |
+| 4 | `bool` | scalar | `true`, `false` | Hasil perbandingan |
+| 5 | `array` | compound | `["a", "b"]` | Daftar, kunci-nilai, tabel |
+| 6 | `object` | compound | `new Siswa()` | Instans dari class |
+| 7 | `resource` | khusus | handle `fopen()` | Koneksi file/db yang terbuka |
+| 8 | `null` | khusus | `null` | "tidak ada nilai" |
+
+```php
+<?php
+$teks    = "Halo";    // string
+$angka   = 42;        // int
+$desimal = 3.14;      // float
+$benar   = true;      // bool
+$kosong  = null;      // null
+
+var_dump($angka);     // int(42)
+echo gettype($teks);  // string
+```
+
+**Nilai default**: variabel yang belum pernah ditugaskan dibaca sebagai `null` dan memunculkan warning — selalu inisialisasi. Array tanpa kunci yang ada juga `null` (peringatan *undefined array key*).
+
+## 4 Jenis Scope
+
+| # | Scope | Deklarasi | Cakupan |
+| --- | --- | --- | --- |
+| 1 | Local | `$nama = ...` di dalam fungsi | Hanya di dalam fungsi itu |
+| 2 | Global | `global $konfig;` lalu pakai | Seluruh program |
+| 3 | Static | `static $jumlah = 0;` | Bertahan antar pemanggilan fungsi |
+| 4 | Magic | `$this` | Objek yang sedang berjalan (di dalam class) |
+
+```php
+<?php
+function hitung() {
+    static $panggilan = 0;   // tidak direset tiap panggilan
+    $panggilan++;
+    return $panggilan;
+}
+echo hitung(), hitung();     // 12
+```
+
+## Single vs Double Quote
+
+```php
+<?php
+$nama = "Sari";
+echo "Halo $nama\n";     // Halo Sari + baris baru
+echo 'Halo $nama';       // literal: Halo $nama
+```
+
+Interpolasi `$variabel` dan escape `\n` hanya bekerja di kutip ganda.
+
+## 6 Casting
+
+| Cast | Fungsi | Contoh | Hasil |
+| --- | --- | --- | --- |
+| `(int)` | Ke bilangan bulat | `(int) "12abc"` | `12` |
+| `(float)` | Ke desimal | `(float) "3.5"` | `3.5` |
+| `(string)` | Ke teks | `(string) 99` | `"99"` |
+| `(bool)` | Ke boolean | `(bool) ""` | `false` |
+| `(array)` | Ke array | `(array) 5` | `[5]` |
+| `(object)` | Ke object | `(object) ["a" => 1]` | objek dengan properti `a` |
+
+## Type Juggling: Konversi Otomatis
+
+```php
+<?php
+var_dump("10" + 5);        // int(15)
+var_dump("12abc" + 5);     // int(17) + warning non-numeric
+var_dump(true + true);     // int(2)
+var_dump(10 / 3);          // float(3.333...) — beda dengan Ruby
+```
+
+Jebakan klasik: `0 == "abc"` dan `0 == ""` **false di PHP 8** (di PHP 7 masih true), sedangkan `"5" == "5.0"` tetap **true** karena keduanya string numerik. Selalu bandingkan dengan `===` bila tipe ikut berarti.
+
+## 2 Cara Membuat Konstanta
+
+```php
+<?php
+define("PPN", 0.11);
+const NAMA_APLIKASI = "OnBoss";
+
+echo PPN * 100000;              // 11000
+echo NAMA_APLIKASI;
+```
+
+Konstanta tidak diawali `$` dan tidak boleh diubah; `define()` dipakai saat runtime (misal dari file konfigurasi), `const` hanya di scope file/class.
+
+## Di Dunia Nyata
+
+- **Input form**: `(int) ($_POST['qty'] ?? 0)` — string `"3"` dari form jadi angka aman sebelum dikali harga.
+- **Konfigurasi aplikasi**: `const BASE_URL = "https://..."` dipakai seluruh modul tanpa risiko tertimpa.
+- **Perhitungan pajak/PPN**: `$total + $total * PPN` dengan PPN sebagai konstanta — satu sumber kebenaran.
+- **Flag status**: `$aktif = (bool) $row['aktif']` saat membaca kolom `0/1` dari database.
+- **Membaca query string**: `filter_var($_GET['halaman'] ?? 1, FILTER_VALIDATE_INT)` menolak nilai yang bukan angka.
+
+<div class="note">💡 PHP mengonversi tipe secara diam-diam (type juggling): `"10" + 5` jadi 15, tapi `"dua" + 5` memicu warning dan dianggap 0. Konversi yang aman hanya terjadi di **batas data tak terpercaya** — cast atau `filter_var` begitu data masuk dari form/URL, lalu gunakan `===` di seluruh kondisi di dalam logika.</div>
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$teks = "Halo";
+$angka = 42;
+$desimal = 3.14;
+$benar = true;
+
+echo "String: $teks (" . gettype($teks) . ")\\n";
+echo "Integer: $angka (" . gettype($angka) . ")\\n";
+echo "Float: $desimal\\n";
+var_dump($benar);
+
+$campur = "12abc";
+$angka2 = (int) $campur;
+echo "(int)\\"12abc\\" = $angka2\\n";
+echo "10 + 5 = " . ("10" + 5) . "\\n";
+echo "10 / 3 = " . (10 / 3) . "\\n";
+
+define("PPN", 0.11);
+echo "PPN dari 100000 = " . (100000 * PPN) . "\\n";`} />

@@ -1,0 +1,164 @@
+---
+title: "Studi Kasus: Analisis Nilai Siswa"
+description: "Merangkum seluruh teknik — dari data mentah sampai laporan akhir"
+order: 8
+quiz:
+  - q: "Studi kasus ini memakai struktur data berupa…"
+    options: ["list berisi dict", "dict berisi list fungsi", "set berisi string", "tuple tunggal"]
+    answer: 0
+    explain: "Tiap dict adalah satu baris (satu siswa), dikumpulkan dalam list."
+  - q: "Menentukan lulus/tidaknya siswa termasuk tahap…"
+    options: ["Mengurutkan teks", "Membaca file", "Klasifikasi sederhana berbasis aturan", "Menghapus data"]
+    answer: 2
+    explain: "Aturan ambang batas (mis. nilai >= 75) mengelompokkan data ke kategori lulus atau tidak."
+  - q: "Fungsi max dengan key digunakan untuk menemukan…"
+    options: ["Jumlah siswa", "Siswa dengan nilai tertentu tertinggi", "File terbesar", "Waktu eksekusi"]
+    answer: 1
+    explain: "key menentukan kriteria pembanding, sehingga max mengembalikan baris siswa dengan nilai tertinggi."
+  - q: "Agar laporan mudah dibaca, sebaiknya menampilkan…"
+    options: ["Ringkasan angka kunci + beberapa baris detail", "Seluruh data tanpa ringkasan", "Hanya angka mentah", "Tidak ada output"]
+    answer: 0
+    explain: "Laporan efektif dimulai dari ringkasan, lalu detail bagi yang ingin menggali."
+  - q: "Langkah setelah laporan dibuat biasanya…"
+    options: ["Menyalin kode tanpa cek", "Menghapus dataset", "Menyimpulkan dan menindaklanjuti hasil", "Menghentikan semua analisis"]
+    answer: 2
+    explain: "Analisis bernilai bila menghasilkan keputusan: remedial, apresiasi, atau perbaikan materi."
+example:
+  code: |
+    siswa = [
+        {"nama": "Andi", "nilai": 82},
+        {"nama": "Bia", "nilai": 68},
+    ]
+    for s in siswa:
+        status = "lulus" if s["nilai"] >= 75 else "remedial"
+        print(s["nama"], status)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sekarang kita gabungkan semua: **list + dict + filtering + statistik + looping** untuk menjawab satu pertanyaan nyata dari data nilai sebuah kelas.
+
+## Dataset
+
+```python
+siswa = [
+    {"nama": "Andi",  "kelas": "A", "nilai": 82},
+    {"nama": "Bia",   "kelas": "A", "nilai": 68},
+    {"nama": "Citra", "kelas": "B", "nilai": 91},
+    {"nama": "Damar", "kelas": "B", "nilai": 75},
+    {"nama": "Eka",   "kelas": "A", "nilai": 88},
+    {"nama": "Fajar", "kelas": "B", "nilai": 60},
+]
+```
+
+## 5 Tahap Laporan
+
+| No | Tahap | Teknik yang dipakai |
+|----|-------|---------------------|
+| 1 | Ringkasan keseluruhan | `len`, `sum`, `max`, `min` |
+| 2 | Label kategori | if/else + ambang batas |
+| 3 | Per kelas | `setdefault` + grouping |
+| 4 | Peringkat | `sorted(..., key=...)` |
+| 5 | Temuan | interpretasi angka |
+
+## Ringkasan Keseluruhan
+
+```python
+semua = [s["nilai"] for s in siswa]
+print("Jumlah siswa :", len(semua))
+print("Rata-rata    :", sum(semua) / len(semua))
+print("Tertinggi    :", max(semua))
+print("Terendah     :", min(semua))
+```
+
+Daftar comprehension memecah list of dict menjadi list angka siap hitung.
+
+## Lulus atau Remedial
+
+```python
+AMBANG = 75
+
+for s in siswa:
+    status = "lulus" if s["nilai"] >= AMBANG else "remedial"
+    print(f"{s['nama']:6} {s['nilai']:3} {status}")
+```
+
+Operator tiga cabang `x if syarat else y` membuat label dalam satu baris. Nilai ambang disimpan di konstanta `AMBANG` supaya kebijakan berubah cukup dengan mengedit satu baris.
+
+## Per Kelas
+
+```python
+per_kelas = {}
+for s in siswa:
+    per_kelas.setdefault(s["kelas"], []).append(s["nilai"])
+
+for kelas in sorted(per_kelas):
+    angka = per_kelas[kelas]
+    print(f"Kelas {kelas}: rata-rata {sum(angka) / len(angka):.1f}")
+```
+
+`:.1f` membatasi satu angka di belakang koma — laporan lebih rapi.
+
+## Peringkat dan Temuan
+
+```python
+peringkat = sorted(siswa, key=lambda s: s["nilai"], reverse=True)
+print("Top 3:", [s["nama"] for s in peringkat[:3]])
+
+tertinggi = max(siswa, key=lambda s: s["nilai"])
+if sum(semua) / len(semua) >= 75:
+    print("Kelas secara umum sudah di atas ambang")
+print("Juara kelas:", tertinggi["nama"], tertinggi["nilai"])
+```
+
+3 temuan yang biasanya dicari pihak sekolah:
+
+1. Berapa persen kelas lulus ambang.
+2. Kelas mana rata-ratanya lebih tinggi.
+3. Siapa yang perlu perhatian (3 nilai terendah) dan siapa yang layak apresiasi.
+
+## Di Dunia Nyata
+
+- **Rapor semester** — cetak ringkasan + label lulus/tidak per siswa dari file nilai ujian.
+- **Rekap nilai tryout** — bandingkan rata-rata per kelas paralel untuk evaluasi guru.
+- **Deteksi siswa berisiko** — filter `nilai < 70` dua mata pelajaran berturut-turut sebagai daftar pemanggilan wali kelas.
+- **Hadiah juara kelas** — `sorted(..., reverse=True)[0]` menentukan pemenang tanpa hitung manual.
+- **Evaluasi soal ujian** — rentang nilai (max - min) memberi petunjuk soal terlalu mudah atau terlalu sulit.
+
+<div class="note">💡 Saat laporan menyebut "rata-rata", selalu cek juga nilai terendah dan sebarannya. Rata-rata 78 bisa jadi berasal dari dua genius dan empat siswa yang tertinggal jauh.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`siswa = [
+    {"nama": "Andi",  "kelas": "A", "nilai": 82},
+    {"nama": "Bia",   "kelas": "A", "nilai": 68},
+    {"nama": "Citra", "kelas": "B", "nilai": 91},
+    {"nama": "Damar", "kelas": "B", "nilai": 75},
+    {"nama": "Eka",   "kelas": "A", "nilai": 88},
+    {"nama": "Fajar", "kelas": "B", "nilai": 60},
+]
+
+semua = [s["nilai"] for s in siswa]
+print("Jumlah siswa :", len(semua))
+print("Rata-rata    :", round(sum(semua) / len(semua), 2))
+print("Tertinggi    :", max(semua))
+print("Terendah     :", min(semua))
+print()
+
+print("Daftar nilai:")
+for s in siswa:
+    status = "lulus" if s["nilai"] >= 75 else "remedial"
+    print(f"{s['nama']:6} {s['nilai']:3} {status}")
+
+print()
+per_kelas = {}
+for s in siswa:
+    per_kelas.setdefault(s["kelas"], []).append(s["nilai"])
+
+for kelas in sorted(per_kelas):
+    angka = per_kelas[kelas]
+    print(f"Kelas {kelas}: rata-rata {sum(angka) / len(angka):.1f}")
+
+peringkat = sorted(siswa, key=lambda s: s["nilai"], reverse=True)
+top3 = [s["nama"] for s in peringkat[:3]]
+print()
+print("Top 3:", top3)
+print("Juara:", peringkat[0]["nama"], peringkat[0]["nilai"])`} />

@@ -1,0 +1,188 @@
+---
+title: "Percabangan"
+description: "if sebagai ekspresi dan match yang memaksa semua kasus tertangani"
+order: 4
+quiz:
+  - q: "Di Rust, if bisa dipakai sebagai…"
+    options: ["hanya penanda blok", "ekspresi yang menghasilkan nilai", "komentar", "deklarasi tipe"]
+    answer: 1
+    explain: "Contoh: let skor = if nilai >= 75 { 1 } else { 0 }; — if mengembalikan nilai."
+  - q: "Kondisi if di Rust harus bernilai…"
+    options: ["angka", "char", "bool", "String"]
+    answer: 2
+    explain: "Tidak ada truthy/falsy; hanya true atau false yang diizinkan."
+  - q: "Konstruk yang membandingkan satu nilai dengan banyak pola adalah…"
+    options: ["match", "switch", "case", "select"]
+    answer: 0
+    explain: "match menggantikan switch dan wajib menutup semua kemungkinan (atau punya _)."
+  - q: "Wildcard penangkap semua pola di match ditulis…"
+    options: ["_", "*", "default", "any"]
+    answer: 0
+    explain: "_ menangkap sisa pola yang belum disebutkan."
+  - q: "Pernyataan if/else if di Rust ditulis dengan…"
+    options: ["elsif", "elif", "else if", "otherwise"]
+    answer: 2
+    explain: "Bentuknya mirip bahasa lain: if ... else if ... else."
+example:
+  code: |
+    fn main() {
+        let nilai = 85;
+
+        let huruf = if nilai >= 90 {
+            "A"
+        } else if nilai >= 80 {
+            "B"
+        } else {
+            "C"
+        };
+        println!("Nilai: {}", huruf);
+
+        let angka = 3;
+        match angka {
+            1 => println!("satu"),
+            2 => println!("dua"),
+            3 => println!("tiga"),
+            _ => println!("lainnya"),
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust membuat keputusan dengan **tipe yang jelas dan kasus yang lengkap** — tidak ada cabang terlupa.
+
+## 6 Operator Perbandingan dan 3 Logika
+
+Rust punya **6 operator perbandingan** (`==`, `!=`, `<`, `<=`, `>`, `>=`) dan **3 operator logika** (`&&`, `||`, `!`):
+
+| Kategori | Jumlah | Anggota | Catatan |
+| --- | --- | --- | --- |
+| Perbandingan | 6 | `==` `!=` `<` `<=` `>` `>=` | Lewat trait PartialEq/PartialOrd |
+| Logika | 3 | `&&` `\|\|` `!` | Short-circuit, khusus `bool` |
+| Aritmatika | 5 | `+` `-` `*` `/` `%` | Sama seperti kalkulator |
+| Ternary | 0 | — | Tidak ada; pakai if-ekspresi |
+
+```rust
+let a = 5;
+let b = 10;
+
+println!("{}", a < b);           // true
+println!("{}", a != b);          // true
+println!("{}", a < b && b < 20); // true
+println!("{}", a > b || a == 5); // true
+```
+
+Bedanya dengan bahasa lain: `1 < x < 5` **tidak valid** — tulis `1 < x && x < 5`. Rust juga menolak `if x {}` saat `x` bukan `bool` (tidak ada truthy/falsy).
+
+## if dan else
+
+```rust
+let suhu = 35;
+
+if suhu > 30 {
+    println!("Panas sekali");
+} else if suhu > 25 {
+    println!("Hangat");
+} else {
+    println!("Nyaman");
+}
+```
+
+Kondisi wajib bertipe `bool`. Kurawal `{` harus menempel di baris `if`.
+
+## if sebagai Ekspresi
+
+```rust
+let nilai = 85;
+
+let status = if nilai >= 75 { "Lulus" } else { "Remedial" };
+println!("{}", status);
+```
+
+Karena `if` menghasilkan nilai, penulisan pendek begini sangat umum. Kedua cabang harus menghasilkan tipe yang sama. **Rust tidak punya operator ternary `?:`** — if-ekspresi inilah penggantinya.
+
+## match
+
+```rust
+let angka = 3;
+
+match angka {
+    1 => println!("satu"),
+    2 => println!("dua"),
+    3 => println!("tiga"),
+    _ => println!("angka lain"),
+}
+```
+
+`match` mengecek pola dari atas ke bawah dan **wajib lengkap** — `_` menampung semua kasus yang belum disebut.
+
+## match dengan Nilai Balik
+
+```rust
+let hari = 3;
+let nama = match hari {
+    1 => "Senin",
+    2 => "Selasa",
+    3 => "Rabu",
+    _ => "Hari lain",
+};
+println!("{}", nama);
+```
+
+Nilai yang dihasilkan tiap cabang harus bertipe sama, dan `=>` diakhiri koma bila berbentuk ekspresi.
+
+## if let untuk Pola Tunggal
+
+```rust
+let skor: Option<i32> = Some(90);
+
+if let Some(s) = skor {
+    println!("skor = {}", s);
+} else {
+    println!("tidak ada skor");
+}
+```
+
+`if let` menghemat boilerplate saat kamu hanya peduli pada satu pola (materi `Option` dibahas di chapter error handling).
+
+## Di Dunia Nyata
+
+- **Ongkos kirim**: `match jenis` (regular/express/economy) menentukan tarif dan estimasi hari
+- **Akses user**: `match role` (admin/editor/viewer) memilih menu yang boleh dilihat
+- **Kalkulator**: `match op` menambah/mengurang/membagi sesuai input operator
+- **Validasi input**: match guard `n if n > 0 && n < 100 => ...` membatasi nilai form
+- **Terjemahan status**: `match code` mengubah "404" → "tidak ditemukan" sebelum respons API
+
+<div class="note">💡 match yang tidak lengkap adalah error kompilasi. Fitur ini mencegah bug klasik: lupa menangani satu kondisi dan membiarkannya berjalan diam-diam.</div>
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let nilai = 85;
+
+    let huruf = if nilai >= 90 {
+        "A"
+    } else if nilai >= 80 {
+        "B"
+    } else {
+        "C"
+    };
+    println!("Nilai: {}", huruf);
+
+    let status = if nilai >= 75 { "Lulus" } else { "Remedial" };
+    println!("Status: {}", status);
+
+    match nilai {
+        85 => println!("Tepat di ambang batas"),
+        90 => println!("Sempurna"),
+        _ => println!("Nilai lain"),
+    }
+
+    let a = 5;
+    let b = 10;
+    println!("{} < {} = {}", a, b, a < b);
+    println!("logika: {}", a < b && b < 20);
+
+    let skor: Option<i32> = Some(90);
+    if let Some(s) = skor {
+        println!("if let: skor = {}", s);
+    }
+}`} />

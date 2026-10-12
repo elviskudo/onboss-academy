@@ -1,0 +1,139 @@
+---
+title: "Pengenalan Angular"
+description: "Framework lengkap dari Google — TypeScript, komponen, dan arsitektur yang terstruktur"
+order: 1
+quiz:
+  - q: "Angular dikembangkan dan dirawat oleh…"
+    options: ["Meta", "Microsoft", "Google", "IBM"]
+    answer: 2
+    explain: "Angular (sering disebut Angular 2+) dirilis Google pada 2016 sebagai penerus AngularJS."
+  - q: "Bahasa dasar Angular adalah…"
+    options: ["TypeScript", "PHP", "Ruby", "Swift"]
+    answer: 0
+    explain: "Angular ditulis sepenuhnya di TypeScript — sintaksnya JavaScript plus pengetatan tipe data."
+  - q: "Pembeda utama Angular dibanding React…"
+    options: ["Angular hanya untuk mobile", "Angular adalah framework lengkap: routing, form, http, CLI bawaan", "Angular tidak bisa dipakai untuk web", "Angular tidak memakai komponen"]
+    answer: 1
+    explain: "React adalah library UI; Angular membawa hampir semua kebutuhan aplikasi dalam satu framework."
+  - q: "CLI resmi Angular untuk membuat proyek adalah…"
+    options: ["Angular CLI (ng)", "create-react-app", "vite only", "composer"]
+    answer: 0
+    explain: "Perintah ng new, ng generate, ng serve, dan ng build adalah jalur resmi pengembangan Angular."
+  - q: "Ekstensi file sumber Angular biasanya…"
+    options: [".ts", ".rb", ".ex", ".swift"]
+    answer: 0
+    explain: "Semua kode Angular berupa TypeScript (.ts); template terkadang dipisah ke file .html."
+example:
+  code: |
+    const aplikasi = {
+      nama: "OnBoss Toko",
+      fitur: ["Komponen", "Routing", "Form", "HTTP"],
+      siap: true,
+    };
+    console.log(aplikasi.nama + " — fitur:", aplikasi.fitur.join(", "));
+---
+
+Angular adalah framework untuk membangun aplikasi web skala besar dengan struktur yang konsisten. Bab ini memetakan cara kerjanya sebelum kita menyentuh kode komponen.
+
+## Apa Itu Angular?
+
+Angular mengurus hampir semua kebutuhan aplikasi di dalam satu tempat:
+
+- **Komponen** untuk tampilan
+- **Service & Dependency Injection** untuk logika dan data
+- **Routing** bawaan untuk navigasi antar halaman
+- **Form** bawaan untuk input dan validasi
+- **HTTP client** untuk berbicara dengan API
+
+Karena keputusannya sudah dibuat framework, tim tinggal mengikuti konvensi — bagus untuk proyek besar dengan banyak developer.
+
+## TypeScript: JavaScript yang Terstruktur
+
+```typescript
+function sapa(nama: string, ulang: number = 1): string {
+  return nama.repeat(ulang);
+}
+
+interface Produk {
+  id: number;
+  nama: string;
+  harga: number;
+  stok?: boolean; // tanda ? = boleh kosong
+}
+
+const kopi: Produk = { id: 1, nama: "Kopi", harga: 25000 };
+```
+
+Anotasi tipe (`: string`) membuat IDE menangkap kesalahan sebelum kode dijalankan — manfaat utama TypeScript di proyek nyata.
+
+## Dua Bagian Utama Komponen
+
+```typescript
+@Component({
+  selector: "app-sapa",
+  template: `<h1>Halo, {{ nama }}!</h1>`,
+})
+class SapaComponent {
+  nama = "OnBoss";
+}
+```
+
+Setiap komponen Angular punya **decorator** `@Component` yang memuat template (tampilan) dan class TypeScript (logika). Pola ini muncul terus di bab-bab berikutnya.
+
+## Arsitektur Proyek
+
+Struktur hasil `ng new` umumnya:
+
+```
+src/app/
+  app.component.ts   komponen akar
+  app.routes.ts      daftar rute
+  app.config.ts      konfigurasi provider
+  produk/            fitur dalam folder sendiri
+```
+
+Kode disusun per **fitur**, bukan per jenis file — memudahkan navigasi tim.
+
+## Enam Konsep Inti
+
+Angular modern memiliki **6 konsep inti** yang akan selalu bertemu dalam aplikasi nyata.
+
+| Konsep | Fungsi | Contoh | Kapan dipakai |
+|---|---|---|---|
+| Component | Membentuk bagian UI | kartu produk | Setiap tampilan mandiri |
+| Signal | Menyimpan state reaktif | `signal(0)` | Nilai berubah dan dibaca template |
+| Template | Mendeskripsikan HTML | `@if`, `@for` | Menampilkan data dan kondisi |
+| Service | Memusatkan logika | `ProdukService` | Logika dipakai banyak komponen |
+| Dependency injection | Menyediakan dependensi | `inject(ProdukService)` | Menghindari pembuatan instance manual |
+| Router | Memetakan URL | `/produk/:id` | Aplikasi punya beberapa halaman |
+
+State lokal modern disimpan dengan signal. Berbeda dari variabel biasa, pembacaan signal dilacak Angular sehingga bagian template yang bergantung padanya diperbarui.
+
+```typescript
+import { Component, signal } from "@angular/core";
+
+@Component({
+  selector: "app-counter",
+  standalone: true,
+  template: `<button (click)="tambah()">Klik {{ jumlah() }}</button>`,
+})
+export class CounterComponent {
+  jumlah = signal(0);
+  tambah() {
+    this.jumlah.update((nilai) => nilai + 1);
+  }
+}
+```
+
+## Alur Kerja Angular
+
+Ada **4 tahap utama**: browser membuka URL, router memilih komponen, template membaca state, lalu event pengguna memperbarui state. Angular menjalankan change detection dan menyelaraskan DOM. Untuk aplikasi baru, mulai dengan standalone component; NgModule terutama relevan ketika memelihara kode lama.
+
+## Di Dunia Nyata
+
+- Dasbor operasional memakai component dan signal untuk memperbarui angka pesanan.
+- Katalog toko memakai router untuk halaman daftar dan detail produk.
+- Portal bank menaruh autentikasi dan akses API di service terinjeksi.
+- Form administrasi memakai TypeScript agar bentuk data salah terdeteksi sebelum rilis.
+
+<div class="note">💡 Angular punya kurva belajar awal yang lebih curam dari React, tapi tebusannya: struktur seragam. Begitu paham satu komponen, kamu paham semua komponen di proyek mana pun.</div>

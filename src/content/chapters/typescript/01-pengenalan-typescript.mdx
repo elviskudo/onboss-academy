@@ -1,0 +1,135 @@
+---
+title: "Pengenalan TypeScript"
+description: "JavaScript plus sistem tipe — kenapa proyek modern memakainya"
+order: 1
+quiz:
+  - q: "TypeScript dikembangkan dan dirilis oleh…"
+    options: ["Microsoft", "Google", "Meta", "Oracle"]
+    answer: 0
+    explain: "TypeScript dirilis Microsoft tahun 2012 dan kini dikelola sebagai proyek open source."
+  - q: "Setelah dikompilasi, TypeScript menghasilkan…"
+    options: ["HTML", "Kode JavaScript", "CSS", "Biner mesin"]
+    answer: 1
+    explain: "tsc menghapus semua anotasi tipe dan menulis file .js — browser hanya tahu JavaScript."
+  - q: "Ekstensi file TypeScript adalah…"
+    options: [".js", ".ts", ".jsx", ".txt"]
+    answer: 1
+    explain: ".ts untuk kode biasa; .tsx khusus file yang berisi JSX/React."
+  - q: "Keuntungan utama memakai TypeScript adalah…"
+    options: ["Menangkap error saat kompilasi", "Halaman jadi lebih cepat", "Tidak butuh browser", "Menggantikan database"]
+    answer: 0
+    explain: "Error tipe tertangkap oleh tsc sebelum kode dijalankan — bug banyak terjaring lebih awal."
+  - q: "Tipe untuk data teks di TypeScript ditulis…"
+    options: ["int", "string", "char", "bool"]
+    answer: 1
+    explain: "Pakai huruf kecil string, number, boolean — bukan String/Number kapital ala Java."
+example:
+  code: |
+    const nama: string = "Sari";
+    const umur: number = 20;
+    console.log(nama + " berumur " + umur + " tahun");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript adalah **JavaScript yang ditambahkan sistem tipe**. Kode kamu tetap dijalankan sebagai JavaScript, tetapi salah nama variabel atau salah tipe argumen ketahuan sebelum program jalan.
+
+## Kenapa TypeScript?
+
+Alasannya paling jelas kalau dibandingkan berdampingan dengan JavaScript murni:
+
+## JavaScript vs TypeScript
+
+| Aspek | JavaScript | TypeScript |
+|-------|-----------|------------|
+| Pemeriksaan tipe | Tidak ada — error muncul saat runtime | `tsc` menangkap sebelum kode jalan |
+| Autocomplete editor | Tebak dari nilai | Tahu persis bentuk data |
+| Refactor | Berisiko — pemanggil tak tersentuh | Semua pemanggil ikut terdeteksi |
+| Runtime | Langsung di browser | Harus dikompilasi ke `.js` dulu |
+| Kecepatan menulis | Cepat di awal | Sedikit lebih lambat, jauh lebih cepat saat debug |
+
+## Hello World
+
+```typescript
+const nama: string = "Sari";
+const umur: number = 20;
+console.log(nama + " berumur " + umur + " tahun");
+```
+
+` : string` disebut **anotasi tipe** — ia hanya untuk kompilator dan hilang saat kode dijalankan.
+
+## Type Inference
+
+```typescript
+let usia = 20;        // TS menebak: number
+usia = 21;            // ✔ diperbolehkan
+usia = "dua puluh";   // ✖ error: string tidak masuk ke number
+```
+
+Kalau tipe sudah jelas dari nilai awal, kamu tidak perlu menulis anotasi secara manual.
+
+## Tipe Dasar yang Sering Dipakai
+
+```typescript
+const teks: string = "Halo";
+const angka: number = 4.5;
+const aktif: boolean = true;
+const kosong: null = null;
+const entah: unknown = "bisa apa saja"; // lebih aman dari any
+```
+
+## Cara Menjalankan
+
+```bash
+tsc namafile.ts    # menghasilkan namafile.js
+node namafile.js
+```
+
+Di halaman ini kamu bisa langsung menekan **Jalankan** pada editor OnBoss — kompilasi dilakukan otomatis di server.
+
+## Proses Kompilasi: Type Erasure
+
+```typescript
+// input: namafile.ts
+const umur: number = 20;
+function sapa(n: string): string { return "Halo " + n; }
+
+// output: namafile.js (anotasi hilang seluruhnya)
+const umur = 20;
+function sapa(n) { return "Halo " + n; }
+```
+
+Semua anotasi tipe **dihapus** (erased) oleh `tsc` — browser menerima JavaScript murni. Artinya: tipe tidak memperlambat programmu, tetapi juga tidak melindungi di runtime (proteksinya selesai saat kompilasi).
+
+## 4 Keuntungan di Proyek Nyata
+
+1. **Error lebih awal**: typo `namaLengkap` vs `nama` tertangkap editor dan kompilator, bukan saat user klik tombol.
+2. **Editor lebih pintar**: autocomplete dan petunjuk parameter langsung muncul.
+3. **Kontrak antar-tim**: interface menjelaskan bentuk data API tanpa perlu membaca seluruh kode.
+4. **Refactor berani**: mengganti nama fungsi aman karena semua pemanggil ikut terdeteksi.
+
+Dipakai industri: VS Code, Angular, Next.js, dan banyak backend Node.js ditulis TypeScript.
+
+## Di Dunia Nyata
+
+- **API response** berisi field opsional (`alamat?`) — `tsc` memaksa kamu menangani kasus `undefined`.
+- **Rename properti** `harga` → `hargaTotal` di seluruh project: editor menandai semua 42 lokasi yang harus diperbaiki.
+- **Library npm modern** hampir semuanya menyertakan definisi `@types/…` supaya pemakainya tidak menebak-nebak.
+- **Tim besar**: kontrak interface di review PR lebih cepat dipahami daripada membaca isi fungsi.
+- **Migrasi bertahap**: file `.js` lama bisa diimpor apa adanya dari `.ts` — semua kode JS valid juga kode TS.
+
+<div class="note">💡 TypeScript menghormati seluruh aturan JavaScript. Semua kode JS yang valid juga kode TS yang valid, jadi kamu bisa memigrasi proyek lama perlahan — file demi file.</div>
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const nama: string = "Sari";
+const umur: number = 20;
+const lulus: boolean = true;
+
+function sapa(n: string, u: number): string {
+  return "Halo " + n + ", umur " + u + " tahun";
+}
+
+console.log(sapa(nama, umur));
+console.log("Lulus?", lulus);
+
+const angka: number[] = [5, 3, 8];
+console.log("Jumlah:", angka.reduce((a, b) => a + b, 0));`} />

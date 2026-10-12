@@ -1,0 +1,171 @@
+---
+title: "Form & Validasi"
+description: "Form template-driven dan Reactive Forms — menangkap input serta memvalidasi dengan Angular"
+order: 6
+quiz:
+  - q: "Reactive Forms menyusun form lewat…"
+    options: ["Objek FormControl/FormGroup di class TypeScript", "Atribut HTML saja", "CSS khusus", "Service HTTP"]
+    answer: 0
+    explain: "Model form berupa objek programatik — validasi dan perubahan nilai diatur dari class."
+  - q: "Template-driven form memerlukan…"
+    options: ["provideHttpClient", "FormsModule diimports komponen", "Router", "RxJS penuh"]
+    answer: 1
+    explain: "ngModel dan form bawaan template-driven berasal dari FormsModule."
+  - q: "FormControl merepresentasikan…"
+    options: ["Satu field input beserta nilai dan status validasinya", "Seluruh halaman", "Router outlet", "Satu komponen"]
+    answer: 0
+    explain: "Gabungan beberapa FormControl membentuk FormGroup — itulah model form lengkap."
+  - q: "Status validasi sebuah form control tersedia di properti…"
+    options: ["control.color", "control.mode", "control.status, berisi 'valid' atau 'invalid'", "control.type"]
+    answer: 2
+    explain: "Cek control.invalid atau form.invalid untuk mengunci tombol submit."
+  - q: "Fungsi Validators.required adalah…"
+    options: ["Menandai field wajib diisi", "Menghapus field", "Mengirim form ke server", "Mengubah tipe data"]
+    answer: 0
+    explain: "Validator bawaan: required, minLength, email, pattern — bisa juga ditulis sendiri."
+example:
+  code: |
+    function validasi(form) {
+      const errors = {};
+      if (!form.nama) errors.nama = "Nama wajib diisi";
+      if (!form.email.includes("@")) errors.email = "Email tidak valid";
+      return errors;
+    }
+    const hasil = validasi({ nama: "", email: "salah" });
+    console.log("Error:", JSON.stringify(hasil));
+---
+
+Form adalah jendela data pengguna ke aplikasi. Angular menyediakan dua pendekatan; di proyek modern, **Reactive Forms** lebih sering dipakai.
+
+## Template-Driven
+
+```html
+<form #form="ngForm" (ngSubmit)="simpan(form.value)">
+  <input name="nama" [(ngModel)]="nama" required #namaCtrl="ngModel" />
+  @if (namaCtrl.invalid && namaCtrl.touched) {
+    <p>Nama wajib diisi.</p>
+  }
+  <button [disabled]="form.invalid">Kirim</button>
+</form>
+```
+
+```typescript
+import { FormsModule } from "@angular/forms";
+
+@Component({
+  standalone: true,
+  imports: [FormsModule],
+  templateUrl: "./login.component.html",
+})
+export class LoginComponent {
+  nama = "";
+  simpan(nilai: { nama: string }) {
+    console.log("Submit:", nilai);
+  }
+}
+```
+
+Cocok untuk form sederhana: struktur form ditentukan di template.
+
+## Reactive Forms
+
+```typescript
+import { Component } from "@angular/core";
+import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+
+@Component({
+  selector: "app-daftar",
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="simpan()">
+      <input formControlName="email" placeholder="Email" />
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <p>Email tidak valid.</p>
+      }
+      <input formControlName="sandi" type="password" />
+      <button [disabled]="form.invalid">Daftar</button>
+    </form>
+  `,
+})
+export class DaftarComponent {
+  private fb = inject(FormBuilder);
+
+  form = this.fb.nonNullable.group({
+    email: ["", [Validators.required, Validators.email]],
+    sandi: ["", [Validators.required, Validators.minLength(6)]],
+  });
+
+  simpan() {
+    if (this.form.invalid) return;
+    console.log(this.form.getRawValue());
+  }
+}
+```
+
+Model form hidup di class — mudah divalidasi secara program, direset, atau diisi ulang dari server.
+
+## Validasi Kustom
+
+```typescript
+function wajibUnik(control: AbstractControl) {
+  const dilarang = ["admin", "root"];
+  return dilarang.includes(String(control.value))
+    ? { unik: "Username tidak boleh " + control.value }
+    : null;
+}
+
+email: ["", [Validators.required, wajibUnik]],
+```
+
+Validator mengembalikan object error atau null — Angular menaruhnya di `control.errors`.
+
+## Menampilkan Semua Error Sekaligus
+
+```typescript
+get pesanError() {
+  const c = this.form.controls.email;
+  if (c.errors?.["required"]) return "Email wajib diisi";
+  if (c.errors?.["email"]) return "Format email salah";
+  return "";
+}
+```
+
+Gabungkan dengan `[disabled]="form.invalid"` agar submit hanya aktif saat form sehat.
+
+## Dua Pendekatan Form
+
+Angular menyediakan **2 pendekatan resmi** dengan trade-off berbeda.
+
+| Pendekatan | Model berada di | Kekuatan | Kapan dipakai |
+|---|---|---|---|
+| Template-driven | template | ringkas, sedikit kode | form kontak sederhana |
+| Reactive Forms | TypeScript | bertipe, mudah dites, dinamis | checkout, onboarding, editor |
+
+Reactive Forms membangun struktur dengan **3 unit utama**: `FormControl` untuk satu field, `FormGroup` untuk kumpulan bernama, dan `FormArray` untuk daftar dinamis. Status interaksi yang penting ada **4**: `touched`, `untouched`, `dirty`, dan `pristine`; gabungkan dengan `valid` atau `invalid` agar pesan tidak muncul sebelum pengguna berinteraksi.
+
+```typescript
+form = this.fb.nonNullable.group({
+  nama: ["", Validators.required],
+  alamat: this.fb.array([this.fb.control("")]),
+});
+
+get alamat() {
+  return this.form.controls.alamat;
+}
+
+tambahAlamat() {
+  this.alamat.push(this.fb.control(""));
+}
+```
+
+Saat submit invalid, panggil `markAllAsTouched()` supaya seluruh kesalahan terlihat. Validasi browser memperbaiki pengalaman, tetapi server tetap harus memvalidasi ulang karena request dapat dibuat tanpa UI.
+
+## Di Dunia Nyata
+
+- Login memakai form sederhana dengan error hanya setelah field disentuh.
+- Checkout memakai `FormGroup` bertingkat untuk alamat dan metode pembayaran.
+- Form anggota keluarga memakai `FormArray` untuk jumlah orang dinamis.
+- Editor profil mengisi ulang nilai server dengan `patchValue` tanpa mengganti semua field.
+
+<div class="note">💡 Reactive Forms memindahkan keputusan form ke TypeScript: validasi, transformasi nilai, dan submit hidup di satu tempat. Untuk form panjang dengan kondisi rumit, pendekatan ini jauh lebih terawat daripada validasi tersebar di template.</div>

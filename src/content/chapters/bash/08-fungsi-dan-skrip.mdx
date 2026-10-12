@@ -1,0 +1,190 @@
+---
+title: "Fungsi dan Skrip Terstruktur"
+description: "Menyusun skrip produksi dengan 2 sintaks fungsi, scope local, return status, dan strict mode"
+order: 8
+quiz:
+  - q: "Definisi fungsi dalam Bash ditutup dengan…"
+    options: ["end", "fin", "}", "done"]
+    answer: 2
+    explain: "namafungsi() { ...; } atau function namafungsi { ...; } — keduanya valid."
+  - q: "Cara mengambil DATA kembalian fungsi adalah…"
+    options: ["Menggunakan echo lalu $()", "return dengan angka", "print", "yield"]
+    answer: 0
+    explain: "return hanya untuk status sukses/gagal (0–255). Untuk data, gunakan echo lalu tangkap dengan $()."
+  - q: "local x=5 di dalam fungsi berarti…"
+    options: ["Variabel global", "Variabel hanya berlaku di dalam fungsi", "Variabel konstanta", "Variabel environment"]
+    answer: 1
+    explain: "local mencegah variabel fungsi menimpa variabel dengan nama sama di luar."
+  - q: "set -o pipefail membuat skrip…"
+    options: ["Keluar saat variabel kosong", "Mencetak semua command", "Menganggap pipeline gagal bila salah satu tahap gagal", "Menjalankan pipe paralel"]
+    answer: 2
+    explain: "Tanpa pipefail, pipeline biasanya hanya memakai status perintah terakhir."
+  - q: "Pemanggilan fungsi bernama sapa ditulis dengan…"
+    options: ["call sapa", "run sapa", "sapa", "exec sapa"]
+    answer: 2
+    explain: "Fungsi dipanggil cukup dengan menulis namanya, seperti perintah biasa."
+example:
+  code: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    sapa() {
+      local nama="$1"
+      echo "Halo, $nama"
+    }
+
+    hitung() {
+      echo "$(( $1 + $2 ))"
+    }
+
+    sapa "Sari"
+    hasil=$(hitung 4 7)
+    echo "4 + 7 = $hasil"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi mengelompokkan langkah terkait menjadi perintah bernama. Skrip 100 baris tanpa fungsi adalah daftar instruksi acak; dengan fungsi, alur utamanya bisa dibaca seperti paragraf.
+
+## Dua Sintaks Fungsi
+
+Bash mendukung **2 sintaks definisi** yang setara:
+
+```bash
+sapa() {
+  echo "Halo, $1"
+}
+
+function pamit {
+  echo "Sampai jumpa, $1"
+}
+```
+
+| Sintaks | Portabilitas | Rekomendasi |
+| --- | --- | --- |
+| `nama() { ...; }` | juga bekerja di POSIX shell | pilih ini |
+| `function nama { ...; }` | khusus Bash | valid, tetapi tidak perlu |
+
+Fungsi harus didefinisikan sebelum dipanggil. Memanggilnya cukup menulis nama seperti command biasa: `sapa "Sari"`.
+
+## Parameter dan Scope local
+
+```bash
+sapa() {
+  local nama="$1"
+  local sapaan=${2:-Halo}
+  echo "$sapaan, $nama"
+}
+
+sapa "Sari" "Selamat pagi"
+```
+
+Di dalam fungsi, `$1`, `$2`, `$#`, dan `$@` merujuk ke argumen fungsi — bukan argumen skrip. Gunakan `local` untuk semua variabel internal agar tidak menimpa nama di luar fungsi.
+
+Bash tidak punya parameter bernama atau default formal; `${2:-Halo}` adalah pola default idiomatis.
+
+## Dua Jenis Nilai Kembalian
+
+Fungsi Bash punya **2 jalur hasil** yang tidak boleh dicampur:
+
+| Hasil | Mekanisme | Rentang | Dipakai untuk |
+| --- | --- | --- | --- |
+| Status | `return angka` | 0–255 | sukses/gagal |
+| Data | `echo` + `$(...)` | teks bebas | nilai perhitungan |
+
+```bash
+tambah() {
+  echo "$(( $1 + $2 ))"
+}
+
+valid_file() {
+  [ -f "$1" ] || return 1
+  [ -r "$1" ] || return 2
+  return 0
+}
+
+hasil=$(tambah 4 7)
+echo "Hasil: $hasil"
+```
+
+Jangan `return 300` untuk mengirim hasil hitung: status dibatasi 0–255 dan hanya bermakna sebagai sukses/gagal.
+
+## Strict Mode: Tiga Pengaman
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+```
+
+| Opsi | Fungsi | Bug yang dicegah |
+| --- | --- | --- |
+| `-e` | keluar saat perintah gagal | skrip lanjut setelah backup gagal |
+| `-u` | error saat variabel belum ada | typo `$NAAM` dianggap kosong |
+| `pipefail` | pipeline gagal jika satu tahap gagal | `grep` gagal tapi `wc` sukses |
+
+Strict mode bukan pengganti error handling: kegagalan yang memang diharapkan tetap harus diletakkan dalam `if` atau ditangani dengan `||`.
+
+## Struktur Skrip Produksi
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+log() {
+  printf '[INFO] %s\n' "$*"
+}
+
+gagal() {
+  printf '[ERROR] %s\n' "$*" >&2
+  exit 1
+}
+
+main() {
+  [ "$#" -ge 1 ] || gagal "Pemakaian: $0 FILE"
+  [ -r "$1" ] || gagal "Tidak bisa membaca: $1"
+  log "Memproses $1"
+}
+
+main "$@"
+```
+
+Pola `main "$@"` memisahkan definisi dari eksekusi: saat membaca file, kamu melihat semua kemampuan dulu, lalu satu baris terakhir menjelaskan awal alur.
+
+## Debugging Skrip
+
+Ada 3 alat debug bawaan:
+
+```bash
+bash -n skrip.sh   # validasi sintaks tanpa menjalankan
+bash -x skrip.sh   # tampilkan setiap command setelah ekspansi
+set -x             # aktifkan trace di bagian tertentu
+set +x             # matikan lagi
+```
+
+Jangan aktifkan `-x` saat skrip memegang password/token: nilai variabel dapat ikut tercetak ke log.
+
+## Di Dunia Nyata
+
+1. **Pipeline deploy** — fungsi `build`, `test`, dan `deploy` membuat urutan kegagalan jelas; strict mode menghentikan proses sebelum artefak rusak naik ke server.
+2. **Backup konsisten** — fungsi `gagal` mengirim pesan ke stderr dan exit non-zero agar scheduler menandai job gagal.
+3. **CLI internal** — `case` di `main` memilih subcommand, sementara detail tiap subcommand disimpan sebagai fungsi tersendiri.
+4. **Pembersihan otomatis** — `trap 'rm -f "$tmp"' EXIT` memastikan file sementara terhapus walau skrip gagal di tengah.
+5. **Test kecil tanpa framework** — panggil fungsi dengan input tetap lalu bandingkan hasil command substitution sebelum deploy.
+
+<div class="note">💡 Pisahkan keputusan dari data: `return 0/1` untuk menjawab "sukses atau gagal", `echo` untuk menghasilkan nilai. Campuran keduanya membuat pemanggil tidak tahu harus membaca `$?` atau stdout.</div>
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+set -euo pipefail
+
+sapa() {
+  local nama="$1"
+  echo "Halo, $nama"
+}
+
+tambah() {
+  echo "$(( $1 + $2 ))"
+}
+
+sapa "OnBoss"
+hasil=$(tambah 4 7)
+echo "4 + 7 = $hasil"`} />

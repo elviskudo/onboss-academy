@@ -1,0 +1,126 @@
+---
+title: "Pengenalan Python"
+description: "Bahasa paling ramah pemula — dari print sampai proyek nyata"
+order: 1
+quiz:
+  - q: "Siapa pencipta Python?"
+    options: ["Linus Torvalds", "James Gosling", "Guido van Rossum", "Brendan Eich"]
+    answer: 2
+    explain: "Guido van Rossum memulai Python tahun 1991 — dinamai dari Monty Python, bukan ular."
+  - q: "Python dikenal karena…"
+    options: ["Harus dikompilasi", "Sintaksis bersih & mudah dibaca", "Hanya untuk matematika", "Berjalan tanpa interpreter"]
+    answer: 1
+    explain: "Python memakai indentasi (spasi) sebagai blok — struktur kode terlihat jelas."
+  - q: "Perintah untuk menampilkan output adalah…"
+    options: ["console.log()", "print()", "echo()", "System.out()"]
+    answer: 1
+    explain: "print() adalah fungsi bawaan Python 3."
+  - q: "Python menggunakan tanda komentar…"
+    options: ["#", "//", "<!-- -->", "--"]
+    answer: 0
+    explain: "Satu baris: # komentar. Multi-baris: triple quote \"\"\" ... \"\"\"."
+  - q: "Ekstensi file Python adalah…"
+    options: [".python", ".pt", ".py", ".rb"]
+    answer: 2
+    explain: ".py — dijalankan dengan perintah python namafile.py."
+example:
+  code: |
+    print("Halo, Dunia!")
+    print("2 + 2 =", 2 + 2)
+    for i in range(3):
+        print("Perulangan ke-", i)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Python adalah bahasa **paling populer untuk pemula sekaligus untuk profesional**: bersih, serbaguna, dan bawaan library raksasa untuk data, AI, dan otomasi. Sekali paham sintaksis dasarnya, kamu bisa baca kode Python apa pun.
+
+## Hello World
+
+```python
+print("Halo, Dunia!")
+```
+
+Tidak perlu deklarasi tipe, titik koma, atau kurawal — blok ditandai **indentasi 4 spasi**. Tiga hal yang langsung terasa: `print()` untuk output, indentasi sebagai bagian dari sintaksis, dan tipe data ditentukan saat runtime (dynamic typing).
+
+## Komentar
+
+```python
+# ini komentar satu baris
+
+"""
+Ini komentar
+multi baris.
+"""
+
+def hitung(x):
+    """Docstring: dokumentasi resmi yang bisa dibaca tools."""
+    return x * 2
+```
+
+Komentar `#` dibuang interpreter. Docstring `"""..."""` justru disimpan dan bisa dipanggil lewat `help(hitung)`.
+
+## Variabel & Tipe Dasar
+
+```python
+nama = "Sari"        # str
+umur = 20            # int
+tinggi = 1.65        # float
+aktif = True         # bool
+kosong = None        # NoneType
+
+print(f"Halo {nama}, umurmu {umur} tahun")
+```
+
+`f"..."` (f-string) menyisipkan variabel langsung ke dalam teks. Python tidak punya kata kunci deklarasi seperti `var`/`let`/`const` — cukup `nama = nilai`.
+
+## Anatomi Sintaksis Python
+
+| Bagian | Fungsi | Contoh |
+|---|---|---|
+| Indentasi 4 spasi | menandai blok kode | badan `if` wajib menjorok |
+| Titik dua `:` | membuka blok | `if umur >= 17:` |
+| `#` | komentar satu baris | `# TODO: rapikan` |
+| `"""..."""` | string/docstring multi-baris | dokumentasi fungsi |
+| Titik koma `;` | dua perintah dalam satu baris (opsional, jarang) | `a = 1; b = 2` |
+| Kurawal `{}` | hanya untuk dict/set/f-string — bukan blok | `{"a": 1}` |
+
+## Python 2 vs Python 3
+
+Saat ini yang dipakai hanya **Python 3** (3.12/3.13) — Python 2 sudah pensiun tahun 2020 dan tidak lagi dapat update keamanan. Beberapa beda klasik: `print` di Python 3 wajib kurung `print("x")`, dan `/` selalu menghasilkan float.
+
+## Menjalankan Program
+
+```bash
+python namafile.py    # jalankan file
+python                # REPL interaktif
+```
+
+Empat cara paling umum: (1) terminal `python namafile.py`, (2) REPL `python` untuk coba-coba, (3) editor online seperti editor OnBoss di halaman ini, (4) Jupyter Notebook untuk analisis data.
+
+## Kenapa Python Populer?
+
+| Bidang | Library utama | Dipakai untuk |
+|---|---|---|
+| Data & AI | pandas, numpy, TensorFlow, PyTorch | analisis data, machine learning |
+| Web | Django, Flask, FastAPI | API, situs, backend |
+| Otomasi | os, requests, openpyxl | skrip sistem, scraping, Excel |
+| DevOps | Fabric, Ansible (Python API) | otomasi server |
+
+Ekosistemnya terbesar di dunia: ratusan ribu paket siap pakai di PyPI (`pip install namapaket`), dan konvensi kodenya disatukan di PEP 8 sehingga kode programmer lain mudah dibaca.
+
+## Di Dunia Nyata
+
+- Skrip yang mengganti nama 1.000 file foto sekaligus berdasarkan tanggal.
+- Baca 12 sheet Excel, hitung total penjualan, tulis jadi 1 laporan CSV otomatis.
+- Scraping harga tiket tiap jam, lalu kirim notifikasi ke Telegram kalau turun.
+- Bot Telegram pengingat tugas harian yang jalan di server 24 jam.
+
+<div class="note">💡 Python menghormati indentasi. Gunakan 4 spasi (bukan tab campur spasi) — struktur kode = sintaksis Python, salah indentasi = error IndentationError.</div>
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`print("Halo dari OnBoss Academy! 🐍")
+print("2 + 2 =", 2 + 2)
+for i in range(3):
+    print("Perulangan ke-", i)
+nama = "Dunia"
+print(f"Selamat tinggal, {nama}!")`} />

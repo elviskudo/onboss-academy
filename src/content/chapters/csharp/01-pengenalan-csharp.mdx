@@ -1,0 +1,136 @@
+---
+title: "Pengenalan C#"
+description: "Bahasa andalan Microsoft .NET — anatomi program, pipeline IL/JIT, dan CLR"
+order: 1
+quiz:
+  - q: "Siapa yang mengembangkan bahasa C#?"
+    options: ["Google", "Microsoft", "Sun Microsystems", "Bell Labs"]
+    answer: 1
+    explain: "C# dibuat oleh Microsoft (Anders Hejlsberg) dan dirilis tahun 2002 bersama .NET."
+  - q: "Titik masuk program C# terletak di…"
+    options: ["method Main pada sebuah class", "fungsi init()", "method start()", "konstruktor Program"]
+    answer: 0
+    explain: "Compiler mencari method Main statis sebagai awal eksekusi program."
+  - q: "Bahasa intermediate yang dihasilkan compiler C# disebut…"
+    options: ["bytecode Java", "assembly mesin", "IL (Intermediate Language)", "HTML"]
+    answer: 2
+    explain: "Kode sumber → IL → di-JIT ke kode mesin oleh CLR sesuai komputer tujuan."
+  - q: "Ekstensi file sumber C# adalah…"
+    options: [".csharp", ".c", ".net", ".cs"]
+    answer: 3
+    explain: ".cs — file inilah yang dikompilasi oleh compiler C#."
+  - q: "CLR pada C# berperan sebagai…"
+    options: ["Runtime yang menjalankan IL + mengelola memori", "Editor kode", "Server web", "Database engine"]
+    answer: 0
+    explain: "Common Language Runtime mem-JIT IL, menjalankan garbage collector, dan menegakkan aturan tipe."
+example:
+  code: |
+    using System;
+
+    class Program
+    {
+        static void Main()
+        {
+            string nama = "OnBoss";
+            Console.WriteLine("Halo, " + nama + "!");
+            Console.WriteLine("2 + 2 = " + (2 + 2));
+        }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C# (dibaca "C sharp") adalah bahasa **berbasis class, ber-type, dan berjalan di .NET** — dipakai untuk web (ASP.NET), game (Unity), dan aplikasi enterprise. Bab ini membedah anatomi program dan bagaimana kode berjalan di atas CLR.
+
+## Hello World
+
+```csharp
+using System;
+
+class Program
+{
+    static void Main()
+    {
+        Console.WriteLine("Halo, Dunia!");
+    }
+}
+```
+
+`Console.WriteLine(...)` mencetak teks lalu pindah baris. `Console.Write(...)` tanpa pindah baris.
+
+## Anatomi Program
+
+| Bagian | Fungsi | Contoh |
+|---|---|---|
+| `using System;` | memakai namespace tanpa awalan | akses `Console` |
+| `class Program` | wadah semua method — semua kode hidup di class | cetakan objek |
+| `static void Main()` | titik masuk program — **wajib tepat satu** | `Main()` |
+| `{ }` | membuka/menutup blok | badan method |
+| `;` | penutup pernyataan — wajib | `int a = 1;` |
+| `//` dan `/* */` | komentar 1 baris / multi-baris | `// catatan` |
+| `Console.WriteLine` | tulis + pindah baris | output |
+
+C# **wajib berorientasi objek**: bahkan pernyataan `Console.WriteLine` pun memanggil method pada objek (dan class statis) — tidak ada kode yang hidup bebas di luar class.
+
+## Komentar
+
+```csharp
+// komentar satu baris
+
+/*
+Komentar
+multi baris.
+*/
+
+/// <summary>Dokumentasi XML — dibaca oleh IDE dan tools.</summary>
+```
+
+## Dari Kode ke Eksekusi
+
+Kompilasi C# melewati **3 tahap**:
+
+1. **Compile** — `csc Program.cs` mengubah `.cs` menjadi **IL** (Intermediate Language) + metadata, disimpan di assembly (`.dll`/`.exe`).
+2. **JIT** — CLR mengubah IL menjadi kode mesin spesifik CPU saat method pertama dipanggil.
+3. **Execute** — CLR menjalankan kode sambil garbage collector mengelola memori.
+
+```bash
+dotnet run          # cara harian: build + jalankan
+dotnet new console  # membuat project baru
+```
+
+Konsekuensinya: assembly C# bisa jalan di Windows, Linux, dan macOS tanpa dikompilasi ulang — cukup pasang .NET runtime yang sesuai. Di kursus ini kamu tidak perlu menginstal apa pun: editor OnBoss di halaman ini langsung menjalankan kode C# kamu.
+
+## Kenapa Belajar C#?
+
+| Bidang | Teknologi | Dipakai untuk |
+|---|---|---|
+| Web | ASP.NET Core, Blazor | API, situs berperforma tinggi |
+| Game | Unity | engine game terpopuler di dunia |
+| Enterprise | .NET + SQL Server | perbankan, ERP, layanan korporat |
+| Desktop | WinForms, WPF, MAUI | aplikasi Windows & lintas platform |
+
+.NET kini **open source** dan berjalan di Windows, Linux, dan macOS, dengan versi LTS yang didukung bertahun-tahun.
+
+## Di Dunia Nyata
+
+- API transaksi bank yang memproses ribuan request per detik memakai ASP.NET Core.
+- Game mobile dan PC (Among Us, City Skylines) dibuat di Unity dengan C#.
+- Sistem ERP pabrik mencatat produksi harian lewat aplikasi desktop C#.
+- Layanan REST untuk aplikasi ojek daring ditulis di C# karena tipe-nya ketat dan mudah diuji.
+- Tools internal kantor (input absensi, generate laporan) dibuat cepat dengan C# + WinForms/MAUI.
+
+<div class="note">💡 C# membedakan huruf besar dan kecil: <code>Main</code> dan <code>main</code> adalah dua hal berbeda. Konvensi penamaan pun tegas — PascalCase untuk class dan method (Program, HitungTotal), camelCase untuk variabel lokal (umurSiswa).</div>
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        string nama = "OnBoss Academy";
+        int tahun = 2026;
+        Console.WriteLine("Halo dari " + nama + "!");
+        Console.WriteLine("Tahun: " + tahun);
+        Console.WriteLine("2 + 2 = " + (2 + 2));
+    }
+}`} />
