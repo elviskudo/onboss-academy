@@ -14,9 +14,9 @@ Platform belajar pemrograman berbahasa Indonesia dengan materi terstruktur, cont
 
 ## Stack
 
-- Astro 7 dengan SSR Node.
+- Astro 7 dengan SSR di Cloudflare Workers (`@astrojs/cloudflare`).
 - Tailwind CSS 4 dan MDX.
-- Prisma dengan SQLite.
+- Prisma dengan Cloudflare D1 (SQLite di edge).
 - CodeMirror 6.
 - sql.js untuk menjalankan SQL di browser.
 - jsPDF untuk sertifikat.
@@ -60,6 +60,53 @@ PISTON_URL=""
 ```
 
 Jangan commit `.env`, database lokal, atau secret.
+
+Runtime Cloudflare membaca `JUDGE0_URL` dan `PISTON_URL` dari `vars` di `wrangler.jsonc`. Secret production dipasang dengan `npx wrangler secret put <KEY>`.
+
+## Deploy ke Cloudflare
+
+Production: <https://onboss-academy.elviskudo.workers.dev>
+
+Simpan kredensial hanya di `.env` (sudah di-gitignore) — jangan pernah di-commit:
+
+```
+CLOUDFLARE_API_TOKEN=...
+CLOUDFLARE_ACCOUNT_ID=...
+```
+
+Buat database D1 (sekali saja) lalu isi `database_id` di `wrangler.jsonc`:
+
+```sh
+npx wrangler d1 create onboss-academy
+```
+
+Terapkan skema ke D1 remote, lalu deploy:
+
+```sh
+npm run db:migrate:remote
+npm run deploy
+```
+
+Perintah pendukung:
+
+| Perintah | Fungsi |
+| --- | --- |
+| `npm run db:migrate:local` | Terapkan migrasi D1 lokal (untuk dev/preview) |
+| `npm run db:migrate:remote` | Terapkan migrasi ke D1 produksi |
+| `npm run generate-types` | Regenerasi `worker-configuration.d.ts` setelah ubah `wrangler.jsonc` |
+| `npx astro preview` | Preview build memakai workerd |
+
+### Update ke web live
+
+Perubahan kode maupun konten MDX **tidak otomatis** tayang. Keduanya ikut ter-bundle ke dalam worker, jadi setiap kali ada perubahan jalankan lagi:
+
+```sh
+npm run deploy
+```
+
+Yang berubah langsung tanpa deploy hanya data di D1 (user, progres, absen, sertifikat).
+
+Catatan: `session: false` dipakai karena autentikasi memakai cookie + tabel `Session` di D1, bukan Astro Sessions.
 
 ## Validasi dan Build
 

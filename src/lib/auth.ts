@@ -23,7 +23,7 @@ export async function createSession(userId: string, context: APIContext) {
   context.cookies.set(SESSION_COOKIE, session.id, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: import.meta.env.PROD,
     path: '/',
     maxAge: SESSION_DAYS * 24 * 60 * 60,
   });

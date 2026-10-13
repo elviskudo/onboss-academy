@@ -1,0 +1,26 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"compatibility_date": "2026-10-06",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"name": "onboss-academy",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "onboss-academy",
+			"database_id": "8a34f152-9775-4b17-9bfd-562aa09070a4",
+			"migrations_dir": "d1_migrations"
+		}
+	],
+	"vars": {
+		"JUDGE0_URL": "https://ce.judge0.com",
+		"PISTON_URL": ""
+	},
+	"observability": {
+		"enabled": true
+	}
+}

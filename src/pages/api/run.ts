@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 import { rateLimit, clientIp } from '../../lib/rate-limit';
 import { json } from '../../lib/http';
 
 // Provider eksekusi kode.
 // Default: instance publik Judge0 (ce.judge0.com) — tanpa Docker, tanpa API key.
 // Self-host (opsional): set PISTON_URL ke instance Piston milikmu, mis. http://localhost:2000/api/v2/piston
-const JUDGE0_URL = process.env.JUDGE0_URL || 'https://ce.judge0.com';
-const PISTON_URL = process.env.PISTON_URL || '';
+const JUDGE0_URL = env.JUDGE0_URL || 'https://ce.judge0.com';
+const PISTON_URL = env.PISTON_URL || '';
 
 // Map id bahasa kita → language_id Judge0 (+ alias nama Piston umum)
 const JUDGE0_LANG: Record<string, number> = {
