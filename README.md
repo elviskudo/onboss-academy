@@ -108,6 +108,16 @@ Yang berubah langsung tanpa deploy hanya data di D1 (user, progres, absen, serti
 
 Catatan: `session: false` dipakai karena autentikasi memakai cookie + tabel `Session` di D1, bukan Astro Sessions.
 
+## Troubleshooting
+
+- Error `The file does not exist at ".../node_modules/.vite/deps_ssr/..."` saat `npm run dev`: cache optimizer Vite basi, biasanya setelah `.env` atau config berubah saat server berjalan. Hentikan server lalu bersihkan cache:
+
+```sh
+npx astro dev stop
+rm -rf node_modules/.vite
+npm run dev
+```
+
 ## Validasi dan Build
 
 ```sh
