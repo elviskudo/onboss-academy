@@ -6,7 +6,7 @@ const user = Astro.locals.user;
 if (!user || user.email.toLowerCase() !== 'elviskudo@gmail.com') return Astro.redirect(user ? '/dashboard' : '/login');
 
 const activeSince = new Date(Date.now() - 30 * 60 * 1000);
-const [users, visitorRows, events, progress, certificates, attendance, recentUsers, visitorEvents, userDates, popularPages, countries, devices, loggedInViews, activeEvents, allUsers] = await Promise.all([
+const [users, visitorRows, events, progress, certificates, attendance, recentUsers, visitorEvents, userDates, popularPages, countries, devices, loggedInViews, activeEvents, allUsers, learningEvents] = await Promise.all([
   db.user.count(),
   db.visitorEvent?.findMany({ distinct: ['visitorId'], select: { visitorId: true } }) ?? Promise.resolve([]),
   db.visitorEvent?.count() ?? Promise.resolve(0),
@@ -22,10 +22,13 @@ const [users, visitorRows, events, progress, certificates, attendance, recentUse
   db.visitorEvent.count({ where: { userId: { not: null } } }),
   db.visitorEvent.findMany({ where: { userId: { not: null }, createdAt: { gte: activeSince } }, distinct: ['userId'], select: { userId: true, path: true, createdAt: true } }),
   db.user.findMany({ orderBy: { createdAt: 'desc' }, select: { id: true, name: true, email: true, createdAt: true, _count: { select: { progress: true } } } }),
+  db.visitorEvent.findMany({ where: { userId: { not: null }, path: { startsWith: '/belajar/' }, createdAt: { gte: activeSince } }, orderBy: { createdAt: 'desc' }, select: { userId: true, path: true, createdAt: true } }),
 ]);
 
 const activeIds = new Set(activeEvents.map((event) => event.userId));
 const activeUsers = allUsers.filter((member) => activeIds.has(member.id));
+const learningByUser = new Map<string, (typeof learningEvents)[number]>();
+for (const event of learningEvents) if (event.userId && !learningByUser.has(event.userId)) learningByUser.set(event.userId, event);
 
 const dayKey = (date: Date) => date.toISOString().slice(0, 10);
 const days = Array.from({ length: 14 }, (_, index) => {
@@ -103,7 +106,11 @@ const stats = [
     <section class="mt-10 grid gap-6 lg:grid-cols-2">
       <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
         <div class="flex items-center justify-between gap-4"><div><h2 class="text-xl font-extrabold">Sedang aktif belajar</h2><p class="mt-1 text-sm text-muted">User login yang beraktivitas dalam 30 menit terakhir.</p></div><span class="rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold text-success">{activeUsers.length} aktif</span></div>
-        <div class="mt-5 divide-y divide-line">{activeUsers.length ? activeUsers.map((member) => { const event = activeEvents.find((item) => item.userId === member.id); return <div class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><div><p class="font-bold">{member.name}</p><p class="text-xs text-muted">{event?.path}</p></div><span class="text-xs font-bold text-success">Aktif</span></div>; }) : <p class="py-4 text-sm text-muted">Belum ada user aktif dalam 30 menit terakhir.</p>}</div>
+        <div class="mt-5 divide-y divide-line">{activeUsers.length ? activeUsers.map((member) => { const event = activeEvents.find((item) => item.userId === member.id); const lesson = learningByUser.get(member.id); return <div class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"><div><p class="font-bold">{member.name}</p><p class="text-xs text-muted">{lesson ? `Belajar: ${lesson.path.replace('/belajar/', '').replaceAll('-', ' ')}` : `Menu: ${event?.path}`}</p></div><span class="text-xs font-bold text-success">Aktif</span></div>; }) : <p class="py-4 text-sm text-muted">Belum ada user aktif dalam 30 menit terakhir.</p>}</div>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4"><div><h2 class="text-xl font-extrabold">Sedang belajar</h2><p class="mt-1 text-sm text-muted">Menu dan step terakhir user.</p></div><span class="text-sm font-bold text-muted">{learningByUser.size} learner</span></div>
+        <div class="mt-5 divide-y divide-line">{learningByUser.size ? [...learningByUser].map(([userId, event]) => { const member = allUsers.find((item) => item.id === userId); return <div class="flex items-center justify-between gap-3 py-3 first:pt-0"><div><p class="font-bold">{member?.name}</p><p class="text-xs capitalize text-muted">{event.path.replace('/belajar/', '').replaceAll('-', ' ')}</p></div><p class="text-right text-[11px] text-muted">{event.createdAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p></div>; }) : <p class="py-4 text-sm text-muted">Belum ada aktivitas belajar.</p>}</div>
       </div>
       <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
         <div class="flex items-center justify-between gap-4"><div><h2 class="text-xl font-extrabold">Semua yang bergabung</h2><p class="mt-1 text-sm text-muted">Daftar lengkap member dan progresnya.</p></div><span class="text-sm font-bold text-muted">{allUsers.length} user</span></div>
