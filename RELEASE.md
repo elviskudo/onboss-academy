@@ -1,5 +1,24 @@
 # Release Notes
 
+## v0.0.2 — Admin Analytics
+
+### Highlights
+
+- Admin dashboard di `/admin`, hanya dapat diakses oleh admin yang dikonfigurasi.
+- Ringkasan visitor unik, page views, user terdaftar, aktivitas belajar, sertifikat, dan check-in.
+- Grafik pertumbuhan visitor dan user baru selama 14 hari.
+- Daftar halaman populer, device, negara, referrer, serta page views dari user login.
+- Visitor tracking privacy-first menggunakan cookie; IP hanya disimpan sebagai hash SHA-256 bersalt untuk security.
+- D1 migration `0002_visitor_metadata.sql` menambahkan metadata analytics tanpa menghapus data existing.
+
+### Verification
+
+- `python3 scripts/check_content.py` berhasil.
+- `npx astro check` berhasil.
+- `npm run build` berhasil.
+- Migration D1 local dan remote berhasil diterapkan.
+
+
 ## v0.0.1 — Initial Release
 
 ### Highlights

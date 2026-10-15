@@ -11,6 +11,8 @@ Platform belajar pemrograman berbahasa Indonesia dengan materi terstruktur, cont
 - Kuis per chapter dengan nilai kelulusan minimal 70%.
 - Progres belajar, absensi harian, streak, dan sertifikat.
 - Logo aplikasi di navbar dan favicon.
+- Admin dashboard terlindungi untuk `elviskudo@gmail.com` dengan ringkasan user, visitor, aktivitas, dan pertumbuhan 14 hari.
+- Analytics privacy-first: page views, halaman populer, device, negara Cloudflare, referrer, user login, dan hash IP untuk security tanpa menyimpan IP mentah.
 
 ## Stack
 
@@ -28,7 +30,7 @@ Persyaratan: Node.js `>=22.12.0`.
 
 ```sh
 npm install
-npx prisma migrate dev
+npm run db:migrate:local
 npm run dev
 ```
 
@@ -146,7 +148,8 @@ Panduan penulisan MDX tersedia di `AGENTS.md`.
 | `npm run build` | Membuat production build |
 | `npx astro check` | Memeriksa tipe dan integrasi Astro |
 | `python3 scripts/check_content.py` | Memvalidasi seluruh konten MDX |
-| `npx prisma migrate dev` | Menjalankan migrasi database lokal |
+| `npm run db:migrate:local` | Menerapkan migrasi D1 lokal |
+| `npx prisma generate` | Regenerasi Prisma Client setelah perubahan schema |
 
 ## Lisensi
 

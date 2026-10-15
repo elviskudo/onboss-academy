@@ -1,0 +1,112 @@
+---
+import Base from '../../layouts/Base.astro';
+import { db } from '../../lib/db';
+
+const user = Astro.locals.user;
+if (!user || user.email.toLowerCase() !== 'elviskudo@gmail.com') return Astro.redirect(user ? '/dashboard' : '/login');
+
+const [users, visitorRows, events, progress, certificates, attendance, recentUsers, visitorEvents, userDates, popularPages, countries, devices, loggedInViews] = await Promise.all([
+  db.user.count(),
+  db.visitorEvent?.findMany({ distinct: ['visitorId'], select: { visitorId: true } }) ?? Promise.resolve([]),
+  db.visitorEvent?.count() ?? Promise.resolve(0),
+  db.chapterProgress.count(),
+  db.certificate.count(),
+  db.attendance.count(),
+  db.user.findMany({ orderBy: { createdAt: 'desc' }, take: 6, select: { name: true, email: true, createdAt: true } }),
+  db.visitorEvent?.findMany({ select: { createdAt: true } }) ?? Promise.resolve([]),
+  db.user.findMany({ select: { createdAt: true } }),
+  db.visitorEvent.groupBy({ by: ['path'], _count: { path: true }, orderBy: { _count: { path: 'desc' } }, take: 5 }),
+  db.visitorEvent.groupBy({ by: ['country'], where: { country: { not: null } }, _count: { country: true }, orderBy: { _count: { country: 'desc' } }, take: 5 }),
+  db.visitorEvent.groupBy({ by: ['device'], where: { device: { not: null } }, _count: { device: true }, orderBy: { _count: { device: 'desc' } } }),
+  db.visitorEvent.count({ where: { userId: { not: null } } }),
+]);
+
+const dayKey = (date: Date) => date.toISOString().slice(0, 10);
+const days = Array.from({ length: 14 }, (_, index) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - (13 - index));
+  const key = dayKey(date);
+  return {
+    key,
+    label: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+    visitors: visitorEvents.filter((event) => dayKey(new Date(event.createdAt)) === key).length,
+    users: userDates.filter((member) => dayKey(new Date(member.createdAt)) === key).length,
+  };
+});
+const chartMax = Math.max(...days.map((day) => Math.max(day.visitors, day.users)), 1);
+
+const stats = [
+  { label: 'Total pengunjung', value: visitorRows.length, detail: 'visitor unik terdeteksi', color: 'text-primary' },
+  { label: 'User bergabung', value: users, detail: 'akun terdaftar', color: 'text-success' },
+  { label: 'Page views', value: events, detail: 'kunjungan tercatat', color: 'text-violet-600' },
+  { label: 'Aktivitas belajar', value: progress, detail: 'bab diselesaikan', color: 'text-amber-600' },
+  { label: 'Sertifikat terbit', value: certificates, detail: 'pencapaian learner', color: 'text-rose-600' },
+  { label: 'Check-in', value: attendance, detail: 'hari belajar tercatat', color: 'text-cyan-600' },
+];
+---
+<Base title="Admin Dashboard" description="Insight operasional OnBoss Academy.">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-wider text-primary">Control center</p>
+        <h1 class="mt-2 text-3xl font-extrabold tracking-tight">Admin Dashboard</h1>
+        <p class="mt-1.5 text-muted">Pantau pertumbuhan dan aktivitas OnBoss Academy.</p>
+      </div>
+      <span class="rounded-full border border-success/30 bg-success-soft px-3 py-1.5 text-xs font-bold text-success">Production ready</span>
+    </div>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {stats.map((stat) => (
+        <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+          <p class="text-sm font-bold text-muted">{stat.label}</p>
+          <p class:list={['mt-3 text-4xl font-extrabold tracking-tight', stat.color]}>{stat.value.toLocaleString('id-ID')}</p>
+          <p class="mt-1 text-xs text-muted">{stat.detail}</p>
+        </div>
+      ))}
+    </div>
+
+    <section class="mt-10 rounded-2xl border border-line bg-surface p-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div><h2 class="text-xl font-extrabold">Pertumbuhan 14 hari</h2><p class="mt-1 text-sm text-muted">Aktivitas pengunjung dan user baru per hari.</p></div>
+        <div class="flex gap-4 text-xs font-bold"><span class="text-primary">● Pengunjung</span><span class="text-success">● User baru</span></div>
+      </div>
+      <div class="mt-8 flex h-56 items-end gap-1.5 border-b border-line px-1 sm:gap-3">
+        {days.map((day) => (
+          <div class="flex h-full min-w-0 flex-1 items-end gap-0.5" title={`${day.label}: ${day.visitors} pengunjung, ${day.users} user baru`}>
+            <div class="w-1/2 rounded-t-md bg-primary/80" style={`height:${Math.max((day.visitors / chartMax) * 100, day.visitors ? 4 : 0)}%`}></div>
+            <div class="w-1/2 rounded-t-md bg-success/80" style={`height:${Math.max((day.users / chartMax) * 100, day.users ? 4 : 0)}%`}></div>
+          </div>
+        ))}
+      </div>
+      <div class="mt-3 flex justify-between text-[10px] text-muted"><span>{days[0].label}</span><span>{days[6].label}</span><span>{days[13].label}</span></div>
+    </section>
+
+    <section class="mt-10 grid gap-6 lg:grid-cols-3">
+      <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm lg:col-span-2">
+        <h2 class="text-xl font-extrabold">Halaman terpopuler</h2><p class="mt-1 text-sm text-muted">URL yang paling sering dibuka.</p>
+        <div class="mt-5 space-y-3">{popularPages.map((page) => <div class="flex justify-between gap-4 text-sm"><span class="truncate font-semibold">{page.path}</span><span class="font-bold text-primary">{page._count.path}</span></div>)}</div>
+      </div>
+      <div class="rounded-2xl border border-line bg-surface p-6 shadow-sm">
+        <h2 class="text-xl font-extrabold">Audiens</h2><p class="mt-1 text-sm text-muted">Perangkat dan negara.</p>
+        <div class="mt-5 space-y-3 text-sm">{devices.map((item) => <div class="flex justify-between"><span>{item.device}</span><b>{item._count.device}</b></div>)}{countries.slice(0, 3).map((item) => <div class="flex justify-between"><span>{item.country}</span><b>{item._count.country}</b></div>)}</div>
+      </div>
+    </section>
+    <p class="mt-4 text-xs text-muted">{loggedInViews.toLocaleString('id-ID')} page views berasal dari user yang login. IP disimpan sebagai hash untuk privacy dan security.</p>
+
+    <section class="mt-10 rounded-2xl border border-line bg-surface p-6 shadow-sm">
+      <div class="flex items-center justify-between gap-4">
+        <div><h2 class="text-xl font-extrabold">User terbaru</h2><p class="mt-1 text-sm text-muted">Member yang baru bergabung.</p></div>
+        <span class="text-sm font-bold text-muted">{users} total</span>
+      </div>
+      <div class="mt-6 divide-y divide-line">
+        {recentUsers.map((member) => (
+          <div class="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0 last:pb-0">
+            <div><p class="font-bold">{member.name}</p><p class="text-sm text-muted">{member.email}</p></div>
+            <p class="text-sm text-muted">{member.createdAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+</Base>

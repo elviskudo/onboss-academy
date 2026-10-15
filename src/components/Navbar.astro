@@ -33,6 +33,7 @@ function active(href: string) {
     <div class="flex items-center gap-2">
       {user ? (
         <div class="flex items-center gap-2">
+          {user.email.toLowerCase() === 'elviskudo@gmail.com' && <a href="/admin" class="hidden text-sm font-semibold text-primary hover:text-primary-dark sm:block">Admin</a>}
           <a href="/dashboard" class="hidden text-sm font-semibold text-muted hover:text-ink sm:block">{user.name.split(' ')[0]}</a>
           <form method="POST" action="/api/auth/logout">
             <button type="submit" class="rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-ink hover:border-ink/30">Keluar</button>

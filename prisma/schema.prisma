@@ -20,6 +20,23 @@ model User {
   certificates Certificate[]
 }
 
+model VisitorEvent {
+  id        String   @id @default(cuid())
+  visitorId String
+  userId    String?
+  path      String
+  referrer  String?
+  device    String?
+  country   String?
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([visitorId])
+  @@index([createdAt])
+  @@index([path])
+  @@index([country])
+}
+
 model Session {
   id        String   @id @default(cuid())
   userId    String
