@@ -1,5 +1,17 @@
 # Release Notes
 
+## v0.0.3 — Mobile Sidebar Fix
+
+### Highlights
+
+- Sidebar daftar bab di mobile tidak lagi sticky dan dibatasi `max-h-[40vh]` sehingga tidak menutupi hampir setengah layar.
+- Perilaku desktop (lg) tetap: sticky `top-20` dengan tinggi maksimal viewport.
+
+### Verification
+
+- `python3 scripts/check_content.py` berhasil (337 MDX valid, 38 bahasa).
+- `npx astro build` berhasil dengan adapter Cloudflare.
+
 ## v0.0.2 — Admin Analytics
 
 ### Highlights

@@ -12,6 +12,7 @@ Platform belajar pemrograman berbahasa Indonesia dengan materi terstruktur, cont
 - Progres belajar, absensi harian, streak, dan sertifikat.
 - Logo aplikasi di navbar dan favicon.
 - Admin dashboard terlindungi untuk `elviskudo@gmail.com` dengan ringkasan user, visitor, aktivitas, dan pertumbuhan 14 hari.
+- Sidebar daftar bab responsif: terbatas tinggi di mobile, sticky di desktop.
 - Analytics privacy-first: page views, halaman populer, device, negara Cloudflare, referrer, user login, dan hash IP untuk security tanpa menyimpan IP mentah.
 
 ## Stack
