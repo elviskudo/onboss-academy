@@ -18,10 +18,11 @@ const { lang = 'html', runtime = 'client-html', pistonName, code, title = 'Coba 
   </div>
   <div class="grid lg:grid-cols-2">
     <div class="tryit-editor-host min-h-[220px] border-b border-line lg:border-b-0 lg:border-r"></div>
-    <div class="tryit-output min-h-[220px] bg-[#1E1E2E] p-4 font-mono text-[13px] leading-6 text-[#E2E8F0]">
-      <div class="tryit-logs whitespace-pre-wrap break-words"><span class="text-[#94A3B8]">▶ Klik “Jalankan” untuk melihat hasil…</span></div>
-      <div class="tryit-sql-result hidden"></div>
-    </div>
+     <div class="tryit-output min-h-[220px] bg-[#1E1E2E] p-4 font-mono text-[13px] leading-6 text-[#E2E8F0]">
+       <div class="tryit-logs whitespace-pre-wrap break-words"><span class="text-[#94A3B8]">▶ Klik “Jalankan” untuk melihat hasil…</span></div>
+       <div class="tryit-preview mt-3 overflow-hidden rounded-lg bg-white"></div>
+       <div class="tryit-sql-result hidden"></div>
+     </div>
   </div>
   <textarea class="tryit-source hidden" aria-hidden="true">{code}</textarea>
 </div>
@@ -120,15 +121,13 @@ const { lang = 'html', runtime = 'client-html', pistonName, code, title = 'Coba 
 
     const out = logsOf(root);
     out.innerHTML = '';
-    const holder = document.createElement('div');
-    holder.className = 'tryit-frame';
+    root.querySelector('.tryit-preview')?.replaceChildren(iframe);
     iframe.addEventListener('load', () => {
       setTimeout(() => {
         const h = iframe.contentDocument?.body?.scrollHeight || 200;
         iframe.style.minHeight = Math.min(Math.max(h + 16, 160), 520) + 'px';
       }, 60);
     });
-    out.after(iframe);
 
     const onMsg = (e: MessageEvent) => {
       if (e.source !== iframe.contentWindow || !e.data || e.data.__oba !== true) return;

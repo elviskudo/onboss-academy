@@ -5,9 +5,11 @@ Platform belajar pemrograman berbahasa Indonesia dengan materi terstruktur, cont
 ## Fitur
 
 - 38 bahasa dan topik teknologi.
-- 336 chapter MDX dengan urutan belajar yang jelas.
+- 338 chapter MDX dengan urutan belajar yang jelas.
 - Materi Python mengikuti alur tutorial inti W3Schools, termasuk Project Mini.
+- Materi HTML5 praktis untuk form modern, validasi, dan aksesibilitas.
 - Editor kode interaktif untuk runtime yang didukung.
+- Preview HTML dipisahkan dari console log agar hasil halaman lebih mudah dibaca.
 - Kuis per chapter dengan nilai kelulusan minimal 70%.
 - Progres belajar, absensi harian, streak, dan sertifikat.
 - Logo aplikasi di navbar dan favicon.

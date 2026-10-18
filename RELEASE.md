@@ -1,5 +1,19 @@
 # Release Notes
 
+## v0.0.4 — HTML5 Forms & Runtime Preview
+
+### Highlights
+
+- Menambahkan chapter HTML5 tentang form modern, validasi bawaan browser, aksesibilitas label, dan studi kasus reservasi.
+- Preview runtime HTML kini tampil di panel putih terpisah dari console log agar hasil halaman lebih mudah dibaca.
+- Contoh HTML tetap berjalan dalam iframe sandbox.
+
+### Verification
+
+- `python3 scripts/check_content.py` berhasil (338 MDX valid, 38 bahasa).
+- `npx astro check` berhasil.
+- `npm run build` berhasil dengan adapter Cloudflare.
+
 ## v0.0.3 — Mobile Sidebar Fix
 
 ### Highlights
