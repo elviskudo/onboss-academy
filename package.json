@@ -11,7 +11,7 @@
     "preview": "wrangler types && astro preview",
     "astro": "astro",
     "generate-types": "wrangler types",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && rm -f dist/server/.dev.vars && wrangler deploy",
     "db:migrate:local": "wrangler d1 migrations apply onboss-academy --local",
     "db:migrate:remote": "wrangler d1 migrations apply onboss-academy --remote"
   },
