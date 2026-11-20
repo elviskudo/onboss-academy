@@ -1,0 +1,80 @@
+---
+title: "Studi Kasus: Kebocoran Data"
+description: "Merangkai deteksi, kontainment, notifikasi, dan perbaikan pasca-insiden"
+order: 26
+quiz:
+  - q: "Tanda awal kebocoran data bisa berupa…"
+    options: ["Favicon dimuat", "Server reboot terjadwal", "Unduhan massal oleh akun biasa", "Halaman utama dibuka"]
+    answer: 2
+    explain: "Pola akses yang tidak biasa sering menjadi indikator pertama."
+  - q: "Langkah pertama setelah kecurigaan muncul adalah…"
+    options: ["Menghapus semua log", "Menghubungi media dulu", "Memformat seluruh server", "Verifikasi dan tentukan ruang lingkup"]
+    answer: 3
+    explain: "Verifikasi mencegah respons berlebihan terhadap false positive."
+  - q: "Saat kredensial bocor, tindakan yang tepat adalah…"
+    options: ["Cabut sesi dan paksa ganti kata sandi", "Biarkan sampai besok", "Tambah admin baru", "Hapus database"]
+    answer: 0
+    explain: "Memutus akses penyerang lebih prioritas daripada investigasi mendalam."
+  - q: "Notifikasi terdampak sebaiknya…"
+    options: ["Tanpa kontak", "Jelas, faktual, dan memuat langkah yang harus diambil", "Samar-samar", "Menunggu beberapa bulan"]
+    answer: 1
+    explain: "Transparansi membantu pengguna melindungi diri."
+  - q: "Hasil akhir penanganan insiden adalah…"
+    options: ["Hukuman tanpa perbaikan", "Penghapusan seluruh bukti", "Rencana perbaikan yang ditindaklanjuti", "Laporan yang disimpan saja"]
+    answer: 2
+    explain: "Insiden bernilai bila menghasilkan perubahan yang mencegah pengulangan."
+example:
+  code: |
+    Linimasa singkat:
+      09:12 unduhan 50.000 baris oleh akun-x
+      09:15 anomali terdeteksi
+      09:20 sesi dicabut, akun dikunci
+      09:45 ruang lingkup dipastikan
+---
+
+Kebocoran data menguji seluruh kemampuan keamanan: deteksi, respons, komunikasi, dan perbaikan. Latihan berikut merangkum alurnya.
+
+## Skenario
+
+```text
+Akun seorang karyawan membuka 50.000 baris data pelanggan dalam 3 menit.
+Aktivitas normal akun itu biasanya kurang dari 100 baris per hari.
+```
+
+## Verifikasi
+
+Cek log akses, alamat IP, user-agent, dan apakah aktivitas sesuai pola kerja. Bandingkan dengan rekan satu tim. Jangan langsung menyimpulkan sebelum bukti cukup.
+
+## Kontainment
+
+```text
+1. Cabut sesi dan token akun
+2. Nonaktifkan akun sementara
+3. Simpan log dan request_id
+4. Batasi ekspor data untuk semua akun
+5. Periksa apakah data dikirim ke luar
+```
+
+## Komunikasi
+
+Siapkan narasi internal dan eksternal. Sampaikan apa yang diketahui, apa yang belum diketahui, dan kapan pembaruan berikutnya. Hindari spekulasi.
+
+## Perbaikan
+
+| Temuan | Tindakan |
+|---|---|
+| Tidak ada batas ekspor | Rate limit dan kuota per peran |
+| Tidak ada alert anomali | Aturan deteksi volume download |
+| Akun tanpa MFA | Wajib MFA untuk semua staf |
+| Log minim | Tambah field user, IP, dan request_id |
+
+<div class="note">💡 Simpan linimasa lengkap sejak deteksi pertama. Dokumentasi yang baik mempercepat audit, komunikasi, dan perbaikan.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Latihan ringkas:
+  1. Tulis linimasa 6 kejadian
+  2. Tandai kapan kontainment dilakukan
+  3. Tulis 3 tindakan perbaikan
+  4. Susun satu paragraf notifikasi untuk pengguna`}</code></pre>

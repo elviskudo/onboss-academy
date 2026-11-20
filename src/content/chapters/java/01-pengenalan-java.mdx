@@ -119,12 +119,16 @@ Alur lengkapnya: `.java` → **javac** → `.class` (bytecode) → **JVM** → k
 
 <div class="note">💡 Bedakan: <b>JDK</b> (tool kompilasi + runtime, dipasang saat belajar), <b>JRE</b> (hanya runtime), <b>JVM</b> (mesin bytecode di dalam keduanya). Menulis kode butuh JDK; jalankan <code>java -version</code> untuk memastikan terpasang sebelum latihan pertama.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     public static void main(String[] args) {
         System.out.println("Halo dari OnBoss Academy!");
         int a = 7, b = 5;
         System.out.println(a + " + " + b + " = " + (a + b));
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i &lt;= 3; i++) {
             System.out.println("Perulangan ke-" + i);
         }
         String nama = "Dunia";

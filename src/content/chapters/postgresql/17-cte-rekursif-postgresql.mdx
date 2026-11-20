@@ -1,0 +1,111 @@
+---
+title: "CTE Rekursif dan Hierarki"
+description: "WITH RECURSIVE, hierarki pohon, deret tanggal, dan siklus"
+order: 17
+quiz:
+  - q: "Bagian awal CTE rekursif disebut…"
+    options: ["Anchor member", "Recursive member", "Base table", "Terminal"]
+    answer: 1
+    explain: "Anchor menetapkan baris awal sebelum pengulangan."
+  - q: "Bagian berulang digabung dengan…"
+    options: ["UNION ALL", "UNION", "INTERSECT", "EXCEPT"]
+    answer: 2
+    explain: "UNION ALL menggabungkan anchor dan recursive member."
+  - q: "Kolom hierarki yang umum dipakai adalah…"
+    options: ["parent_id", "child_id", "root_id", "link_id"]
+    answer: 3
+    explain: "parent_id menunjukkan atasan/induk dari baris."
+  - q: "Agar rekursi berhenti diperlukan…"
+    options: ["Kondisi WHERE", "LIMIT 1", "ORDER BY", "GROUP BY"]
+    answer: 0
+    explain: "Kondisi berhenti mencegah infinite loop."
+  - q: "Untuk mencegah siklus pada graf bisa dipakai…"
+    options: ["ARRAY path + operator <@ atau = ANY", "DISTINCT saja", "LIMIT", "GROUP BY"]
+    answer: 1
+    explain: "Menyimpan jalur yang sudah dikunjungi memungkinkan deteksi siklus."
+example:
+  code: |
+    WITH RECURSIVE angka(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM angka WHERE n&lt;5) SELECT * FROM angka;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+CTE rekursif mengulang query terhadap hasilnya sendiri sampai kondisi berhenti terpenuhi. Ini alat alami untuk hierarki, graf sederhana, dan deret.
+
+## Deret Angka
+
+```sql
+WITH RECURSIVE angka(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM angka WHERE n < 10
+)
+SELECT n FROM angka;
+```
+
+Anchor `SELECT 1` menghasilkan baris pertama. Recursive member menambah satu sampai `n &lt; 5` tidak lagi benar.
+
+## Hierarki Karyawan
+
+```sql
+WITH RECURSIVE pohon AS (
+  SELECT id, nama, manager_id, 1 AS kedalaman
+  FROM karyawan WHERE manager_id IS NULL
+  UNION ALL
+  SELECT k.id, k.nama, k.manager_id, p.kedalaman + 1
+  FROM karyawan k JOIN pohon p ON k.manager_id = p.id
+)
+SELECT repeat('  ', kedalaman - 1) || nama AS struktur, kedalaman
+FROM pohon ORDER BY kedalaman, nama;
+```
+
+Baris dengan `manager_id IS NULL` adalah akar. Rekursi menuruni level berikutnya.
+
+## Deret Tanggal
+
+```sql
+WITH RECURSIVE tanggal(hari) AS (
+  SELECT DATE '2026-11-01'
+  UNION ALL
+  SELECT hari + INTERVAL '1 day'
+  FROM tanggal WHERE hari < DATE '2026-11-07'
+)
+SELECT hari FROM tanggal;
+```
+
+Deret tanggal berguna untuk mengisi tanggal yang tidak punya transaksi sebelum digabung dengan data aktual.
+
+## Menjaga Siklus
+
+```sql
+WITH RECURSIVE jalur AS (
+  SELECT id, ARRAY[id] AS visited
+  FROM simpul WHERE id = 1
+  UNION ALL
+  SELECT e.to, j.visited || e.to
+  FROM edge e JOIN jalur j ON e.from = j.id
+  WHERE NOT e.to = ANY(j.visited)
+)
+SELECT * FROM jalur;
+```
+
+Kolom `visited` menyimpan jalur. Kondisi `NOT ... = ANY` mencegah mengunjungi simpul yang sudah dilalui.
+
+<div class="note">💡 Rekursi tanpa kondisi berhenti bisa berjalan sangat lama. Saat prototyping, tambahkan `LIMIT` sementara atau batas kedalaman untuk berjaga-jaga.</div>
+
+## Di Dunia Nyata
+
+- **Struktur organisasi**: atasan → bawahan beberapa level.
+- **Kategori bertingkat**: katalog produk dengan subkategori.
+- **Kalender**: mengisi tanggal kosong untuk grafik.
+- **Graf dependensi**: menelusuri rute atau relasi.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`WITH RECURSIVE angka(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM angka WHERE n &lt; 5
+)
+SELECT n, n * n AS kuadrat FROM angka;`} />

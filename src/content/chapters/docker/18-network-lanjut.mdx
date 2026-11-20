@@ -1,0 +1,86 @@
+---
+title: "Jaringan Docker Lanjutan"
+description: "Driver bridge, host, none, DNS internal, dan isolasi layanan"
+order: 18
+quiz:
+  - q: "Driver jaringan default untuk container adalah…"
+    options: ["overlay", "macvlan", "bridge", "host"]
+    answer: 2
+    explain: "Bridge membuat jaringan privat di host dengan NAT untuk akses keluar."
+  - q: "Mode --network host berarti kontainer…"
+    options: ["Mendapat IP sendiri", "Tanpa jaringan", "Membuat bridge baru", "Menggunakan stack jaringan host langsung"]
+    answer: 3
+    explain: "Port container sama dengan port host; tidak ada pemetaan -p yang diperlukan."
+  - q: "Dalam jaringan user-defined bridge, container saling mengenali lewat…"
+    options: ["Nama container atau alias sebagai hostname", "Alamat MAC saja", "File /etc/hosts manual", "ID image"]
+    answer: 0
+    explain: "Docker menyediakan DNS internal otomatis."
+  - q: "--network none akan…"
+    options: ["Mengganti DNS", "Menonaktifkan semua antarmuka jaringan kecuali loopback", "Menghubungkan ke internet tanpa proxy", "Membuat jaringan overlay"]
+    answer: 1
+    explain: "Cocok untuk proses yang benar-benar tidak butuh jaringan."
+  - q: "Perintah untuk membuat jaringan baru adalah…"
+    options: ["docker bridge new appnet", "docker create network appnet", "docker network create appnet", "docker net add appnet"]
+    answer: 2
+    explain: "Jaringan user-defined dapat diberi subnet, gateway, dan label."
+example:
+  code: |
+    docker network create appnet
+    docker run -d --name db --network appnet postgres:16-alpine
+    docker run --rm --network appnet alpine ping -c 2 db
+---
+
+Jaringan Docker bukan sekadar `-p`. Memilih driver yang tepat menentukan bagaimana container berbicara satu sama lain dan dengan dunia luar.
+
+## Driver yang Sering Dipakai
+
+| Driver | Kapan dipakai | Karakter |
+|---|---|---|
+| `bridge` | Default, satu host | Isolasi + NAT keluar |
+| `host` | Butuh performa maksimal, Linux | Tanpa isolasi port |
+| `none` | Proses offline | Hanya loopback |
+| `overlay` | Swarm/Kubernetes multi-host | Jaringan lintas node |
+| `macvlan` | Container butuh IP LAN sendiri | Terlihat seperti perangkat fisik |
+
+## DNS Internal
+
+```bash
+docker network create appnet
+docker run -d --name db --network appnet postgres:16-alpine
+docker run --rm --network appnet alpine sh -c 'ping -c 2 db'
+```
+
+Pada bridge default, container hanya bisa memanggil lewat IP. Pada **user-defined bridge**, nama container menjadi hostname—ini alasan utama membuat jaringan sendiri.
+
+## Inspeksi dan Koneksi Manual
+
+```bash
+docker network ls
+docker network inspect appnet
+docker network connect appnet web     # tambahkan container ke jaringan lain
+docker network disconnect appnet web
+```
+
+Satu container boleh terhubung ke beberapa jaringan sekaligus—pola umum untuk memisahkan jaringan publik dan database.
+
+## Port Publishing
+
+```bash
+docker run -p 8080:80 nginx              # semua antarmuka host
+docker run -p 127.0.0.1:8080:80 nginx    # hanya localhost
+docker run -P nginx                      # publish semua EXPOSE ke port acak
+docker port <container>                  # lihat pemetaan aktif
+```
+
+## Mode Host: Kelebihan dan Risiko
+
+Mode host menghilangkan lapisan NAT sehingga latency lebih rendah, tetapi container berbagi stack jaringan host. Dua proses tidak boleh memakai port yang sama. Mode ini hanya didukung penuh di Linux; di Docker Desktop perlu pengaturan khusus.
+
+<div class="note">💡 Jangan mengandalkan nomor IP container—IP berubah saat container dibuat ulang. Selalu gunakan nama layanan pada jaringan user-defined.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`docker network create latihan-net &gt;/dev/null
+docker run --rm --network latihan-net alpine:3.20 sh -c 'echo jaringan aktif: $(hostname -i)'
+docker network rm latihan-net &gt;/dev/null`}</code></pre>

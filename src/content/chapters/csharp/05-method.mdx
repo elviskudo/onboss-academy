@@ -153,6 +153,10 @@ Pecah menjadi method ketika: (1) blok yang sama dipakai di 2+ tempat, (2) logika
 
 <div class="note">💡 Satu method sebaiknya mengerjakan satu hal. Method pendek dengan nama jelas (HitungTotal, ValidasiEmail) jauh lebih mudah diuji daripada method raksasa berisi seratus baris yang mencetak, menghitung, dan menyimpan sekaligus.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
 
 class Program
@@ -165,7 +169,7 @@ class Program
     static int Pangkat(int basis, int eksponen = 2)
     {
         int hasil = 1;
-        for (int i = 0; i < eksponen; i++)
+        for (int i = 0; i &lt; eksponen; i++)
         {
             hasil *= basis;
         }

@@ -1,0 +1,125 @@
+---
+title: "Reference"
+description: "lvalue reference, reference sebagai parameter, const reference, dan perbedaan dengan pointer"
+order: 11
+quiz:
+  - q: "Reference di C++ adalah…"
+    options: ["Alias untuk variabel yang sudah ada", "Pointer yang bisa NULL", "Salinan nilai", "Array baru"]
+    answer: 0
+    explain: "Reference tidak bisa diubah arahnya dan wajib diinisialisasi."
+  - q: "Deklarasi reference yang benar adalah…"
+    options: ["int &r = x;", "int *r = x;", "int r& = x;", "ref int r = x;"]
+    answer: 0
+    explain: "Tanda & muncul sebelum nama variabel."
+  - q: "Untuk menghindari salinan besar pada parameter, gunakan…"
+    options: ["const T&", "T by value", "T* selalu", "T&&"]
+    answer: 0
+    explain: "const reference menerima lvalue/rvalue tanpa menyalin."
+  - q: "Reference tidak bisa…"
+    options: ["Diinisialisasi", "DijadikanNULL", "Dipakai sebagai parameter", "Dikembalikan dari fungsi"]
+    answer: 1
+    explain: "Tidak ada null reference; gunakan pointer bila optional."
+  - q: "`int&& r` adalah…"
+    options: ["Reference ke reference biasa", "Rvalue reference (C++11)", "Pointer ganda", "Array"]
+    answer: 1
+    explain: "Dipakai untuk move semantics."
+example:
+  code: |
+    #include <iostream>
+    
+    void tukar(int &a, int &b) {
+        int s = a; a = b; b = s;
+    }
+    
+    void cetak(const std::string &s) {
+        std::cout <&lt; s <&lt; '\n';  // tanpa salinan
+    }
+    
+    int main() {
+        int x = 3, y = 7;
+        tukar(x, y);
+        std::cout <&lt; x <&lt; " " <&lt; y <&lt; '\n';
+        cetak("Halo C++");
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Reference (`&`) adalah alias untuk objek yang sudah ada. Ia membuat kode lebih bersih daripada pointer untuk parameter yang wajib ada.
+
+## Dasar
+
+```cpp
+int x = 10;
+int &r = x;     // r adalah x
+r = 20;         // x sekarang 20
+std::cout << &x << " " << &r;  // alamat sama
+```
+
+Aturan:
+
+- Harus diinisialisasi saat deklarasi.
+- Tidak bisa diubah untuk merujuk objek lain.
+- Tidak ada reference kosong (berbeda dengan pointer NULL).
+
+## Reference sebagai Parameter
+
+```cpp
+void naikkan(int &nilai) {
+    nilai += 1;   // mengubah variabel pemanggil
+}
+
+int a = 5;
+naikkan(a);       // a jadi 6
+```
+
+## const Reference
+
+```cpp
+void tampil(const std::string &s) {
+    std::cout << s;
+}
+```
+
+Menghindari salinan string/vektor besar, sekaligus mencegah fungsi mengubah isinya. Ini bentuk default untuk parameter "baca saja".
+
+## Reference vs Pointer
+
+| Aspek | Reference | Pointer |
+|---|---|---|
+| Null | tidak bisa | bisa |
+| Reassign | tidak bisa | bisa |
+| Sintaks | `x` | `*p` |
+| Cocok untuk | parameter wajib | optional / ownership |
+
+## Rvalue Reference
+
+```cpp
+void terima(std::string &&s) {
+    // s adalah objek sementara, boleh "dicuri" isinya
+}
+```
+
+`&&` (C++11) adalah fondasi move semantics — dibahas di chapter 19.
+
+<div class="note">💡 Kembalikan reference dari fungsi hanya jika objek yang dirujuk masa hidupnya lebih panjang dari pemanggil. Mengembalikan reference ke variabel lokal = undefined behavior.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+
+void tukar(int &a, int &b) {
+    int s = a; a = b; b = s;
+}
+
+void cetak(const std::string &s) {
+    std::cout <&lt; s <&lt; '\n';  // tanpa salinan
+}
+
+int main() {
+    int x = 3, y = 7;
+    tukar(x, y);
+    std::cout <&lt; x <&lt; " " <&lt; y <&lt; '\n';
+    cetak("Halo C++");
+}`} />

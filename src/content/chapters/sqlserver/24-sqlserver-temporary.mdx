@@ -1,0 +1,94 @@
+---
+title: "Tabel Temporary, Table Variable, dan CTE Materialisasi"
+description: "#temp, ##global, @table, dan kapan masing-masing dipakai"
+order: 24
+quiz:
+  - q: "Tabel temporary lokal ditandai dengan…"
+    options: ["$nama", "#nama", "##nama", "@nama"]
+    answer: 1
+    explain: "#temp hanya terlihat di sesi saat ini."
+  - q: "Tabel temporary global ditandai dengan…"
+    options: ["@nama", "nama#", "#nama", "##nama"]
+    answer: 3
+    explain: "##nama terlihat semua sesi sampai sesi pembuatnya ditutup."
+  - q: "Table variable dideklarasikan dengan…"
+    options: ["CREATE TABLE @t", "VAR TABLE", "SET TABLE", "DECLARE @t TABLE (...)"]
+    answer: 3
+    explain: "DECLARE @t TABLE (kolom tipe);"
+  - q: "Tabel temporary disimpan di…"
+    options: ["file log", "tempdb", "master", "memory hanya"]
+    answer: 1
+    explain: "#temp dan ##temp adalah objek di database tempdb."
+  - q: "Table variable cocok untuk…"
+    options: ["Backup database", "Mengganti view", "Data kecil dan jumlah baris sedikit", "Jutaan baris dengan indeks kompleks"]
+    answer: 2
+    explain: "Optimizer traditionally mengira table variable punya satu baris, sehingga kurang cocok untuk data besar."
+example:
+  code: |
+    CREATE TABLE #ringkas (id INT PRIMARY KEY, total INT);
+    INSERT INTO #ringkas SELECT id, SUM(jumlah) FROM dbo.penjualan GROUP BY id;
+    DECLARE @dua TABLE (nama NVARCHAR(50));
+    INSERT INTO @dua VALUES (N'Ana');
+    SELECT * FROM #ringkas; DROP TABLE #ringkas;
+---
+
+## #Tabel Temporary
+
+```sql
+CREATE TABLE #ringkas (
+  id INT PRIMARY KEY,
+  total INT
+);
+
+INSERT INTO #ringkas
+SELECT id, SUM(jumlah) FROM dbo.penjualan GROUP BY id;
+
+SELECT * FROM #ringkas;
+DROP TABLE #ringkas;
+```
+
+Tabel ini benar-benar dibuat di `tempdb`, boleh diberi indeks dan statistik, serta otomatis hilang saat sesi koneksi ditutup. Menambahkan `DROP TABLE` di akhir skrip adalah kebiasaan baik bila sesi akan dipakai ulang (pooling).
+
+## ##Tabel Global
+
+```sql
+CREATE TABLE ##bersama (pesan NVARCHAR(200));
+```
+
+Terlihat oleh semua sesi. Umumnya dipakai untuk pertukaran data sementara antar koneksi, tetapi rawan tabrakan nama dan jarang diperlukan.
+
+## Table Variable
+
+```sql
+DECLARE @tabel TABLE (
+  kode VARCHAR(10),
+  jumlah INT
+);
+
+INSERT INTO @tabel (kode, jumlah)
+SELECT kode, SUM(jumlah) FROM dbo.penjualan GROUP BY kode;
+
+SELECT * FROM @tabel;
+```
+
+Berada di `tempdb` secara internal, tetapi sphere hidupnya sesuai batch/prosedur. Tidak perlu `DROP`.
+
+## Memilih
+
+| Kebutuhan | Pilihan |
+| --- | --- |
+| Data besar, butuh indeks/statistik | `#temp` |
+| Beberapa ratus baris dalam fungsi/prosedur | `@table` |
+| Dipakai lintas sesi | `##temp` (hati-hati) |
+| Hanya satu query | CTE |
+
+<div class="note">💡 Sejak SQL Server 2019 ada **table variable deferred compilation** yang membuat estimasi baris lebih akurat. Tetap ukur dengan actual plan sebelum memutuskan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #nilai (n INT);
+INSERT INTO #nilai VALUES (80), (90), (100);
+SELECT AVG(CAST(n AS DECIMAL(10,2))) AS rata FROM #nilai;
+DROP TABLE #nilai;`}</code></pre>

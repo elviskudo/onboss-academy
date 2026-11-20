@@ -1,0 +1,92 @@
+---
+title: "Operator Lanjutan"
+description: "Operator identitas, keanggotaan, bitwise, dan precedence dalam Python"
+order: 13
+quiz:
+  - q: "Operator `is` membandingkan…"
+    options: ["Nilai", "Identitas objek (alamat memori)", "Panjang string", "Tipe saja"]
+    answer: 1
+    explain: "`is` cek apakah dua nama menunjuk objek yang sama; `==` cek nilainya."
+  - q: "Hasil dari `3 in [1, 2, 3]` adalah…"
+    options: ["True", "False", "3", "Error"]
+    answer: 0
+    explain: "`in` mengembalikan boolean keanggotaan."
+  - q: "Operator bitwise XOR ditulis…"
+    options: ["&", "|", "^", "~"]
+    answer: 2
+    explain: "`^` melakukan XOR bit per bit; `&` AND, `|` OR, `~` NOT."
+  - q: "Prioritas tertinggi di antara `+`, `*`, `**`, `()` adalah…"
+    options: ["+", "*", "**", "()"]
+    answer: 3
+    explain: "Kurung paling tinggi, lalu pangkat, lalu perkalian, lalu penjumlahan."
+  - q: "`a // b` menghasilkan…"
+    options: ["Pembagian desimal", "Pembagian bulat (floor)", "Sisa bagi", "Pangkat"]
+    answer: 1
+    explain: "// membulatkan ke bawah; % memberi sisa."
+example:
+  code: |
+    a = 7
+    b = 7
+    print(a == b, a is b)
+    print(3 in [1, 2, 3])
+    print(6 & 3, 6 | 3, 6 ^ 3)
+    print(2 ** 3 ** 2)  # 512, pangkat asosiatif kanan
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Selain operator aritmetika dan perbandingan dasar, Python punya operator identitas, keanggotaan, dan bitwise.
+
+## Identitas vs Kesamaan
+
+```python
+a = [1, 2]
+b = [1, 2]
+c = a
+print(a == b)   # True  → isinya sama
+print(a is b)   # False → objek berbeda
+print(a is c)   # True  → nama yang sama
+```
+
+Gunakan `is` hanya untuk singleton seperti `None`: `if x is None:`.
+
+## Keanggotaan
+
+```python
+"ka" in "kampus"        # True (substring)
+"merah" not in ["biru", "hijau"]  # True
+"user" in {"user": 1}   # True (cek key dict)
+```
+
+## Bitwise
+
+| Operator | Nama | Contoh `6`(110) & `3`(011) |
+|---|---|---|
+| `&` | AND | `2` (010) |
+| `|` | OR | `7` (111) |
+| `^` | XOR | `5` (101) |
+| `~` | NOT | `-7` |
+| `<<` / `>>` | Geser kiri/kanan | `6 <&lt; 1` = 12 |
+
+Berguna untuk flag, mask, dan optimasi level rendah.
+
+## Precedence (Prioritas)
+
+Dari tertinggi ke terendah: `()` → `**` → unari `+ - ~` → `* / // %` → `+ -` → `<&lt; >>` → `&` → `^` → `|` → perbandingan → `not` → `and` → `or`.
+
+```python
+hasil = 2 + 3 * 4 ** 2   # 2 + 3*16 = 50
+print(-2 ** 2)           # -4, bukan 4!
+```
+
+<div class="note">💡 Pangkat (`**`) lebih kuat dari minus unari, tapi kurang kuat dari kurung. Kalau ragu, tulis kurung eksplisit — pembaca kode juga akan lebih mudah.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`a = 7
+b = 7
+print(a == b, a is b)
+print(3 in [1, 2, 3])
+print(6 & 3, 6 | 3, 6 ^ 3)
+print(2 ** 3 ** 2)  # 512, pangkat asosiatif kanan`} />

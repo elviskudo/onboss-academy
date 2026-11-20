@@ -1,0 +1,101 @@
+---
+title: "Spesifisitas & Cascade"
+description: "Memahami urutan prioritas aturan CSS saat beberapa selector bertabrakan"
+order: 13
+quiz:
+  - q: "Urutan prioritas yang benar (terendah ke tertinggi) adalah…"
+    options: ["tag &lt; class &lt; id", "id &lt; class &lt; tag", "class &lt; id &lt; tag", "tag &lt; id &lt; class"]
+    answer: 0
+    explain: "Spesifisitas naik dari tag ke class ke id."
+  - q: "`!important` memiliki efek…"
+    options: ["Menurunkan prioritas", "Menimpa hampir semua aturan lain", "Tidak berpengaruh", "Hanya berlaku di inline"]
+    answer: 1
+    explain: "Deklarasi !important mengalahkan selector biasa, meski selector lawan lebih spesifik."
+  - q: "Bobot spesifisitas `#nav .item:hover` adalah…"
+    options: ["1-1-1", "1-2-0", "1-1-0", "0-3-0"]
+    answer: 1
+    explain: "Satu id (1), satu class + satu pseudo-class (2), tanpa tag (0)."
+  - q: "Kalau dua aturan memiliki spesifisitas sama, yang menang adalah…"
+    options: ["Yang ditulis paling awal", "Yang ditulis paling akhir", "Yang paling panjang", "Acak"]
+    answer: 1
+    explain: "Pada tingkat yang sama, source order terakhir yang dipakai."
+  - q: "Style inline (atribut style) memiliki prioritas…"
+    options: ["Di bawah tag", "Di atas selector id", "Sama dengan class", "Paling rendah"]
+    answer: 1
+    explain: "Inline style mengalahkan selector id biasa, tapi masih bisa dikalahkan !important."
+example:
+  code: |
+    /* 0-0-1 */
+    p { color: black; }
+    /* 0-1-0 */
+    .intro { color: blue; }
+    /* 1-0-0 */
+    #utama { color: green; }
+    /* 1-1-0 */
+    #utama .intro { color: purple; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat dua aturan CSS menargetkan elemen yang sama dengan properti yang sama, browser perlu aturan wasit. Wasitnya bernama **cascade**, dan kekuatan masing-masing aturan disebut **spesifisitas**.
+
+## Komponen Spesifisitas
+
+Spesifisitas ditulis sebagai tiga angka `(id, class, tag)`:
+
+| Selector | Hitungan | Nilai |
+|----------|----------|-------|
+| `p` | 0 id, 0 class, 1 tag | `0-0-1` |
+| `.judul` | 0, 1, 0 | `0-1-0` |
+| `#main` | 1, 0, 0 | `1-0-0` |
+| `.card p` | 0, 1, 1 | `0-1-1` |
+| `#main .card:hover` | 1, 2, 0 | `1-2-0` |
+
+Pseudo-class seperti `:hover` dihitung seperti class. Pseudo-element seperti `::before` dihitung seperti tag. Combinator (spasi, `>`, `+`) **tidak menambah nilai**.
+
+## Urutan Cascade Lengkap
+
+Dari yang paling kuat ke paling lemah:
+
+1. Deklarasi `!important` (dari stylesheet pengguna/browser juga ikut berpengaruh)
+2. Inline style (`style="…"`)
+3. Selector dengan id
+4. Selector class, atribut, pseudo-class
+5. Selector tag dan pseudo-element
+6. Aturan yang ditulis terakhir saat spesifisitas sama
+
+## Contoh Konflik
+
+```css
+p          { color: black; }   /* 0-0-1 */
+.intro     { color: blue;  }   /* 0-1-0 → menang */
+#utama p   { color: green; }   /* 1-0-1 → menang lagi */
+#utama .intro { color: red; }  /* 1-1-0 → paling kuat */
+```
+
+Karena `.intro` lebih spesifik dari `p`, warna biru menang walau aturan `p` ditulis belakangan.
+
+<div class="note">💡 Hindari `!important` kecuali benar-benar terpaksa (misalnya menimpa style library pihak ketiga). Lebih baik naikkan spesifisitas dengan class yang tepat atau susun ulang urutan stylesheet.</div>
+
+## Strategi Sehat
+
+- Pakai class sebagai "satuan gaya" utama, bukan id.
+- Jaga spesifisitas serendah mungkin agar mudah ditimpa.
+- Susun CSS dari umum (reset, tipografi) ke khusus (komponen, state).
+- Kalau kamu perlu menimpa, tambahkan class state seperti `.is-active`, bukan `!important`.
+
+## Di Dunia Nyata
+
+- Tombol `.btn` berubah tampilan saat `.btn.is-loading` ditambahkan.
+- Tema gelap menimpa warna terang karena aturannya dimuat setelahnya.
+- Library UI sering memakai `!important` pada utilitas seperti `.hidden` — tahu cara mengatasinya menyelamatkan debugging.
+
+## Try it Yourself
+
+Hapus salah satu aturan atau tambahkan `!important` untuk mengamati siapa yang menang.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`p { color: black; }
+.intro { color: #2563EB; }
+#utama p { color: #16A34A; }
+#utama .intro { color: #DC2626; }
+.catatan { color: #6B7280 !important; }`} />

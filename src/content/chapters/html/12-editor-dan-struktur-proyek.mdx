@@ -1,0 +1,93 @@
+---
+title: "Editor & Struktur Proyek HTML"
+description: "Memilih teks editor, membuat file .html, dan kerangka folder proyek yang rapi"
+order: 12
+quiz:
+  - q: "Ekstensi file untuk halaman HTML modern adalah…"
+    options: [".htm", ".html", ".xhtml", ".txt"]
+    answer: 1
+    explain: ".html adalah ekstensi standar. .htm juga dikenal, tapi .html yang paling umum dipakai."
+  - q: "Teks editor berikut yang tepat untuk menulis HTML adalah…"
+    options: ["Microsoft Word", "Visual Studio Code", "Photoshop", "Excel"]
+    answer: 1
+    explain: "VS Code, Sublime Text, atau editor teks lain menyimpan file sebagai teks murni tanpa format tersembunyi."
+  - q: "File utama yang biasanya dibuka pertama kali disebut…"
+    options: ["index.html", "main.html", "home.html", "start.html"]
+    answer: 0
+    explain: "Web server otomatis melayani index.html sebagai halaman awal sebuah folder."
+  - q: "Struktur folder yang umum untuk aset gambar adalah…"
+    options: ["images/ atau assets/", "system/", "bin/", "temp/"]
+    answer: 0
+    explain: "Folder images/ atau assets/ menyimpan gambar, CSS, dan JavaScript agar proyek tetap rapi."
+  - q: "Live Server di VS Code berguna untuk…"
+    options: ["Mengompres gambar", "Membuka halaman di browser dan memuat ulang otomatis saat file berubah", "Mengubah ekstensi file", "Membuat database"]
+    answer: 1
+    explain: "Live Server menjalankan server lokal dan me-refresh browser setiap kali kamu menyimpan perubahan."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <title>Belajar HTML</title>
+    </head>
+    <body>
+      <h1>Halo dari editor teks!</h1>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Menulis HTML tidak butuh software berat. Yang kamu butuhkan hanyalah **teks editor** dan **browser**.
+
+## Teks Editor yang Disarankan
+
+- **Visual Studio Code** — gratis, punya ekstensi HTML & Live Server
+- **Sublime Text** — ringan dan cepat
+- **Notepad++** — populer di Windows
+- **TextEdit / nano** — bawaan macOS/Linux (pastikan mode teks biasa)
+
+Hindari Word atau editor kaya teks lain: mereka menyisipkan format tersembunyi yang membuat browser bingung membaca kode.
+
+## Membuat File Pertama
+
+1. Buat folder baru, misalnya `belajar-html`
+2. Di dalamnya, buat file `index.html`
+3. Ketik kerangka dasar, lalu simpan
+4. Klik dua kali file itu — browser akan menampilkannya
+
+<div class="note">💡 Gunakan <code>index.html</code> sebagai nama file utama.nginx, Apache, dan GitHub Pages otomatis mencari nama ini saat membuka sebuah folder.</div>
+
+## Struktur Folder yang Rapi
+
+```
+belajar-html/
+├── index.html
+├── about.html
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── script.js
+│   └── images/
+│       └── foto.jpg
+```
+
+Memisahkan aset sejak awal membuat proyek mudah dikembangkan. Saat nanti kamu menambah banyak halaman, semua gambar dan style tetap tertata.
+
+## Live Server
+
+Ekstensi **Live Server** di VS Code menjalankan server lokal (biasanya di `http://127.0.0.1:5500`) dan memuat ulang halaman otomatis setiap kali kamu menyimpan file. Ini jauh lebih nyaman daripada membuka file dengan `file://` karena perilakunya lebih mirip server sungguhan.
+
+## Try it Yourself
+
+Ubah teks di dalam `<h1>` lalu lihat hasilnya di panel pratinjau.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body>
+  <h1>Halo, aku sedang belajar HTML!</h1>
+  <p>Ubah teks ini sesukamu.</p>
+</body>
+</html>`} />

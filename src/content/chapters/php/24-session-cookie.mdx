@@ -1,0 +1,163 @@
+---
+title: "Session & Cookie PHP"
+description: "Mengelola state dan autentikasi sederhana dengan session dan cookie"
+order: 24
+quiz:
+  - q: "Untuk memulai session di PHP gunakan…"
+    options: ["session_start()", "start_session()", "new Session()", "cookie_start()"]
+    answer: 0
+    explain: "Fungsi ini harus dipanggil sebelum output apa pun."
+  - q: "Data session disimpan di…"
+    options: ["Browser", "Server (file/default)", "URL", "Database selalu"]
+    answer: 1
+    explain: "Browser hanya menyimpan ID session dalam cookie."
+  - q: "Cookie dibuat dengan…"
+    options: ["setcookie()", "createCookie()", "cookie()", "set_cookie()"]
+    answer: 0
+    explain: "Harus dipanggil sebelum output dikirim."
+  - q: "`session_destroy()` akan…"
+    options: ["Menghapus semua data session", "Menghapus cookie browser", "Mengakhiri request", "Mengosongkan database"]
+    answer: 0
+    explain: "Cookie session di browser tetap ada sampai expired."
+  - q: "Flag HttpOnly pada cookie berguna untuk…"
+    options: ["Mencegah akses dari JavaScript", "Mempercepat cookie", "Mengubah warna", "Menambah ukuran"]
+    answer: 0
+    explain: "Ini perlindungan penting terhadap XSS."
+example:
+  code: |
+    <?php
+    session_start();
+    $_SESSION['user'] = 'Sari';
+    
+    setcookie('tema', 'gelap', [
+        'expires' => time() + 86400,
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTTP itu stateless — setiap request berdiri sendiri. **Session** dan **cookie** memberi aplikasi ingatan antar-request.
+
+## Session
+
+```php
+<?php
+session_start();
+
+$_SESSION['nama'] = 'Sari';
+$_SESSION['keranjang'] = [1, 2, 3];
+
+echo $_SESSION['nama'];
+unset($_SESSION['nama']); // hapus satu kunci
+```
+
+Alurnya:
+
+1. `session_start()` membuat/membaca ID session.
+2. ID dikirim ke browser sebagai cookie `PHPSESSID`.
+3. Data session disimpan di server (default: file di `/tmp`).
+
+## Menangani Login
+
+```php
+<?php
+session_start();
+
+if (isset($_POST['nama'])) {
+    $_SESSION['user'] = trim($_POST['nama']);
+    session_regenerate_id(true); // cegah session fixation
+}
+
+if (isset($_SESSION['user'])) {
+    echo "Selamat datang, " . htmlspecialchars($_SESSION['user']);
+} else {
+    echo "Silakan login";
+}
+```
+
+## Logout
+
+```php
+<?php
+session_start();
+
+$_SESSION = [];
+
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
+
+session_destroy();
+```
+
+## Cookie
+
+```php
+<?php
+setcookie('tema', 'gelap', [
+    'expires'  => time() + (30 * 86400),
+    'path'     => '/',
+    'domain'   => 'example.com',
+    'secure'   => true,
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
+echo $_COOKIE['tema'] ?? 'terang';
+```
+
+Atribut penting:
+
+| Atribut | Fungsi |
+|---------|--------|
+| `expires` | Waktu kedaluwarsa |
+| `path` | Cakupan URL |
+| `secure` | Hanya HTTPS |
+| `httponly` | Tidak bisa dibaca JS |
+| `samesite` | Perlindungan CSRF |
+
+## Perbandingan
+
+| Aspek | Session | Cookie |
+|-------|---------|--------|
+| Lokasi data | Server | Browser |
+| Kapasitas | Besar | ±4 KB |
+| Umur | Sampai dihapus/expire | Diatur expires |
+| Dikirim tiap request | Hanya ID | Semua isi |
+
+<div class="note">💡 `session_start()` harus dipanggil sebelum apa pun yang dikirim ke output (termasuk whitespace). Kalau muncul error "headers already sent", cek baris sebelum tag `<?php`.</div>
+
+## Di Dunia Nyata
+
+- Keranjang belanja disimpan di session sebelum checkout.
+- Token "remember me" disimpan sebagai cookie HttpOnly dengan expiry 30 hari.
+- Preferensi tema disimpan cookie agar bisa dibaca JS ringan di frontend.
+
+## Try it Yourself
+
+Tambahkan unset($_SESSION['user']) atau ubah nilai cookie pada contoh ini.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+session_start();
+
+$_SESSION['kunjungan'] = ($_SESSION['kunjungan'] ?? 0) + 1;
+$_SESSION['user'] = 'Sari';
+
+echo "Kunjungan: " . $_SESSION['kunjungan'] . PHP_EOL;
+echo "User: " . htmlspecialchars($_SESSION['user']) . PHP_EOL;
+
+setcookie('tema', 'gelap', [
+    'expires' => time() + 3600,
+    'path' => '/',
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
+echo "Cookie tema: " . ($_COOKIE['tema'] ?? 'belum tersimpan') . PHP_EOL;`} />

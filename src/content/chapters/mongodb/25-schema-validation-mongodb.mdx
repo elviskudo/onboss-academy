@@ -1,0 +1,97 @@
+---
+title: "Schema Validation"
+description: "validator, validationLevel, validationAction, $jsonSchema, dan menambah aturan ke koleksi lama"
+order: 25
+quiz:
+  - q: "Opsi createCollection untuk aturan schema adalah…"
+    options: ["check", "validate", "validator", "schema"]
+    answer: 2
+    explain: "validator menerima ekspresi $jsonSchema atau operator query."
+  - q: "Operator yang dipakai untuk deklarasi tipe dalam $jsonSchema adalah…"
+    options: ["$schema", "$must", "$type", "$is"]
+    answer: 2
+    explain: "Contoh: {nama: {$type: \"string\"}}."
+  - q: "validationAction: \"warn\" berarti…"
+    options: ["Menerima tapi mencatat peringatan", "Menghapus dokumen", "Mengubah tipe", "Menolak dokumen"]
+    answer: 0
+    explain: "Warn tidak memblokir tulisan; error yang menolak."
+  - q: "validationLevel: \"moderate\" menerapkan aturan pada…"
+    options: ["Tidak ada", "Semua dokumen", "Hanya insert dan update dokumen yang sudah valid", "Hanya keyword"]
+    answer: 2
+    explain: "Moderate memeriksa dokumen lama yang sudah valid saat diubah."
+  - q: "Aturan required dalam $jsonSchema berisi…"
+    options: ["Daftar koleksi", "Daftar user", "Daftar field wajib", "Daftar index"]
+    answer: 2
+    explain: "required: [\"nama\", \"harga\"] mewajibkan dua field itu ada."
+example:
+  code: |
+    db.createCollection("produk_valid", {
+      validator: {$jsonSchema: {
+        bsonType: "object",
+        required: ["nama", "harga"],
+        properties: {
+          nama: {bsonType: "string"},
+          harga: {bsonType: "int", minimum: 0}
+        }
+      }},
+      validationAction: "error"
+    })
+---
+
+## Kenapa Perlu Aturan
+
+Fleksibilitas MongoDB adalah kekuatan sekaligus risiko. Tanpa aturan, koleksi `produk` bisa berisi dokumen tanpa nama, harga berupa string, atau field yang salah eja. Schema validation menolak dokumen yang tidak mematuhi aturan.
+
+## $jsonSchema
+
+```javascript
+db.createCollection("produk_valid", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["nama", "harga"],
+      properties: {
+        nama: { bsonType: "string", description: "wajib teks" },
+        harga: { bsonType: "int", minimum: 0 },
+        kategori: { enum: ["Elektronik", "Furniture", "Makanan"] }
+      }
+    }
+  },
+  validationAction: "error",
+  validationLevel: "strict"
+})
+```
+
+Deklarasi di atas mewajibkan `nama` dan `harga`, melarang harga negatif, serta membatasi nilai kategori.
+
+## Level dan Action
+
+| Opsi | Nilai | Efek |
+| --- | --- | --- |
+| `validationLevel` | `strict` | semua insert/update dicek |
+| | `moderate` | dokumen lama yang invalid tidak dicek saat diubah |
+| `validationAction` | `error` | tolak tulisan |
+| | `warn` | terima tapi tulis peringatan di log |
+
+## Menambah ke Koleksi Lama
+
+```javascript
+db.runCommand({
+  collMod: "produk",
+  validator: { $jsonSchema: { required: ["nama"] } },
+  validationLevel: "moderate"
+})
+```
+
+Mulai dengan `warn` dan `moderate` saat data lama masih kotor. Setelah dibersihkan, baru naikkan ke `error` dan `strict`.
+
+<div class="note">💡 Schema validation bukan pengganti validasi aplikasi. Tetap validasi input di lapisan API agar pesan error ramah pengguna dan tidak bergantung pada detail database.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_valid
+db.createCollection("produk_valid", {validator: {$jsonSchema: {bsonType: "object", required: ["nama"], properties: {nama: {bsonType: "string"}}}}, validationAction: "error"})
+db.produk_valid.insertOne({nama: "Keyboard", harga: 100})
+print(db.produk_valid.countDocuments({}))`}</code></pre>

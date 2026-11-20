@@ -1,0 +1,139 @@
+---
+title: "String JavaScript"
+description: "Membuat, mengakses, dan memanipulasi teks dengan method string modern"
+order: 14
+quiz:
+  - q: "Cara membuat string yang bisa menyisipkan variabel adalah…"
+    options: ["Tanda kutip biasa", "Template literal dengan backtick", "Array join", "Number toString"]
+    answer: 1
+    explain: "Template literal memakai `${ekspresi}` di dalam backtick."
+  - q: "`\"Halo\".length` menghasilkan…"
+    options: ["4", "5", "6", "error"]
+    answer: 0
+    explain: "Halo terdiri dari 4 karakter."
+  - q: "`\"abc\".toUpperCase()` menghasilkan…"
+    options: ["abc", "ABC", "Abc", "undefined"]
+    answer: 1
+    explain: "toUpperCase mengembalikan string baru (string bersifat immutable)."
+  - q: "`\"  halo  \".trim()` menghasilkan…"
+    options: ["\"halo\"", "\"  halo\"", "\"halo  \"", "error"]
+    answer: 0
+    explain: "Trim menghapus spasi di kedua ujung."
+  - q: "`\"a,b,c\".split(\",\")` menghasilkan…"
+    options: ["String", "Array ['a','b','c']", "Object", "Number"]
+    answer: 1
+    explain: "Split memecah string menjadi array berdasarkan pemisah."
+example:
+  code: |
+    const nama = "Sari";
+    console.log(`Halo, ${nama}!`);
+    console.log(nama.toUpperCase());
+    console.log("a,b,c".split(","));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+String adalah tipe data untuk teks. Di JavaScript, string **immutable** — method-nya tidak mengubah nilai asli, melainkan mengembalikan string baru.
+
+## Membuat String
+
+```js
+const a = "Double quote";
+const b = 'Single quote';
+const c = `Template literal dengan ${nama}`;
+```
+
+Backtick memungkinkan multiline dan interpolasi:
+
+```js
+const pesan = `Halo ${nama},
+selamat datang di ${app}.`;
+```
+
+## Mengakses Karakter
+
+```js
+const teks = "JavaScript";
+teks[0]        // "J"
+teks.at(-1)    // "t" (karakter terakhir)
+teks.length    // 10
+```
+
+Indeks dimulai dari 0. `at(-1)` adalah cara modern mengambil karakter terakhir.
+
+## Method Pencarian
+
+| Method | Hasil |
+|--------|-------|
+| `indexOf("a")` | Indeks pertama (-1 kalau tidak ada) |
+| `lastIndexOf("a")` | Indeks terakhir |
+| `includes("Script")` | `true`/`false` |
+| `startsWith("Java")` | `true`/`false` |
+| `endsWith("Script")` | `true`/`false` |
+| `match(/Script/)` | Array hasil regex atau null |
+
+## Method Transformasi
+
+```js
+"halo".toUpperCase()      // "HALO"
+"HALO".toLowerCase()      // "halo"
+"  halo  ".trim()         // "halo"
+"a-b-c".replace("-", "/") // "a/b-c"
+"a-b-a".replaceAll("a", "x") // "x-b-x"
+"abc".padStart(5, "0")    // "00abc"
+"abc".repeat(3)           // "abcabcabc"
+```
+
+Perhatikan `replace()` hanya mengganti kemunculan **pertama** untuk string; `replaceAll()` mengganti semuanya (atau pakai regex dengan flag `g`).
+
+## Memotong String
+
+```js
+const teks = "Pemrograman Web";
+teks.slice(0, 11)   // "Pemrograman"
+teks.substring(0, 11) // sama, tapi tukar argumen jika terbalik
+teks.slice(-3)      // " Web"
+teks.split(" ")     // ["Pemrograman", "Web"]
+```
+
+`slice` menerima indeks negatif; `substring` tidak.
+
+## Escape Character
+
+```js
+const baris = "Baris 1\nBaris 2";
+const kutip = "Dia bilang \"Halo\"";
+const tab = "A\tB";
+```
+
+<div class="note">💡 String bersifat immutable. `teks[0] = "X"` tidak melakukan apa pun (atau error di strict mode). Selalu simpan hasil method ke variabel baru.</div>
+
+## Unicode & Emoji
+
+```js
+"😀".length        // 2 (dua code unit UTF-16)
+[...("😀")].length // 1 (code point)
+```
+
+Untuk emoji dan karakter di luar BMP, pakai spread atau `Array.from()` saat menghitung karakter yang terlihat.
+
+## Di Dunia Nyata
+
+- Validasi email memakai `includes("@")` sebelum regex yang lebih ketat.
+- Slug URL dibuat dari `judul.toLowerCase().trim().replace(/\s+/g, "-")`.
+- Format angka ribuan memakai `Intl.NumberFormat`, bukan manipulasi string manual.
+
+## Try it Yourself
+
+Ubah regex pada `replace` atau ganti method `slice` dengan `split` di bawah.
+
+<TryIt lang="javascript" runtime="client-js" code={`const nama = "  onboss academy  ";
+console.log("-asli-", nama, "-");
+console.log("trim:", nama.trim());
+console.log("upper:", nama.trim().toUpperCase());
+const slug = nama.trim().toLowerCase().replace(/\s+/g, "-");
+console.log("slug:", slug);
+const kalimat = "Belajar JavaScript itu menyenangkan";
+console.log("includes:", kalimat.includes("JavaScript"));
+console.log("slice:", kalimat.slice(0, 7));
+console.log("karakter terakhir:", kalimat.at(-1));`} />

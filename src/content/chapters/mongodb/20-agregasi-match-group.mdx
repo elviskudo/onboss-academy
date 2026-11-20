@@ -1,0 +1,103 @@
+---
+title: "Agregasi: $match dan $group Mendalam"
+description: "filter pada pipeline, _id komposit, akumulator $push/$addToSet, group null"
+order: 20
+quiz:
+  - q: "$match pada pipeline menerima…"
+    options: ["Nama koleksi", "Filter seperti find()", "Nama field saja", "Array akumulator"]
+    answer: 1
+    explain: "Sintaks $match identik dengan argumen find()."
+  - q: "Pengelompokan berdasarkan dua field memakai…"
+    options: ["groupBy: [\"a\", \"b\"]", "_id: \"$a,$b\"", "_id: [\"$a\", \"$b\"]", "_id: {a: \"$a\", b: \"$b\"}"]
+    answer: 3
+    explain: "_id bisa berupa dokumen berisi beberapa field."
+  - q: "_id: null dalam $group berarti…"
+    options: ["Semua dokumen jadi satu grup", "Tidak ada grup", "Grup kosong", "Error"]
+    answer: 0
+    explain: "null adalah kunci konstan, sehingga seluruh dokumen masuk satu grup."
+  - q: "Akumulator untuk mengumpulkan nilai ke array adalah…"
+    options: ["$first", "$push", "$sum", "$avg"]
+    answer: 1
+    explain: "$push mengumpulkan nilai, termasuk duplikat."
+  - q: "$addToSet dalam $group berguna untuk…"
+    options: ["Mengurutkan grup", "Menghapus grup", "Menjumlahkan angka", "Mengumpulkan nilai unik"]
+    answer: 3
+    explain: "$addToSet mengabaikan duplikat."
+example:
+  code: |
+    db.penjualan.aggregate([
+      {$match: {tahun: 2026, status: "lunas"}},
+      {$group: {_id: {kategori: "$kategori", bulan: "$bulan"}, omzet: {$sum: "$jumlah"}, pembeli: {$addToSet: "$id_pembeli"}}},
+      {$sort: {"_id.bulan": 1}}
+    ])
+---
+
+## $match Lebih Awal Lebih Baik
+
+```javascript
+db.penjualan.aggregate([
+  { $match: { tahun: 2026, status: "lunas" } },
+  { $group: { _id: "$kategori", omzet: { $sum: "$jumlah" } } }
+])
+```
+
+`$match` di awal memakai indeks dan mengurangi jumlah dokumen yang masuk ke `$group`. Kalau diletakkan setelah `$group`, server sudah menghitung data yang akhirnya dibuang.
+
+## Grup berdasarkan Beberapa Field
+
+```javascript
+{
+  $group: {
+    _id: { kategori: "$kategori", bulan: "$bulan" },
+    omzet: { $sum: "$jumlah" }
+  }
+}
+```
+
+Hasilnya berupa dokumen dengan `_id` berupa objek. Aksesnya memakai `_id.kategori` dan `_id.bulan`.
+
+## Akumulator Kumpulan
+
+| Akumulator | Hasil |
+| --- | --- |
+| `$push` | array semua nilai |
+| `$addToSet` | array nilai unik |
+| `$first` | nilai pertama dalam grup |
+| `$last` | nilai terakhir dalam grup |
+| `$stdDevPop` | simpangan baku populasi |
+
+```javascript
+{
+  $group: {
+    _id: "$kategori",
+    daftarProduk: { $addToSet: "$nama" },
+    semuaTransaksi: { $push: "$kode" }
+  }
+}
+```
+
+Hati-hati: `$push` pada koleksi jutaan dokumen bisa menghasilkan dokumen yang melebihi batas ukuran 16 MB.
+
+## Grup Semua Data
+
+```javascript
+db.penjualan.aggregate([
+  { $group: { _id: null, total: { $sum: "$jumlah" }, n: { $sum: 1 } } }
+])
+```
+
+Ini setara dengan `SELECT SUM(jumlah), COUNT(*) FROM penjualan` dalam SQL.
+
+<div class="note">💡 Urutan dokumen di dalam `$group` tidak dijamin. Kalau memakai `$first` atau `$last`, lakukan `$sort` sebelum `$group` agar hasilnya deterministik.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_group
+db.penjualan.insertMany([
+  {kategori: "A", bulan: 1, jumlah: 10},
+  {kategori: "A", bulan: 1, jumlah: 15},
+  {kategori: "B", bulan: 2, jumlah: 20}
+])
+db.penjualan.aggregate([{$group: {_id: "$kategori", total: {$sum: "$jumlah"}, n: {$sum: 1}}}])`}</code></pre>

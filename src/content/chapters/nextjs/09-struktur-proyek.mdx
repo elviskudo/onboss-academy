@@ -1,0 +1,111 @@
+---
+title: "Struktur Proyek Next.js"
+description: "folder app, public, src, dan konvensi file yang penting"
+order: 9
+quiz:
+  - q: "File konfigurasi utama Next.js adalah…"
+    options: ["vite.config.js", "webpack.config.js", "next.config.js / .mjs", "app.config.ts"]
+    answer: 2
+    explain: "Di sinilah opsi build, images, dan redirect ditaruh."
+  - q: "Folder untuk aset statis yang bisa diakses langsung adalah…"
+    options: ["private/", "public/", "static/", "assets/"]
+    answer: 1
+    explain: "File di public/ tersedia di akar URL, misal /logo.png."
+  - q: "File layout.tsx di app/ berfungsi untuk…"
+    options: ["Mengganti index.html", "Menyimpan CSS saja", "Membuat API", "Membungkus semua halaman di segmen itu"]
+    answer: 3
+    explain: "Layout bisa bersarang dan mempertahankan state saat navigasi."
+  - q: "Alias '@/' biasanya mengarah ke…"
+    options: ["dist", "src/ atau root proyek", "node_modules", "public"]
+    answer: 1
+    explain: "Dikonfigurasi di tsconfig.json lewat paths."
+  - q: "File middleware.ts ditempatkan di…"
+    options: ["Root proyek atau src/", "app/api/", "public/", "components/"]
+    answer: 0
+    explain: "Lokasinya menentukan cakupan rute yang terkena middleware."
+example:
+  code: |
+    app/
+      layout.tsx
+      page.tsx
+      about/page.tsx
+      api/produk/route.ts
+    public/logo.png
+    next.config.mjs
+---
+
+Next.js mengandalkan konvensi folder. Begitu kamu mengenali polanya, struktur proyek menjadi peta rute itu sendiri.
+
+## Peta Folder
+
+| Path | Fungsi |
+|------|--------|
+| `app/` | halaman, layout, rute API (App Router) |
+| `pages/` | gaya lama Pages Router |
+| `public/` | aset statis |
+| `src/` | opsional, wadah kode aplikasi |
+| `components/` | komponen reusable |
+
+## File Khusus di app/
+
+| Nama | Peran |
+|------|-------|
+| `page.tsx` | membuat rute dan konten |
+| `layout.tsx` | pembungkus bersama |
+| `loading.tsx` | UI saat Suspense menunggu |
+| `error.tsx` | fallback error client |
+| `not-found.tsx` | halaman 404 |
+| `route.ts` | endpoint API |
+
+## Contoh Layout
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="id">
+      <body>
+        <header><a href="/">OnBoss Academy</a></header>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+Layout root wajib berisi tag `<html>` dan `<body>`.
+
+## Konfigurasi
+
+```js
+// next.config.mjs
+const nextConfig = {
+  images: { remotePatterns: [{ hostname: "images.example.com" }] },
+  reactStrictMode: true,
+};
+export default nextConfig;
+```
+
+## alias TS
+
+```json
+{
+  "compilerOptions": {
+    "paths": { "@/*": ["./src/*"] }
+  }
+}
+```
+
+<div class="note">💡 Nama folder di dalam `app/` langsung menjadi URL. Menuliskan `app/produk/[id]/page.tsx` berarti kamu sudah mendefinisikan rute `/produk/:id` tanpa daftar rute manual.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`app/
+  layout.tsx
+  page.tsx
+  about/page.tsx
+  api/produk/route.ts
+public/logo.png
+next.config.mjs`}</code></pre>

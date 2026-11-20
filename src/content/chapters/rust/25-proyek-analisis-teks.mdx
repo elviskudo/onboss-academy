@@ -1,0 +1,168 @@
+---
+"title": "Proyek: Analis Teks"
+"description": "Menggabungkan struct, enum, generic, iterator, error, dan module dalam satu CLI"
+"order": 25
+"quiz":
+- "q": "Pemisahan modul dalam proyek berguna untuk…"
+  "options":
+  - "membuat semua fungsi publik"
+  - "mengurangi keterhubungan antar bagian"
+  - "menghapus error"
+  - "menghindari test"
+  "answer": 1
+  "explain": "Modul memisahkan tanggung jawab dan membatasi visibilitas."
+- "q": "Fungsi yang bisa gagal sebaiknya mengembalikan…"
+  "options":
+  - "Option"
+  - "Result"
+  - "bool"
+  - "String"
+  "answer": 1
+  "explain": "Result menyimpan alasan kegagalan."
+- "q": "Iterator collect() ke HashMap memerlukan…"
+  "options":
+  - "pasangan (k, v)"
+  - "string biasa"
+  - "slice"
+  - "enum"
+  "answer": 0
+  "explain": "HashMap dibangun dari pasangan kunci–nilai."
+- "q": "Trait bound `T: Display` mengizinkan…"
+  "options":
+  - "perbandingan"
+  - "pencetakan dengan {}"
+  - "pengkloningan"
+  - "penjumlahan"
+  "answer": 1
+  "explain": "Display dipakai oleh format string {}."
+- "q": "Test unit diletakkan di…"
+  "options":
+  - "file terpisah saja"
+  - "modul #[cfg(test)] atau tests/"
+  - "Cargo.toml"
+  - "README"
+  "answer": 1
+  "explain": "Keduanya pola standar dalam proyek Rust."
+"example":
+  "code": "use std::collections::HashMap;\nfn kata_unik(s: &str) -> usize {\n    s.split_whitespace().collect::<HashMap<_, _>>().len()\n}\nfn main() { println!(\"{}\", kata_unik(\"satu dua satu\")); }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek penutup menggabungkan hampir semua yang sudah kamu pelajari: struct, enum, generic, iterator, error handling, dan modul.
+
+## Struktur
+
+```
+src/
+  main.rs
+  analisis.rs
+```
+
+```rust
+// analisis.rs
+use std::collections::HashMap;
+
+#[derive(Debug)]
+pub struct Statistik {
+    pub kata: usize,
+    pub unik: usize,
+    pub karakter: usize,
+}
+
+pub fn analisis(teks: &str) -> Statistik {
+    let kata: Vec<&str> = teks.split_whitespace().collect();
+    let unik = kata.iter().collect::<HashMap<_, _>>().len();
+    Statistik {
+        kata: kata.len(),
+        unik,
+        karakter: teks.chars().count(),
+    }
+}
+```
+
+## Generic Helper
+
+```rust
+pub fn teratas<T: std::fmt::Display>(data: &[T], n: usize) -> Vec<String> {
+    data.iter()
+        .take(n)
+        .map(|x| x.to_string())
+        .collect()
+}
+```
+
+## Error Handling
+
+```rust
+pub fn dari_file(path: &str) -> Result<Statistik, std::io::Error> {
+    let isi = std::fs::read_to_string(path)?;
+    Ok(analisis(&isi))
+}
+```
+
+## Main
+
+```rust
+mod analisis;
+
+fn main() {
+    let teks = "Rust itu aman dan Rust itu cepat";
+    let s = analisis::analisis(teks);
+    println!("kata: {}, unik: {}, karakter: {}", s.kata, s.unik, s.karakter);
+}
+```
+
+## Test
+
+```rust
+#[cfg(test)]
+mod tes {
+    use super::*;
+    #[test]
+    fn hitung_benar() {
+        let s = analisis("satu dua satu");
+        assert_eq!(s.kata, 3);
+        assert_eq!(s.unik, 2);
+    }
+}
+```
+
+<div class="note">💡 Kode yang sudah berjalan jangan langsung ditulis ulang. Tambah satu fungsi, jalankan test, lalu lanjut. Lambat tapi pasti.</div>
+
+
+## Try it Yourself
+
+Semua modul digabung dalam satu file agar bisa langsung dijalankan.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::collections::HashMap;
+
+#[derive(Debug)]
+struct Statistik {
+    kata: usize,
+    unik: usize,
+    karakter: usize,
+}
+
+fn analisis(teks: &str) -> Statistik {
+    let kata: Vec<&str> = teks.split_whitespace().collect();
+    let unik = kata.iter().collect::<HashMap<_, _>>().len();
+    Statistik {
+        kata: kata.len(),
+        unik,
+        karakter: teks.chars().count(),
+    }
+}
+
+fn teratas<T: std::fmt::Display>(data: &[T], n: usize) -> Vec<String> {
+    data.iter().take(n).map(|x| x.to_string()).collect()
+}
+
+fn main() {
+    let teks = "Rust itu aman dan Rust itu cepat";
+    let s = analisis(teks);
+    println!("kata: {}, unik: {}, karakter: {}", s.kata, s.unik, s.karakter);
+
+    let kata: Vec<&str> = teks.split_whitespace().collect();
+    println!("3 kata pertama: {:?}", teratas(&kata, 3));
+}`} />

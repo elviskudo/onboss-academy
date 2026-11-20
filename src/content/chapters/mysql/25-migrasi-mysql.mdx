@@ -1,0 +1,99 @@
+---
+title: "Migrasi Skema dan Deployment Aman"
+description: "ALTER TABLE online, versioning migrasi, rollback, dan zero-downtime"
+order: 25
+quiz:
+  - q: "Perintah dasar mengubah struktur tabel adalah…"
+    options: ["ALTER TABLE", "CHANGE TABLE", "MODIFY SCHEMA", "UPDATE TABLE"]
+    answer: 0
+    explain: "ALTER TABLE ... ADD/MODIFY/DROP COLUMN."
+  - q: "ALGORITHM=INPLACE pada ALTER berarti…"
+    options: ["Tabel disalin penuh", "Perubahan tanpa salin seluruh tabel bila memungkinkan", "Query otomatis lebih cepat", "Data hilang"]
+    answer: 1
+    explain: "INPLACE menghindari rebuild tabel pada operasi yang didukung."
+  - q: "Strategi deploy aman untuk perubahan kolom adalah…"
+    options: ["Langsung DROP kolom lama", "Tambah kolom baru, migrasi data, baru hapus yang lama", "Ganti nama tabel tanpa tes", "Hapus backup"]
+    answer: 1
+    explain: "Expand → migrate → contract memungkinkan aplikasi lama tetap jalan."
+  - q: "File migrasi sebaiknya…"
+    options: ["Ditulis manual tanpa urutan", "Diberi nomor urut dan masuk version control", "Disimpan hanya di lokal", "Dihapus setelah dipakai"]
+    answer: 1
+    explain: "Nomor urut menjamin urutan aplikasi yang konsisten."
+  - q: "Rollback migrasi idealnya…"
+    options: ["Tidak perlu disiapkan", "Memiliki skrip kebalikan yang diuji", "Selalu DROP database", "Menghapus semua log"]
+    answer: 1
+    explain: "Setiap migrasi perlu jalur mundur yang jelas dan diuji."
+example:
+  code: |
+    -- Expand: tambah kolom baru, isi data, baru hapus kolom lama.
+    ALTER TABLE produk ADD COLUMN harga_baru DECIMAL(12,2) NULL;
+    UPDATE produk SET harga_baru=harga;
+    ALTER TABLE produk MODIFY harga_baru DECIMAL(12,2) NOT NULL;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Perubahan skema di database produksi perlu prosedur. ALTER TABLE pada tabel besar bisa memblokir write atau menyalin jutaan baris.
+
+## Pola Expand–Migrate–Contract
+
+```text
+1. Expand   : tambah kolom/tabel baru, biarkan yang lama ada
+2. Migrate  : aplikasi baru menulis ke dua tempat, data lama disalin
+3. Contract: setelah semua terbaru, hapus kolom lama
+```
+
+Pola ini memungkinkan deploy bertahap tanpa downtime.
+
+## ALTER yang Lebih Aman
+
+```sql
+ALTER TABLE produk
+  ADD COLUMN harga_baru DECIMAL(12,2) NULL,
+  ALGORITHM=INPLACE, LOCK=NONE;
+```
+
+Jika kombinasi tidak didukung, MySQL akan mengeluarkan error — lebih baik gagal saat deploy daripada mem-blokir produksi.
+
+## Versioning
+
+```text
+migrations/
+  001_create_produk.sql
+  002_add_harga_baru.sql
+  003_backfill_harga.sql
+```
+
+Setiap file berisi `up` dan ideally `down`. Simpan di repositori, jalankan dengan tool migrasi (Flyway, Liquibase, atau script internal).
+
+## Backfill Bertahap
+
+```sql
+UPDATE produk SET harga_baru = harga
+WHERE harga_baru IS NULL LIMIT 1000;
+```
+
+Ulangi sampai tidak ada baris tersisa. Batch kecil menghindari transaksi panjang dan replikasi lag.
+
+## Uji Migrasi
+
+1. Jalankan pada salinan produksi dengan volume data serupa.
+2. Ukur durasi dan dampak lock.
+3. Uji aplikasi lama dan baru secara bersamaan.
+4. Uji rollback.
+
+<div class="note">💡 Hindari mengganti nama kolom dan mengubah tipe secara sekaligus. Pecah menjadi langkah kecil agar setiap tahap bisa dibatalkan.</div>
+
+## Di Dunia Nyata
+
+- **Rename kolom**: tambah kolom baru, salin, lalu hapus yang lama.
+- **Pemisahan tabel**: salin data ke tabel baru sebelum mengarahkan aplikasi.
+- **Penambahan index**: gunakan ALGORITHM=INPLACE bila tersedia.
+- **Rollback**: simpan skrip kebalikan di file yang sama.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`ALTER TABLE karyawan ADD COLUMN level VARCHAR(20) NULL, ALGORITHM=INPLACE, LOCK=NONE;
+UPDATE karyawan SET level = CASE WHEN gaji >= 10000000 THEN 'Tinggi' ELSE 'Standar' END;
+SELECT level, COUNT(*) AS jumlah FROM karyawan GROUP BY level;`} />

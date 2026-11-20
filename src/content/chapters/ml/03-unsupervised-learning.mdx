@@ -27,7 +27,7 @@ example:
   code: |
     titik = [(1, 2), (1, 3), (8, 9), (9, 8)]
     pusat = [(1, 2), (9, 9)]
-
+    
     for x, y in titik:
         jarak = [round((x - a) ** 2 + (y - b) ** 2) for a, b in pusat]
         kelompok = jarak.index(min(jarak))

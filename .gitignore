@@ -26,3 +26,14 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# temporary MDX generation / repair scripts from bulk content expansion
+scripts/__pycache__/
+scripts/gen_*.py
+scripts/append_*.py
+scripts/fix_*.py
+scripts/escape_*.py
+scripts/wrap_*.py
+scripts/standardize_*.py
+scripts/vary_*.py
+scripts/patch_*.py

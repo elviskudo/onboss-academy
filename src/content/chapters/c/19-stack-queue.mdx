@@ -1,0 +1,130 @@
+---
+title: "Stack & Queue"
+description: "implementasi stack dan queue dengan array serta linked list"
+order: 19
+quiz:
+  - q: "Stack mengikuti prinsip…"
+    options: ["FIFO", "LIFO", "LIFO dan FIFO", "Random"]
+    answer: 1
+    explain: "Last In First Out — elemen terakhir masuk pertama keluar."
+  - q: "Queue mengikuti prinsip…"
+    options: ["LIFO", "FIFO", "FILO", "Prioritas"]
+    answer: 1
+    explain: "First In First Out — seperti antrean."
+  - q: "Operasi stack untuk mengambil elemen disebut…"
+    options: ["dequeue", "pop", "peek", "shift"]
+    answer: 1
+    explain: "push = masukkan, pop = ambil."
+  - q: "Pada queue, elemen baru masuk di…"
+    options: ["depan", "belakang (rear)", "tengah", "indeks 0"]
+    answer: 1
+    explain: "Penambahan di rear, pengambilan di front."
+  - q: "Implementasi queue dengan array sederhana memiliki masalah…"
+    options: ["Selalu O(log n)", "Elemen bergeser saat dequeue", "Tidak bisa kosong", "Tidak bisa penuh"]
+    answer: 1
+    explain: "Solusinya: circular buffer dengan indeks front/rear."
+example:
+  code: |
+    #include <stdio.h>
+    #define MAX 5
+    
+    int stack[MAX], top = -1;
+    
+    void push(int v) { if (top &lt; MAX-1) stack[++top] = v; }
+    int pop(void)    { return top >= 0 ? stack[top--] : -1; }
+    
+    int antre[MAX], front = 0, rear = 0, count = 0;
+    void enqueue(int v) {
+        if (count &lt; MAX) { antre[rear] = v; rear = (rear+1)%MAX; count++; }
+    }
+    int dequeue(void) {
+        if (!count) return -1;
+        int v = antre[front]; front = (front+1)%MAX; count--; return v;
+    }
+    
+    int main(void) {
+        push(1); push(2); push(3);
+        printf("Pop: %d\n", pop());
+        enqueue(10); enqueue(20);
+        printf("Dequeue: %d %d\n", dequeue(), dequeue());
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Stack dan queue adalah struktur data linear dengan aturan akses yang berbeda. Keduanya bisa dibangun dari array maupun linked list.
+
+## Stack (LIFO)
+
+```c
+int tumpukan[100];
+int top = -1;
+
+void push(int v) {
+    if (top < 99) tumpukan[++top] = v;
+}
+int pop(void) {
+    if (top >= 0) return tumpukan[top--];
+    return -1;   /* penanda kosong */
+}
+```
+
+Kegunaan: undo/redo, evaluasi ekspresi, call stack, DFS.
+
+## Queue (FIFO)
+
+```c
+int q[100], front = 0, rear = 0;
+
+void enqueue(int v) { q[rear++] = v; }
+int dequeue(void)   { return q[front++]; }
+```
+
+Versi naif di atas membuang ruang di depan. Gunakan **circular queue**:
+
+```c
+rear = (rear + 1) % MAX;
+front = (front + 1) % MAX;
+```
+
+## Prioritas Queue
+
+Elemen dengan prioritas tinggi keluar lebih dulu. Implementasi sederhana: array terurut; implementasi efisien: binary heap (O(log n)).
+
+## Linked List vs Array
+
+| Struktur | Keuntungan linked |
+|---|---|
+| Stack | ukuran fleksibel, tidak overflow sampai memori habis |
+| Queue | tidak perlu circular trick |
+
+<div class="note">💡 Dalam praktik, pakai array/circular buffer kalau ukuran maksimumnya diketahui — lebih sederhana dan lebih ramah cache. Linked list berguna kalau ukuran sangat dinamis.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#define MAX 5
+
+int stack[MAX], top = -1;
+
+void push(int v) { if (top &lt; MAX-1) stack[++top] = v; }
+int pop(void)    { return top >= 0 ? stack[top--] : -1; }
+
+int antre[MAX], front = 0, rear = 0, count = 0;
+void enqueue(int v) {
+    if (count &lt; MAX) { antre[rear] = v; rear = (rear+1)%MAX; count++; }
+}
+int dequeue(void) {
+    if (!count) return -1;
+    int v = antre[front]; front = (front+1)%MAX; count--; return v;
+}
+
+int main(void) {
+    push(1); push(2); push(3);
+    printf("Pop: %d\n", pop());
+    enqueue(10); enqueue(20);
+    printf("Dequeue: %d %d\n", dequeue(), dequeue());
+    return 0;
+}`} />

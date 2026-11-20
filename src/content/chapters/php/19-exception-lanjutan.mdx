@@ -1,0 +1,174 @@
+---
+title: "Exception Lanjutan PHP"
+description: "Try/catch/finally, custom exception, dan error handling global"
+order: 19
+quiz:
+  - q: "Blok yang selalu dijalankan setelah try/catch adalah…"
+    options: ["catch", "finally", "throw", "try"]
+    answer: 1
+    explain: "Finally cocok untuk cleanup."
+  - q: "Exception ditimbulkan dengan…"
+    options: ["throw new Exception()", "catch new Exception()", "error()", "raise()"]
+    answer: 0
+    explain: "Throw membuat exception baru."
+  - q: "Custom exception sebaiknya mewarisi…"
+    options: ["Exception", "Array", "String", "stdClass"]
+    answer: 0
+    explain: "Atau turunan Exception seperti RuntimeException."
+  - q: "`set_exception_handler()` berguna untuk…"
+    options: ["Menangkap exception yang tidak ditangani", "Membuat exception", "Menghapus error", "Mengirim email"]
+    answer: 0
+    explain: "Ini handler global terakhir."
+  - q: "Di PHP, Error dan Exception keduanya turunan dari…"
+    options: ["Throwable", "Object", "Array", "String"]
+    answer: 0
+    explain: "Sejak PHP 7, keduanya bisa ditangkap dengan catch(Throwable $e)."
+example:
+  code: |
+    <?php
+    class ValidasiException extends Exception {}
+    
+    try {
+        throw new ValidasiException("Data tidak valid");
+    } catch (ValidasiException $e) {
+        echo $e->getMessage();
+    } finally {
+        echo " Selesai";
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Penanganan error yang baik membuat aplikasi gagal dengan anggun, bukan menampilkan stack trace ke pengguna.
+
+## try / catch / finally
+
+```php
+<?php
+try {
+    $file = fopen("data.txt", "r");
+    if (!$file) {
+        throw new RuntimeException("Gagal membuka file");
+    }
+    echo fread($file, filesize("data.txt"));
+} catch (RuntimeException $e) {
+    echo "Error: " . $e->getMessage();
+} finally {
+    if (isset($file) && is_resource($file)) {
+        fclose($file);
+    }
+    echo "\nOperasi selesai";
+}
+```
+
+`finally` dijalankan baik ada exception maupun tidak.
+
+## Multiple Catch
+
+```php
+<?php
+try {
+    // ...
+} catch (InvalidArgumentException $e) {
+    echo "Input salah: " . $e->getMessage();
+} catch (PDOException $e) {
+    echo "Database error";
+} catch (Throwable $e) {
+    echo "Error tak terduga";
+}
+```
+
+Urutan penting: tangkap yang paling spesifik dulu. `Throwable` di terakhir sebagai jaring pengaman.
+
+## Custom Exception
+
+```php
+<?php
+class ValidasiException extends Exception {
+    public function __construct(
+        public string $field,
+        string $pesan
+    ) {
+        parent::__construct("$field: $pesan");
+    }
+}
+
+function validasiUmur(int $umur): void {
+    if ($umur < 0 || $umur > 150) {
+        throw new ValidasiException("umur", "di luar rentang");
+    }
+}
+```
+
+## Error vs Exception
+
+```php
+<?php
+try {
+    $x = 1 / 0; // DivisionByZeroError di PHP 8
+} catch (DivisionByZeroError $e) {
+    echo "Tidak bisa dibagi nol";
+}
+```
+
+Sejak PHP 7, error fatal tertentu menjadi `Error` yang bisa ditangkap. Keduanya mengimplementasikan `Throwable`.
+
+## Handler Global
+
+```php
+<?php
+set_exception_handler(function (Throwable $e) {
+    error_log($e->getMessage() . " di " . $e->getFile() . ":" . $e->getLine());
+    http_response_code(500);
+    echo "Terjadi kesalahan. Silakan coba lagi.";
+});
+
+set_error_handler(function ($level, $message, $file, $line) {
+    throw new ErrorException($message, 0, $level, $file, $line);
+});
+```
+
+## Mode Debug vs Produksi
+
+```php
+<?php
+ini_set('display_errors', '0');   // produksi: jangan tampilkan ke pengguna
+ini_set('log_errors', '1');
+error_log("Error: " . $e->getMessage());
+```
+
+Di development, `display_errors = 1` membantu debugging. Di produksi, selalu matikan dan arahkan ke log.
+
+<div class="note">💡 Jangan menggunakan exception untuk alur normal (misalnya "data tidak ditemukan"). Untuk kondisi yang wajar, kembalikan `null` atau Result object.</div>
+
+## Di Dunia Nyata
+
+- Framework menangkap exception dan merender halaman error 500 yang ramah.
+- Validasi form mengumpulkan error per field lalu ditampilkan kembali.
+- Job worker mencatat exception lalu melanjutkan antrian berikutnya.
+
+## Try it Yourself
+
+Ubah nilai umur menjadi 20 atau hapus catch untuk melihat bedanya.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+class ValidasiException extends Exception {
+    public function __construct(public string $field, string $pesan) {
+        parent::__construct("$field: $pesan");
+    }
+}
+
+function validasiUmur(int $umur): void {
+    if ($umur &lt; 0 || $umur > 150) {
+        throw new ValidasiException("umur", "di luar rentang");
+    }
+}
+
+try {
+    validasiUmur(200);
+} catch (ValidasiException $e) {
+    echo " Tertangkap: " . $e->getMessage() . PHP_EOL;
+} finally {
+    echo "Blok finally selalu jalan" . PHP_EOL;
+}
+echo "Program tetap lanjut." . PHP_EOL;`} />

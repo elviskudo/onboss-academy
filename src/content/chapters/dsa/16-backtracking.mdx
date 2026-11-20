@@ -1,0 +1,110 @@
+---
+title: Backtracking dan Pruning
+description: Menjelajahi solusi secara increment dan memangkas jalur yang tidak mungkin berhasil.
+order: 16
+quiz:
+- q: Backtracking adalah…
+  options:
+  - Membangun solusi langkah demi langkah dan mundur bila gagal
+  - Membagi data jadi dua
+  - Menyimpan hasil fungsi
+  - Mengurutkan array
+  answer: 0
+  explain: Pendekatan ini mencoba pilihan, lalu membatalkan saat tidak memenuhi syarat.
+- q: Pruning berfungsi untuk…
+  options:
+  - Mengubah tipe data
+  - Memotong cabang pencarian yang mustahil
+  - Menambah jumlah solusi
+  - Menghapus input
+  answer: 1
+  explain: Pruning mengurangi ruang pencarian tanpa kehilangan solusi valid.
+- q: Kompleksitas N-Queen adalah…
+  options:
+  - O(log n)
+  - O(n log n)
+  - Eksponensial
+  - O(n)
+  answer: 2
+  explain: Jumlah konfigurasi tumbuh sangat cepat dengan ukuran papan.
+- q: Backtracking sering diimplementasikan dengan…
+  options:
+  - Heap
+  - Hash map
+  - Queue
+  - Rekursi
+  answer: 3
+  explain: Setiap level rekursi memilih satu keputusan.
+- q: Contoh masalah backtracking adalah…
+  options:
+  - Sudoku dan N-Queen
+  - Binary search
+  - Merge sort
+  - Mencari nilai maksimum
+  answer: 0
+  explain: Keduanya memerlukan eksplorasi kombinasi dengan pembatalan.
+example:
+  code: "def generate(n):\n    if n == 0:\n        return [\"\"]\n    hasil = []\n    for c in \"ab\":\n        for sisa in generate(n - 1):\n            hasil.append(c + sisa)\n    return hasil\n\nprint(generate(3))\n"
+---
+
+
+**Backtracking** mencoba solusi sedikit demi sedikit. Jika suatu pilihan membujuk ke jalan buntu, algoritma mundur dan mencoba pilihan lain.
+
+## Pola Umum
+
+```text
+pilih -> cek valid -> rekursi -> batalkan pilihan
+```
+
+```python
+def permutasi(s, jalur=""):
+    if not s:
+        print(jalur)
+        return
+    for i, ch in enumerate(s):
+        sisa = s[:i] + s[i+1:]
+        permutasi(sisa, jalur + ch)
+
+permutasi("abc")
+```
+
+## N-Queen
+
+```python
+def aman(papan, baris, kolom):
+    for i in range(baris):
+        if papan[i] == kolom or abs(papan[i] - kolom) == baris - i:
+            return False
+    return True
+
+def n_queen(n, baris=0, papan=[]):
+    if baris == n:
+        print(papan)
+        return 1
+    jumlah = 0
+    for kolom in range(n):
+        if aman(papan, baris, kolom):
+            jumlah += n_queen(n, baris + 1, papan + [kolom])
+    return jumlah
+
+print(n_queen(4))
+```
+
+## Pruning
+
+Pruning memeriksa lebih awal apakah cabang masih bisa menghasilkan solusi. Pada N-Queen, pengecekan serangan diagonal adalah bentuk pruning.
+
+| Tanpa pruning | Dengan pruning |
+|---|---|
+| semua kombinasi dicoba | cabang invalid langsung ditinggalkan |
+| waktu eksponensial penuh | jauh lebih sedikit node |
+
+<div class="note">💡 Backtracking berbeda dengan brute force: keduanya menjelajahi kemungkinan, tetapi backtracking membatalkan lebih awal begitu aturan dilanggar.</div>
+
+## Kapan Dipakai
+
+- Sudoku, teka-teki kata, dan pencarian kombinasi.
+- Parsing grammar dan pencocokan pola kompleks.
+- Optimasi diskrit dengan ruang solusi tidak terlalu besar.
+
+Untuk ruang sangat besar, pertimbangkan dynamic programming atau branch-and-bound yang lebih terarah.

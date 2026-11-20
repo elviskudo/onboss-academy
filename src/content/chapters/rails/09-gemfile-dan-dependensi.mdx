@@ -1,0 +1,98 @@
+---
+"title": "Gemfile dan Dependensi"
+"description": "Mengelola pustaka lewat Gemfile, Bundler, dan Gemfile.lock"
+"order": 9
+"quiz":
+- "q": "File yang dipakai Bundler untuk membaca daftar dependensi adalah…"
+  "options":
+  - "Gemfile.lock"
+  - "Gemfile"
+  - "package.json"
+  - "requirements.txt"
+  "answer": 1
+  "explain": "Bundler membaca Gemfile lalu mengunci versi hasil resolusi ke Gemfile.lock."
+- "q": "Perintah menginstal gem sesuai Gemfile adalah…"
+  "options":
+  - "bundle install"
+  - "gem build"
+  - "rails gems"
+  - "npm install"
+  "answer": 0
+  "explain": "bundle install mengunduh dan memasang semua gem yang dideklarasikan."
+- "q": "Fungsi Gemfile.lock adalah…"
+  "options":
+  - "Menghias proyek"
+  - "Mengunci versi gem agar konsisten"
+  - "Menyimpan password"
+  - "Mengganti database"
+  "answer": 1
+  "explain": "Lockfile memastikan semua mesin memakai versi gem yang sama persis."
+- "q": "Perintah memperbarui satu gem ke versi terbaru adalah…"
+  "options":
+  - "bundle update nama_gem"
+  - "bundle refresh"
+  - "gem cleanup"
+  - "rails upgrade gem"
+  "answer": 0
+  "explain": "bundle update nama_gem mengubah versi di lockfile untuk gem tersebut."
+- "q": "Grup gem yang hanya dipakai saat development adalah…"
+  "options":
+  - "group :production"
+  - "group :test"
+  - "group :development"
+  - "group :all"
+  "answer": 2
+  "explain": "Blok group :development berisi gem yang tidak dipasang di production lewat bundle install --without."
+"example":
+  "code": "source \"https://rubygems.org\"\ngem \"rails\", \"~> 7.1\"\ngem \"pg\"\ngem \"sidekiq\"\n\ngroup :development, :test do\n  gem \"rspec-rails\"\nend\n"
+---
+
+## Kenapa Gemfile Penting
+
+```ruby
+source "https://rubygems.org"
+gem "rails", "~> 7.1"
+gem "pg"
+gem "sidekiq"
+
+group :development, :test do
+  gem "rspec-rails"
+end
+```
+
+Gemfile adalah **daftar belanja** proyek. Kamu menulis nama gem dan rentang versi yang diinginkan, lalu Bundler mencari kombinasi yang saling cocok.
+
+```ruby
+source "https://rubygems.org"
+gem "rails", "~> 7.1"
+gem "pg"
+```
+
+`~> 7.1` berarti "versi 7.x, tapi jangan lompat ke 8.0". Ini menjaga kode tetap kompatibel saat patch dirilis.
+
+## Anatomi Gemfile
+
+| Bagian | Contoh | Fungsi |
+|---|---|---|
+| `source` | `https://rubygems.org` | tempat mengunduh gem |
+| `gem` | `gem "redis"` | dependensi yang dipakai aplikasi |
+| versi | `"~> 7.1"` | batas versi yang diizinkan |
+| `group` | `group :test do` | mengelompokkan gem per lingkungan |
+| `git` | `git: "..."` | sumber gem dari repositori |
+
+## Perintah Sehari-hari
+
+```bash
+bundle install      # pasang semua gem
+bundle update rails # perbarui satu gem
+bundle exec rspec   # jalankan perintah dalam konteks bundle
+bundle list         # lihat gem yang terpasang
+```
+
+`bundle exec` penting saat ada beberapa versi gem di mesin yang sama — perintah itu memastikan versi yang dipakai adalah versi di lockfile.
+
+## Lockfile sebagai Kontrak
+
+Gemfile.lock menyimpan **resolusi akhir**: versi pasti semua gem beserta dependensi turunannya. Simpan file ini di version control. Tanpa lockfile, dua developer bisa mendapat kombinasi gem berbeda dan mengalami bug yang hanya muncul di satu mesin.
+
+<div class="note">💡 Setiap kali mengubah Gemfile, jalankan <code>bundle install</code> lalu commit Gemfile.lock bersamaan. Memisahkan keduanya adalah sumber klasik error "gem tidak ditemukan" di server.</div>

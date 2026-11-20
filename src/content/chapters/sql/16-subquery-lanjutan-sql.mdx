@@ -1,0 +1,118 @@
+---
+title: "Subquery Lanjutan: IN, EXISTS, dan Derived Table"
+description: "Perbedaan subquery skalar, IN, EXISTS, dan tabel turunan"
+order: 16
+quiz:
+  - q: "Subquery skalar harus mengembalikan…"
+    options: ["Banyak baris", "Satu nilai", "Satu kolom kosong", "Tabel lengkap"]
+    answer: 1
+    explain: "Subquery di WHERE dengan operator perbandingan harus menghasilkan satu nilai."
+  - q: "EXISTS bernilai benar ketika…"
+    options: ["Subquery mengembalikan sedikitnya satu baris", "Subquery mengembalikan NULL", "Jumlah baris lebih dari satu", "Subquery salah sintaks"]
+    answer: 0
+    explain: "EXISTS hanya peduli ada/tidaknya baris, bukan isinya."
+  - q: "Derived table ditulis di klausa…"
+    options: ["SELECT", "FROM", "WHERE", "ORDER BY"]
+    answer: 1
+    explain: "Subquery di FROM disebut derived table dan wajib diberi alias."
+  - q: "NOT IN berbahaya bila subquery mengandung…"
+    options: ["NULL", "Angka", "Alias", "ORDER BY"]
+    answer: 0
+    explain: "Satu NULL dalam daftar membuat NOT IN menghasilkan unknown untuk semua baris."
+  - q: "Korelasi pada correlated subquery berarti…"
+    options: ["Subquery merujuk kolom query luar", "Subquery dijalankan sekali", "Tabel tidak punya index", "Query gagal"]
+    answer: 0
+    explain: "Subquery dievaluasi per baris query luar karena bergantung pada nilainya."
+example:
+  code: |
+    SELECT nama FROM karyawan k WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Subquery adalah query di dalam query. Ia bisa menghasilkan satu nilai, daftar nilai, atau seluruh tabel sementara. Memilih bentuk yang tepat membuat query lebih cepat dan lebih mudah dibaca.
+
+## Empat Bentuk Subquery
+
+| Bentuk | Dipakai di | Contoh |
+| --- | --- | --- |
+| Skalar | WHERE / SELECT | `gaji > (SELECT AVG(gaji) ...)` |
+| IN | WHERE | `id IN (SELECT lead_id ...)` |
+| EXISTS | WHERE | `EXISTS (SELECT 1 ...)` |
+| Derived | FROM | `FROM (SELECT ...) ringkas` |
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE gaji > (SELECT AVG(gaji) FROM karyawan);
+```
+
+## IN vs EXISTS
+
+```sql
+-- IN: cocokkan nilai terhadap daftar
+SELECT nama FROM karyawan
+WHERE id IN (SELECT lead_id FROM proyek);
+
+-- EXISTS: cek keberadaan baris
+SELECT nama FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+```
+
+`EXISTS` berhenti begitu satu baris ditemukan, sehingga sering lebih efisien pada tabel besar. `SELECT 1` adalah kebiasaan karena kolomnya tidak pernah dipakai — yang penting ada baris atau tidak.
+
+## Jebakan NOT IN
+
+```sql
+-- Berisiko bila proyek.lead_id mengandung NULL
+SELECT nama FROM karyawan
+WHERE id NOT IN (SELECT lead_id FROM proyek);
+
+-- Versi aman
+SELECT k.nama FROM karyawan k
+WHERE NOT EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+```
+
+Dengan `NOT IN`, keberadaan satu NULL saja membuat seluruh hasil menjadi kosong. `NOT EXISTS` tidak punya masalah ini.
+
+## Derived Table
+
+```sql
+SELECT ringkas.dept, ringkas.jumlah
+FROM (
+  SELECT dept, COUNT(*) AS jumlah
+  FROM karyawan
+  GROUP BY dept
+) AS ringkas
+WHERE ringkas.jumlah >= 2;
+```
+
+Subquery di FROM berlaku seperti tabel sementara dan **wajib** diberi alias. Ini cara menyaring hasil agregasi tanpa HAVING.
+
+## Subquery di SELECT
+
+```sql
+SELECT nama, gaji,
+       (SELECT AVG(gaji) FROM karyawan) AS rata_semua
+FROM karyawan;
+```
+
+Nilai dihitung ulang untuk tiap baris secara logis, meski optimizer sering meng-cache-nya. Untuk laporan besar, CTE lebih mudah dioptimalkan dan dibaca.
+
+<div class="note">💡 Correlated subquery merujuk kolom query luar, sehingga secara konseptual dijalankan ulang per baris. Untuk data besar, coba tulis ulang dengan JOIN atau CTE sebelum mengeluhkan performa.</div>
+
+## Di Dunia Nyata
+
+- **Cek kepemilikan**: karyawan yang memimpin proyek memakai EXISTS.
+- **Marker laporan**: kolom `rata_semua` memberi konteks pada setiap baris.
+- **Filter agregat**: derived table menyaring grup di dalam WHERE.
+- **Validasi**: `NOT EXISTS` mencari produk yang belum pernah dipesan.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT k.nama, k.gaji,
+       (SELECT ROUND(AVG(gaji)) FROM karyawan) AS rata_semua
+FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id)
+ORDER BY k.gaji DESC;`} />

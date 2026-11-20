@@ -1,0 +1,112 @@
+---
+title: "Fungsi String, Angka, dan Tanggal MySQL"
+description: "Fungsi bawaan MySQL untuk manipulasi nilai di query"
+order: 13
+quiz:
+  - q: "Fungsi menggabungkan string di MySQL adalah…"
+    options: ["CONCAT()", "||", "+", "JOIN()"]
+    answer: 1
+    explain: "CONCAT('A','B') menghasilkan 'AB'."
+  - q: "Fungsi tanggal hari ini di MySQL adalah…"
+    options: ["NOW()", "CURRENT_DATE saja", "TODAY()", "DATE()"]
+    answer: 2
+    explain: "NOW() mengembalikan datetime; CURDATE() hanya tanggal."
+  - q: "Fungsi memotong teks adalah…"
+    options: ["SUBSTRING()", "CUT()", "SLICE()", "PART()"]
+    answer: 3
+    explain: "SUBSTRING(x, awal, panjang)."
+  - q: "DATE_FORMAT(tanggal, '%Y-%m') menghasilkan…"
+    options: ["Tahun-Bulan", "Hari penuh", "Jam saja", "Nama hari"]
+    answer: 0
+    explain: "%Y tahun empat digit, %m bulan dua digit."
+  - q: "Fungsi COALESCE berguna untuk…"
+    options: ["Mengganti NULL dengan cadangan", "Menambah baris", "Menghapus tabel", "Mengubah collation"]
+    answer: 1
+    explain: "COALESCE(kolom, 0) memberi 0 bila kolom NULL."
+example:
+  code: |
+    SELECT nama, CONCAT('ID-', id) AS kode, UPPER(dept) AS unit, DATE_FORMAT(NOW(), '%Y-%m') AS bulan FROM karyawan LIMIT 3;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+MySQL menyediakan ratusan fungsi bawaan. Tiga kelompok yang paling sering dipakai adalah fungsi string, angka, dan tanggal.
+
+## String
+
+| Fungsi | Contoh | Hasil |
+| --- | --- | --- |
+| `CONCAT` | `CONCAT('A','B')` | AB |
+| `UPPER`/`LOWER` | `UPPER('ana')` | ANA |
+| `LENGTH` | `LENGTH('Rani')` | 4 |
+| `SUBSTRING` | `SUBSTRING('2026-11',1,4)` | 2026 |
+| `TRIM` | `TRIM(' R ')` | R |
+| `REPLACE` | `REPLACE('a-b','-','')` | ab |
+
+```sql
+SELECT CONCAT(nama, ' (', jabatan, ')') AS label FROM karyawan;
+```
+
+## Angka
+
+```sql
+SELECT ROUND(AVG(gaji), 0) AS rata,
+       CEIL(12.3) AS atas,
+       FLOOR(12.8) AS bawah,
+       MOD(17, 5) AS sisa;
+```
+
+`ROUND(x, d)` membulatkan ke d desimal. Untuk uang selalu pakai `DECIMAL`, bukan `FLOAT`.
+
+## Tanggal
+
+```sql
+SELECT NOW() AS saat_ini,
+       CURDATE() AS hari_ini,
+       YEAR('2026-11-20') AS tahun,
+       MONTH('2026-11-20') AS bulan,
+       DATE_ADD('2026-11-20', INTERVAL 7 DAY) AS minggu_depan;
+```
+
+`DATEDIFF(a, b)` menghitung selisih hari; `TIMESTAMPDIFF(HOUR, a, b)` memberi selisih jam.
+
+## Format Tanggal
+
+```sql
+SELECT DATE_FORMAT('2026-11-20', '%d/%m/%Y') AS tampilan;
+-- 20/11/2026
+```
+
+Simpan tanggal dalam tipe DATE/DATETIME, bukan string. Format tampilan diurus saat query, bukan saat penyimpanan.
+
+## NULL dan Condition
+
+```sql
+SELECT COALESCE(dept, 'Tanpa unit') AS unit,
+       IF(gaji >= 10000000, 'Tinggi', 'Standar') AS level,
+       NULLIF(stok, 0) AS stok_aman
+FROM karyawan;
+```
+
+`IF()` adalah versi ringkas CASE untuk dua cabang; `NULLIF()` membantu menghindari pembagian dengan nol.
+
+<div class="note">💡 Memanggil fungsi pada kolom yang ter-index di WHERE sering membuat index tidak dipakai. `WHERE YEAR(tanggal)=2026` lebih lambat daripada `WHERE tanggal >= '2026-01-01' AND tanggal < '2027-01-01'`.</div>
+
+## Di Dunia Nyata
+
+- **Label UI**: `CONCAT()` merakit nama lengkap dan jabatan.
+- **Laporan bulanan**: `DATE_FORMAT()` mengelompokkan transaksi per bulan.
+- **Validasi**: `LENGTH()` memeriksa panjang kode.
+- **SLA**: `TIMESTAMPDIFF()` mengukur durasi respons.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT nama,
+       CONCAT('K-', id) AS kode,
+       UPPER(dept) AS unit,
+       ROUND(gaji / 1000000.0, 1) AS juta,
+       COALESCE(dept, 'Tanpa unit') AS unit_aman
+FROM karyawan
+ORDER BY gaji DESC
+LIMIT 4;`} />

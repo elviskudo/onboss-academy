@@ -1,0 +1,134 @@
+---
+"title": "Protokol"
+"description": "Menetapkan kontrak dengan protocol, extension, dan associated type"
+"order": 17
+"quiz":
+- "q": "Protokol berisi…"
+  "options":
+  - "Kode SQL"
+  - "Deklarasi requirement tanpa implementasi wajib"
+  - "Hanya variabel"
+  - "Hanya class"
+  "answer": 1
+  "explain": "Tipe yang conform harus menyediakan requirement tersebut."
+- "q": "Cara menyatakan conform adalah…"
+  "options":
+  - "struct X extends Protokol"
+  - "implement Protokol on X"
+  - "struct X: Protokol"
+  - "protocol X implements"
+  "answer": 2
+  "explain": "Nama protokol ditulis setelah titik dua."
+- "q": "Extension berguna untuk…"
+  "options":
+  - "Menghapus properti"
+  - "Mengganti init"
+  - "Membuat subclass"
+  - "Menambah method ke tipe yang sudah ada"
+  "answer": 3
+  "explain": "Extension tidak bisa menambah stored property."
+- "q": "associatedtype dipakai untuk…"
+  "options":
+  - "Menamai tipe yang ditentukan saat conform"
+  - "Menyimpan variabel global"
+  - "Mengganti generic"
+  - "Mendeklarasi class"
+  "answer": 0
+  "explain": "Biasa dipakai pada protokol koleksi atau Container."
+- "q": "Protokol dengan Self requirement bisa dipakai sebagai…"
+  "options":
+  - "Tipe variabel biasa"
+  - "Generic constraint, bukan tipe biasa"
+  - "Subclass"
+  - "Enum"
+  "answer": 1
+  "explain": "Pembatasan ini menjaga keamanan tipe saat runtime."
+"example":
+  "code": "protocol DapatDisapa {\n    var nama: String { get }\n    func sapa() -> String\n}\n\nextension DapatDisapa {\n    func sapa() -> String {\n        \"Halo, \\(nama)!\"\n    }\n}\n\nstruct User: DapatDisapa {\n    let nama: String\n}\n\nprint(User(nama: \"Budi\").sapa()) // Halo, Budi!\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Mendefinisikan Protokol
+
+```swift
+protocol DapatDisapa {
+    var nama: String { get }
+    func sapa() -> String
+}
+
+extension DapatDisapa {
+    func sapa() -> String {
+        "Halo, \(nama)!"
+    }
+}
+
+struct User: DapatDisapa {
+    let nama: String
+}
+
+print(User(nama: "Budi").sapa()) // Halo, Budi!
+```
+
+```swift
+protocol DapatDicetak {
+    var deskripsi: String { get }
+    func cetak()
+}
+```
+
+Properti bisa mensyaratkan `{ get }` atau `{ get set }`.
+
+## Conform dan Extension
+
+```swift
+struct Buku: DapatDicetak {
+    let deskripsi: String
+    func cetak() { print(deskripsi) }
+}
+```
+
+Extension pada protokol menyediakan **implementasi default**. Tipe yang conform boleh memakainya atau menggantinya.
+
+## Associated Type
+
+```swift
+protocol Container {
+    associatedtype Item
+    var items: [Item] { get }
+    mutating func append(_ item: Item)
+}
+```
+
+Saat conform, Swift menyimpulkan `Item` dari tipe array yang dipakai.
+
+| Konsep | Fungsi |
+|---|---|
+| `protocol` | kontrak |
+| `extension` | tambahan method / default implementation |
+| `associatedtype` | placeholder tipe |
+| `where` | batasan tambahan pada generic |
+
+<div class="note">💡 Protocol-oriented programming adalah gaya khas Swift: rancang perilaku sebagai protokol, beri implementasi default lewat extension, lalu pakai struct kecil yang conform.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`protocol DapatDisapa {
+    var nama: String { get }
+    func sapa() -> String
+}
+
+extension DapatDisapa {
+    func sapa() -> String {
+        "Halo, \(nama)!"
+    }
+}
+
+struct User: DapatDisapa {
+    let nama: String
+}
+
+print(User(nama: "Budi").sapa()) // Halo, Budi!`} />

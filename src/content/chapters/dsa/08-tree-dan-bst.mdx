@@ -5,7 +5,7 @@ description: "Node, binary search tree, dan tiga cara menelusuri: inorder, preor
 order: 8
 quiz:
   - q: "Binary search tree (BST) memiliki sifat…"
-    options: ["Anak kiri < parent < anak kanan", "Semua anak di kiri", "Kedua anak selalu sama", "Kedalaman selalu sama"]
+    options: ["Anak kiri &lt; parent &lt; anak kanan", "Semua anak di kiri", "Kedua anak selalu sama", "Kedalaman selalu sama"]
     answer: 0
     explain: "Properti ini membuat pencarian membuang separuh subtree tiap langkah — seperti binary search."
   - q: "Inorder traversal BST menghasilkan elemen…"
@@ -35,7 +35,7 @@ example:
     def insert(root, data):
         if root is None:
             return Node(data)
-        if data < root.data:
+        if data &lt; root.data:
             root.left = insert(root.left, data)
         else:
             root.right = insert(root.right, data)
@@ -152,7 +152,7 @@ Ada **4 keluarga yang sering ditemui**: binary tree membatasi dua anak, BST mena
 | Struktur | Aturan | Operasi utama | Kapan dipakai |
 |---|---|---|---|
 | Binary tree | maksimal dua anak | traversal | ekspresi dan keputusan |
-| BST | kiri < root < kanan | search/insert/delete | data terurut dinamis |
+| BST | kiri &lt; root &lt; kanan | search/insert/delete | data terurut dinamis |
 | Heap | parent minimum/maksimum | push/pop O(log n) | priority queue |
 | Balanced BST | tinggi dijaga logaritmik | operasi O(log n) | ordered map/set |
 
@@ -167,6 +167,10 @@ Ada **4 traversal dasar**: inorder, preorder, postorder, dan level-order. Tiga p
 
 <div class="note">💡 BST yang disisipkan dalam urutan terurut akan miring jadi rantai — operasi jatuh ke O(n). Struktur seimbang (AVL, red-black) atau setara Python `bisect` menjaga ketinggian tetap log n.</div>
 
+## Try it Yourself
+
+Jalankan contoh di bawah untuk melihat ide algoritma ini berjalan langsung.
+
 <TryIt lang="python" runtime="piston" pistonName="python" code={`class Node:
     def __init__(self, data):
         self.data = data
@@ -176,7 +180,7 @@ Ada **4 traversal dasar**: inorder, preorder, postorder, dan level-order. Tiga p
 def insert(root, data):
     if root is None:
         return Node(data)
-    if data < root.data:
+    if data &lt; root.data:
         root.left = insert(root.left, data)
     else:
         root.right = insert(root.right, data)

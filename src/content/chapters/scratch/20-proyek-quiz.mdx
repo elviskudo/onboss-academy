@@ -1,0 +1,82 @@
+---
+title: "Studi Kasus: Game Kuis"
+description: "Menggabungkan daftar soal, variabel, dan penilaian"
+order: 20
+quiz:
+  - q: "Struktur data yang tepat untuk bank soal adalah…"
+    options: ["Dua daftar sejajar: pertanyaan dan jawaban", "Satu kostum per soal", "Backdrop saja", "Satu variabel besar"]
+    answer: 0
+    explain: "Index yang sama menghubungkan soal dengan kunci jawabannya."
+  - q: "Untuk memilih soal acak, gunakan…"
+    options: ["item ke- 0", "acak dari 1 sampai (panjang [soal])", "selalu 1", "panjang [skor]"]
+    answer: 1
+    explain: "Index daftar Scratch mulai dari 1."
+  - q: "Alur penilaian yang benar adalah…"
+    options: ["Tanya tanpa kunci", "Simpan skor di kostum", "Bandingkan jawaban pemain dengan kunci lalu ubah skor", "Ubah skor dulu lalu tanya"]
+    answer: 2
+    explain: "Perbandingan terjadi setelah pemain menjawab."
+  - q: "Agar soal tidak berulang dalam satu putaran, bisa…"
+    options: ["Mengulang acak tanpa penanda", "Menghapus semua kostum", "Mengubah volume", "Hapus item yang sudah dipakai atau simpan daftar terpakai"]
+    answer: 3
+    explain: "Tanpa penanda, generator acak bisa memilih index yang sama lagi."
+  - q: "Penutup yang baik setelah kuis selesai adalah…"
+    options: ["Tampilkan skor akhir dan tombol ulang", "Langsung tutup proyek", "Hanya suara pop", "Menghapus daftar"]
+    answer: 0
+    explain: "Pengguna perlu tahu hasilnya dan bisa mencoba lagi."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur [skor] ke [0]]
+    [atur [i] ke [1]]
+    [ulangi 5 [
+      [ubah [i] sebesar 1]
+      [tanya (item ke- (i) dari [soal]) dan tunggu]
+      [jika <(jawaban) = (item ke- (i) dari [kunci])> [ubah [skor] sebesar 1]]
+    ]]
+    [ucap (gabung [Skor: ] (skor)) selama 2]
+---
+
+Game kuis memanfaatkan hampir semua fitur dasar Scratch: daftar, variabel, operator, pesan, dan percabangan.
+
+## Struktur Data
+
+```text
+soal  = [Ibukota Indonesia?, 2+2=?, Warna langit?]
+kunci = [Jakarta, 4, Biru]
+```
+
+## Alur Satu Putaran
+
+```text
+pilih index acak -> tampilkan soal -> tunggu jawaban
+-> bandingkan dengan kunci -> ubah skor -> index berikutnya
+```
+
+## Masukan Jawaban
+
+Gunakan blok `tanya [...] dan tunggu`; jawaban tersimpan di pelapor `(jawaban)`. Untuk pilihan ganda, minta pemain menekan tombol 1–4 dan simpan ke variabel `pilih`.
+
+## Menghindari Pengulangan
+
+```text
+[tambahkan (i) ke [terpakai]]
+[jika <([terpakai] berisi (i))> [pilih index lain]]
+```
+
+## Penutup
+
+Tampilkan skor akhir, lalu kirim pesan `ulang` yang mereset skor, daftar terpakai, dan index ke keadaan awal.
+
+<div class="note">💡 Simpan soal dan kunci sebagai daftar terpisah. Mengubah satu soal tidak akan menggeser kunci bila kedua daftar tetap sejajar.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`// Kerangka kuis 3 soal:
+[ketika bendera diklik]
+[atur [skor] ke [0]]
+[ulangi 3 [
+  [tanya (item ke- 1 dari [soal]) dan tunggu]
+  [jika &lt;(jawaban) = (item ke- 1 dari [kunci])&gt; [ubah [skor] sebesar 1]]
+]]
+[ucap (gabung [Skor akhir: ] (skor)) selama 2]`}</code></pre>

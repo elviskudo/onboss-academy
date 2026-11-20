@@ -1,0 +1,103 @@
+---
+title: "Operator di R"
+description: "Operator aritmetika, perbandingan, logika, dan penugasan serta urutan prioritasnya"
+order: 9
+quiz:
+  - q: "Operator untuk pangkat di R adalah…"
+    options: ["^ atau **", "^^", "pow()", "*"]
+    answer: 0
+    explain: "R mengenal ^ dan ** untuk exponensiasi."
+  - q: "Hasil dari 7 %% 3 adalah…"
+    options: ["1", "2", "3", "4"]
+    answer: 0
+    explain: "%% adalah modulo, sisa pembagian 7 oleh 3."
+  - q: "Operator identitas yang ketat adalah…"
+    options: ["==", "=", "===", "<-"]
+    answer: 2
+    explain: "=== membandingkan nilai sekaligus tipe; == melakukan coercions."
+  - q: "Nilai TRUE & TRUE adalah…"
+    options: ["TRUE", "FALSE", "NA", "1"]
+    answer: 0
+    explain: "& adalah AND vektorised untuk elemen demi elemen."
+  - q: "Untuk AND dengan evaluasi singkat dipakai…"
+    options: ["&&", "&", "and", "||"]
+    answer: 0
+    explain: "&& mengevaluasi satu elemen pertama dan berhenti lebih awal."
+example:
+  code: |
+    x <- 7; y <- 3
+    print(x + y); print(x %% y); print(x ^ y)
+    print(x > y && y > 0)
+    print(c(TRUE, FALSE) & c(TRUE, TRUE))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Operator** adalah simbol yang meminta R melakukan kalkulasi atau perbandingan. Hasilnya selalu berupa vektor — bahkan untuk satu angka.
+
+## Aritmetika
+
+| Operator | Arti | Contoh | Hasil |
+| --- | --- | --- | --- |
+| `+` | tambah | `7 + 3` | 10 |
+| `-` | kurang | `7 - 3` | 4 |
+| `*` | kali | `7 * 3` | 21 |
+| `/` | bagi | `7 / 3` | 2.333 |
+| `%%` | sisa bagi | `7 %% 3` | 1 |
+| `%/%` | bagi bulat | `7 %/% 3` | 2 |
+| `^` / `**` | pangkat | `2 ^ 3` | 8 |
+
+```r
+7 %% 3   # sisa
+7 %/% 3  # hasil bagi dibulatkan ke bawah
+2 ** 10  # pangkat, sama dengan 2^10
+```
+
+## Perbandingan
+
+Operator `==`, `!=`, `<`, `>`, `&lt;=`, `>=` menghasilkan `TRUE` atau `FALSE`. Bedanya dengan banyak bahasa lain, `==` boleh membandingkan angka dengan string karena R melakukan *coercion*: `"7" == 7` bernilai `TRUE`. Bila itu tidak diinginkan, gunakan `===` jika tersedia melalui paket atau bandingkan tipe secara eksplisit dengan `identical("7", 7)`.
+
+```r
+identical(7, 7L)   # FALSE: numeric vs integer
+7 == 7L            # TRUE: nilai sama setelah coercion
+```
+
+## Logika
+
+| Operator | Cara kerja |
+| --- | --- |
+| `&` | AND untuk setiap pasangan elemen |
+| `|` | OR untuk setiap pasangan elemen |
+| `!` | negasi |
+| `&&` | AND, hanya elemen pertama, evaluasi singkat |
+| `||` | OR, hanya elemen pertama, evaluasi singkat |
+
+Gunakan `&&` / `||` di dalam `if`, sedangkan `&` / `|` saat memfilter vektor atau kolom data frame.
+
+```r
+usia <- c(17, 25, 40)
+usia >= 18 & usia < 30   # FALSE TRUE FALSE
+```
+
+## Penugasan dan Prioritas
+
+`<-` adalah penugasan paling umum di R; `=` juga dipakai terutama untuk argumen fungsi. `->` menulis ke arah sebaliknya. Prioritasnya: kurung → pangkat → kali/bagi → tambah/kurang → perbandingan → logika → penugasan.
+
+<div class="note">💡 R memakai `<-` karena panah menunjukkan nilai "mengalir" ke nama variabel. Komunitas R sangat konsisten memakai `<-` di skrip, jadi gaya ini sebaiknya diikuti.</div>
+
+## Di Dunia Nyata
+
+- **Penentuan diskon**: `total > 100000 & member == TRUE` menentukan siapa mendapat potongan harga.
+- **Pembagian kelompok umur**: `usia %/% 10 * 10` mengubah usia menjadi kelas dekade.
+- **Validasi input**: `is.na(x) | x &lt; 0` menandai data yang perlu diperbaiki.
+- **Pengecekan singkat**: `if (!is.null(file) && file.exists(file))` menghindari error saat file belum ada.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`x <- 17; y <- 5
+cat("tambah:", x + y, " sisa:", x %% y, " bagi bulat:", x %/% y, "\n")
+cat("pangkat:", y^2, "\n")
+usia <- c(15, 22, 30, 45)
+print(usia >= 18 & usia &lt; 35)
+if (usia[1] >= 18 && usia[2] &lt; 30) cat(" ada yang lolos:  salah satu lolos\n")`} />

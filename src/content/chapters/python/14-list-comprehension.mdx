@@ -1,0 +1,101 @@
+---
+title: "List Comprehension"
+description: "Bangun list secara ringkas dengan filter dan ekspresi bersarang"
+order: 14
+quiz:
+  - q: "Sintaks dasar list comprehension adalah…"
+    options: ["[for x in data: x]", "[x for x in data]", "(x for x in data)", "{x: x for x in data}"]
+    answer: 1
+    explain: "Bentuknya `[ekspresi for item in iterable]`."
+  - q: "`[x for x in range(5) if x % 2 == 0]` menghasilkan…"
+    options: ["[0,1,2,3,4]", "[0,2,4]", "[1,3]", "[2,4]"]
+    answer: 1
+    explain: "Filter `if` menyisakan 0, 2, 4."
+  - q: "Generator expression memakai…"
+    options: ["Kurung siku", "Kurung kurawal", "Tanda kurung biasa", "Titik koma"]
+    answer: 2
+    explain: "`(x for x in data)` menghasilkan iterator malas (lazy)."
+  - q: "Dict comprehension ditandai dengan…"
+    options: ["[]", "()", "{} dengan `k: v`", "<>"]
+    answer: 2
+    explain: "`{k: v for ...}` menghasilkan dictionary."
+  - q: "Kelebihan generator dibanding list comprehension adalah…"
+    options: ["Lebih cepat di semua kasus", "Hemat memori karena malas", "Bisa di-index", "Selalu menghasilkan list"]
+    answer: 1
+    explain: "Generator tidak menyimpan semua nilai sekaligus."
+example:
+  code: |
+    angka = [1, 2, 3, 4, 5, 6]
+    kuadrat_genap = [x*x for x in angka if x % 2 == 0]
+    print(kuadrat_genap)
+    
+    nama = ["ani", "budi", "sari"]
+    panjang = {n: len(n) for n in nama}
+    print(panjang)
+    
+    total = sum(x for x in range(1, 101))
+    print(total)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Comprehension adalah cara membangun list, dict, atau set dari iterable dalam satu baris yang masih terbaca.
+
+## Bentuk Dasar
+
+```python
+kuadrat = [x * x for x in range(6)]
+# [0, 1, 4, 9, 16, 25]
+```
+
+Bagian `x * x` adalah ekspresi hasil; `for x in ...` adalah loop; `if` opsional adalah filter.
+
+## Filter & Ekspresi Bersyarat
+
+```python
+genap = [x for x in range(20) if x % 2 == 0]
+label = ["genap" if x % 2 == 0 else "ganjil" for x in range(5)]
+```
+
+Perhatikan posisi `if`: setelah `for` = filter; sebelum `for` = pilih nilai (ternary).
+
+## Nested Loop
+
+```python
+pasangan = [(a, b) for a in [1, 2] for b in ["x", "y"]]
+# [(1,'x'), (1,'y'), (2,'x'), (2,'y')]
+```
+
+Urutan `for` sama seperti loop bersarang biasa: yang pertama jadi loop luar.
+
+## Dict & Set Comprehension
+
+```python
+{chr(k): k for k in range(65, 70)}   # {'A':65, ...}
+{x % 3 for x in range(10)}           # {0, 1, 2}
+```
+
+## Generator Expression
+
+```python
+gen = (x * x for x in range(1_000_000))
+print(next(gen), next(gen))   # 1, 4
+```
+
+Generator menghasilkan nilai satu per satu saat diminta — cocok untuk data besar. `sum(x for x in data)` sering lebih hemat memori daripada `sum([x for x in data])`.
+
+<div class="note">💡 Comprehension bagus untuk transformasi sederhana. Kalau sudah butuh 2+ `if`, nested yang dalam, atau efek samping, kembalikan ke loop `for` biasa agar tetap mudah dibaca.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`angka = [1, 2, 3, 4, 5, 6]
+kuadrat_genap = [x*x for x in angka if x % 2 == 0]
+print(kuadrat_genap)
+
+nama = ["ani", "budi", "sari"]
+panjang = {n: len(n) for n in nama}
+print(panjang)
+
+total = sum(x for x in range(1, 101))
+print(total)`} />

@@ -1,0 +1,103 @@
+---
+title: "Metadata & Open Graph"
+description: "metadata statis, generateMetadata, og image, dan robots"
+order: 13
+quiz:
+  - q: "Metadata statis didefinisikan dengan…"
+    options: ["useEffect", "next.config", "export const metadata = {...}", "useState"]
+    answer: 2
+    explain: "Objek metadata diekspor dari page/layout."
+  - q: "Metadata dinamis memakai…"
+    options: ["fetchMeta()", "export async function generateMetadata()", "getMetadata()", "useMetadata()"]
+    answer: 1
+    explain: "Bisa mengambil data berdasarkan params."
+  - q: "Open Graph berguna untuk…"
+    options: ["Mengubah CSS", "Menyimpan data", "Membuat rute", "Tampilan kartu saat tautan dibagikan"]
+    answer: 3
+    explain: "Platform sosial membaca tag og: untuk judul, deskripsi, dan gambar."
+  - q: "Gambar OG bisa dibuat otomatis dengan…"
+    options: ["SVG statis", "ImageResponse dari next/og", "next/image", "canvas biasa"]
+    answer: 1
+    explain: "Bergenerate PNG di server tanpa perlu editor gambar."
+  - q: "metadataBase dibutuhkan untuk…"
+    options: ["Mengubah URL relatif jadi absolut pada OG", "Menghubungkan database", "Mengubah font", "Membuat API"]
+    answer: 0
+    explain: "Contoh: new URL('https://contoh.com')."
+example:
+  code: |
+    export const metadata = {
+      title: 'Katalog Produk',
+      description: 'Belajar Next.js lewat contoh nyata.',
+      openGraph: { title: 'Katalog Produk', type: 'website' },
+    };
+---
+
+Metadata menentukan bagaimana halamanmu dikenali oleh browser, mesin pencari, dan platform sosial.
+
+## Metadata Statis
+
+```tsx
+// app/tentang/page.tsx
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tentang Kami | OnBoss",
+  description: "Kenalan dengan tim di balik materials kami.",
+  openGraph: {
+    title: "Tentang OnBoss Academy",
+    description: "Belajar teknologi dengan contoh praktis.",
+    type: "website",
+  },
+};
+```
+
+## Metadata Dinamis
+
+```tsx
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const produk = await ambilProduk(params.id);
+  return {
+    title: produk.nama,
+    description: produk.deskripsi,
+    openGraph: { images: [`/og/${produk.id}`] },
+  };
+}
+```
+
+## Gambar OG Otomatis
+
+```tsx
+// app/og/[id]/route.tsx
+import { ImageResponse } from "next/og";
+
+export async function GET(_req, { params }) {
+  const produk = await ambilProduk(params.id);
+  return new ImageResponse(
+    <div style={{ background: "#111", color: "white", padding: 40 }}>
+      {produk.nama}
+    </div>,
+    { width: 1200, height: 630 }
+  );
+}
+```
+
+## Robots dan Canonical
+
+```ts
+export const metadata = {
+  alternates: { canonical: "/produk/kopi" },
+  robots: { index: true, follow: true },
+};
+```
+
+<div class="note">💡 Sebagian besar URL sosial tidak mendukung gambar relatif. Selalu tentukan `metadataBase` agar Next.js bisa membangun URL absolut dengan benar.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export const metadata = {
+  title: 'Katalog Produk',
+  description: 'Belajar Next.js lewat contoh nyata.',
+  openGraph: { title: 'Katalog Produk', type: 'website' },
+};`}</code></pre>

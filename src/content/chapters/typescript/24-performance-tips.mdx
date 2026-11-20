@@ -1,0 +1,153 @@
+---
+title: "Performa & Best Practice TypeScript"
+description: "Menjaga kompilasi tetap cepat dan kode tetap mudah dirawat"
+order: 24
+quiz:
+  - q: "`skipLibCheck: true` mempercepat kompilasi dengan…"
+    options: ["Melewati pengecekan .d.ts", "Menghapus semua tipe", "Menonaktifkan strict", "Mengubah target"]
+    answer: 0
+    explain: "Konsekuensinya: error di file deklarasi pustaka tidak dilaporkan."
+  - q: "`import type` membantu performa karena…"
+    options: ["Dihapus saat kompilasi", "Lebih cepat di runtime", "Mengubah nilai", "Membuat cache"]
+    answer: 0
+    explain: "Tidak ada require/import runtime untuk tipe murni."
+  - q: "Incremental compilation diaktifkan dengan…"
+    options: ["incremental: true", "fast: true", "cache: true", "watch: true"]
+    answer: 0
+    explain: "TypeScript menyimpan info build di .tsbuildinfo."
+  - q: "`unknown` lebih baik dari `any` karena…"
+    options: ["Lebih aman", "Lebih cepat", "Lebih pendek", "Tidak ada beda"]
+    answer: 0
+    explain: "Memaksa narrowing sebelum pemakaian."
+  - q: "Barrel file berlebihan bisa…"
+    options: ["Mempercepat build", "Memperlambat build karena banyak modul dievaluasi", "Menghapus error", "Tidak berpengaruh"]
+    answer: 1
+    explain: "Bundler perlu mengikuti semua re-export."
+example:
+  code: |
+    {
+      "compilerOptions": {
+        "incremental": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "verbatimModuleSyntax": true
+      }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Seiring pertumbuhan proyek, waktu `tsc` bisa meningkat. Beberapa kebiasaan menjaga pengalaman pengembangan tetap menyenangkan.
+
+## Konfigurasi untuk Proyek Besar
+
+```json
+{
+  "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".cache/tsbuildinfo",
+    "skipLibCheck": true,
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+`incremental` menyimpan hasil kompilasi sebelumnya sehingga run berikutnya hanya memproses file yang berubah.
+
+## Pisahkan Typecheck dari Build
+
+```json
+{
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "vite build",
+    "test": "vitest"
+  }
+}
+```
+
+Biarkan bundler (Vite/esbuild/SWC) yang menghasilkan JS — mereka jauh lebih cepat. TypeScript cukup bertugas memeriksa tipe.
+
+## Kurangi any
+
+```ts
+// ❌
+function proses(data: any): any { ... }
+
+// ✅
+function proses(data: unknown): Hasil<Output> { ... }
+```
+
+Semakin sedikit `any`, semakin banyak bug yang tertangkap sebelum produksi.
+
+## Impor Efisien
+
+```ts
+import type { User } from "./types";
+import { ambilUser } from "./api";
+```
+
+Dengan `verbatimModuleSyntax`, kamu harus eksplisit memakai `import type` untuk tipe. Ini membuat output JS lebih bersih dan prediktabel.
+
+## Hindari Tipe Terlalu Kompleks
+
+```ts
+// ⚠️ sulit dibaca dan bisa melambatkan compiler
+type Aku = T extends infer U ? U extends V ? ... : ... : never;
+
+// ✅ pecah jadi beberapa langkah
+type Dasar = T extends V ? ... : ...;
+type Aku = Dasar extends W ? ... : ...;
+```
+
+Conditional type yang bersarang dalam bisa memicu error "Type instantiation is excessively deep".
+
+## Struktur Folder
+
+```
+src/
+  types/        → deklarasi global & skema
+  components/   → UI
+  lib/          → helper murni
+  hooks/        → logic reusable
+```
+
+Memisahkan tipe dari implementasi memudahkan navigasi dan mengurangi ketergantungan siklik.
+
+## Alat Bantu
+
+- `tsc --extendedDiagnostics` — melihat bagian mana yang paling lama.
+- `tsc --generateTrace` — jejak detail untuk analitik performa compiler.
+- ESLint + typescript-eslint — aturan tambahan di luar compiler.
+- `tsc --noEmit --pretty false` — output mudah dibaca di CI.
+
+<div class="note">💡 Jangan menurunkan `strict` demi menghilangkan error. Perbaiki penyebabnya — error tersebut biasanya memang menunjukkan bug nyata.</div>
+
+## Di Dunia Nyata
+
+- Monorepo memakai project references agar paket bisa dikompilasi paralel.
+- CI menjalankan `typecheck` sebelum test untuk fail fast.
+- `import type` mengurangi ukuran bundle pada proyek dengan banyak tipe shared.
+
+## Try it Yourself
+
+Ubah `as Pesanan` menjadi pengecekan nyata untuk menerapkan pola aman.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Pesanan {
+  id: number;
+  total: number;
+  status: "baru" | "diproses" | "selesai";
+}
+
+type Ringkas = Pick<Pesanan, "id" | "status">;
+
+function ringkas(p: Pesanan): Ringkas {
+  return { id: p.id, status: p.status };
+}
+
+const data: unknown = { id: 7, total: 50000, status: "baru" };
+console.log(ringkas(data as Pesanan));
+
+// try: tsc --extendedDiagnostics untuk melihat waktu kompilasi`} />

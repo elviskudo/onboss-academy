@@ -1,0 +1,122 @@
+---
+"title": "Operator"
+"description": "Operator aritmetika, perbandingan, logika, dan bitwise di Ruby"
+"order": 11
+"quiz":
+- "q": "Operator pangkat di Ruby adalah…"
+  "options":
+  - "^"
+  - "**"
+  - "pow"
+  - "^^"
+  "answer": 1
+  "explain": "2 ** 3 menghasilkan 8; ^ adalah XOR bitwise."
+- "q": "Hasil 7 / 2 di Ruby adalah…"
+  "options":
+  - "3"
+  - "3.5"
+  - "4"
+  - "error"
+  "answer": 0
+  "explain": "Pembagian dua integer menghasilkan integer. Tambahkan 2.0 untuk desimal."
+- "q": "Operator untuk mengecek kesamaan nilai adalah…"
+  "options":
+  - "="
+  - "=="
+  - "==="
+  - "equal?"
+  "answer": 1
+  "explain": "== membandingkan nilai; === dipakai pada pola case/when."
+- "q": "Operator &lt;=> dikenal sebagai…"
+  "options":
+  - "spaceship operator"
+  - "rocket operator"
+  - "hash rocket"
+  - "safe navigation"
+  "answer": 0
+  "explain": "&lt;=> mengembalikan -1, 0, atau 1."
+- "q": "Operator &amp;&amp; dan || memiliki sifat…"
+  "options":
+  - "eager"
+  - "short-circuit"
+  - "selalu true"
+  - "bitwise"
+  "answer": 1
+  "explain": "Keduanya berhenti begitu hasilnya bisa ditentukan."
+"example":
+  "code": "a = 7\nb = 2\nputs a + b\nputs a - b\nputs a * b\nputs a / b\nputs a % b\nputs a ** b\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby memperlakukan hampir semua hal sebagai objek, termasuk angka. Operator adalah method khusus yang bisa di-override pada kelas buatanmu.
+
+## Aritmetika
+
+| Operator | Arti | Contoh | Hasil |
+|---|---|---|---|
+| `+` | Tambah | `7 + 2` | `9` |
+| `-` | Kurang | `7 - 2` | `5` |
+| `*` | Kali | `7 * 2` | `14` |
+| `/` | Bagi | `7 / 2` | `3` |
+| `%` | Sisa | `7 % 2` | `1` |
+| `**` | Pangkat | `2 ** 3` | `8` |
+
+Gunakan `.to_f` atau literal desimal untuk hasil pecahan:
+
+```ruby
+puts 7 / 2.0  # 3.5
+```
+
+## Perbandingan
+
+`==`, `!=`, `>`, `<`, `>=`, `&lt;=`, dan `&lt;=>` (spaceship). Operator `&lt;=>` mengembalikan `-1`, `0`, atau `1` dan dipakai oleh `sort`.
+
+```ruby
+puts 5 <=> 10  # -1
+puts [3, 1, 2].sort # [1, 2, 3]
+```
+
+## Logika
+
+`&&`, `||`, `!` — atau bentuk kata `and`, `or`, `not` yang prioritasnya lebih rendah. `&&` dan `||` bersifat short-circuit.
+
+## Safe Navigation
+
+```ruby
+puts nama&.upcase  # nil, tanpa NoMethodError
+```
+
+`&.` memanggil method hanya jika penerimanya bukan `nil`.
+
+## Operator Sebagai Method
+
+```ruby
+class Titik
+  def +(other)
+    Titik.new(@x + other.x)
+  end
+end
+```
+
+Karena operator adalah method, kamu bisa mendefinisikan perilaku `+`, `==`, `[]`, dan lain-lain pada kelas sendiri.
+
+<div class="note">💡 Bedakan `==` (nilai sama) dengan `equal?` (objek yang benar-benar sama). Untuk objek string, `"a" == "a"` true meski dua objek berbeda.</div>
+
+
+## Try it Yourself
+
+Ubah nilai `a` dan `b`, lalu coba operator `**` atau `&lt;=>`.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`a = 17
+b = 5
+puts "a + b  = #{a + b}"
+puts "a - b  = #{a - b}"
+puts "a * b  = #{a * b}"
+puts "a / b  = #{a / b}"
+puts "a / b float = #{a / b.to_f}"
+puts "a % b  = #{a % b}"
+puts "a ** b = #{a**2}"
+puts "a &lt;=> b = #{a &lt;=> b}"
+puts "logika: #{a > b && b > 0}"
+puts "safe nav: #{nil&.upcase.inspect}"`} />

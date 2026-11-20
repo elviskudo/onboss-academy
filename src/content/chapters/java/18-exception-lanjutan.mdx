@@ -1,0 +1,132 @@
+---
+title: "Exception Lanjutan"
+description: "checked vs unchecked, try-with-resources, custom exception, dan exception chaining"
+order: 18
+quiz:
+  - q: "IOException termasuk…"
+    options: ["Checked exception", "Unchecked exception", "Error", "RuntimeException"]
+    answer: 0
+    explain: "Checked wajib ditangani atau dideklarasikan dengan throws."
+  - q: "NullPointerException termasuk…"
+    options: ["Checked", "Unchecked (RuntimeException)", "Error", "Throwable murni"]
+    answer: 1
+    explain: "RuntimeException tidak wajib ditangani compiler."
+  - q: "try-with-resources menjamin…"
+    options: ["Exception tidak terjadi", "Resource ditutup otomatis", "Lebih cepat", "Tidak perlu catch"]
+    answer: 1
+    explain: "Resource harus implements AutoCloseable; close() dipanggil otomatis."
+  - q: "Custom exception sebaiknya mewarisi…"
+    options: ["Object", "Exception atau RuntimeException", "String", "Thread"]
+    answer: 1
+    explain: "Exception untuk checked, RuntimeException untuk unchecked."
+  - q: "Blok finally dijalankan…"
+    options: ["Hanya saat sukses", "Hanya saat error", "Selalu (kecuali System.exit)", "Tidak pernah"]
+    answer: 2
+    explain: "finally tetap jalan walau ada return di try/catch."
+example:
+  code: |
+    import java.io.*;
+    
+    class SaldoKurang extends Exception {
+      SaldoKurang(String m) { super(m); }
+    }
+    
+    public class Main {
+      static int tarik(int saldo, int jumlah) throws SaldoKurang {
+        if (jumlah > saldo) throw new SaldoKurang("Saldo tidak cukup");
+        return saldo - jumlah;
+      }
+      public static void main(String[] args) {
+        try {
+          System.out.println(tarik(100, 150));
+        } catch (SaldoKurang e) {
+          System.out.println("Gagal: " + e.getMessage());
+        } finally {
+          System.out.println("Selesai");
+        }
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Java membedakan dua dunia exception: checked dan unchecked. Memahami perbedaannya menentukan API yang nyaman dipakai.
+
+## Hierarki
+
+```
+Throwable
+├── Error              → JVM bermasalah (OutOfMemoryError)
+└── Exception
+    ├── RuntimeException  → unchecked (NPE, IAE, IndexOutOfBounds)
+    └── IOException, SQLException, ClassNotFoundException → checked
+```
+
+## Checked vs Unchecked
+
+```java
+// checked → wajib
+public void baca() throws IOException {
+    Files.readString(Path.of("data.txt"));
+}
+
+// unchecked → opsional
+public void bagi(int a, int b) {
+    if (b == 0) throw new IllegalArgumentException("b nol");
+}
+```
+
+Gunakan checked untuk kondisi yang **bisa dipulihkan** oleh caller (file tidak ada, koneksi putus). Unchecked untuk bug programmer atau precondition yang dilanggar.
+
+## try-with-resources
+
+```java
+try (BufferedReader br = Files.newBufferedReader(Path.of("data.txt"))) {
+    return br.readLine();
+} catch (IOException e) {
+    throw new UncheckedIOException(e);
+}
+```
+
+Lebih aman dan pendek daripada `finally { br.close(); }`.
+
+## Custom Exception & Chaining
+
+```java
+class GagalBayar extends Exception {
+    GagalBayar(String pesan, Throwable sebab) {
+        super(pesan, sebab);   // cause menjaga stack trace asli
+    }
+}
+```
+
+## Exception di Lambda/Stream
+
+Checked exception tidak bisa dilempar langsung dari lambda `Function`. Bungkus dengan `RuntimeException` atau buat wrapper functional interface yang menyatakan `throws`.
+
+<div class="note">💡 Jangan menangkap `Exception` lalu hanya mencetaknya tanpa melakukan apa pun. Either tangani (retry, fallback, notifikasi) atau lempar ulang dengan konteks yang lebih jelas.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.io.*;
+
+class SaldoKurang extends Exception {
+  SaldoKurang(String m) { super(m); }
+}
+
+public class Main {
+  static int tarik(int saldo, int jumlah) throws SaldoKurang {
+    if (jumlah > saldo) throw new SaldoKurang("Saldo tidak cukup");
+    return saldo - jumlah;
+  }
+  public static void main(String[] args) {
+    try {
+      System.out.println(tarik(100, 150));
+    } catch (SaldoKurang e) {
+      System.out.println("Gagal: " + e.getMessage());
+    } finally {
+      System.out.println("Selesai");
+    }
+  }
+}`} />

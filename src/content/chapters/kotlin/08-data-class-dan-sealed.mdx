@@ -154,6 +154,10 @@ Ketika semua subtype tercakup, `when` sebagai ekspresi tidak perlu `else`. Bila 
 
 <div class="note">💡 when terhadap sealed class membuat compiler jadi rekan code review: bila kamu menambah varian baru, seluruh when yang belum menanganinya langsung menandai error.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`data class Produk(val nama: String, var harga: Int)
 
 sealed class Hasil {

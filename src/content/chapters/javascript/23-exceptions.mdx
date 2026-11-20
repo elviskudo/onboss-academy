@@ -1,0 +1,161 @@
+---
+title: "Exception & Debugging JS"
+description: "try/catch/finally, throw, error bawaan, dan teknik debugging"
+order: 23
+quiz:
+  - q: "Blok yang dijalankan baik error maupun tidak adalah…"
+    options: ["try", "catch", "finally", "throw"]
+    answer: 2
+    explain: "Finally selalu dijalankan, biasanya untuk cleanup."
+  - q: "`throw new Error('...')` berguna untuk…"
+    options: ["Membuat error kustom", "Menangkap error", "Menghentikan browser", "Membuat variabel"]
+    answer: 0
+    explain: "Throw membuat exception baru yang bisa ditangkap pemanggil."
+  - q: "`try { ... } catch (e) { ... }` — e adalah…"
+    options: ["Event", "Objek error", "Array", "Fungsi"]
+    answer: 1
+    explain: "Biasanya punya properti message, name, dan stack."
+  - q: "`debugger;` dalam kode akan…"
+    options: ["Menghapus variabel", "Menjeda eksekusi di DevTools saat debugger aktif", "Membuat error", "Menampilkan alert"]
+    answer: 1
+    explain: "Statement ini menjadi breakpoint programatik."
+  - q: "Error akibat mengakses properti nilai null disebut…"
+    options: ["TypeError", "SyntaxError", "ReferenceError", "RangeError"]
+    answer: 0
+    explain: "Mengakses properti null/undefined memicu TypeError."
+example:
+  code: |
+    try {
+      const data = JSON.parse(input);
+      console.log(data);
+    } catch (err) {
+      console.error(err.message);
+    } finally {
+      console.log("selesai");
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Exception adalah sinyal bahwa sesuatu tidak berjalan sesuai rencana. Penanganan yang baik membuat aplikasi tetap responsif dan memberi petunjuk yang berguna.
+
+## try / catch / finally
+
+```js
+try {
+  const data = JSON.parse(teksDariApi);
+  tampilkan(data);
+} catch (err) {
+  console.error("Gagal memproses:", err.message);
+  tampilkanPesanError();
+} finally {
+  setLoading(false); // tetap jalan
+}
+```
+
+`catch` bisa memiliki binding opsional: `catch {}`. `finally` berguna untuk menutup koneksi, menghentikan spinner, atau melepaskan resource.
+
+## Melempar Error
+
+```js
+function bagi(a, b) {
+  if (b === 0) throw new Error("Pembagi tidak boleh nol");
+  return a / b;
+}
+```
+
+Buat subclass Error untuk error domain:
+
+```js
+class ValidasiError extends Error {
+  constructor(field, pesan) {
+    super(pesan);
+    this.name = "ValidasiError";
+    this.field = field;
+  }
+}
+```
+
+## Jenis Error Bawaan
+
+| Error | Penyebab umum |
+|-------|---------------|
+| `SyntaxError` | Kode tidak valid saat parse |
+| `ReferenceError` | Variabel belum didefinisikan |
+| `TypeError` | Properti/method pada null atau tipe salah |
+| `RangeError` | Nilai di luar rentang |
+| `URIError` | encode/decode URI salah |
+
+## Async Error
+
+```js
+async function ambil() {
+  try {
+    const res = await fetch("/api/data");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch gagal:", err);
+    throw err; // opsional: lempar lagi ke pemanggil
+  }
+}
+```
+
+`try/catch` biasa **tidak** menangkap error dari Promise yang tidak di-`await`. Untuk itu pakai `.catch()`.
+
+## Error Global
+
+```js
+window.addEventListener("error", e => {
+  console.error("Error tidak tertangkap:", e.error || e.message);
+});
+window.addEventListener("unhandledrejection", e => {
+  console.error("Promise ditolak:", e.reason);
+});
+```
+
+Berguna untuk logging terpusat, tapi jangan dijadikan pengganti penanganan lokal.
+
+## Teknik Debugging
+
+- `console.log()`, `console.table()`, `console.group()`.
+- `debugger;` — breakpoint dari dalam kode.
+- DevTools: Sources → breakpoint, watch expression, call stack.
+- `console.trace()` — melihat jejak pemanggilan.
+- `performance.now()` — mengukur durasi.
+
+```js
+console.time("proses");
+data.map(transform);
+console.timeEnd("proses");
+```
+
+<div class="note">💡 Jangan menelan error dengan `catch {}` kosong. Minimal log atau tampilkan pesan — error yang hilang adalah bug yang tertunda.</div>
+
+## Di Dunia Nyata
+
+- Form menampilkan pesan validasi spesifik per field.
+- Service API mengubah error jaringan menjadi pesan ramah pengguna.
+- Aplikasi produksi mengirim error ke Sentry atau layanan monitoring serupa.
+
+## Try it Yourself
+
+Ubah pembagi menjadi 2 atau hapus blok catch untuk melihat bedanya.
+
+<TryIt lang="javascript" runtime="client-js" code={`function bagi(a, b) {
+  if (b === 0) throw new Error("Pembagi tidak boleh nol");
+  return a / b;
+}
+try {
+  console.log(bagi(10, 2));
+  console.log(bagi(10, 0));
+} catch (err) {
+  console.error("Tertangkap:", err.name, "-", err.message);
+} finally {
+  console.log("Blok finally selalu jalan");
+}
+try {
+  JSON.parse("{invalid}");
+} catch (err) {
+  console.log("JSON error:", err.name);
+}`} />

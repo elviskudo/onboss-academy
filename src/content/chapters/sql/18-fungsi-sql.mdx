@@ -1,0 +1,111 @@
+---
+title: "Fungsi Built-in yang Sering Dipakai"
+description: "Fungsi string, angka, tanggal, dan NULL handling lintas database"
+order: 18
+quiz:
+  - q: "Fungsi untuk menggabungkan string di SQLite adalah…"
+    options: ["CONCAT()", "||", "JOIN()", "MERGE()"]
+    answer: 1
+    explain: "SQLite memakai ||; MySQL memakai CONCAT()."
+  - q: "COALESCE(a, b) menghasilkan…"
+    options: ["a bila a tidak NULL, jika tidak b", "Selalu b", "Selalu a", "Jumlah a dan b"]
+    answer: 0
+    explain: "COALESCE mengambil argumen pertama yang bukan NULL."
+  - q: "Fungsi membulatkan angka adalah…"
+    options: ["ROUND()", "RND()", "FLOOR() saja", "CEIL() saja"]
+    answer: 0
+    explain: "ROUND(x, n) membulatkan x sampai n desimal."
+  - q: "Fungsi mengambil panjang teks di SQLite adalah…"
+    options: ["LEN()", "LENGTH()", "SIZE()", "CHAR_COUNT()"]
+    answer: 1
+    explain: "SQLite/PostgreSQL memakai LENGTH(); SQL Server memakai LEN()."
+  - q: "Fungsi mengganti NULL dengan nilai lain adalah…"
+    options: ["ISNULL() saja", "COALESCE()", "REPLACE()", "NVL() di semua database"]
+    answer: 1
+    explain: "COALESCE adalah fungsi standar SQL yang tersedia luas."
+example:
+  code: |
+    SELECT nama, UPPER(nama) AS kapital, LENGTH(nama) AS panjang, COALESCE(dept, '-') AS unit FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi bawaan mengubah nilai di dalam query tanpa harus menulis kode aplikasi. Sintaksnya bisa berbeda antar database, jadi selalu cek dokumentasi engine yang dipakai.
+
+## Fungsi String
+
+| Fungsi | SQLite / PostgreSQL | Contoh |
+| --- | --- | --- |
+| Huruf kapital | `UPPER(x)` | `UPPER('ana')` → ANA |
+| Huruf kecil | `LOWER(x)` | `LOWER('ANA')` → ana |
+| Panjang | `LENGTH(x)` | `LENGTH('Rani')` → 4 |
+| Potong | `SUBSTR(x, awal, n)` | `SUBSTR('2026-11', 1, 4)` → 2026 |
+| Gabung | `x \|\| y` | `'A' \|\| 'B'` → AB |
+| Buang spasi | `TRIM(x)` | `TRIM(' R ')` → R |
+
+Di MySQL, `SUBSTRING()` dan `CONCAT()` lebih umum dipakai.
+
+## Fungsi Angka
+
+```sql
+SELECT ROUND(AVG(gaji), 0) AS rata,
+       MIN(gaji) AS terendah,
+       MAX(gaji) AS tertinggi,
+       SUM(gaji) AS total
+FROM karyawan;
+```
+
+`ROUND(x)` membulatkan ke bilangan bulat; `ROUND(x, 2)` menyimpan dua angka desimal. `ABS(x)` nilai mutlak, `MOD(a, b)` sisa bagi.
+
+## Fungsi Tanggal
+
+```sql
+-- SQLite
+SELECT date('now') AS hari_ini,
+       strftime('%Y', '2026-11-20') AS tahun;
+
+-- PostgreSQL
+SELECT CURRENT_DATE,
+       EXTRACT(YEAR FROM DATE '2026-11-20') AS tahun;
+```
+
+Format tanggal antar engine berbeda. Simpan tanggal dalam format ISO `YYYY-MM-DD` agar perbandingan string tetap benar.
+
+## NULL Handling
+
+```sql
+SELECT COALESCE(dept, 'Tanpa unit') AS unit FROM karyawan;
+SELECT NULLIF(gaji, 0) AS gaji_aman FROM karyawan;
+```
+
+`COALESCE` memberi cadangan bila NULL. `NULLIF(a, b)` menghasilkan NULL bila `a = b` — trik ini mencegah pembagian dengan nol: `total / NULLIF(jumlah, 0)`.
+
+## CASE sebagai Fungsi
+
+```sql
+SELECT nama,
+       CASE WHEN gaji >= 10000000 THEN 'Senior' ELSE 'Reguler' END AS level
+FROM karyawan;
+```
+
+CASE bisa dipakai di mana pun ekspresi diizinkan: SELECT, WHERE, ORDER BY, GROUP BY,甚至 HAVING.
+
+<div class="note">💡 Fungsi pada kolom yang di-index sering membuat index tidak terpakai. `WHERE UPPER(nama) = 'ANI'` lebih lambat daripada menyimpan kolom `nama_upper` yang sudah dinormalisasi.</div>
+
+## Di Dunia Nyata
+
+- **Label UI**: `UPPER()` dan `SUBSTR()` merapikan teks sebelum ditampilkan.
+- **Format laporan**: `ROUND()` menghindari angka desimal panjang di tabel.
+- **Data opsional**: `COALESCE()` mencegah tampilan kosong pada dashboard.
+- **Keamanan pembagian**: `NULLIF()` menghindari error divide-by-zero.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama,
+       UPPER(nama) AS huruf_kapital,
+       LENGTH(nama) AS panjang_nama,
+       COALESCE(dept, 'Tanpa unit') AS unit,
+       ROUND(gaji / 1000000.0, 1) AS juta
+FROM karyawan
+ORDER BY panjang_nama DESC;`} />

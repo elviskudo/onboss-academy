@@ -1,0 +1,105 @@
+---
+title: "Dependency Injection Lanjutan"
+description: "providedIn, token, provider override, dan hierarchical injector"
+order: 14
+quiz:
+  - q: "`providedIn: 'root'` berarti service…"
+    options: ["Tidak bisa di-inject", "Dibuat tiap permintaan", "Tersedia sebagai singleton di seluruh aplikasi", "Hanya di satu komponen"]
+    answer: 2
+    explain: "Angular membuat satu instance untuk root injector."
+  - q: "Fungsi modern untuk mengambil dependensi adalah…"
+    options: ["provide()", "inject()", "get()", "use()"]
+    answer: 1
+    explain: "inject() dipakai di field initializer atau factory."
+  - q: "InjectionToken berguna untuk…"
+    options: ["Membuat komponen", "Mengirim HTML", "Mengganti CSS", "Nilai non-kelas seperti konfigurasi"]
+    answer: 3
+    explain: "Token memberi identitas pada nilai apa pun."
+  - q: "Provider di level komponen berarti…"
+    options: ["Selalu singleton", "Instance baru untuk komponen dan anaknya", "Instance global", "Tidak ada instance"]
+    answer: 1
+    explain: "Hierarki injector menentukan cakupan instance."
+  - q: "Decorator klasik untuk menyuntik dependensi adalah…"
+    options: ["@Inject", "@Provide", "@Service", "@Token"]
+    answer: 0
+    explain: "`@Inject(TOKEN)` dipakai bila tipenya tidak bisa dibaca langsung."
+example:
+  code: |
+    export const API_URL = new InjectionToken<string>("API_URL");
+
+    providers: [{ provide: API_URL, useValue: "/api/v1" }]
+
+    const url = inject(API_URL);
+---
+
+Dependency Injection (DI) membuat komponen tidak perlu membuat sendiri objek yang ia butuhkan. Angular yang menyediakannya.
+
+## Service Singleton
+
+```typescript
+import { Injectable } from "@angular/core";
+
+@Injectable({ providedIn: "root" })
+export class KeranjangService {
+  private items: string[] = [];
+
+  tambah(nama: string) { this.items.push(nama); }
+  daftar() { return [...this.items]; }
+}
+```
+
+Pemakaian di komponen:
+
+```typescript
+export class HeaderComponent {
+  private keranjang = inject(KeranjangService);
+
+  get jumlah() { return this.keranjang.daftar().length; }
+}
+```
+
+## InjectionToken
+
+```typescript
+import { InjectionToken } from "@angular/core";
+
+export const API_URL = new InjectionToken<string>("API_URL");
+
+// di app.config.ts
+export const appConfig: ApplicationConfig = {
+  providers: [{ provide: API_URL, useValue: "/api/v1" }],
+};
+
+// di service
+const url = inject(API_URL);
+```
+
+## Beberapa Bentuk Provider
+
+| Bentuk | Fungsi |
+|--------|--------|
+| `useValue` | nilai tetap |
+| `useClass` | kelas pengganti |
+| `useFactory` | dibuat lewat fungsi |
+| `useExisting` | alias ke provider lain |
+
+```typescript
+{ provide: Logger, useClass: LoggerProduksi }
+{ provide: MODE, useFactory: () => isDevMode() ? "dev" : "prod" }
+```
+
+## Hierarki
+
+Provider di root terlihat semua komponen. Provider di komponen hanya terlihat komponen itu dan anaknya. Ini berguna untuk state yang memang lokal per fitur.
+
+<div class="note">💡 DI bukan sekadar "new otomatis". Dengan token dan provider, kamu bisa mengganti implementasi saat testing tanpa mengubah kode komponen.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export const API_URL = new InjectionToken<string>("API_URL");
+
+providers: [{ provide: API_URL, useValue: "/api/v1" }]
+
+const url = inject(API_URL);`}</code></pre>

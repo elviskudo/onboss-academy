@@ -1,0 +1,104 @@
+---
+"title": "Query Active Record"
+"description": "Mencari data dengan where, order, limit, pluck, dan lazy loading relation"
+"order": 13
+"quiz":
+- "q": "Metode Active Record yang menghasilkan SQL WHERE adalah…"
+  "options":
+  - "where"
+  - "find"
+  - "all"
+  - "count"
+  "answer": 0
+  "explain": "where(kolom: nilai) diterjemahkan menjadi klausa WHERE."
+- "q": "Sifat Chainable dari ActiveRecord::Relation berarti…"
+  "options":
+  - "Langsung mengeksekusi query"
+  - "Bisa dirantai sebelum query dijalankan"
+  - "Hanya untuk database SQLite"
+  - "Menghapus data"
+  "answer": 1
+  "explain": "Relation baru dieksekusi saat hasilnya dibutuhkan (lazy)."
+- "q": "Metode untuk mengambil hanya kolom tertentu adalah…"
+  "options":
+  - "select"
+  - "pluck"
+  - "pick"
+  - "columns"
+  "answer": 1
+  "explain": "pluck mengambil array nilai kolom tanpa memuat objek model."
+- "q": "Cara mengurutkan hasil secara menurun adalah…"
+  "options":
+  - "order(:created_at)"
+  - "order(created_at: :desc)"
+  - "sort desc"
+  - "reverse"
+  "answer": 1
+  "explain": "order(created_at: :desc) menghasilkan ORDER BY created_at DESC."
+- "q": "Metode untuk menghitung jumlah baris adalah…"
+  "options":
+  - "size"
+  - "count"
+  - "length"
+  - "total"
+  "answer": 1
+  "explain": "count menjalankan SELECT COUNT(*) di database."
+"example":
+  "code": "class ArticlesController &lt; ApplicationController\n  def index\n    @articles = Article\n      .where(published: true)\n      .where(\"title LIKE ?\", \"%rails%\")\n      .order(created_at: :desc)\n      .limit(10)\n  end\nend\n"
+---
+
+## Relation itu Lazy
+
+```ruby
+class ArticlesController < ApplicationController
+  def index
+    @articles = Article
+      .where(published: true)
+      .where("title LIKE ?", "%rails%")
+      .order(created_at: :desc)
+      .limit(10)
+  end
+end
+```
+
+```ruby
+relasi = Article.where(published: true)
+```
+
+Pada baris itu, belum ada query yang dikirim ke database. Query terjadi saat relasi dipakai — misalnya di view lewat `each`, atau saat dipanggil `to_a`, `count`, `first`.
+
+Karena lazy, relasi bisa dirantai:
+
+```ruby
+Article.where(published: true).order(:title).limit(5)
+```
+
+## Perintah yang Sering Dipakai
+
+| Metode | SQL yang mirip | Contoh |
+|---|---|---|
+| `where` | WHERE | `where(status: "aktif")` |
+| `not` | NOT | `where.not(status: "arsip")` |
+| `order` | ORDER BY | `order(created_at: :desc)` |
+| `limit` / `offset` | LIMIT / OFFSET | `limit(10).offset(20)` |
+| `pluck` | SELECT kolom | `pluck(:title)` |
+| `distinct` | DISTINCT | `distinct.pluck(:kota)` |
+
+## Hindari SQL Mentah
+
+```ruby
+# aman — placeholder menghindari injeksi
+Article.where("title LIKE ?", "%#{kata}%")
+```
+
+Jangan menggabungkan input user langsung ke string SQL. Placeholder `?` atau named bind membuat database mengirim nilai sebagai data, bukan perintah.
+
+## N+1 Query
+
+Saat menampilkan `article.author.name` untuk 50 artikel, Rails bisa melakukan 51 query. `includes` mengambil penulis sekaligus:
+
+```ruby
+Article.includes(:author).limit(50)
+```
+
+<div class="note">💡 Gunakan <code>find_by</code> untuk satu baris (menghasilkan nil atau objek) dan <code>find</code> bila baris harus ada — <code>find</code> melempar RecordNotFound bila tidak ketemu.</div>

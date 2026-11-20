@@ -1,0 +1,124 @@
+---
+title: "Kode C yang Aman"
+description: "buffer overflow, integer overflow, undefined behavior, dan teknik defensif"
+order: 26
+quiz:
+  - q: "Undefined behavior berarti…"
+    options: ["Program selalu crash", "Compiler bebas melakukan apa pun", "Error saat compile", "Selalu menghasilkan 0"]
+    answer: 1
+    explain: "Hasilnya tidak dijamin oleh standar — bisa tampak normal atau meledak."
+  - q: "Buffer overflow terjadi saat…"
+    options: ["Menulis melewati batas array", "Array terlalu kecil", "Pointer NULL", "Stack penuh"]
+    answer: 0
+    explain: "Ini sumber banyak kerentanan keamanan."
+  - q: "Fungsi yang lebih aman daripada strcpy adalah…"
+    options: ["strncpy / snprintf", "gets", "sprintf", "atoi"]
+    answer: 0
+    explain: "Fungsi dengan batas ukuran mencegah overflow."
+  - q: "Integer overflow pada unsigned terjadi saat…"
+    options: ["Nilai melebihi kapasitas", "Nilai negatif", "Dibagi nol", "Dikonversi ke float"]
+    answer: 0
+    explain: "Unsigned overflow terdefinisi (wrap-around), signed overflow adalah UB."
+  - q: "Cara terbaik mencegah bug memori saat development adalah…"
+    options: ["Sanitizer + review", "Menambah printf", "Menghapus free", "Menggunakan gets"]
+    answer: 0
+    explain: "AddressSanitizer/UndefinedBehaviorSanitizer mendeteksi banyak kasus secara otomatis."
+example:
+  code: |
+    #include <stdio.h>
+    #include <string.h>
+    
+    safe_copy(char *dst, size_t kapasitas, const char *src) {
+        if (!dst || !src || kapasitas == 0) return;
+        snprintf(dst, kapasitas, "%s", src);
+    }
+    
+    int main(void) {
+        char kecil[8];
+        safe_copy(kecil, sizeof kecil, "teks yang sangat panjang");
+        printf("%s\n", kecil);  /* otomatis terpotong aman */
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C memberi kontrol penuh atas memori — dan juga tanggung jawab penuh. Memahami cara kode bisa salah adalah bagian dari keahlian C.
+
+## Undefined Behavior (UB)
+
+Contoh UB:
+
+```c
+int i = 5;
+i = i++ + ++i;      /* urutan evaluasi tidak ditentukan */
+int a[3]; a[5] = 1; /* out of bounds */
+int *p = NULL; *p = 1;
+int x; printf("%d", x);  /* belum diinisialisasi */
+```
+
+Compiler boleh mengoptimalkan dengan asumsi UB tidak terjadi — akibatnya bug bisa hilang di debug dan muncul di release.
+
+## Buffer Overflow
+
+```c
+char nama[16];
+strcpy(nama, input_panjang);   /* BAHAYA */
+gets(nama);                    /* JANGAN PERNAH */
+```
+
+Ganti dengan:
+
+```c
+fgets(nama, sizeof nama, stdin);
+snprintf(nama, sizeof nama, "%s", input);
+```
+
+## Overflow Integer
+
+```c
+unsigned char x = 255;
+x++;   /* 0 (wrap-around, terdefinisi) */
+
+int y = 2147483647;
+y++;   /* UB pada signed int */
+```
+
+Cek batas sebelum operasi bila nilai berasal dari input eksternal.
+
+## Defensive Coding
+
+1. Selalu cek pointer sebelum dereference.
+2. Selalu cek hasil `malloc`.
+3. Gunakan ukuran `sizeof *ptr`.
+4. Inisialisasi variabel lokal.
+5. Batasi semua operasi string.
+6. Aktifkan warning: `gcc -Wall -Wextra -Werror`.
+
+## Sanitizer
+
+```bash
+gcc -fsanitize=address,undefined -g program.c -o program
+```
+
+Jalankan test suite dengan sanitizer secara rutin — ini menangkap bug yang mustahil dilihat hanya dengan membaca kode.
+
+<div class="note">💡 Anggap semua input dari luar (user, file, jaringan) sebagai berbahaya. Validasi panjang, rentang, dan format sebelum memprosesnya.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <string.h>
+
+safe_copy(char *dst, size_t kapasitas, const char *src) {
+    if (!dst || !src || kapasitas == 0) return;
+    snprintf(dst, kapasitas, "%s", src);
+}
+
+int main(void) {
+    char kecil[8];
+    safe_copy(kecil, sizeof kecil, "teks yang sangat panjang");
+    printf("%s\n", kecil);  /* otomatis terpotong aman */
+    return 0;
+}`} />

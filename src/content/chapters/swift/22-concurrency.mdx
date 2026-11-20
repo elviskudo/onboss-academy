@@ -1,0 +1,146 @@
+---
+"title": "Concurrency Modern"
+"description": "async/await, actor, Task, dan async let pada Swift"
+"order": 22
+"quiz":
+- "q": "Kata kunci untuk fungsi asynchronous adalah…"
+  "options":
+  - "await"
+  - "async"
+  - "suspend"
+  - "defer"
+  "answer": 1
+  "explain": "func ambil() async -> Data { ... }."
+- "q": "Memanggil fungsi async memakai…"
+  "options":
+  - "async"
+  - "try"
+  - "await"
+  - "yield"
+  "answer": 2
+  "explain": "await menandai potensi suspension point."
+- "q": "Actor melindungi…"
+  "options":
+  - "File statis"
+  - "Enum"
+  - "Protokol"
+  - "State mutable yang diakses banyak task"
+  "answer": 3
+  "explain": "Actor memastikan hanya satu task mengakses state pada satu waktu."
+- "q": "async let berguna untuk…"
+  "options":
+  - "Menjalankan beberapa task concurrently"
+  - "Membuat variabel konstanta"
+  - "Mengganti actor"
+  - "Menunda ekssekusi"
+  "answer": 0
+  "explain": "Hasil diambil dengan await di akhir."
+- "q": "Task.detached berbeda dari Task biasa karena…"
+  "options":
+  - "Lebih lambat"
+  - "Tidak mewarisi context/actor"
+  - "Hanya untuk UI"
+  - "Tidak bisa dibatalkan"
+  "answer": 1
+  "explain": "Gunakan dengan hati-hati karena konteks tidak diteruskan."
+"example":
+  "code": "actor Counter {\n    private var nilai = 0\n\n    func naik() {\n        nilai += 1\n    }\n\n    func baca() -> Int { nilai }\n}\n\nfunc ambilData() async -> String {\n    await Task.sleep(1_000_000_000)\n    return \"Data siap\"\n}\n\nTask {\n    let c = Counter()\n    await c.naik()\n    print(await c.baca())\n    print(await ambilData())\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## async/await
+
+```swift
+actor Counter {
+    private var nilai = 0
+
+    func naik() {
+        nilai += 1
+    }
+
+    func baca() -> Int { nilai }
+}
+
+func ambilData() async -> String {
+    await Task.sleep(1_000_000_000)
+    return "Data siap"
+}
+
+Task {
+    let c = Counter()
+    await c.naik()
+    print(await c.baca())
+    print(await ambilData())
+}
+```
+
+```swift
+func unduh(_ url: URL) async throws -> Data {
+    let (data, _) = try await URLSession.shared.data(from: url)
+    return data
+}
+
+let data = try await unduh(url)
+```
+
+Kode asynchronous terbaca seperti kode synchronous — tanpa pyramid of doom callback.
+
+## Actor
+
+```swift
+actor Dompet {
+    private var saldo = 0
+
+    func setor(_ n: Int) { saldo += n }
+    func total() -> Int { saldo }
+}
+```
+
+Akses ke properti actor dari luar harus memakai `await`, karena bisa menunggu giliran.
+
+## Structured Concurrency
+
+```swift
+async let a = ambilA()
+async let b = ambilB()
+let hasil = await (a, b)
+```
+
+Bila salah satu gagal, yang lain otomatis dibatalkan saat scope selesai.
+
+| Alat | Fungsi |
+|---|---|
+| `Task { }` | unit kerja asynchronous |
+| `async let` | beberapa child task |
+| `TaskGroup` | jumlah task dinamis |
+| `withTaskCancellationHandler` | merespons pembatalan |
+
+<div class="note">💡 Gunakan `@MainActor` untuk kode yang menyentuh UI. Actor memastikan pembaruan antarmuka terjadi di thread utama tanpa sembarang `DispatchQueue.main.async`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`actor Counter {
+    private var nilai = 0
+
+    func naik() {
+        nilai += 1
+    }
+
+    func baca() -> Int { nilai }
+}
+
+func ambilData() async -> String {
+    await Task.sleep(1_000_000_000)
+    return "Data siap"
+}
+
+Task {
+    let c = Counter()
+    await c.naik()
+    print(await c.baca())
+    print(await ambilData())
+}`} />

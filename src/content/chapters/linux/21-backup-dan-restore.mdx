@@ -1,0 +1,122 @@
+---
+title: Strategi Backup dan Restore
+description: Merancang backup yang bisa dipercaya dan menguji pemulihannya.
+order: 21
+quiz:
+- q: Aturan 3-2-1 berarti…
+  options:
+  - 3 user, 2 admin, 1 root
+  - 3 salinan, 2 media, 1 lokasi offsite
+  - 3 server, 2 backup, 1 cloud
+  - 3 hari, 2 jam, 1 menit
+  answer: 1
+  explain: Aturan ini mengurangi risiko kehilangan data karena satu titik gagal.
+- q: Backup inkremental menyimpan…
+  options:
+  - Hanya file kecil
+  - Hanya log
+  - Perubahan sejak backup terakhir
+  - Semua data setiap kali
+  answer: 2
+  explain: Lebih hemat ruang dan waktu, tapi restore perlu rangkaian lengkap.
+- q: Perintah rsync yang benar untuk sinkron aman adalah…
+  options:
+  - rsync -copy sumber tujuan
+  - cp -r --sync sumber tujuan
+  - sync sumber tujuan
+  - rsync -avz sumber/ tujuan/
+  answer: 3
+  explain: -a mengawetkan atribut, -v verbose, -z kompresi.
+- q: Mengapa backup harus diuji?
+  options:
+  - Karena backup yang tidak bisa di-restore tidak berguna
+  - Karena ingin menghemat ruang
+  - Karena harus dihapus
+  - Karena tidak ada alasan
+  answer: 0
+  explain: Uji restore secara berkala pada lingkungan terpisah.
+- q: Snapshot berbeda dari backup karena…
+  options:
+  - Hanya untuk file teks
+  - Biasanya tidak berada di lokasi terpisah
+  - Selalu terenkripsi
+  - Tidak bisa dibuat
+  answer: 1
+  explain: Snapshot cepat untuk rollback, tapi bukan pengganti backup offsite.
+example:
+  code: 'rsync -avz --delete /srv/app/ /backup/app/
+
+    tar -czf /backup/app-$(date +%F).tar.gz /srv/app
+
+    # simulasi restore
+
+    mkdir -p /tmp/restore && tar -xzf /backup/app-$(date +%F).tar.gz -C /tmp/restore
+
+    '
+---
+
+
+Backup yang baik diukur dari **kemampuan restore**, bukan dari ukuran file hasil backup.
+
+## Aturan 3-2-1
+
+```text
+3 salinan data
+2 jenis media berbeda
+1 salinan di lokasi terpisah
+```
+
+## Jenis Backup
+
+| Jenis | Kelebihan | Kekurangan |
+|---|---|---|
+| Full | restore paling cepat | ruang besar |
+| Inkremental | hemat ruang | restore bertahap |
+| Differensial | tengah-tengah | makin lama makin besar |
+| Snapshot | sangat cepat | bukan offsite |
+
+## rsync
+
+```bash
+rsync -avz /srv/app/ /backup/app/
+rsync -avz --delete /srv/app/ /backup/app/
+rsync -avz -e ssh /srv/app/ user@backup:/backup/
+```
+
+Opsi `--delete` menyamakan tujuan dengan sumber — hati-hati salah arah bisa menghapus data.
+
+## Backup Database
+
+```bash
+mysqldump -u user -p namadb | gzip > db.sql.gz
+pg_dump namadb | gzip > db.sql.gz
+```
+
+```bash
+gunzip < db.sql.gz | mysql -u user -p namadb
+```
+
+## Otomatisasi
+
+```bash
+# /etc/cron.d/backup
+0 2 * * * root /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+```
+
+```bash
+#!/bin/bash
+set -euo pipefail
+TANGGAL=$(date +%F)
+tar -czf "/backup/app-$TANGGAL.tar.gz" /srv/app
+find /backup -name "app-*.tar.gz" -mtime +30 -delete
+```
+
+<div class="note">💡 Simpan checksum backup. Jika file berubah tanpa sengaja, perbandingan hash membantu mendeteksi korupsi sebelum restore diperlukan.</div>
+
+## Checklist Restore
+
+1. Pilih backup yang tepat.
+2. Restore ke lokasi sementara.
+3. Verifikasi file dan izin.
+4. Uji aplikasi bila memungkinkan.
+5. Dokumentasikan waktu dan hasilnya.

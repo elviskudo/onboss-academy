@@ -1,0 +1,123 @@
+---
+title: 'Trie: Pohon Prefiks'
+description: Struktur pohon untuk menyimpan dan mencari kata berdasarkan awalan secara cepat.
+order: 19
+quiz:
+- q: Trie menyimpan…
+  options:
+  - Seluruh kata dalam satu node
+  - Hash kata
+  - Urutan angka
+  - Karakter per node沿着 kata
+  answer: 3
+  explain: Setiap jalur dari akar membentuk sebuah prefiks/kata.
+- q: Keunggulan trie untuk autocomplete adalah…
+  options:
+  - Semua kata dengan prefiks tertentu berada di subtree yang sama
+  - Menghapus huruf vokal
+  - Mengurutkan alphabetis otomatis
+  - Tidak butuh memori
+  answer: 0
+  explain: Cukup turun ke prefiks lalu kumpulkan kata di bawahnya.
+- q: Kompleksitas pencarian kata panjang m adalah…
+  options:
+  - O(1)
+  - O(m)
+  - O(log m)
+  - O(m^2)
+  answer: 1
+  explain: Cukup mengikuti satu karakter per level.
+- q: Penanda akhir kata pada trie biasanya…
+  options:
+  - Hash tambahan
+  - Tanda baca
+  - Boolean is_word di node
+  - Node khusus akar
+  answer: 2
+  explain: Dibutuhkan karena sebuah kata bisa menjadi prefiks kata lain.
+- q: Kekurangan trie dibanding hash set adalah…
+  options:
+  - Pencarian lebih lambat
+  - Tidak bisa insert
+  - Hanya untuk angka
+  - Penggunaan memori lebih besar
+  answer: 3
+  explain: Banyak node pointer membuatnya boros untuk vocabulary besar.
+example:
+  code: "class Node:\n    def __init__(self):\n        self.anak = {}\n        self.akhir = False\n\nakar = Node()\ndef sisip(kata):\n    node = akar\n    for c in kata:\n        node = node.anak.setdefault(c, Node())\n    node.akhir = True\n\nsisip(\"kucing\"); sisip(\"kuci\")\nprint(\"kucing\" in str(akar.anak))\n"
+---
+
+
+**Trie** (prefix tree) menyimpan kata karakter demi karakter. Cocok saat kita sering bertanya: “kata apa saja yang diawali ...?”
+
+## Struktur
+
+```text
+        (akar)
+         /   \
+        k     m
+       / \     \
+      a   u     a
+     /     \     \
+    r      c     k
+   /        \
+  u         i
+ /           \
+s             n
+```
+
+```python
+class Node:
+    def __init__(self):
+        self.anak = {}
+        self.akhir = False
+
+def sisip(akar, kata):
+    node = akar
+    for ch in kata:
+        node = node.anak.setdefault(ch, Node())
+    node.akhir = True
+
+def cari(akar, kata):
+    node = akar
+    for ch in kata:
+        if ch not in node.anak:
+            return False
+        node = node.anak[ch]
+    return node.akhir
+```
+
+## Autocomplete
+
+```python
+def prefiks(akar, awal):
+    node = akar
+    for ch in awal:
+        if ch not in node.anak:
+            return []
+        node = node.anak[ch]
+    hasil = []
+    def kumpulkan(n, s):
+        if n.akhir:
+            hasil.append(s)
+        for ch, nxt in n.anak.items():
+            kumpulkan(nxt, s + ch)
+    kumpulkan(node, awal)
+    return hasil
+```
+
+| Operasi | Kompleksitas |
+|---|---|
+| Insert | O(m) |
+| Cari kata | O(m) |
+| Cari prefiks | O(m + hasil) |
+| Ruang | O(total karakter) |
+
+<div class="note">💡 Trie menghemat waktu tetapi mengorbankan memori. Untuk vocabulary jutaan kata, pertimbangkan compact trie / radix tree yang menggabungkan rantai node tunggal.</div>
+
+## Aplikasi Lain
+
+- Spell checker dan koreksi ejaan.
+- Routing IP (longest prefix match).
+- Pencarian kata kunci real-time.
+- Kompresi teks dengan encoding kamus.

@@ -1,0 +1,67 @@
+---
+title: "Instalasi Docker"
+description: "Memasang Docker Engine di Linux, macOS, dan Windows serta memverifikasi instalasi"
+order: 9
+quiz:
+  - q: "Perintah untuk mengecek versi Docker Engine adalah…"
+    options: ["engine -v", "docker --version", "docker info version", "version docker"]
+    answer: 1
+    explain: "docker --version menampilkan versi client dan engine yang terpasang."
+  - q: "docker info berguna untuk…"
+    options: ["Membuat Dockerfile", "Mengganti password registry", "Melihat detail daemon: driver storage, jumlah container, dan resource", "Menghapus semua image"]
+    answer: 2
+    explain: "docker info memberikan gambaran kondisi daemon secara lengkap."
+  - q: "Di Linux, Docker berjalan sebagai…"
+    options: ["Ekstensi browser", "Modul kernel userspace", "Cron job", "Daemon systemd docker.service"]
+    answer: 3
+    explain: "Engine dijalankan oleh systemd; user perlu bergabung ke grup docker atau menjalankan perintah dengan sudo."
+  - q: "docker run hello-world akan…"
+    options: ["Menarik image kecil lalu menjalankannya untuk verifikasi", "Menghapus sistem", "Membuat jaringan baru", "Mengompilasi kode"]
+    answer: 0
+    explain: "Image hello-world adalah cara resmi memastikan instalasi bekerja."
+  - q: "Masuk ke grup docker memungkinkan…"
+    options: ["Mengubah kernel", "Memanggil docker tanpa sudo", "Mendapat container gratis", "Mengakses registry tanpa login"]
+    answer: 1
+    explain: "Keanggotaan grup memberi akses ke socket daemon; perlakukan seperti akses root."
+example:
+  code: |
+    docker --version
+    docker info
+    docker run hello-world
+---
+
+Docker Engine terdiri dari **daemon** (`dockerd`), **CLI** (`docker`), dan API. Di Linux daemon berjalan sebagai layanan sistem; di macOS dan Windows ia hidup di dalam mesin virtual ringan yang dikelola Docker Desktop.
+
+## Linux
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker $USER   # logout/login agar grup aktif
+docker run hello-world
+```
+
+ paket dari repositori distro juga bisa dipakai, tetapi script resmi memberi versi yang lebih mutakhir.
+
+## macOS dan Windows
+
+Pasang **Docker Desktop** dari situs resminya. Setelah instalasi, buka aplikasi sampai statusnya *Running*. Buka Terminal atau PowerShell lalu jalankan `docker --version`. Arsitektur Apple Silicon perlu memilih image `linux/arm64` atau memakai emulasi untuk `linux/amd64`.
+
+## Verifikasi dan Informasi
+
+```bash
+docker version        # client + server
+docker info           # detail daemon
+docker run hello-world
+```
+
+Perintah terakhir menarik image dari registry, membuat container, lalu mencetak pesan sukses. Bila gagal, periksa apakah daemon berjalan dan apakah mesin punya akses internet.
+
+<div class="note">💡 Menambahkan user ke grup `docker` setara dengan memberi hak root: socket `/var/run/docker.sock` bisa dipakai untuk mounting folder sistem. Berikan hanya pada akun yang benar-benar dipercaya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`docker --version
+docker run hello-world
+docker info --format '{{.ServerVersion}}'`}</code></pre>

@@ -1,0 +1,110 @@
+---
+title: "Vue & TypeScript"
+description: "defineProps bertipe, defineEmits, ref generic, dan type-only import"
+order: 24
+quiz:
+  - q: "Untuk mengetik props di `<script setup>`, gunakan…"
+    options: ["@Props()", "type Props = define()", "defineProps<{ judul: string }>()", "props: { judul: String }"]
+    answer: 2
+    explain: "Generic memberi tipe tanpa runtime deklarasi."
+  - q: "Nilai default props dengan generic memakai…"
+    options: ["@Default", "withDefaults()", "defaultProps()", "defineDefaults()"]
+    answer: 1
+    explain: "withDefaults(defineProps<...>(), { judul: '...' })."
+  - q: "defineEmits bertipe ditulis…"
+    options: ["emits: ['pilih']", "@Emit", "useEmits()", "defineEmits<{ pilih: [id: number] }>()"]
+    answer: 3
+    explain: "Sintaks tuple mendefinisikan argumen event."
+  - q: "`ref<number>(0)` berguna untuk…"
+    options: ["Membuat props", "Menentukan tipe nilai ref", "Mengubah ref jadi computed", "Menghapus ref"]
+    answer: 1
+    explain: "TypeScript menyimpulkan juga, tapi generic membantu di kasus kompleks."
+  - q: "`import type { Produk }` berarti…"
+    options: ["Hanya tipe yang diimpor, tidak ada kode runtime", "Mengimpor nilai", "Menghapus file", "Membuat API"]
+    answer: 0
+    explain: "Menghindari bundle tambahan."
+example:
+  code: |
+    interface Props { judul: string; qty?: number }
+    const props = withDefaults(defineProps<Props>(), { qty: 1 })
+    const emit = defineEmits<{ pilih: [id: number] }>()
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript membuat kontrak komponen Vue menjadi jelas: props apa yang masuk, event apa yang keluar.
+
+## Props Bertipe
+
+```vue
+<script setup lang="ts">
+interface Props {
+  judul: string
+  qty?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  qty: 1,
+})
+</script>
+```
+
+## Emits Bertipe
+
+```vue
+<script setup lang="ts">
+const emit = defineEmits<{
+  pilih: [id: number]
+  tutup: []
+}>()
+
+function kirim() {
+  emit('pilih', 42) // ✅
+  // emit('pilih', '42') // ❌ error TS
+}
+</script>
+```
+
+## Ref dan Reactive
+
+```ts
+import { ref, reactive } from 'vue'
+
+const jumlah = ref<number>(0)
+const form = reactive<{ nama: string; umur?: number }>({ nama: '' })
+```
+
+## Composable Bertipe
+
+```ts
+export function useFetch<T>(url: Ref<string>) {
+  const data = ref<T | null>(null)
+  const error = ref('')
+  return { data, error }
+}
+```
+
+```ts
+const { data } = useFetch<Produk[]>(url)
+```
+
+## Tips
+
+- Aktifkan `vue-tsc` untuk pemeriksaan tipe di template.
+- Gunakan `import type` untuk tipe saja.
+- Hindari `any` kecuali memang tidak ada pilihan.
+
+<div class="note">💡 Tipe bukan untuk "terlihat profesional", tapi untuk membuat editor memberi tahu kesalahan sebelum aplikasi dijalankan.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi kontrak props dengan validasi runtime sederhana
+function props({ judul, qty }) {
+  if (typeof judul !== "string") throw new Error("judul harus string");
+  return { judul, qty: qty ?? 1 };
+}
+
+console.log(props({ judul: "Kopi", qty: 2 }));
+console.log(props({ judul: "Roti" }));`} />

@@ -139,6 +139,10 @@ Konstanta tidak diawali `$` dan tidak boleh diubah; `define()` dipakai saat runt
 
 <div class="note">💡 PHP mengonversi tipe secara diam-diam (type juggling): `"10" + 5` jadi 15, tapi `"dua" + 5` memicu warning dan dianggap 0. Konversi yang aman hanya terjadi di **batas data tak terpercaya** — cast atau `filter_var` begitu data masuk dari form/URL, lalu gunakan `===` di seluruh kondisi di dalam logika.</div>
 
+## Try it Yourself
+
+Ubah nilai atau tipe variabel pada contoh di bawah.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $teks = "Halo";
 $angka = 42;

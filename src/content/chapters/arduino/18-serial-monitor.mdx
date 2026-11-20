@@ -1,0 +1,93 @@
+---
+title: "Serial Monitor Lanjut"
+description: "Baud rate, parsing data, dan format keluaran"
+order: 18
+quiz:
+  - q: "Baud rate umum untuk Serial Monitor adalah…"
+    options: ["115.200 MHz", "1", "9600", "100"]
+    answer: 2
+    explain: "9600 atau 115200 paling sering dipakai; keduanya harus sama di sketch dan monitor."
+  - q: "Fungsi Serial.print berbeda dari Serial.println karena…"
+    options: ["print lebih cepat", "println khusus angka", "print tidak perlu begin", "println menambah baris baru"]
+    answer: 3
+    explain: "println setara print plus carriage return."
+  - q: "Untuk membaca angka dari Serial Monitor, gunakan…"
+    options: ["Serial.parseInt() atau Serial.readString()", "digitalRead()", "analogWrite()", "millis()"]
+    answer: 0
+    explain: "Parsing perlu mempertimbangkan newline dan buffer."
+  - q: "Jika baud rate tidak cocok, yang terjadi adalah…"
+    options: ["Pin berubah", "Karakter tampak acak", "Arduino rusak", "Upload gagal selamanya"]
+    answer: 1
+    explain: "Samakan pengaturan di pojok kanan bawah Serial Monitor."
+  - q: "Serial.begin(9600) dipanggil di…"
+    options: ["Sebelum include", "Di interrupt", "setup()", "loop()"]
+    answer: 2
+    explain: "Inisialisasi cukup sekali saat board mulai."
+example:
+  code: |
+    void setup() { Serial.begin(9600); }
+    void loop() {
+      Serial.print('Suhu: ');
+      Serial.print(27.5);
+      Serial.println(' C');
+      if (Serial.available()) {
+        int perintah = Serial.parseInt();
+        Serial.print('Diterima: ');
+        Serial.println(perintah);
+      }
+    }
+---
+
+Serial Monitor adalah jendela debugging paling sederhana. Dengan format yang rapi, kamu bisa melihat apa yang dipikirkan Arduino.
+
+## Inisialisasi
+
+```cpp
+void setup() {
+  Serial.begin(9600);
+  while (!Serial) { }  // board dengan USB native
+}
+```
+
+Pada Uno, `while(!Serial)` umumnya tidak diperlukan.
+
+## Format Keluaran
+
+```cpp
+Serial.print(42);            // 42
+Serial.print(42, HEX);       // 2A
+Serial.print(3.14159, 2);    // 3.14
+Serial.println('selesai');   // baris baru
+```
+
+## Membaca Perintah
+
+```cpp
+if (Serial.available() > 0) {
+  String perintah = Serial.readStringUntil('\n');
+  perintah.trim();
+  if (perintah == 'on') digitalWrite(13, HIGH);
+}
+```
+
+`readStringUntil` menunggu sampai karakter pemisah diterima; atur timeout dengan `Serial.setTimeout(50)` bila perlu.
+
+## Plotter
+
+Serial Plotter menampilkan grafik dari nilai numerik yang dicetak satu per baris:
+
+```text
+25.1
+25.3
+25.2
+```
+
+<div class="note">💡 Serial menggunakan pin 0 (RX) dan 1 (TX). Hindari memakai keduanya untuk komponen lain saat Serial Monitor aktif.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Serial.begin(9600);
+Serial.print('Nilai A0 = ');
+Serial.println(analogRead(A0));
+Serial.println(analogRead(A1));`}</code></pre>

@@ -1,0 +1,138 @@
+---
+"title": "Context"
+"description": "Pembatalan, deadline, dan value pada context.Context"
+"order": 24
+"quiz":
+- "q": "Fungsi untuk membuat context dengan timeout adalah…"
+  "options":
+  - "context.WithTimeout"
+  - "context.NewTimeout"
+  - "context.Timeout"
+  - "time.WithContext"
+  "answer": 0
+  "explain": "WithTimeout(parent, durasi) mengembalikan ctx dan cancel."
+- "q": "Fungsi cancel sebaiknya…"
+  "options":
+  - "diabaikan"
+  - "dipanggil dengan defer"
+  - "dipanggil dua kali"
+  - "disimpan saja"
+  "answer": 1
+  "explain": "defer cancel() mencegah kebocoran resource timer."
+- "q": "ctx.Done() mengembalikan…"
+  "options":
+  - "error"
+  - "channel"
+  - "bool"
+  - "waktu"
+  "answer": 1
+  "explain": "Channel ditutup saat context dibatalkan atau kedaluwarsa."
+- "q": "ctx.Err() mengembalikan…"
+  "options":
+  - "nil atau alasan pembatalan"
+  - "nilai dari WithValue"
+  - "channel"
+  - "waktu mulai"
+  "answer": 0
+  "explain": "Biasanya context.Canceled atau context.DeadlineExceeded."
+- "q": "WithValue sebaiknya dipakai untuk…"
+  "options":
+  - "data request lintas API"
+  - "nilai kecil seperti request ID"
+  - "semua konfigurasi"
+  - "menggantikan argumen fungsi"
+  "answer": 1
+  "explain": "Context bukan tempat menyimpan parameter bisnis."
+"example":
+  "code": "package main\nimport (\n    \"context\"\n    \"fmt\"\n    \"time\"\n)\nfunc main() {\n    ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)\n    defer cancel()\n    <-ctx.Done()\n    fmt.Println(ctx.Err())\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`context.Context` membawa sinyal pembatalan, deadline, dan data kecil lintas batas API. Ia adalah konvensi pertama pada fungsi yang bisa lama atau melakukan I/O.
+
+## Membuat Context
+
+```go
+ctx := context.Background()   // akar, tidak pernah dibatalkan
+
+ctx, cancel := context.WithCancel(ctx)
+defer cancel()
+
+ctx, cancel = context.WithTimeout(ctx, 2*time.Second)
+defer cancel()
+
+ctx, cancel = context.WithDeadline(ctx, waktu)
+defer cancel()
+```
+
+## Mendengar Pembatalan
+
+```go
+select {
+case <-ctx.Done():
+    return ctx.Err()
+case hasil := <-hasilChan:
+    return hasil, nil
+}
+```
+
+## Meneruskan ke Fungsi
+
+```go
+func ambil(ctx context.Context, url string) ([]byte, error) {
+    req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+    return http.DefaultClient.Do(req)
+}
+```
+
+Context selalu menjadi parameter **pertama**.
+
+## WithValue
+
+```go
+type key struct{}
+ctx = context.WithValue(ctx, key{}, "req-123")
+id, _ := ctx.Value(key{}).(string)
+```
+
+Gunakan tipe kunci khusus (bukan string biasa) agar tidak bentrok antar package.
+
+## Aturan
+
+- Jangan simpan Context di struct; kirim sebagai argumen
+- Jangan pakai `context.TODO()` permanen
+- `cancel` wajib dipanggil walau operasi sukses
+- WithValue bukan pengganti argumen fungsi
+
+<div class="note">💡 Banyak fungsi standar seperti <code>http</code> dan <code>database/sql</code> sudah menerima context. Manfaatkan untuk menghentikan request saat klien memutus koneksi.</div>
+
+
+## Try it Yourself
+
+Ubah durasi timeout menjadi lebih panjang atau pendek.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+func kerja(ctx context.Context) {
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Println("dihentikan:", ctx.Err())
+            return
+        default:
+            time.Sleep(10 * time.Millisecond)
+        }
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
+    defer cancel()
+    kerja(ctx)
+}`} />

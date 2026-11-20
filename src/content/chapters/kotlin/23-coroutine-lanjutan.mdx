@@ -1,0 +1,140 @@
+---
+"title": "Coroutine Lanjutan"
+"description": "Flow, StateFlow, channel, dan exception handling pada coroutine"
+"order": 23
+"quiz":
+- "q": "Flow berguna untuk…"
+  "options":
+  - "Mengganti kelas"
+  - "Aliran data asynchronous bertahap"
+  - "Menulis SQL"
+  - "Mengatur rute"
+  "answer": 1
+  "explain": "Flow memancarkan beberapa nilai secara berurutan."
+- "q": "Operator yang mengubah nilai di Flow adalah…"
+  "options":
+  - "filter"
+  - "collect"
+  - "map"
+  - "launch"
+  "answer": 2
+  "explain": "map mengubah setiap nilai sebelum dikonsumsi collect."
+- "q": "StateFlow menyimpan…"
+  "options":
+  - "Riwayat lengkap"
+  - "Daftar error"
+  - "Hanya fungsi"
+  - "Nilai state terbaru"
+  "answer": 3
+  "explain": "StateFlow adalah hot flow dengan nilai terbaru yang selalu bisa dibaca."
+- "q": "Fungsi untuk mengonsumsi Flow adalah…"
+  "options":
+  - "collect"
+  - "await"
+  - "join"
+  - "start"
+  "answer": 0
+  "explain": "collect adalah terminal operator yang memicu aliran."
+- "q": "Exception handler coroutine dipasang lewat…"
+  "options":
+  - "tryFlow"
+  - "CoroutineExceptionHandler"
+  - "ErrorScope"
+  - "catchContext"
+  "answer": 1
+  "explain": "Handler diberikan ke scope atau launch sebagai context element."
+"example":
+  "code": "import kotlinx.coroutines.*\nimport kotlinx.coroutines.flow.*\n\nfun angka(): Flow<Int> = flow {\n    for (i in 1..3) {\n        delay(100)\n        emit(i)\n    }\n}\n\nfun main() = runBlocking {\n    angka()\n        .filter { it % 2 == 1 }\n        .map { \"Angka $it\" }\n        .collect { println(it) }\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Cold vs Hot
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun angka(): Flow<Int> = flow {
+    for (i in 1..3) {
+        delay(100)
+        emit(i)
+    }
+}
+
+fun main() = runBlocking {
+    angka()
+        .filter { it % 2 == 1 }
+        .map { "Angka $it" }
+        .collect { println(it) }
+}
+```
+
+| Jenis | Mulai saat | Contoh |
+|---|---|---|
+| Cold | `collect` dipanggil | `flow { }` |
+| Hot | dibuat, aktif terus | `StateFlow`, `SharedFlow` |
+
+Cold flow membuat ulang sumber setiap kali dikonsumsi — cocok untuk operasi one-shot seperti request jaringan.
+
+## Operator Flow
+
+```kotlin
+flowOf(1, 2, 3)
+    .map { it * 10 }
+    .filter { it > 10 }
+    .collect { println(it) }
+```
+
+`map`, `filter`, `take`, dan `debounce` adalah operator menengah. `collect`, `first`, dan `toList` adalah operator terminal.
+
+## StateFlow di ViewModel
+
+```kotlin
+class VM : ViewModel() {
+    private val _uiState = MutableStateFlow("Muat")
+    val uiState: StateFlow<String> = _uiState.asStateFlow()
+
+    fun muat() {
+        viewModelScope.launch {
+            _uiState.value = ambilData()
+        }
+    }
+}
+```
+
+`asStateFlow()` menyembunyikan sisi mutable dari pemanggil.
+
+## Error Handling
+
+```kotlin
+flow { emit(1); throw IllegalStateException("Gagal") }
+    .catch { e -> emit(-1) }
+    .collect { println(it) }
+```
+
+Operator `catch` menangkap exception di upstream dan bisa menggantinya dengan nilai fallback.
+
+<div class="note">💡 Context pada Flow tetap mengikuti pemanggilnya. Gunakan <code>flowOn(Dispatchers.IO)</code> untuk memindahkan bagian produksi tanpa mengubah tempat <code>collect</code> dijalankan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+
+fun angka(): Flow<Int> = flow {
+    for (i in 1..3) {
+        delay(100)
+        emit(i)
+    }
+}
+
+fun main() = runBlocking {
+    angka()
+        .filter { it % 2 == 1 }
+        .map { "Angka $it" }
+        .collect { println(it) }
+}`} />

@@ -1,0 +1,131 @@
+---
+"title": "Gem & Bundler"
+"description": "gem install, Gemfile, bundle install, versioning, dan gem lokal"
+"order": 22
+"quiz":
+- "q": "Perintah menginstal gem secara global adalah…"
+  "options":
+  - "gem install"
+  - "bundle add"
+  - "gem new"
+  - "install gem"
+  "answer": 0
+  "explain": "gem install nama_gem memasang ke sistem."
+- "q": "File yang mendefinisikan dependensi proyek adalah…"
+  "options":
+  - "Gemfile"
+  - "package.json"
+  - "requirements.txt"
+  - "gems.rb"
+  "answer": 0
+  "explain": "Gemfile berisi gem dan versi yang dibutuhkan proyek."
+- "q": "File Gemfile.lock berisi…"
+  "options":
+  - "daftar gem tanpa versi"
+  - "versi pasti hasil resolusi"
+  - "kode gem"
+  - "dokumentasi"
+  "answer": 1
+  "explain": "Lock file memastikan seluruh tim memakai versi sama."
+- "q": "Perintah menginstal semua gem di Gemfile adalah…"
+  "options":
+  - "bundle install"
+  - "gem all"
+  - "bundle update"
+  - "gem bundle"
+  "answer": 0
+  "explain": "bundle install membaca Gemfile dan mengunci versi."
+- "q": "Versi '~> 2.1' berarti…"
+  "options":
+  - "tepat 2.1"
+  - ">= 2.1 dan &lt; 3.0"
+  - "> 2.1 saja"
+  - "versi terbaru"
+  "answer": 1
+  "explain": " operator pessimis memperbolehkan patch/minor sampai sebelum versi mayor berikutnya."
+"example":
+  "code": "source \"https://rubygems.org\"\ngem \"rake\", \"~> 13.0\"\ngem \"json\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Gem adalah paket Ruby. Bundler mengelola gem per proyek supaya semua orang memakai versi yang sama.
+
+## Gem Global
+
+```bash
+gem install rubocop
+gem list
+gem uninstall rubocop
+```
+
+## Gemfile
+
+```ruby
+source "https://rubygems.org"
+
+ruby "3.2.0"
+
+gem "rake", "~> 13.0"
+gem "sinatra"
+
+group :development, :test do
+  gem "rspec"
+end
+```
+
+## Perintah Bundler
+
+| Perintah | Fungsi |
+|---|---|
+| `bundle install` | Pasang dependensi |
+| `bundle update` | Perbarui versi |
+| `bundle exec ruby app.rb` | Jalankan dengan versi terkunci |
+| `bundle list` | Tampilkan gem aktif |
+| `bundle show nama` | Lokasi gem |
+| `bundle init` | Buat Gemfile baru |
+
+## Version Constraint
+
+| Operator | Arti |
+|---|---|
+| `= 1.2.3` | Tepat |
+| `~> 2.1` | `>= 2.1, &lt; 3.0` |
+| `~> 2.1.4` | `>= 2.1.4, &lt; 2.2` |
+| `>= 1.0` | Minimal |
+
+## Gem Lokal
+
+```ruby
+gem "nama_gem", path: "./lib/nama_gem"
+gem "nama_gem", git: "https://github.com/..."
+```
+
+## Membuat Gem
+
+```bash
+bundle gem nama_gem
+```
+
+Perintah ini membuat struktur dasar: `lib/`, `spec/`, dan gemspec.
+
+<div class="note">💡 Selalu jalankan aplikasi dengan <code>bundle exec</code> saat proyek memakai Bundler. Ini mencegah Ruby memuat versi gem global yang berbeda.</div>
+
+
+## Try it Yourself
+
+Contoh Gemfile ini dipakai sebagai referensi, bukan dijalankan di playground.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`source "https://rubygems.org"
+
+ruby ">= 3.0"
+
+gem "rake", "~> 13.0"
+gem "json"
+
+group :development do
+  gem "rubocop", require: false
+end
+
+# bundle install
+# bundle exec ruby app.rb`} />

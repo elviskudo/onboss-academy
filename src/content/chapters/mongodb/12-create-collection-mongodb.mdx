@@ -1,0 +1,89 @@
+---
+title: "Membuat dan Mengatur Koleksi"
+description: "createCollection, collection kosong, capped collection, rename dan drop"
+order: 12
+quiz:
+  - q: "Perintah membuat koleksi bernama pesanan adalah…"
+    options: ["create db.pesanan", "db.create(pesanan)", "db.createCollection(\"pesanan\")", "db.newCollection(\"pesanan\")"]
+    answer: 2
+    explain: "db.createCollection(\"nama\") membuat koleksi eksplisit."
+  - q: "Koleksi capped memiliki sifat…"
+    options: ["Hanya menyimpan string", "Tidak bisa di-index", "Ukuran tetap dan menimpa data lama", "Bisa dihapus tanpa peringatan"]
+    answer: 2
+    explain: "Capped collection menulis secara melingkar ketika kapasitas penuh."
+  - q: "Perintah mengganti nama koleksi adalah…"
+    options: ["db.lama.renameCollection(\"baru\")", "db.rename(lama, baru)", "db.lama.name = \"baru\"", "db.lama.rename(\"baru\")"]
+    answer: 0
+    explain: "renameCollection tersedia sebagai metode koleksi."
+  - q: "Menghapus koleksi memakai…"
+    options: ["db.drop(koleksi)", "db.koleksi.drop()", "db.koleksi.delete()", "db.koleksi.removeAll()"]
+    answer: 1
+    explain: "drop() menghapus koleksi beserta indeksnya."
+  - q: "Koleksi dibuat otomatis saat…"
+    options: ["Menjalankan show collections", "Server restart", "Menjalankan use", "Dokumen pertama disisipkan"]
+    answer: 3
+    explain: "insertOne/insertMany pada koleksi belum ada akan membuatnya otomatis."
+example:
+  code: |
+    db.createCollection("log_aktifitas")
+    db.createCollection("log_terbatas", {capped: true, size: 10000, max: 100})
+    db.log_terbatas.renameCollection("log_ringkas")
+    db.log_ringkas.drop()
+---
+
+## Dua Cara Membuat
+
+Koleksi bisa dibuat **implisit** atau **eksplisit**.
+
+```javascript
+// implisit: koleksi muncul saat dokumen pertama masuk
+db.kategori.insertOne({ nama: "Elektronik" })
+
+// eksplisit: dibuat lebih dulu
+db.createCollection("log_aktifitas")
+```
+
+Pembuatan eksplisit berguna kalau kamu ingin mengatur opsi khusus atau ingin koleksi kosong tetap terdaftar.
+
+## Opsi Koleksi
+
+| Opsi | Fungsi |
+| --- | --- |
+| `capped` | ukuran tetap, menimpa data terlama |
+| `size` | batas ukuran dalam byte |
+| `max` | batas jumlah dokumen |
+| `validator` | aturan schema validation |
+| `collation` | aturan perbandingan teks (locale, case) |
+
+```javascript
+db.createCollection("antrian", {
+  capped: true,
+  size: 1048576,
+  max: 500
+})
+```
+
+Capped collection cocok untuk log pendek, bukan untuk data yang harus diarsipkan permanen.
+
+## Mengelola Koleksi
+
+```javascript
+db.getCollectionNames()
+db.log_aktifitas.renameCollection("log_activity")
+db.log_activity.drop()
+```
+
+`drop()` langsung menghilangkan semua dokumen dan indeks. Tidak ada konfirmasi tambahan.
+
+<div class="note">💡 Sebelum mengganti nama koleksi di produksi, perbarui juga kode aplikasi dan indeks yang bergantung pada nama lama. Rename koleksi tidak otomatis memperbaiki referensi di aplikasi.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_koleksi
+db.createCollection("catatan")
+db.catatan.insertMany([{teks: "satu"}, {teks: "dua"}])
+print(db.getCollectionNames())
+db.catatan.renameCollection("catatan_baru")
+print(db.getCollectionNames())`}</code></pre>

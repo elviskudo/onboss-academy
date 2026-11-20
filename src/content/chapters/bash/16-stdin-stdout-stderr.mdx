@@ -1,0 +1,133 @@
+---
+"title": "Stdin, Stdout, dan Stderr"
+"description": "Mengatur aliran data, redireksi, dan perbedaan output normal dengan error"
+"order": 16
+"quiz":
+- "q": "Nomor descriptor untuk stdout adalah…"
+  "options":
+  - "0"
+  - "1"
+  - "2"
+  - "3"
+  "answer": 1
+  "explain": "0=stdin, 1=stdout, 2=stderr."
+- "q": "Cara mengalihkan stderr ke file adalah…"
+  "options":
+  - "2> error.log"
+  - "> error.log"
+  - "&> error.log"
+  - "1> error.log"
+  "answer": 0
+  "explain": "2 adalah nomor descriptor stderr."
+- "q": "Perintah untuk menggabungkan stderr ke stdout adalah…"
+  "options":
+  - "2>&1"
+  - "1>&2"
+  - "&2"
+  - "|>"
+  "answer": 0
+  "explain": "2>&1 membuat stderr menuju tujuan stdout saat ini."
+- "q": "Cara menulis teks ke stderr adalah…"
+  "options":
+  - "echo \"err\" >&2"
+  - "echo \"err\" 2>"
+  - "stderr \"err\""
+  - "print -e \"err\""
+  "answer": 0
+  "explain": ">&2 mengarahkan stdout perintah ke stderr."
+- "q": "Here-string ditulis dengan…"
+  "options":
+  - "<<&lt; \"teks\""
+  - "<&lt; \"teks\""
+  - "&lt; \"teks\""
+  - ">\"teks\""
+  "answer": 0
+  "explain": "<<&lt; meneruskan satu baris teks ke stdin."
+"example":
+  "code": "#!/usr/bin/env bash\necho \"info: mulai\" >&2\necho \"hasil utama\"\n\n# redireksi ke file\necho \"baris satu\" > output.txt\necho \"baris dua\" >> output.txt\n\n# gabungkan stderr dan stdout\nls /tidak/ada > gabung.log 2>&1\n\n# here-string\nwc -c <<&lt; \"Belajar Bash\"\n\n# buang output\nperintah_berisik >/dev/null 2>&1\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Tiga Aliran Standar
+
+```bash
+#!/usr/bin/env bash
+echo "info: mulai" >&2
+echo "hasil utama"
+
+# redireksi ke file
+echo "baris satu" > output.txt
+echo "baris dua" >> output.txt
+
+# gabungkan stderr dan stdout
+ls /tidak/ada > gabung.log 2>&1
+
+# here-string
+wc -c <<< "Belajar Bash"
+
+# buang output
+perintah_berisik >/dev/null 2>&1
+```
+
+| Nama | Descriptor | Fungsi |
+|---|---|---|
+| stdin | 0 | input, biasanya keyboard |
+| stdout | 1 | output normal |
+| stderr | 2 | pesan error dan diagnostic |
+
+Memisahkan error dari hasil penting agar pipeline tidak mencampur data dengan pesan.
+
+## Redireksi
+
+```bash
+perintah > file       # timpa stdout
+perintah >> file      # tambahkan ke stdout
+perintah 2> error.log # stderr ke file
+perintah &> semua.log # stdout + stderr (Bash)
+perintah < input.txt  # stdin dari file
+```
+
+## Urutan Penting
+
+```bash
+perintah > hasil.log 2>&1   # benar: keduanya ke hasil.log
+perintah 2>&1 > hasil.log   # stderr ke stdout lama, stdout ke file
+```
+
+Urutan evaluasi kiri ke kanan membuat dua baris di atas berbeda secara fundamental.
+
+## Here-doc dan Here-string
+
+```bash
+cat <<'EOF'
+Teks apa adanya, $tidak_diekspansi
+EOF
+
+grep "kata" <<< "$variabel"
+```
+
+Kutip pada `<<'EOF'` mencegah ekspansi variabel di dalam here-doc.
+
+<div class="note">💡 Gunakan <code>>/dev/null 2>&1</code> untuk membuang semua output perintah yang memang tidak ingin dilihat. Jangan membuang stderr saat kamu masih perlu mendiagnosa masalah.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+echo "info: mulai" >&2
+echo "hasil utama"
+
+# redireksi ke file
+echo "baris satu" > output.txt
+echo "baris dua" >> output.txt
+
+# gabungkan stderr dan stdout
+ls /tidak/ada > gabung.log 2>&1
+
+# here-string
+wc -c <<&lt; "Belajar Bash"
+
+# buang output
+perintah_berisik >/dev/null 2>&1`} />

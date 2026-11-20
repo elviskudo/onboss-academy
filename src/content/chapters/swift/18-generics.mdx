@@ -1,0 +1,133 @@
+---
+"title": "Generics"
+"description": "Fungsi dan tipe generik, constraint, serta associated type pada Swift"
+"order": 18
+"quiz":
+- "q": "Fungsi generik ditulis dengan…"
+  "options":
+  - "func f(any x)"
+  - "func f<T>(_ x: T)"
+  - "func f{x}"
+  - "generic func f"
+  "answer": 1
+  "explain": "Parameter tipe berada di dalam sudut kurung setelah nama fungsi."
+- "q": "Constraint generic ditulis dengan…"
+  "options":
+  - "T extends Comparable"
+  - "T where Comparable"
+  - "T: Comparable"
+  - "Comparable<T>"
+  "answer": 2
+  "explain": "T: Comparable membatasi T pada tipe yang bisa dibandingkan."
+- "q": "Fungsi swapTwoValues bersifat…"
+  "options":
+  - "Spesifik Int"
+  - "Class"
+  - "Protokol"
+  - "Generik"
+  "answer": 3
+  "explain": "Bekerja untuk dua nilai dari tipe yang sama."
+- "q": "Klausa where dipakai untuk…"
+  "options":
+  - "Menambah syarat pada generic"
+  - "Mengganti nama fungsi"
+  - "Memilih file"
+  - "Membuat loop"
+  "answer": 0
+  "explain": "Contoh: func f<T>(_ x: T) where T: Numeric."
+- "q": "some Protocol dalam Swift adalah…"
+  "options":
+  - "Opsional"
+  - "Opaque return type"
+  - "Any"
+  - "Protocol biasa"
+  "answer": 1
+  "explain": "some Protokol menyembunyikan tipe konkret tapi tetap dikenal compiler."
+"example":
+  "code": "func pasangan<T>(_ a: T, _ b: T) -> [T] {\n    [a, b]\n}\n\nfunc maksimum<T: Comparable>(_ a: T, _ b: T) -> T {\n    a > b ? a : b\n}\n\nstruct Kotak<T> {\n    let isi: T\n}\n\nprint(pasangan(\"a\", \"b\"))     // [\"a\", \"b\"]\nprint(maksimum(7, 12))        // 12\nprint(Kotak(isi: 42).isi)     // 42\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Fungsi Generik
+
+```swift
+func pasangan<T>(_ a: T, _ b: T) -> [T] {
+    [a, b]
+}
+
+func maksimum<T: Comparable>(_ a: T, _ b: T) -> T {
+    a > b ? a : b
+}
+
+struct Kotak<T> {
+    let isi: T
+}
+
+print(pasangan("a", "b"))     // ["a", "b"]
+print(maksimum(7, 12))        // 12
+print(Kotak(isi: 42).isi)     // 42
+```
+
+```swift
+func identitas<T>(_ nilai: T) -> T {
+    return nilai
+}
+```
+
+Tipe `T` ditentukan pada saat pemanggilan berdasarkan argumen yang diberikan.
+
+## Constraint
+
+```swift
+func urutkan<T: Comparable>(_ nilai: [T]) -> [T] {
+    nilai.sorted()
+}
+```
+
+Beberapa constraint bisa digabung: `<T: Comparable & CustomStringConvertible>`.
+
+## Tipe Generik
+
+```swift
+struct Stack<Element> {
+    private var items: [Element] = []
+
+    mutating func push(_ item: Element) { items.append(item) }
+    mutating func pop() -> Element? { items.popLast() }
+}
+```
+
+Nama `Element` lebih bermakna daripada `T` bila mewakili kumpulan data.
+
+## Opaque vs Existential
+
+| Sintaks | Arti |
+|---|---|
+| `some Protocol` | satu tipe konkret, disembunyikan pemanggil |
+| `any Protocol` | tipe apa pun yang conform, dipilih saat runtime |
+
+SwiftUI memakai `some View` agar compiler tahu tipe pasti tanpa menuliskannya panjang.
+
+<div class="note">💡 Generic menghasilkan kode yang type-safe tanpa duplikasi. Hindari <code>Any</code> kecuali kamu memang perlu heterogen — <code>Any</code> menghapus informasi tipe.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`func pasangan<T>(_ a: T, _ b: T) -> [T] {
+    [a, b]
+}
+
+func maksimum<T: Comparable>(_ a: T, _ b: T) -> T {
+    a > b ? a : b
+}
+
+struct Kotak<T> {
+    let isi: T
+}
+
+print(pasangan("a", "b"))     // ["a", "b"]
+print(maksimum(7, 12))        // 12
+print(Kotak(isi: 42).isi)     // 42`} />

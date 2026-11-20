@@ -1,0 +1,118 @@
+---
+title: "Float & Inline-Block"
+description: "Mengapungkan elemen dan mengatur alur teks di sekitarnya"
+order: 21
+quiz:
+  - q: "Nilai `float` yang benar adalah…"
+    options: ["left, right, none", "top, bottom, center", "start, end", "inline, block"]
+    answer: 0
+    explain: "Float hanya mengenal kiri, kanan, dan none."
+  - q: "Float terutama dipakai untuk…"
+    options: ["Membuat tata letak dua dimensi", "Mengapungkan elemen agar teks mengelilinginya", "Menyembunyikan elemen", "Mengurutkan grid"]
+    answer: 1
+    explain: "Tujuan awal float adalah flow teks di sekitar gambar, bukan layout halaman."
+  - q: "Properti untuk menghentikan teks mengalir di sekitar float adalah…"
+    options: ["float", "clear", "overflow", "display"]
+    answer: 1
+    explain: "Clear: both/left/right memaksa elemen turun di bawah float."
+  - q: "`inline-block` berbeda dari `inline` karena…"
+    options: ["Bisa diatur width/height", "Tidak bisa diwarnai", "Selalu block", "Tidak punya margin"]
+    answer: 0
+    explain: "Itulah alasan inline-block dulu dipakai untuk membuat baris tombol."
+  - q: "Layout modern sebaiknya memakai…"
+    options: ["Float + clearfix", "Flexbox atau Grid", "Table layout", "inline-block saja"]
+    answer: 1
+    explain: "Flex dan Grid menyediakan alignment, gap, dan responsivitas tanpa trik."
+example:
+  code: |
+    img.gambar { float: left; width: 140px; margin: 0 16px 8px 0; }
+    .bersih { clear: both; }
+    .item { display: inline-block; width: 30%; vertical-align: top; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebelum Flexbox dan Grid ada, **float** adalah andalan untuk membuat layout kolom. Kini perannya menyempit, tapi tetap penting untuk efek teks mengelilingi gambar.
+
+## Cara Kerja Float
+
+```css
+.gambar {
+  float: left;
+  width: 160px;
+  margin: 0 16px 8px 0;
+}
+```
+
+Elemen yang diapungkan dikeluarkan dari alur normal **sebagian** — teks dan elemen inline di sekitarnya tetap mengalir mengikuti sisinya.
+
+```html
+<img class="gambar" src="peta.jpg" alt="Peta wisata">
+<p>Teks artikel akan mengalir di sebelah kanan gambar…</p>
+```
+
+## Clear
+
+```css
+.footer { clear: both; }
+```
+
+`clear` memaksa elemen turun di bawah float sebelumnya. Nilainya: `left`, `right`, `both`, `none`.
+
+## Masalah Klasik: Induk Collapse
+
+Kalau semua anak mengapung, induk bisa "runtuh" tingginya menjadi nol. Dulu dipakai trik clearfix:
+
+```css
+.induk::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+```
+
+Sekarang cukup:
+
+```css
+.induk { display: flow-root; }
+```
+
+## inline-block untuk Baris Item
+
+```css
+.menu li {
+  display: inline-block;
+  width: 120px;
+  vertical-align: top;
+  margin-right: 8px;
+}
+```
+
+Kelemahan: spasi antar tag di HTML ikut terhitung, dan `vertical-align` perlu diatur supaya item dengan tinggi beda tidak bertumpuk aneh. Flexbox menyelesaikan keduanya dengan `gap` dan `align-items`.
+
+<div class="note">💡 Pelajari float tetap tahu, tapi jangan pakai untuk layout baru. Gunakan Flexbox untuk baris/kolom satu dimensi dan Grid untuk dua dimensi.</div>
+
+## Perbandingan Cepat
+
+| Kebutuhan | Float | inline-block | Flexbox | Grid |
+|-----------|-------|--------------|---------|------|
+| Teks mengelilingi gambar | ✅ | ❌ | ❌ | ❌ |
+| Baris tombol | ⚠️ | ✅ | ✅ | ✅ |
+| Kolom responsif | ⚠️ | ⚠️ | ✅ | ✅ |
+| Alignment vertikal | ❌ | ⚠️ | ✅ | ✅ |
+| Gap otomatis | ❌ | ❌ | ✅ | ✅ |
+
+## Di Dunia Nyata
+
+- Artikel berita dengan gambar kecil di samping paragraf pertama.
+- Klien email tetap memakai tabel dan inline-block karena dukungan flex masih terbatas di klien email.
+- Kode lama yang belum dimigrasi masih penuh clearfix — mengenalinya membantu saat maintenance.
+
+## Try it Yourself
+
+Ganti `float: left` menjadi `right` atau hapus `clear` untuk melihat alur teksnya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 16px; font-size: 14px; }
+.gambar { float: left; width: 110px; height: 90px; background: #C7D2FE; display: grid; place-items: center; border-radius: 8px; margin: 0 14px 6px 0; }
+.bersih { clear: both; border-top: 1px dashed #9CA3AF; margin-top: 16px; padding-top: 8px; }
+.item { display: inline-block; width: 90px; vertical-align: top; background: #FEF3C7; padding: 8px; margin: 4px; border-radius: 6px; }`} />

@@ -1,0 +1,85 @@
+---
+title: "Registry dan Push Image"
+description: "Mengunggah image ke Docker Hub atau registry privat beserta autentikasi"
+order: 22
+quiz:
+  - q: "Perintah untuk login ke registry adalah…"
+    options: ["docker signin", "docker registry login", "docker login", "docker auth"]
+    answer: 2
+    explain: "docker login menyimpan kredensial di ~/.docker/config.json."
+  - q: "Sebelum docker push, image perlu…"
+    options: ["Dijalankan dulu", "Diubah ke tar", "Dihapus dari lokal", "Diberi tag yang cocok dengan repository registry"]
+    answer: 3
+    explain: "Tag menentukan nama repository tujuan di registry."
+  - q: "Registry publik bawaan Docker adalah…"
+    options: ["Docker Hub (docker.io)", "GitHub Pages", "npmjs", "PyPI"]
+    answer: 0
+    explain: "Image tanpa prefix registry dianggap berasal dari docker.io/library."
+  - q: "Untuk registry lokal di port 5000, tag yang benar adalah…"
+    options: ["nama@5000", "localhost:5000/nama:1.0", "5000/nama:1.0", "local://nama"]
+    answer: 1
+    explain: "Bagian sebelum slash pertama yang mengandung titik atau titik dua dibaca sebagai host registry."
+  - q: "docker logout berguna untuk…"
+    options: ["Menutup container", "Menghapus volume", "Menghapus kredensial tersimpan", "Menghapus image"]
+    answer: 2
+    explain: "Berguna pada mesin bersama agar token tidak tertinggal."
+example:
+  code: |
+    docker login registry.example.com
+    docker tag app:1.0 registry.example.com/tim/app:1.0
+    docker push registry.example.com/tim/app:1.0
+    docker logout registry.example.com
+---
+
+Registry adalah tempat menyimpan dan mendistribusikan image. Docker Hub adalah yang paling dikenal, tetapi tim sering memakai registry privat untuk kode internal.
+
+## Alur Push
+
+```bash
+docker login registry.example.com
+docker build -t app:1.0 .
+docker tag app:1.0 registry.example.com/tim/app:1.0
+docker push registry.example.com/tim/app:1.0
+```
+
+`docker push` mengunggah layer yang belum ada di registry. Layer yang sudah ter-common (misalnya base image) tidak dikirim ulang.
+
+## Struktur Nama
+
+```text
+registry.example.com/tim/api:1.4.2
+│                    │   │  │
+│                    │   │  └── tag
+│                    │   └───── repository
+│                    └───────── namespace/organisasi
+└────────────────────────────── host registry
+```
+
+Aturan sederhana: bagian sebelum `/` pertama mengandung `.` atau `:` ⇒ itu adalah host registry.
+
+## Registry Lokal untuk Eksperimen
+
+```bash
+docker run -d -p 5000:5000 --name registry registry:2
+docker tag alpine:3.20 localhost:5000/alpine:lokal
+docker push localhost:5000/alpine:lokal
+curl localhost:5000/v2/_catalog
+```
+
+Registry lokal biasanya HTTP biasa. Docker menolak HTTP untuk alamat selain localhost; untuk host lain perlu konfigurasi `insecure-registries`—dan itu berisiko di produksi.
+
+## Autentikasi di CI
+
+```bash
+echo "$REGISTRY_TOKEN" | docker login ghcr.io -u "$USER" --password-stdin
+```
+
+Gunakan `--password-stdin` agar kata sandi tidak muncul di history shell atau log proses. Token sebaiknya berupa credential dengan masa berlaku terbatas, bukan kata sandi akun.
+
+<div class="note">💡 Setelah push, verifikasi dengan menarik image di mesin lain. Tag yang sama bisa menunjuk ke digest berbeda bila pipeline menimpanya—simpan digest untuk rilis produksi.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' '---' 'contoh tag untuk registry:' '  localhost:5000/tim/aplikasi:1.0' '  ghcr.io/tim/aplikasi:1.0' '---' &gt; contoh-tag.txt
+docker images alpine:3.20 --format '{{.Repository}}:{{.Tag}}' 2&gt;/dev/null || printf '%s\\n' 'Tarik image dulu sebelum memberi tag.'`}</code></pre>

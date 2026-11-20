@@ -1,0 +1,99 @@
+---
+title: "Faktor dan Kategori"
+description: "Mengelola data kategorikal dengan factor, levels, labels, dan urutan kategori"
+order: 11
+quiz:
+  - q: "Fungsi untuk membuat faktor adalah…"
+    options: ["factor()", "category()", "as.factor() saja", "levels()"]
+    answer: 0
+    explain: "factor() membuat faktor; as.factor() mengubah vektor yang sudah ada."
+  - q: "levels(factor(c('B','A','B'))) menghasilkan…"
+    options: ["A B", "B A", "A B B", "2"]
+    answer: 0
+    explain: "Level diurutkan secara alfabetis secara default."
+  - q: "Agar urutan mengikuti kemunculan pertama, gunakan…"
+    options: ["levels = unique(x)", "ordered = TRUE", "sort = FALSE", "sequence = TRUE"]
+    answer: 0
+    explain: "levels = unique(x) memakai urutan kemunculan pertama."
+  - q: "Faktor berurutan dibuat dengan…"
+    options: ["factor(x, ordered = TRUE)", "ordered.factor(x)", "seq.factor(x)", "factor(x, sort = TRUE)"]
+    answer: 0
+    explain: "Argumen ordered = TRUE menandai hubungan urutan pada level."
+  - q: "Masalah umum saat mengubah faktor ke angka adalah…"
+    options: ["Selalu berhasil", "Kode level dihasilkan, bukan nilai aslinya", "Faktor menjadi NA", "Error"]
+    answer: 1
+    explain: "as.numeric(faktor) mengembalikan indeks level; konversi aman lewat as.numeric(as.character(x))."
+example:
+  code: |
+    kategori <- factor(c("Sedang", "Tinggi", "Rendah", "Tinggi"))
+    print(levels(kategori))
+    print(table(kategori))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Faktor** merepresentasikan data kategori. Faktor menyimpan kode bilangan bulat di belakang layar dan daftar *level* yang memberi makna pada kode tersebut. Ini menghemat memori dan memberi tahu fungsi statistik bahwa sebuah kolom bukan angka.
+
+## Membuat Faktor
+
+```r
+status <- factor(c("Aktif", "Nonaktif", "Aktif"))
+levels(status)          # "Aktif" "Nonaktif"
+as.integer(status)      # 1 2 1 (kode internal)
+```
+
+Secara default level diurutkan alfabetis. Untuk urutan khusus:
+
+```r
+mutu <- factor(c("B", "A", "C"), levels = c("A", "B", "C"))
+```
+
+## Faktor Berurutan
+
+```r
+kepuasan <- factor(c("Setuju", "Netral", "Setuju"),
+                   levels = c("Tidak setuju", "Netral", "Setuju"),
+                   ordered = TRUE)
+kepuasan[1] > kepuasan[2]   # TRUE
+```
+
+`ordered = TRUE` memungkinkan perbandingan `<` dan `>` serta dipakai beberapa prosedur statistik seperti regresi ordinal.
+
+## Mengubah dan Menambah Level
+
+```r
+f <- factor(c("Merah", "Biru"))
+levels(f) <- c("Merah", "Biru", "Hijau")   # level baru ditambahkan
+f <- droplevels(f)                          # buang level tak terpakai
+```
+
+Saat menggabungkan dua data frame yang levelnya berbeda, `levels<-` atau `fct_expand()` dari **forcats** mencegah kategori hilang.
+
+## Jebakan Konversi
+
+```r
+nilai <- factor(c("10", "20", "30"))
+as.numeric(nilai)                 # 1 2 3 — bukan 10 20 30
+as.numeric(as.character(nilai))   # 10 20 30 — cara benar
+```
+
+<div class="note">💡 Jika kolom dibaca sebagai faktor padahal isinya angka, perbaiki sejak import: `read.csv(..., stringsAsFactors = FALSE)`. Sejak R 4.0-default memang sudah `FALSE`, tetapi data lama atau paket tertentu masih bisa menghasilkan faktor.</div>
+
+## Di Dunia Nyata
+
+- **Survei**: skala Likert disimpan sebagai faktor berurutan agar analisis menghormati urutan.
+- **Visualisasi**: `ggplot()` mengelompokkan warna menurut level faktor.
+- **Tabel silang**: `table(jenis, wilayah)` memakai level sebagai baris/kolom.
+- **Model**: `lm()` otomatis membuat *dummy variable* dari faktor.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`kategori <- factor(c("Rendah", "Tinggi", "Sedang", "Tinggi"),
+                    levels = c("Rendah", "Sedang", "Tinggi"), ordered = TRUE)
+print(kategori)
+print(table(kategori))
+print(kategori[2] > kategori[1])
+angka <- factor(c("10", "20", "30"))
+cat("Kode level:", as.integer(angka), "\n")
+cat("Nilai asli:", as.numeric(as.character(angka)), "\n")`} />

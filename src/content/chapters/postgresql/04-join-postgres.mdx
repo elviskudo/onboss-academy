@@ -109,6 +109,10 @@ JOIN karyawan ON lead_id = id;  -- USING(id) juga bisa jika nama kolom sama
 
 <div class="note">💡 Di Postgres, JOIN menjamin tipe kompatibel: meng-join INTEGER ke TEXT langsung error — relasi yang salah ketik terdeteksi sebelum jadi kebocoran data.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="postgresql" runtime="sql" code={`SELECT k.nama AS ketua, k.dept, p.nama AS proyek, p.budget
 FROM karyawan k
 LEFT JOIN proyek p ON k.id = p.lead_id

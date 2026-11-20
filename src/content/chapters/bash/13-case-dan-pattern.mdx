@@ -1,0 +1,137 @@
+---
+"title": "Case dan Pola Cocoking"
+"description": "Percabangan_multi dengan case dan pola glob pada Bash"
+"order": 13
+"quiz":
+- "q": "Kata kunci pembuka blok case adalah…"
+  "options":
+  - "switch \"$x\" {"
+  - "case \"$x\" in"
+  - "match \"$x\" with"
+  - "ifcase \"$x\""
+  "answer": 1
+  "explain": "Diakhiri dengan esac."
+- "q": "Aturiap cabang case diakhiri dengan…"
+  "options":
+  - ";"
+  - "break"
+  - ";;"
+  - "end"
+  "answer": 2
+  "explain": "Dua titik koma menghentikan cabang."
+- "q": "Pola yang cocok dengan semua nilai adalah…"
+  "options":
+  - "?"
+  - "."
+  - "all"
+  - "*"
+  "answer": 3
+  "explain": "Asterisk adalah wildcard default."
+- "q": "Pola [a-z] mencocokkan…"
+  "options":
+  - "Satu huruf kecil"
+  - "Kata apa pun"
+  - "Angka"
+  - "Spasi"
+  "answer": 0
+  "explain": "Bracket expression mencocokkan satu karakter dari rentang."
+- "q": "Cabang default pada case biasanya ditulis…"
+  "options":
+  - "default: ..."
+  - "*) ... ;;"
+  - "else ..."
+  - "_) ... ;;"
+  "answer": 1
+  "explain": "Asterisk menangkap nilai yang tidak cocok cabang lain."
+"example":
+  "code": "#!/usr/bin/env bash\nread -p \"Pilih (start/stop/status): \" aksi\n\ncase \"$aksi\" in\n  start)\n    echo \"Menyalakan layanan...\"\n    ;;\n  stop|halt)\n    echo \"Mematikan layanan...\"\n    ;;\n  sta*)\n    echo \"Status: berjalan\"\n    ;;\n  *)\n    echo \"Perintah tidak dikenal: $aksi\"\n    exit 1\n    ;;\nesac\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Sintaks Case
+
+```bash
+#!/usr/bin/env bash
+read -p "Pilih (start/stop/status): " aksi
+
+case "$aksi" in
+  start)
+    echo "Menyalakan layanan..."
+    ;;
+  stop|halt)
+    echo "Mematikan layanan..."
+    ;;
+  sta*)
+    echo "Status: berjalan"
+    ;;
+  *)
+    echo "Perintah tidak dikenal: $aksi"
+    exit 1
+    ;;
+esac
+```
+
+```bash
+case "$nilai" in
+  pola1) perintah ;;
+  pola2) perintah ;;
+  *)     perintah default ;;
+esac
+```
+
+Case mengevaluasi pola dari atas sampai ada yang cocok. Hanya satu cabang yang dijalankan.
+
+## Pola yang Didukung
+
+| Pola | Arti |
+|---|---|
+| `*` | sembarang teks |
+| `?` | satu karakter apa pun |
+| `[abc]` | salah satu dari a, b, c |
+| `[0-9]` | satu digit |
+| `a|b` | a atau b |
+
+## Contoh Praktis
+
+```bash
+case "$file" in
+  *.jpg|*.png) echo "Gambar" ;;
+  *.txt|*.md)  echo "Teks" ;;
+  *.sh)        echo "Skrip" ;;
+  *)           echo "Jenis tidak dikenal" ;;
+esac
+```
+
+Saat memakai glob seperti `*.jpg` di dalam case, tanda kutip tidak dipakai karena pola harus diinterpretasi shell.
+
+## Case vs If
+
+- Gunakan `case` bila membandingkan satu nilai dengan banyak pola.
+- Gunakan `if` bila setiap kondisi melibatkan variabel atau perbandingan berbeda.
+
+<div class="note">💡 Awali setiap cabang dengan spasi dan akhiri dengan <code>;;</code>. Lupa titik koma adalah error syntax yang paling sering terjadi pada blok case.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+read -p "Pilih (start/stop/status): " aksi
+
+case "$aksi" in
+  start)
+    echo "Menyalakan layanan..."
+    ;;
+  stop|halt)
+    echo "Mematikan layanan..."
+    ;;
+  sta*)
+    echo "Status: berjalan"
+    ;;
+  *)
+    echo "Perintah tidak dikenal: $aksi"
+    exit 1
+    ;;
+esac`} />

@@ -1,0 +1,101 @@
+---
+title: Feed-Forward Network
+description: Lapis MLP di dalam setiap blok Transformer dan fungsi aktivasi yang biasa dipakai.
+order: 10
+quiz:
+- q: Feed-forward pada Transformer bekerja…
+  options:
+  - Hanya di decoder
+  - Hanya saat inference
+  - Pada setiap token secara terpisah
+  - Pada seluruh token sekaligus sebagai satu vektor
+  answer: 2
+  explain: FFN memproses tiap posisi secara independen setelah attention mencampur konteks.
+- q: Bentuk umum FFN Transformer adalah…
+  options:
+  - Satu lapis softmax
+  - Konvolusi 3x3
+  - RNN satu arah
+  - Dua lapis linear dengan aktivasi di antaranya
+  answer: 3
+  explain: 'Struktur khasnya: Linear(d_model -> d_ff), aktivasi, lalu Linear(d_ff -> d_model).'
+- q: Ukuran d_ff biasanya…
+  options:
+  - Lebih besar dari d_model (sekitar 4x)
+  - Selalu 1
+  - Lebih kecil dari d_model
+  - Sama dengan d_model
+  answer: 0
+  explain: Banyak arsitektur memakai d_ff ≈ 4 × d_model untuk kapasitas tambahan.
+- q: Aktivasi yang populer pada FFN Transformer modern adalah…
+  options:
+  - Sigmoid
+  - GELU atau SwiGLU
+  - ReLU saja
+  - Tanh
+  answer: 1
+  explain: GELU dan SwiGLU umum dipakai pada GPT dan Llama.
+- q: Peran FFN dibanding attention adalah…
+  options:
+  - Mengganti positional encoding
+  - Mengurangi vocabulary
+  - Menyimpan dan mengolah informasi per token
+  - Menghitung bobot antar token
+  answer: 2
+  explain: Attention mencampur konteks; FFN memperkaya representasi tiap token secara nonlinier.
+example:
+  code: 'd_model = 512
+
+    d_ff = 4 * d_model
+
+    ffn = "Linear(d_model, d_ff) -> GELU -> Linear(d_ff, d_model)"
+
+    '
+---
+
+
+Setelah attention mengumpulkan informasi dari token lain, **feed-forward network (FFN)** mengolah informasi itu di dalam tiap token. Disebut juga MLP blok.
+
+## Struktur Dasar
+
+```text
+FFN(x) = W2 * activation(W1 * x + b1) + b2
+```
+
+```python
+d_model = 512
+d_ff = 4 * d_model  # 2048
+
+def ffn(x, W1, b1, W2, b2):
+    h = gelu(x @ W1 + b1)
+    return h @ W2 + b2
+```
+
+| Parameter | Arti | Nilai umum |
+|---|---|---|
+| `d_model` | dimensi representasi token | 512–8192 |
+| `d_ff` | dimensi hidden FFN | 2–8 kali `d_model` |
+| aktivasi | fungsi nonlinier | ReLU, GELU, SwiGLU |
+
+## Kenapa Per Token?
+
+Attention sudah melakukan komunikasi antarposisi. FFN bekerja **position-wise**: token ke-3 diproses dengan bobot yang sama seperti token ke-10, tetapi tidak melihat token lain. Ini membuatnya mudah diparalelkan.
+
+## Varian Modern
+
+- **GELU** — versi halus dari ReLU, dipakai BERT dan GPT.
+- **SwiGLU** — gating dengan dua proyeksi, dipakai Llama dan PaLM.
+- **MoE (Mixture of Experts)** — beberapa FFN, hanya sebagian yang aktif per token.
+
+```text
+SwiGLU(x) = Swish(W1 x) ⊗ (W2 x)
+output = W3(SwiGLU(x))
+```
+
+<div class="note">💡 FFN menyumbang porsi besar parameter model. Saat menghitung ukuran model, sekitar dua pertiga parameter sering berada di FFN, bukan attention.</div>
+
+## Dampak Praktis
+
+- FFN lebih besar membuat model lebih ekspresif, tapi biaya komputasi dan memori naik.
+- MoE memisahkan kapasitas dari biaya: total parameter besar, token hanya melewati beberapa expert.
+- Saat quantisasi, bobot FFN biasanya menjadi target utama penghematan memori.

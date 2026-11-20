@@ -1,0 +1,132 @@
+---
+"title": "Loop dan Range"
+"description": "Perulangan for, while, do-while, serta penggunaan range dan step"
+"order": 14
+"quiz":
+- "q": "Perulangan for di Kotlin memakai kata kunci…"
+  "options":
+  - "for (x in ...)"
+  - "foreach (...)"
+  - "for each ..."
+  - "loop ..."
+  "answer": 0
+  "explain": "Sintaksnya for (item in koleksi) { ... }."
+- "q": "Range 1..5 berisi angka…"
+  "options":
+  - "1 sampai 4"
+  - "1 sampai 5"
+  - "0 sampai 5"
+  - "2 sampai 5"
+  "answer": 1
+  "explain": "Operator .. bersifat inclusive pada kedua ujung."
+- "q": "Fungsi untuk mundur dari 5 ke 1 adalah…"
+  "options":
+  - "5 downTo 1"
+  - "5 until 1"
+  - "1..5 reversed"
+  - "5.to(1)"
+  "answer": 0
+  "explain": "downTo menghasilkan range menurun."
+- "q": "Perulangan yang dijamin berjalan minimal sekali adalah…"
+  "options":
+  - "for"
+  - "while"
+  - "do-while"
+  - "repeat"
+  "answer": 2
+  "explain": "do-while mengecek kondisi setelah blok dijalankan."
+- "q": "Fungsi repeat(3) menjalankan blok…"
+  "options":
+  - "3 kali"
+  - "2 kali"
+  - "3 detik"
+  - "Sampai kondisi false"
+  "answer": 0
+  "explain": "repeat(n) merupakan alternatif ringkas untuk loop dengan jumlah tetap."
+"example":
+  "code": "fun main() {\n    for (i in 1..5) print(i)          // 12345\n    println()\n    for (i in 10 downTo 1 step 2) print(i) // 108642\n    println()\n\n    var hitung = 3\n    while (hitung > 0) {\n        print(hitung--)\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## For-in
+
+```kotlin
+fun main() {
+    for (i in 1..5) print(i)          // 12345
+    println()
+    for (i in 10 downTo 1 step 2) print(i) // 108642
+    println()
+
+    var hitung = 3
+    while (hitung > 0) {
+        print(hitung--)
+    }
+}
+```
+
+```kotlin
+for (angka in 1..5) {
+    println(angka)
+}
+
+val nama = listOf("Budi", "Sari")
+for (n in nama) println(n)
+```
+
+Setiap iterasi membuat variabel `n` yang hanya berlaku di dalam blok.
+
+## Range
+
+| Penulisan | Hasil |
+|---|---|
+| `1..5` | 1, 2, 3, 4, 5 |
+| `1 until 5` | 1, 2, 3, 4 |
+| `5 downTo 1` | 5, 4, 3, 2, 1 |
+| `1..10 step 3` | 1, 4, 7, 10 |
+
+Range juga berlaku untuk `Char`: `'a'..'d'` menghasilkan a, b, c, d.
+
+## While dan Do-While
+
+```kotlin
+var energi = 3
+while (energi > 0) {
+    println("Energi: $energi")
+    energi--
+}
+
+do {
+    println("Pasti tampil minimal sekali")
+} while (energi > 0)
+```
+
+## Repeat dan Indeks
+
+```kotlin
+repeat(3) { println("Halo ke-${it + 1}") }
+
+for ((indeks, nilai) in nama.withIndex()) {
+    println("$indeks -> $nilai")
+}
+```
+
+`it` adalah nama otomatis untuk parameter lambda tunggal.
+
+<div class="note">💡 Hati-hati dengan <code>while (true)</code> tanpa kondisi keluar. Pastikan ada <code>break</code>, <code>return</code>, atau perubahan variabel yang pada akhirnya membuat kondisi menjadi false.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    for (i in 1..5) print(i)          // 12345
+    println()
+    for (i in 10 downTo 1 step 2) print(i) // 108642
+    println()
+
+    var hitung = 3
+    while (hitung > 0) {
+        print(hitung--)
+    }
+}`} />

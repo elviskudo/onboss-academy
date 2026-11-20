@@ -1,0 +1,144 @@
+---
+title: "Thread & Concurrency"
+description: "threading, GIL, Lock, dan kapan memakai thread vs multiprocessing"
+order: 23
+quiz:
+  - q: "Modul bawaan untuk thread adalah…"
+    options: ["threading", "multithread", "concurrent", "asyncio"]
+    answer: 0
+    explain: "Modul `threading` menyediakan Thread, Lock, dan sinkronisasi dasar."
+  - q: "GIL pada CPython membatasi…"
+    options: ["I/O", "Eksekusi bytecode Python paralel", "Import modul", "Pembacaan file"]
+    answer: 1
+    explain: "GIL mengizinkan satu thread mengeksekusi bytecode Python pada satu waktu."
+  - q: "Untuk tugas CPU-bound di Python, pilihan yang lebih tepat adalah…"
+    options: ["Thread", "Multiprocessing", "Async/await", "Comprehension"]
+    answer: 1
+    explain: "Multiprocessing memakai proses terpisah sehingga punya GIL sendiri."
+  - q: "Lock dipakai untuk…"
+    options: ["Mempercepat thread", "Mencegah race condition", "Membuat thread baru", "Menghentikan program"]
+    answer: 1
+    explain: "Lock memastikan hanya satu thread mengakses resource kritis."
+  - q: "`t.join()` melakukan…"
+    options: ["Memulai thread", "Menunggu thread selesai", "Menghapus thread", "Mengunci thread"]
+    answer: 1
+    explain: "join memblokir pemanggil sampai thread target selesai."
+example:
+  code: |
+    import threading
+    import time
+    
+    hasil = []
+    kunci = threading.Lock()
+    
+    def kerja(n):
+        time.sleep(0.01)  # simulasi I/O
+        with kunci:
+            hasil.append(n * 2)
+    
+    threads = [threading.Thread(target=kerja, args=(i,)) for i in range(5)]
+    for t in threads: t.start()
+    for t in threads: t.join()
+    
+    print(sorted(hasil))
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Concurrency membantu program melakukan banyak hal dalam satu waktu. Python menyediakan thread, process, dan asyncio untuk kebutuhan berbeda.
+
+## Thread Dasar
+
+```python
+import threading
+
+def cetak(nama):
+    for i in range(3):
+        print(nama, i)
+
+t = threading.Thread(target=cetak, args=("A",))
+t.start()
+t.join()   # tunggu selesai
+print("selesai")
+```
+
+## Race Condition & Lock
+
+```python
+total = 0
+kunci = threading.Lock()
+
+def tambah():
+    global total
+    for _ in range(100_000):
+        with kunci:
+            total += 1
+```
+
+Tanpa lock, operasi `total += 1` bisa saling menimpa. `with kunci` menjamin eksklusi.
+
+## GIL
+
+Global Interpreter Lock membuat hanya satu thread yang mengeksekusi bytecode Python pada satu waktu. Konsekuensinya:
+
+| Jenis tugas | Pilihan tepat |
+|---|---|
+| I/O-bound (download, DB, file) | `threading` atau `asyncio` |
+| CPU-bound (komputasi berat) | `multiprocessing` |
+
+```python
+from multiprocessing import Pool
+
+with Pool(4) as p:
+    print(p.map(lambda x: x*x, range(10)))
+```
+
+## Thread Pool
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+with ThreadPoolExecutor(max_workers=4) as ex:
+    hasil = list(ex.map(unduh, urls))
+```
+
+Executor mengelola thread untukmu — lebih sederhana daripada mengelola `Thread` manual.
+
+## async/await (Sekilas)
+
+```python
+import asyncio
+
+async def tugas(n):
+    await asyncio.sleep(1)
+    return n * 2
+
+async def main():
+    print(await asyncio.gather(tugas(1), tugas(2)))
+
+asyncio.run(main())
+```
+
+`asyncio` cocok untuk banyak I/O konkuren dengan overhead lebih rendah dari thread.
+
+<div class="note">💡 Mulai dari <code>ThreadPoolExecutor</code> untuk I/O dan <code>ProcessPoolExecutor</code> untuk CPU. Turun ke <code>Thread</code>/<code>Lock</code> manual hanya bila kamu benar-benar butuh kontrol.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import threading
+import time
+
+hasil = []
+kunci = threading.Lock()
+
+def kerja(n):
+    time.sleep(0.01)  # simulasi I/O
+    with kunci:
+        hasil.append(n * 2)
+
+threads = [threading.Thread(target=kerja, args=(i,)) for i in range(5)]
+for t in threads: t.start()
+for t in threads: t.join()
+
+print(sorted(hasil))`} />

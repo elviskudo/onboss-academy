@@ -1,0 +1,111 @@
+---
+title: "Referensi Cepat dan Langkah Selanjutnya"
+description: "Rangkuman sintaks, urutan klausa, dan peta belajar lanjutan"
+order: 28
+quiz:
+  - q: "Urutan penulisan klausa SELECT yang benar adalah…"
+    options: ["SELECT FROM WHERE GROUP BY HAVING ORDER BY LIMIT", "SELECT WHERE FROM GROUP BY HAVING ORDER BY LIMIT", "FROM SELECT WHERE GROUP BY HAVING ORDER BY LIMIT", "SELECT FROM ORDER BY WHERE GROUP BY"]
+    answer: 0
+    explain: "Urutan penulisan: SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT."
+  - q: "Agar belajar efektif, latihan terbaik adalah…"
+    options: ["Membaca tanpa praktik", "Menulis query pada data nyata", "Menghafal tanpa konteks", "Menyontek jawaban"]
+    answer: 1
+    explain: "Praktik dengan data membuat pola query melekat lebih kuat."
+  - q: "Fungsi agregat untuk menghitung baris adalah…"
+    options: ["SUM()", "COUNT()", "AVG()", "GROUP()"]
+    answer: 1
+    explain: "COUNT(*) menghitung seluruh baris dalam grup."
+  - q: "Untuk menggabungkan tabel berdasarkan kunci dipakai…"
+    options: ["JOIN", "COPY", "MERGE FILE", "SORT"]
+    answer: 0
+    explain: "JOIN memasangkan baris antartabel sesuai kondisi ON."
+  - q: "Pemeriksaan performa query dimulai dengan…"
+    options: ["EXPLAIN", "DROP", "INSERT", "GRANT"]
+    answer: 0
+    explain: "EXPLAIN/EXPLAIN QUERY PLAN menunjukkan rencana eksekusi."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept ORDER BY jumlah DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bagian penutup ini merangkum pola yang paling sering dipakai dan memberi arah belajar berikutnya. Simpan halaman ini sebagai daftar cepat saat menulis query.
+
+## Daftar Perintah Inti
+
+| Kategori | Perintah |
+| --- | --- |
+| DDL | CREATE, ALTER, DROP |
+| DML | SELECT, INSERT, UPDATE, DELETE |
+| Filter | WHERE, AND, OR, IN, BETWEEN, LIKE, IS NULL |
+| Agregat | COUNT, SUM, AVG, MIN, MAX, GROUP BY, HAVING |
+| Gabung | INNER/LEFT/RIGHT/FULL JOIN, UNION |
+| Perantara | CTE (WITH), subquery, view |
+| Transaksi | BEGIN, COMMIT, ROLLBACK, SAVEPOINT |
+| Performa | EXPLAIN, CREATE INDEX |
+| Keamanan | GRANT, REVOKE, prepared statement
+
+## Template Query Umum
+
+```sql
+WITH langkah1 AS (
+  SELECT kolom, COUNT(*) AS jumlah
+  FROM tabel
+  WHERE kondisi
+  GROUP BY kolom
+)
+SELECT kolom, jumlah,
+       CASE WHEN jumlah >= 10 THEN 'Tinggi' ELSE 'Rendah' END AS kategori
+FROM langkah1
+WHERE jumlah > 0
+ORDER BY jumlah DESC
+LIMIT 20;
+```
+
+## Urutan Eksekusi Logis
+
+```text
+FROM → JOIN → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
+```
+
+Urutan ini menjelaskan mengapa alias dari SELECT belum tersedia di WHERE, dan mengapa HAVING datang setelah agregasi.
+
+## Rencana Latihan
+
+1. Kuasai SELECT, WHERE, ORDER BY, dan LIMIT.
+2. Latih agregasi dengan GROUP BY dan HAVING.
+3. Pahami perbedaan INNER dan LEFT JOIN sampai bisa menjelaskan anti join.
+4. Biasakan CTE untuk query bertahap.
+5. Pelajari index dengan EXPLAIN.
+6. Terapkan transaksi dan prepared statement di proyek nyata.
+
+## Kapan Pindah ke Dialek Khusus
+
+Setelah fondasi kuat, pilih salah satu:
+
+- **PostgreSQL**: fitur JSONB, window function lengkap, ekstensi.
+- **MySQL**: ekosistem web luas, replication.
+- **SQL Server**: integration dengan stack Microsoft.
+- **SQLite**: embedded, mobile, pengujian ringan.
+- **BigQuery/Snowflake**: analitik berskala besar.
+
+<div class="note">💡 Query yang benar hari ini bisa menjadi lambat besok saat data tumbuh 10 kali lipat. Biasakan mengukur dengan volume data yang realistis sejak awal.</div>
+
+## Di Dunia Nyata
+
+- **Analis data**: 80% pekerjaan harian adalah SELECT + agregasi + join.
+- **Backend engineer**: query parametris, transaksi, dan index.
+- **Data engineer**: pipeline, materialized view, dan optimasi biaya.
+- **Product manager**: memahami definisi metrik di balik dashboard.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata
+FROM karyawan
+WHERE gaji >= 7000000
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY rata DESC
+LIMIT 5;`} />

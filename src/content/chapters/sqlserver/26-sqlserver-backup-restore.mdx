@@ -1,0 +1,101 @@
+---
+title: "Backup dan Restore"
+description: "FULL, DIFFERENTIAL, LOG backup, recovery model, dan RESTORE WITH RECOVERY"
+order: 26
+quiz:
+  - q: "Jenis backup yang menyalin seluruh database adalah…"
+    options: ["FILE", "FULL", "DIFFERENTIAL", "LOG"]
+    answer: 1
+    explain: "FULL backup adalah baseline."
+  - q: "Differential backup berisi…"
+    options: ["Hanya log", "Hanya indeks", "Semua data", "Perubahan sejak FULL terakhir"]
+    answer: 3
+    explain: "Differential menghemat waktu backup dan restore."
+  - q: "Transaction log backup hanya mungkin pada recovery model…"
+    options: ["FULL atau BULK_LOGGED", "Any", "NONE", "SIMPLE"]
+    answer: 0
+    explain: "SIMPLE memotong log otomatis dan tidak mendukung log backup."
+  - q: "RESTORE ... WITH RECOVERY berarti…"
+    options: ["Membuat salinan", "Database langsung bisa dipakai", "Menunggu log berikutnya", "Menghapus backup"]
+    answer: 1
+    explain: "RECOVERY menyelesaikan proses restore dan membuka database."
+  - q: "Perintah membackup database ke disk adalah…"
+    options: ["EXPORT DATABASE", "COPY DATABASE", "BACKUP DATABASE ... TO DISK", "SAVE DATABASE"]
+    answer: 2
+    explain: "BACKUP DATABASE nama TO DISK = 'path.bak';"
+example:
+  code: |
+    BACKUP DATABASE AcademyDB TO DISK = 'C:\Backup\AcademyDB.bak' WITH COMPRESSION;
+    GO
+    RESTORE DATABASE AcademyDB_Uji
+      FROM DISK = 'C:\Backup\AcademyDB.bak'
+      WITH MOVE 'AcademyDB' TO 'C:\Data\Uji.mdf',
+           MOVE 'AcademyDB_log' TO 'C:\Data\Uji.ldf';
+    GO
+---
+
+## Recovery Model
+
+| Model | Log backup | Cocok untuk |
+| --- | --- | --- |
+| SIMPLE | tidak ada | development, data bisa diulang |
+| FULL | ya | produksi yang butuh point-in-time recovery |
+| BULK_LOGGED | ya | operasi bulk besar dengan log minimal |
+
+```sql
+ALTER DATABASE AcademyDB SET RECOVERY FULL;
+```
+
+## Strategi Umum
+
+```sql
+-- mingguan
+BACKUP DATABASE AcademyDB
+TO DISK = 'D:\Backup\AcademyDB_full.bak'
+WITH COMPRESSION, INIT;
+
+-- harian
+BACKUP DATABASE AcademyDB
+TO DISK = 'D:\Backup\AcademyDB_diff.bak'
+WITH DIFFERENTIAL, COMPRESSION;
+
+-- tiap 15 menit
+BACKUP LOG AcademyDB
+TO DISK = 'D:\Backup\AcademyDB_log.trn'
+WITH COMPRESSION;
+```
+
+`INIT` menimpa file backup lama. Simpan salinan di lokasi berbeda agar kehilangan satu disk tidak menghilangkan semua backup.
+
+## Restore
+
+```sql
+RESTORE DATABASE AcademyDB
+FROM DISK = 'D:\Backup\AcademyDB_full.bak'
+WITH RECOVERY;
+```
+
+Untuk point-in-time:
+
+```sql
+RESTORE DATABASE AcademyDB
+FROM DISK = 'D:\Backup\full.bak' WITH NORECOVERY;
+RESTORE DATABASE AcademyDB
+FROM DISK = 'D:\Backup\diff.bak' WITH NORECOVERY;
+RESTORE LOG AcademyDB
+FROM DISK = 'D:\Backup\log.trn'
+WITH RECOVERY, STOPAT = '2026-11-20 09:00:00';
+```
+
+`NORECOVERY` menjaga database dalam keadaan "restoring" agar backup berikutnya bisa diterapkan.
+
+<div class="note">💡 Backup yang tidak pernah diuji bukan backup. Lakukan restore rutin ke server uji dan verifikasi jumlah baris serta beberapa query kunci.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`BACKUP DATABASE master TO DISK = 'C:\\Backup\\master_test.bak' WITH COMPRESSION;
+GO
+SELECT * FROM msdb.dbo.backupset ORDER BY backup_start_date DESC;
+GO`}</code></pre>

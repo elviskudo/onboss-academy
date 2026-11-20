@@ -1,0 +1,115 @@
+---
+title: "Refactoring Komponen"
+description: "memecah komponen besar, menamai fungsi dengan jelas, dan mengurangi duplikasi"
+order: 23
+quiz:
+  - q: "Tanda komponen perlu dipecah adalah…"
+    options: ["Semua props bertipe string", "Tidak ada state", "Satu file menangani banyak tanggung jawab", "File kurang dari 10 baris"]
+    answer: 2
+    explain: "Campuran form, daftar, dan fetch dalam satu file sulit diuji."
+  - q: "Pemisahan yang baik menghasilkan…"
+    options: ["CSS inline semua", "Komponen dengan satu tanggung jawab jelas", "Lebih banyak baris kode", "Lebih banyak props drilling"]
+    answer: 1
+    explain: "Mudah dibaca dan dipakai ulang."
+  - q: "Duplikasi logika sebaiknya…"
+    options: ["Dibiarkan agar cepat", "Dihapus beserta fiturnya", "Ditulis di CSS", "Dipindah ke custom hook atau utilitas"]
+    answer: 3
+    explain: "Satu sumber kebenaran mengurangi bug."
+  - q: "Nama komponen yang baik biasanya…"
+    options: ["Angka", "PascalCase dan menggambarkan peran", "Semua huruf kecil", "Singkatan acak"]
+    answer: 1
+    explain: "Contoh: DaftarPesanan, KartuProduk."
+  - q: "Prop yang terlalu banyak bisa menjadi tanda…"
+    options: ["Komponen melakukan terlalu banyak hal", "React rusak", "CSS perlu diubah", "Perlu menambah state"]
+    answer: 0
+    explain: "Pertimbangkan memecah atau mengelompokkan data."
+example:
+  code: |
+    // Sebelum: satu komponen melakukan semua
+    function Halaman() { /* fetch + form + tabel + filter */ }
+
+    // Sesudah
+    function Halaman() {
+      return <><Filter /><FormTambah /><TabelPesanan /></>;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Menulis komponen itu mudah. Menjaga tetap rapi saat aplikasi tumbuh adalah tantangan sebenarnya.
+
+## Tanda Perlu Refactor
+
+- File lebih dari ~200 baris dan sulit dicari bagiannya.
+- Satu komponen mengambil data, mengolah, dan menampilkan sekaligus.
+- Props bertambah terus sampai sulit diingat.
+- Logika yang sama muncul di tiga tempat.
+
+## Memecah Berdasarkan Tanggung Jawab
+
+```jsx
+// Sebelum
+function HalamanPesanan() {
+  const [pesanan, setPesanan] = useState([]);
+  const [filter, setFilter] = useState("");
+  // 120 baris logika + JSX ...
+}
+
+// Sesudah
+function HalamanPesanan() {
+  const [filter, setFilter] = useState("");
+
+  return (
+    <main>
+      <PanelFilter value={filter} onChange={setFilter} />
+      <DaftarPesanan filter={filter} />
+    </main>
+  );
+}
+```
+
+`DaftarPesanan` boleh memakai `useFetch` sendiri — tanggung jawabnya jelas.
+
+## Ekstrak Logika ke Hook
+
+```jsx
+// useFilter.js
+export function useFilter(items, kata) {
+  return items.filter((i) =>
+    i.nama.toLowerCase().includes(kata.toLowerCase())
+  );
+}
+```
+
+## Pemberian Nama
+
+| Buruk | Baik |
+|-------|------|
+| `data` | `daftarPesanan` |
+| `handle` | `handleSimpanPesanan` |
+| `Comp` | `KartuRingkasan` |
+| `flag` | `sedangMemuat` |
+
+## Langkah Aman
+
+1. Pastikan ada test yang lolos.
+2. Pindahkan satu potong kecil.
+3. Jalankan test lagi.
+4. Ulangi.
+
+<div class="note">💡 Refactor bukan soal membuat kode lebih pendek, tapi membuatnya lebih mudah dipahami orang yang pertama kali membacanya — termasuk dirimu sendiri enam bulan kemudian.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Refactoring kecil: ekstrak fungsi filter
+const pesanan = [
+  { nama: "Kopi Susu", lunas: true },
+  { nama: "Roti Bakar", lunas: false },
+];
+
+function yangLunas(data) { return data.filter((p) => p.lunas); }
+
+console.log(yangLunas(pesanan));
+console.log(yangLunas(pesanan).map((p) => p.nama).join(", "));`} />

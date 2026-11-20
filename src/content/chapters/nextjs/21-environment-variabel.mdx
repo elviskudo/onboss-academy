@@ -1,0 +1,85 @@
+---
+title: "Environment Variable"
+description: ".env.local, NEXT_PUBLIC_, validasi, dan rahasia di server"
+order: 21
+quiz:
+  - q: "File untuk variabel lokal pengembangan adalah…"
+    options: [".env.public", "secrets.txt", ".env.local", "config.json"]
+    answer: 2
+    explain: "File ini tidak boleh masuk repository."
+  - q: "Variabel yang bisa dibaca browser harus diawali…"
+    options: ["VITE_", "NEXT_PUBLIC_", "PUBLIC_", "CLIENT_"]
+    answer: 1
+    explain: "Next.js mengganti nilainya saat build."
+  - q: "Rahasia API sebaiknya disimpan…"
+    options: ["Di komponen client", "Di URL", "Di localStorage", "Di variabel server tanpa NEXT_PUBLIC_"]
+    answer: 3
+    explain: "Nilainya hanya tersedia di server."
+  - q: "File .env.local sebaiknya…"
+    options: ["Dihapus saat deploy", "Dimasukkan ke .gitignore", "Di-commit", "Ditaruh di public/"]
+    answer: 1
+    explain: "Isinya bisa berisi kredensial."
+  - q: "Contoh variabel di runtime Vercel diatur lewat…"
+    options: ["Dashboard project > Environment Variables", "public/_env", "middleware", "next.config saja"]
+    answer: 0
+    explain: "Nilai bisa dibedakan per environment."
+example:
+  code: |
+    # .env.local
+    DATABASE_URL=postgres://...
+    NEXT_PUBLIC_API_URL=https://api.contoh.com
+---
+
+Environment variable memisahkan konfigurasi dari kode. Next.js punya aturan tegas soal mana yang boleh sampai ke browser.
+
+## Menulis
+
+```bash
+# .env.local
+DATABASE_URL=postgres://user:pass@localhost:5432/app
+API_SECRET=rahasia123
+NEXT_PUBLIC_API_URL=https://api.contoh.com
+```
+
+```gitignore
+.env*.local
+```
+
+## Membaca di Server
+
+```ts
+const url = process.env.DATABASE_URL;
+const rahasia = process.env.API_SECRET;
+```
+
+Keduanya tidak dikirim ke browser.
+
+## Membaca di Client
+
+```ts
+const api = process.env.NEXT_PUBLIC_API_URL;
+```
+
+Hanya variabel berawalan `NEXT_PUBLIC_` yang disematkan ke bundle. Semua orang bisa melihat nilainya — jangan taruh rahasia di sini.
+
+## Validasi
+
+```ts
+// lib/env.ts
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) throw new Error("DATABASE_URL belum disetel");
+
+export { DATABASE_URL };
+```
+
+Validasi lebih awal membuat error lebih mudah dilacak daripada saat request pertama kali.
+
+<div class="note">💡 Anggap setiap `NEXT_PUBLIC_` sebagai informasi publik. Kalau nilainya tidak boleh diketahui orang lain, jangan gunakan awalan itu.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`# .env.local
+DATABASE_URL=postgres://...
+NEXT_PUBLIC_API_URL=https://api.contoh.com`}</code></pre>

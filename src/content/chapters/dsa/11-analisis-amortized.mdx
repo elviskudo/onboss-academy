@@ -1,0 +1,94 @@
+---
+title: Analisis Amortized dan Potensi Dinamis
+description: Menghitung biaya rata-rata operasi yang kadang mahal tapi jarang terjadi.
+order: 11
+quiz:
+- q: Analisis amortized menghitung…
+  options:
+  - Waktu terburuk satu operasi
+  - Jumlah baris kode
+  - Ukuran memori statis
+  - Biaya rata-rata per operasi atas rentang operasi
+  answer: 3
+  explain: Amortized melihat total biaya dibagi jumlah operasi, bukan satu operasi saja.
+- q: append pada Python list memiliki biaya amortized…
+  options:
+  - O(1)
+  - O(log n)
+  - O(n)
+  - O(n^2)
+  answer: 0
+  explain: Kadang list harus resize O(n), tapi itu jarang sehingga rata-rata tetap konstan.
+- q: Faktor pertumbuhan kapasitas umum adalah…
+  options:
+  - 1,1x
+  - 2x
+  - 10x
+  - Tidak pernah berubah
+  answer: 1
+  explain: Menggandakan kapasitas membuat biaya copy teramortisasi.
+- q: Metode potensial (potential method) memakai…
+  options:
+  - Hash random
+  - Rekursi tanpa base case
+  - Fungsi potensi yang merepresentasikan kerja tersimpan
+  - Matriks adjacency
+  answer: 2
+  explain: Potensi naik saat operasi murah dan turun saat operasi mahal.
+- q: Contoh struktur dengan operasi amortized O(1) adalah…
+  options:
+  - Binary search
+  - Merge sort
+  - Matrix multiplication
+  - Dynamic array
+  answer: 3
+  explain: Dynamic array adalah contoh klasik analisis amortized.
+example:
+  code: "kapasitas = 1\ndata = []\nfor i in range(8):\n    if len(data) == kapasitas:\n        kapasitas *= 2\n        print(\"resize ke\", kapasitas)\n    data.append(i)\n"
+---
+
+
+Beberapa operasi sesekali mahal, tetapi **rata-rata** tetap murah. Analisis amortized memberi caraformal untuk mengatakan itu.
+
+## Intuisi Dynamic Array
+
+```python
+kapasitas = 1
+data = []
+for i in range(8):
+    if len(data) == kapasitas:
+        kapasitas *= 2
+        print("resize ke", kapasitas)
+    data.append(i)
+```
+
+Resize menyalin n elemen, tetapi terjadi setelah makin banyak append. Total salinan: 1 + 2 + 4 + ... + n/2 &lt; n.
+
+```text
+total biaya n append < 2n  ->  amortized O(1)
+```
+
+## Dua Metode
+
+| Metode | Ide |
+|---|---|
+| Aggregasi | hitung total T(n), bagi n |
+| Potensial | simpan “kredit” pada struktur |
+
+```text
+biaya amortized = biaya aktual + ΔΦ
+```
+
+Saat kapasitas bertambah, Φ naik. Saat resize, Φ turun untuk membayar biaya salin.
+
+## Contoh Lain
+
+- **Stack dengan pop multipel** — bisa mahal sekali, murah secara amortized.
+- **Disjoint Set Union** — path compression mencapai hampir O(1).
+- **Hash table resize** — rehash jarang terjadi.
+
+<div class="note">💡 Amortized berbeda dengan average case. Average case bergantung pada distribusi input; amortized menjamin rata-rata atas **urutan operasi apa pun**.</div>
+
+## Kapan Penting
+
+Saat merancang struktur data kustom, catat operasi yang mahal lalu tanyakan: seberapa sering ia terjadi, dan apakah biayanya bisa dibayar oleh operasi sebelumnya?

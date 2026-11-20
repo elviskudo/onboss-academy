@@ -1,0 +1,105 @@
+---
+title: Cross-Attention antara Encoder dan Decoder
+description: Bagaimana decoder membaca representasi encoder pada model sequence-to-sequence.
+order: 15
+quiz:
+- q: Pada cross-attention, query berasal dari…
+  options:
+  - Encoder
+  - Embedding awal saja
+  - Token output akhir
+  - Decoder
+  answer: 3
+  explain: Decoder menanya (Q), encoder menyediakan K dan V berupa representasi sumber.
+- q: Cross-attention terletak…
+  options:
+  - Setelah self-attention decoder
+  - Hanya di encoder
+  - Di tokenizer
+  - Sebelum self-attention decoder
+  answer: 0
+  explain: 'Urutan blok decoder: masked self-attention, cross-attention, lalu FFN.'
+- q: Fungsi cross-attention dalam terjemahan adalah…
+  options:
+  - Menghapus padding
+  - Menghubungkan kata tujuan dengan kata sumber
+  - Mengganti tokenisasi
+  - Menyimpan bobot model
+  answer: 1
+  explain: Setiap posisi tujuan bisa melihat bagian kalimat sumber yang relevan.
+- q: Model decoder-only seperti GPT…
+  options:
+  - Hanya untuk terjemahan
+  - Memakai cross-attention eksternal
+  - Tidak punya cross-attention ke encoder
+  - Memakai encoder penuh
+  answer: 2
+  explain: GPT hanya bertumpuk blok decoder dengan masked self-attention.
+- q: Keluaran cross-attention berbentuk…
+  options:
+  - Matriks vocabulary
+  - Token sumber baru
+  - Bobot optimizer
+  - Vektor konteks per posisi decoder
+  answer: 3
+  explain: Hasilnya adalah representasi yang sudah kaya informasi sumber untuk diproses FFN.
+example:
+  code: 'Q = decoder_hidden
+
+    K = encoder_output
+
+    V = encoder_output
+
+    konteks = softmax(Q @ K.T / sqrt(d)) @ V
+
+    '
+---
+
+
+Pada arsitektur encoder–decoder asli, decoder tidak hanya mendengar dirinya sendiri. Ia juga **membaca encoder** lewat cross-attention.
+
+## Alur Informasi
+
+```text
+Encoder:  sumber -> self-attention -> representasi sumber
+Decoder:  target -> masked self-attention -> cross-attention -> FFN
+```
+
+```python
+def cross_attention(dec_hidden, enc_output, Wq, Wk, Wv):
+    Q = dec_hidden @ Wq
+    K = enc_output @ Wk
+    V = enc_output @ Wv
+    skor = Q @ K.T / (Q.shape[-1] ** 0.5)
+    return softmax(skor) @ V
+```
+
+| Komponen | Sumber | Peran |
+|---|---|---|
+| Query | decoder | “bagian mana sumber yang relevan?” |
+| Key | encoder | identitas tiap token sumber |
+| Value | encoder | isi informasi token sumber |
+
+## Perbedaan dengan Self-Attention
+
+- Self-attention: Q, K, V berasal dari **urutan yang sama**.
+- Cross-attention: Q dari decoder, K/V dari **urutan lain**.
+
+Pada terjemahan, kata tujuan “kucing” bisa memberi perhatian besar pada kata sumber “cat”, walau posisinya jauh.
+
+## Model Modern
+
+| Model | Arsitektur | Cross-attention |
+|---|---|---|
+| BERT | encoder-only | tidak ada |
+| GPT | decoder-only | tidak ada |
+| T5 / BART | encoder-decoder | ya |
+| Whisper | encoder-decoder | ya |
+
+<div class="note">💡 Decoder-only bisa melakukan many tugas karena prompt berisi instruksi dan contoh. Namun untuk terjemahan dan ringkasan dengan sumber terpisah, encoder-decoder tetap efisien.</div>
+
+## Aplikasi
+
+- Terjemahan mesin dengan kalimat sumber panjang.
+- Ringkasan dokumen: encoder membaca artikel, decoder menulis ringkasan.
+- Speech-to-text: encoder memproses audio, decoder menghasilkan transkrip.

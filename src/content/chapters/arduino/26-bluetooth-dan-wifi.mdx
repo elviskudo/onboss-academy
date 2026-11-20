@@ -1,0 +1,88 @@
+---
+title: "Bluetooth dan Wi-Fi"
+description: "Modul HM-10, ESP-01, dan pengiriman data nirkabel"
+order: 26
+quiz:
+  - q: "Modul HM-10 berkomunikasi dengan Arduino lewat…"
+    options: ["SPI", "GPIO analog", "UART serial", "I2C"]
+    answer: 2
+    explain: "Perintah AT mengatur nama, peran, dan koneksi BLE."
+  - q: "ESP-01 dapat dipakai sebagai…"
+    options: ["Pengganti EEPROM", "Driver motor", "Layar", "Wi-Fi shield serial untuk Arduino"]
+    answer: 3
+    explain: "Perintah AT dikirim lewat UART."
+  - q: "Pada Uno, pin 0/1 dipakai untuk…"
+    options: ["USB dan upload", "I2C", "PWM", "ADC"]
+    answer: 0
+    explain: "Gunakan SoftwareSerial pada pin lain bila UART tetap diperlukan."
+  - q: "Kelemahan SoftwareSerial adalah…"
+    options: ["Tanpa library", "Tidak optimal untuk kirim dan terima sekaligus", "Terlalu cepat", "Hanya 5 V"]
+    answer: 1
+    explain: "Kecepatan tinggi dan banyak instance bisa tidak stabil."
+  - q: "BLE cocok untuk…"
+    options: ["Server web besar", "Mengganti router", "Perangkat daya rendah dengan ponsel", "Streaming video"]
+    answer: 2
+    explain: "HM-10 dan ESP32 mendukung BLE."
+example:
+  code: |
+    #include <SoftwareSerial.h>
+    SoftwareSerial bt(2, 3);  // RX, TX
+    
+    void setup() {
+      Serial.begin(9600);
+      bt.begin(9600);
+    }
+    
+    void loop() {
+      if (bt.available()) Serial.write(bt.read());
+      if (Serial.available()) bt.write(Serial.read());
+    }
+---
+
+Modul nirkabel mengubah Arduino menjadi perangkat IoT. Dua pilihan murah: HM-10 (BLE) dan ESP-01 (Wi-Fi), keduanya memakai UART.
+
+## HM-10
+
+```text
+Perintah AT (dari Serial Monitor pada 9600 baud):
+AT             -> OK
+AT+NAMEArduku  -> mengubah nama
+AT+ROLE0       -> peripheral
+```
+
+## ESP-01
+
+```text
+AT                    -> OK
+AT+CWMODE=1           -> station
+AT+CWJAP="wifi","sandi" -> hubung ke router
+```
+
+## SoftwareSerial
+
+```cpp
+#include <SoftwareSerial.h>
+SoftwareSerial modul(2, 3);   // RX=2, TX=3
+
+modul.begin(9600);
+modul.println('Halo');
+```
+
+Gunakan baud 9600 untuk memulai. Pin RX modul harus menerima TX Arduino, dan sebaliknya.
+
+## Level Shifter
+
+Modul ESP-01 beroperasi di 3,3 V. Pin TX Arduino 5 V perlu diturunkan dengan pembagi tegangan sebelum masuk ke RX ESP-01.
+
+<div class="note">💡 Untuk proyek Wi-Fi yang lebih besar, pertimbangkan ESP32 sebagai pengganti Arduino+ESP-01—terintegrasi, lebih cepat, dan banyak pin.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;SoftwareSerial.h&gt;
+SoftwareSerial esp(2,3);
+void setup(){ Serial.begin(9600); esp.begin(9600); }
+void loop(){
+  if(esp.available()) Serial.write(esp.read());
+  if(Serial.available()) esp.write(Serial.read());
+}`}</code></pre>

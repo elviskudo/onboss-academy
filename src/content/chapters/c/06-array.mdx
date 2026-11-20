@@ -31,7 +31,7 @@ example:
         int nilai[4] = {80, 90, 75, 88};
         int total = 0;
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i &lt; 4; i++) {
             total += nilai[i];
         }
         printf("Rata-rata: %.1f\n", (double) total / 4);
@@ -171,6 +171,10 @@ Untuk data yang ukurannya baru diketahui saat program berjalan, array statis tid
 
 <div class="note">💡 Selalu sertakan variabel panjang saat mengoper array. C tidak menyimpan ukuran array di memori, sehingga membaca melewati batas tidak memunculkan error — hanya hasil yang salah atau crash yang tidak bisa ditebak. Ukuran tetap, akses cepat, nol proteksi: itulah array C.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 
 int main(void) {
@@ -178,18 +182,18 @@ int main(void) {
     int total = 0, maks = nilai[0], min = nilai[0];
     int n = sizeof(nilai) / sizeof(nilai[0]);
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i &lt; n; i++) {
         total += nilai[i];
         if (nilai[i] > maks) maks = nilai[i];
-        if (nilai[i] < min) min = nilai[i];
+        if (nilai[i] &lt; min) min = nilai[i];
     }
     printf("Jumlah: %d\\n", total);
     printf("Rata-rata: %.1f\\n", (double) total / n);
     printf("Tertinggi: %d | Terendah: %d\\n", maks, min);
 
     int urut[5] = {5, 3, 8, 1, 2};
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4 - i; j++) {
+    for (int i = 0; i &lt; 4; i++) {
+        for (int j = 0; j &lt; 4 - i; j++) {
             if (urut[j] > urut[j + 1]) {
                 int t = urut[j];
                 urut[j] = urut[j + 1];
@@ -198,12 +202,12 @@ int main(void) {
         }
     }
     printf("Terurut: ");
-    for (int i = 0; i < 5; i++) printf("%d ", urut[i]);
+    for (int i = 0; i &lt; 5; i++) printf("%d ", urut[i]);
     printf("\\n");
 
     int matriks[2][3] = {{1, 2, 3}, {4, 5, 6}};
-    for (int b = 0; b < 2; b++) {
-        for (int k = 0; k < 3; k++) printf("%d ", matriks[b][k]);
+    for (int b = 0; b &lt; 2; b++) {
+        for (int k = 0; k &lt; 3; k++) printf("%d ", matriks[b][k]);
         printf("\\n");
     }
     return 0;

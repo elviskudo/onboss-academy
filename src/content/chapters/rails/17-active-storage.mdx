@@ -1,0 +1,110 @@
+---
+"title": "Active Storage"
+"description": "Mengunggah dan melampirkan gambar serta file lewat Active Storage"
+"order": 17
+"quiz":
+- "q": "Asosiasi untuk satu lampiran pada Active Storage adalah…"
+  "options":
+  - "has_many_attached"
+  - "has_one_attached"
+  - "has_attachment"
+  - "attach_one"
+  "answer": 1
+  "explain": "has_one_attached :avatar dipakai untuk satu file."
+- "q": "Metode untuk membuat varian ukuran gambar adalah…"
+  "options":
+  - "resize"
+  - "thumbnail"
+  - "variant"
+  - "derive"
+  "answer": 2
+  "explain": "avatar.variant(resize_to_limit: [300, 300]) memakai ImageProcessing."
+- "q": "Perintah memasang migrasi Active Storage adalah…"
+  "options":
+  - "bin/rails db:storage"
+  - "rails assets:install"
+  - "bundle install storage"
+  - "bin/rails active_storage:install"
+  "answer": 3
+  "explain": "Generator membuat tabel attachments dan blobs."
+- "q": "Servis penyimpanan bawaan Rails adalah…"
+  "options":
+  - "disk"
+  - "s3"
+  - "gcs"
+  - "memory"
+  "answer": 0
+  "explain": "Konfigurasi config/storage.yml memakai disk untuk development."
+- "q": "Cara menampilkan URL lampiran di view adalah…"
+  "options":
+  - "image_tag @user.avatar"
+  - "url_for(@user.avatar)"
+  - "asset_path @user.avatar"
+  - "file_url @user.avatar"
+  "answer": 1
+  "explain": "url_for menghasilkan URL proxy atau URL langsung ke servis."
+"example":
+  "code": "class User &lt; ApplicationRecord\n  has_one_attached :avatar\n  has_many_attached :documents\nend\n\n# di view\n&lt;%= image_tag current_user.avatar.variant(resize_to_limit: [120, 120]) if current_user.avatar.attached? %>\n"
+---
+
+
+## Menyiapkan Active Storage
+
+```ruby
+class User < ApplicationRecord
+  has_one_attached :avatar
+  has_many_attached :documents
+end
+
+# di view
+<%= image_tag current_user.avatar.variant(resize_to_limit: [120, 120]) if current_user.avatar.attached? %>
+```
+
+```bash
+bin/rails active_storage:install
+bin/rails db:migrate
+```
+
+Dua tabel dibuat: `active_storage_blobs` (metadata file) dan `active_storage_attachments` (hubungan ke model).
+
+## Melampirkan File
+
+```ruby
+class User < ApplicationRecord
+  has_one_attached :avatar
+end
+
+user.avatar.attach(
+  io: File.open("foto.png"),
+  filename: "foto.png",
+  content_type: "image/png"
+)
+```
+
+Di form, cukup `form.file_field :avatar` dengan `multipart: true` pada `form_with`.
+
+## Varian Gambar
+
+```erb
+<%= image_tag user.avatar.variant(resize_to_limit: [300, 300]) %>
+```
+
+Varian diproses oleh gem `image_processing` (ImageMagick atau libvips). Hasilnya di-cache, jadi tidak diproses ulang setiap request.
+
+## Servis Penyimpanan
+
+| Servis | Dipakai untuk | Konfigurasi |
+|---|---|---|
+| `disk` | development lokal | `config/storage.yml` |
+| `amazon` | produksi dengan S3 | kredensial lewat Rails credentials |
+| `google` | Google Cloud Storage | kredensial lewat Rails credentials |
+| `mirror` | replikasi ke beberapa servis | daftar servis di `config.active_storage.service` |
+
+## Membersihkan Lampiran
+
+```ruby
+user.avatar.purge     # langsung hapus
+user.avatar.purge_later # lewat Active Job
+```
+
+<div class="note">💡 Selalu cek <code>attached?</code> sebelum menampilkan gambar. Lampiran yang belum diunggah mengembalikan nil dan akan menyebabkan error bila langsung dipanggil <code>variant</code>.</div>

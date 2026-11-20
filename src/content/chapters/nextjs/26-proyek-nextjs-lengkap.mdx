@@ -1,0 +1,137 @@
+---
+title: "Proyek: Aplikasi Next.js Lengkap"
+description: "menggabungkan App Router, data fetching, server action, dan deploy"
+order: 26
+quiz:
+  - q: "Struktur proyek memakai…"
+    options: ["Tanpa layout", "public/ sebagai rute", "App Router dengan app/", "Pages Router wajib"]
+    answer: 2
+    explain: "Konvensi file menentukan rute."
+  - q: "Data yang sering berubah sebaiknya diambil dengan…"
+    options: ["CSS", "revalidate pendek atau no-store", "Cache selamanya", "localStorage"]
+    answer: 1
+    explain: "Sesuaikan strategi dengan kebutuhan data."
+  - q: "Form modern memakai…"
+    options: ["Endpoint terpisah wajib", "window.alert", "Tanpa validasi", "Server Action"]
+    answer: 3
+    explain: "Lebih sedikit boilerplate dan langsung di server."
+  - q: "Halaman error ditempatkan di…"
+    options: ["middleware", "app/error.tsx", "public/error.html", "next.config"]
+    answer: 1
+    explain: "Berlaku untuk segmen bersangkutan."
+  - q: "Langkah terakhir sebelum rilis adalah…"
+    options: ["npm run build dan uji", "Menghapus test", "Menonaktifkan metadata", "Mengubah semua rute"]
+    answer: 0
+    explain: "Pastikan hasil build benar-benar berjalan."
+example:
+  code: |
+    app/
+      layout.tsx
+      page.tsx
+      produk/[id]/page.tsx
+      produk/action.ts
+      api/produk/route.ts
+      loading.tsx
+      error.tsx
+---
+
+Penutup seri ini: merangkai semua konsep menjadi aplikasi katalog produk siap pakai.
+
+## Struktur
+
+```
+app/
+  layout.tsx
+  page.tsx
+  produk/
+    page.tsx
+    [id]/page.tsx
+    action.ts
+    loading.tsx
+    error.tsx
+  api/produk/route.ts
+components/
+  KartuProduk.tsx
+lib/
+  db.ts
+```
+
+## Halaman Daftar
+
+```tsx
+export const revalidate = 60;
+
+export default async function HalamanProduk() {
+  const produk = await ambilProduk();
+
+  return (
+    <main>
+      <h1>Katalog Produk</h1>
+      <div className="grid">
+        {produk.map((p) => (
+          <a key={p.id} href={`/produk/${p.id}`}>
+            <KartuProduk nama={p.nama} harga={p.harga} />
+          </a>
+        ))}
+      </div>
+    </main>
+  );
+}
+```
+
+## Detail
+
+```tsx
+export async function generateMetadata({ params }) {
+  const p = await ambilProduk(params.id);
+  return { title: p?.nama ?? "Produk" };
+}
+
+export default async function Detail({ params }) {
+  const p = await ambilProduk(params.id);
+  if (!p) notFound();
+
+  return (
+    <article>
+      <h1>{p.nama}</h1>
+      <p>Rp{p.harga.toLocaleString("id-ID")}</p>
+      <form action={tambahKeKeranjang}>
+        <input type="hidden" name="id" value={p.id} />
+        <button type="submit">Tambah ke keranjang</button>
+      </form>
+    </article>
+  );
+}
+```
+
+## Route Handler
+
+```ts
+export async function GET() {
+  const data = await ambilProduk();
+  return NextResponse.json(data);
+}
+```
+
+## Checklist Akhir
+
+- [ ] Metadata dan OG sudah benar.
+- [ ] Gambar memakai `next/image`.
+- [ ] Error dan loading punya tampilan.
+- [ ] Input divalidasi di server.
+- [ ] `npm run build` sukses.
+
+<div class="note">💡 Kamu sudah menempuh jalur lengkap: struktur, styling, data, caching, interaksi, keamanan, dan deploy. Pilih satu proyek kecil dan terapkan semuanya — pemahaman akan jauh lebih kuat setelah mempraktikkannya.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`app/
+  layout.tsx
+  page.tsx
+  produk/[id]/page.tsx
+  produk/action.ts
+  api/produk/route.ts
+  loading.tsx
+  error.tsx`}</code></pre>

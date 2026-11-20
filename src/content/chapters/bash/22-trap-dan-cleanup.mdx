@@ -1,0 +1,126 @@
+---
+"title": "Trap dan Cleanup"
+"description": "Menangani sinyal, membersihkan file sementara, dan memastikan skrip gagal dengan benar"
+"order": 22
+"quiz":
+- "q": "Perintah trap dipakai untuk…"
+  "options":
+  - "Menghentikan proses"
+  - "Menangkap sinyal dan menjalankan handler"
+  - "Membuat file"
+  - "Mengirim email"
+  "answer": 1
+  "explain": "trap \"perintah\" SIGNAL mendaftarkan handler."
+- "q": "Sinyal yang dijalankan saat skrip keluar adalah…"
+  "options":
+  - "STOP"
+  - "PAUSE"
+  - "EXIT"
+  - "END"
+  "answer": 2
+  "explain": "trap cleanup EXIT berjalan baik sukses maupun gagal."
+- "q": "Opsi set -e membuat skrip…"
+  "options":
+  - "Menampilkan semua perintah"
+  - "Mengabaikan error"
+  - "Menjalankan debug"
+  - "Berhenti saat perintah gagal"
+  "answer": 3
+  "explain": "Errexit menghentikan eksekusi pada status non-nol."
+- "q": "Opsi set -u membuat skrip…"
+  "options":
+  - "Kesalahan saat memakai variabel belum didefinisikan"
+  - "Menjadi diam"
+  - "Menghapus variabel"
+  - "Mengubah path"
+  "answer": 0
+  "explain": "Nounset mencegah typo variabel lolos tanpa terdeteksi."
+- "q": "Cara membuat file sementara yang aman adalah…"
+  "options":
+  - "touch /tmp/foo"
+  - "mktemp"
+  - "echo > /tmp/data"
+  - "mkdir temp"
+  "answer": 1
+  "explain": "mktemp membuat nama unik dan mengurangi risiko tabrakan."
+"example":
+  "code": "#!/usr/bin/env bash\nset -euo pipefail\n\nTMP=$(mktemp)\ntrap 'rm -f \"$TMP\"' EXIT\ntrap 'echo \"Dibatalkan\"; exit 130' INT TERM\n\necho \"data\" > \"$TMP\"\necho \"Bekerja dengan $TMP\"\n\n# pipefail membuat pipeline gagal bila salah satu bagian gagal\ngrep \"data\" \"$TMP\" | wc -l\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Strict Mode
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+trap 'echo "Dibatalkan"; exit 130' INT TERM
+
+echo "data" > "$TMP"
+echo "Bekerja dengan $TMP"
+
+# pipefail membuat pipeline gagal bila salah satu bagian gagal
+grep "data" "$TMP" | wc -l
+```
+
+```bash
+set -e   # keluar saat perintah gagal
+set -u   # error pada variabel belum didefinisikan
+set -o pipefail  # pipeline gagal bila salah satu tahap gagal
+```
+
+Kombinasi `set -euo pipefail` adalah standar skrip produksi.
+
+## Trap
+
+```bash
+trap 'rm -f "$TMP"' EXIT
+trap 'echo "Sinyal INT diterima" >&2' INT
+```
+
+Penangan EXIT berjalan terakhir, baik karena akhir skrip, `exit`, maupun error dengan `set -e`.
+
+## Berkas Sementara
+
+```bash
+TMPDIR_KU=$(mktemp -d)
+trap 'rm -rf "$TMPDIR_KU"' EXIT
+```
+
+`mktemp` membuat nama acak yang sulit ditebak — jauh lebih aman daripada `/tmp/fileku.txt` yang bisa ditimpa proses lain.
+
+## Membersihkan dengan Aman
+
+```bash
+bersih() {
+  local kode=$?
+  [ -n "${TMP:-}" ] && rm -f "$TMP"
+  exit "$kode"
+}
+trap bersih EXIT
+```
+
+Pertahankan kode keluar asli agar scheduler mengetahui apakah skrip berhasil.
+
+<div class="note">💡 Jangan memakai `trap ... EXIT` dengan variabel yang belum di-set saat `set -u` aktif. Gunakan `${VAR:-}` supaya handler tidak ikut error.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+set -euo pipefail
+
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+trap 'echo "Dibatalkan"; exit 130' INT TERM
+
+echo "data" > "$TMP"
+echo "Bekerja dengan $TMP"
+
+# pipefail membuat pipeline gagal bila salah satu bagian gagal
+grep "data" "$TMP" | wc -l`} />

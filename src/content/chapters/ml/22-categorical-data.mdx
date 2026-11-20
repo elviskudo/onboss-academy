@@ -1,0 +1,75 @@
+---
+title: "Data Kategorik dan Encoding"
+description: "one-hot, label encoding, ordinal, target leakage, dan kardinalitas tinggi"
+order: 22
+quiz:
+  - q: "One-hot encoding menghasilkan…"
+    options: ["Label baru", "Satu kolom biner per kategori", "Satu kolom angka urut", "Data teks saja"]
+    answer: 1
+    explain: "Cocok untuk kategori tanpa urutan."
+  - q: "Label encoding cocok untuk…"
+    options: ["Nama kota", "Email", "Kategori berurutan seperti rendah-sedang-tinggi", "Warna mobil"]
+    answer: 2
+    explain: "Angka yang dihasilkan menyiratkan urutan."
+  - q: "One-hot pada fitur dengan 1000 kategori dapat…"
+    options: ["Menghapus 1000 baris", "Mengubah label", "Tidak ada efek", "Membuat 1000 kolom"]
+    answer: 3
+    explain: "Disebut curse of dimensionality."
+  - q: "Urutan yang benar adalah…"
+    options: ["Tidak perlu split", "Split dulu, lalu fit encoder pada latih", "Fit encoder pada semua data", "Encode setelah evaluasi"]
+    answer: 1
+    explain: "Mencegah kategori uji bocor."
+  - q: "Kategori baru saat prediksi sebaiknya…"
+    options: ["Menyebabkan error diam", "Dijadikan label", "Ditangani dengan fallback/unknown", "Dihapus model"]
+    answer: 2
+    explain: "Produksi harus tahan terhadap nilai baru."
+example:
+  code: |
+    kategori=["merah","biru","merah"]
+    unik=sorted(set(kategori))
+    print([[1 if v==u else 0 for u in unik] for v in kategori])
+---
+
+## Jenis Encoding
+
+| Metode | Cocok untuk |
+| --- | --- |
+| One-hot | kategori tanpa urutan |
+| Ordinal | kategori berurutan |
+| Binary | kardinalitas tinggi |
+
+## One-Hot Manual
+
+```python
+kategori = ["merah", "biru", "merah"]
+unik = sorted(set(kategori))
+
+encoded = [[1 if v == u else 0 for u in unik] for v in kategori]
+print(unik)
+print(encoded)
+```
+
+## Ordinal
+
+```python
+peta = {"rendah": 0, "sedang": 1, "tinggi": 2}
+print([peta[x] for x in ["sedang", "tinggi"]])
+```
+
+Gunakan hanya bila urutan memang bermakna.
+
+## Kategori Tak Dikenal
+
+Saat data baru berisi kategori yang tidak ada saat latih, model one-hot bisa bingung. Siapkan kolom `unknown` atau strategi fallback.
+
+<div class="note">💡 Jangan memakai label encoding untuk warna atau kota: model akan mengira "biru = 1" lebih kecil dari "merah = 2", padahal tidak ada urutan那样的 makna.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`kategori = ["merah", "biru", "hijau", "merah"]
+unik = sorted(set(kategori))
+print("Kategori:", unik)
+for v in kategori:
+    print(v, [1 if v == u else 0 for u in unik])`}</code></pre>

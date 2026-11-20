@@ -1,0 +1,97 @@
+---
+title: "Analog Input"
+description: "ADC 10-bit, tegangan referensi, dan pembacaan stabil"
+order: 16
+quiz:
+  - q: "analogRead(A0) pada Uno mengembalikan rentang…"
+    options: ["0–1023", "0–255", "0–5", "0–100"]
+    answer: 0
+    explain: "ADC 10-bit memetakan 0–5 V menjadi 0–1023."
+  - q: "Resolusi 10-bit berarti ada…"
+    options: ["10 level", "1024 level", "256 level", "100 level"]
+    answer: 1
+    explain: "2 pangkat 10 = 1024 nilai yang mungkin."
+  - q: "Untuk mengubah nilai ADC menjadi tegangan, gunakan…"
+    options: ["tegangan = nilai * 1023", "tegangan = nilai + 5", "tegangan = nilai * 5.0 / 1023", "tegangan = nilai / 5"]
+    answer: 2
+    explain: "Dengan asumsi referensi default 5 V."
+  - q: "Fungsi analogReference() berguna untuk…"
+    options: ["Mengubah pin jadi output", "Menambah baudrate", "Menghapus EEPROM", "Memilih tegangan referensi ADC"]
+    answer: 3
+    explain: "INTERNAL memberi referensi 1,1 V pada Uno untuk pembacaan kecil lebih presisi."
+  - q: "Pembacaan analog yang bergetar bisa distabilkan dengan…"
+    options: ["Rata-rata beberapa pembacaan", "Menambah delay panjang", "Mengubah pin", "Menonaktifkan ADC"]
+    answer: 0
+    explain: "Rata-rata atau median mengurangi noise."
+example:
+  code: |
+    int nilai = analogRead(A0);
+    float tegangan = nilai * (5.0 / 1023.0);
+    Serial.println(tegangan);
+    
+    // rata-rata 10 pembacaan
+    long total = 0;
+    for (int i=0; i&lt;10; i++) total += analogRead(A0);
+    float rata = total / 10.0;
+---
+
+Pin analog mengubah tegangan menjadi angka. Memahami rentang dan referensi membuat konversi ke satuan dunia nyata menjadi tepat.
+
+## ADC Uno
+
+| Parameter | Nilai |
+|---|---|
+| Resolusi | 10 bit (0–1023) |
+| Referensi default | 5 V |
+| Step tegangan | ~4,9 mV |
+| Input impedance | ~100 MΩ |
+
+## Konversi
+
+```cpp
+float volt = analogRead(A0) * (5.0 / 1023.0);
+```
+
+Untuk sensor 3,3 V pada Uno, gunakan pembagi tegangan atau ubah referensi ke `INTERNAL`—jangan langsung memberi 3,3 V ke pin yang dikonfigurasi untuk 5 V tanpa perhitungan ulang.
+
+## Referensi
+
+```cpp
+analogReference(DEFAULT);   // 5 V (Uno)
+analogReference(INTERNAL);  // 1,1 V (Uno)
+```
+
+Tunggu beberapa milidetik setelah mengganti referensi sebelum membaca.
+
+## Rata-rata
+
+```cpp
+long total = 0;
+for (int i = 0; i < 16; i++) {
+  total += analogRead(A0);
+}
+float hasil = total / 16.0;
+```
+
+## Potensiometer
+
+```text
+5V ----[ pot 10k ]---- GND
+           |
+           +---- A0
+```
+
+Nilai berubah sesuai posisi tuas. Ini cara termudah mencoba input analog.
+
+<div class="note">💡 Pin A0–A5 juga bisa dipakai sebagai digital I/O dengan `digitalRead(A0)`. Namun sekali dipakai untuk ADC, jumlah pin digital berkurang.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`void setup(){ Serial.begin(9600); }
+void loop(){
+  int n=analogRead(A0);
+  Serial.print(n); Serial.print(' -&gt; ');
+  Serial.println(n*5.0/1023.0);
+  delay(200);
+}`}</code></pre>

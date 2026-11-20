@@ -108,6 +108,10 @@ Gunakan `TIMESTAMP` untuk waktu kejadian global seperti `created_at`; gunakan `D
 
 <div class="note">💡 ALTER TABLE untuk mengganti tipe dapat menyalin tabel dan mengunci operasi pada data besar. Pilih tipe berdasarkan domain dan pertumbuhan, bukan sekadar nilai hari ini.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT nama,
        jabatan,
        CAST(gaji AS REAL) / 1000000 AS gaji_juta,

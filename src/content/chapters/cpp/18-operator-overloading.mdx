@@ -1,0 +1,137 @@
+---
+title: "Operator Overloading"
+description: "operator sebagai method dan fungsi free, aturan, serta contoh operator<&lt; dan []"
+order: 18
+quiz:
+  - q: "Operator overload harus…"
+    options: ["Memiliki paling sedikit satu operand bertipe class/enum", "Selalu static", "Selalu global", "Tidak boleh friend"]
+    answer: 0
+    explain: "Tidak bisa mengubah arti operator pada tipe bawaan."
+  - q: "Operator yang TIDAK bisa di-overload adalah…"
+    options: [":: . ?: sizeof", "+ - * /", "== <", "<&lt; >>"]
+    answer: 0
+    explain: "Termasuk juga `.*` dan `->*`."
+  - q: "Untuk mencetak objek dengan cout, overload…"
+    options: ["operator<<", "operator>>", "operator()", "operator+"]
+    answer: 0
+    explain: "Biasanya fungsi free dengan friend agar bisa akses private."
+  - q: "`operator[]` umumnya diimplementasikan sebagai…"
+    options: ["Member function", "Fungsi free", "Macro", "Static"]
+    answer: 0
+    explain: "Harus member karena `this` diperlukan."
+  - q: "`operator()` membuat objek bisa…"
+    options: ["Dipanggil seperti fungsi (functor)", "Dijadikan array", "Di-cast", "Dihapus"]
+    answer: 0
+    explain: "Dipakai comparator dan lambda."
+example:
+  code: |
+    #include <iostream>
+    
+    class Titik {
+        int x, y;
+    public:
+        Titik(int a=0,int b=0):x(a),y(b){}
+        Titik operator+(const Titik& o) const {
+            return Titik(x+o.x, y+o.y);
+        }
+        int operator[](int i) const { return i==0 ? x : y; }
+        friend std::ostream& operator<<(std::ostream& os, const Titik& t);
+    };
+    
+    std::ostream& operator<<(std::ostream& os, const Titik& t) {
+        return os <&lt; "(" <&lt; t.x <&lt; "," <&lt; t.y <&lt; ")";
+    }
+    
+    int main() {
+        Titik a(1,2), b(3,4);
+        std::cout <&lt; a+b <&lt; " " <&lt; a[0] <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Operator overloading membuat tipe buatanmu terasa seperti tipe bawaan: `a + b`, `cout <&lt; obj`, `v[0]`. Gunakan dengan selera — kejutan membuat kode sulit dibaca.
+
+## Aturan Emas
+
+1. Jangan mengubah arti operator yang sudah jelas (`+` untuk penjumlahan).
+2. Hormati prezendensi dan asosiativitas bawaan.
+3. Kembali ke fungsi bernama bila operasinya tidak alami.
+
+## Member vs Free Function
+
+```cpp
+class Vektor {
+public:
+    Vektor operator+(const Vektor& o) const;   // member
+};
+
+std::ostream& operator<<(std::ostream& os, const Vektor& v); // free
+```
+
+`operator<<` harus free karena operand kiri adalah `ostream`, bukan class-mu.
+
+## Operator yang Sering Di-overload
+
+| Operator | Kegunaan |
+|---|---|
+| `<<`, `>>` | I/O |
+| `==`, `!=` | perbandingan |
+| `<` | sorting |
+| `[]` | akses indeks |
+| `()` | functor/callable |
+| `+ - * /` | aritmetika |
+| `++ --` | iterator |
+| `->` | smart pointer |
+
+## Functor
+
+```cpp
+struct LebihKecil {
+    bool operator()(int a, int b) const { return a < b; }
+};
+
+std::sort(v.begin(), v.end(), LebihKecil{});
+```
+
+Functor bisa menyimpan state, berbeda dengan fungsi biasa.
+
+## Konversi
+
+```cpp
+class Derajat {
+public:
+    explicit operator double() const { return nilai; }  // no implicit
+private:
+    double nilai;
+};
+```
+
+Gunakan `explicit` agar tidak terjadi konversi diam-diam yang menyesatkan.
+
+<div class="note">💡 Overload `==` dan `<` konsisten (transitif, simetris). Kalau tidak, `std::sort` dan `std::set` bisa berperilaku aneh.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+
+class Titik {
+    int x, y;
+public:
+    Titik(int a=0,int b=0):x(a),y(b){}
+    Titik operator+(const Titik& o) const {
+        return Titik(x+o.x, y+o.y);
+    }
+    int operator[](int i) const { return i==0 ? x : y; }
+    friend std::ostream& operator<<(std::ostream& os, const Titik& t);
+};
+
+std::ostream& operator<<(std::ostream& os, const Titik& t) {
+    return os <&lt; "(" <&lt; t.x <&lt; "," <&lt; t.y <&lt; ")";
+}
+
+int main() {
+    Titik a(1,2), b(3,4);
+    std::cout <&lt; a+b <&lt; " " <&lt; a[0] <&lt; '\n';
+}`} />

@@ -1,0 +1,117 @@
+---
+title: "Lifecycle Hooks"
+description: "ngOnInit, ngOnChanges, ngAfterViewInit, dan ngOnDestroy"
+order: 13
+quiz:
+  - q: "Hook yang dijalankan sekali setelah komponen dibuat adalah…"
+    options: ["ngAfterViewInit", "ngDoCheck", "ngOnInit", "ngOnChanges"]
+    answer: 2
+    explain: "Tempat umum untuk inisialisasi data."
+  - q: "ngOnChanges dipanggil saat…"
+    options: ["Tombol diklik", "Input berubah", "CSS berubah", "Rute berubah"]
+    answer: 1
+    explain: "Hook ini menerima SimpleChanges berisi nilai lama dan baru."
+  - q: "ngAfterViewInit dipakai saat…"
+    options: ["Ingin mengambil API", "Ingin membersihkan timer", "Ingin mengubah input", "Perlu mengakses @ViewChild setelah view siap"]
+    answer: 3
+    explain: "Elemen DOM anak sudah tersedia di titik ini."
+  - q: "Pembersihan timer/subscription sebaiknya di…"
+    options: ["ngAfterViewInit", "ngOnDestroy", "ngOnInit", "constructor"]
+    answer: 1
+    explain: "Mencegah memory leak saat komponen dihapus."
+  - q: "Logika berat sebaiknya tidak ditaruh di…"
+    options: ["constructor", "ngOnInit", "method event", "ngOnDestroy"]
+    answer: 0
+    explain: "Constructor sebaiknya hanya menyiapkan dependensi."
+example:
+  code: |
+    export class DetailComponent implements OnInit, OnDestroy {
+      private timer?: ReturnType<typeof setInterval>;
+
+      ngOnInit() { this.timer = setInterval(() => {}, 1000); }
+      ngOnDestroy() { if (this.timer) clearInterval(this.timer); }
+    }
+---
+
+Setiap komponen punya siklus hidup: dibuat, diperbarui, lalu dihancurkan. Hook memberi titik masuk di setiap fase.
+
+## Peta Hook
+
+| Hook | Dipanggil saat | Kegunaan |
+|------|----------------|----------|
+| `ngOnChanges` | input berubah | reaksi terhadap perubahan props |
+| `ngOnInit` | setelah inisialisasi | ambil data awal |
+| `ngDoCheck` | tiap pengecekan | deteksi kustom (jarang) |
+| `ngAfterViewInit` | view siap | akses DOM/@ViewChild |
+| `ngOnDestroy` | sebelum dihapus | cleanup |
+
+## Contoh Lengkap
+
+```typescript
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from "@angular/core";
+
+@Component({
+  selector: "app-penghitung",
+  standalone: true,
+  template: `<p>{{ detik }}</p>`,
+})
+export class PenghitungComponent implements OnInit, OnChanges, OnDestroy {
+  @Input() mulai = 0;
+  detik = 0;
+  private timer?: ReturnType<typeof setInterval>;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes["mulai"]) {
+      this.detik = changes["mulai"].currentValue;
+    }
+  }
+
+  ngOnInit() {
+    this.timer = setInterval(() => this.detik++, 1000);
+  }
+
+  ngOnDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+}
+```
+
+## Mengakses View
+
+```typescript
+import { Component, ElementRef, ViewChild, AfterViewInit } from "@angular/core";
+
+@Component({
+  standalone: true,
+  template: `<input #kolom>`,
+})
+export class FokusComponent implements AfterViewInit {
+  @ViewChild("kolom") kolom?: ElementRef<HTMLInputElement>;
+
+  ngAfterViewInit() {
+    this.kolom?.nativeElement.focus();
+  }
+}
+```
+
+## Efek dengan destroyRef
+
+```typescript
+import { inject, DestroyRef } from "@angular/core";
+
+const destroyRef = inject(DestroyRef);
+destroyRef.onDestroy(() => console.log("komponen dibersihkan"));
+```
+
+<div class="note">💡 Inisialisasi yang bergantung pada input sebaiknya di `ngOnChanges`, bukan di constructor — pada saat constructor, input belum tentu tersedia.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export class DetailComponent implements OnInit, OnDestroy {
+  private timer?: ReturnType<typeof setInterval>;
+
+  ngOnInit() { this.timer = setInterval(() => {}, 1000); }
+  ngOnDestroy() { if (this.timer) clearInterval(this.timer); }
+}`}</code></pre>

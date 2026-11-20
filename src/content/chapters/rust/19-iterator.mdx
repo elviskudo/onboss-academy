@@ -1,0 +1,150 @@
+---
+"title": "Iterator"
+"description": "Lazy evaluation, adapter, collect, dan iterator kustom"
+"order": 19
+"quiz":
+- "q": "Iterator bersifat…"
+  "options":
+  - "eager"
+  - "lazy"
+  - "selalu mut"
+  - "async"
+  "answer": 1
+  "explain": "Adapter tidak jalan sampai iterator dikonsumsi."
+- "q": "Method yang mengubah tiap elemen adalah…"
+  "options":
+  - "filter"
+  - "map"
+  - "fold"
+  - "take"
+  "answer": 1
+  "explain": "map memetakan nilai; filter menyaring."
+- "q": "Hasil collect() bergantung pada…"
+  "options":
+  - "nilai awal"
+  - "tipe yang diharapkan"
+  - "urutan definisi"
+  - "panjang iterator"
+  "answer": 1
+  "explain": "Tipe target menentukan apakah collect menghasilkan Vec, HashMap, atau String."
+- "q": "fold berguna untuk…"
+  "options":
+  - "menggabungkan semua jadi satu nilai"
+  - "membuat iterator baru"
+  - "menghapus elemen"
+  - "mengurutkan"
+  "answer": 0
+  "explain": "fold membawa akumulator melalui tiap elemen."
+- "q": "Trait yang harus diimplementasikan iterator kustom adalah…"
+  "options":
+  - "Iterator dengan next()"
+  - "Iterable"
+  - "Next"
+  - "Stream"
+  "answer": 0
+  "explain": "Cukup mengimplementasikan fn next(&mut self) -> Option<Self::Item>."
+"example":
+  "code": "fn main() {\n    let v: Vec<i32> = (1..6).map(|x| x * 3).collect();\n    println!(\"{:?}\", v);\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Iterator adalah tulang punggung pemrosesan data di Rust. Mereka **lazy**, komposabel, dan sering dioptimasi sampai tidak ada alokasi tambahan.
+
+## Adapter Umum
+
+| Adapter | Fungsi |
+|---|---|
+| `map` | Ubah tiap elemen |
+| `filter` | Saring elemen |
+| `take` / `skip` | Ambil/lewati n elemen |
+| `zip` | Gabungkan dua iterator |
+| `enumerate` | Tambah indeks |
+| `chain` | Sambungkan iterator |
+| `fold` | Akumulasi |
+| `find` | Cari elemen pertama |
+
+```rust
+let hasil: Vec<i32> = (1..20)
+    .filter(|n| n % 3 == 0)
+    .map(|n| n * n)
+    .take(3)
+    .collect();
+```
+
+## collect()
+
+```rust
+let v: Vec<i32> = (1..4).collect();
+let s: String = ['a', 'b'].iter().collect();
+let set: HashSet<i32> = [1, 1, 2].into_iter().collect();
+```
+
+Tipe hasil biasanya ditentukan oleh anotasi variabel.
+
+## fold vs sum
+
+```rust
+let total: i32 = (1..5).sum();
+let total2 = (1..5).fold(0, |acc, x| acc + x);
+```
+
+`sum()` adalah shortcut untuk pola fold paling umum.
+
+## Iterator Kustom
+
+```rust
+struct Hitungan(i32, i32);
+
+impl Iterator for Hitungan {
+    type Item = i32;
+    fn next(&mut self) -> Option<i32> {
+        if self.0 > self.1 { return None; }
+        let v = self.0;
+        self.0 += 1;
+        Some(v)
+    }
+}
+```
+
+Cukup mengimplementasikan `next()`. Method lain seperti `map` otomatis tersedia.
+
+## .into_iter(), .iter(), .iter_mut()
+
+- `iter()` — pinjam immutable
+- `iter_mut()` — pinjam mutable
+- `into_iter()` — mengambil kepemilikan
+
+<div class="note">💡 Rantai iterator sering lebih cepat daripada loop manual karena kompiler bisa meleburkan adapter menjadi satu pass tanpa alokasi perantara.</div>
+
+
+## Try it Yourself
+
+Tambahkan adapter `enumerate` atau ubah batas rentang.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`struct Hitungan(i32, i32);
+
+impl Iterator for Hitungan {
+    type Item = i32;
+    fn next(&mut self) -> Option<i32> {
+        if self.0 > self.1 { return None; }
+        let v = self.0;
+        self.0 += 1;
+        Some(v)
+    }
+}
+
+fn main() {
+    let hasil: Vec<i32> = (1..12)
+        .filter(|n| n % 2 == 0)
+        .map(|n| n * n)
+        .collect();
+    println!("genap kuadrat: {:?}", hasil);
+
+    let total = Hitungan(1, 5).fold(0, |a, b| a + b);
+    println!("jumlah custom: {}", total);
+
+    for (i, kata) in ["Go", "Rust", "Zig"].iter().enumerate() {
+        println!("{}. {}", i + 1, kata);
+    }
+}`} />

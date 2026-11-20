@@ -1,0 +1,128 @@
+---
+title: Status Kerja dan .gitignore
+description: Membaca status working tree serta menyembunyikan file yang tidak boleh ikut tercatat.
+order: 10
+quiz:
+- q: Perintah untuk melihat status repositori adalah…
+  options:
+  - git show
+  - git branch
+  - git status
+  - git log
+  answer: 2
+  explain: git status menampilkan file yang dimodifikasi, staged, dan untracked.
+- q: File .gitignore berisi…
+  options:
+  - Daftar commit
+  - Password remote
+  - Riwayat branch
+  - Pola nama file/direktori yang diabaikan Git
+  answer: 3
+  explain: Git tidak akan men-track file baru yang cocok dengan pola di .gitignore.
+- q: Pola `*.log` pada .gitignore berarti…
+  options:
+  - Semua file berakhiran .log diabaikan
+  - Hanya file log di root
+  - Semua folder log dihapus
+  - File log ikut di-commit
+  answer: 0
+  explain: Tanda bintang mencocokkan apa pun sebelum ekstensi .log.
+- q: Bagaimana cara mengabaikan folder node_modules?
+  options:
+  - /node_modules.js
+  - node_modules/
+  - '*.node_modules'
+  - ignore node_modules
+  answer: 1
+  explain: Akhiran slash menandakan direktori, berlaku di semua level.
+- q: File yang sudah ter-track tetap muncul walau masuk .gitignore. Cara menghentikannya…
+  options:
+  - git clean -fd
+  - git ignore nama_file
+  - git rm --cached nama_file
+  - git reset --hard
+  answer: 2
+  explain: --cached menghapus dari index tanpa menghapus file di disk.
+example:
+  code: '# .gitignore
+
+    node_modules/
+
+    *.log
+
+    .env
+
+    dist/
+
+    .DS_Store
+
+    '
+---
+
+
+`git status` adalah kebiasaan paling penting dalam penggunaan Git. Ia memberitahu **di mana posisi kita** sebelum melakukan perubahan berikutnya.
+
+## Membaca Status
+
+```bash
+git status
+git status --short
+```
+
+| Status | Arti |
+|---|---|
+| Untracked | file baru belum dikenal Git |
+| Changes not staged | file berubah belum masuk index |
+| Changes to be committed | sudah staged, siap commit |
+| nothing to commit | working tree bersih |
+
+## Menulis .gitignore
+
+```gitignore
+# dependensi
+node_modules/
+vendor/
+
+# rahasia dan lokal
+.env
+.env.local
+*.pem
+
+# hasil build
+dist/
+build/
+*.log
+
+# editor
+.idea/
+.DS_Store
+```
+
+Aturan pola:
+
+- `*` mencocokkan karakter apa pun dalam satu level.
+- `**` mencocokkan direktori bertingkat.
+- `/` di awal berarti relatif terhadap root repo.
+- `/` di akhir berarti direktori.
+- `!` membalik pengecualian, misalnya `!important.log`.
+
+## File Sudah Ter-Track
+
+.gitignore **hanya mencegah file baru masuk**. File yang sudah terlanjur di-commit tetap dipantau.
+
+```bash
+git rm --cached .env
+echo ".env" >> .gitignore
+git commit -m "Hentikan tracking file .env"
+```
+
+<div class="note">💡 Simpan `.env.example` berisi nama variabel tanpa nilainya. Tim tahu konfigurasi apa yang dibutuhkan tanpa membocorkan kunci asli.</div>
+
+## Debug Pola
+
+```bash
+git check-ignore -v path/to/file
+git status --ignored
+```
+
+Perintah ini menunjukkan aturan mana yang menyebabkan sebuah file diabaikan.

@@ -26,11 +26,11 @@ quiz:
 example:
   code: |
     # app/models/product.rb
-    class Product < ApplicationRecord
+    class Product &lt; ApplicationRecord
     end
 
     # app/controllers/products_controller.rb
-    class ProductsController < ApplicationController
+    class ProductsController &lt; ApplicationController
       def index
         @products = Product.all
       end

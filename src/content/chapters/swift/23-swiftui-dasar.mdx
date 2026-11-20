@@ -1,0 +1,151 @@
+---
+"title": "Dasar SwiftUI"
+"description": "Menyusun tampilan deklaratif dengan View, modifier, state, dan binding"
+"order": 23
+"quiz":
+- "q": "Protokol dasar setiap tampilan SwiftUI adalah…"
+  "options":
+  - "UIView"
+  - "View"
+  - "ViewController"
+  - "Scene"
+  "answer": 1
+  "explain": "Struct atau class yang conform View harus punya properti body."
+- "q": "Properti body bertipe…"
+  "options":
+  - "UIView"
+  - "Any"
+  - "some View"
+  - "String"
+  "answer": 2
+  "explain": "Opaque return type menyembunyikan tipe view konkret."
+- "q": "@State dipakai untuk…"
+  "options":
+  - "Data global"
+  - "Networking"
+  - "Migrasi"
+  - "State lokal yang memicu render ulang"
+  "answer": 3
+  "explain": "Perubahan @State membuat SwiftUI menghitung body kembali."
+- "q": "Binding diperoleh dengan…"
+  "options":
+  - "$ prefixed state"
+  - "#state"
+  - "@binding"
+  - "state.bind"
+  "answer": 0
+  "explain": "$nama menghasilkan Binding<String> untuk kontrol seperti TextField."
+- "q": "Modifier VStack berguna untuk…"
+  "options":
+  - "Menghapus view"
+  - "Menumpuk view secara vertikal"
+  - "Menyimpan data"
+  - "Membuat class"
+  "answer": 1
+  "explain": "HStack horizontal, ZStack bertumpuk."
+"example":
+  "code": "import SwiftUI\n\nstruct Halaman: View {\n    @State private var nama = \"\"\n\n    var body: some View {\n        VStack(spacing: 16) {\n            Text(\"Halo, \\(nama.isEmpty ? \"Teman\" : nama)!\")\n                .font(.title)\n                .foregroundColor(.blue)\n\n            TextField(\"Nama kamu\", text: $nama)\n                .textFieldStyle(.roundedBorder)\n                .padding()\n\n            Button(\"Sapa\") {\n                nama = \"OnBoss\"\n            }\n            .buttonStyle(.borderedProminent)\n        }\n        .padding()\n    }\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## View sebagai Fungsi dari State
+
+```swift
+import SwiftUI
+
+struct Halaman: View {
+    @State private var nama = ""
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Halo, \(nama.isEmpty ? "Teman" : nama)!")
+                .font(.title)
+                .foregroundColor(.blue)
+
+            TextField("Nama kamu", text: $nama)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Sapa") {
+                nama = "OnBoss"
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
+}
+```
+
+```swift
+struct Kartu: View {
+    var body: some View {
+        Text("Selamat datang")
+            .font(.headline)
+            .padding()
+    }
+}
+```
+
+SwiftUI membangun tampilan dari deklarasi. Saat state berubah, framework menghitung body lagi dan menerapkan perbedaan secara otomatis.
+
+## Property Wrapper
+
+| Wrapper | Fungsi |
+|---|---|
+| `@State` | state lokal milik view |
+| `@Binding` | referensi ke state milik induk |
+| `@ObservedObject` | objek eksternal yang diamati |
+| `@StateObject` | objek yang dibuat dan dimiliki view |
+| `@EnvironmentObject` | data bersama dari seluruh hierarchy |
+
+## Layout Dasar
+
+| Container | Arah |
+|---|---|
+| `VStack` | vertikal |
+| `HStack` | horizontal |
+| `ZStack` | bertumpuk |
+| `LazyVGrid` | grid yang dibuat sesuai kebutuhan |
+
+## Modifier
+
+```swift
+Image(systemName: "star.fill")
+    .resizable()
+    .frame(width: 40, height: 40)
+    .foregroundStyle(.yellow)
+```
+
+Setiap modifier mengembalikan view baru — mereka bersifat immutable dan bisa dirantai.
+
+<div class="note">💡 Jangan menyimpan data permanen di @State. Untuk data yang perlu bertahan, gunakan @AppStorage, UserDefaults, atau model database.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`import SwiftUI
+
+struct Halaman: View {
+    @State private var nama = ""
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Halo, \(nama.isEmpty ? "Teman" : nama)!")
+                .font(.title)
+                .foregroundColor(.blue)
+
+            TextField("Nama kamu", text: $nama)
+                .textFieldStyle(.roundedBorder)
+                .padding()
+
+            Button("Sapa") {
+                nama = "OnBoss"
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding()
+    }
+}`} />

@@ -7,10 +7,10 @@ quiz:
     options: ["plus (+)", "titik (.)", "koma (,)", "ampersand (&)"]
     answer: 1
     explain: "\"Halo \" . $nama — plus hanya untuk angka, meski PHP kadang mau mengonversi."
-  - q: "Berapa jumlah operator perbandingan yang didaftarkan (termasuk === dan <=>)?"
+  - q: "Berapa jumlah operator perbandingan yang didaftarkan (termasuk === dan &lt;=>)?"
     options: ["6", "8", "10", "12"]
     answer: 2
-    explain: "==, ===, !=, !==, <>, <, >, <=, >=, dan <=> (spaceship) — sepuluh."
+    explain: "==, ===, !=, !==, <>, <, >, &lt;=, >=, dan &lt;=> (spaceship) — sepuluh."
   - q: "Apa hasil dari \"5\" + 3 di PHP?"
     options: ["Error", "8", "53", "null"]
     answer: 1
@@ -41,7 +41,7 @@ Setelah tipe data, kuasai dua hal yang paling sering muncul di kode PHP sehari-h
 | --- | --- | --- |
 | Aritmatika | 6 | `+` `-` `*` `/` `%` `**` |
 | Inkrement/decrement | 2 | `++` `--` (4 posisi: pre/post) |
-| Perbandingan | 10 | `==` `===` `!=` `!==` `<>` `<` `>` `<=` `>=` `<=>` |
+| Perbandingan | 10 | `==` `===` `!=` `!==` `<>` `<` `>` `&lt;=` `>=` `&lt;=>` |
 | Logika | 6 | `&&` `\|\|` `!` `and` `or` `xor` |
 | Penugasan | 12 | `=` `+=` `-=` `*=` `/=` `%=` `**=` `.=` `??=` `&=` `\|=` `^=` |
 | Gabung teks | 1 | `.` (concatenation) |
@@ -127,6 +127,10 @@ echo number_format(1250000), "\n";                    // 1,250,000
 - **Menyusun pesan log**: `sprintf("[%s] %s: %s", date("Y-m-d"), $level, $pesan)` agar format konsisten.
 
 <div class="note">💡 PHP punya **7 nilai yang dianggap kosong (falsy)**: `false`, `null`, `0`, `0.0`, `""`, `"0"`, dan `[]`. Artinya `if ($nilai)` lolos juga untuk string `"0"` — sedangkan input form selalu berupa string. Untuk field wajib isi, pakai validasi eksplisit `isset()` + `!== ""`, jangan mengandalkan kefalsifan semata.</div>
+
+## Try it Yourself
+
+Coba ganti operator atau string pada contoh ini.
 
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $nama = "Sari";

@@ -1,0 +1,115 @@
+---
+title: "Canvas"
+description: "Menggambar grafis di browser dengan elemen canvas dan JavaScript"
+order: 29
+quiz:
+  - q: "Elemen canvas memerlukan apa untuk menggambar?"
+    options: ["CSS saja", "JavaScript", "Tag <img>", "Flash"]
+    answer: 1
+    explain: "Canvas hanya berupa permukaan kosong; JavaScript yang menggambar di dalamnya."
+  - q: "Metode untuk mengambil konteks 2D adalah…"
+    options: ["getContext('2d')", "getCanvas()", "draw2d()", "context2d()"]
+    answer: 0
+    explain: "const ctx = canvas.getContext('2d');"
+  - q: "Metode untuk menggambar persegi panjang adalah…"
+    options: ["fillRect()", "drawBox()", "rectFill()", "box()"]
+    answer: 0
+    explain: "ctx.fillRect(x, y, width, height)."
+  - q: "Atribut width dan height pada canvas ditentukan di…"
+    options: ["CSS saja", "Atribut HTML atau properti JS", "Tag <style>", "Meta tag"]
+    answer: 1
+    explain: "Lebih baik di atribut HTML atau canvas.width/canvas.height di JS."
+  - q: "Canvas cocok untuk…"
+    options: ["Teks artikel", "Game dan visualisasi dinamis", "Tabel data", "Form input"]
+    answer: 1
+    explain: "Canvas unggul untuk grafik, animasi, dan game 2D."
+example:
+  code: |
+    <canvas id="gambar" width="300" height="150"
+            style="border:1px solid #ccc;"></canvas>
+    
+    <script>
+      const c = document.getElementById('gambar');
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = 'orange';
+      ctx.fillRect(20, 20, 120, 80);
+      ctx.fillStyle = 'teal';
+      ctx.font = '20px sans-serif';
+      ctx.fillText('Halo Canvas!', 20, 130);
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`<canvas>` adalah 'kanvas' kosong berukuran tertentu. Semua gambar dilakukan lewat JavaScript.
+
+## Membuat Canvas
+
+```html
+<canvas id="gambar" width="400" height="200"></canvas>
+```
+
+Lalu ambil konteksnya:
+
+```js
+const canvas = document.getElementById('gambar');
+const ctx = canvas.getContext('2d');
+```
+
+## Menggambar Bentuk
+
+```js
+ctx.fillStyle = 'skyblue';
+ctx.fillRect(10, 10, 100, 50);
+
+ctx.strokeStyle = 'red';
+ctx.strokeRect(130, 10, 100, 50);
+
+ctx.beginPath();
+ctx.arc(80, 130, 40, 0, Math.PI * 2);
+ctx.fill();
+```
+
+## Menulis Teks
+
+```js
+ctx.font = '24px Arial';
+ctx.fillText('Halo!', 10, 180);
+```
+
+## Perbedaan Canvas vs SVG
+
+| Canvas | SVG |
+|--------|-----|
+| Berbasis piksel | Berbasis vektor |
+| Cocok untuk game | Cocok untuk ikon & diagram |
+| Tidak punya DOM per bentuk | Tiap bentuk bisa diklik |
+| Performa tinggi untuk banyak objek | Mudah di-CSS |
+
+<div class="note">💡 Ubah ukuran canvas lewat atribut HTML, bukan CSS, supaya koordinat gambar tidak ikut ter-skala.</div>
+
+## Try it Yourself
+
+Ubah warna `fillStyle` lalu lihat hasilnya.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Canvas Pertamaku</h1>
+  <canvas id="gambar" width="320" height="180"
+          style="border:1px solid #ccc;"></canvas>
+  <script>
+    const c = document.getElementById('gambar');
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#E44D26';
+    ctx.fillRect(20, 20, 130, 80);
+    ctx.fillStyle = '#264DE4';
+    ctx.beginPath();
+    ctx.arc(230, 60, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#222';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Belajar Canvas', 20, 150);
+  </script>
+</body>
+</html>`} />

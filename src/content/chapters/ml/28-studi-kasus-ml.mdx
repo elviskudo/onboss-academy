@@ -1,0 +1,94 @@
+---
+title: "Studi Kasus: Prediksi Churn Pelanggan"
+description: "alur lengkap ML: definisi masalah, data, fitur, split, model, evaluasi, dan deploy"
+order: 28
+quiz:
+  - q: "Langkah pertama proyek ML adalah…"
+    options: ["Membuat grafik", "Mendefinisikan pertanyaan bisnis", "Memilih algoritma", "Menambah GPU"]
+    answer: 1
+    explain: "Tanpa tujuan jelas, model tidak punya arah."
+  - q: "Churn berarti…"
+    options: ["Harga naik", "Data hilang", "Pelanggan berhenti langganan", "Pelanggan baru"]
+    answer: 2
+    explain: "Target biner: churn / tidak."
+  - q: "Kebocoran data bisa terjadi bila…"
+    options: ["Data diacak", "Model disimpan", "Ada missing value", "Fitur dibuat dari informasi masa depan"]
+    answer: 3
+    explain: "Contoh: menyertakan tanggal pembatalan sebagai fitur."
+  - q: "Untuk kelas churn yang minoritas, metrik yang berguna adalah…"
+    options: ["Std fitur", "Recall dan AUC", "Akurasi saja", "Jumlah kolom"]
+    answer: 1
+    explain: "Akurasi bisa menipu pada data imbalance."
+  - q: "Model siap dipakai setelah…"
+    options: ["Diberi nama", "Disimpan tanpa pengujian", "Dievaluasi pada data yang belum pernah dilihat", "Dilatih sekali"]
+    answer: 2
+    explain: "Generalization adalah syarat utama."
+example:
+  code: |
+    data=[(1,0),(5,1),(12,0),(2,1)]
+    print("Fitur lama langganan vs churn:",data)
+---
+
+## 1. Pertanyaan Bisnis
+
+> Pelanggan mana yang kemungkinan besar berhenti langganan bulan depan sehingga bisa diberi penawaran retensi?
+
+Target: `churn` = 1 bila berhenti, 0 bila tetap.
+
+## 2. Data dan Fitur
+
+```python
+data = [
+    {"lama_bulan": 2, "tagihan": 50000, "churn": 1},
+    {"lama_bulan": 18, "tagihan": 75000, "churn": 0},
+    {"lama_bulan": 4, "tagihan": 60000, "churn": 1},
+    {"lama_bulan": 24, "tagihan": 90000, "churn": 0},
+]
+
+fitur = [[d["lama_bulan"], d["tagihan"]] for d in data]
+label = [d["churn"] for d in data]
+print(fitur, label)
+```
+
+## 3. Hindari Kebocoran
+
+Jangan memasukkan `tanggal_pembatalan`, `alasan_keluar`, atau kolom apa pun yang hanya diketahui **setelah** churn terjadi.
+
+## 4. Split dan Model
+
+```python
+latih = data[:3]
+uji = data[3:]
+print("Jumlah latih:", len(latih), "uji:", len(uji))
+```
+
+Dengan data sebanyak ini, hasil tidak bisa dijadikan kesimpulan final — di dunia nyata dibutuhkan ribuan baris dan cross-validation.
+
+## 5. Evaluasi
+
+Gunakan confusion matrix, recall, dan AUC. Pertimbangkan biaya: menawarkan diskon ke pelanggan yang sebenarnya tidak churn lebih murah daripada kehilangan pelanggan.
+
+## 6. Deploy dan Pantau
+
+- Simpan versi model dan preprocessor bersamaan.
+- Pantau distribusi fitur baru (data drift).
+- Latih ulang secara berkala.
+- Simpan feedback apakah penawaran berhasil.
+
+<div class="note">💡 Model hanyalah bagian kecil dari sistem. Pengetahuan bisnis, kualitas data, dan desain intervensi sering menentukan keberhasilan jauh lebih besar daripada pilihan algoritma.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`data = [
+    {"lama": 2, "tagihan": 50, "churn": 1},
+    {"lama": 18, "tagihan": 75, "churn": 0},
+    {"lama": 4, "tagihan": 60, "churn": 1},
+    {"lama": 24, "tagihan": 90, "churn": 0},
+]
+fitur = [[d["lama"], d["tagihan"]] for d in data]
+label = [d["churn"] for d in data]
+print("Fitur:", fitur)
+print("Label:", label)
+print("Rata lama:", sum(d["lama"] for d in data)/len(data))`}</code></pre>

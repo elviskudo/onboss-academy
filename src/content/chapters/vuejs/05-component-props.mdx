@@ -145,6 +145,10 @@ console.log(Kartu({ judul: "Info", isi: "Halo Vue" }).render);
 
 <div class="note">💡 Jangan mengubah `props.x` di dalam komponen anak — Vue akan memperingatkan. Kirim event ke induk (`$emit`) agar induk yang memperbarui datanya; materi bab berikutnya.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`// Props = function parameter yang divalidasi
 function Kartu({ judul, isi, penulis = "Anonim" }) {
   if (!judul) throw new Error("judul wajib diisi");

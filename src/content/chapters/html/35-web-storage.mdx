@@ -1,0 +1,109 @@
+---
+title: "Web Storage API"
+description: "Menyimpan data di browser dengan localStorage dan sessionStorage"
+order: 35
+quiz:
+  - q: "Data di localStorage bertahan sampai…"
+    options: ["Ditutup tab", "Dihapus manual", "1 jam", "Refresh"]
+    answer: 1
+    explain: "localStorage tidak punya waktu kedaluwarsa."
+  - q: "sessionStorage berbeda karena datanya…"
+    options: ["Hilang saat sesi tab selesai", "Lebih besar", "Tidak bisa dihapus", "Hanya untuk gambar"]
+    answer: 0
+    explain: "Data sessionStorage hilang saat tab ditutup."
+  - q: "Metode untuk menyimpan data adalah…"
+    options: ["setItem()", "save()", "write()", "push()"]
+    answer: 0
+    explain: "localStorage.setItem('kunci', 'nilai')."
+  - q: "localStorage hanya menyimpan…"
+    options: ["String", "Objek JavaScript langsung", "Fungsi", "Gambar"]
+    answer: 0
+    explain: "Objek harus diubah dengan JSON.stringify() dulu."
+  - q: "Berapa perkiraan kapasitas localStorage per origin?"
+    options: ["~5 MB", "~1 KB", "~1 GB", "Tidak terbatas"]
+    answer: 0
+    explain: "Biasanya sekitar 5 MB per origin tergantung browser."
+example:
+  code: |
+    <button onclick="simpan()">Simpan</button>
+    <button onclick="baca()">Baca</button>
+    <p id="hasil"></p>
+    
+    <script>
+    function simpan() {
+      localStorage.setItem('nama', 'OnBoss');
+      const data = { skor: 95, level: 3 };
+      localStorage.setItem('data', JSON.stringify(data));
+    }
+    function baca() {
+      const d = JSON.parse(localStorage.getItem('data') || '{}');
+      document.getElementById('hasil').textContent =
+        localStorage.getItem('nama') + ' — skor ' + d.skor;
+    }
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Web Storage** memberi browser tempat menyimpan data sederhana di sisi klien.
+
+## localStorage vs sessionStorage
+
+| | localStorage | sessionStorage |
+|---|--------------|----------------|
+| Umur | Sampai dihapus | Sampai tab ditutup |
+| Lingkup | Semua tab origin yang sama | Per tab |
+| Kapasitas | ~5 MB | ~5 MB |
+
+## Operasi Dasar
+
+```js
+localStorage.setItem('nama', 'OnBoss');
+const nilai = localStorage.getItem('nama');
+localStorage.removeItem('nama');
+localStorage.clear();
+```
+
+## Menyimpan Objek
+
+localStorage hanya menyimpan string. Untuk objek:
+
+```js
+const user = { nama: 'Andi', skor: 90 };
+localStorage.setItem('user', JSON.stringify(user));
+
+const hasil = JSON.parse(localStorage.getItem('user'));
+```
+
+## Kasus Penggunaan
+
+- Menyimpan preferensi tema (dark/light)
+- Token sesi (dengan hati-hati)
+- Draft formulir
+- Riwayat kecil
+
+<div class="note">💡 Jangan simpan kata sandi atau data sensitif di localStorage. Data ini bisa dibaca JavaScript apa pun di halamanmu dan rentan XSS.</div>
+
+## Try it Yourself
+
+Klik Simpan, lalu Refresh halaman, lalu klik Baca — datanya tetap ada.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Web Storage</h1>
+  <button onclick="simpan()">Simpan Nama</button>
+  <button onclick="baca()">Baca Nama</button>
+  <p id="hasil">Belum ada data.</p>
+  <script>
+    function simpan() {
+      const n = prompt('Nama kamu?') || 'Anonim';
+      localStorage.setItem('namaSaya', n);
+    }
+    function baca() {
+      document.getElementById('hasil').textContent =
+        localStorage.getItem('namaSaya') || 'Belum ada data.';
+    }
+  </script>
+</body>
+</html>`} />

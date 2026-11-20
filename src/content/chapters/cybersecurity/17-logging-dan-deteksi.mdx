@@ -1,0 +1,79 @@
+---
+title: "Logging dan Deteksi"
+description: "Membangun log yang berguna, SIEM, dan dasar deteksi anomali"
+order: 17
+quiz:
+  - q: "Log keamanan sebaiknya mencatat…"
+    options: ["Token akses", "Siapa, kapan, apa, dan hasilnya", "Kata sandi pengguna", "Semua isi email"]
+    answer: 1
+    explain: "Kontekst yang cukup membantu investigasi tanpa membocorkan rahasia."
+  - q: "SIEM berfungsi mengumpulkan…"
+    options: ["Kata sandi", "Cadangan database", "Log dari banyak sumber untuk dikorelasi", "Paket perangkat lunak"]
+    answer: 2
+    explain: "SIEM menyatukan log, membuat aturan, dan memicu alert."
+  - q: "Time sinkron (NTP) penting karena…"
+    options: ["Membuat log lebih pendek", "Menghapus duplikat", "Mengenkripsi disk", "Korelasi antar log bergantung pada waktu yang sama"]
+    answer: 3
+    explain: "Selisih waktu beberapa menit bisa menyesatkan rekonstruksi insiden."
+  - q: "False positive yang terlalu tinggi menyebabkan…"
+    options: ["Analis lelah dan mengabaikan alert", "Serangan otomatis gagal", "Log terhapus", "Enkripsi melemah"]
+    answer: 0
+    explain: "Aturan deteksi perlu disetel agar sinyal tetap bermakna."
+  - q: "Data sensitif dalam log harus…"
+    options: ["Ditaruh di URL", "Ditutupi atau dihapus", "Dibiarkan agar lengkap", "Dienkripsi dengan kunci di log yang sama"]
+    answer: 1
+    explain: "Token dan kata sandi di log menjadi sasaran empuk penyerang."
+example:
+  code: |
+    2026-01-12T09:21:03Z level=warn event=login_failed user=ani ip=203.0.113.8
+    2026-01-12T09:21:04Z level=warn event=login_failed user=ani ip=203.0.113.8
+    2026-01-12T09:21:06Z level=info event=login_ok    user=ani ip=203.0.113.8
+---
+
+Log adalah catatan peristiwa. Tanpa log, respons insiden berubah menjadi tebakan. Namun log yang buruk—terlalu sedikit, terlalu banyak, atau mengandung rahasia—juga tidak berguna.
+
+## Field yang Berguna
+
+```json
+{
+  "ts": "2026-01-12T09:21:03Z",
+  "level": "warn",
+  "event": "login_failed",
+  "user": "ani",
+  "src_ip": "203.0.113.8",
+  "request_id": "b7f1"
+}
+```
+
+`request_id` yang sama bisa dipakai untuk mengikuti satu request melintasi banyak layanan.
+
+## Hierarki Alert
+
+| Level | Contoh | Respons |
+|---|---|---|
+| Info | Login sukses | Arsipkan |
+| Warn | 5 login gagal | Tinjau |
+| High | Login sukses dari lokasi baru | Konfirmasi pengguna |
+| Critical | Perubahan role admin | Eskalasi langsung |
+
+## Deteksi Sederhana
+
+```text
+> 10 login gagal / 5 menit untuk satu akun     -> brute force
+akses ke URL admin dari IP publik             -> penyisiran
+upload file .php                              -> percobaan webshell
+keluar trafik besar ke IP asing               -> kemungkinan eksfiltrasi
+```
+
+## Retensi
+
+Tentukan berapa lama log disimpan berdasarkan kebutuhan forensik dan regulasi. Log yang lebih lama bisa dipindah ke storage murah, tetapi tetap harus terlindung dari perubahan.
+
+<div class="note">💡 Gunakan tanda tangan atau penyimpanan append-only agar penyerang yang sudah masuk tidak bisa menghapus jejaknya dengan mudah.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Contoh kalimat korelasi:
+  'Dalam 3 menit, 5 akun berbeda gagal login dari IP yang sama, lalu satu akun berhasil.'
+  -&gt; kemungkinan brute force yang akhirnya berhasil.`}</code></pre>

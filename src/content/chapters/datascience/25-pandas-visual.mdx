@@ -1,0 +1,92 @@
+---
+title: "Visualisasi dengan Pandas/Matplotlib"
+description: "plot seri, bar, hist, scatter, subplot, label, dan menyimpan grafik"
+order: 25
+quiz:
+  - q: "Modul plotting yang biasa dipakai bersama Pandas adalah…"
+    options: ["graph", "matplotlib.pyplot", "mathplot", "plotlyonly"]
+    answer: 1
+    explain: "import matplotlib.pyplot as plt."
+  - q: "Metode Pandas untuk plot langsung adalah…"
+    options: ["df.draw()", "df.chart()", "df.plot()", "df.graph()"]
+    answer: 2
+    explain: "Pandas membungkus matplotlib."
+  - q: "Histogram menampilkan…"
+    options: ["Hubungan dua variabel", "Urutan waktu", "Teks", "Distribusi frekuensi"]
+    answer: 3
+    explain: "Histogram mengelompokkan nilai ke bin."
+  - q: "plt.xlabel() berfungsi untuk…"
+    options: ["Menghapus grafik", "Memberi label sumbu x", "Mengubah warna", "Menyimpan file"]
+    answer: 1
+    explain: "Label membuat grafik mudah dimengerti."
+  - q: "Grafik disimpan dengan…"
+    options: ["plt.file(\"file\")", "save(plt)", "plt.savefig(\"file.png\")", "plt.write(\"file\")"]
+    answer: 2
+    explain: "savefig menyimpan ke disk."
+example:
+  code: |
+    import matplotlib.pyplot as plt
+    x=[1,2,3]; y=[2,4,3]
+    plt.plot(x,y,marker="o")
+    plt.xlabel("X"); plt.ylabel("Y")
+    plt.savefig("grafik.png")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Plot Garis
+
+```python
+import matplotlib.pyplot as plt
+
+bulan = [1, 2, 3, 4]
+omzet = [10, 15, 13, 20]
+
+plt.plot(bulan, omzet, marker="o", label="Omzet")
+plt.title("Omzet Bulanan")
+plt.xlabel("Bulan")
+plt.ylabel("Juta Rupiah")
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+## Bar
+
+```python
+kategori = ["A", "B", "C"]
+nilai = [30, 45, 25]
+plt.bar(kategori, nilai, color="steelblue")
+plt.show()
+```
+
+## Histogram
+
+```python
+data = [62, 70, 75, 80, 80, 85, 90, 95]
+plt.hist(data, bins=4, edgecolor="black")
+plt.show()
+```
+
+## Scatter
+
+```python
+jam = [1, 2, 3, 4]
+nilai = [55, 62, 70, 77]
+plt.scatter(jam, nilai)
+plt.xlabel("Jam belajar")
+plt.ylabel("Nilai")
+plt.show()
+```
+
+<div class="note">💡 Simpan file dengan `dpi=150` atau lebih untuk hasil yang tajam. Sertakan label sumbu dan satuan — pembaca tidak boleh menebak apa yang ditampilkan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`# Versi tanpa matplotlib: grafik batang teks
+data = {"Senin": 30, "Selasa": 45, "Rabu": 25}
+maks = max(data.values())
+for hari, nilai in data.items():
+    print(f"{hari:>7} | {'█' * round(nilai/maks*20)} {nilai}")`} />

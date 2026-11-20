@@ -1,0 +1,141 @@
+---
+title: "constexpr & Fitur C++20"
+description: "compile-time computation, concepts, ranges, module, dan coroutine sekilas"
+order: 25
+quiz:
+  - q: "`constexpr` berarti…"
+    options: ["Bisa dievaluasi saat compile time", "Selalu konstan", "Tidak bisa diubah", "Thread-safe"]
+    answer: 0
+    explain: "Bisa juga dipakai saat runtime bila argumennya tidak konstan."
+  - q: "`consteval` (C++20) berbeda karena…"
+    options: ["WAJIB dievaluasi saat compile time", "Lebih lambat", "Hanya untuk class", "Tidak ada beda"]
+    answer: 0
+    explain: "Pemanggilan dengan argumen runtime = error."
+  - q: "Concepts berguna untuk…"
+    options: ["Membatasi tipe template dengan pesan error jelas", "Mengganti class", "Menghapus include", "Membuat thread"]
+    answer: 0
+    explain: "Contoh: `template<std::integral T>`."
+  - q: "Ranges (C++20) memungkinkan…"
+    options: ["Pipeline lazy seperti filter|transform", "Menghapus vector", "Compile lebih cepat", "Mengganti exception"]
+    answer: 0
+    explain: "Tidak membuat container perantara."
+  - q: "Module (C++20) menggantikan…"
+    options: ["Header file tradisional", "Namespace", "Template", "Exception"]
+    answer: 0
+    explain: "Mengurangi waktu compile & macros bocor."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    #include <ranges>
+    #include <concepts>
+    
+    constexpr int faktorial(int n) {
+        return n &lt;= 1 ? 1 : n * faktorial(n-1);
+    }
+    
+    template <std::integral T>
+    T dua_kali(T x) { return 2*x; }
+    
+    int main() {
+        static_assert(faktorial(5) == 120);
+        std::cout <&lt; dua_kali(21) <&lt; '\n';
+    
+        std::vector<int> v{1,2,3,4,5,6};
+        for (int x : v | std::views::filter([](int n){return n%2==0;})
+                       | std::views::transform([](int n){return n*n;}))
+            std::cout <&lt; x <&lt; " ";   // 4 16 36
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C++20 membawa perubahan besar: compile-time programming yang lebih kuat, kode generik yang lebih ramah, dan gaya fungsional lewat ranges.
+
+## constexpr
+
+```cpp
+constexpr int pangkat(int b, int e) {
+    int hasil = 1;
+    for (int i=0;i<e;i++) hasil *= b;
+    return hasil;
+}
+
+static_assert(pangkat(2, 10) == 1024);  // dicek saat compile
+```
+
+Fungsi `constexpr` bisa dipanggil dengan nilai runtime juga — saat itu perilakunya biasa.
+
+## consteval & constinit
+
+- `consteval` → hanya compile time.
+- `constinit` → inisialisasi statis dijamin saat compile (tidak ada static initialization order fiasco).
+
+## Concepts
+
+```cpp
+#include <concepts>
+
+template <std::integral T>
+T rata(T a, T b) { return (a+b)/2; }
+```
+
+Sebelum concepts, error template bisa berisi ratusan baris. Sekarang compiler berkata "T tidak memenuhi std::integral".
+
+## Ranges
+
+```cpp
+#include <ranges>
+
+auto genap = v | std::views::filter([](int n){ return n%2==0; });
+```
+
+View bersifat **lazy** dan tidak menyalin data. Bisa dirantai: `filter | transform | take`.
+
+## Modules
+
+```cpp
+// hitung.cppm
+export module hitung;
+export int tambah(int a, int b) { return a+b; }
+
+// main.cpp
+import hitung;
+```
+
+Module menggantikan `#include` untuk kode sendiri — tidak ada header guard, tidak ada makro bocor, compile lebih cepat.
+
+## Coroutine (Sekilas)
+
+```cpp
+// co_await, co_yield, co_return
+```
+
+Dasar dari async/await modern C++ (masih butuh library pendukung seperti cppcoro/asio).
+
+<div class="note">💡 Adopsi C++20 bertahap: mulai dari `constexpr`, `std::string_view`, structured binding, dan ranges. Module & coroutine bisa menyusul setelah toolchain tim mendukung penuh.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+#include <ranges>
+#include <concepts>
+
+constexpr int faktorial(int n) {
+    return n &lt;= 1 ? 1 : n * faktorial(n-1);
+}
+
+template <std::integral T>
+T dua_kali(T x) { return 2*x; }
+
+int main() {
+    static_assert(faktorial(5) == 120);
+    std::cout <&lt; dua_kali(21) <&lt; '\n';
+
+    std::vector<int> v{1,2,3,4,5,6};
+    for (int x : v | std::views::filter([](int n){return n%2==0;})
+                   | std::views::transform([](int n){return n*n;}))
+        std::cout <&lt; x <&lt; " ";   // 4 16 36
+}`} />

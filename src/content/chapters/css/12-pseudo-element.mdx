@@ -1,0 +1,118 @@
+---
+title: "Pseudo-Element CSS"
+description: "Menghias bagian tertentu dari elemen dengan ::before dan ::after"
+order: 12
+quiz:
+  - q: "Penulisan pseudo-element modern memakai…"
+    options: ["Satu titik dua", "Dua titik dua", "Tanda pagar", "Tanda bintang"]
+    answer: 1
+    explain: "Format standar adalah `::before`, `::after`, `::first-line`."
+  - q: "Properti yang WAJIB ada agar ::before tampil adalah…"
+    options: ["color", "content", "display", "position"]
+    answer: 1
+    explain: "Tanpa `content` (boleh string kosong), pseudo-element tidak dirender."
+  - q: "`::first-letter` digunakan untuk…"
+    options: ["Huruf pertama paragraf", "Huruf pertama setiap kata", "Huruf terakhir", "Seluruh paragraf"]
+    answer: 0
+    explain: "Pseudo-element ini hanya menyasar huruf pertama baris pertama blok."
+  - q: "Pseudo-element dianggap sebagai…"
+    options: ["Elemen DOM asli", "Anak elemen secara visual", "Induk elemen", "Class tambahan"]
+    answer: 1
+    explain: "Ia berperilaku seperti anak elemen meski tidak ada di markup."
+  - q: "`::selection` dipakai untuk mengubah…"
+    options: ["Warna saat teks diblokir", "Warna link", "Ukuran font", "Border tabel"]
+    answer: 0
+    explain: "Pseudo-element ini menata tampilan teks yang sedang dipilih pengguna."
+example:
+  code: |
+    .judul::after { content: " ✦"; color: #F59E0B; }
+    .catatan::before { content: "💡 "; }
+    p::first-letter { font-size: 2em; float: left; }
+    ::selection { background: #FDE68A; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kalau pseudo-class memilih **elemen berdasarkan state**, **pseudo-element** memilih *bagian dari* elemen. Kamu bisa menyisipkan konten dekoratif tanpa menambah markup HTML.
+
+## Daftar Pseudo-Element Inti
+
+| Pseudo-element | Fungsi |
+|----------------|--------|
+| `::before` | Menyisipkan konten sebelum isi elemen |
+| `::after` | Menyisipkan konten setelah isi elemen |
+| `::first-letter` | Huruf pertama baris pertama |
+| `::first-line` | Baris pertama teks |
+| `::selection` | Tampilan teks saat disorot |
+| `::placeholder` | Teks petunjuk pada input |
+
+## Aturan Emas: content
+
+Pseudo-element tidak akan muncul tanpa deklarasi `content`. Untuk dekorasi murni, pakai string kosong:
+
+```css
+.kartu::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: #4F46E5;
+  margin-bottom: 12px;
+}
+```
+
+## Contoh Pemakaian
+
+```css
+/* label badge di pojok kartu */
+.badge::after {
+  content: "BARU";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #DC2626;
+  color: white;
+}
+
+/* drop cap pada artikel */
+.artikel > p:first-of-type::first-letter {
+  font-size: 3.2rem;
+  float: left;
+  line-height: 1;
+  margin: 4px 8px 0 0;
+  color: #4F46E5;
+}
+
+input::placeholder { color: #9CA3AF; font-style: italic; }
+```
+
+<div class="note">💡 Konten buatan pseudo-element tidak bisa dipilih dengan mouse dan tidak masuk ke pembaca layar. Jangan pakai `content` untuk informasi penting — tetap tulis di HTML.</div>
+
+## Kapan Tidak Memakainya
+
+- Ikon penting yang harus bisa dibaca pembaca layar → pakai elemen SVG atau teks sungguhan.
+- Konten yang perlu di-copy pengguna → taruh di markup.
+- Efek yang butuh interaksi kompleks → lebih baik pakai elemen nyata.
+
+## Di Dunia Nyata
+
+- Garis dekoratif di atas kartu profil tanpa div tambahan.
+- Panah kecil pada tombol dropdown (`::after` + border transparan).
+- Counter otomatis pada daftar langkah (`content: counter(langkah)`).
+- Menata warna highlight saat pengguna menyeleksi teks artikel.
+
+## Try it Yourself
+
+Ganti isi `content` pada contoh ini atau hapus `::first-letter` untuk melihat bedanya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: Georgia, serif; padding: 16px; }
+.artikel p:first-of-type::first-letter {
+  font-size: 3rem; float: left; line-height: 1;
+  color: #4F46E5; margin: 4px 8px 0 0;
+}
+.judul::after { content: " ✦"; color: #F59E0B; }
+.catatan::before { content: "CATATAN: "; font-weight: bold; color: #DC2626; }
+::selection { background: #FDE68A; }`} />

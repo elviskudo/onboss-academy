@@ -1,0 +1,70 @@
+---
+title: "Clustering Hierarki"
+description: "agglomerative, dendrogram, linkage, dan perbedaan dengan k-means"
+order: 26
+quiz:
+  - q: "Clustering hierarki agglomeratif dimulai dari…"
+    options: ["Centroid tetap", "Setiap titik sebagai klaster sendiri", "Satu klaster besar", "Label acak"]
+    answer: 1
+    explain: "Lalu digabung bertahap."
+  - q: "Dendrogram menampilkan…"
+    options: ["Akurasi model", "Distribusi normal", "Urutan penggabungan klaster", "Jumlah fitur"]
+    answer: 2
+    explain: "Pohon visual hasil clustering."
+  - q: "Linkage \"average\" menggunakan…"
+    options: ["Titik terdekat", "Titik terjauh", "Centroid", "Rata-rata jarak antaranggota"]
+    answer: 3
+    explain: "Lebih tahan outlier daripada single linkage."
+  - q: "Kelebihan clustering hierarki adalah…"
+    options: ["Hanya untuk teks", "Tidak perlu menentukan k di awal", "Selalu lebih cepat", "Tanpa jarak"]
+    answer: 1
+    explain: "k dipilih dengan memotong dendrogram."
+  - q: "Kelemahan utamanya adalah…"
+    options: ["Harus ada label", "Tidak bisa pakai jarak", "Kompleksitas memori O(n²)", "Tidak bisa divisualisasi"]
+    answer: 2
+    explain: "Sulit untuk dataset sangat besar."
+example:
+  code: |
+    jarak={(0,1):2,(0,2):5,(1,2):4}
+    print(min(jarak,key=jarak.get))
+---
+
+## Cara Kerja
+
+| Langkah | Aksi |
+| --- | --- |
+| 1 | tiap titik = satu klaster |
+| 2 | cari dua klaster terdekat |
+| 3 | gabung |
+| 4 | ulangi sampai satu klaster |
+
+## Linkage
+
+| Metode | Arti |
+| --- | --- |
+| Single | jarak minimum |
+| Complete | jarak maksimum |
+| Average | rata-rata jarak |
+| Ward | minimalkan varians gabungan |
+
+## Memilih Jumlah Klaster
+
+Potong dendrogram pada tinggi tertentu. Makin rendah potongan, makin banyak klaster.
+
+## Perbandingan
+
+| Aspek | K-Means | Hierarki |
+| --- | --- | --- |
+| k di awal | wajib | tidak wajib |
+| Skalabilitas | lebih baik | terbatas |
+| Visual | scatter | dendrogram |
+
+<div class="note">💡 Untuk data ribuan titik, k-means biasanya lebih praktis. Hierarki bersinar saat data kecil dan kamu ingin memahami struktur bertingkat.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`jarak = {(0,1): 2.0, (0,2): 5.0, (1,2): 4.0}
+pasangan = min(jarak, key=jarak.get)
+print("Pertama digabung:", pasangan, "jarak", jarak[pasangan])`}</code></pre>

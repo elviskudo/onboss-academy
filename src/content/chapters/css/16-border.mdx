@@ -1,0 +1,124 @@
+---
+title: "Border CSS"
+description: "Mengatur garis tepi elemen dengan gaya, warna, ketebalan, dan radius"
+order: 16
+quiz:
+  - q: "Nilai `border-style` yang menampilkan garis putus-putus adalah…"
+    options: ["solid", "dashed", "double", "groove"]
+    answer: 1
+    explain: "Dashed menghasilkan segmen garis terputus."
+  - q: "Shorthand `border: 2px solid red` menetapkan…"
+    options: ["Semua sisi", "Hanya sisi atas", "Hanya sisi kiri", "Hanya sudut"]
+    answer: 0
+    explain: "Tanpa arah, border berlaku di keempat sisi."
+  - q: "Properti untuk membulatkan sudut adalah…"
+    options: ["border-radius", "border-round", "corner-radius", "border-curve"]
+    answer: 0
+    explain: "Contoh: `border-radius: 12px` atau `50%` untuk lingkaran."
+  - q: "`border: none` berarti…"
+    options: ["Garis tipis", "Tidak ada garis", "Garis default", "Garis putus"]
+    answer: 1
+    explain: "Nilai none menghapus border (Berbeda dengan hidden pada tabel)."
+  - q: "Untuk border hanya di bawah, gunakan…"
+    options: ["border-bottom", "border-lower", "bottom-border", "border-y"]
+    answer: 0
+    explain: "Arah yang tersedia: top, right, bottom, left."
+example:
+  code: |
+    .kartu {
+      border: 1px solid #E5E7EB;
+      border-radius: 12px;
+      border-top: 4px solid #4F46E5;
+    }
+    .lingkaran { border-radius: 50%; }
+    .garis-putus { border-bottom: 2px dashed #9CA3AF; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Border** adalah garis di tepi kotak elemen — tepat di luar padding dan di dalam margin. Border bisa jadi pemisah halus, penanda status, atau elemen dekoratif itu sendiri.
+
+## Tiga Komponen Border
+
+```css
+.kotak {
+  border-width: 2px;
+  border-style: solid;
+  border-color: #4F46E5;
+}
+```
+
+Ketiganya bisa dirangkum:
+
+```css
+.kotak { border: 2px solid #4F46E5; }
+```
+
+Urutannya bebas, tapi kebiasaan orang: **lebar → gaya → warna**.
+
+## Gaya Garis
+
+| Nilai | Tampilan |
+|-------|----------|
+| `solid` | Garis penuh |
+| `dashed` | Putus-putus panjang |
+| `dotted` | Titik-titik |
+| `double` | Dua garis paralel |
+| `groove` / `ridge` | Efek timbul/cekung |
+| `inset` / `outset` | Efek tertanam |
+| `none` / `hidden` | Tanpa garis |
+
+## Border per Sisi
+
+```css
+.kartu {
+  border: 1px solid #E5E7EB;
+  border-top: 4px solid #4F46E5;   /* aksen atas */
+  border-right: none;              /* sisi kanan polos */
+}
+```
+
+Nilai juga bisa ditulis empat arah sekaligus dalam satu properti: `border-width: 1px 2px 3px 4px` mengikuti pola **atas kanan bawah kiri** (searah jarum jam).
+
+## Sudut Membulat
+
+```css
+.kartu   { border-radius: 16px; }
+.pil     { border-radius: 999px; } /* bentuk pil */
+.avatar  { border-radius: 50%; }   /* lingkaran sempurna */
+.izin    { border-radius: 16px 16px 0 0; } /* hanya atas */
+```
+
+Nilai persen dihitung terhadap lebar dan tinggi elemen, jadi `50%` pada kotak berukuran sama menghasilkan lingkaran.
+
+## Border sebagai Gambar
+
+`border-image` memungkinkan potongan gambar dipakai menjadi sudut dan sisi:
+
+```css
+.frame {
+  border: 12px solid transparent;
+  border-image: url('bingkai.png') 30 round;
+}
+```
+
+Fitur ini kuat tapi jarang dipakai karena sulit responsif — ketahui saja keberadaannya.
+
+<div class="note">💡 Border ikut menambah ukuran elemen saat `box-sizing: content-box`. Beralih ke `border-box` membuat lebar total tetap sesuai angka yang kamu tulis.</div>
+
+## Di Dunia Nyata
+
+- Kartuproduk memakai border tipis + radius agar terasa "mengambang".
+- Field error ditandai `border-color: #DC2626` dan ring merah saat fokus.
+- Garis putus-putus pada area drop-file memberi kesan "taruh di sini".
+- Avatar pengguna dipotong lingkaran dengan `border-radius: 50%`.
+
+## Try it Yourself
+
+Coba ubah gaya border menjadi `dashed` atau ganti warna aksen pada kartu di bawah.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 16px; }
+.kartu { border: 1px solid #E5E7EB; border-radius: 14px; border-top: 5px solid #4F46E5; padding: 16px; max-width: 320px; }
+.pil { display: inline-block; border: 2px solid #16A34A; color: #16A34A; border-radius: 999px; padding: 4px 14px; }
+.avatar { width: 72px; height: 72px; border-radius: 50%; background: #FDE68A; display: grid; place-items: center; font-size: 28px; }
+.garis { border-bottom: 3px dashed #F59E0B; margin: 20px 0; }`} />

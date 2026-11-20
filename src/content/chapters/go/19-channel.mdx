@@ -1,0 +1,153 @@
+---
+"title": "Channel"
+"description": "Komunikasi antar goroutine, buffered channel, dan select"
+"order": 19
+"quiz":
+- "q": "Channel dibuat dengan…"
+  "options":
+  - "make(chan T)"
+  - "new(chan T)"
+  - "chan T{}"
+  - "channel[T]"
+  "answer": 0
+  "explain": "make(chan int) membuat channel unbuffered untuk int."
+- "q": "Channel unbuffered bersifat…"
+  "options":
+  - "asinkron"
+  - "sinkron (pengirim menunggu penerima)"
+  - "selalu penuh"
+  - "hanya untuk satu nilai"
+  "answer": 1
+  "explain": "Pengiriman baru selesai saat goroutine lain menerima."
+- "q": "Cara menutup channel adalah…"
+  "options":
+  - "close(ch)"
+  - "ch.Close()"
+  - "ch <- nil"
+  - "delete(ch)"
+  "answer": 0
+  "explain": "close(ch) menandakan tidak ada nilai lagi."
+- "q": "Penerimaan dengan dua nilai berarti…"
+  "options":
+  - "nilai dan tipe"
+  - "nilai dan status terbuka"
+  - "nilai dan error"
+  - "nilai dan panjang"
+  "answer": 1
+  "explain": "v, ok := <-ch; ok false jika channel ditutup dan habis."
+- "q": "select dipakai untuk…"
+  "options":
+  - "memilih goroutine"
+  - "menunggu beberapa operasi channel sekaligus"
+  - "mengurutkan channel"
+  - "menutup semua channel"
+  "answer": 1
+  "explain": "select memilih kasus channel yang siap, mirip switch untuk komunikasi."
+"example":
+  "code": "package main\nimport \"fmt\"\nfunc main() {\n    ch := make(chan string)\n    go func() { ch <- \"halo\" }()\n    fmt.Println(<-ch)\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Channel adalah pipa untuk mengirim nilai antar goroutine. Filosofinya terkenal: *"Jangan berkomunikasi dengan berbagi memori; bagikan memori dengan berkomunikasi."*
+
+## Dasar
+
+```go
+ch := make(chan int)        // unbuffered
+ch <- 10                    // kirim
+nilai := <-ch               // terima
+```
+
+Pada channel unbuffered, pengirim menunggu sampai ada penerima — keduanya bertemu (rendezvous).
+
+## Buffered Channel
+
+```go
+ch := make(chan int, 3)
+ch <- 1
+ch <- 2
+fmt.Println(len(ch)) // 2
+```
+
+Kirim tidak langsung menunggu selama buffer belum penuh.
+
+## Menutup Channel
+
+```go
+close(ch)
+
+for nilai := range ch {
+    fmt.Println(nilai)
+}
+```
+
+`range` otomatis berhenti saat channel ditutup dan habis. Hanya **pengirim** yang sebaiknya menutup channel.
+
+## Arah Channel
+
+```go
+func kirim(out chan<- int) { out <- 1 }
+func baca(in <-chan int) { fmt.Println(<-in) }
+```
+
+Membatasi arah membuat kontrak fungsi lebih jelas.
+
+## select
+
+```go
+select {
+case v := <-ch1:
+    fmt.Println("dari ch1:", v)
+case ch2 <- "x":
+    fmt.Println("ch2 terkirim")
+case <-time.After(time.Second):
+    fmt.Println("timeout")
+}
+```
+
+Jika beberapa kasus siap, Go memilih salah satu secara acak. `select {}` tanpa kasus mem-blok selamanya — berguna untuk menjaga goroutine tetap hidup.
+
+## Worker Pool
+
+```go
+jobs := make(chan int)
+for w := 0; w < 3; w++ {
+    go func() {
+        for j := range jobs { fmt.Println(j) }
+    }()
+}
+```
+
+<div class="note">💡 Channel bukan pengganti mutex untuk semua kasus. Untuk melindungi satu variabel sederhana, <code>sync.Mutex</code> sering lebih jelas.</div>
+
+
+## Try it Yourself
+
+Kirim lebih banyak nilai atau ubah kapasitas buffer channel.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+
+func main() {
+    ch := make(chan int, 3)
+    ch <- 10
+    ch <- 20
+    close(ch)
+
+    for v := range ch {
+        fmt.Println("nilai:", v)
+    }
+
+    a := make(chan string)
+    b := make(chan string)
+    go func() { a <- "kiri" }()
+    go func() { b <- "kanan" }()
+
+    select {
+    case v := <-a:
+        fmt.Println("terpilih:", v)
+    case v := <-b:
+        fmt.Println("terpilih:", v)
+    }
+}`} />

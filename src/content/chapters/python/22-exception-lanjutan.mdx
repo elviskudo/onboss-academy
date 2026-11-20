@@ -1,0 +1,141 @@
+---
+title: "Exception Lanjutan"
+description: "raise, else, finally, custom exception, chaining, dan context manager buatan"
+order: 22
+quiz:
+  - q: "Blok `finally` dijalankan…"
+    options: ["Hanya saat sukses", "Hanya saat error", "Selalu, sukses atau error", "Hanya dengan return"]
+    answer: 2
+    explain: "finally dipakai untuk cleanup yang harus terjadi apa pun hasilnya."
+  - q: "Klausa `else` pada try/exception dijalankan saat…"
+    options: ["Ada exception", "Tidak ada exception", "Selalu", "Saat finally"]
+    answer: 1
+    explain: "else berisi kode yang hanya jalan bila try sukses."
+  - q: "Cara membuat custom exception adalah…"
+    options: ["class Err: pass", "class Err(Exception): pass", "def Err(): pass", "exception Err"]
+    answer: 1
+    explain: "Custom exception mewarisi Exception (atau subkelasnya)."
+  - q: "`raise ... from e` berguna untuk…"
+    options: ["Menghapus error", "Mengaitkan exception baru dengan penyebabnya", "Mengulang loop", "Menutup file"]
+    answer: 1
+    explain: "Exception chaining menjaga jejak error asli saat dibungkus."
+  - q: "Context manager buatan perlu method…"
+    options: ["__enter__ dan __exit__", "__open__ dan __close__", "__start__ dan __stop__", "__iter__ dan __next__"]
+    answer: 0
+    explain: "Protokol context manager terdiri dari __enter__ dan __exit__."
+example:
+  code: |
+    class SaldoKurang(Exception):
+        pass
+    
+    def tarik(saldo, jumlah):
+        if jumlah > saldo:
+            raise SaldoKurang(f"butuh {jumlah}, punya {saldo}")
+        return saldo - jumlah
+    
+    try:
+        sisa = tarik(100, 150)
+    except SaldoKurang as e:
+        print("Gagal:", e)
+    else:
+        print("Sisa:", sisa)
+    finally:
+        print("Transaksi selesai")
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Exception dasar sudah dibahas di chapter 09. Sekarang kita lihat pola yang lebih matang: exception buatan, chaining, dan context manager.
+
+## Struktur Lengkap
+
+```python
+try:
+    hasil = risiko()
+except ValueError as e:
+    print("Nilai salah:", e)
+except (TypeError, KeyError):
+    print("Tipe/kunci bermasalah")
+else:
+    print("Sukses:", hasil)
+finally:
+    print("Cleanup selalu jalan")
+```
+
+Urutan `except` penting: tangkap yang **paling spesifik dulu**. `except Exception` terakhir sebagai jaring pengaman.
+
+## raise
+
+```python
+def bagi(a, b):
+    if b == 0:
+        raise ValueError("pembagi tidak boleh nol")
+    return a / b
+```
+
+Boleh juga melempar ulang exception yang tertangkap dengan `raise` (tanpa argumen) — jejak asli tetap terjaga.
+
+## Custom Exception
+
+```python
+class ErrorValidasi(Exception):
+    def __init__(self, field, pesan):
+        self.field = field
+        super().__init__(f"{field}: {pesan}")
+
+raise ErrorValidasi("email", "format tidak valid")
+```
+
+Buat exception sendiri bila caller perlu membedakan kegagalan bisnis dari kegagalan teknis.
+
+## Chaining
+
+```python
+try:
+    data = json.loads(teks)
+except json.JSONDecodeError as e:
+    raise ConfigError("config rusak") from e
+```
+
+`from e` menghasilkan `__cause__`, sehingga traceback menampilkan "The above exception was the direct cause...".
+
+## Context Manager Sendiri
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def transaksi(nama):
+    print("mulai", nama)
+    try:
+        yield
+        print("commit")
+    except Exception:
+        print("rollback")
+        raise
+
+with transaksi("bayar"):
+    proses_bayar()
+```
+
+<div class="note">💡 Jangan menelan exception dengan <code>except: pass</code>. Setidaknya log alasannya. Error yang disembunyikan berubah menjadi bug yang muncul jauh dari sumbernya.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`class SaldoKurang(Exception):
+    pass
+
+def tarik(saldo, jumlah):
+    if jumlah > saldo:
+        raise SaldoKurang(f"butuh {jumlah}, punya {saldo}")
+    return saldo - jumlah
+
+try:
+    sisa = tarik(100, 150)
+except SaldoKurang as e:
+    print("Gagal:", e)
+else:
+    print("Sisa:", sisa)
+finally:
+    print("Transaksi selesai")`} />

@@ -1,0 +1,92 @@
+---
+title: "BuildKit dan Cache"
+description: "Mempercepat build dengan cache mount, parallel stage, dan inline cache"
+order: 21
+quiz:
+  - q: "BuildKit diaktifkan lewat variabel…"
+    options: ["DOCKLE=1", "DOCKER_BUILDKIT=1", "DOCKER_CACHE=1", "BUILD_FAST=1"]
+    answer: 1
+    explain: "Docker modern mengaktifkannya secara default, variabel ini dipakai untuk memaksa."
+  - q: "Sintaks untuk mengaktifkan fitur BuildKit adalah…"
+    options: ["// syntax:1", "@dockerfile 1", "# syntax=docker/dockerfile:1", "# buildkit enable"]
+    answer: 2
+    explain: "Baris directives harus berada paling atas sebelum instruksi pertama."
+  - q: "RUN --mount=type=cache berguna untuk…"
+    options: ["Menyimpan password", "Membuka port", "Menghapus base image", "Menyimpan cache dependency antar build tanpa masuk layer"]
+    answer: 3
+    explain: "Cache mount tidak menjadi bagian image final."
+  - q: "Secret BuildKit diakses melalui…"
+    options: ["--mount=type=secret", "ENV SECRET", "ARG SECRET", "COPY .env"]
+    answer: 0
+    explain: "Isi secret tidak tertulis di layer maupun metadata image."
+  - q: "docker build --progress=plain menampilkan…"
+    options: ["Log container", "Output build langkah demi langkah tanpa TUI", "Hanya error", "Grafik jaringan"]
+    answer: 1
+    explain: "Berguna di CI agar log build mudah dibaca."
+example:
+  code: |
+    # syntax=docker/dockerfile:1
+    FROM node:20-alpine
+    WORKDIR /app
+    COPY package*.json ./
+    RUN --mount=type=cache,target=/root/.npm npm ci
+    COPY . .
+    RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm run build
+---
+
+BuildKit adalah mesin build generasi baru Docker. Ia membangun graf dependensi instruksi, menjalankan stage yang saling bebas secara paralel, dan menyediakan mount khusus untuk cache serta secret.
+
+## Mengaktifkan
+
+```bash
+DOCKER_BUILDKIT=1 docker build -t app:1.0 .
+docker build --progress=plain -t app:1.0 .
+```
+
+Baris directives di awal Dockerfile menentukan versi parser yang dipakai:
+
+```dockerfile
+# syntax=docker/dockerfile:1
+```
+
+## Cache Mount
+
+```dockerfile
+RUN --mount=type=cache,target=/root/.npm npm ci
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y curl
+```
+
+Berbeda dengan cache layer, cache mount **tidak ikut** ke dalam image final. Isinya bertahan antar build sehingga mengunduh ulang paket bisa dihindari.
+
+## Secret Mount
+
+```dockerfile
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc \
+    npm ci --include=dev
+```
+
+```bash
+docker build --secret id=npmrc,src=$HOME/.npmrc -t app:1.0 .
+```
+
+File rahasia hanya tersedia selama perintah `RUN` berjalan. Ia tidak masuk layer, tidak bisa dilihat dengan `docker history`, dan tidak ikut ter-push.
+
+## Cache Eksternal untuk CI
+
+```bash
+docker buildx build \
+  --cache-from type=registry,ref=ghcr.io/tim/app:cache \
+  --cache-to type=registry,ref=ghcr.io/tim/app:cache,mode=max \
+  -t ghcr.io/tim/app:1.4.2 .
+```
+
+Mode `max` menyimpan lebih banyak metadata antar stage sehingga build di runner berbeda tetap bisa memakai cache.
+
+<div class="note">💡 Invalidate cache terjadi saat isi yang disalin berubah. Salin file lock (`package-lock.json`, `go.sum`) lebih dulu, baru kode aplikasi—kunci yang umum ini berlaku juga di BuildKit.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' '# syntax=docker/dockerfile:1' 'FROM alpine:3.20' 'RUN --mount=type=cache,target=/tmp/cache sh -c "echo data &gt; /tmp/cache/a &amp;&amp; cat /tmp/cache/a"' 'CMD ["echo", "selesai"]' &gt; Dockerfile
+docker build --progress=plain -t latihan-buildkit . 2&gt;&amp;1 | tail -5`}</code></pre>

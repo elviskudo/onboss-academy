@@ -1,0 +1,111 @@
+---
+title: "Modul & Package"
+description: "import, from-import, alias, __name__, dan struktur package Python"
+order: 16
+quiz:
+  - q: "Perintah untuk memuat modul `math` adalah…"
+    options: ["include math", "import math", "require math", "load math"]
+    answer: 1
+    explain: "`import` mengeksekusi modul dan mengikat namanya di namespace."
+  - q: "`from math import sqrt` membuat…"
+    options: ["Semua isi math jadi variabel", "Hanya sqrt yang langsung dipakai", "Modul baru", "Error"]
+    answer: 1
+    explain: "from-import mengikat nama tertentu ke namespace lokal."
+  - q: "Nilai `__name__` saat file dijalankan langsung adalah…"
+    options: ["'main'", "'__main__'", "Nama modul", "None"]
+    answer: 1
+    explain: "Blok `if __name__ == '__main__':` hanya jalan saat file dieksekusi langsung."
+  - q: "Package Python ditandai dengan adanya file…"
+    options: ["main.py", "__init__.py", "package.txt", "setup.cfg"]
+    answer: 1
+    explain: "__init__.py menandai direktori sebagai package (opsional di namespace package modern)."
+  - q: "`import numpy as np` membuat alias untuk…"
+    options: ["Fungsi np", "Modul numpy", "Variabel global", "Class"]
+    answer: 1
+    explain: "alias `as` mempersingkat nama modul saat dipanggil."
+example:
+  code: |
+    import math
+    from math import sqrt as akar
+    
+    print(math.pi)
+    print(akar(49))
+    
+    if __name__ == "__main__":
+        print("Dijalankan langsung")
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Modul memecah program besar menjadi file-file kecil yang bisa dipakai ulang. Package adalah direktori berisi kumpulan modul.
+
+## Cara Import
+
+```python
+import math                 # math.sqrt(...)
+import math as m            # m.sqrt(...)
+from math import sqrt       # sqrt(...)
+from math import sqrt as akar
+from math import *          # hindari: mencemari namespace
+```
+
+## Apa yang Terjadi Saat Import?
+
+Python mencari modul di `sys.path`, lalu **mengeksekusi seluruh isi file sekali saja** (hasilnya di-cache di `sys.modules`). Import kedua tidak mengulang eksekusi.
+
+## Modul sebagai Script
+
+```python
+# utils.py
+def bantu():
+    return "halo"
+
+if __name__ == "__main__":
+    print(bantu())   # hanya saat `python utils.py`
+```
+
+Saat di-import, `__name__` adalah `"utils"`, sehingga blok uji tidak jalan.
+
+## Struktur Package
+
+```
+proyek/
+├── app/
+│   ├── __init__.py
+│   ├── utils.py
+│   └── models/
+│       ├── __init__.py
+│       └── user.py
+└── main.py
+```
+
+```python
+from app.utils import bantu
+from app.models.user import User
+```
+
+## Modul Standar yang Sering Dipakai
+
+| Modul | Fungsi |
+|---|---|
+| `math` | operasi matematika |
+| `random` | angka acak & pilihan |
+| `datetime` | tanggal & waktu |
+| `os` / `pathlib` | sistem file |
+| `json` | parse/serialisasi JSON |
+| `re` | regular expression |
+| `collections` | struktur data tambahan |
+
+<div class="note">💡 Hindari nama file yang sama dengan modul standar (misal <code>math.py</code> atau <code>json.py</code>) — Python akan memuat file kamu instead of pustaka bawaan dan bug-nya sulit dilacak.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import math
+from math import sqrt as akar
+
+print(math.pi)
+print(akar(49))
+
+if __name__ == "__main__":
+    print("Dijalankan langsung")`} />

@@ -1,0 +1,121 @@
+---
+"title": "Routing Lanjutan"
+"description": "Resources, anggota collection, namespace, dan constraint pada rute Rails"
+"order": 10
+"quiz":
+- "q": "Perintah yang otomatis membuat tujuh rute CRUD adalah…"
+  "options":
+  - "resources :articles"
+  - "route :articles"
+  - "crud :articles"
+  - "get :articles"
+  "answer": 0
+  "explain": "resources menghasilkan index, show, new, create, edit, update, destroy."
+- "q": "Rute untuk menghapus artikel memakai verb HTTP…"
+  "options":
+  - "GET"
+  - "POST"
+  - "DELETE"
+  - "PATCH"
+  "answer": 2
+  "explain": "Destroy dipetakan ke DELETE /articles/:id."
+- "q": "Blok collection pada resources dipakai untuk…"
+  "options":
+  - "Aksi pada satu anggota"
+  - "Aksi pada seluruh kumpulan tanpa id"
+  - "Mengganti controller"
+  - "Menghapus rute"
+  "answer": 1
+  "explain": "Collection menghasilkan rute seperti /articles/publish tanpa :id."
+- "q": "Cara melihat daftar seluruh rute aplikasi adalah…"
+  "options":
+  - "bin/rails routes"
+  - "bin/rails paths"
+  - "rails url all"
+  - "bin/rails server --routes"
+  "answer": 0
+  "explain": "Perintah routes menampilkan tabel helper, verb, URL, dan controller#action."
+- "q": "Namespace pada routing biasanya dipakai untuk…"
+  "options":
+  - "Mengganti database"
+  - "Memisahkan modul seperti area admin"
+  - "Menambah CSS"
+  - "Mempercepat migrasi"
+  "answer": 1
+  "explain": "namespace :admin memetakan ke Admin::UsersController dan URL /admin/users."
+"example":
+  "code": "Rails.application.routes.draw do\n  resources :articles do\n    member do\n      post :publish\n    end\n    collection do\n      get :archive\n    end\n  end\n\n  namespace :admin do\n    resources :users\n  end\n\n  root \"home#index\"\nend\n"
+---
+
+## Dari Rute Tunggal ke Resources
+
+```ruby
+Rails.application.routes.draw do
+  resources :articles do
+    member do
+      post :publish
+    end
+    collection do
+      get :archive
+    end
+  end
+
+  namespace :admin do
+    resources :users
+  end
+
+  root "home#index"
+end
+```
+
+Rute sederhana ditulis satu per satu:
+
+```ruby
+get "/tentang", to: "home#about"
+```
+
+Untuk data CRUD, Rails menyediakan `resources` yang membuat tujuh rute sekaligus. Tabel di bawah memetakan aksi ke verb dan URL.
+
+| Aksi | Verb | Path | Fungsi |
+|---|---|---|---|
+| index | GET | `/articles` | daftar semua |
+| show | GET | `/articles/:id` | satu artikel |
+| new | GET | `/articles/new` | form baru |
+| create | POST | `/articles` | simpan artikel |
+| edit | GET | `/articles/:id/edit` | form ubah |
+| update | PATCH | `/articles/:id` | simpan perubahan |
+| destroy | DELETE | `/articles/:id` | hapus |
+
+## Member dan Collection
+
+Terkadang aksi CRUD standar tidak cukup.
+
+```ruby
+resources :articles do
+  member { post :publish }     # /articles/1/publish
+  collection { get :archive }  # /articles/archive
+end
+```
+
+**Member** menyertakan `:id` karena bekerja pada satu baris. **Collection** tidak memakai `:id` karena bekerja pada kumpulan data.
+
+## Namespace dan Scope
+
+```ruby
+namespace :admin do
+  resources :users
+end
+```
+
+Rute di atas menghasilkan `/admin/users` dan mengarah ke `Admin::UsersController`. Controller sebaiknya ditempatkan di `app/controllers/admin/users_controller.rb`.
+
+## Root dan Helper
+
+`root "home#index"` mendefinisikan halaman depan `/`. Rails juga membuat helper seperti `articles_path`, `article_path(@article)`, dan `new_article_path`.
+
+```erb
+<%= link_to "Daftar", articles_path %>
+<%= link_to "Baca", article_path(@article) %>
+```
+
+<div class="note">💡 Jalankan <code>bin/rails routes</code> setelah mengubah config/routes.rb. Urutan rute penting — rute yang lebih atas akan dicocokkan lebih dulu, jadi taruh rute khusus sebelum rute generik.</div>

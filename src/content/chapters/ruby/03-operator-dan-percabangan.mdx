@@ -3,10 +3,10 @@ title: "Operator & Percabangan"
 description: "27 operator inti Ruby dan 5 bentuk percabangan: if, unless, case, ternary, modifier"
 order: 3
 quiz:
-  - q: "Operator pembanding ruang (spaceship) `<=>` menghasilkan…"
+  - q: "Operator pembanding ruang (spaceship) `&lt;=>` menghasilkan…"
     options: ["true/false saja", "-1, 0, atau 1", "Selalu 1", "Error jika beda tipe"]
     answer: 1
-    explain: "<=> mengembalikan -1 (kurang), 0 (sama), 1 (lebih), dan nil bila tidak bisa dibandingkan."
+    explain: "&lt;=> mengembalikan -1 (kurang), 0 (sama), 1 (lebih), dan nil bila tidak bisa dibandingkan."
   - q: "Kebalikan dari `if` di Ruby disebut…"
     options: ["unless", "until", "case", "when"]
     answer: 0
@@ -66,10 +66,10 @@ Percabangan menentukan alur program berdasarkan kondisi, operator adalah bahan b
 | `==` | Sama nilainya | `"a" == "a"` | `true` |
 | `!=` | Tidak sama | `5 != 5` | `false` |
 | `<` `>` | Kurang / lebih | `5 > 3` | `true` |
-| `<=` `>=` | Kurang-lebih / lebih-lebih | `5 >= 5` | `true` |
-| `<=>` | Spaceship: -1 / 0 / 1 | `5 <=> 3` | `1` |
+| `&lt;=` `>=` | Kurang-lebih / lebih-lebih | `5 >= 5` | `true` |
+| `&lt;=>` | Spaceship: -1 / 0 / 1 | `5 &lt;=> 3` | `1` |
 
-`<=>` adalah kunci pengurutan: `sort` memakainya, dan hasil `nil` berarti kedua objek tidak bisa dibandingkan sehingga pengurutan melempar `ArgumentError`.
+`&lt;=>` adalah kunci pengurutan: `sort` memakainya, dan hasil `nil` berarti kedua objek tidak bisa dibandingkan sehingga pengurutan melempar `ArgumentError`.
 
 ## 6 Operator Logika
 
@@ -138,6 +138,10 @@ puts "Sudah dewasa" if umur >= 18
 - **Batch job berkondisi**: `next if baris.kosong?` mempercepat pemrosesan file dengan baris kosong.
 
 <div class="note">💡 Di Ruby hanya `false` dan `nil` yang dianggap salah. Angka `0`, string `""`, dan array `[]` tetap benar — jadi `if jumlah` tetap jalan walau jumlahnya nol. Untuk memastikan benar-benar ada isi, tanyakan secara eksplisit: `if jumlah && jumlah.positive?`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`nilai = 78
 

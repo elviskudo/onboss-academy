@@ -1,0 +1,119 @@
+---
+"title": "Rails API Mode"
+"description": "Membangun JSON API tanpa view: serializers, status, autentikasi, dan versioning"
+"order": 24
+"quiz":
+- "q": "Perintah membuat aplikasi API-only adalah…"
+  "options":
+  - "rails new nama --api"
+  - "rails new nama --json"
+  - "rails api nama"
+  - "gem new api"
+  "answer": 0
+  "explain": "Flag --api melewati middleware dan view yang tidak diperlukan API."
+- "q": "Metode render JSON di controller adalah…"
+  "options":
+  - "render json: @data"
+  - "render @data"
+  - "json @data"
+  - "respond @data"
+  "answer": 0
+  "explain": "render json: mengubah objek menjadi JSON."
+- "q": "Gem serializer populer untuk Rails API adalah…"
+  "options":
+  - "active_model_serializers"
+  - "rails-serializer"
+  - "jsonify"
+  - "fast_json"
+  "answer": 0
+  "explain": "ActiveModelSerializers mengontrol bentuk JSON yang dikirim."
+- "q": "Status HTTP untuk resource yang baru dibuat adalah…"
+  "options":
+  - "200"
+  - "201"
+  - "204"
+  - "301"
+  "answer": 1
+  "explain": "201 Created menandakan pembuatan berhasil."
+- "q": "Versioning API umum dilakukan dengan…"
+  "options":
+  - "Namespace /api/v1"
+  - "Mengganti port"
+  - "Mengubah database"
+  - "Menambah CSS"
+  "answer": 0
+  "explain": "Namespace memisahkan kontrak lama dan baru dalam satu aplikasi."
+"example":
+  "code": "namespace :api do\n  namespace :v1 do\n    resources :articles, only: [:index, :show, :create]\n  end\nend\n\nclass Api::V1::ArticlesController &lt; ApplicationController\n  def index\n    render json: Article.all, status: :ok\n  end\n\n  def create\n    article = Article.new(article_params)\n    if article.save\n      render json: article, status: :created\n    else\n      render json: { errors: article.errors.full_messages }, status: :unprocessable_entity\n    end\n  end\nend\n"
+---
+
+## API-only versus Full-stack
+
+```ruby
+namespace :api do
+  namespace :v1 do
+    resources :articles, only: [:index, :show, :create]
+  end
+end
+
+class Api::V1::ArticlesController < ApplicationController
+  def index
+    render json: Article.all, status: :ok
+  end
+
+  def create
+    article = Article.new(article_params)
+    if article.save
+      render json: article, status: :created
+    else
+      render json: { errors: article.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+end
+```
+
+| Aspek | API-only | Full-stack |
+|---|---|---|
+| View ERB | tidak ada | ada |
+| Middleware cookie | bisa dimatikan | aktif |
+| Respons | JSON | HTML |
+| Klien | mobile / SPA | browser |
+
+Buat dengan `rails new nama --api` bila server hanya menyajikan data.
+
+## Status yang Tepat
+
+| Keadaan | Status |
+|---|---|
+| Berhasil baca | 200 OK |
+| Berhasil buat | 201 Created |
+| Berhasil hapus tanpa body | 204 No Content |
+| Validasi gagal | 422 Unprocessable Entity |
+| Tidak terautentikasi | 401 Unauthorized |
+| Tidak diizinkan | 403 Forbidden |
+
+## Serializer
+
+Tanpa serializer, `render json: @article` mengirim semua kolom. Serializer membatasi field:
+
+```ruby
+class ArticleSerializer < ActiveModel::Serializer
+  attributes :id, :title, :created_at
+  belongs_to :author
+end
+```
+
+## Autentikasi
+
+API modern memakai token (misalnya JWT atau token opaque yang dibuat dengan `has_secure_token`). Simpan token di header `Authorization: Bearer ...`, lalu verifikasi di `before_action`.
+
+## Versioning
+
+```
+/api/v1/articles
+/api/v2/articles
+```
+
+Perubahan bentuk respons yang memecah klien lama sebaiknya masuk ke versi baru, bukan mengubah versi yang sudah dipakai produksi.
+
+<div class="note">💡 Jangan mengembalikan stack trace atau pesan error database ke klien. Kirim pesan umum di produksi dan simpan detail di log server.</div>

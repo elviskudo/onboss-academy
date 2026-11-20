@@ -1,0 +1,114 @@
+---
+title: "View: Tabel Virtual dari Query"
+description: "Membuat, memakai, dan mengelola view untuk menyederhanakan query"
+order: 19
+quiz:
+  - q: "View adalah…"
+    options: ["Tabel fisik berisi salinan data", "Query tersimpan yang tampil seperti tabel", "Index khusus", "Trigger"]
+    answer: 1
+    explain: "View menyimpan definisi SELECT, bukan data (kecuali materialized view)."
+  - q: "Perintah membuat view adalah…"
+    options: ["CREATE VIEW", "MAKE VIEW", "NEW VIEW", "INSERT VIEW"]
+    answer: 0
+    explain: "CREATE VIEW nama AS SELECT ...;"
+  - q: "Keuntungan view adalah…"
+    options: ["Selalu lebih cepat", "Menyembunyikan kompleksitas dan bisa membatasi kolom", "Menghapus duplikat otomatis", "Mengganti primary key"]
+    answer: 1
+    explain: "View menyederhanakan query dan bisa jadi lapisan keamanan."
+  - q: "DROP VIEW akan…"
+    options: ["Menghapus data tabel asal", "Menghapus definisi view saja", "Mengosongkan semua tabel", "Mengubah struktur tabel"]
+    answer: 1
+    explain: "View hanya definisi; tabel dasar tidak tersentuh."
+  - q: "Materialized view berbeda karena…"
+    options: ["Menyimpan hasil secara fisik", "Tidak bisa dipakai SELECT", "Hanya untuk SQLite", "Selalu lebih kecil"]
+    answer: 0
+    explain: "Materialized view menyimpan hasil query sehingga perlu disegarkan."
+example:
+  code: |
+    CREATE VIEW ringkas AS SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept; SELECT * FROM ringkas;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+View adalah *query bernama* yang bisa diperlakukan seperti tabel. Ia membantu menyembunyikan join rumit, membatasi kolom sensitif, dan menjaga konsistensi laporan.
+
+## Membuat dan Memakai
+
+```sql
+CREATE VIEW karyawan_ringkas AS
+SELECT id, nama, dept, gaji
+FROM karyawan;
+
+SELECT * FROM karyawan_ringkas WHERE dept = 'Engineering';
+```
+
+View tidak menyimpan baris. Setiap kali dipanggil, query di dalamnya dijalankan terhadap data terbaru.
+
+## View untuk Menyederhanakan Join
+
+```sql
+CREATE VIEW proyek_lead AS
+SELECT p.nama AS proyek, p.budget, k.nama AS lead
+FROM proyek p
+JOIN karyawan k ON k.id = p.lead_id;
+
+SELECT lead, SUM(budget) AS total
+FROM proyek_lead
+GROUP BY lead;
+```
+
+Aplikasi cukup query ke view tanpa mengetahui detail join-nya.
+
+## View sebagai Lapisan Keamanan
+
+```sql
+CREATE VIEW pegawai_publik AS
+SELECT id, nama, jabatan FROM karyawan;  -- sengaja tanpa gaji
+```
+
+Berikan hak SELECT pada `pegawai_publik`, bukan pada tabel `karyawan`. Dengan begitu kolom gaji tidak bisa dibaca oleh pengguna tertentu.
+
+Perlu diingat: view bukan pengganti sistem hak akses database yang benar.
+
+## Mengubah dan Menghapus
+
+```sql
+CREATE OR REPLACE VIEW karyawan_ringkas AS
+SELECT id, nama, dept FROM karyawan;   -- gaji dihapus dari view
+
+DROP VIEW IF EXISTS karyawan_ringkas;
+```
+
+Tidak semua database mendukung `CREATE OR REPLACE`; beberapa memakai `ALTER VIEW` atau harus `DROP` dulu.
+
+## Materialized View
+
+Beberapa sistem (PostgreSQL, Oracle) punya *materialized view*: hasil query disimpan secara fisik dan perlu disegarkan.
+
+```sql
+-- PostgreSQL
+CREATE MATERIALIZED VIEW ringkas_dept AS
+SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept;
+
+REFRESH MATERIALIZED VIEW ringkas_dept;
+```
+
+Cocok untuk laporan agregat berat yang diakses sering tapi tidak perlu real-time.
+
+<div class="note">💡 View yang bertumpuk (view di atas view) bisa sulit dioptimalkan. Untuk query kritis, kadang lebih baik menulis SELECT langsung atau memakai CTE.</div>
+
+## Di Dunia Nyata
+
+- **API publik**: view tanpa kolom sensitif dipakai untuk akun dengan hak terbatas.
+- **Laporan standar**: satu view dipakai banyak dashboard agar definisinya seragam.
+- **Kompatibilitas**: view lama tetap ada saat struktur tabel berubah.
+- **Agregat berat**: materialized view dip segarkan tiap malam.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE VIEW ringkas_dept AS
+SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata
+FROM karyawan
+GROUP BY dept;
+SELECT * FROM ringkas_dept ORDER BY rata DESC;`} />

@@ -1,0 +1,89 @@
+---
+title: "Selector Dasar CSS"
+description: "Memilih elemen dengan tag, class, id, dan selector universal"
+order: 9
+quiz:
+  - q: "Selector untuk memilih semua elemen <p> adalah…"
+    options: ["*", ".p", "p", "#p"]
+    answer: 2
+    explain: "Nama tag ditulis tanpa awalan, jadi `p` memilih semua paragraf."
+  - q: "Selector yang menargetkan atribut class=\"menu\" adalah…"
+    options: ["#menu", ".menu", "menu", "*menu"]
+    answer: 1
+    explain: "Titik dipakai untuk class; pagar untuk id."
+  - q: "Selector universal yang memilih semua elemen adalah…"
+    options: ["*", "all", "**", "@"]
+    answer: 0
+    explain: "Tanda bintang tunggal berarti setiap elemen di dokumen."
+  - q: "Selector #utama akan mencocokkan…"
+    options: ["Semua elemen utama", "Elemen dengan id=\"utama\"", "Elemen dengan class=\"utama\"", "Tag <utama>"]
+    answer: 1
+    explain: "Pagar (#) adalah penanda id, dan id harus unik per halaman."
+  - q: "CSS `p, h1 { color: red; }` berarti…"
+    options: ["Hanya p yang merah", "p dan h1 sama-sama merah", "p di dalam h1 merah", "Semua elemen merah"]
+    answer: 1
+    explain: "Koma menggabungkan beberapa selector dalam satu aturan (selector list)."
+example:
+  code: |
+    p { color: #374151; }
+    .intro { font-weight: 600; }
+    #utama { border-bottom: 2px solid #4F46E5; }
+    * { box-sizing: border-box; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setiap aturan CSS diawali **selector** — petunjuk kepada browser tentang elemen mana yang boleh dihias. Menguasai selector berarti menguasai "siapa yang kena gaya".
+
+## Empat Selector Paling Awal
+
+| Selector | Contoh | Artinya |
+|----------|--------|---------|
+| Tag / type | `h1` | Semua elemen `<h1>` |
+| Class | `.kartu` | Elemen dengan `class="kartu"` |
+| ID | `#header` | Elemen dengan `id="header"` (unik) |
+| Universal | `*` | Semua elemen apa pun |
+
+```css
+h1            { color: navy; }
+.kartu        { padding: 16px; }
+#header       { background: #111827; }
+*             { margin: 0; padding: 0; }
+```
+
+## Menggabungkan Selector
+
+Koma berarti "atau" — aturan yang sama dipakai bersama:
+
+```css
+h1, h2, h3 {
+  font-family: Georgia, serif;
+  letter-spacing: -0.02em;
+}
+```
+
+Sementara itu, penyambungan tanpa spasi berarti "dan":
+
+```css
+p.intro        { font-size: 1.15rem; }  /* <p class="intro"> */
+#header .logo  { width: 120px; }        /* .logo di dalam #header */
+```
+
+<div class="note">💡 ID lebih spesifik daripada class, dan class lebih spesifik daripada tag. Kalau dua aturan bertabrakan, yang paling spesifik menang — bukan sekadar yang ditulis terakhir.</div>
+
+## Kapan Memakai Mana?
+
+- **Tag** untuk gaya dasar seluruh dokumen, misalnya mengatur `line-height` semua paragraf.
+- **Class** untuk komponen yang bisa dipakai berulang: tombol, kartu, label status.
+- **ID** untuk satu area unik seperti anchor navigasi atau elemen yang dipetakanJavaScript.
+- **Universal** dengan hati-hati — sering dipakai bersama `box-sizing` untuk reset.
+
+## Try it Yourself
+
+Tambahkan class `sorotan` pada paragraf atau ubah warna selector `h1` di bawah.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`h1 { color: #4F46E5; font-family: sans-serif; }
+p { color: #374151; line-height: 1.6; }
+. sorotan { background: #FEF3C7; }
+#judul { border-bottom: 3px solid #F59E0B; }
+* { box-sizing: border-box; }`} />

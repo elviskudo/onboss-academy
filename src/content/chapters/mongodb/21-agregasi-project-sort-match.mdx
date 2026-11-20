@@ -1,0 +1,99 @@
+---
+title: "Agregasi: $project, $sort, $limit, dan $match"
+description: "membentuk ulang dokumen, field computed, sort compound, serta batas hasil"
+order: 21
+quiz:
+  - q: "Tahap untuk memilih dan membentuk ulang field adalah…"
+    options: ["$shape", "$project", "$select", "$pick"]
+    answer: 1
+    explain: "$project menentukan field mana yang keluar dari tahap."
+  - q: "Untuk membuat field baru dari perhitungan dipakai…"
+    options: ["$new", "$define", "$set di dalam $project", "$make"]
+    answer: 2
+    explain: "$project: {pajak: {$multiply: [\"$harga\", 0.1]}} membuat field turunan."
+  - q: "$sort dengan {harga: -1} mengurutkan…"
+    options: ["Menurun", "Acak", "Berdasarkan panjang", "Menaik"]
+    answer: 0
+    explain: "-1 = descending."
+  - q: "Batas ukuran dokumen hasil agregasi MongoDB adalah…"
+    options: ["Tidak ada", "1 MB", "16 MB", "100 MB"]
+    answer: 2
+    explain: "Dokumen BSON maksimal 16 MB; gunakan $out bila hasil sangat besar."
+  - q: "$limit diletakkan setelah $sort untuk…"
+    options: ["Menggabungkan koleksi", "Membuat indeks", "Mendapatkan nilai terbesar/terkecil", "Menghapus duplikat"]
+    answer: 2
+    explain: "Sort dulu, lalu limit mengambil baris teratas sesuai urutan."
+example:
+  code: |
+    db.produk.aggregate([
+      {$match: {aktif: true}},
+      {$project: {nama: 1, harga: 1, pajak: {$multiply: ["$harga", 0.11]}, _id: 0}},
+      {$sort: {pajak: -1}},
+      {$limit: 3}
+    ])
+---
+
+## $project
+
+```javascript
+db.produk.aggregate([
+  { $project: { nama: 1, harga: 1, _id: 0 } }
+])
+```
+
+Sama seperti proyeksi di `find()`. Selain memilih field, `$project` bisa membuat field baru dengan ekspresi.
+
+## Field Turunan
+
+| Ekspresi | Fungsi |
+| --- | --- |
+| `$add` | penjumlahan |
+| `$subtract` | pengurangan |
+| `$multiply` | perkalian |
+| `$divide` | pembagian |
+| `$concat` | menggabungkan string |
+| `$toUpper` | huruf kapital |
+| `$cond` | if-else |
+
+```javascript
+{
+  $project: {
+    nama: 1,
+    total: { $multiply: ["$harga", "$jumlah"] },
+    label: { $cond: [{ $gt: ["$stok", 0] }, "Tersedia", "Habis"] }
+  }
+}
+```
+
+## $sort dan $limit
+
+```javascript
+db.produk.aggregate([
+  { $sort: { kategori: 1, harga: -1 } },
+  { $limit: 10 }
+])
+```
+
+Sort maju-kiri ke kanan. Kamu bisa mengurutkan field hasil `$project` karena tahap dijalankan berurutan.
+
+## $skip
+
+```javascript
+db.produk.aggregate([
+  { $sort: { _id: 1 } },
+  { $skip: 20 },
+  { $limit: 10 }
+])
+```
+
+Kombinasi ini setara dengan halaman ketiga berisi 10 data. Tetap siapkan sort yang stabil.
+
+<div class="note">💡 Mulai MongoDB 4.2 ada tahap `$set` sebagai alternatif `$project` ketika kamu hanya ingin menambah/mengubah field tanpa menyembunyikan yang lain.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_project
+db.produk.insertMany([{nama: "A", harga: 100}, {nama: "B", harga: 250}])
+db.produk.aggregate([{$project: {nama: 1, pajak: {$multiply: ["$harga", 0.1]}, _id: 0}}, {$sort: {pajak: -1}}])`}</code></pre>

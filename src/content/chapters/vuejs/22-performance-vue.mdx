@@ -1,0 +1,96 @@
+---
+title: "Performansi Vue"
+description: "computed vs method, v-if vs v-show, key, dan virtual list"
+order: 22
+quiz:
+  - q: "Computed lebih baik daripada method untuk nilai turunan karena…"
+    options: ["Tidak bisa error", "Langsung ke DOM", "Hasilnya di-cache sampai dependency berubah", "Lebih pendek"]
+    answer: 2
+    explain: "Method dijalankan ulang tiap render."
+  - q: "v-show berbeda dari v-if karena…"
+    options: ["Hanya untuk form", "Elemen tetap ada, hanya CSS display yang diubah", "Menghapus elemen", "Lebih lambat selalu"]
+    answer: 1
+    explain: "Cocok untuk elemen yang sering bolak-balik."
+  - q: "Daftar besar sebaiknya…"
+    options: ["Dirender semua", "Dihapus", "Ditaruh di CSS", "Dirender sebagian (virtual list)"]
+    answer: 3
+    explain: "Hanya baris terlihat yang dibuat."
+  - q: "Prop key pada v-for harus…"
+    options: ["Nama kelas", "Unik dan stabil", "Selalu index", "Angka acak"]
+    answer: 1
+    explain: "ID data adalah pilihan terbaik."
+  - q: "Cara paling awal mengoptimasi adalah…"
+    options: ["Mengukur dengan Vue DevTools", "Menambah memo di semua tempat", "Menghapus computed", "Mengubah semua ke v-show"]
+    answer: 0
+    explain: "Ukur dulu baru perbaiki."
+example:
+  code: |
+    <div v-for="item in terlihat" :key="item.id">{{ item.nama }}</div>
+
+    const terlihat = computed(() => items.slice(mulai, akhir));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Vue sudah cepat secara default. Optimasi yang tepat dimulai dari pengukuran dan kebiasaan sederhana.
+
+## Kebiasaan Sehari-hari
+
+| Situasi | Pilihan |
+|---------|---------|
+| Nilai turunan | `computed` |
+| Perhitungan sekali saat event | method |
+| Sering tampil/sembunyi | `v-show` |
+| Jarang tampil, berat | `v-if` |
+| Daftar ribuan baris | virtual list |
+
+## Contoh Computed
+
+```vue
+<script setup>
+const items = ref([/* ... */])
+const kata = ref('')
+
+const tersaring = computed(() =>
+  items.value.filter((i) => i.nama.includes(kata.value))
+)
+</script>
+```
+
+## Virtual List Sederhana
+
+```js
+const tinggiBaris = 40;
+const mulai = computed(() => Math.floor(scrollTop.value / tinggiBaris));
+const akhir = computed(() => mulai.value + 20);
+const terlihat = computed(() => items.value.slice(mulai.value, akhir.value));
+```
+
+Untuk produksi, gunakan `vue-virtual-scroller` atau `@tanstack/vue-virtual`.
+
+## Hindari Mutasi dalam Computed
+
+```js
+// ❌ computed sebaiknya murni
+const total = computed(() => {
+  log.push("dipanggil"); // efek samping
+  return items.value.length;
+});
+```
+
+Efek samping taruh di `watch`.
+
+<div class="note">💡 Mulai dari struktur data yang benar: jangan menyimpan turunan sebagai state terpisah. Biarkan computed yang menghitung — otomatis dan bebas bug sinkronisasi.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi virtual list
+const items = Array.from({ length: 1000 }, (_, i) => "Baris " + (i + 1));
+const tinggi = 40, scrollTop = 800, jumlah = 5;
+const mulai = Math.floor(scrollTop / tinggi);
+const terlihat = items.slice(mulai, mulai + jumlah);
+
+console.log("dirender:", terlihat.length, "dari", items.length);
+console.log(terlihat);`} />

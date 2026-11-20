@@ -1,0 +1,84 @@
+---
+title: "Testing dan Debugging"
+description: "Multimeter, Serial Print, dan isolasi masalah"
+order: 28
+quiz:
+  - q: "Langkah pertama saat LED tidak menyala adalah…"
+    options: ["Cek kabel, polaritas, dan resistor", "Ganti board", "Tulis ulang seluruh kode", "Menambah delay"]
+    answer: 0
+    explain: "Kesalahan rangkaian lebih sering terjadi daripada kesalahan kode."
+  - q: "Multimeter pada mode continuity berguna untuk…"
+    options: ["Mengubah pin", "Mengecek kabel dan sambungan", "Mengukur suhu", "Mengirim data"]
+    answer: 1
+    explain: "Bunyi bip menandakan jalur terhubung."
+  - q: "Teknik Serial.print untuk debug disebut…"
+    options: ["Simulasi", "Profiling", "Print debugging", "Unit testing"]
+    answer: 2
+    explain: "Cepat, tapi hasilnya perlu dibersihkan setelah selesai."
+  - q: "Jika upload gagal dengan error avrdude, cek…"
+    options: ["Resistor LED", "Kartu SD", "Baudrate Serial Monitor", "Port, board, dan kabel USB"]
+    answer: 3
+    explain: "Port yang salah adalah penyebab paling umum."
+  - q: "Cara mengisolasi masalah hardware adalah…"
+    options: ["Ganti satu komponen dengan yang diketahui bekerja", "Mengubah semua kode sekaligus", "Menonaktifkan Serial", "Menghapus library"]
+    answer: 0
+    explain: "Perubahan satu variabel per kali memudahkan pelacakan."
+example:
+  code: |
+    // Print debugging
+    Serial.print('state=');
+    Serial.print(state);
+    Serial.print(' sensor=');
+    Serial.println(nilai);
+---
+
+Debugging yang sistematis menghemat waktu. Ubah satu hal, amati hasilnya, lalu lanjut—jangan menebak dan mengubah semuanya sekaligus.
+
+## Daftar Cek Cepat
+
+```text
+[ ] Kabel GND terhubung
+[ ] Polaritas LED benar (kaki panjang ke pin)
+[ ] Resistor sesuai
+[ ] PinMode sudah diatur
+[ ] Board & port dipilih benar
+[ ] Serial baud cocok
+```
+
+## Multimeter
+
+| Mode | Yang dicek |
+|---|---|
+| Continuity | Kabel dan sambungan |
+| DC Voltage | Tegangan pin & catu daya |
+| Resistance | Nilai resistor |
+| Diode test | Polaritas LED/dioda |
+
+## Serial Debugging
+
+```cpp
+Serial.print('A0=');
+Serial.print(analogRead(A0));
+Serial.print(' state=');
+Serial.println(state);
+```
+
+Tambahkan label agar angka tidak membingungkan saat banyak nilai.
+
+## Isolasi Bertahap
+
+1. Uji LED built-in pin 13 → verifikasi board & sketch.
+2. Tambah resistor + LED eksternal → verifikasi rangkaian.
+3. Tambah sensor satu per satu → verifikasi library & alamat.
+4. Gabungkan semua di sketch akhir.
+
+<div class="note">💡 Setelah selesai debug, hapus atau beri komentar pada Serial.print yang tidak perlu—terutama jika board berjalan otonom.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Langkah isolasi:
+# 1. Upload blink pin 13 (LED onboard)
+# 2. Uji tegangan pin dengan multimeter
+# 3. Tambah komponen satu per satu
+# 4. Cetak nilai ke Serial untuk verifikasi`}</code></pre>

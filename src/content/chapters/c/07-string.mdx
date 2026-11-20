@@ -64,7 +64,7 @@ printf("%c\n", s1[4]);        // \0 (terminator, bukan huruf)
 | `strcpy(dst, src)` | salin src → dst | **tanpa cek panjang** |
 | `strncpy(dst, src, n)` | salin maks n karakter | bisa tanpa `'\0'` — hati-hati |
 | `strcat(a, b)` | gabung b di belakang a | buffer a harus cukup |
-| `strcmp(a, b)` | bandingkan isi | `0` = sama, `<0`/`>0` = urutan leksikografis |
+| `strcmp(a, b)` | bandingkan isi | `0` = sama, `&lt;0`/`>0` = urutan leksikografis |
 | `strncmp(a, b, n)` | banding n karakter pertama | aman untuk prefix check |
 | `strchr(s, c)` | cari karakter pertama | NULL jika tak ada |
 | `strstr(a, b)` | cari substring | NULL jika tak ada |
@@ -148,6 +148,10 @@ Loop berhenti saat menemui `'\0'` — pola paling umum untuk memproses teks di C
 
 <div class="note">💡 Selalu siapkan buffer lebih besar dari teks terpanjang, dan ingat <code>strlen</code> menghitung karakter <b>tanpa</b> penutup <code>'\0'</code> — alokasikan +1 untuk terminatornya. Untuk operasi apa pun yang menyalin atau menggabung, pertimbangkan versi <code>n</code>-nya (strncpy/snprintf) demi menghindari buffer overflow.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 #include <string.h>
 
@@ -173,7 +177,7 @@ int main(void) {
     printf("Besar semua: ");
     for (int i = 0; sapa[i] != '\\0'; i++) {
         char c = sapa[i];
-        if (c >= 'a' && c <= 'z') c = c - 'a' + 'A';
+        if (c >= 'a' && c &lt;= 'z') c = c - 'a' + 'A';
         printf("%c", c);
     }
     printf("\\n");

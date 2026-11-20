@@ -1,0 +1,123 @@
+---
+title: "ExceptionHandling C++"
+description: "try/catch/throw, exception hierarchy, RAII, dan exception safety"
+order: 19
+quiz:
+  - q: "Blok catch menangkap exception berdasarkan…"
+    options: ["Tipe yang dilempar", "Nama variabel", "Baris kode", "Waktu"]
+    answer: 0
+    explain: "`catch (const std::runtime_error& e)` menangkap menurut tipe."
+  - q: "`catch (...)` berarti…"
+    options: ["Menangkap semua exception", "Tidak menangkap apa-apa", "Hanya error系统", "Hanya di debug"]
+    answer: 0
+    explain: "Biasanya dipakai terakhir sebagai jaring pengaman."
+  - q: "Buku 'Effective C++' menyarankan melempar…"
+    options: ["Objek, bukan pointer", "String literal", "Integer", "Pointer"]
+    answer: 0
+    explain: "Compiler mengelola masa hidup objek exception otomatis."
+  - q: "RAII membantu exception safety karena…"
+    options: ["Resource dibersihkan destructor saat stack unwinding", "Exception jadi lebih cepat", "Menghapus catch", "Tidak ada hubungan"]
+    answer: 0
+    explain: "Ini alasan utama hindari new/delete manual."
+  - q: "`noexcept` pada fungsi berarti…"
+    options: ["Fungsi berjanji tidak melempar (terminate jika melanggar)", "Selalu aman", "Tidak bisa dipanggil", "Exception ditelan"]
+    answer: 0
+    explain: "Beda dengan `throw()` yang sudah deprecated."
+example:
+  code: |
+    #include <stdexcept>
+    #include <iostream>
+    #include <vector>
+    
+    int bagi(int a, int b) {
+        if (b == 0) throw std::invalid_argument("pembagi nol");
+        return a / b;
+    }
+    
+    int main() {
+        std::vector<int> v{1,2,3};
+        try {
+            std::cout <&lt; bagi(10, 0) <&lt; '\n';
+            std::cout <&lt; v.at(10) <&lt; '\n';   // out_of_range
+        } catch (const std::invalid_argument &e) {
+            std::cerr <&lt; "Argumen: " <&lt; e.what() <&lt; '\n';
+        } catch (const std::exception &e) {
+            std::cerr <&lt; "Umum: " <&lt; e.what() <&lt; '\n';
+        }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Exception C++ mirip Java, tapi tanpa checked exception. Kekuatan sebenarnya muncul saat dipasangkan dengan RAII.
+
+## Dasar
+
+```cpp
+try {
+    if (gagal) throw std::runtime_error("pesan");
+} catch (const std::runtime_error &e) {
+    std::cerr << e.what() << '
+';
+} catch (...) {
+    std::cerr << "tidak diketahui
+";
+}
+```
+
+Tangkap dengan **const reference** agar tidak ada slicing dan tidak menyalin.
+
+## Hierarki
+
+```
+std::exception
+├── std::logic_error      → invalid_argument, out_of_range, domain_error
+└── std::runtime_error    → overflow_error, range_error
+```
+
+Buat exception sendiri dengan mewarisi `std::runtime_error`.
+
+## Stack Unwinding
+
+Saat exception dilempar, semua object lokal di scope antara `throw` dan `catch` dihancurkan otomatis. Inilah gunanya smart pointer/container — resource ikut ter-cleanup tanpa kode `finally` (C++ tidak punya `finally`).
+
+## Exception Safety
+
+| Level | Arti |
+|---|---|
+| Nothrow | tidak pernah melempar |
+| Strong | jika gagal, state tidak berubah |
+| Basic | tidak ada leak, state依然 valid |
+| None | bisa leak/corrupt |
+
+Copy-and-swap adalah teknik klasik untuk mencapai strong guarantee.
+
+## no-throw Destructor
+
+Destructor sebaiknya tidak melempar exception. Jika destructor melempar saat stack unwinding, program akan `std::terminate()`.
+
+<div class="note">💡 Pakai exception untuk kondisi **luar biasa** (file tidak ada, alokasi gagal). Untuk input user yang salah secara normal, kembalikan `std::optional` atau `expected` (C++23) — alur lebih jelas dan tanpa overhead exception.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <stdexcept>
+#include <iostream>
+#include <vector>
+
+int bagi(int a, int b) {
+    if (b == 0) throw std::invalid_argument("pembagi nol");
+    return a / b;
+}
+
+int main() {
+    std::vector<int> v{1,2,3};
+    try {
+        std::cout <&lt; bagi(10, 0) <&lt; '\n';
+        std::cout <&lt; v.at(10) <&lt; '\n';   // out_of_range
+    } catch (const std::invalid_argument &e) {
+        std::cerr <&lt; "Argumen: " <&lt; e.what() <&lt; '\n';
+    } catch (const std::exception &e) {
+        std::cerr <&lt; "Umum: " <&lt; e.what() <&lt; '\n';
+    }
+}`} />

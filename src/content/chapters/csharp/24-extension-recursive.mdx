@@ -1,0 +1,140 @@
+---
+"title": "Method Ekstensi dan Rekursi"
+"description": "Menambah method ke tipe yang sudah ada dan menyelesaikan masalah dengan rekursi"
+"order": 24
+"quiz":
+- "q": "Method ekstensi didefinisikan di dalam…"
+  "options":
+  - "class statis"
+  - "class biasa"
+  - "interface"
+  - "enum"
+  "answer": 0
+  "explain": "Method ekstensi harus berada di static class dan dirinya sendiri static."
+- "q": "Parameter pertama method ekstensi diawali kata kunci…"
+  "options":
+  - "this"
+  - "ref"
+  - "out"
+  - "params"
+  "answer": 0
+  "explain": "`this string s` menandakan method dipanggil sebagai s.NamaMethod()."
+- "q": "Agar method ekstensi terlihat, kamu perlu…"
+  "options":
+  - "using namespace tempat class itu berada"
+  - "mewariskan class"
+  - "menginstal paket"
+  - "menambah atribut"
+  "answer": 0
+  "explain": "Method ekstensi ditemukan lewat direktif using pada namespace-nya."
+- "q": "Dalam rekursi, kondisi dasar (base case) berfungsi untuk…"
+  "options":
+  - "mengulang tanpa henti"
+  - "menghentikan pemanggilan diri"
+  - "menyimpan hasil"
+  - "membuat exception"
+  "answer": 1
+  "explain": "Tanpa base case, rekursi akan berlanjut sampai stack overflow."
+- "q": "Faktorial 5 adalah…"
+  "options":
+  - "24"
+  - "120"
+  - "25"
+  - "15"
+  "answer": 1
+  "explain": "5! = 5 × 4 × 3 × 2 × 1 = 120."
+"example":
+  "code": "using System;\nstatic class Bantuan\n{\n    public static int Kata(this string s) =>\n        s.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;\n}\nclass Program\n{\n    static void Main() => Console.WriteLine(\"satu dua\".Kata());\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kadang kamu ingin method seperti `Length` pada tipe yang sudah ada tanpa bisa mengubah kode sumbernya. Method ekstensi menyelesaikan itu. Sementara itu, rekursi berguna untuk masalah yang bisa dipecah jadi versi lebih kecil dari diri sendiri.
+
+## Method Ekstensi
+
+```csharp
+using System;
+
+static class StringBantuan
+{
+    public static bool IniEmail(this string s)
+        => s.Contains("@") && s.Contains(".");
+
+    public static string Potong(this string s, int n)
+        => s.Length <= n ? s : s.Substring(0, n) + "...";
+}
+
+string email = "rani@contoh.com";
+Console.WriteLine(email.IniEmail());      // True
+Console.WriteLine(email.Potong(8));       // rani@co...
+```
+
+Aturan:
+- Berada di `static class`
+- Method berubah juga `static`
+- Parameter pertama memakai `this`
+- Perlu `using` ke namespace tempat class berada
+
+LINQ (`Where`, `Select`) sebenarnya juga method ekstensi pada `IEnumerable<T>`.
+
+## Rekursi
+
+```csharp
+static int Faktorial(int n)
+{
+    if (n <= 1) return 1;       // base case
+    return n * Faktorial(n - 1); // recursive case
+}
+```
+
+Setiap pemanggilan menambah frame di stack. Pastikan base case tercapai.
+
+## Contoh: Fibonacci
+
+```csharp
+static int Fib(int n) =>
+    n <= 1 ? n : Fib(n - 1) + Fib(n - 2);
+```
+
+Versi naif ini sangat lambat untuk `n` besar karena menghitung ulang. Simpan hasil sebelumnya (memoization) atau pakai perulangan.
+
+## Kapan Memakai Rekursi
+
+| Cocok | Kurang cocok |
+|---|---|
+| Pohon, graf, struktur bersarang | Penjumlahan array sederhana |
+| XML/JSON bertingkat | Perulangan linear panjang |
+| Algoritma divide-and-conquer | Masalah tanpa base case jelas |
+
+<div class="note">💡 Method ekstensi tidak benar-benar menambah anggota ke tipe aslinya — itu hanya ilusi kompiler. Method ini tidak bisa mengakses anggota private dari tipe yang diperluas.</div>
+
+## Try it Yourself
+
+Coba panggil `Faktorial(10)` atau ubah batas `Potong`.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+static class StringBantuan
+{
+    public static int JumlahKata(this string s) =>
+        s.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+
+    public static string Potong(this string s, int n) =>
+        s.Length &lt;= n ? s : s.Substring(0, n) + "...";
+}
+
+class Program
+{
+    static int Faktorial(int n) => n &lt;= 1 ? 1 : n * Faktorial(n - 1);
+
+    static void Main()
+    {
+        string kalimat = "Belajar C# itu menyenangkan";
+        Console.WriteLine(kalimat.JumlahKata() + " kata");
+        Console.WriteLine(kalimat.Potong(12));
+
+        for (int i = 0; i &lt;= 6; i++)
+            Console.WriteLine(i + "! = " + Faktorial(i));
+    }
+}`} />

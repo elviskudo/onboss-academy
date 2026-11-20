@@ -1,0 +1,114 @@
+---
+title: "Interceptor & Error Handling"
+description: "retry, cache sederhana, loading global, dan error terpusat"
+order: 21
+quiz:
+  - q: "Interceptor dijalankan…"
+    options: ["Setelah render", "Saat build", "Sebelum request dikirim dan saat response diterima", "Hanya saat error"]
+    answer: 2
+    explain: "Interceptor berada di pipeline HttpClient."
+  - q: "Operator retry berguna untuk…"
+    options: ["Menutup koneksi", "Mengulang request yang gagal sementara", "Menghapus header", "Mengubah URL"]
+    answer: 1
+    explain: "Batasi jumlah retry agar tidak membebani server."
+  - q: "Loading global bisa dibuat dengan…"
+    options: ["CSS saja", "Router guard", "Pipe", "Service berisi signal + interceptor"]
+    answer: 3
+    explain: "Interceptor menaikkan/menurunkan penghitung saat request berjalan."
+  - q: "catchError harus mengembalikan…"
+    options: ["boolean", "Observable baru atau melempar error", "void", "string"]
+    answer: 1
+    explain: "Gunakan throwError(() => err) atau of(fallback)."
+  - q: "Menampilkan pesan error di satu tempat disebut…"
+    options: ["Error handling terpusat", "Lazy loading", "Binding", "Interpolasi"]
+    answer: 0
+    explain: "Menghindari duplikasi penanganan di banyak komponen."
+example:
+  code: |
+    export const pengaman: HttpInterceptorFn = (req, next) =>
+      next(req).pipe(
+        retry({ count: 2, delay: 500 }),
+        catchError((e) => { console.error(e); return throwError(() => e); })
+      );
+---
+
+Interceptor yang baik membuat perilaku jaringan konsisten di seluruh aplikasi: auth, loading, retry, dan error.
+
+## Retry Terbatas
+
+```typescript
+import { HttpInterceptorFn } from "@angular/common/http";
+import { retry, catchError, throwError } from "rxjs";
+
+export const retryInterceptor: HttpInterceptorFn = (req, next) =>
+  next(req).pipe(
+    retry({ count: 2, delay: 400 }),
+    catchError((err) => {
+      console.error("Request gagal:", req.url, err.status);
+      return throwError(() => err);
+    })
+  );
+```
+
+Jangan retry method yang mengubah data (`POST`) tanpa idempotency key.
+
+## Loading Counter
+
+```typescript
+@Injectable({ providedIn: "root" })
+export class LoadingService {
+  private aktif = signal(0);
+  readonly sedangMuat = computed(() => this.aktif() > 0);
+
+  mulai() { this.aktif.update((n) => n + 1); }
+  selesai() { this.aktif.update((n) => Math.max(0, n - 1)); }
+}
+```
+
+```typescript
+export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
+  const loading = inject(LoadingService);
+  loading.mulai();
+  return next(req).pipe(
+    finalize(() => loading.selesai())
+  );
+};
+```
+
+Di template root:
+
+```html
+@if (loading.sedangMuat()) { <div class="progress">Memuat…</div> }
+```
+
+## Encok dan Timeout
+
+```typescript
+timeout(8000)
+```
+
+Gunakan `timeout` agar request yang menggantung tidak membuat UI menunggu selamanya.
+
+## Daftar Interceptor
+
+```typescript
+provideHttpClient(withInterceptors([
+  authInterceptor,
+  loadingInterceptor,
+  retryInterceptor,
+]))
+```
+
+Urutan penting: auth menambah header, loading menghitung, retry mengulang.
+
+<div class="note">💡 Interceptor adalah tempat yang tepat untuk "aturan main" jaringan. Komponen tetap fokus menampilkan data, bukan mengurus token atau retry.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export const pengaman: HttpInterceptorFn = (req, next) =>
+  next(req).pipe(
+    retry({ count: 2, delay: 500 }),
+    catchError((e) => { console.error(e); return throwError(() => e); })
+  );`}</code></pre>

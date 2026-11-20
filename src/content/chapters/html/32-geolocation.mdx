@@ -1,0 +1,116 @@
+---
+title: "Geolocation API"
+description: "Mendapatkan lokasi pengguna dengan izin dan JavaScript"
+order: 32
+quiz:
+  - q: "Metode JavaScript untuk mendapatkan lokasi adalah…"
+    options: ["navigator.geolocation.getCurrentPosition()", "window.getLocation()", "document.location()", "geo.locate()"]
+    answer: 0
+    explain: "Geolocation API diakses lewat navigator.geolocation."
+  - q: "Lokasi hanya bisa diakses jika…"
+    options: ["Pengguna memberikan izin", "Halaman pakai HTTPS", "Ada database", "Browser lama"]
+    answer: 0
+    explain: "Browser meminta izin pengguna sebelum membagikan lokasi."
+  - q: "Objek position berisi…"
+    options: ["coords.latitude dan coords.longitude", "width dan height", "x dan y", "name dan value"]
+    answer: 0
+    explain: "Koordinat tersedia di position.coords."
+  - q: "Callback error dipanggil saat…"
+    options: ["Lokasi berhasil", "Izin ditolak atau gagal", "Halaman dimuat", "Tombol diklik"]
+    answer: 1
+    explain: "Fungsi kedua getCurrentPosition menangani kegagalan."
+  - q: "Sebagian besar browser mewajibkan…"
+    options: ["HTTP", "HTTPS untuk geolocation", "Flash", "Cookie"]
+    answer: 1
+    explain: "Konteks aman (HTTPS) diperlukan di hampir semua browser modern."
+example:
+  code: |
+    <button onclick="lokasi()">Lokasi Saya</button>
+    <p id="hasil"></p>
+    
+    <script>
+    function lokasi() {
+      navigator.geolocation.getCurrentPosition(
+        p => {
+          document.getElementById('hasil').textContent =
+            p.coords.latitude + ', ' + p.coords.longitude;
+        },
+        e => { alert('Gagal: ' + e.message); }
+      );
+    }
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Geolocation API** memberi tahu koordinat perangkat pengguna — dengan izin mereka.
+
+## Cara Kerja
+
+```js
+navigator.geolocation.getCurrentPosition(berhasil, gagal);
+```
+
+Fungsi `berhasil` menerima objek `position`:
+
+```js
+function berhasil(position) {
+  console.log(position.coords.latitude);
+  console.log(position.coords.longitude);
+}
+```
+
+## Opsi Tambahan
+
+```js
+navigator.geolocation.getCurrentPosition(berhasil, gagal, {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 60000
+});
+```
+
+## Penting: Izin & Privasi
+
+- Browser akan menampilkan prompt izin
+- Pengguna bisa menolak — aplikasi harus tetap berfungsi
+- Lokasi dianggap data sensitif
+- Hampir semua browser mewajibkan HTTPS
+
+<div class="note">💡 Jangan meminta lokasi saat halaman baru dibuka jika belum jelas gunanya. Minta saat pengguna benar-benar menekan tombol "Lokasi Saya".</div>
+
+## Pantau Perubahan
+
+```js
+const id = navigator.geolocation.watchPosition(berhasil);
+// nanti: navigator.geolocation.clearWatch(id);
+```
+
+Cocok untuk navigasi atau tracking pergerakan.
+
+## Try it Yourself
+
+Klik tombol untuk mencoba (browser akan meminta izin).
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Geolocation</h1>
+  <button onclick="lokasi()">Tampilkan Lokasiku</button>
+  <p id="hasil">Belum ada data.</p>
+  <script>
+    function lokasi() {
+      if (!navigator.geolocation) {
+        document.getElementById('hasil').textContent = 'Tidak didukung.';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        p => document.getElementById('hasil').textContent =
+          'Latitude: ' + p.coords.latitude.toFixed(4) +
+          '<br>Longitude: ' + p.coords.longitude.toFixed(4),
+        e => document.getElementById('hasil').textContent = 'Error: ' + e.message
+      );
+    }
+  </script>
+</body>
+</html>`} />

@@ -1,0 +1,134 @@
+---
+title: "Vue Router"
+description: "rute, parameter, nested route, navigation guard, dan lazy loading"
+order: 17
+quiz:
+  - q: "Vue Router dipasang dengan…"
+    options: ["createApp(Router)", "app.mount(router)", "app.use(router)", "app.router()"]
+    answer: 2
+    explain: "Router adalah plugin Vue."
+  - q: "Parameter rute didefinisikan dengan…"
+    options: ["path: '/produk/[id]'", "path: '/produk/:id'", "path: '/produk/{id}'", "path: '/produk/?id'"]
+    answer: 1
+    explain: "Nilainya dibaca lewat route.params.id."
+  - q: "Untuk rute bersarang dipakai…"
+    options: ["nested: true", "<router-link nested>", "app.child()", "children dan <router-view>"]
+    answer: 3
+    explain: "Outlet anak ditaruh di komponen induk."
+  - q: "Navigation guard sebelum masuk rute adalah…"
+    options: ["onRoute", "beforeEach", "afterEach", "beforeEnterOnly"]
+    answer: 1
+    explain: "Biasa dipakai untuk cek login."
+  - q: "Lazy loading rute ditulis dengan…"
+    options: ["component: () => import('./Halaman.vue')", "component: './Halaman.vue'", "lazy: true", "importSync()"]
+    answer: 0
+    explain: "Vue Router akan memuat chunk saat rute dibuka."
+example:
+  code: |
+    const routes = [
+      { path: '/', component: Beranda },
+      { path: '/produk/:id', component: Detail },
+      { path: '/admin', component: Admin,
+        beforeEnter: (to) => sudahLogin() ? true : '/login' },
+    ];
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Vue Router mengubah URL menjadi tampilan. Rute yang rapi membuat aplikasi mudah dinavigasi dan dibagikan.
+
+## Dasar
+
+```js
+import { createRouter, createWebHistory } from 'vue-router'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', component: Beranda },
+    { path: '/tentang', component: Tentang },
+  ],
+})
+
+app.use(router)
+```
+
+Di `App.vue`:
+
+```vue
+<nav>
+  <RouterLink to="/">Beranda</RouterLink>
+  <RouterLink to="/tentang">Tentang</RouterLink>
+</nav>
+
+<RouterView />
+```
+
+## Parameter
+
+```js
+{ path: '/produk/:id', name: 'produk', component: Detail }
+```
+
+```vue
+<script setup>
+import { useRoute } from 'vue-router'
+const route = useRoute()
+console.log(route.params.id)
+</script>
+```
+
+Query: `/cari?q=kopi` → `route.query.q`.
+
+## Rute Bersarang
+
+```js
+{
+  path: '/akun',
+  component: AkunLayout,
+  children: [
+    { path: 'profil', component: Profil },
+    { path: 'pesanan', component: Pesanan },
+  ],
+}
+```
+
+`AkunLayout` harus memuat `<RouterView />`.
+
+## Guard
+
+```js
+router.beforeEach((to) => {
+  if (to.meta butuhLogin && !sudahLogin()) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+});
+```
+
+## Lazy Loading
+
+```js
+{ path: '/laporan', component: () => import('./views/Laporan.vue') }
+```
+
+<div class="note">💡 Taruh metadata seperti `meta: { butuhLogin: true }` pada rute agar guard bisa dibaca dengan jelas tanpa menghardcode path.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi pencocokan rute sederhana
+const routes = [
+  { path: "/", nama: "Beranda" },
+  { path: "/produk/:id", nama: "Detail" },
+];
+
+function cocok(url) {
+  if (url === "/") return routes[0];
+  if (url.startsWith("/produk/")) {
+    return { ...routes[1], params: { id: url.split("/")[2] } };
+  }
+  return null;
+}
+
+console.log(cocok("/produk/42"));`} />

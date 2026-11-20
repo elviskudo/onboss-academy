@@ -33,11 +33,11 @@ example:
         int nilai[4] = {80, 90, 75, 88};
         string nama = "OnBoss Academy";
 
-        cout << nama.substr(0, 6) << endl;
-        cout << "Posisi Academy: " << nama.find("Academy") << endl;
+        cout <&lt; nama.substr(0, 6) <&lt; endl;
+        cout <&lt; "Posisi Academy: " <&lt; nama.find("Academy") <&lt; endl;
 
-        for (int n : nilai) cout << n << " ";
-        cout << endl;
+        for (int n : nilai) cout <&lt; n <&lt; " ";
+        cout <&lt; endl;
         return 0;
     }
 ---
@@ -92,7 +92,7 @@ String bersifat **mutable** (bisa diubah di tempat) tetapi setiap operasi `+` me
 | `append(t)` / `+=` | tambah di belakang | teks + t |
 | `insert(p, t)` | sisip di posisi p | teks + t |
 | `erase(p, n)` | hapus n karakter | teks pendek |
-| `compare(t)` | `< 0`, `0`, `> 0` | -1 / 0 / 1 |
+| `compare(t)` | `&lt; 0`, `0`, `> 0` | -1 / 0 / 1 |
 | `find_first_of(t)` | posisi karakter pertama dari set | indeks |
 
 ```cpp
@@ -162,6 +162,10 @@ Akses selalu `m[baris][kolom]`. Jika kolomnya dinamis, gunakan `vector<vector<in
 
 <div class="note">💡 Untuk data dinamis yang panjangnya berubah, gunakan <code>std::vector</code> (materi berikutnya). Array statis hanya untuk ukuran yang benar-benar tetap, seperti koordinat, hari dalam minggu, atau konfigurasi hardcoded.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <string>
 #include <sstream>
@@ -171,21 +175,21 @@ int main() {
     int nilai[4] = {80, 90, 75, 88};
     int jumlah = sizeof(nilai) / sizeof(nilai[0]);
     int total = 0;
-    for (int i = 0; i < jumlah; i++) total += nilai[i];
-    cout << "Rata-rata: " << (double) total / jumlah << endl;
+    for (int i = 0; i &lt; jumlah; i++) total += nilai[i];
+    cout <&lt; "Rata-rata: " <&lt; (double) total / jumlah <&lt; endl;
 
     string teks = "Belajar C++ di OnBoss";
-    cout << "Panjang: " << teks.length() << endl;
-    cout << "Awal: " << teks.substr(0, 7) << endl;
-    cout << "Posisi OnBoss: " << teks.find("OnBoss") << endl;
-    cout << "Angka dari teks: " << stoi("42") << endl;
-    cout << "Teks dari angka: " << to_string(95) << endl;
+    cout <&lt; "Panjang: " <&lt; teks.length() <&lt; endl;
+    cout <&lt; "Awal: " <&lt; teks.substr(0, 7) <&lt; endl;
+    cout <&lt; "Posisi OnBoss: " <&lt; teks.find("OnBoss") <&lt; endl;
+    cout <&lt; "Angka dari teks: " <&lt; stoi("42") <&lt; endl;
+    cout <&lt; "Teks dari angka: " <&lt; to_string(95) <&lt; endl;
 
     string data = "Sari,Budi,Rina";
     stringstream ss(data);
     string nama;
-    cout << "Nama: ";
-    while (getline(ss, nama, ',')) cout << nama << " ";
-    cout << endl;
+    cout <&lt; "Nama: ";
+    while (getline(ss, nama, ',')) cout <&lt; nama <&lt; " ";
+    cout <&lt; endl;
     return 0;
 }`} />

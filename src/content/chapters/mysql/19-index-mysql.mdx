@@ -1,0 +1,103 @@
+---
+title: "Index di MySQL: B-Tree, FULLTEXT, dan Composite"
+description: "Jenis index, leftmost prefix, EXPLAIN, dan biaya write"
+order: 19
+quiz:
+  - q: "Index default pada tabel InnoDB adalah…"
+    options: ["Hash", "B-Tree", "R-Tree", "Bitmap"]
+    answer: 1
+    explain: "InnoDB memakai B-Tree untuk index biasa."
+  - q: "Aturan leftmost prefix berlaku untuk…"
+    options: ["Index komposit", "Primary key saja", "FULLTEXT", "Setiap kolom"]
+    answer: 0
+    explain: "Index (a,b) melayani filter a dan a+b, bukan b saja."
+  - q: "Index untuk pencarian teks panjang adalah…"
+    options: ["FULLTEXT", "B-Tree biasa", "HASH", "SPATIAL"]
+    answer: 0
+    explain: "FULLTEXT dipakai dengan MATCH ... AGAINST."
+  - q: "Perintah melihat rencana query adalah…"
+    options: ["EXPLAIN", "SHOW INDEX", "DESCRIBE USER", "PROFILE"]
+    answer: 0
+    explain: "EXPLAIN menunjukkan tabel, type, key, dan rows."
+  - q: "Terlalu banyak index menyebabkan…"
+    options: ["SELECT selalu lebih cepat", "INSERT/UPDATE lebih lambat", "Data terenkripsi", "Primary key hilang"]
+    answer: 1
+    explain: "Setiap write harus memperbarui seluruh index pada tabel."
+example:
+  code: |
+    CREATE INDEX idx_karyawan_dept ON karyawan(dept); EXPLAIN SELECT * FROM karyawan WHERE dept='Engineering';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Index mempercepat pencarian dengan menyimpan struktur tambahan yang memetakan nilai ke baris. Di MySQL/InnoDB, index utama adalah B-Tree.
+
+## Membuat Index
+
+```sql
+CREATE INDEX idx_produk_kategori ON produk(kategori);
+CREATE UNIQUE INDEX idx_produk_sku ON produk(sku);
+ALTER TABLE produk ADD INDEX idx_harga (harga);
+SHOW INDEX FROM produk;
+DROP INDEX idx_harga ON produk;
+```
+
+## Index Komposit
+
+```sql
+CREATE INDEX idx_pesanan_user_tanggal ON pesanan(user_id, tanggal);
+```
+
+Index ini membantu:
+
+- `WHERE user_id = 5`
+- `WHERE user_id = 5 AND tanggal >= '2026-01-01'`
+- `ORDER BY tanggal` dalam partisi user_id tertentu
+
+Tidak membantu: `WHERE tanggal = '...'` saja.
+
+## FULLTEXT
+
+```sql
+CREATE FULLTEXT INDEX ft_artikel ON artikel(judul, isi);
+SELECT * FROM artikel
+WHERE MATCH(judul, isi) AGAINST('database mysql' IN NATURAL LANGUAGE MODE);
+```
+
+FULLTEXT mengerti kata dan relevansi, jauh lebih baik daripada `LIKE '%kata%'` pada teks panjang.
+
+## Membaca EXPLAIN
+
+| Kolom | Arti penting |
+| --- | --- |
+| `type` | ALL = full scan; ref/range/const = index dipakai |
+| `key` | index yang dipilih |
+| `rows` | perkiraan baris dibaca |
+| `Extra` | Using index, Using temporary, Using filesort |
+
+```sql
+EXPLAIN SELECT nama FROM karyawan WHERE dept = 'Engineering';
+```
+
+## Kapan Index Tidak Dipakai
+
+- Fungsi pada kolom: `WHERE YEAR(tanggal)=2026`
+- Wildcard di awal: `LIKE '%kopi'`
+- Perbandingan tipe berbeda: kolom INT dibanding string
+- Tabel sangat kecil — optimizer memilih scan saja
+
+<div class="note">💡 Primary key di InnoDB adalah clustered index: baris data disimpan bersama kunci. Index sekunder menyimpan nilai primary key sebagai penunjuk, jadi primary key yang pendek menghemat ruang.</div>
+
+## Di Dunia Nyata
+
+- **Login**: index UNIQUE pada email.
+- **Feed**: `(user_id, created_at)` untuk mengambil posting terbaru.
+- **Katalog**: index kategori + harga untuk filter.
+- **Pencarian artikel**: FULLTEXT pada judul dan isi.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE INDEX idx_karyawan_dept ON karyawan(dept);
+EXPLAIN SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering' ORDER BY gaji DESC;
+SHOW INDEX FROM karyawan;`} />

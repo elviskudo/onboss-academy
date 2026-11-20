@@ -1,0 +1,104 @@
+---
+title: "Regular Expression"
+description: "modul re: pattern, character class, quantifier, group, dan substitusi"
+order: 19
+quiz:
+  - q: "Modul bawaan Python untuk regex adalah…"
+    options: ["re", "regex", "rx", "pattern"]
+    answer: 0
+    explain: "Modul `re` sudah termasuk dalam pustaka standar."
+  - q: "`\\d` dalam regex cocok dengan…"
+    options: ["Huruf", "Digit", "Spasi", "Tanda baca"]
+    answer: 1
+    explain: "\\d = [0-9]."
+  - q: "Quantifier `+` berarti…"
+    options: ["Nol atau lebih", "Satu atau lebih", "Tepat satu", "Opsional"]
+    answer: 1
+    explain: "`*` = 0+, `+` = 1+, `?` = 0 atau 1."
+  - q: "`re.match()` mencari pola…"
+    options: ["Di semua posisi string", "Hanya di awal string", "Hanya di akhir", "Di dalam file"]
+    answer: 1
+    explain: "Gunakan re.search() untuk mencari di posisi mana pun."
+  - q: "Fungsi untuk mengganti semua kecocokan adalah…"
+    options: ["re.find()", "re.replace()", "re.sub()", "re.swap()"]
+    answer: 2
+    explain: "re.sub(pola, pengganti, teks) mengganti semua match."
+example:
+  code: |
+    import re
+    
+    teks = "Hubungi 021-555-1234 atau 0812-3456-7890"
+    pola = r"\d{3,4}-\d{3,4}-\d{4}"
+    print(re.findall(pola, teks))
+    
+    bersih = re.sub(r"\s+", " ", "a   b\t c")
+    print(bersih)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Regular expression (regex) adalah mini-bahasa untuk mencocokkan pola teks. Modul `re` sudah bawaan Python.
+
+## Fungsi Utama
+
+| Fungsi | Hasil |
+|---|---|
+| `re.match(pola, s)` | Match hanya di awal |
+| `re.search(pola, s)` | Match pertama di mana saja |
+| `re.findall(pola, s)` | Semua match sebagai list string |
+| `re.finditer(pola, s)` | Semua match sebagai iterator objek |
+| `re.sub(pola, ganti, s)` | Ganti semua match |
+| `re.split(pola, s)` | Potong string |
+
+## Dasar Pola
+
+```python
+r"[A-Za-z]+"   # satu atau lebih huruf
+r"\d{4}"       # tepat 4 digit
+r"\s+"         # satu atau lebih spasi/tab
+r"^Halo"       # diawali Halo
+r"rak$"        # diakhiri rak
+r"kol(a|e)r"   # grup pilihan
+```
+
+Gunakan **raw string** `r"..."` agar backslash tidak diartikan ulang oleh Python.
+
+## Group
+
+```python
+m = re.search(r"(\w+)@(\w+)\.com", "sari@sekolah.com")
+print(m.group(0))  # sari@sekolah.com
+print(m.group(1))  # sari
+print(m.groups())  # ('sari', 'sekolah')
+```
+
+## Flag
+
+```python
+re.findall("halo", teks, re.IGNORECASE)
+re.findall(".", teks, re.DOTALL)      # titik ikut cocok newline
+re.findall("^a", teks, re.MULTILINE)  # ^ untuk tiap baris
+```
+
+## Kompilasi untuk Pemakaian Berulang
+
+```python
+email = re.compile(r"^[\w.]+@[\w.]+\.\w+$")
+print(bool(email.match("sari@sekolah.com")))  # True
+for item in daftar:
+    print(email.match(item))
+```
+
+<div class="note">💡 Regex mudah menjadi sulit dibaca. Untuk pola panjang, pakai `re.VERBOSE` dan tulis komentar di dalam pola. Untuk parsing HTML, gunakan parser HTML — bukan regex.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import re
+
+teks = "Hubungi 021-555-1234 atau 0812-3456-7890"
+pola = r"\d{3,4}-\d{3,4}-\d{4}"
+print(re.findall(pola, teks))
+
+bersih = re.sub(r"\s+", " ", "a   b\t c")
+print(bersih)`} />

@@ -1,0 +1,71 @@
+---
+title: "Suara dan Efek Audio"
+description: "Menambahkan suara, mengatur volume, dan sinkronisasi"
+order: 11
+quiz:
+  - q: "Untuk memutar suara di Scratch, gunakan blok…"
+    options: ["ucap [..]", "ganti kostum", "ubah volume", "mainkan suara [..]"]
+    answer: 3
+    explain: "Blok ini tersedia di kategori Suara."
+  - q: "Blok \"mainkan suara sampai selesai\" berbeda dengan \"mainkan suara\" karena…"
+    options: ["Menunggu suara selesai sebelum lanjut", "Lebih keras", "Tanpa volume", "Hanya untuk mikrofon"]
+    answer: 0
+    explain: "Versi \"sampai selesai\" mem-blok skrip sampai audio habis."
+  - q: "Volume 100 dalam Scratch berarti…"
+    options: ["Setengah keras", "Volume penuh", "Bisikan", "Suara mati"]
+    answer: 1
+    explain: "Rentang volume biasanya 0–100."
+  - q: "Fungsi pelapor volume berguna untuk…"
+    options: ["Menggerakkan sprite", "Membaca skor", "Mengetahui level volume saat ini", "Mengubah kostum"]
+    answer: 2
+    explain: "Pelapor ini ada di kategori Suara."
+  - q: "Blok \"hentikan semua suara\" berguna saat…"
+    options: ["Menghapus sprite", "Mengganti backdrop", "Menambah skor", "Menghentikan audio yang masih berjalan"]
+    answer: 3
+    explain: "Sering dipanggil saat ganti Adegan atau mengulang game."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur volume ke [80]]
+    [mainkan suara [pop]]
+    [tunggu 0.5 detik]
+    [ubah volume sebesar -10]
+---
+
+Suara memberi umpan balik yang kuat pada proyek. Scratch bisa memutar suara yang diimpor, merekam sendiri, atau memakai suara dari pustaka bawaan.
+
+## Blok Suara Inti
+
+```text
+[mainkan suara [..]]
+[mainkan suara [..] sampai selesai]
+[hentikan semua suara]
+[ubah volume sebesar 10]
+[atur volume ke 100%]
+[ganti efek [pitch] sebesar 10]
+[hapus semua efek suara]
+```
+
+## Sinkronisasi
+
+Gunakan `mainkan suara sampai selesai` bila urutan penting, misalnya ucapan diikuti animasi. Gunakan `mainkan suara` biasa bila suara boleh tumpang tindih dengan aksi lain.
+
+## Efek
+
+Dropdown efek meliputi pitch dan pan. Efek dapat diubah bertahap, lalu dihapus dengan `[hapus semua efek suara]` agar tidak terbawa ke suara berikutnya.
+
+## Penggunaan Kreatif
+
+- Efek `pop` saat sprite menyentuh musuh.
+- Suara latar yang diulang dengan volume rendah.
+- Perintah ucap untuk menyampaikan instruksi tanpa teks panjang.
+
+<div class="note">💡 Terlalu banyak suara yang diputar bersamaan membuat hasilnya keruh. Batasi satu atau dua lapisan audio aktif pada satu waktu.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika saya menerima [kena]]
+[mainkan suara [pop]]
+[ubah volume sebesar -5]
+[ucap (gabung [Nyawa: ] (nyawa)) selama 1]`}</code></pre>

@@ -1,0 +1,82 @@
+---
+title: "Konfigurasi Sistem dengan raspi-config"
+description: "Pengaturan hostname, lokal, kamera, dan antarmuka"
+order: 11
+quiz:
+  - q: "Alat konfigurasi bawaan Raspberry Pi adalah…"
+    options: ["pi-setup", "rpi-configure", "sysctl-pi", "raspi-config"]
+    answer: 3
+    explain: "raspi-config menyediakan menu teks untuk pengaturan umum."
+  - q: "Perintah untuk membukanya adalah…"
+    options: ["sudo raspi-config", "raspi-config start", "sudo config pi", "pi --setup"]
+    answer: 0
+    explain: "Jalankan dari terminal, lalu pilih menu dengan tombol panah."
+  - q: "Menu untuk mengaktifkan kamera adalah…"
+    options: ["System → Display", "Interface Options → Camera", "Advanced → Camera", "Network → Camera"]
+    answer: 1
+    explain: "Kamera juga bisa diaktifkan lewat `sudo modprobe bcm2835-v4l2` pada sistem lama."
+  - q: "Mengubah kata sandi pengguna dilakukan lewat menu…"
+    options: ["Interface → Password", "Advanced → User", "System Options → Password", "Network → Password"]
+    answer: 2
+    explain: "Bisa juga dengan perintah passwd."
+  - q: "Setelah mengubah pengaturan yang diminta reboot, sebaiknya…"
+    options: ["Langsung cabut kabel", "Hapus kartu", "Matikan Wi-Fi", "Jalankan sudo reboot"]
+    answer: 3
+    explain: "Beberapa perubahan modul kernel baru aktif setelah restart."
+example:
+  code: |
+    sudo raspi-config
+    # 1 System Options  -> Hostname, Password, Wi-Fi
+    # 2 Display Options -> Resolution
+    # 3 Interface Options -> Camera, SSH, I2C, SPI
+    # 4 Performance Options -> GPU Memory
+---
+
+`raspi-config` merangkum pengaturan yang dulunya harus diedit manual. Menu ini aman untuk pemula karena setiap perubahan diminta konfirmasi.
+
+## Menu yang Sering Dipakai
+
+| Menu | Fungsi |
+|---|---|
+| System Options | Hostname, kata sandi, boot otomatis |
+| Display Options | Resolusi dan overscan |
+| Interface Options | SSH, kamera, I2C, SPI, 1-Wire |
+| Performance Options | Pembagian memori GPU, overclock |
+| Localisation Options | Zona waktu, keyboard, locale |
+
+## Contoh: Aktifkan I2C
+
+```bash
+sudo raspi-config
+# Interface Options -> I2C -> Yes -> reboot
+sudo apt install i2c-tools
+i2cdetect -y 1
+```
+
+## Cara Lain: config.txt
+
+Pengaturan hardware juga bisa ditulis di `/boot/firmware/config.txt` (Pi 5) atau `/boot/config.txt` (model lama):
+
+```text
+enable_i2c=1
+dtparam=spi=on
+gpu_mem=128
+```
+
+## Zona Waktu
+
+```bash
+sudo timedatectl set-timezone Asia/Jakarta
+timedatectl
+```
+
+Waktu yang benar penting untuk penamaan file log dan jadwal cron.
+
+<div class="note">💡 Simpan cadangan `config.txt` sebelum mengubahnya. Baris yang salah bisa membuat layar atau kamera berhenti bekerja.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`sudo raspi-config nonint do_i2c 1
+sudo raspi-config nonint get_i2c
+printf '%s\\n' '0 = aktif, 1 = nonaktif (untuk mode nonint)'`}</code></pre>

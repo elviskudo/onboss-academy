@@ -1,0 +1,80 @@
+---
+title: "Wi-Fi dan Hotspot"
+description: "Menghubungkan ke jaringan dan membuat access point sendiri"
+order: 18
+quiz:
+  - q: "File yang menyimpan konfigurasi Wi-Fi pada Raspberry Pi OS terbaru adalah…"
+    options: ["netplan.yaml", "hosts", "wpa_supplicant.conf di /etc/wpa_supplicant", "wifi.conf di /boot"]
+    answer: 2
+    explain: "NetworkManager juga bisa mengelola lewat `nmcli`."
+  - q: "Perintah nmcli untuk melihat jaringan adalah…"
+    options: ["wifi scan", "iwlist scan only", "net list", "nmcli device wifi list"]
+    answer: 3
+    explain: "nmcli adalah alat resmi NetworkManager."
+  - q: "Hotspot memungkinkan Pi…"
+    options: ["Menjadi access point yang bisa disambung perangkat lain", "Menghapus Wi-Fi", "Mengganti kartu SD", "Menambah GPIO"]
+    answer: 0
+    explain: "Berguna untuk proyek IoT di lokasi tanpa router."
+  - q: "Mode access point sering memakai paket…"
+    options: ["vim dan nano", "hostapd dan dnsmasq", "apache dan mysql", "git dan curl"]
+    answer: 1
+    explain: "hostapd mengelola Wi-Fi, dnsmasq memberi DHCP dan DNS."
+  - q: "Alamat IP statis pada interface biasanya ditetapkan di…"
+    options: ["fstab", "hosts", "dhcpcd.conf atau pengaturan NetworkManager", "config.txt"]
+    answer: 2
+    explain: "IP tetap memudahkan akses ke layanan yang dijalankan Pi."
+example:
+  code: |
+    sudo nmcli device wifi list
+    sudo nmcli device wifi connect "NamaWiFi" password "rahasia"
+    
+    # Cek koneksi
+    ip addr show wlan0
+---
+
+Konektivitas membuat Pi bisa diperbarui, dikendalikan dari jarak jauh, dan mengirim data sensor. Dua skenario umum: bergabung ke Wi-Fi existing atau menjadi hotspot sendiri.
+
+## Bergabung ke Wi-Fi
+
+```bash
+nmcli device wifi list
+nmcli device wifi connect "NamaWiFi" password "kata-sandi"
+nmcli connection show
+```
+
+Pastikan negara diatur agar kanal Wi-Fi sesuai regulasi:
+
+```bash
+sudo raspi-config  # Localisation Options -> WLAN Country
+```
+
+## Membuat Hotspot
+
+```bash
+sudo apt install hostapd dnsmasq
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+```
+
+Konfigurasi `hostapd.conf` berisi nama jaringan, kata sandi, dan kanal. `dnsmasq` memberi alamat IP ke klien.
+
+## IP Stateless vs Statis
+
+```text
+192.168.4.1   -> alamat Pi sebagai gateway hotspot
+192.168.4.2+  -> klien yang terhubung
+```
+
+## Penyulitan Koneksi
+
+SSH, MQTT, dan HTTP bisa berjalan di hotspot. Untuk jaringan yang lebih luas, pertimbangkan WireGuard atau Tailscale agar akses tetap aman tanpa membuka port di router.
+
+<div class="note">💡 Wi-Fi 2,4 GHz lebih kompatibel dengan modul bawaan Pi. Jaringan 5 GHz hanya didukung oleh model dengan adapter yang sesuai.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Cek status nirkabel:
+nmcli general status
+ip addr show wlan0
+iwconfig wlan0 2&gt;/dev/null || true`}</code></pre>

@@ -1,0 +1,116 @@
+---
+title: "Mengelola Paket dan Lingkungan"
+description: "install.packages, library, namespace, versi paket, dan reproduksi dengan renv"
+order: 25
+quiz:
+  - q: "Fungsi untuk memasang paket dari CRAN adalah…"
+    options: ["install.packages()", "library()", "require.package()", "load.package()"]
+    answer: 1
+    explain: "install.packages('nama') mengunduh dan memasang paket."
+  - q: "Fungsi untuk memuat paket ke sesi adalah…"
+    options: ["library()", "install()", "import()", "attach.package()"]
+    answer: 2
+    explain: "library(nama) memuat paket; paket inti sudah termuat otomatis."
+  - q: "Operator :: dipakai untuk…"
+    options: ["Memanggil fungsi dari namespace paket", "Menghapus paket", "Menginstal dari GitHub", "Menutup sesi"]
+    answer: 3
+    explain: "dplyr::filter() memanggil fungsi tanpa memuat seluruh paket."
+  - q: "Paket untuk mengunci versi dependensi proyek adalah…"
+    options: ["renv", "base", "stats", "utils"]
+    answer: 0
+    explain: "renv::snapshot() menyimpan versi paket ke renv.lock."
+  - q: "Fungsi untuk melihat paket terpasang adalah…"
+    options: ["installed.packages()", "list.packages()", "all.packages()", "packages()"]
+    answer: 1
+    explain: "installed.packages() mengembalikan matriks paket yang tersedia."
+example:
+  code: |
+    print(rownames(installed.packages())[1:3])
+    print(packageVersion("stats"))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kekuatan R ada pada ekosistem paketnya. Ribuan paket tersedia di CRAN, Bioconductor, dan GitHub. Mengelolanya dengan rapi membuat analisis tetap bisa dijalankan bulan depan.
+
+## Pasang dan Muat
+
+```r
+install.packages("dplyr")
+library(dplyr)
+
+# tanpa memuat seluruh paket ke namespace
+dplyr::mutate(df, baru = lama * 2)
+```
+
+`install.packages()` cukup sekali per mesin. `library()` dilakukan setiap sesi baru. `require()` mirip `library()` tetapi mengembalikan `TRUE`/`FALSE` dan sering dipakai di dalam fungsi.
+
+## Sumber Paket
+
+| Sumber | Cara |
+| --- | --- |
+| CRAN | `install.packages("nama")` |
+| CRAN archive | `remotes::install_version("nama", "1.2.3")` |
+| GitHub | `remotes::install_github("user/repo")` |
+| Bioconductor | `BiocManager::install("nama")` |
+
+<div class="note">💡 Paket dari GitHub belum tentu stabil. Untuk pekerjaan produksi, catat commit hash atau versi rilis tertentu.</div>
+
+## Namespace dan Konflik Nama
+
+```r
+stats::filter
+dplyr::filter
+```
+
+Dua fungsi bernama `filter` bisa berasal dari paket berbeda. Jika dua paket dimuat dan nama bentrok, R memberi peringatan saat startup. Operator `::` menghilangkan keraguan.
+
+## Informasi Paket
+
+```r
+packageVersion("dplyr")
+installed.packages()[1:3, c("Package", "Version")]
+sessionInfo()
+help(package = "dplyr")
+vignette("dplyr")
+```
+
+`sessionInfo()` mencatat versi R, paket, dan sistem operasi — lampirkan ini saat melaporkan bug.
+
+## Proyek Terisolasi dengan renv
+
+```r
+renv::init()        # mulai proyek, salin paket ke cache proyek
+renv::install("dplyr")
+renv::snapshot()    # tulis versi ke renv.lock
+renv::restore()     # pasang versi sesuai lock di mesin lain
+```
+
+`renv.lock` berisi versi dan sumber setiap paket. Simpan file ini di version control bersama kode, bukan `renv/library/`.
+
+## Memperbarui dengan Aman
+
+```r
+old.packages()                # paket yang punya versi baru
+update.packages(ask = FALSE)
+renv::update()                # di proyek ber-renv
+```
+
+Perbarui di lingkungan uji dulu. Perubahan versi bisa mengubah default fungsi dan hasil analisis tanpa peringatan.
+
+## Di Dunia Nyata
+
+- **Tim analitik**: `renv.lock` memastikan semua orang memakai versi yang sama.
+- **Deploy model**: Docker image memuat paket sesuai lock file.
+- **Audit**: `sessionInfo()` dalam laporan membuktikan versi apa yang dipakai.
+- **Eksperimen**: satu proyek memakai paket versi lama, proyek lain versi baru tanpa konflik.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`cat("Versi R:", R.version.string, "\n")
+cat("Versi stats:", as.character(packageVersion("stats")), "\n")
+paket <- rownames(installed.packages())
+cat("Jumlah paket terpasang:", length(paket), "\n")
+print(head(paket, 6))
+cat("Fungsi filter dari namespace:", is.function(stats::filter), "\n")`} />

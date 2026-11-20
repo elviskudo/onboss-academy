@@ -1,0 +1,147 @@
+---
+title: "Tanggal & Waktu PHP"
+description: "DateTime, timezone, format, dan perhitungan selisih waktu"
+order: 21
+quiz:
+  - q: "Class bawaan PHP untuk tanggal adalah…"
+    options: ["Date", "DateTime", "Time", "Timestamp"]
+    answer: 1
+    explain: "DateTime (dan DateTimeImmutable) adalah class standar."
+  - q: "Format `Y-m-d` menghasilkan…"
+    options: ["2026-03-08", "08/03/2026", "8 Maret 2026", "2026/03/08"]
+    answer: 0
+    explain: "Y = tahun 4 digit, m = bulan 2 digit, d = hari 2 digit."
+  - q: "`time()` mengembalikan…"
+    options: ["Objek DateTime", "Unix timestamp dalam detik", "String tanggal", "Array"]
+    answer: 1
+    explain: "Jumlah detik sejak 1 Januari 1970 UTC."
+  - q: "Perbedaan DateTimeImmutable adalah…"
+    options: ["Lebih cepat", "Method modifikasi mengembalikan objek baru", "Tidak bisa diformat", "Hanya untuk UTC"]
+    answer: 1
+    explain: "Objek asli tidak berubah — lebih aman secara fungsional."
+  - q: "Untuk mengatur zona waktu gunakan…"
+    options: ["date_default_timezone_set()", "setlocale()", "timezone()", "gmtime()"]
+    answer: 0
+    explain: "Contoh: date_default_timezone_set('Asia/Jakarta')."
+example:
+  code: |
+    <?php
+    date_default_timezone_set('Asia/Jakarta');
+    $hariIni = new DateTimeImmutable('now');
+    echo $hariIni->format('l, d F Y H:i');
+    
+    $besok = $hariIni->modify('+1 day');
+    echo $besok->format('Y-m-d');
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP menyediakan class `DateTime` dan `DateTimeImmutable` untuk bekerja dengan waktu. Keduanya jauh lebih aman daripada manipulasi timestamp manual.
+
+## Membuat Objek Tanggal
+
+```php
+<?php
+date_default_timezone_set('Asia/Jakarta');
+
+$sekarang = new DateTime();                  // waktu sekarang
+$tertentu = new DateTime('2026-03-08 10:30'); // dari string
+$dariFormat = DateTime::createFromFormat('d/m/Y', '08/03/2026');
+$timestamp = new DateTime('@' . time());      // dari Unix timestamp
+```
+
+`DateTimeImmutable` memiliki API sama, tetapi method seperti `modify()` mengembalikan objek baru.
+
+## Memformat
+
+```php
+<?php
+$d = new DateTimeImmutable('2026-03-08 14:30:00');
+
+echo $d->format('Y-m-d');           // 2026-03-08
+echo $d->format('l, d F Y');        // Minggu, 08 Maret 2026
+echo $d->format('H:i:s');           // 14:30:00
+echo $d->format('c');               // 2026-03-08T14:30:00+07:00
+```
+
+Karakter format umum: `Y` (tahun), `m` (bulan), `d` (hari), `l` (nama hari), `F` (nama bulan), `H` (jam 24 jam), `i` (menit), `s` (detik), `U` (timestamp).
+
+## Modifikasi
+
+```php
+<?php
+$d = new DateTimeImmutable('2026-03-08');
+
+$besok   = $d->modify('+1 day');
+$lusa    = $d->modify('+2 days');
+$bulanDepan = $d->modify('+1 month');
+$awalBulan = $d->modify('first day of this month');
+$akhirBulan = $d->modify('last day of this month');
+
+echo $d->format('Y-m-d');        // tetap 2026-03-08
+echo $besok->format('Y-m-d');    // 2026-03-09
+```
+
+## Selisih Waktu
+
+```php
+<?php
+$a = new DateTimeImmutable('2026-01-01');
+$b = new DateTimeImmutable('2026-03-08');
+
+$selisih = $a->diff($b);
+echo $selisih->days;  // 66
+echo $selisih->format('%m bulan, %d hari');
+```
+
+## Zona Waktu
+
+```php
+<?php
+$jakarta = new DateTimeZone('Asia/Jakarta');
+$utc     = new DateTimeZone('UTC');
+
+$d = new DateTimeImmutable('now', $jakarta);
+echo $d->format('Y-m-d H:i e');
+
+$diUtc = $d->setTimezone($utc);
+echo $diUtc->format('Y-m-d H:i e');
+```
+
+Simpan waktu di database dalam **UTC**, lalu konversi ke zona pengguna saat ditampilkan.
+
+## Fungsi legacy
+
+```php
+<?php
+echo date('Y-m-d');             // format waktu sekarang
+echo strtotime('+3 days');      // timestamp dari string relatif
+echo mktime(12, 0, 0, 3, 8, 2026);
+```
+
+Masih umum, tapi `DateTime` lebih fleksibel untuk logika kompleks.
+
+<div class="note">💡 `modify('+1 month')` dari 31 Januari bisa menghasilkan 3 Maret karena Februari tidak punya hari ke-31. Gunakan `add(new DateInterval('P1M'))` dengan hati-hati atau uji kasus ujung bulan.</div>
+
+## Di Dunia Nyata
+
+- Menampilkan "2 jam lalu" dari selisih `diff()`.
+- Menjadwalkan email dengan `modify('+3 days')`.
+- Konversi waktu meeting antar zona dengan `setTimezone()`.
+
+## Try it Yourself
+
+Ganti zona waktu atau format tanggal pada contoh berikut.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+date_default_timezone_set('Asia/Jakarta');
+$hariIni = new DateTimeImmutable('now');
+
+echo "Hari ini: " . $hariIni->format('l, d F Y H:i') . PHP_EOL;
+$besok = $hariIni->modify('+1 day');
+echo "Besok: " . $besok->format('Y-m-d') . PHP_EOL;
+
+$a = new DateTimeImmutable('2026-01-01');
+$b = new DateTimeImmutable('2026-03-08');
+echo "Selisih: " . $a->diff($b)->days . " hari" . PHP_EOL;
+echo "Timestamp: " . $hariIni->getTimestamp() . PHP_EOL;`} />

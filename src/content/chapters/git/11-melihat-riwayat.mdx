@@ -1,0 +1,107 @@
+---
+title: Melihat Riwayat dan Perbedaan
+description: Menjelajahi commit, perubahan antarversi, dan jejak satu baris kode.
+order: 11
+quiz:
+- q: Perintah untuk melihat riwayat ringkas adalah…
+  options:
+  - git diff --name-only
+  - git show HEAD
+  - git reflog
+  - git log --oneline
+  answer: 3
+  explain: --oneline memampatkan setiap commit menjadi satu baris.
+- q: Perintah untuk melihat perubahan belum staged adalah…
+  options:
+  - git diff
+  - git diff --staged
+  - git show
+  - git log -p
+  answer: 0
+  explain: git diff membandingkan working tree dengan index.
+- q: Untuk melihat perubahan yang sudah staged gunakan…
+  options:
+  - git blame
+  - git diff --staged
+  - git diff
+  - git status -s
+  answer: 1
+  explain: --staged (atau --cached) membandingkan index dengan commit terakhir.
+- q: Perintah untuk mengetahui siapa mengubah baris tertentu adalah…
+  options:
+  - git diff
+  - git bisect
+  - git blame
+  - git log
+  answer: 2
+  explain: git blame menampilkan commit dan penulis untuk setiap baris file.
+- q: HEAD pada Git merujuk ke…
+  options:
+  - File konfigurasi
+  - Remote repository
+  - Index
+  - Commit terakhir pada branch aktif
+  answer: 3
+  explain: HEAD adalah pointer ke commit yang sedang berada di checkout.
+example:
+  code: 'git log --oneline --graph --all
+
+    git show HEAD
+
+    git diff HEAD~1 HEAD
+
+    git blame src/app.js
+
+    '
+---
+
+
+Riwayat Git bukan sekadar daftar commit — ia adalah **peta perubahan** yang bisa ditelusuri.
+
+## Log yang Berguna
+
+```bash
+git log --oneline --graph --all
+git log --author="Sinta" --since="2 weeks ago"
+git log --oneline -- src/app.js
+git log -p -2
+```
+
+| Opsi | Fungsi |
+|---|---|
+| `--oneline` | satu baris per commit |
+| `--graph` | visualisasi branch |
+| `--all` | semua branch, bukan hanya aktif |
+| `-p` | tampilkan patch |
+| `--stat` | ringkasan jumlah baris |
+| `-- path` | filter berdasarkan file |
+
+## Membaca Diff
+
+```bash
+git diff              # working tree vs index
+git diff --staged     # index vs HEAD
+git diff HEAD         # working tree vs HEAD
+git diff HEAD~1 HEAD  # dua commit terakhir
+```
+
+Tanda `+` berarti penambahan, `-` berarti penghapusan. Baris yang berubah ditampilkan sebagai pasangan.
+
+## Menelusuri Asal Baris
+
+```bash
+git blame src/main.py
+git log -S "fungsi_penting" --oneline
+```
+
+`-S` mencari commit yang menambah atau menghapus teks tertentu — sangat membantu saat mencari kapan bug mulai muncul.
+
+<div class="note">💡 `git reflog` mencatat semua pergerakan HEAD, termasuk commit yang “hilang” setelah reset. Sering kali itu penyelamat saat perubahan tampaknya menghilang.</div>
+
+## Ringkasan Perintah
+
+```bash
+git show <hash>       # detail satu commit
+git show --stat HEAD  # ringkasan file yang berubah
+git log --follow -- nama_file  # riwayat termasuk rename
+```

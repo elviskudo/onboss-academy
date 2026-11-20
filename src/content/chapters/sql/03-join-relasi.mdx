@@ -122,6 +122,10 @@ Kamu bisa memakai `WHERE`, `ORDER BY`, dan fungsi agregat di atas hasil JOIN —
 
 <div class="note">💡 Ingat urutan: JOIN menggabungkan baris dulu, baru WHERE menyaring hasilnya. Posisi syarat (di ON vs di WHERE) menentukan arti query pada LEFT JOIN.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="sql" runtime="sql" code={`SELECT k.nama AS ketua, k.jabatan, p.nama AS proyek, p.budget
 FROM proyek p
 INNER JOIN karyawan k ON p.lead_id = k.id

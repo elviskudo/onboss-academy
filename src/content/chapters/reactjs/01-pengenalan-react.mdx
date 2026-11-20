@@ -134,6 +134,10 @@ JSX hanya sintaks gula. Di balik layar ia berubah jadi pemanggilan fungsi JavaSc
 
 <div class="note">💡 Catatan editor OnBoss: pada track React, editor di halaman ini menjalankan JavaScript murni saja — kode JSX tidak dieksekusi di browser kamu. Jadi bab-bab awal berlatih logika JS (ES6, array method, props sebagai argumen, state) yang jadi fondasi React; sintaks React sendiri dipelajari lewat contoh di teks.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`function Kartu(user) {
   return "[" + user.peran + "] " + user.nama;
 }
@@ -141,7 +145,7 @@ console.log(Kartu({ nama: "Sari", peran: "Admin" }));
 
 function daftar(items) {
   const baris = [];
-  for (let i = 0; i < items.length; i++) {
+  for (let i = 0; i &lt; items.length; i++) {
     baris.push((i + 1) + ". " + items[i]);
   }
   return baris.join("\\n");

@@ -1,0 +1,115 @@
+---
+title: "Parallel Routes & Intercepting"
+description: "slot @nama, default.tsx, dan modal di atas halaman lain"
+order: 17
+quiz:
+  - q: "Parallel route dibuat dengan folder…"
+    options: ["(nama)", "_nama", "@nama", "[nama]"]
+    answer: 2
+    explain: "Folder @grafik menjadi slot bernama grafik."
+  - q: "Slot parallel diterima layout sebagai…"
+    options: ["query string", "prop dengan nama slot", "children saja", "context"]
+    answer: 1
+    explain: "Contoh: { children, grafik, statistik }."
+  - q: "File default.tsx berguna untuk…"
+    options: ["Mengganti layout", "Membuat API", "Menambah metadata", "Fallback saat slot tidak cocok setelah refresh"]
+    answer: 3
+    explain: "Menghindari 404 pada slot paralel."
+  - q: "Intercepting route ditandai dengan…"
+    options: ["__modal", "(.) atau (..)", "@", "[...slug]"]
+    answer: 1
+    explain: "(.) artinya segmen yang sama, (..) satu level di atas."
+  - q: "Kasus klasik intercepting route adalah…"
+    options: ["Modal detail tanpa meninggalkan halaman daftar", "Mengubah warna", "Membuat footer", "Menambah font"]
+    answer: 0
+    explain: "URL berubah tapi daftar tetap terlihat di belakang modal."
+example:
+  code: |
+    app/foto/@modal/(.)[id]/page.tsx  -> modal intercept
+    app/foto/[id]/page.tsx           -> halaman penuh
+
+    export default function Layout({ children, modal }) {
+      return <>{children}{modal}</>;
+    }
+---
+
+Parallel dan intercepting route terlihat menakutkan, tapi sangat berguna untuk UI kompleks seperti dashboard dan modal.
+
+## Parallel Routes
+
+Struktur:
+
+```
+app/dashboard/
+  @grafik/page.tsx
+  @statistik/page.tsx
+  layout.tsx
+  page.tsx
+```
+
+```tsx
+export default function Layout({
+  children,
+  grafik,
+  statistik,
+}: {
+  children: React.ReactNode;
+  grafik: React.ReactNode;
+  statistik: React.ReactNode;
+}) {
+  return (
+    <div className="grid">
+      <main>{children}</main>
+      <aside>{statistik}</aside>
+      <section>{grafik}</section>
+    </div>
+  );
+}
+```
+
+Tiap slot bisa punya state loading/error sendiri.
+
+## default.tsx
+
+```tsx
+// app/dashboard/@grafik/default.tsx
+export default function Default() {
+  return <p>Pilih periode untuk melihat grafik.</p>;
+}
+```
+
+Tanpa ini, refresh pada rute tertentu bisa membuat slot kosong atau 404.
+
+## Intercepting Route
+
+```
+app/foto/
+  page.tsx              -> daftar foto
+  [id]/page.tsx         -> halaman detail penuh
+  @modal/
+    (.)[id]/page.tsx    -> modal saat diklik dari daftar
+    default.tsx         -> null
+```
+
+Layout:
+
+```tsx
+export default function Layout({ children, modal }) {
+  return <>{children}{modal}</>;
+}
+```
+
+Saat user mengklik foto dari daftar, modal muncul di atas daftar. Saat URL dibuka langsung, halaman detail penuh yang tampil.
+
+<div class="note">💡 Mulai dari parallel route biasa. Intercepting route sebaiknya ditambahkan setelah rute dasar stabil — kombinasi keduanya bisa membingungkan kalau belum terbiasa.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`app/foto/@modal/(.)[id]/page.tsx  -> modal intercept
+app/foto/[id]/page.tsx           -> halaman penuh
+
+export default function Layout({ children, modal }) {
+  return <>{children}{modal}</>;
+}`}</code></pre>

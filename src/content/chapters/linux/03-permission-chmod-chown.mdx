@@ -135,3 +135,12 @@ Periksa setiap komponen path dengan `namei -l /path/file`. Gunakan `chmod -R` da
 - Sticky bit pada folder bersama mencegah user menghapus file milik user lain.
 
 <div class="note">💡 File rahasia seperti SSH private key dan `.env` sebaiknya `600`; `644` membuat semua user lokal dapat membacanya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`chmod 755 script.sh
+chown user:user file.txt
+ls -l file.txt
+`}</code></pre>

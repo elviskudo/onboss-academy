@@ -1,0 +1,131 @@
+---
+title: "Alokasi Memori Dinamis"
+description: "malloc, calloc, realloc, free, dan bug memori yang sering terjadi"
+order: 15
+quiz:
+  - q: "Fungsi untuk mengalokasikan memori adalah…"
+    options: ["alloc()", "malloc()", "new()", "create()"]
+    answer: 1
+    explain: "malloc(size_t) mengembalikan void* atau NULL."
+  - q: "Perbedaan calloc dan malloc adalah…"
+    options: ["calloc mengisi nol", "calloc lebih lambat selalu", "malloc hanya untuk char", "Tidak ada beda"]
+    answer: 0
+    explain: "calloc(n, size) mengalokasikan n*size byte dan menulinya 0."
+  - q: "`realloc(ptr, baru)` berguna untuk…"
+    options: ["Menghapus ptr", "Mengubah ukuran blok memori", "Menyalin string", "Menginisialisasi variabel"]
+    answer: 1
+    explain: "Bisa memindahkan alamat, jadi simpan hasilnya sementara."
+  - q: "Setelah `free(p)`, variabel p sebaiknya…"
+    options: ["Dipakai terus", "Di-set NULL", "Dialokasi lagi otomatis", "Dideklarasi ulang"]
+    answer: 1
+    explain: "Mencegah dangling pointer; pemakaian setelah free = undefined behavior."
+  - q: "Memory leak terjadi ketika…"
+    options: ["Memori dialokasi tapi tidak pernah di-free", "Pointer bernilai NULL", "Stack terlalu kecil", "Compiler error"]
+    answer: 0
+    explain: "Leak membuat pemakaian memori naik terus saat program berjalan."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    
+    int main(void) {
+        int n = 3;
+        int *data = calloc(n, sizeof *data);
+        if (!data) return 1;
+    
+        for (int i = 0; i &lt; n; i++) data[i] = (i+1) * 10;
+    
+        n = 5;
+        int *tmp = realloc(data, n * sizeof *data);
+        if (!tmp) { free(data); return 1; }
+        data = tmp;
+        data[3] = 40; data[4] = 50;
+    
+        for (int i = 0; i &lt; n; i++) printf("%d ", data[i]);
+        puts("");
+        free(data);
+        data = NULL;
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C tidak punya garbage collector. Kamu bertanggung jawab penuh atas memori heap: mengalokasi, memakai, lalu mengembalikannya.
+
+## malloc / calloc / realloc / free
+
+```c
+int *p = malloc(10 * sizeof *p);    /* belum diinisialisasi */
+int *q = calloc(10, sizeof *q);     /* semua 0 */
+
+if (p == NULL) { /* alokasi gagal */ }
+
+int *tmp = realloc(p, 20 * sizeof *p);
+if (tmp) p = tmp; else free(p);
+
+free(p);
+free(q);
+```
+
+Selalu cek hasil alokasi. Gunakan `sizeof *pointer` daripada `sizeof(int)` — kalau tipe berubah, ukuran ikut benar.
+
+## Kesalahan Umum
+
+| Bug | Gejala |
+|---|---|
+| Lupa `free` | memory leak |
+| `free` dua kali | crash/heap corruption |
+| Pakai setelah `free` | undefined behavior |
+| Write melewati batas | buffer overflow |
+| `realloc` langsung ke pointer asli | kehilangan blok saat gagal |
+
+## Stack vs Heap
+
+```c
+void f(void) {
+    int lokal[10];        /* stack, otomatis hilang */
+    int *heap = malloc(10 * sizeof(int)); /* heap, harus di-free */
+    free(heap);
+}
+```
+
+Stack cepat tapi kecil dan masa hidupnya singkat. Heap lebih besar dan fleksibel, tapi lebih lambat serta perlu manajemen manual.
+
+## Pola Aman
+
+```c
+#define AMAN_FREE(p) do { free(p); (p) = NULL; } while (0)
+```
+
+Makro ini memastikan pointer tidak menjadi dangling setelah dibebaskan.
+
+<div class="note">💡 Gunakan tools seperti <b>Valgrind</b> atau AddressSanitSanitizer (`-fsanitize=address`) saat development. Mereka bisa menemukan leak dan akses memori ilegal yang tidak terlihat saat program tampak normal.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(void) {
+    int n = 3;
+    int *data = calloc(n, sizeof *data);
+    if (!data) return 1;
+
+    for (int i = 0; i &lt; n; i++) data[i] = (i+1) * 10;
+
+    n = 5;
+    int *tmp = realloc(data, n * sizeof *data);
+    if (!tmp) { free(data); return 1; }
+    data = tmp;
+    data[3] = 40; data[4] = 50;
+
+    for (int i = 0; i &lt; n; i++) printf("%d ", data[i]);
+    puts("");
+    free(data);
+    data = NULL;
+    return 0;
+}`} />

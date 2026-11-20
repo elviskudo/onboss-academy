@@ -128,7 +128,7 @@ if (cm < 0) {
 }
 ```
 
-Cek `cm < 0` **sebelum** `cm < 20`; nilai gagal `-1` juga lebih kecil dari 20 dan akan memicu alarm palsu bila urutan dibalik.
+Cek `cm &lt; 0` **sebelum** `cm &lt; 20`; nilai gagal `-1` juga lebih kecil dari 20 dan akan memicu alarm palsu bila urutan dibalik.
 
 ## Rentang dan Batas Fisik
 
@@ -148,7 +148,7 @@ Ambil **3 atau 5 sampel**, buang nilai `-1`, lalu gunakan median. Median lebih t
 ## Di Dunia Nyata
 
 1. **Sensor parkir meja** — buzzer makin cepat saat tangan mendekati 50, 30, lalu 15 cm.
-2. **Robot penghindar halangan** — berhenti dan berbelok ketika jarak depan < 25 cm.
+2. **Robot penghindar halangan** — berhenti dan berbelok ketika jarak depan &lt; 25 cm.
 3. **Pengukur tinggi air tanpa kontak** — sensor di atas tangki mengukur ruang kosong, level = tinggi tangki − jarak.
 4. **Dispenser otomatis** — tangan pada 8–15 cm memicu pompa selama 300 ms.
 5. **Penghitung benda di konveyor** — perubahan jarak cepat melewati ambang dihitung sebagai satu produk.

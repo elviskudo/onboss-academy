@@ -1,0 +1,135 @@
+---
+title: "Async, Promise & Awaited"
+description: "Mengetik kode asynchronous dengan Promise dan utility Awaited"
+order: 17
+quiz:
+  - q: "`Promise<string>` berarti Promise yang nantinya menghasilkan…"
+    options: ["string", "number", "void", "any"]
+    answer: 0
+    explain: "Generik Promise menyatakan tipe hasil resolve."
+  - q: "Fungsi async selalu mengembalikan…"
+    options: ["Nilai biasa", "Promise", "Array", "void"]
+    answer: 1
+    explain: "Bahkan `return 5` dibungkus jadi Promise<number>."
+  - q: "`Awaited<Promise<string>>` menghasilkan…"
+    options: ["Promise<string>", "string", "any", "never"]
+    answer: 1
+    explain: "Utility Awaited mengambil tipe hasil unwrap Promise."
+  - q: "`Promise.all([p1, p2])` menghasilkan Promise dari…"
+    options: ["Tuple hasil sesuai urutan", "Array any", "Hasil pertama saja", "Object"]
+    answer: 0
+    explain: "Tipe tuple tetap dipertahankan TypeScript."
+  - q: "`await` hanya bisa dipakai di dalam…"
+    options: ["Fungsi async atau top-level module", "Fungsi biasa", "Class", "Interface"]
+    answer: 0
+    explain: "Di luar itu, kompilator akan error."
+example:
+  code: |
+    async function ambilData(): Promise<{ nama: string }> {
+      const res = await fetch('/api/user');
+      return res.json() as Promise<{ nama: string }>;
+    }
+    
+    type Hasil = Awaited<ReturnType<typeof ambilData>>;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript tidak mengubah cara kerja Promise — ia hanya memastikan tipe nilai yang kamu terima dan kembalikan konsisten.
+
+## Mengetik Promise
+
+```ts
+function ambilAngka(): Promise<number> {
+  return new Promise(resolve => setTimeout(() => resolve(42), 100));
+}
+
+async function ambilTeks(): Promise<string> {
+  return "halo"; // otomatis dibungkus Promise
+}
+```
+
+## async/await
+
+```ts
+interface User { id: number; nama: string }
+
+async function ambilUser(id: number): Promise<User> {
+  const res = await fetch(`/api/users/${id}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as User;
+}
+```
+
+`as User` di sini adalah assertion karena `res.json()` bertipe `Promise<any>`. Lebih baik lagi, validasi dengan type guard atau library seperti Zod.
+
+## Awaited & ReturnType
+
+```ts
+type Hasil = Awaited<ReturnType<typeof ambilUser>>; // User
+```
+
+Ini sangat berguna saat kamu ingin menyimpan tipe hasil sebuah fungsi async tanpa mendeklarasikan ulang.
+
+## Promise.all / allSettled / race
+
+```ts
+const [user, postingan] = await Promise.all([
+  ambilUser(1),
+  ambilPostingan(1)
+]);
+// user: User, postingan: Postingan[]
+
+const hasil = await Promise.allSettled([p1, p2]);
+// ({ status: "fulfilled"; value: T } | { status: "rejected"; reason: any })[]
+```
+
+`all` gagal kalau salah satu gagal. `allSettled` menunggu semuanya selesai apa pun hasilnya.
+
+## Error Handling
+
+```ts
+try {
+  const data = await ambilUser(1);
+} catch (err) {
+  if (err instanceof Error) console.error(err.message);
+}
+```
+
+Dengan `useUnknownInCatchVariables` (aktif di `strict`), `err` bertipe `unknown`.
+
+## Top-Level Await
+
+```ts
+const config = await fetch("/config.json").then(r => r.json());
+```
+
+Bisa dipakai di modul ESM dengan `module: ESNext` / `ES2022`. Tidak bisa di CommonJS.
+
+<div class="note">💡 Jangan menulis fungsi `async` hanya untuk mengembalikan nilai sinkron. Itu menambah microtask tanpa manfaat.</div>
+
+## Di Dunia Nyata
+
+- React Query/SWR menyimpulkan tipe data dari fungsi query async.
+- `Awaited<ReturnType<typeof action>>` dipakai untuk tipe state hasil server action.
+- `Promise.all` mempercepat fetch beberapa resource independen.
+
+## Try it Yourself
+
+Ubah `Promise.all` menjadi `Promise.allSettled` untuk melihat perubahan tipe hasil.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface User { id: number; nama: string }
+
+function ambilUser(id: number): Promise<User> {
+  return Promise.resolve({ id, nama: "Sari" });
+}
+
+async function main(): Promise<void> {
+  const [a, b] = await Promise.all([ambilUser(1), ambilUser(2)]);
+  console.log(a.nama, b.nama);
+}
+
+type Hasil = Awaited<ReturnType<typeof ambilUser>>;
+const contoh: Hasil = { id: 3, nama: "Budi" };
+console.log("Tipe hasil:", contoh.nama);
+main();`} />

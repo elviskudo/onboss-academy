@@ -153,6 +153,10 @@ Pola baca: urutkan kondisi dari yang **paling spesifik** ke yang paling umum, da
 
 <div class="note">💡 Jangan memaksa tipe dengan `as` hanya untuk membungkus error kompilasi. `as` menyembunyikan masalah; narrowing menghadapinya dan mencegah bug saat runtime.</div>
 
+## Try it Yourself
+
+Ubah tipe union atau kondisi narrowing pada contoh ini.
+
 <TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Bentuk =
   | { kind: "lingkaran"; r: number }
   | { kind: "persegi"; sisi: number };

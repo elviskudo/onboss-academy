@@ -1,0 +1,107 @@
+---
+"title": "View, Helper, dan Partial"
+"description": "Menyusun template ERB agar tetap rapi memakai partial, layout, dan helper"
+"order": 12
+"quiz":
+- "q": "Partial Rails biasanya dinamai…"
+  "options":
+  - "_header.html.erb"
+  - "header.html.erb"
+  - "header.partial"
+  - "partial-header.erb"
+  "answer": 0
+  "explain": "Nama file partial diawali garis bawah."
+- "q": "Cara merender partial _card dari view adalah…"
+  "options":
+  - "&lt;%= render \"card\" %>"
+  - "&lt;%= partial \"card\" %>"
+  - "&lt;%= include \"card\" %>"
+  - "&lt;%= yield \"card\" %>"
+  "answer": 0
+  "explain": "render \"card\" mencari app/views/articles/_card.html.erb."
+- "q": "Fungsi yield dalam layout adalah…"
+  "options":
+  - "Menutup tag HTML"
+  - "Menempatkan konten view utama"
+  - "Mengambil parameter"
+  - "Membuat migrasi"
+  "answer": 1
+  "explain": "yield adalah titik sisipan konten halaman ke dalam layout."
+- "q": "Helper Rails berguna untuk…"
+  "options":
+  - "Mengganti controller"
+  - "Mengelompokkan logika tampilan yang dipakai berulang"
+  - "Menyimpan data"
+  - "Mengatur rute"
+  "answer": 1
+  "explain": "Helper memisahkan logika format tampilan dari template."
+- "q": "Tag ERB untuk mencetak nilai ke halaman adalah…"
+  "options":
+  - "&lt;% ... %>"
+  - "&lt;%= ... %>"
+  - "&lt;%# ... %>"
+  - "{{{ ... }}}"
+  "answer": 1
+  "explain": "&lt;%= ... %> mengevaluasi Ruby lalu mencetak hasilnya."
+"example":
+  "code": "# app/views/articles/show.html.erb\n&lt;%= render \"card\", article: @article %>\n\n# app/views/articles/_card.html.erb\n<article class=\"card\">\n  <h2>&lt;%= link_to article.title, article %></h2>\n  <p>&lt;%= truncate(article.body, length: 120) %></p>\n</article>\n"
+---
+
+## ERB dalam Singkat
+
+```ruby
+# app/views/articles/show.html.erb
+<%= render "card", article: @article %>
+
+# app/views/articles/_card.html.erb
+<article class="card">
+  <h2><%= link_to article.title, article %></h2>
+  <p><%= truncate(article.body, length: 120) %></p>
+</article>
+```
+
+ERB menyisipkan Ruby ke dalam HTML. Ada tiga bentuk penanda:
+
+| Penanda | Fungsi | Contoh |
+|---|---|---|
+| `&lt;% ... %>` | menjalankan kode tanpa mencetak | `&lt;% if user %> ... &lt;% end %>` |
+| `&lt;%= ... %>` | menjalankan lalu mencetak | `&lt;%= @article.title %>` |
+| `&lt;%# ... %>` | komentar, tidak dieksekusi | `&lt;%# catatan %> |)`
+
+## Partial
+
+Partial adalah potongan view yang bisa dipakai ulang. Nama file diawali `_`:
+
+```erb
+<%= render "card", article: @article %>
+<%= render partial: "card", collection: @articles, as: :article %>
+```
+
+Bentuk kedua merender partial sekali per elemen koleksi — Rails otomatis memilih variabel `article` berkat opsi `as:`.
+
+## Layout
+
+`app/views/layouts/application.html.erb` membungkus semua halaman:
+
+```erb
+<body>
+  <%= render "shared/navbar" %>
+  <main><%= yield %></main>
+</body>
+```
+
+`yield` diganti dengan isi view yang sedang diminta. Layout lain bisa dipilih lewat `layout "admin"`.
+
+## Helper
+
+```ruby
+module ApplicationHelper
+  def tanggal_indonesia(tanggal)
+    tanggal.strftime("%d %B %Y")
+  end
+end
+```
+
+Lalu di view: `&lt;%= tanggal_indonesia(@article.created_at) %>`. Helper menjaga template tetap mudah dibaca.
+
+<div class="note">💡 ERB otomatis meng-escape output, jadi <code>&lt;script&gt;</code> dari input user tampil sebagai teks, bukan dieksekusi. Jangan memakai <code>html_safe</code> kecuali kamu benar-benar yakin sumbernya aman.</div>

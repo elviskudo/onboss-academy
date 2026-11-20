@@ -1,0 +1,89 @@
+---
+title: "Korelasi dan Matriks Korelasi"
+description: "korelasi Pearson, arah dan kekuatan, matriks, serta kausalitas"
+order: 15
+quiz:
+  - q: "Nilai korelasi Pearson berkisar…"
+    options: ["0 sampai 100", "-1 sampai 1", "0 sampai 1", "-∞ sampai ∞"]
+    answer: 1
+    explain: "-1 negatif kuat, 0 tidak ada linear, 1 positif kuat."
+  - q: "Korelasi 0.9 berarti hubungan linear…"
+    options: ["Tidak ada", "Lemah", "Sangat kuat positif", "Sangat kuat negatif"]
+    answer: 2
+    explain: "Mendekati 1 = positif kuat."
+  - q: "Korelasi tidak membuktikan…"
+    options: ["Hubungan linear", "Arah", "Kekuatan", "Kausalitas"]
+    answer: 3
+    explain: "Korelasi hanya asosiasi."
+  - q: "Matriks korelasi berisi…"
+    options: ["Standar deviasi", "Korelasi tiap pasangan variabel", "Rata-rata tiap kolom", "Jumlah baris"]
+    answer: 1
+    explain: "Matriks simetris dengan diagonal 1."
+  - q: "Hubungan kuadrat sempurna bisa memiliki korelasi Pearson…"
+    options: ["Selalu -1", "Tidak terdefinisi", "Mendekati 0", "Selalu 1"]
+    answer: 2
+    explain: "Pearson hanya menangkap hubungan linear."
+example:
+  code: |
+    x=[1,2,3,4,5]; y=[2,4,6,8,10]
+    mx=sum(x)/len(x); my=sum(y)/len(y)
+    num=sum((a-mx)*(b-my) for a,b in zip(x,y))
+    den=(sum((a-mx)**2 for a in x)*sum((b-my)**2 for b in y))**0.5
+    print(num/den)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Koefisien Korelasi
+
+Rumus Pearson membandingkan penyimpangan dua variabel terhadap rata-ratanya masing-masing.
+
+```python
+def korelasi(x, y):
+    mx, my = sum(x)/len(x), sum(y)/len(y)
+    atas = sum((a-mx)*(b-my) for a, b in zip(x, y))
+    bawah = (sum((a-mx)**2 for a in x) * sum((b-my)**2 for b in y)) ** 0.5
+    return atas / bawah if bawah else 0
+```
+
+## Interpretasi Kasar
+
+| Nilai | Arti |
+| --- | --- |
+| 0.8 – 1.0 | sangat kuat |
+| 0.5 – 0.8 | kuat |
+| 0.2 – 0.5 | lemah |
+| 0 – 0.2 | sangat lemah |
+
+Tanda positif/negatif menunjukkan arah, bukan kualitas.
+
+## Matriks
+
+```python
+kolom = {
+    "jam": [1, 2, 3, 4],
+    "nilai": [50, 60, 70, 80],
+    "tidur": [7, 6, 8, 5],
+}
+nama = list(kolom)
+for a in nama:
+    print(a, [round(korelasi(kolom[a], kolom[b]), 2) for b in nama])
+```
+
+Matriks membantu melihat banyak pasangan variabel sekaligus sebelum memilih fitur untuk model.
+
+<div class="note">💡 Lihat scatter plot sebelum mempercayai angka korelasi. Dua variabel bisa berkorelasi kuat karena satu outlier, padahal pola mayoritas datar.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def korelasi(x, y):
+    mx, my = sum(x)/len(x), sum(y)/len(y)
+    atas = sum((a-mx)*(b-my) for a,b in zip(x,y))
+    bawah = (sum((a-mx)**2 for a in x)*sum((b-my)**2 for b in y))**0.5
+    return round(atas/bawah, 3) if bawah else 0
+
+jam = [1,2,3,4,5]
+nilai = [55,62,70,77,85]
+print("Korelasi jam-nilai:", korelasi(jam, nilai))`} />

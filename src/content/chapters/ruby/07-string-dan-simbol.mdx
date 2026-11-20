@@ -113,6 +113,10 @@ Symbol hemat karena dua kali `:aktif` di mana pun menunjuk objek yang sama, seda
 
 <div class="note">💡 Method tanda seru pada String (`strip!`, `upcase!`, `gsub!`) **mengembalikan `nil` bila tidak ada yang berubah** — `"ABC".upcase!` bernilai `nil`, bukan `"ABC"`. Jangan pernah menulis `x = teks.strip!`; simpan hasilnya dari versi tanpa `!` atau pastikan operasinya benar-benar mengubah isi.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`nama = "OnBoss"
 puts "Halo, #{nama}!"
 puts "Panjang: #{nama.length}"

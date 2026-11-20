@@ -1,0 +1,125 @@
+---
+title: "v-model Lanjutan"
+description: "modifier, multiple checkbox, select, dan model pada komponen"
+order: 11
+quiz:
+  - q: "`v-model.number` berguna untuk…"
+    options: ["Menghapus spasi", "Menambah kelas", "Mengubah input menjadi angka", "Membatasi panjang"]
+    answer: 2
+    explain: "Nilai numerik otomatis dikonversi dari string."
+  - q: "`v-model.trim` melakukan…"
+    options: ["Menambah prefix", "Memangkas spasi di ujung teks", "Mengubah huruf", "Menghapus tag HTML"]
+    answer: 1
+    explain: "Sama dengan String.trim()."
+  - q: "Beberapa checkbox dengan v-model yang sama menghasilkan…"
+    options: ["String pertama", "Boolean", "Object", "Array nilai yang dicentang"]
+    answer: 3
+    explain: "Tiap checkbox memakai atribut value."
+  - q: "Pada komponen, v-model adalah singkatan dari…"
+    options: [":v-model + @model", ":modelValue + @update:modelValue", ":value + @input", ":model + @change"]
+    answer: 1
+    explain: "Anak memancarkan update:modelValue saatnilai berubah."
+  - q: "Modifier .lazy membuat v-model memperbarui saat…"
+    options: ["Event change, bukan input", "Tiap ketikan", "Saat mount", "Saat unmount"]
+    answer: 0
+    explain: "Cocok bila update tiap ketikan terlalu mahal."
+example:
+  code: |
+    <input v-model.number.trim="umur" type="number">
+    <input type="checkbox" v-model="hobi" value="membaca">
+    <select v-model="kota">...</select>
+    <InputNama v-model="nama" />
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`v-model` terlihat sederhana, tapi punya banyak opsi untuk kasus nyata.
+
+## Modifier
+
+```vue
+<input v-model.trim="nama" placeholder="Nama">
+<input v-model.number="umur" type="number">
+<input v-model.lazy="catatan">
+```
+
+| Modifier | Efek |
+|----------|------|
+| `.trim` | memangkas spasi |
+| `.number` | konversi ke angka |
+| `.lazy` | pakai event `change` |
+
+## Checkbox Grup
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const hobi = ref([])
+</script>
+
+<template>
+  <label><input type="checkbox" v-model="hobi" value="membaca"> Membaca</label>
+  <label><input type="checkbox" v-model="hobi" value="lari"> Lari</label>
+  <p>{{ hobi }}</p>
+</template>
+```
+
+## Radio dan Select
+
+```vue
+<label><input type="radio" v-model="kontak" value="email"> Email</label>
+<label><input type="radio" v-model="kontak" value="wa"> WhatsApp</label>
+
+<select v-model="kota">
+  <option disabled value="">Pilih kota</option>
+  <option>Jakarta</option>
+  <option>Bandung</option>
+</select>
+```
+
+## v-model pada Komponen
+
+```vue
+<!-- InputNama.vue -->
+<script setup>
+defineProps({ modelValue: String })
+const emit = defineEmits(['update:modelValue'])
+</script>
+
+<template>
+  <input
+    :value="modelValue"
+    @input="emit('update:modelValue', $event.target.value)"
+  >
+</template>
+```
+
+Pemakaian:
+
+```vue
+<InputNama v-model="nama" />
+```
+
+## Beberapa v-model
+
+```vue
+<FilterPanel v-model:halaman="halaman" v-model:cari="kata" />
+```
+
+Anak menerima props `halaman`, `cari` dan memancarkan `update:halaman`, `update:cari`.
+
+<div class="note">💡 Ingat arahnya: induk mengirim `modelValue` lewat props, anak mengirim kembali perubahan lewat event. Itu sebabnya v-model bisa dipakai di komponen kustom.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan kontrak v-model komponen
+let modelValue = "Sari";
+
+function updateModelValue(baru) { modelValue = baru; }
+
+function onInput(target) { updateModelValue(target.value.trim()); }
+
+onInput({ value: "  Budi  " });
+console.log("nilai:", modelValue);`} />

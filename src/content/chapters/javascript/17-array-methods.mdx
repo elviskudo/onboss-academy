@@ -1,0 +1,126 @@
+---
+title: "Method Array Lanjutan"
+description: "map, filter, reduce, find, sort, dan teknik transformasi array"
+order: 17
+quiz:
+  - q: "`[1,2,3].map(x => x * 2)` menghasilkan…"
+    options: ["[2,4,6]", "[1,2,3]", "6", "true"]
+    answer: 0
+    explain: "Map membuat array baru dengan hasil callback tiap elemen."
+  - q: "`[1,2,3,4].filter(x => x % 2 === 0)` menghasilkan…"
+    options: ["[1,3]", "[2,4]", "[1,2,3,4]", "2"]
+    answer: 1
+    explain: "Filter menyimpan elemen yang callback-nya truthy."
+  - q: "`[1,2,3].reduce((a,b)=>a+b, 0)` menghasilkan…"
+    options: ["0", "3", "6", "error"]
+    answer: 2
+    explain: "Akumulator mulai 0 lalu menjumlahkan semua elemen."
+  - q: "`find()` berbeda dari `filter()` karena…"
+    options: ["Mengembalikan satu elemen pertama", "Mengembalikan array", "Lebih lambat", "Tidak ada beda"]
+    answer: 0
+    explain: "Find berhenti pada elemen pertama yang cocok."
+  - q: "Secara default `sort()` mengurutkan…"
+    options: ["Secara numerik", "Sebagai string UTF-16", "Acak", "Menurut panjang"]
+    answer: 1
+    explain: "Itu sebabnya [10,2,1].sort() menjadi [1,10,2]."
+example:
+  code: |
+    const angka = [1, 2, 3, 4];
+    console.log(angka.map(x => x * 2));
+    console.log(angka.filter(x => x % 2 === 0));
+    console.log(angka.reduce((a, b) => a + b, 0));
+    console.log([...angka].sort((a, b) => a - b));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Method array modern membuat kode lebih deklaratif: kamu menjelaskan **apa** yang ingin dilakukan, bukan **bagaimana** melakukan loop-nya.
+
+## Map, Filter, Reduce
+
+```js
+const produk = [
+  { nama: "Kopi", harga: 20000, aktif: true },
+  { nama: "Teh", harga: 15000, aktif: false },
+];
+
+const aktif = produk.filter(p => p.aktif);
+const nama = produk.map(p => p.nama);
+const total = produk.reduce((sum, p) => sum + p.harga, 0);
+```
+
+| Method | Input | Output | Kegunaan |
+|--------|-------|--------|----------|
+| `map` | semua elemen | array sama panjang | Transformasi |
+| `filter` | semua elemen | array lebih pendek/sama | Seleksi |
+| `reduce` | semua elemen | satu nilai | Agregasi |
+| `find` | sampai ketemu | satu elemen/undefined | Pencarian |
+| `some` | sampai ketemu | boolean | "ada yang…?" |
+| `every` | sampai gagal | boolean | "semua…?" |
+
+## Find & Friends
+
+```js
+const kopi = produk.find(p => p.nama === "Kopi");
+const adaMurah = produk.some(p => p.harga < 18000);
+const semuaAktif = produk.every(p => p.aktif);
+const indeks = produk.findIndex(p => p.nama === "Teh");
+```
+
+## Sort yang Benar
+
+```js
+const angka = [10, 2, 1];
+angka.sort();              // [1, 10, 2] ❌
+angka.sort((a, b) => a - b); // [1, 2, 10] ✅
+
+const nama = ["Sari", "Budi", "Andi"];
+nama.sort((a, b) => a.localeCompare(b, "id"));
+```
+
+`sort()` **mengubah array asli**. Kalau ingin menyalin, pakai `[...arr].sort(...)` atau `arr.toSorted()` (fitur baru).
+
+## Utility Lain
+
+```js
+[1, 2, 3].at(-1)          // 3
+[1, 2, 3].includes(2)     // true
+[1, 2].concat([3, 4])     // [1,2,3,4]
+Array.from("abc")         // ['a','b','c']
+Array(5).fill(0)          // [0,0,0,0,0]
+[1,2,3].join("-")         // "1-2-3"
+[1,2,3].reverse()         // [3,2,1] (mutasi!)
+```
+
+## Chaining
+
+```js
+const hasil = produk
+  .filter(p => p.harga > 10000)
+  .map(p => ({ ...p, harga: p.harga * 1.1 }))
+  .sort((a, b) => b.harga - a.harga);
+```
+
+Rantai ini mudah dibaca, tapi ingat tiap method membuat array baru (kecuali `sort`/`reverse`). Pada data sangat besar, loop biasa bisa lebih efisien.
+
+<div class="note">💡 `reduce` tanpa nilai awal akan memakai elemen pertama sebagai akumulator. Untuk array kosong, itu melempar TypeError — selalu berikan nilai awal.</div>
+
+## Di Dunia Nyata
+
+- Dashboard menghitung total pendapatan dengan `reduce`.
+- Tabel menyaring baris berdasarkan input pencarian dengan `filter`.
+- Daftar dropdown diurutkan dengan `localeCompare` agar urutan alphabet Indonesia benar.
+
+## Try it Yourself
+
+Ubah ambang batas kelulusan atau ganti `filter` dengan `map` pada contoh ini.
+
+<TryIt lang="javascript" runtime="client-js" code={`const nilai = [80, 55, 92, 70, 60];
+const lulus = nilai.filter(n => n >= 70);
+const rata = nilai.reduce((a, b) => a + b, 0) / nilai.length;
+const tertinggi = Math.max(...nilai);
+console.log("Lulus:", lulus);
+console.log("Rata-rata:", rata.toFixed(1));
+console.log("Tertinggi:", tertinggi);
+console.log("Urutan naik:", [...nilai].sort((a, b) => a - b));
+console.log("Ada yang remedial?", nilai.some(n => n &lt; 60));`} />

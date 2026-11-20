@@ -129,6 +129,10 @@ Cara pakai: tulis `#include <nama.h>` di paling atas file. Header menyediakan **
 
 <div class="note">💡 C tidak punya built-in string seperti Python — teks adalah kumpulan karakter <code>char</code> yang berakhir dengan karakter nol <code>'\0'</code>. Itulah sebabnya library <code>&lt;string.h&gt;</code> begitu penting, dan salah satu sumber bug paling umum di bahasa ini.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 
 int main(void) {
@@ -137,7 +141,7 @@ int main(void) {
     printf("%d + %d = %d\\n", a, b, a + b);
     printf("Sisa %d / %d = %d\\n", a, b, a % b);
     printf("Rata-rata = %.1f\\n", (double) (a + b) / 2);
-    for (int i = 1; i <= 3; i++) {
+    for (int i = 1; i &lt;= 3; i++) {
         printf("Perulangan ke-%d\\n", i);
     }
     printf("%s\\n", "Sampai jumpa!");

@@ -1,0 +1,109 @@
+---
+title: Git Submodule
+description: Menyertakan repositori lain di dalam repositori dengan versi yang terkunci.
+order: 16
+quiz:
+- q: Submodule Git digunakan untuk…
+  options:
+  - Menyertakan repo lain sebagai subdirektori dengan commit tertentu
+  - Menggabungkan dua branch
+  - Menghapus file
+  - Mengganti remote
+  answer: 0
+  explain: Submodule menyimpan pointer ke commit tertentu pada repo eksternal.
+- q: Perintah menambah submodule adalah…
+  options:
+  - git remote add submodule
+  - git submodule add <url> path
+  - git add submodule
+  - git clone --submodule
+  answer: 1
+  explain: Perintah ini membuat entri .gitmodules dan commit pointer di repo induk.
+- q: Setelah clone repo yang punya submodule, jalankan…
+  options:
+  - git checkout -- .
+  - git fetch --tags
+  - git submodule update --init --recursive
+  - git pull --all
+  answer: 2
+  explain: --init mendaftarkan submodule, --recursive mengambil submodule bersarang.
+- q: File .gitmodules berisi…
+  options:
+  - Daftar commit induk
+  - Konfigurasi remote utama
+  - Riwayat tag
+  - Pemetaan path ke URL submodule
+  answer: 3
+  explain: File ini dibagikan agar pengembang lain tahu dari mana submodule diambil.
+- q: Kelemahan submodule adalah…
+  options:
+  - Perlu langkah inisialisasi tambahan dan bisa detached HEAD
+  - Tidak bisa di-commit
+  - Hanya untuk Windows
+  - Tidak mendukung URL
+  answer: 0
+  explain: Submodule tidak otomatis terisi saat clone biasa dan sering berada dalam keadaan detached HEAD.
+example:
+  code: 'git submodule add https://github.com/org/ui-kit.git packages/ui-kit
+
+    git submodule update --init --recursive
+
+    git submodule status
+
+    '
+---
+
+
+Terkadang sebuah proyek perlu menyertakan kode dari repositori lain — misalnya library internal atau komponen UI bersama. **Submodule** menyimpan referensi ke commit tertentu, bukan menyalin seluruh isinya.
+
+## Menambah Submodule
+
+```bash
+git submodule add https://github.com/org/ui-kit.git packages/ui-kit
+git add .gitmodules packages/ui-kit
+git commit -m "Tambah submodule ui-kit"
+```
+
+Yang tersimpan di repo induk hanyalah pointer commit dan entri di `.gitmodules`.
+
+```text
+[submodule "packages/ui-kit"]
+    path = packages/ui-kit
+    url = https://github.com/org/ui-kit.git
+```
+
+## Mengambil Submodule
+
+```bash
+git clone https://github.com/org/app.git
+cd app
+git submodule update --init --recursive
+```
+
+Tanpa langkah ini, direktori submodule kosong.
+
+## Memperbarui
+
+```bash
+cd packages/ui-kit
+git switch main
+git pull origin main
+cd ../..
+git add packages/ui-kit
+git commit -m "Perbarui ui-kit ke versi terbaru"
+```
+
+Repo induk akan mencatat commit baru dari submodule.
+
+<div class="note">💡 Submodule sering berada dalam keadaan **detached HEAD**. Buat branch lokal sebelum mengubah kode di dalamnya agar commit tidak mengambang.</div>
+
+## Alternatif
+
+| Pendekatan | Kelebihan | Kekurangan |
+|---|---|---|
+| Submodule | versi terkunci jelas | perlu init, lebih ribet |
+| Package manager | familiar, dependency otomatis | butuh publish ke registry |
+| Vendor copy | paling sederhana | duplikasi dan sulit update |
+| Monorepo | satu riwayat | repositori besar |
+
+Pilih submodule bila Anda benar-benar butuh mengontrol commit tepat dari repo eksternal.

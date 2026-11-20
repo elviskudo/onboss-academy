@@ -1,0 +1,155 @@
+---
+"title": "Modul Lanjutan"
+"description": "include vs prepend, extend, constant lookup, dan mixin dengan hook"
+"order": 21
+"quiz":
+- "q": "include menaruh modul …"
+  "options":
+  - "sebelum kelas di ancestors"
+  - "setelah kelas di ancestors"
+  - "di luar hierarchy"
+  - "sebagai konstanta"
+  "answer": 1
+  "explain": "Method kelas lebih diutamakan daripada method modul yang di-include."
+- "q": "prepend menaruh modul …"
+  "options":
+  - "sebelum kelas di ancestors"
+  - "setelah kelas"
+  - "di modul lain"
+  - "tidak di hierarchy"
+  "answer": 0
+  "explain": "Method modul jadi lebih prioritas daripada method kelas."
+- "q": "extend menambahkan method modul ke…"
+  "options":
+  - "instance"
+  - "objek atau kelas itu sendiri sebagai singleton"
+  - "semua kelas"
+  - "konstanta"
+  "answer": 1
+  "explain": "extend menjadikan method tersebut method kelas (class method)."
+- "q": "Hook included dipanggil saat…"
+  "options":
+  - "modul dibuat"
+  - "modul di-include ke kelas"
+  - "objek dibuat"
+  - "method dipanggil"
+  "answer": 1
+  "explain": "Bisa dipakai untuk menambahkan method otomatis."
+- "q": "Konstanta dalam modul diakses dengan…"
+  "options":
+  - "Modul::KONSTAN"
+  - "Modul.KONSTAN"
+  - "Modul#KONSTAN"
+  - "@Modul::KONSTAN"
+  "answer": 0
+  "explain": "Operator :: dipakai untuk namespace dan konstanta."
+"example":
+  "code": "module Sapa\n  def halo = \"Halo\"\nend\nclass Orang\n  include Sapa\nend\nputs Orang.new.halo\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Modul di Ruby punya dua peran: namespace untuk konstanta dan wadah method yang bisa dicampukkan (mixin). Memahami `include`, `prepend`, dan `extend` penting untuk rancangan API.
+
+## include
+
+```ruby
+module BisaLari
+  def lari = "sedang lari"
+end
+
+class Manusia
+  include BisaLari
+end
+
+Manusia.ancestors # [Manusia, BisaLari, Object, ...]
+```
+
+Method kelas menang atas method modul.
+
+## prepend
+
+```ruby
+module Log
+  def proses
+    puts "mulai"
+    super
+  end
+end
+
+class Kerja
+  prepend Log
+  def proses = puts("kerja")
+end
+```
+
+`prepend` menaruh modul sebelum kelas, jadi method modul bisa memanggil `super` ke method kelas — pola populer untuk decorator.
+
+## extend
+
+```ruby
+module Utilitas
+  def bantu = "membantu"
+end
+
+class Layanan
+  extend Utilitas
+end
+
+Layanan.bantu # class method
+```
+
+## Hook
+
+```ruby
+module Terlaporkan
+  def self.included(base)
+    base.extend(ClassMethods)
+  end
+
+  module ClassMethods
+    def daftar = @daftar ||= []
+  end
+end
+```
+
+Hook `included`, `extended`, dan `prepended` dipanggil otomatis saat modul dipakai.
+
+## Namespace
+
+```ruby
+modul Onboss
+  VERSION = "1.0"
+  module Util
+    def self.nama = "Onboss"
+  end
+end
+```
+
+<div class="note">💡 `include` menambah method sebagai instance method; `extend` menambah sebagai singleton method. Beda keduanya sering membingungkan pemula.</div>
+
+
+## Try it Yourself
+
+Coba tukar `include` dengan `prepend` untuk melihat urutan `super`.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`module Pembungkus
+  def jalan
+    "awal -> " + super + " -> akhir"
+  end
+end
+
+class Dasar
+  include Pembungkus
+  def jalan = "inti"
+end
+
+class Khusus
+  prepend Pembungkus
+  def jalan = "inti"
+end
+
+puts Dasar.new.jalan
+puts Khusus.new.jalan
+p Dasar.ancestors.first(3)
+p Khusus.ancestors.first(3)`} />

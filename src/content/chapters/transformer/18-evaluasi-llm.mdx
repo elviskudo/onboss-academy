@@ -1,0 +1,103 @@
+---
+title: Evaluasi Kualitas LLM
+description: Metrik, benchmark, dan praktik pengujian jawaban model bahasa.
+order: 18
+quiz:
+- q: Perplexity mengukur…
+  options:
+  - Ukuran model
+  - Jumlah token
+  - Seberapa terkejut model terhadap teks uji
+  - Kecepatan generate
+  answer: 2
+  explain: Perplexity rendah berarti model memberi probabilitas tinggi pada urutan yang memang muncul.
+- q: BLEU digunakan untuk…
+  options:
+  - Mengukur latency
+  - Menghitung biaya token
+  - Mengukur RAM
+  - Membandingkan terjemahan dengan referensi
+  answer: 3
+  explain: BLEU menghitung kesamaan n-gram antara output dan terjemahan referensi.
+- q: Keterbatasan metrik otomatis adalah…
+  options:
+  - Tidak selalu mencerminkan kebenaran atau kebergunaan
+  - Selalu lebih akurat dari manusia
+  - Hanya bisa untuk bahasa Inggris
+  - Tidak bisa dihitung
+  answer: 0
+  explain: Dua jawaban bisa berbeda kata namun sama benarnya — metrik n-gram sering salah menilai.
+- q: Human evaluation biasanya menilai…
+  options:
+  - Waktu kompilasi
+  - Helpfulness, correctness, dan safety
+  - Jumlah baris kode
+  - Ukuran file
+  answer: 1
+  explain: Penilai manusia melihat kualitas nyata yang sulit direduksi jadi satu angka.
+- q: LLM-as-a-judge perlu hati-hati karena…
+  options:
+  - Tidak bisa membaca teks
+  - Hanya untuk Bahasa Indonesia
+  - Model bisa memihak jawaban panjang atau gaya tertentu
+  - Model selalu benar
+  answer: 2
+  explain: Evaluator otomatis pun punya bias dan sebaiknya dikalibrasi terhadap penilaian manusia.
+example:
+  code: 'import math
+
+    # Perplexity = exp(-rata-rata log probabilitas token)
+
+    nll = 1.2
+
+    print("perplexity ≈", round(math.exp(nll), 2))
+
+    '
+---
+
+
+Membandingkan LLM tidak bisa hanya dengan “terasa lebih pintar”. Dibutuhkan **evaluasi terstruktur**.
+
+## Metrik Intrinsik
+
+```text
+Perplexity = exp( -1/N · Σ log P(token_i | token_<i) )
+```
+
+```python
+import math
+
+avg_nll = 1.2
+print("perplexity ≈", round(math.exp(avg_nll), 2))
+```
+
+Perplexity lebih rendah biasanya lebih baik, tetapi tidak menjamin jawaban benar atau aman.
+
+| Metrik | Fokus | Catatan |
+|---|---|---|
+| Perplexity | pemodelan probabilitas | intrinsik, cepat |
+| BLEU / ROUGE | kesamaan dengan referensi | rapuh terhadap parafrasa |
+| Exact Match | jawaban persis | cocok untuk factoid |
+| F1 / accuracy | klasifikasi | butuh label |
+| Human eval | kualitas nyata | mahal tapi paling dipercaya |
+
+## Benchmark
+
+- **MMLU** — pengetahuan lintas 57 bidang.
+- **GSM8K** — penalaran aritmetika langkah demi langkah.
+- **HumanEval** — kemampuan menulis kode Python.
+- **TruthfulQA** — ketahanan terhadap misconception umum.
+
+## Praktik yang Baik
+
+1. Buat test set tetap yang tidak pernah dipakai saat tuning prompt.
+2. Sertakan contoh dalam bahasa dan domain yang benar-benar dipakai pengguna.
+3. Pisahkan penilaian fakta, kelengkapan, nada, dan keamanan.
+4. Uji juga kasus trivial dan adversarial, bukan hanya soal sulit.
+5. Simpan versi prompt dan model agar hasil bisa direproduksi.
+
+<div class="note">💡 Jika skor benchmark naik tetapi pengguna tetap mengeluh, kemungkinan benchmark tidak mewakili kebutuhan nyata. Evaluasi terbaik adalah yang menyerupai pemakaian produksi.</div>
+
+## Evaluasi Generatif
+
+Untuk tugas terbuka, pakai rubrik berbobot: kebenaran 40%, kelengkapan 25%, kejelasan 20%, kesesuaian format 15%. Minta beberapa evaluator独立 lalu rata-ratakan untuk mengurangi varians.

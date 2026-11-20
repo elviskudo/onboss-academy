@@ -127,3 +127,13 @@ Jangan memasukkan secret ke commit atau log CI. Jika telanjur, cabut dan rotasi 
 - Squash merge merangkum commit WIP menjadi satu perubahan yang mudah direvert.
 
 <div class="note">💡 Satu aturan emas: jangan pernah push langsung ke main di repo tim. Semua perubahan lewat branch + PR + review + CI — itulah pengaman terbesar dari kesalahan kolektif.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`git checkout -b fitur/keranjang
+git add .
+git commit -m "Tambah keranjang"
+git push origin fitur/keranjang
+`}</code></pre>

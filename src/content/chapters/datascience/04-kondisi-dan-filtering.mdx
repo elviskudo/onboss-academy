@@ -28,7 +28,7 @@ example:
     nilai = [78, 92, 65, 88, 71]
     lulus = [n for n in nilai if n >= 75]
     print("Lulus:", lulus)
-    print("Tidak lulus:", [n for n in nilai if n < 75])
+    print("Tidak lulus:", [n for n in nilai if n &lt; 75])
 ---
 
 import TryIt from '../../../components/TryIt.astro';
@@ -44,9 +44,9 @@ Python punya **6 operator perbandingan**:
 | `==` | sama dengan | `78 == 78` | `True` |
 | `!=` | tidak sama | `78 != 90` | `True` |
 | `>` | lebih besar | `90 > 80` | `True` |
-| `<` | lebih kecil | `70 < 75` | `True` |
+| `<` | lebih kecil | `70 &lt; 75` | `True` |
 | `>=` | lebih besar/sama | `75 >= 75` | `True` |
-| `<=` | lebih kecil/sama | `70 <= 75` | `True` |
+| `&lt;=` | lebih kecil/sama | `70 &lt;= 75` | `True` |
 
 Digabung dengan **3 operator logika** — `and`, `or`, `not` — semua syarat filter bisa dirangkai.
 
@@ -138,16 +138,20 @@ print(f"{len(di_atas)}/{len(nilai)} = {persen:.0f}% di atas rata-rata")
 
 - **Kupon khusus pelanggan VIP** — filter transaksi dengan `total >= 1_000_000` sebelum kirim promo.
 - **Dashboard absensi** — tampilkan hanya baris dengan `status == "hadir"` dan tanggal hari ini.
-- **Validasi input form** — `if umur < 17:` sebelum data dikirim ke server.
+- **Validasi input form** — `if umur &lt; 17:` sebelum data dikirim ke server.
 - **Saring error log** — komprehension `[b for b in log if b["level"] == "ERROR"]` sebelum dilaporkan ke tim.
-- **Daftar siswa remedial** — `[s for s in siswa if s["nilai"] < 75]` sebagai antrean bimbingan.
+- **Daftar siswa remedial** — `[s for s in siswa if s["nilai"] &lt; 75]` sebagai antrean bimbingan.
 
 <div class="note">💡 Saat menyaring data, hitung juga berapa baris yang tersisa. Filter yang terlalu ketat bisa menyisakan nol baris dan membuat rata-rata jadi membagi nol.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`nilai = [78, 92, 65, 88, 71, 95, 60, 84]
 
 lulus = [n for n in nilai if n >= 75]
-tidak = [n for n in nilai if n < 75]
+tidak = [n for n in nilai if n &lt; 75]
 atas_90 = [n for n in nilai if n >= 90]
 
 print("Total data:", len(nilai))

@@ -1,0 +1,93 @@
+---
+title: "Variabel Environment"
+description: "Menyuntik konfigurasi ke container lewat ENV, -e, dan file env"
+order: 13
+quiz:
+  - q: "Instruksi Dockerfile untuk menetapkan env default adalah…"
+    options: ["EXPORT", "ENV", "SET", "ARG"]
+    answer: 1
+    explain: "ENV menetapkan variabel yang melekat pada image dan bisa ditimpa saat run."
+  - q: "Opsi -e saat docker run berfungsi…"
+    options: ["Menentukan user", "Mengubah entrypoint", "Menimpa atau menambah variabel environment", "Membuka port"]
+    answer: 2
+    explain: "Nilai -e hanya berlaku untuk container yang dibuat kali itu."
+  - q: "ARG berbeda dari ENV karena…"
+    options: ["ARG lebih aman", "ARG hanya untuk port", "ARG selalu bersifat rahasia", "ARG hanya tersedia saat build, tidak otomatis ada saat runtime"]
+    answer: 3
+    explain: "ARG berguna untuk parameter build; ENV untuk konfigurasi runtime."
+  - q: "Perintah docker run --env-file berguna untuk…"
+    options: ["Memuat banyak variabel dari satu file", "Menyimpan log", "Mengganti base image", "Membuat volume"]
+    answer: 0
+    explain: "File berisi baris KEY=value, satu pasangan per baris."
+  - q: "Menaruh password di ENV image adalah…"
+    options: ["Dilarang Docker", "Tidak disarankan karena nilainya terbaca di inspect", "Praktik terbaik", "Wajib untuk produksi"]
+    answer: 1
+    explain: "Gunakan secret manager atau file secret yang di-mount saat runtime."
+example:
+  code: |
+    ENV APP_ENV=development
+    ENV PORT=8080
+    docker run -e APP_ENV=production --env-file .env app:1.0
+---
+
+Variabel environment adalah cara standar memberi konfigurasi ke aplikasi dalam container tanpa mengubah kode. Bedanya dengan argumen command: env biasanya dipakai untuk pengaturan, bukan perilaku sekali jalan.
+
+## ENV di Dockerfile
+
+```dockerfile
+FROM node:20-alpine
+ENV NODE_ENV=production
+ENV PORT=3000
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+`ENV KEY=value` mendukung bentuk `ENV KEY value` (lama), tetapi bentuk `=` lebih jelas. Nilai dengan spasi perlu dikutip.
+
+## Menimpa Saat Runtime
+
+```bash
+docker run -d \
+  -e NODE_ENV=staging \
+  -e DATABASE_URL=postgres://db:5432/app \
+  --env-file .env.production \
+  -p 3000:3000 app:1.0
+```
+
+Prioritas: nilai `-e` menimpa nilai dari `--env-file`, yang pada gilirannya menimpa `ENV` di image.
+
+## ARG untuk Build
+
+```dockerfile
+ARG VERSION=dev
+RUN echo "Building $VERSION" > /app/version.txt
+```
+
+```bash
+docker build --build-arg VERSION=1.4.2 -t app:1.4.2 .
+```
+
+Nilai ARG tidak otomatis bertahan di image final. Jika ingin keduanya, deklarasikan ARG lalu salin ke ENV:
+
+```dockerfile
+ARG VERSION=dev
+ENV APP_VERSION=${VERSION}
+```
+
+## Melihat dan Menghindari Kebocoran
+
+```bash
+docker inspect app --format '{{range .Config.Env}}{{println .}}{{end}}'
+docker exec app env | sort
+```
+
+Kedua perintah menampil nilai env, jangan sampai token produksi ikut tercetak di log CI. Untuk data sensitif, gunakan Docker secrets (Swarm), Kubernetes Secret, atau layanan seperti Vault.
+
+<div class="note">💡 `ENV` dapat tertinggal pada metadata image. Jangan pakai untuk API key meski image-nya privat.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'APP_ENV=latihan' 'PORT=8080' &gt; .env
+printf '%s\\n' 'FROM alpine:3.20' 'ENV APP_ENV=default' 'CMD ["sh", "-c", "echo $APP_ENV"]' &gt; Dockerfile
+docker build -t latihan-env . &gt;/dev/null &amp;&amp; docker run --rm --env-file .env latihan-env`}</code></pre>

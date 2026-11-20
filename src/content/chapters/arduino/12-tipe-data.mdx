@@ -1,0 +1,86 @@
+---
+title: "Tipe Data dan Variabel"
+description: "int, long, float, bool, char, dan penggunaan memori"
+order: 12
+quiz:
+  - q: "Tipe int pada Arduino Uno memakan…"
+    options: ["2 byte", "4 byte", "1 byte", "8 byte"]
+    answer: 0
+    explain: "Pada board AVR 8-bit, int berbeda dari int di komputer 32-bit."
+  - q: "Tipe yang cocok untuk menyimpan teks satu karakter adalah…"
+    options: ["byte", "char", "int", "bool"]
+    answer: 1
+    explain: "char memakai 1 byte dan bisa menyimpan ASCII."
+  - q: "bool hanya bisa berisi…"
+    options: ["Desimal", "Karakter", "true atau false", "0 sampai 255"]
+    answer: 2
+    explain: "nilai true setara 1, false setara 0."
+  - q: "Perintah sizeof(variabel) mengembalikan…"
+    options: ["Nilai variabel", "Alamat pin", "Jumlah digit", "Ukuran dalam byte"]
+    answer: 3
+    explain: "Berguna untuk menghemat SRAM yang terbatas."
+  - q: "Untuk menyimpan hasil analogRead (0–1023), tipe yang cukup adalah…"
+    options: ["int", "char", "bool", "byte"]
+    answer: 0
+    explain: "byte hanya sampai 255 sehingga tidak cukup."
+example:
+  code: |
+    int a = 42;             // 2 byte di Uno
+    long b = 100000L;       // 4 byte
+    float c = 3.14;         // 4 byte
+    bool aktif = true;      // 1 byte
+    char huruf = 'A';       // 1 byte
+    
+    Serial.println(sizeof(a));
+---
+
+Memori Arduino sangat terbatas. Memilih tipe yang tepat membuat program lebih kecil dan lebih cepat.
+
+## Tipe Umum
+
+| Tipe | Rentang (Uno) | Ukuran |
+|---|---|---|
+| `byte` | 0–255 | 1 byte |
+| `int` | -32.768–32.767 | 2 byte |
+| `unsigned int` | 0–65.535 | 2 byte |
+| `long` | ±2,1 miliar | 4 byte |
+| `float` | ~6 digit desimal | 4 byte |
+| `bool` | true/false | 1 byte |
+| `char` | -128–127 | 1 byte |
+
+## Konversi
+
+```cpp
+int x = 65;
+char c = (char)x;       // 'A'
+float f = x / 2.0;      // 32.5, karena 2.0 float
+int g = x / 2;          // 32, pembagian integer
+```
+
+## String vs char Array
+
+```cpp
+char teks[] = 'Halo';   // 5 byte termasuk '\0'
+String s = 'Halo';      // lebih fleksibel, tapi boros & fragmentasi
+```
+
+Pada Uno, hindari `String` untuk input yang berubah-ubah—pakai array `char` dengan ukuran tetap.
+
+## Konstanta
+
+```cpp
+const int PIN_LED = 13;
+#define PIN_TOMBOL 2
+```
+
+`const` lebih aman karena tetap memeriksa tipe; `#define` hanya pengganti teks.
+
+<div class="note">💡 `sizeof(int)` berbeda antara Uno (2) dan Due/ESP32 (4). Jangan mengasumsikan ukuran saat berpindah board.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Serial.begin(9600);
+Serial.print('int = '); Serial.println(sizeof(int));
+Serial.print('long = '); Serial.println(sizeof(long));
+Serial.print('float = '); Serial.println(sizeof(float));`}</code></pre>

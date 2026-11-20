@@ -1,0 +1,127 @@
+---
+title: "Tipografi & Font CSS"
+description: "Mengatur font, ukuran, jarak baris, dan tipografi responsif"
+order: 24
+quiz:
+  - q: "Properti untuk mengatur families font adalah…"
+    options: ["font-family", "font-face", "font-style", "text-font"]
+    answer: 0
+    explain: "Contoh: `font-family: 'Inter', sans-serif;`"
+  - q: "`line-height: 1.6` berarti…"
+    options: ["16px", "160% dari ukuran font", "1,6 piksel", "Tergantung viewport"]
+    answer: 1
+    explain: "Angka tanpa satuan adalah pengali terhadap font-size elemen."
+  - q: "`font-weight: 700` setara dengan…"
+    options: ["normal", "bold", "italic", "thin"]
+    answer: 1
+    explain: "Skala numerik 100–900; 400 = normal, 700 = bold."
+  - q: "Unit `rem` diukur terhadap…"
+    options: ["Elemen induk", "Font-size root (html)", "Viewport", "Piksel tetap"]
+    answer: 1
+    explain: "rem = root em, sehingga lebih prediktabel untuk tipografi global."
+  - q: "Aturan @font-face dipakai untuk…"
+    options: ["Mengimpor font kustom", "Membuat garis baru", "Mengatur warna teks", "Menambah margin"]
+    answer: 0
+    explain: "Dengan @font-face kita bisa memuat file font sendiri (woff2)."
+example:
+  code: |
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 1rem;
+      line-height: 1.65;
+      color: #374151;
+    }
+    h1 { font-size: clamp(1.8rem, 4vw, 3rem); letter-spacing: -0.03em; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tipografi yang baik bukan sekadar memilih font cantik. **Hierarki**, **irama baris**, dan **keterbacaan** jauh lebih penting.
+
+## Properti Font Inti
+
+| Properti | Fungsi | Contoh |
+|----------|--------|--------|
+| `font-family` | Jenis huruf | `'Inter', sans-serif` |
+| `font-size` | Ukuran | `1rem`, `16px`, `clamp(...)` |
+| `font-weight` | Ketebalan | `400`, `600`, `700` |
+| `font-style` | Miring/normal | `italic` |
+| `line-height` | Jarak antar baris | `1.6` |
+| `letter-spacing` | Jarak antar huruf | `-0.02em` |
+| `word-spacing` | Jarak antar kata | `0.05em` |
+| `text-transform` | Kapitalisasi | `uppercase` |
+
+## Font Stack
+
+```css
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+```
+
+Browser mencari font pertama yang tersedia. Selalu akhiri dengan kategori umum (`serif`, `sans-serif`, `monospace`, `cursive`, `fantasy`).
+
+## Memuat Font Sendiri
+
+```css
+@font-face {
+  font-family: "OnBoss Sans";
+  src: url("/font/onboss.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+```
+
+`font-display: swap` menampilkan font cadangan lebih dulu agar teks tidak kosong saat font belum selesai diunduh.
+
+## Tipografi Responsif
+
+```css
+h1 { font-size: clamp(1.75rem, 1rem + 3vw, 3rem); }
+```
+
+`clamp(min, preferred, max)` memastikan ukuran tidak terlalu kecil di ponsel atau terlalu besar di monitor lebar — tanpa banyak media query.
+
+## Unit yang Biasa Dipakai
+
+- `px` — tetap, mudah diprediksi.
+- `em` — relatif terhadap font-size elemen sendiri (bisa berlipat pada nested).
+- `rem` — relatif terhadap `<html>`, paling aman untuk skala global.
+- `ch` — lebar karakter "0", bagus untuk panjang baris.
+- `vh/vw` — relatif terhadap viewport.
+
+```css
+.artikel p { max-width: 65ch; margin-inline: auto; }
+```
+
+Baris 45–75 karakter dianggap paling nyaman dibaca.
+
+## Hierarki yang Sehat
+
+```css
+h1 { font-size: 2.5rem; font-weight: 800; line-height: 1.15; }
+h2 { font-size: 1.75rem; font-weight: 700; line-height: 1.25; }
+h3 { font-size: 1.25rem; font-weight: 600; }
+p  { font-size: 1rem; line-height: 1.65; }
+small { font-size: 0.875rem; color: #6B7280; }
+```
+
+Semakin besar teks, semakin rapat `line-height`-nya. Semakin kecil teks, semakin longgar jarak barisnya.
+
+<div class="note">💡 Jangan memakai `text-align: justify` pada bahasa dengan kata panjang tanpa hyphenasi — bisa menciptakan "sungai" ruang kosong di tengah paragraf.</div>
+
+## Di Dunia Nyata
+
+- Artikel memakai `max-width: 65ch` supaya mata tidak lelah mengikuti baris panjang.
+- Angka pada dashboard memakai font monospace agar lebih mudah dibandingkan.
+- Judul hero memakai `clamp()` sehingga tetap proporsional di semua layar.
+
+## Try it Yourself
+
+Ubah `line-height` atau nilai `clamp` pada judul untuk melihat perubahan tipografinya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: Georgia, serif; padding: 16px; color: #374151; }
+h1 { font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+p { line-height: 1.7; max-width: 60ch; }
+.kecil { font-size: 0.875rem; color: #6B7280; }
+.kode { font-family: ui-monospace, Menlo, monospace; background: #F3F4F6; padding: 2px 6px; border-radius: 4px; }`} />

@@ -1,0 +1,90 @@
+---
+title: "Memahami Distribusi Data"
+description: "histogram sederhana, skewness, outlier, dan normal distribution"
+order: 10
+quiz:
+  - q: "Histogram digunakan untuk…"
+    options: ["Membuat tabel", "Menampilkan frekuensi data", "Menghapus duplikat", "Menyimpan data"]
+    answer: 1
+    explain: "Histogram mengelompokkan nilai ke dalam bin."
+  - q: "Distribusi miring ke kanan disebut…"
+    options: ["Simetris", "Seragam", "Positive skew", "Negative skew"]
+    answer: 2
+    explain: "Ekor di kanan lebih panjang; mean biasanya lebih besar dari median."
+  - q: "Outlier adalah…"
+    options: ["Nilai rata-rata", "Data kosong", "Median", "Nilai di luar pola umum"]
+    answer: 3
+    explain: "Outlier jauh dari sebagian besar data."
+  - q: "Distribusi normal memiliki bentuk…"
+    options: ["Segitiga", "Lonjong simetris", "Miring ke kiri", "Rata"]
+    answer: 1
+    explain: "Bentuk lonceng simetris di sekitar mean."
+  - q: "IQR dihitung dari…"
+    options: ["Mean - Median", "Q1 + Q3", "Q3 - Q1", "Max - Min"]
+    answer: 2
+    explain: "Interquartile range = kuartil ketiga dikurangi kuartil pertama."
+example:
+  code: |
+    data=[12,13,13,14,14,14,15,15,16,60]
+    urutan=sorted(data)
+    q1=urutan[len(urutan)//4]
+    q3=urutan[(3*len(urutan))//4]
+    print("IQR:",q3-q1)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Mengapa Distribusi Penting
+
+Dua dataset bisa punya mean sama tetapi bentuk sangat berbeda. Ringkasan tunggal menyembunyikan cerita tersebut — histogram membukanya.
+
+## Histogram Sederhana
+
+```python
+data = [1, 2, 2, 3, 3, 3, 4, 4, 5]
+
+for nilai in sorted(set(data)):
+    bintang = "#" * data.count(nilai)
+    print(f"{nilai}: {bintang}")
+```
+
+Output teks seperti ini mudah dibaca tanpa library grafis dan tetap dipahami pemula.
+
+## Bentuk Distribusi
+
+| Bentuk | Ciri | Contoh |
+| --- | --- | --- |
+| Simetris | kiri ≈ kanan | tinggi badan |
+| Positive skew | ekor kanan panjang | penghasilan |
+| Negative skew | ekor kiri panjang | usia pensiunan |
+| Seragam | semua nilai mirip | angka dadu adil |
+
+## Outlier dengan IQR
+
+```python
+import statistics
+
+data = [12, 13, 13, 14, 14, 15, 15, 16, 60]
+q1, q3 = statistics.quantiles(data, n=4)[0], statistics.quantiles(data, n=4)[2]
+iqr = q3 - q1
+batas = iqr * 1.5
+outlier = [x for x in data if x < q1 - batas or x > q3 + batas]
+print(outlier)
+```
+
+Aturan 1.5 × IQR adalah konvensi umum, bukan hukum alam. Tetap pertimbangkan konteks bisnis.
+
+<div class="note">💡 Jangan langsung membuang outlier. Nilai 60 di contoh bisa jadi kesalahan input, atau bisa jadi transaksi besar yang justru paling penting untuk dianalisis.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import statistics
+
+data = [12, 13, 13, 14, 14, 15, 15, 16, 60]
+q1, _, q3 = statistics.quantiles(data, n=4)
+iqr = q3 - q1
+bawah, atas = q1 - 1.5*iqr, q3 + 1.5*iqr
+print("Q1, Q3:", q1, q3)
+print("Outlier:", [x for x in data if x &lt; bawah or x > atas])`} />

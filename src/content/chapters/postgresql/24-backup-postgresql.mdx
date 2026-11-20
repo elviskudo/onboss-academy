@@ -1,0 +1,96 @@
+---
+title: "Backup dan Restore PostgreSQL"
+description: "pg_dump, pg_restore, pg_basebackup, PITR, dan strategi cadangan"
+order: 24
+quiz:
+  - q: "Perintah backup logical satu database adalah…"
+    options: ["pg_dump", "pg_basebackup", "pg_ctl dump", "copy database"]
+    answer: 0
+    explain: "pg_dump menghasilkan SQL atau custom archive."
+  - q: "Format yang memungkinkan restore selektif adalah…"
+    options: ["custom (-Fc)", "plain SQL", "CSV", "text"]
+    answer: 0
+    explain: "pg_restore bisa memilih objek dari archive custom/directory."
+  - q: "pg_basebackup menghasilkan…"
+    options: ["Salinan fisik cluster termasuk WAL", "File SQL saja", "CSV tabel", "Log error"]
+    answer: 0
+    explain: "Backup fisik dipakai untuk PITR dan standby."
+  - q: "PITR memungkinkan…"
+    options: ["Restore ke titik waktu tertentu", "Menghapus semua data", "Membuat user baru", "Mengubah collation"]
+    answer: 0
+    explain: "Point-in-time recovery memakai base backup + WAL."
+  - q: "Backup sebaiknya…"
+    options: ["Disimpan di server yang sama", "Diuji restore secara berkala", "Dibuat sekali", "Tanpa WAL"]
+    answer: 1
+    explain: "Backup tanpa uji restore tidak bisa dipercaya."
+example:
+  code: |
+    -- Perintah di shell, bukan SQL:
+    -- pg_dump -Fc academy > academy.dump
+    -- pg_restore -d academy_baru academy.dump
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ada duapendekatan utama: backup logical (`pg_dump`) dan backup fisik (`pg_basebackup`). Keduanya punya tempat masing-masing.
+
+## Backup Logical
+
+```bash
+pg_dump -U postgres -Fc academy > academy.dump
+pg_dump -U postgres -Ft academy > academy.tar
+pg_dump -U postgres academy > academy.sql
+```
+
+`-Fc` (custom) paling fleksibel karena `pg_restore` bisa memilih tabel tertentu dan memakai parallel restore.
+
+## Restore
+
+```bash
+createdb academy_baru
+pg_restore -U postgres -d academy_baru academy.dump
+pg_restore -U postgres -d academy_baru -t produk academy.dump
+```
+
+Restore ke database baru lebih aman daripada menimpa langsung.
+
+## Backup Fisik dan PITR
+
+```bash
+pg_basebackup -D /backup/base -Ft -z -X stream
+```
+
+Untuk PITR, siapkan `restore_command` yang mengambil WAL dari arsip, lalu buat `recovery.signal` dengan target waktu:
+
+```text
+restore_command = 'cp /arsip/wal/%f %p'
+recovery_target_time = '2026-11-20 08:00:00+07'
+```
+
+## Arsip WAL
+
+```text
+archive_mode = on
+archive_command = 'cp %p /arsip/wal/%f'
+```
+
+WAL yang terarsip memungkinkan memulihkan database sampai detik sebelum insiden.
+
+## Strategi 3-2-1
+
+3 salinan, 2 media berbeda, 1 lokasi terpisah. Simpan kunci enkripsi terpisah dari backup.
+
+<div class="note">💡 `pg_dump` saat ada transaksi panjang bisa memakan waktu lama karena harus melihat snapshot konsisten. Pantau durasi dan jadwalkan di luar jam sibuk.</div>
+
+## Di Dunia Nyata
+
+- **Development**: dump harian untuk replikasi data ke lokal (tanpa data sensitif).
+- **Produksi**: base backup harian + WAL continuous.
+- **Migrasi**: dump/restore untuk pindah versi mayor.
+- **Insiden**: PITR mengembalikan sebelum DELETE salah.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT current_database() AS db, pg_size_pretty(pg_database_size(current_database())) AS ukuran;
+SELECT schemaname, tablename FROM pg_tables WHERE schemaname = 'public';`} />

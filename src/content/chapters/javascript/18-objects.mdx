@@ -1,0 +1,137 @@
+---
+title: "Object JavaScript"
+description: "Membuat, mengakses, dan memanipulasi objek serta destructuring"
+order: 18
+quiz:
+  - q: "Cara mengakses properti objek dengan nama dinamis adalah…"
+    options: ["obj.nama", "obj['nama']", "obj->nama", "obj.nama()"]
+    answer: 1
+    explain: "Bracket notation menerima string atau variabel."
+  - q: "`Object.keys(obj)` mengembalikan…"
+    options: ["Array nilai", "Array kunci", "Jumlah properti", "Objek baru"]
+    answer: 1
+    explain: "Ada juga Object.values() dan Object.entries()."
+  - q: "Destructuring `const {a, b} = obj` akan…"
+    options: ["Membuat array", "Membuat variabel a dan b dari properti obj", "Menghapus properti", "Error"]
+    answer: 1
+    explain: "Ini sintaks ringkas untuk mengambil properti."
+  - q: "`JSON.stringify(obj)` menghasilkan…"
+    options: ["Objek JS", "String JSON", "Array", "undefined"]
+    answer: 1
+    explain: "Fungsi kebalikannya adalah JSON.parse()."
+  - q: "Spread `{...obj}` akan…"
+    options: ["Mengubah objek asli", "Membuat salinan dangkal", "Menghapus objek", "Mengurutkan kunci"]
+    answer: 1
+    explain: "Nested objek tetap direferensikan bersama."
+example:
+  code: |
+    const orang = { nama: "Sari", umur: 20, kota: "Bandung" };
+    const { nama, umur } = orang;
+    console.log(Object.keys(orang));
+    console.log(JSON.stringify(orang));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Objek adalah kumpulan pasangan **kunci–nilai**. Ia adalah fondasi hampir semua struktur data di JavaScript, termasuk array dan fungsi (keduanya juga objek).
+
+## Membuat Objek
+
+```js
+const pengguna = {
+  nama: "Sari",
+  umur: 20,
+  aktif: true,
+  alamat: { kota: "Bandung", kodepos: "40111" },
+  hobi: ["membaca", "berenang"],
+  sapa() {
+    return `Halo, ${this.nama}`;
+  }
+};
+```
+
+## Mengakses Properti
+
+```js
+pengguna.nama          // dot notation
+pengguna["nama"]       // bracket notation
+const kunci = "umur";
+pengguna[kunci]        // dinamis
+pengguna?.alamat?.kota // aman kalau alamat bisa null
+```
+
+## Mengubah & Menambah
+
+```js
+pengguna.umur = 21;
+pengguna.email = "sari@example.com";
+delete pengguna.aktif;
+
+const salinan = { ...pengguna, kota: "Jakarta" };
+```
+
+Spread operator menyalin pasangan kunci ke objek baru. Ini bukan deep clone.
+
+## Destructuring
+
+```js
+const { nama, umur, alamat: { kota } } = pengguna;
+const { nama: namaDepan, ...sisa } = pengguna;
+```
+
+Rest `...sisa` mengumpulkan properti yang tidak diambil.
+
+```js
+const [pertama, , ketiga] = ["a", "b", "c"]; // destructuring array
+```
+
+## Method Penting Object
+
+```js
+Object.keys(pengguna)      // ["nama", "umur", ...]
+Object.values(pengguna)    // ["Sari", 20, ...]
+Object.entries(pengguna)   // [["nama","Sari"], ...]
+Object.hasOwn(pengguna, "nama") // true
+Object.assign({}, a, b)    // gabungkan (mutasi argumen pertama)
+Object.freeze(pengguna)    // cegah perubahan
+```
+
+## Perulangan
+
+```js
+for (const [kunci, nilai] of Object.entries(pengguna)) {
+  console.log(kunci, nilai);
+}
+```
+
+Jangan memakai `for...in` tanpa `hasOwn` — ia juga mengambil properti yang diwariskan dari prototype.
+
+## JSON
+
+```js
+const teks = JSON.stringify(pengguna);
+const kembali = JSON.parse(teks);
+```
+
+JSON tidak mengenal `undefined`, fungsi, atau `Date` khusus (Date menjadi string ISO). Saat `JSON.stringify` diberi fungsi replacer, kamu bisa mengontrol apa yang disimpan.
+
+<div class="note">💡 Kunci objek selalu string atau Symbol. Menulis `{ 1: "satu" }` akan disimpan sebagai kunci `"1"`.</div>
+
+## Di Dunia Nyata
+
+- Response API hampir selalu objek/array of objects.
+- State aplikasi (React, Vue) berupa objek yang diperbarui immutable dengan spread.
+- Konfigurasi aplikasi disimpan sebagai objek lalu di-`destructure` saat dipakai.
+
+## Try it Yourself
+
+Tambahkan properti baru atau ubah destructuring pada contoh objek berikut.
+
+<TryIt lang="javascript" runtime="client-js" code={`const produk = { nama: "Kopi", harga: 20000, stok: 12, aktif: true };
+const { nama, harga } = produk;
+console.log("Nama:", nama, "Harga:", harga);
+console.log("Keys:", Object.keys(produk));
+console.log("Entries:", Object.entries(produk));
+const diskon = { ...produk, harga: harga * 0.9 };
+console.log("Setelah diskon:", diskon);
+console.log("JSON:", JSON.stringify(diskon));`} />

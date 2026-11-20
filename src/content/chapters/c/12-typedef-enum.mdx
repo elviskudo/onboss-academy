@@ -1,0 +1,124 @@
+---
+title: "typedef & enum"
+description: "membuat nama tipe baru dan sekumpulan konstanta bernama"
+order: 12
+quiz:
+  - q: "`typedef` digunakan untuk…"
+    options: ["Mendefinisikan makro", "Membuat nama alternatif untuk tipe", "Mengalokasikan memori", "Mendeklarasikan fungsi"]
+    answer: 1
+    explain: "typedef tidak membuat tipe baru, hanya alias."
+  - q: "Sintaks typedef yang benar adalah…"
+    options: ["typedef int Age;", "type int Age;", "define int Age;", "int typedef Age;"]
+    answer: 0
+    explain: "Dengan itu `Age umur;` setara `int umur;`."
+  - q: "Nilai enum pertama secara default adalah…"
+    options: ["0", "1", "-1", "Tidak terdefinisi"]
+    answer: 0
+    explain: "Konstanta berikutnya naik 1, kecuali diberi nilai eksplisit."
+  - q: "Enum di C bertipe…"
+    options: ["char", "int", "float", "void"]
+    answer: 1
+    explain: "Nilai enum bisa dianggap integer."
+  - q: "typedef struct berguna untuk…"
+    options: ["Menghindari penulisan `struct` berulang", "Menghapus field", "Mengubah ukuran struct", "Membuat pointer"]
+    answer: 0
+    explain: "`typedef struct {…} Titik;` membuat `Titik` bisa dipakai langsung."
+example:
+  code: |
+    #include <stdio.h>
+    
+    typedef unsigned int Uang;
+    
+    typedef enum {
+        SENIN = 1, SELASA, RABU, KAMIS, JUMAT
+    } Hari;
+    
+    typedef struct {
+        const char *nama;
+        int nilai;
+    } Siswa;
+    
+    int main(void) {
+        Uang bayar = 50000;
+        Siswa s = {"Sari", 90};
+        printf("Bayar %u, hari ke-%d, %s = %d\n",
+               bayar, RABU, s.nama, s.nilai);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C memberi dua alat untuk membuat kode lebih mudah dibaca: `typedef` (nama tipe baru) dan `enum` (konstanta bernama).
+
+## typedef
+
+```c
+typedef unsigned long Uang;
+Uang harga = 15000UL;
+```
+
+Typedef sangat membantu pada tipe panjang seperti pointer fungsi:
+
+```c
+typedef int (*Banding)(const void *, const void *);
+Banding cmp = banding_int;
+```
+
+## enum
+
+```c
+enum Status { MENUNGGU, BERJALAN, SELESAI = 10, GAGAL };
+
+enum Status s = BERJALAN;   /* 1 */
+printf("%d\n", SELESAI);   /* 10, GAGAL = 11 */
+```
+
+Enum hanya gula sintaks untuk konstanta integer — tidak ada pengecekan tipe ketat seperti Java.
+
+## typedef + struct
+
+```c
+typedef struct {
+    int x, y;
+} Titik;
+
+Titik asal = {0, 0};
+```
+
+Tanpa typedef, setiap deklarasi harus ditulis `struct Titik asal;`.
+
+## Kapan Memakai
+
+| Kasus | Pilihan |
+|---|---|
+| Konstanta terkait | `enum` |
+| Makro sederhana | `#define` |
+| Nama tipe panjang | `typedef` |
+| Konstanta dengan tipe/ukuran tertentu | `typedef enum` + Cast |
+
+<div class="note">💡 Beri nama enum dengan huruf kapital seperti konstanta (`MERAH`, `BARU`). Ini konvensi yang sudah lama dipakai di kode C dan membedakannya dari variabel biasa.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+typedef unsigned int Uang;
+
+typedef enum {
+    SENIN = 1, SELASA, RABU, KAMIS, JUMAT
+} Hari;
+
+typedef struct {
+    const char *nama;
+    int nilai;
+} Siswa;
+
+int main(void) {
+    Uang bayar = 50000;
+    Siswa s = {"Sari", 90};
+    printf("Bayar %u, hari ke-%d, %s = %d\n",
+           bayar, RABU, s.nama, s.nilai);
+    return 0;
+}`} />

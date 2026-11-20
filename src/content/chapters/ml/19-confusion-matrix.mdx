@@ -1,0 +1,81 @@
+---
+title: "Confusion Matrix"
+description: "TP, TN, FP, FN, akurasi, presisi, recall, F1, dan konteks biaya kesalahan"
+order: 19
+quiz:
+  - q: "True Positive berarti…"
+    options: ["Model salah memprediksi negatif", "Model benar memprediksi positif", "Model salah memprediksi positif", "Model benar memprediksi negatif"]
+    answer: 1
+    explain: "TP = kenyataan positif, prediksi positif."
+  - q: "False Positive disebut juga…"
+    options: ["True negative", "Recall", "Type I error", "Type II error"]
+    answer: 2
+    explain: "Positif palsu."
+  - q: "Presisi = …"
+    options: ["TP/(TP+FN)", "TP/(TN+FP)", "(TP+TN)/total", "TP/(TP+FP)"]
+    answer: 3
+    explain: "Dari yang diprediksi positif, berapa yang benar."
+  - q: "Recall = …"
+    options: ["Akurasi", "TP/(TP+FN)", "TP/(TP+FP)", "TN/(TN+FP)"]
+    answer: 1
+    explain: "Dari yang benar positif, berapa yang ketemu."
+  - q: "Untuk deteksi penyakit langka, metrik yang sering dipentingkan adalah…"
+    options: ["Presisi saja", "Jumlah fitur", "Recall", "Akurasi mentah"]
+    answer: 2
+    explain: "Melewatkan kasus positif sangat mahal."
+example:
+  code: |
+    tp,fp,fn,tn=40,10,5,45
+    akurasi=(tp+tn)/(tp+fp+fn+tn)
+    presisi=tp/(tp+fp)
+    recall=tp/(tp+fn)
+    print(round(akurasi,3),round(presisi,3),round(recall,3))
+---
+
+## Empat Kotak
+
+|  | Prediksi Positif | Prediksi Negatif |
+| --- | --- | --- |
+| Kenyataan Positif | TP | FN |
+| Kenyataan Negatif | FP | TN |
+
+```python
+tp, fp, fn, tn = 40, 10, 5, 45
+total = tp + fp + fn + tn
+
+akurasi = (tp + tn) / total
+presisi = tp / (tp + fp)
+recall = tp / (tp + fn)
+f1 = 2 * presisi * recall / (presisi + recall)
+
+print(akurasi, presisi, recall, f1)
+```
+
+## Arti Metrik
+
+| Metrik | Fokus |
+| --- | --- |
+| Akurasi | semua prediksi benar |
+| Presisi | kualitas prediksi positif |
+| Recall | tidak melewatkan positif |
+| F1 | keseimbangan presisi-recall |
+
+## Kenapa Akurasi Menipu
+
+Dalam data 1% positif, model yang memprediksi "negatif semua" sudah punya akurasi 99% — tapi tidak berguna. Lihat confusion matrix.
+
+<div class="note">💡 Pilih metrik dari biaya kesalahan. Spam: presisi tinggi agar email penting tidak masuk folder spam. Kanker: recall tinggi agar tidak ada kasus terlewat.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`tp, fp, fn, tn = 40, 10, 5, 45
+akurasi = (tp+tn)/(tp+fp+fn+tn)
+presisi = tp/(tp+fp)
+recall = tp/(tp+fn)
+f1 = 2*presisi*recall/(presisi+recall)
+print("Akurasi:", round(akurasi,3))
+print("Presisi:", round(presisi,3))
+print("Recall :", round(recall,3))
+print("F1     :", round(f1,3))`}</code></pre>

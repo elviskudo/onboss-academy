@@ -1,0 +1,114 @@
+---
+title: "Teleport & Suspense"
+description: "merender ke luar hierarki DOM dan menangani konten async"
+order: 19
+quiz:
+  - q: "Teleport berguna untuk…"
+    options: ["Membuat rute", "Mengirim API", "Modal yang harus muncul di atas seluruh halaman", "Mengubah warna"]
+    answer: 2
+    explain: "Teleport memindahkan DOM ke target lain, misalnya body."
+  - q: "Target Teleport ditulis dengan…"
+    options: ["<Teleport target=\"body\">", "<Teleport to=\"body\">", "<Portal to=\"body\">", "<Move to=\"body\">"]
+    answer: 1
+    explain: "to bisa berupa selector CSS atau elemen."
+  - q: "Suspense menangani…"
+    options: ["Validasi form", "Routing", "Animasi", "Konten async saat masih dimuat"]
+    answer: 3
+    explain: "Bisa menampilkan fallback."
+  - q: "Fallback Suspense ditaruh di slot…"
+    options: ["#async", "#fallback", "#default", "#loading"]
+    answer: 1
+    explain: "Slot default berisi konten utama."
+  - q: "Komponen async dibuat dengan…"
+    options: ["defineAsyncComponent(() => import(...))", "new Component()", "ref(Component)", "createAsync()"]
+    answer: 0
+    explain: "Vue akan memuat modul saat dibutuhkan."
+example:
+  code: |
+    <Teleport to="body">
+      <div class="modal">...</div>
+    </Teleport>
+
+    <Suspense>
+      <template #default><AsyncPanel /></template>
+      <template #fallback><p>Memuat…</p></template>
+    </Suspense>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua fitur ini menyelesaikan masalah yang sering muncul: modal yang tertutup `overflow`, dan konten yang belum siap.
+
+## Teleport
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const buka = ref(false)
+</script>
+
+<template>
+  <button @click="buka = true">Buka modal</button>
+
+  <Teleport to="body">
+    <div v-if="buka" class="overlay" @click.self="buka = false">
+      <div class="modal">
+        <p>Konten modal</p>
+        <button @click="buka = false">Tutup</button>
+      </div>
+    </div>
+  </Teleport>
+</template>
+```
+
+Secara logika modal tetap berada di komponen ini (state, event, props tetap bekerja), tapi fisikanya pindah ke `<body>`. Itu menghindari masalah `z-index` dan `overflow: hidden`.
+
+## Suspense
+
+```vue
+<script setup>
+import { defineAsyncComponent } from 'vue'
+
+const LaporanBerat = defineAsyncComponent(() =>
+  import('./LaporanBerat.vue')
+)
+</script>
+
+<template>
+  <Suspense>
+    <template #default>
+      <LaporanBerat />
+    </template>
+    <template #fallback>
+      <p>Menyiapkan laporan…</p>
+    </template>
+  </Suspense>
+</template>
+```
+
+`@pending`, `@resolve`, dan `@fallback` tersedia bila ingin mencatat status.
+
+## Kapan Dipakai
+
+| Fitur | Kasus |
+|-------|-------|
+| Teleport | modal, tooltip, notifikasi toast |
+| Suspense | komponen async, fetch awal |
+| Async component | fitur berat yang jarang dibuka |
+
+<div class="note">💡 Teleport bukan berarti melepaskan state. Event dan reaktivitas tetap mengikuti komponen asal — hanya posisi DOM-nya yang berpindah.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi target teleport: konten "dipindah" ke body secara logika
+const dom = { app: ["<header>", "<modal>"], body: ["<script>"] };
+function teleport(konten, target) {
+  dom.app = dom.app.filter((x) => x !== konten);
+  dom[target].push(konten);
+}
+
+teleport("<modal>", "body");
+console.log("app:", dom.app);
+console.log("body:", dom.body);`} />

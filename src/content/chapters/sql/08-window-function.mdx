@@ -124,6 +124,10 @@ Baris pertama mendapat NULL karena tidak punya pendahulu. Bungkus dengan `COALES
 
 <div class="note">💡 Window function butuh SQLite 3.25+ (2018), MySQL 8.0+, atau PostgreSQL modern. Di editor OnBoss, window function langsung jalan di SQLite bawaan.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="sql" runtime="sql" code={`SELECT nama, dept, gaji,
        RANK() OVER (PARTITION BY dept ORDER BY gaji DESC) AS peringkat_dept,
        SUM(gaji) OVER (ORDER BY id) AS gaji_kumulatif

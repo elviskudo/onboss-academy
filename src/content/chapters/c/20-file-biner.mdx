@@ -1,0 +1,116 @@
+---
+title: "File Biner"
+description: "fread, fwrite, struktur biner, dan endianness"
+order: 20
+quiz:
+  - q: "Mode `rb` digunakan untuk…"
+    options: ["Baca teks", "Baca biner", "Tulis biner", "Append"]
+    answer: 1
+    explain: "'r' = read, 'b' = binary."
+  - q: "`fread(&x, sizeof x, 1, f)` mengembalikan…"
+    options: ["Byte yang dibaca", "Jumlah item yang berhasil dibaca", "Pointer file", "Ukuran file"]
+    answer: 1
+    explain: "Argumen kedua = ukuran item, ketiga = jumlah item."
+  - q: "Endianness mengacu pada…"
+    options: ["Ukuran file", "Urutan byte dalam angka multi-byte", "Nama file", "Kompresi"]
+    answer: 1
+    explain: "Little-endian menyimpan byte rendah lebih dulu."
+  - q: "Menulis struct langsung dengan fwrite bisa bermasalah karena…"
+    options: ["Padding/alignment & endianness", "Struct selalu salah", "File terlalu kecil", "Tidak ada masalah"]
+    answer: 0
+    explain: "Format biner bergantung pada kompiler dan arsitektur."
+  - q: "`fseek(f, 0, SEEK_END)` memindahkan posisi ke…"
+    options: ["Awal file", "Akhir file", "Posisi saat ini", "Byte ke-0"]
+    answer: 1
+    explain: "Bisa dipakai untuk mendapatkan ukuran file dengan ftell."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdint.h>
+    
+    typedef struct {
+        uint32 id;
+        float  nilai;
+    } Rekam;
+    
+    int main(void) {
+        Rekam r = {1, 9.5f};
+        FILE *f = fopen("data.bin", "wb");
+        fwrite(&r, sizeof r, 1, f);
+        fclose(f);
+    
+        f = fopen("data.bin", "rb");
+        Rekam baca;
+        if (fread(&baca, sizeof baca, 1, f) == 1)
+            printf("id=%u nilai=%.1f\n", baca.id, baca.nilai);
+        fclose(f);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+File biner menyimpan byte mentah, tanpa konversi teks. Ini dipakai untuk gambar, audio, dan data terstruktur yang efisien.
+
+## Mode Biner
+
+```c
+FILE *f = fopen("data.bin", "wb");   /* write binary */
+FILE *g = fopen("data.bin", "rb");   /* read binary */
+```
+
+Di Windows, mode teks mengubah `
+` menjadi `
+`. Mode biner mencegah itu — penting agar data tidak berubah.
+
+## fread / fwrite
+
+```c
+size_t n = fwrite(&obj, sizeof obj, 1, f);
+size_t m = fread(&obj, sizeof obj, 1, f);
+```
+
+Selalu cek nilai kembaliannya; bisa lebih kecil dari jumlah item yang diminta saat file rusak atau habis.
+
+## Masalah Portabilitas
+
+1. **Padding**: compiler bisa menyisipkan byte antar field struct.
+2. **Endianness**: x86 little-endian, beberapa ARM big-endian.
+3. **Ukuran tipe**: `long` 4 byte di Windows, 8 byte di Linux 64-bit.
+
+Solusi: gunakan tipe berukuran tetap dari `<stdint.h>` (`uint32_t`, `int64_t`) dan serialisasi field satu per satu bila format harus lintas platform.
+
+## Ukuran File
+
+```c
+fseek(f, 0, SEEK_END);
+long ukuran = ftell(f);
+rewind(f);
+```
+
+<div class="note">💡 Untuk pertukaran data antar sistem, format tekstual seperti JSON/CSV sering lebih aman daripada dump struct biner. Biner pilihannya kalau performa dan ukuran benar-benar kritikal.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdint.h>
+
+typedef struct {
+    uint32 id;
+    float  nilai;
+} Rekam;
+
+int main(void) {
+    Rekam r = {1, 9.5f};
+    FILE *f = fopen("data.bin", "wb");
+    fwrite(&r, sizeof r, 1, f);
+    fclose(f);
+
+    f = fopen("data.bin", "rb");
+    Rekam baca;
+    if (fread(&baca, sizeof baca, 1, f) == 1)
+        printf("id=%u nilai=%.1f\n", baca.id, baca.nilai);
+    fclose(f);
+    return 0;
+}`} />

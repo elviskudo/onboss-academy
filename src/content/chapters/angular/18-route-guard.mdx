@@ -1,0 +1,102 @@
+---
+title: "Route Guard"
+description: "CanActivate, CanDeactivate, functional guard, dan proteksi rute"
+order: 18
+quiz:
+  - q: "Guard modern Angular ditulis sebagai…"
+    options: ["Decorator @Guard", "Pipe", "Fungsi CanActivateFn", "Class Component"]
+    answer: 2
+    explain: "Sejak Angular 15, guard berupa fungsi sederhana."
+  - q: "CanActivate dipakai untuk…"
+    options: ["Menyimpan form", "Memutuskan apakah rute boleh dibuka", "Mengirim data ke API", "Mengubah template"]
+    answer: 1
+    explain: "Kembalikan true/false atau UrlTree untuk redirect."
+  - q: "Untuk mengarahkan ke login, guard bisa mengembalikan…"
+    options: ["false saja", "string 'login'", "null", "router.parseUrl('/login')"]
+    answer: 3
+    explain: "UrlTree membuat navigasi baru secara eksplisit."
+  - q: "CanDeactivate berguna untuk…"
+    options: ["Menambah rute", "Mencegah kehilangan data form yang belum disimpan", "Mengunci CSS", "Memuat gambar"]
+    answer: 1
+    explain: "Bisa menampilkan konfirmasi sebelum meninggalkan halaman."
+  - q: "Guard di sisi klien sebaiknya…"
+    options: ["Dilengkapi pemeriksaan di server", "Jadi satu-satunya pengaman", "Dihapus", "Disimpan di localStorage"]
+    answer: 0
+    explain: "User bisa memanipulasi klien; server tetap berwenang."
+example:
+  code: |
+    export const authGuard: CanActivateFn = () => {
+      const auth = inject(AuthService);
+      const router = inject(Router);
+      return auth.sudahLogin() ? true : router.parseUrl("/login");
+    };
+---
+
+Guard menjaga rute tertentu agar tidak dibuka sembarangan. Guard modern berbentuk fungsi dan memakai `inject()`.
+
+## Auth Guard
+
+```typescript
+import { CanActivateFn, Router } from "@angular/router";
+import { inject } from "@angular/core";
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.sudahLogin()) return true;
+
+  // simpan tujuan agar bisa kembali setelah login
+  return router.createUrlTree(["/login"], {
+    queryParams: { returnUrl: state.url },
+  });
+};
+```
+
+Pasang di rute:
+
+```typescript
+{
+  path: "dashboard",
+  component: DashboardComponent,
+  canActivate: [authGuard],
+}
+```
+
+## Guard Anak
+
+```typescript
+canActivateChild: [authGuard]
+```
+
+Berlaku untuk semua rute di bawah induknya.
+
+## Konfirmasi Keluar
+
+```typescript
+export const belumSimpanGuard: CanDeactivateFn<FormComponent> =
+  (component) => component.bersih || confirm("Simpan dulu?");
+```
+
+## Resolve Data
+
+```typescript
+export const produkResolver: ResolveFn<Produk> = (route) => {
+  const api = inject(ProdukService);
+  return api.detail(Number(route.paramMap.get("id")));
+};
+```
+
+Data sudah tersedia sebelum komponen tampil.
+
+<div class="note">💡 Guard memberi pengalaman yang rapi, tapi bukan pengamanan. Pastikan API juga menolak request tanpa izin — frontend hanya lapisan pertama.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.sudahLogin() ? true : router.parseUrl("/login");
+};`}</code></pre>

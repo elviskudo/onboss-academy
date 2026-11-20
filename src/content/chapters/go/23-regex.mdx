@@ -1,0 +1,132 @@
+---
+"title": "Regular Expression"
+"description": "Pola regexp, ReplaceAllString, FindStringSubmatch, dan group di Go"
+"order": 23
+"quiz":
+- "q": "Package regexp bawaan Go diimpor dari…"
+  "options":
+  - "regexp"
+  - "re"
+  - "regex"
+  - "pcre"
+  "answer": 0
+  "explain": "import \"regexp\" adalah package standar."
+- "q": "Fungsi kompilasi pola adalah…"
+  "options":
+  - "regexp.Compile"
+  - "regexp.New"
+  - "regexp.Create"
+  - "regexp.Parse"
+  "answer": 0
+  "explain": "Compile mengembalikan (*Regexp, error)."
+- "q": "Pola \\d+ dalam string Go biasa ditulis…"
+  "options":
+  - "\"\\\\d+\""
+  - "\"\\d+\""
+  - "`\\d+`"
+  - "'\\d+'"
+  "answer": 0
+  "explain": "String biasa butuh escape ganda; raw string backtick lebih rapi."
+- "q": "MatchString mengembalikan…"
+  "options":
+  - "string"
+  - "bool"
+  - "int"
+  - "[]string"
+  "answer": 1
+  "explain": "MatchString bernilai true bila pola cocok di teks."
+- "q": "Untuk mengambil group dari pola, gunakan…"
+  "options":
+  - "FindString"
+  - "FindAllString"
+  - "FindStringSubmatch"
+  - "ReplaceAll"
+  "answer": 2
+  "explain": "Submatch mengembalikan slice: indeks 0 kecocokan penuh, lalu tiap group."
+"example":
+  "code": "package main\nimport (\n    \"fmt\"\n    \"regexp\"\n)\nfunc main() {\n    re := regexp.MustCompile(`\\d+`)\n    fmt.Println(re.FindString(\"abc123def\"))\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go memakai sintaks regex RE2. Artinya aman dari *catastrophic backtracking*, tapi tidak mendukung lookahead seperti PCRE.
+
+## Kompilasi
+
+```go
+re, err := regexp.Compile(`^[a-z]+$`)
+if err != nil { return err }
+
+// Jika pola sudah dipastikan benar:
+re := regexp.MustCompile(`^[a-z]+$`)
+```
+
+`MustCompile` panic saat pola salah — cocok untuk konstanta di kode.
+
+## Dasar Pola
+
+| Pola | Arti |
+|---|---|
+| `.` | Karakter apa saja |
+| `\d` | Digit |
+| `\w` | Kata (huruf, digit, underscore) |
+| `\s` | Spasi |
+| `[abc]` | Salah satu dari a, b, c |
+| `+`, `*`, `?` | Quantifier |
+| `^`, `$` | Awal/akhir string |
+
+## Method Utama
+
+```go
+re.MatchString(teks)                 // bool
+re.FindString(teks)                  // kecocokan pertama
+re.FindAllString(teks, -1)           // semua kecocokan
+re.ReplaceAllString(teks, "ganti")   // ganti semua
+re.Split(teks, -1)                   // pecah berdasarkan pola
+```
+
+## Group
+
+```go
+re := regexp.MustCompile(`^(\w+), (\d+)$`)
+m := re.FindStringSubmatch("Rani, 22")
+fmt.Println(m[1], m[2]) // Rani 22
+```
+
+Gunakan `SubexpNames()` jika ingin memberi nama group: `(?P<nama>\w+)`.
+
+## Raw String
+
+Selalu pakai backtick untuk pola:
+
+```go
+regexp.MustCompile(`\d+\.\d+`)
+```
+
+Jika memakai tanda kutip biasa, backslash harus ditulis dua kali.
+
+<div class="note">💡 Regex bagus untuk validasi ringan dan ekstraksi pola. Untuk parsing HTML, gunakan parser HTML khusus — bukan regex.</div>
+
+
+## Try it Yourself
+
+Coba pola lain seperti `^[a-z]+$` atau tambah group.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "fmt"
+    "regexp"
+)
+func main() {
+    re := regexp.MustCompile("(\w+)@(\w+\.\w+)")
+    teks := "Hubungi rani@onboss.id atau dimas@contoh.com"
+
+    fmt.Println("Ada email?", re.MatchString(teks))
+    fmt.Println("Semua:", re.FindAllString(teks, -1))
+
+    m := re.FindStringSubmatch(teks)
+    fmt.Println("User:", m[1], "Domain:", m[2])
+
+    angka := regexp.MustCompile("\d+")
+    fmt.Println("Disamarkan:", angka.ReplaceAllString("telp 08123", "#"))
+}`} />

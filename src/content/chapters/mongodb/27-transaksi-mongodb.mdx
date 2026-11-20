@@ -1,0 +1,102 @@
+---
+title: "Transaksi Multi-Dokumen"
+description: "session, startTransaction, commit, abort, isolation, dan kapan transaksi diperlukan"
+order: 27
+quiz:
+  - q: "Transaksi MongoDB dimulai dari…"
+    options: ["transaction()", "db.startTransaction()", "session.startTransaction()", "db.begin()"]
+    answer: 2
+    explain: "Transaksi berada di dalam session yang dibuat client.startSession()."
+  - q: "Perintah menyelesaikan transaksi adalah…"
+    options: ["session.finish()", "db.commit()", "session.commitTransaction()", "session.end()"]
+    answer: 2
+    explain: "commitTransaction() menyimpan semua perubahan."
+  - q: "Jika ada error, perintah yang benar adalah…"
+    options: ["session.stop()", "db.rollback()", "session.close()", "session.abortTransaction()"]
+    answer: 3
+    explain: "abortTransaction() membatalkan semua perubahan dalam transaksi."
+  - q: "Satu dokumen di MongoDB bersifat…"
+    options: ["Hanya untuk read", "Atomik secara bawaan", "Selalu butuh transaksi", "Tidak pernah konsisten"]
+    answer: 1
+    explain: "Update satu dokumen atomik tanpa transaksi."
+  - q: "Transaksi didukung penuh pada…"
+    options: ["Semua mode tanpa syarat", "Hanya Data API", "Standalone mongod", "Replica set atau sharded cluster"]
+    answer: 3
+    explain: "Transaksi multi-dokumen memerlukan replica set atau sharded cluster."
+example:
+  code: |
+    const session = client.startSession();
+    session.startTransaction();
+    try {
+      await akun.updateOne({_id: 1}, {$inc: {saldo: -100}}, {session});
+      await akun.updateOne({_id: 2}, {$inc: {saldo: 100}}, {session});
+      await session.commitTransaction();
+    } catch (e) {
+      await session.abortTransaction();
+    } finally {
+      session.endSession();
+    }
+---
+
+## Kapan Dibutuhkan
+
+Satu operasi pada **satu dokumen** sudah atomik. Transaksi diperlukan kalau satu proses bisnis menyentuh **beberapa dokumen** dan semua harus berhasil atau semua gagal.
+
+Contoh klasik: memindahkan saldo dari rekening A ke B. Tanpa transaksi, aplikasi bisa saja sudah mengurangi A tetapi gagal menambah B.
+
+## Session
+
+```javascript
+const session = client.startSession();
+
+try {
+  session.startTransaction();
+  await db.collection("akun").updateOne(
+    { _id: 1 }, { $inc: { saldo: -100 } }, { session }
+  );
+  await db.collection("akun").updateOne(
+    { _id: 2 }, { $inc: { saldo: 100 } }, { session }
+  );
+  await session.commitTransaction();
+} catch (err) {
+  await session.abortTransaction();
+  throw err;
+} finally {
+  session.endSession();
+}
+```
+
+Opsi `{ session }` wajib disertakan pada setiap operasi agar menjadi bagian dari transaksi.
+
+## Batasan
+
+| Aspek | Keterangan |
+| --- | --- |
+| Durasi | sebaiknya singkat; transaksi lama menahan resource |
+| Ukuran | ada batas total data yang ditulis |
+| Lingkungan | replica set / sharded cluster |
+| DDL | tidak semua perubahan struktur bisa masuk transaksi |
+
+## Alternatif: Desain Atomik
+
+Sering kali transaksi bisa dihindari dengan **embed**: simpan saldo dan riwayat dalam satu dokumen, lalu gunakan update atomik `$inc` dengan syarat filter. Satu dokumen = satu operasi atomik, lebih cepat dan lebih sederhana.
+
+<div class="note">💡 Transaksi menambah overhead. Pakai hanya untuk operasi yang benar-benar harus konsisten lintas dokumen, bukan sebagai kebiasaan default.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`const session = client.startSession();
+session.startTransaction();
+try {
+  await db.collection("akun").updateOne({_id: 1}, {$inc: {saldo: -50}}, {session});
+  await db.collection("akun").updateOne({_id: 2}, {$inc: {saldo: 50}}, {session});
+  await session.commitTransaction();
+  console.log("Berhasil");
+} catch (e) {
+  await session.abortTransaction();
+  console.log("Gagal");
+} finally {
+  session.endSession();
+}`}</code></pre>

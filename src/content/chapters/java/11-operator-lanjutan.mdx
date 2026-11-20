@@ -1,0 +1,97 @@
+---
+title: "Operator Lanjutan"
+description: "operator bitwise, ternary, shift, instanceof, dan precedence di Java"
+order: 11
+quiz:
+  - q: "Operator XOR bitwise di Java adalah…"
+    options: ["&", "|", "^", "&&"]
+    answer: 2
+    explain: "`^` melakukan XOR per bit; `&&` dan `||` adalah logika short-circuit."
+  - q: "Hasil dari `5 >> 1` adalah…"
+    options: ["10", "2", "3", "1"]
+    answer: 1
+    explain: "Geser kanan 5 (101) → 2 (10), setara pembagian 2."
+  - q: "Operator ternary ditulis…"
+    options: ["? :", "if else", "&&", "??"]
+    answer: 0
+    explain: "`kondisi ? nilaiJikaBenar : nilaiJikaSalah`."
+  - q: "`&&` berbeda dengan `&` karena…"
+    options: ["Lebih lambat", "Short-circuit (tidak evaluasi kanan jika kiri false)", "Hanya untuk boolean", "Tidak ada bedanya"]
+    answer: 1
+    explain: "Short-circuit mencegah error seperti pembagian nol di sisi kanan."
+  - q: "`instanceof` berguna untuk…"
+    options: ["Membuat object", "Mengecek tipe object saat runtime", "Mengubah tipe variabel", "Menghitung panjang"]
+    answer: 1
+    explain: "instanceof mengembalikan boolean apakah object merupakan instance dari tipe tertentu."
+example:
+  code: |
+    public class Main {
+      public static void main(String[] args) {
+        int a = 6, b = 3;
+        System.out.println(a & b);   // 2
+        System.out.println(a | b);   // 7
+        System.out.println(a ^ b);   // 5
+        System.out.println(a <&lt; 1);  // 12
+        int maks = a > b ? a : b;
+        System.out.println("Maks: " + maks);
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Java mewarisi banyak operator dari C, termasuk bitwise dan ternary. Memahaminya penting untuk membaca kode level rendah dan menulis ekspresi ringkas.
+
+## Bitwise
+
+| Operator | Arti | Contoh `6`(110) & `3`(011) |
+|---|---|---|
+| `&` | AND | `2` |
+| `|` | OR | `7` |
+| `^` | XOR | `5` |
+| `~` | NOT | `-7` |
+| `<<` | geser kiri | `12` |
+| `>>` | geser kanan (arithmetik) | `3` |
+| `>>>` | geser kanan (logical) | `3` |
+
+```java
+int flag = BACA | TULIS;        // menggabungkan flag
+if ((flag & TULIS) != 0) { ... } // mengecek flag
+```
+
+## Short-Circuit
+
+```java
+if (x != 0 && 10 / x > 2) { ... }
+```
+
+Karena `&&` short-circuit, pembagian tidak pernah terjadi saat `x == 0`. Operator `&` tetap mengevaluasi kedua sisi — gunakan hanya untuk bitwise pada integer (atau AND boolean non-short-circuit yang disengaja).
+
+## Ternary
+
+```java
+String status = nilai >= 75 ? "Lulus" : "Gagal";
+```
+
+Bisa bersarang, tapi jangan berlebihan — lebih dari dua level sebaiknya diganti `if/else`.
+
+## Precedence
+
+Dari tinggi: `()` → unari `++ -- ! ~` → `* / %` → `+ -` → shift `<&lt; >>` → perbandingan → `== !=` → `&` → `^` → `|` → `&&` → `||` → ternary → assignment.
+
+<div class="note">💡 Gunakan kurung eksplisit saat mencampur bitwise dengan perbandingan. `a & b == 0` berarti `a & (b == 0)` dan akan error karena `&` pada boolean bukan short-circuit.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+  public static void main(String[] args) {
+    int a = 6, b = 3;
+    System.out.println(a & b);   // 2
+    System.out.println(a | b);   // 7
+    System.out.println(a ^ b);   // 5
+    System.out.println(a <&lt; 1);  // 12
+    int maks = a > b ? a : b;
+    System.out.println("Maks: " + maks);
+  }
+}`} />

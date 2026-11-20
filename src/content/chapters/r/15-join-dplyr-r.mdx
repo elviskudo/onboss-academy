@@ -1,0 +1,127 @@
+---
+title: "Transformasi Data dengan dplyr"
+description: "Verbs inti dplyr: filter, select, mutate, arrange, summarise, group_by, dan join"
+order: 15
+quiz:
+  - q: "Verb dplyr untuk memilih baris adalah…"
+    options: ["select()", "filter()", "mutate()", "summarise()"]
+    answer: 1
+    explain: "filter menyaring baris; select memilih kolom."
+  - q: "Operator pipe di dplyr ditulis…"
+    options: ["->", "%>%", "|>", "::"]
+    answer: 1
+    explain: "%>% mengirim hasil fungsi sebelumnya sebagai argumen pertama fungsi berikutnya."
+  - q: "group_by() harus dipasangkan dengan…"
+    options: ["filter()", "summarise()", "select()", "arrange()"]
+    answer: 1
+    explain: "summarise menghitung satu baris ringkasan per grup."
+  - q: "left_join() menyimpan…"
+    options: ["Hanya baris yang cocok di dua tabel", "Semua baris tabel kiri", "Semua baris tabel kanan", "Produk kartesius"]
+    answer: 1
+    explain: "left_join mempertahankan semua baris kiri, mengisi NA untuk yang tak cocok."
+  - q: "Fungsi untuk membuat kolom baru adalah…"
+    options: ["mutate()", "rename()", "distinct()", "count()"]
+    answer: 0
+    explain: "mutate menambah atau mengubah kolom sambil mempertahankan baris."
+example:
+  code: |
+    library(dplyr)
+    df <- data.frame(kelas=c("A","B","A"), nilai=c(80,90,85))
+    print(df %>% group_by(kelas) %>% summarise(rata=mean(nilai)))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**dplyr** menyediakan kata kerja (verbs) yang mudah dibaca untuk manipulasi data. Filosofinya: satu fungsi melakukan satu hal, lalu dirangkai dengan pipe.
+
+## Tujuh Verb Inti
+
+| Verb | Tugas |
+| --- | --- |
+| `filter()` | menyaring baris |
+| `select()` | memilih kolom |
+| `mutate()` | membuat/mengubah kolom |
+| `arrange()` | mengurutkan baris |
+| `summarise()` | meringkas menjadi satu baris per grup |
+| `group_by()` | menentukan grup |
+| `distinct()` | membuang baris duplikat |
+
+```r
+library(dplyr)
+hasil <- data.frame(nama = c("Ana", "Budi", "Rani"),
+                    nilai = c(80, 92, 85)) %>%
+  filter(nilai >= 85) %>%
+  mutate(predikat = ifelse(nilai >= 90, "A", "B")) %>%
+  arrange(desc(nilai)) %>%
+  select(nama, nilai, predikat)
+```
+
+## Pipe: %>% dan |>
+
+```r
+# gaya klasik (butuh library dplyr/magrittr)
+df %>% filter(nilai > 80) %>% summarise(rata = mean(nilai))
+
+# pipe native R 4.1+, tidak perlu paket tambahan
+df |> filter(nilai > 80) |> summarise(rata = mean(nilai))
+```
+
+`%>%` menyisipkan data sebagai argumen pertama. `|>` adalah versi bawaan R dengan keterbatasan: tidak bisa memakai `.` sebagai placeholder di semua posisi.
+
+## Ringkasan per Grup
+
+```r
+penjualan %>%
+  group_by(wilayah, tahun) %>%
+  summarise(total = sum(omzet),
+            rata  = mean(omzet),
+            n     = n(),
+            .groups = "drop")
+```
+
+Argumen `.groups = "drop"` melepaskan grouping setelah ringkasan agar operasi berikutnya tidak terkejut. `n()` menghitung jumlah baris dalam grup.
+
+## Join dengan dplyr
+
+```r
+pesanan %>% left_join(pelanggan, by = "id_pelanggan")
+pesanan %>% inner_join(produk, by = "id_produk")
+```
+
+| Fungsi | Baris yang dipertahankan |
+| --- | --- |
+| `inner_join` | hanya yang cocok di kedua tabel |
+| `left_join` | semua baris tabel kiri |
+| `right_join` | semua baris tabel kanan |
+| `full_join` | semua baris kedua tabel |
+| `anti_join` | baris kiri yang tidak punya pasangan |
+
+<div class="note">💡 Sebelum join, cek tipe kolom kuncinya. `id` bertipe character di satu tabel dan integer di tabel lain sering menghasilkan semua `NA` tanpa peringatan yang jelas.</div>
+
+## Helper yang Sering Dipakai
+
+```r
+df %>% slice_max(nilai, n = 3)       # 3 nilai terbesar
+df %>% count(kelas)                  # frekuensi per kategori
+df %>% mutate(z = (nilai - mean(nilai)) / sd(nilai))  # standardisasi
+df %>% rename(skor = nilai)          # ganti nama kolom
+df %>% relocate(nama, .before = 1)   # pindahkan kolom ke depan
+```
+
+## Di Dunia Nyata
+
+- **Dashboard penjualan**: `group_by(bulan) %>% summarise(total)` sebagai dasar grafik.
+- **Data pelanggan**: `left_join` menggabungkan transaksi dengan profil pelanggan.
+- **Pembersihan**: `distinct(id, .keep_all = TRUE)` membuang duplikat.
+- **Analisis kohort**: `mutate()` membuat kolom bulan pertama.transaksi untuk dikelompokkan.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`library(dplyr)
+df <- data.frame(nama = c("Ana", "Budi", "Rani", "Dewi"),
+                 kelas = c("A", "B", "A", "B"),
+                 nilai = c(80, 92, 85, 78))
+print(df %>% filter(nilai >= 80) %>% mutate(predikat = ifelse(nilai >= 85, "Baik", "Cukup")))
+print(df %>% group_by(kelas) %>% summarise(rata = round(mean(nilai), 1), n = n(), .groups = "drop"))
+print(df %>% arrange(desc(nilai)) %>% select(nama, nilai))`} />

@@ -1,0 +1,133 @@
+---
+"title": "Hash Lanjutan"
+"description": "Symbol key, default value, merge, dig, dan enumerasi hash"
+"order": 13
+"quiz":
+- "q": "Symbol ditulis dengan…"
+  "options":
+  - ":nama"
+  - "@nama"
+  - "nama:"
+  - "#nama"
+  "answer": 0
+  "explain": "Symbol adalah nama konstan dengan awalan titik dua."
+- "q": "Cara memberi nilai default pada hash adalah…"
+  "options":
+  - "Hash.new(0)"
+  - "Hash.default = 0"
+  - "Hash[]"
+  - "hash || 0"
+  "answer": 0
+  "explain": "Hash.new(0) mengembalikan 0 untuk kunci yang belum ada."
+- "q": "Method untuk menggabungkan dua hash adalah…"
+  "options":
+  - "merge"
+  - "concat"
+  - "+"
+  - "join"
+  "answer": 0
+  "explain": "a.merge(b) menghasilkan hash baru; nilai b menang pada kunci kembar."
+- "q": "hash.dig(:a, :b) berguna untuk…"
+  "options":
+  - "menghapus kunci"
+  - "mengakses nested value dengan aman"
+  - "menggabungkan hash"
+  - "mengubah kunci"
+  "answer": 1
+  "explain": "dig mengembalikan nil bila jalur tidak ada, tanpa NoMethodError."
+- "q": "Pada Ruby modern, urutan hash…"
+  "options":
+  - "acak"
+  - "sesuai penyisipan"
+  - "terurut alphabet"
+  - "terurut berdasarkan nilai"
+  "answer": 1
+  "explain": "Hash menjaga urutan penyisipan sejak Ruby 1.9."
+"example":
+  "code": "data = { nama: \"Rani\", umur: 22 }\nputs data[:nama]\nputs data.fetch(:kota, \"Jakarta\")\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hash adalah struktur kunci–nilai yang sangat fleksibel. Hampir setiap program Ruby memakainya — dari konfigurasi sampai parameter fungsi.
+
+## Symbol vs String
+
+```ruby
+data = { nama: "Rani" }    # symbol key
+data2 = { "nama" => "Rani" } # string key
+
+puts data[:nama]
+puts data2["nama"]
+```
+
+Symbol lebih hemat memori dan lebih cepat dibandingkan string untuk kunci.
+
+## Nilai Default
+
+```ruby
+hitung = Hash.new(0)
+hitung[:apel] += 1
+puts hitung[:jeruk] # 0
+```
+
+Untuk default dinamis, gunakan blok:
+
+```ruby
+data = Hash.new { |hash, key| hash[key] = [] }
+data[:daftar] << "item"
+```
+
+## fetch
+
+```ruby
+data.fetch(:nama)          # error bila tidak ada
+data.fetch(:kota, "Unknown") # pakai default
+```
+
+Lebih aman daripada `data[:kota]` yang diam-diam mengembalikan `nil`.
+
+## merge & dig
+
+```ruby
+a = { warna: "merah", ukuran: "M" }
+b = { warna: "biru", berat: 1 }
+puts a.merge(b) # { warna: "biru", ukuran: "M", berat: 1 }
+
+nested = { user: { alamat: { kota: "Bandung" } } }
+puts nested.dig(:user, :alamat, :kota)
+puts nested.dig(:user, :hp, :nomor).inspect # nil
+```
+
+## Enumerasi
+
+```ruby
+data.each do |kunci, nilai|
+  puts "#{kunci}: #{nilai}"
+end
+
+data.keys
+data.values
+data.select { |k, v| v.is_a?(Integer) }
+data.transform_values(&:to_s)
+```
+
+<div class="note">💡 Sejak Ruby 1.9, hash menjaga urutan penyisipan. Kamu bisa memakainya sebagai struktur data kecil yang tetap terurut.</div>
+
+
+## Try it Yourself
+
+Tambahkan kunci baru atau ubah nilai default hash.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`hitung = Hash.new(0)
+%w[apel jeruk apel mangga jeruk apel].each { |b| hitung[b.to_sym] += 1 }
+p hitung
+
+data = { user: { alamat: { kota: "Bandung" } }, umur: 22 }
+puts data.dig(:user, :alamat, :kota)
+puts data.dig(:user, :telepon, :nomor).inspect
+
+gabung = data.merge(aktif: true, umur: 23)
+p gabung
+p gabung.transform_keys(&:to_s)
+p gabung.select { |k, v| v.is_a?(Integer) }`} />

@@ -1,0 +1,80 @@
+---
+title: "Sensor dan Interaksi Pengguna"
+description: "Tombot keyboard, mouse, tabrakan, dan warna"
+order: 18
+quiz:
+  - q: "Blok \"tombol [spasi] ditekan?\" termasuk kategori…"
+    options: ["Gerak", "Data", "Penginderaan", "Kontrol"]
+    answer: 2
+    explain: "Kategori Penginderaan juga berisi mouse, tabrakan, dan warna."
+  - q: "Untuk mengikuti pointer mouse, gunakan blok…"
+    options: ["geser ke mouse", "hadap mouse", "sentuh mouse", "ikuti [pointer mouse]"]
+    answer: 3
+    explain: "Tersedia pilihan ikuti dengan kecepatan tetap."
+  - q: "Blok \"menyentuh [warna]\" berguna untuk…"
+    options: ["Mendeteksi tabrakan berbasis warna", "Mengubah skor", "Memutar suara", "Membuat klon"]
+    answer: 0
+    explain: "Sering dipakai untuk mendeteksi garis finish pada lintasan."
+  - q: "Pelapor \"jarak ke [sprite]\" menghasilkan…"
+    options: ["Skor", "Jarak dalam piksel", "Kecepatan", "Waktu"]
+    answer: 1
+    explain: "Berguna untuk AI sederhana, misalnya musuh mendekat ke pemain."
+  - q: "Blok \"suara keras?\" berguna bila proyek…"
+    options: ["Menggunakan kostum", "Menggunakan daftar", "Menggunakan mikrofon", "Menggunakan keyboard"]
+    answer: 2
+    explain: "Scratch dapat membaca input mikrofon bila diizinkan."
+example:
+  code: |
+    [ketika bendera diklik]
+    [ulangi sampai <menyentuh [merah]> [
+      [hadap [pointer mouse]]
+      [geser 3 langkah]
+    ]]
+    [ubah [skor] sebesar 10]
+---
+
+Sensor membuat proyek merespons dunia luar: keyboard, mouse, sprite lain, warna, dan bahkan mikrofon atau kamera.
+
+## Input Langsung
+
+```text
+[tombol [spasi] ditekan?]
+[mouse down?]
+(mouse x) (mouse y)
+[ikuti [pointer mouse]]
+```
+
+## Tabrakan
+
+```text
+[menyentuh [musuh]?]
+[menyentuh [tepi]?]
+[menyentuh [warna merah]?]
+(jarak ke [pemain])
+```
+
+## Contoh: Musuh Mengikuti Pemain
+
+```text
+[ulangi sampai <(jarak ke [pemain]) < 20> [
+  [hadap [pemain]]
+  [geser 2 langkah]
+  [tunggu 0,05 detik]
+]]
+```
+
+## Deteksi Warna
+
+Klik ikon pipet pada blok warna lalu pilih warna dari panggung. Metode ini sensitif terhadap pencahayaan/efek grafis, jadi hindari mengubah warna sprite yang sedang dideteksi.
+
+<div class="note">💡 Izinkan akses mikrofon/kamerahanya saat proyek benar-benar memakainya, dan beri tahu pengguna bahwa perangkat sedang aktif.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika tombol [panah kanan] ditekan]
+[geser x sebesar 10]
+
+[ketika saya menerima [ceklis-garis]]
+[ulangi sampai &lt;menyentuh [hijau]&gt; [geser 4 langkah]]
+[ubah [skor] sebesar 1]`}</code></pre>

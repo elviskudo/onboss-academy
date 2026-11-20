@@ -1,0 +1,101 @@
+---
+title: 'Cherry-Pick: Memindahkan Satu Commit'
+description: Mengambil perubahan dari branch lain tanpa menggabungkan seluruh riwayatnya.
+order: 14
+quiz:
+- q: git cherry-pick digunakan untuk…
+  options:
+  - Menggabungkan semua branch
+  - Membuat tag
+  - Menerapkan satu commit ke branch saat ini
+  - Menghapus commit
+  answer: 2
+  explain: Perintah ini membuat commit baru dengan patch yang sama di posisi HEAD.
+- q: Setelah cherry-pick, hash commit…
+  options:
+  - Tetap sama
+  - Hilang
+  - Menjadi tag
+  - Berubah karena commit baru dibuat
+  answer: 3
+  explain: Isi patch sama, tapi hash berbeda karena parent dan metadata berbeda.
+- q: Opsi untuk mengambil perubahan tanpa langsung commit adalah…
+  options:
+  - -n atau --no-commit
+  - -x
+  - --abort
+  - --continue
+  answer: 0
+  explain: --no-commit menerapkan patch ke index dan working tree agar bisa disesuaikan.
+- q: Gunakan cherry-pick terutama untuk…
+  options:
+  - Mengatur remote
+  - Backport perbaikan ke branch rilis
+  - Mengganti semua branch
+  - Menghapus file
+  answer: 1
+  explain: 'Backport adalah kasus paling umum: perbaikan di main dipindah ke branch stabil.'
+- q: Jika cherry-pick menemukan konflik, langkah berikutnya adalah…
+  options:
+  - Jalankan git reset --hard
+  - Ketik git merge --abort
+  - Selesaikan konflik lalu git cherry-pick --continue
+  - Hapus seluruh branch
+  answer: 2
+  explain: Setelah konflik diselesaikan dan di-stage, lanjutkan dengan --continue.
+example:
+  code: 'git switch main
+
+    git cherry-pick a1b2c3d
+
+    git log --oneline -3
+
+    '
+---
+
+
+**Cherry-pick** mengambil satu commit dari branch lain dan menerapkannya ke HEAD saat ini. Bayangkan memilih satu buah dari pohon tanpa memetik seluruh cabangnya.
+
+## Alur Dasar
+
+```bash
+git log --oneline fitur/perbaikan   # cari hash commit
+git switch main
+git cherry-pick a1b2c3d
+git log --oneline -3
+```
+
+Commit baru dibuat dengan pesan yang sama, tetapi hash berbeda.
+
+## Opsi Penting
+
+| Opsi | Fungsi |
+|---|---|
+| `-n`, `--no-commit` | terapkan patch tanpa commit |
+| `-x` | tambahkan baris "(cherry picked from ...)" |
+| `--edit` | sunting pesan commit |
+| `--abort` | batalkan proses saat konflik |
+| `--continue` | lanjutkan setelah konflik selesai |
+
+## Kasus Backport
+
+```text
+main        --o--o--F--o      F = fix keamanan
+release/1.4 --o--o--------F'  F' = cherry-pick dari F
+```
+
+Perbaikan masuk ke rilis lama tanpa membawa fitur baru dari `main`.
+
+## Risiko
+
+- Patch bisa bergantung pada commit sebelumnya, sehingga cherry-pick tunggal gagal atau tidak lengkap.
+- Duplikasi perubahan membuat riwayat sulit dibaca bila dilakukan berlebihan.
+- Konflik tetap harus diselesaikan manual.
+
+<div class="note">💡 Bila seluruh rangkaian commit dibutuhkan, pertimbangkan `git rebase` atau `git merge` daripada cherry-pick berkali-kali.</div>
+
+## Praktik Baik
+
+- Selalu sertakan `-x` saat backport agar asal commit tercatat.
+- Uji hasilnya — patch yang sama belum tentu benar di konteks branch berbeda.
+- Simpan catatan rilis yang menyebut commit asli dan commit hasil cherry-pick.

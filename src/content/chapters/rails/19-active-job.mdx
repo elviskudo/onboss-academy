@@ -1,0 +1,109 @@
+---
+"title": "Active Job"
+"description": "Antrean pekerjaan background: adapter, retry, dan job untuk tugas berat"
+"order": 19
+"quiz":
+- "q": "Kelas induk untuk job Rails adalah…"
+  "options":
+  - "ApplicationJob"
+  - "ActiveJob::Worker"
+  - "BackgroundTask"
+  - "JobBase"
+  "answer": 0
+  "explain": "ApplicationJob mewarisi ActiveJob::Base."
+- "q": "Metode yang berisi pekerjaan utama adalah…"
+  "options":
+  - "run"
+  - "perform"
+  - "execute"
+  - "call"
+  "answer": 1
+  "explain": "perform didefinisikan di kelas job."
+- "q": "Metode untuk mengantre job adalah…"
+  "options":
+  - "perform_now"
+  - "perform_later"
+  - "run_async"
+  - "queue"
+  "answer": 1
+  "explain": "perform_later mengirim ke adapter antrean."
+- "q": "Adapter bawaan Active Job adalah…"
+  "options":
+  - "async"
+  - "sidekiq"
+  - "resque"
+  - "delayed_job"
+  "answer": 0
+  "explain": "Adapter async menjalankan thread in-process, cocok untuk development."
+- "q": "Opsi wait: 5.minutes berarti…"
+  "options":
+  - "Job dijalankan 5 menit setelah diantre"
+  - "Job diulang 5 kali"
+  - "Job timeout 5 menit"
+  - "Job dihapus setelah 5 menit"
+  "answer": 0
+  "explain": "wait menunda eksekusi job."
+"example":
+  "code": "class LaporanJob &lt; ApplicationJob\n  queue_as :default\n\n  def perform(user_id)\n    user = User.find(user_id)\n    Laporan.generate(user)\n  end\nend\n\nLaporanJob.perform_later(current_user.id)\nLaporanJob.set(wait: 5.minutes).perform_later(current_user.id)\n"
+---
+
+## Kenapa Background Job
+
+```ruby
+class LaporanJob < ApplicationJob
+  queue_as :default
+
+  def perform(user_id)
+    user = User.find(user_id)
+    Laporan.generate(user)
+  end
+end
+
+LaporanJob.perform_later(current_user.id)
+LaporanJob.set(wait: 5.minutes).perform_later(current_user.id)
+```
+
+Request web sebaiknya selesai dalam ratusan milidetik. Mengirim email, membuat PDF, atau memproses video di dalam request membuat pengguna menunggu dan server kehabisan thread.
+
+```ruby
+class LaporanJob < ApplicationJob
+  def perform(user_id)
+    user = User.find(user_id)
+    Laporan.generate(user)
+  end
+end
+```
+
+Simpan **ID**, bukan objek Active Record, sebagai argumen. Objek bisa berubah atau hilang sebelum job dijalankan.
+
+## Adapter
+
+| Adapter | Kekuatan | Catatan |
+|---|---|---|
+| `async` | tanpa setup | hanya in-process, hilang saat restart |
+| `sidekiq` | cepat, populer | butuh Redis |
+| `resque` | sederhana | butuh Redis |
+| `delayed_job` | berbasis database | tanpa servis tambahan |
+
+Di produksi, ganti adapter di `config/application.rb` lewat `config.active_job.queue_adapter = :sidekiq`.
+
+## Otomatisasi Retry
+
+```ruby
+class WebhookJob < ApplicationJob
+  retry_on Timeout::Error, wait: :polynomially_longer, attempts: 5
+  discard_on ActiveRecord::RecordNotFound
+end
+```
+
+`retry_on` mengulang saat error sementara; `discard_on` membuang job saat error permanen.
+
+## Job dan Transaksi
+
+Job yang diantre di dalam transaksi database bisa dijalankan sebelum transaksi commit. Gunakan `after_commit` untuk menjamin data sudah tersimpan:
+
+```ruby
+after_commit -> { LaporanJob.perform_later(id) }, on: :create
+```
+
+<div class="note">💡 Job harus idempoten — menjalankannya dua kali boleh menghasilkan efek yang sama. Antrean modern kadang mengirim ulang job saat worker crash.</div>

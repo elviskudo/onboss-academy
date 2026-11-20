@@ -12,7 +12,7 @@ quiz:
     answer: 2
     explain: "<?php wajib, <?= (echo singkat) selalu aktif, <? (short tag) nonaktif di konfigurasi modern."
   - q: "Blok kode PHP dibuka dengan…"
-    options: ["<?php", "<script>", "<%php", "< ?"]
+    options: ["<?php", "<script>", "&lt;%php", "&lt; ?"]
     answer: 0
     explain: "Selalu gunakan <?php — tag pendek <? tidak bisa diandalkan."
   - q: "Perintah untuk menjalankan file PHP dari terminal adalah…"
@@ -122,6 +122,10 @@ Yang kamu lakukan di editor OnBoss setara opsi 1. Di produksi, PHP dijalankan se
 
 <div class="note">💡 Setiap file PHP yang berisi kode harus dibuka dengan `<?php`. Lupa tag ini membuat seluruh isi file dikirim sebagai teks biasa dan browser menampilkannya mentah — termasuk kredensial database yang ada di dalamnya. Kalau yakin butuh singkatan, `<?= ... ?>` tetap aman walau short tag dimatikan.</div>
 
+## Try it Yourself
+
+Jalankan contoh PHP berikut untuk melihat output-nya.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $nama = "Sari";
 $umur = 20;
@@ -132,6 +136,6 @@ echo "Umur: $umur tahun\\n";
 echo "Status: " . ($aktif ? "aktif" : "nonaktif") . "\\n";
 echo "2 + 2 = " . (2 + 2) . "\\n";
 
-for ($i = 1; $i <= 3; $i++) {
+for ($i = 1; $i &lt;= 3; $i++) {
     echo "Perulangan ke-$i\\n";
 }`} />

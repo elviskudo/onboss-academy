@@ -1,0 +1,116 @@
+---
+title: "watch & watchEffect"
+description: "mengamati perubahan state, flush timing, dan cleanup"
+order: 12
+quiz:
+  - q: "watch berguna untuk…"
+    options: ["Membuat CSS", "Mengirim HTML", "Efek samping saat sumber berubah", "Mengganti computed"]
+    answer: 2
+    explain: "Misalnya menyimpan ke localStorage atau memanggil API."
+  - q: "watchEffect berbeda dari watch karena…"
+    options: ["Hanya untuk array", "Tidak perlu menyebut sumber secara eksplisit", "Hanya jalan sekali", "Tidak bisa dihentikan"]
+    answer: 1
+    explain: "watchEffect melacak dependency yang dibaca di dalamnya."
+  - q: "`{ deep: true }` pada watch dipakai untuk…"
+    options: ["Mempercepat render", "Menghapus state", "Mengubah tipe", "Mendeteksi perubahan bersarang dalam objek"]
+    answer: 3
+    explain: "Secara default watch hanya mengikuti referensi level atas."
+  - q: "`{ immediate: true }` berarti…"
+    options: ["Saat unmount saja", "Handler dipanggil langsung saat pendaftaran", "Hanya sekali", "Tidak pernah"]
+    answer: 1
+    explain: "Berguna untuk mengisi nilai awal."
+  - q: "Fungsi cleanup dalam watch dipanggil…"
+    options: ["Sebelum handler dijalankan ulang dan saat stop", "Setiap render", "Hanya saat error", "Tidak pernah"]
+    answer: 0
+    explain: "Tempat membatalkan request lama."
+example:
+  code: |
+    watch(kata, async (baru, lama, onCleanup) => {
+      const controller = new AbortController();
+      onCleanup(() => controller.abort());
+      hasil.value = await cari(baru, controller.signal);
+    });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`computed` untuk nilai turunan. `watch` untuk efek samping saat nilai berubah.
+
+## watch Dasar
+
+```vue
+<script setup>
+import { ref, watch } from 'vue'
+
+const kata = ref('')
+const hasil = ref([])
+
+watch(kata, async (baru, lama, onCleanup) => {
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+
+  const res = await fetch(`/api/cari?q=${baru}`, { signal: controller.signal })
+  hasil.value = await res.json()
+})
+</script>
+```
+
+`onCleanup` membatalkan request lama saat user mengetik cepat.
+
+## Beberapa Sumber
+
+```js
+watch([kata, halaman], ([k, h], [kLama, hLama]) => {
+  console.log(k, h);
+});
+```
+
+## Objek Bersarang
+
+```js
+watch(
+  () => form.value.alamat.kota,
+  (baru) => console.log(baru)
+);
+```
+
+Atau `watch(form, handler, { deep: true })`, tapi lebih mahal.
+
+## watchEffect
+
+```js
+const userId = ref(1);
+const user = ref(null);
+
+watchEffect(async () => {
+  const res = await fetch(`/api/user/${userId.value}`);
+  user.value = await res.json();
+});
+```
+
+Vue otomatis melacak `userId` karena dibaca di dalam fungsi.
+
+## Perbandingan
+
+| | computed | watch | watchEffect |
+|---|----------|-------|-------------|
+| Return nilai | ya | tidak | tidak |
+| Sumber eksplisit | ya | ya | tidak |
+| Cocok untuk | turunan | efek terarah | efek otomatis |
+
+<div class="note">💡 Kalau kamu bisa menulisnya sebagai `computed`, lakukan itu. watch sebaiknya hanya untuk hal yang benar-benar "terjadi" setelah perubahan, seperti request atau penyimpanan.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi watch dengan cleanup
+let cleanupDijalankan = false;
+function watchSumber(baru, lama, onCleanup) {
+  onCleanup(() => { cleanupDijalankan = true; });
+  console.log(\`\${lama} -> \${baru}\`);
+}
+
+watchSumber("kopi", "", () => {});
+watchSumber("roti", "kopi", () => { cleanupDijalankan = true; });
+console.log("cleanup:", cleanupDijalankan);`} />

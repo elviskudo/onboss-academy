@@ -1,0 +1,124 @@
+---
+title: Heap dan Priority Queue
+description: Struktur pohon biner yang menjamin elemen prioritas tertinggi di akar.
+order: 13
+quiz:
+- q: Min-heap memiliki sifat…
+  options:
+  - Hanya akar yang terurut
+  - Setiap node lebih kecil atau sama dengan anaknya
+  - Setiap node lebih besar dari anaknya
+  - Semua node terurut kiri-kanan
+  answer: 1
+  explain: Pada min-heap, elemen terkecil selalu di akar.
+- q: Indeks anak kiri dari node i (0-based) adalah…
+  options:
+  - i + 1
+  - i // 2
+  - 2i + 1
+  - 2i
+  answer: 2
+  explain: Indeks orang tua adalah (i - 1) // 2.
+- q: Kompleksitas insert ke heap adalah…
+  options:
+  - O(log n)
+  - O(n)
+  - O(n log n)
+  - O(1)
+  answer: 3
+  explain: Elemen baru “mengapung” setinggi tinggi pohon.
+- q: Modul Python untuk heap adalah…
+  options:
+  - heapq
+  - collections
+  - itertools
+  - math
+  answer: 0
+  explain: heapq menyediakan heappush, heappop, dan heapify.
+- q: Priority queue cocok untuk…
+  options:
+  - Menghitung faktorial
+  - Menjalankan tugas dengan prioritas tertinggi lebih dulu
+  - Menyimpan data FIFO murni
+  - Mengurutkan string alphabetis
+  answer: 1
+  explain: Contohnya penjadwalan proses dan Dijkstra.
+example:
+  code: 'import heapq
+
+    h = []
+
+    heapq.heappush(h, (2, "rendah"))
+
+    heapq.heappush(h, (1, "tinggi"))
+
+    print(heapq.heappop(h))  # (1, ''tinggi'')
+
+    '
+---
+
+
+**Heap** adalah pohon biner lengkap dengan sifat urutan tertentu. Ia mendukung akses cepat ke elemen minimum/maksimum.
+
+## Sifat Struktur
+
+```text
+        1
+      /   \
+     3     2
+    / \   /
+   7   5  4
+```
+
+- Pohon **lengkap**: semua level penuh kecuali mungkin terakhir.
+- Min-heap: parent ≤ anak.
+- Akar selalu elemen terkecil.
+
+```text
+indeks:  0  1  2  3  4  5
+nilai :  1  3  2  7  5  4
+
+anak kiri  = 2i + 1
+anak kanan = 2i + 2
+ortu       = (i - 1) // 2
+```
+
+## Operasi
+
+```python
+import heapq
+
+data = [5, 3, 8, 1, 2]
+heapq.heapify(data)           # O(n)
+heapq.heappush(data, 0)       # O(log n)
+print(heapq.heappop(data))    # O(log n) -> 0
+print(data[0])                # O(1) -> elemen minimum
+```
+
+## Priority Queue
+
+```python
+antrean = []
+heapq.heappush(antrean, (1, "urgent"))
+heapq.heappush(antrean, (3, "biasa"))
+heapq.heappush(antrean, (2, "sedang"))
+
+while antrean:
+    print(heapq.heappop(antrean))
+```
+
+| Operasi | Kompleksitas |
+|---|---|
+| build heap | O(n) |
+| push | O(log n) |
+| pop min | O(log n) |
+| peek | O(1) |
+
+<div class="note">💡 heapq di Python adalah **min-heap**. Untuk max-heap, simpan nilai negatif: `heappush(h, -nilai)`.</div>
+
+## Aplikasi
+
+- Dijkstra dan Prim (graf berbobot).
+- Penjadwalan ulang tugas berdasarkan deadline.
+- Top-K terbesar dari streaming data.
+- Merge K list terurut.

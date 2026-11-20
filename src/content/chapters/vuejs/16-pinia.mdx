@@ -1,0 +1,134 @@
+---
+title: "Pinia State Management"
+description: "store, state, getters, actions, dan pemakaian di komponen"
+order: 16
+quiz:
+  - q: "Pinia adalah…"
+    options: ["Library routing", "Test runner", "State manager resmi Vue 3", "Framework CSS"]
+    answer: 2
+    explain: "Menggantikan Vuex sebagai pilihan utama."
+  - q: "Store didefinisikan dengan…"
+    options: ["Vue.store()", "defineStore('nama', opsi)", "createStore()", "new Store()"]
+    answer: 1
+    explain: "Bisa memakai opsi atau setup-style."
+  - q: "Getters di Pinia mirip dengan…"
+    options: ["watch", "method", "filter", "computed"]
+    answer: 3
+    explain: "Nilai turunan yang di-cache."
+  - q: "Actions dipakai untuk…"
+    options: ["Mengimpor komponen", "Logika asynchronous dan mutasi state", "Mengubah CSS", "Membuat rute"]
+    answer: 1
+    explain: "Bisa async/await."
+  - q: "State store bisa diubah langsung dari komponen…"
+    options: ["Ya, tapi sebaiknya lewat action untuk alur jelas", "Tidak pernah", "Hanya lewat getters", "Hanya di template"]
+    answer: 0
+    explain: "Pinia mengizinkan, tapi action menjaga konsistensi."
+example:
+  code: |
+    export const useKeranjang = defineStore('keranjang', {
+      state: () => ({ items: [] }),
+      getters: { total: (s) => s.items.reduce((a, i) => a + i.harga, 0) },
+      actions: { tambah(p) { this.items.push(p); } },
+    });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Pinia menyimpan state global dengan API yang sederhana dan bertipe baik.
+
+## Membuat Store
+
+```js
+// stores/keranjang.js
+import { defineStore } from 'pinia'
+
+export const useKeranjang = defineStore('keranjang', {
+  state: () => ({
+    items: [],
+  }),
+  getters: {
+    jumlah: (state) => state.items.length,
+    total: (state) => state.items.reduce((sum, i) => sum + i.harga, 0),
+  },
+  actions: {
+    tambah(produk) {
+      this.items.push(produk)
+    },
+    hapus(id) {
+      this.items = this.items.filter((i) => i.id !== id)
+    },
+  },
+})
+```
+
+## Setup-style
+
+```js
+export const useKeranjang = defineStore('keranjang', () => {
+  const items = ref([])
+  const total = computed(() => items.value.reduce((s, i) => s + i.harga, 0))
+
+  function tambah(p) { items.value.push(p) }
+
+  return { items, total, tambah }
+})
+```
+
+## Memakai di Komponen
+
+```vue
+<script setup>
+import { useKeranjang } from '@/stores/keranjang'
+import { storeToRefs } from 'pinia'
+
+const keranjang = useKeranjang()
+const { items, total } = storeToRefs(keranjang)
+</script>
+
+<template>
+  <p>{{ items.length }} item — Rp{{ total }}</p>
+  <button @click="keranjang.tambah({ id: 1, harga: 25000 })">Tambah</button>
+</template>
+```
+
+`storeToRefs` menjaga reaktivitas saat mendestrukturi state/getters.
+
+## Action Async
+
+```js
+actions: {
+  async muat() {
+    this.loading = true
+    try {
+      this.items = await api.daftar()
+    } finally {
+      this.loading = false
+    }
+  },
+}
+```
+
+<div class="note">💡 Pakai Pinia untuk state yang benar-benar lintas halaman (keranjang, sesi user, preferensi). State lokal satu komponen cukup dengan `ref`.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan store Pinia: state + getter + action
+function defineStore(nama, opsi) {
+  const state = opsi.state();
+  const getters = {
+    total: () => state.items.reduce((s, i) => s + i.harga, 0),
+  };
+  return {
+    ...state,
+    getters,
+    tambah(p) { state.items.push(p); },
+    lihat() { return state; },
+  };
+}
+
+const k = defineStore("keranjang", { state: () => ({ items: [] }) });
+k.tambah({ harga: 25000 });
+k.tambah({ harga: 12000 });
+console.log(k.lihat().items.length, k.getters.total());`} />

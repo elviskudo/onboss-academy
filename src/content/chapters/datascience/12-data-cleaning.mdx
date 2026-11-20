@@ -1,0 +1,116 @@
+---
+title: "Pembersihan Data"
+description: "missing value, duplikat, tipe salah, normalisasi teks, dan validasi"
+order: 12
+quiz:
+  - q: "Duplikat pada data dapat menyebabkan…"
+    options: ["Urutan berubah", "Ringkasan bias", "Data hilang", "Query lebih cepat"]
+    answer: 1
+    explain: "Baris ganda melebih-lebihkan jumlah dan total."
+  - q: "Missing value ditandai dengan…"
+    options: ["Angka 0 selalu", "Tidak ada", "None atau NaN", "String kosong selalu"]
+    answer: 2
+    explain: "Python memakai None; library data memakai NaN."
+  - q: "Normalisasi teks bertujuan…"
+    options: ["Menghapus semua huruf", "Membuat data lebih panjang", "Mengubah tipe jadi angka", "Menyamakan format"]
+    answer: 3
+    explain: "Misalnya \" jakarta \" → \"jakarta\"."
+  - q: "Cara aman mengisi missing pada data numerik adalah…"
+    options: ["Dengan menghapus seluruh kolom", "Dengan median atau mean", "Dengan string acak", "Dengan nilai 0 selalu"]
+    answer: 1
+    explain: "Imputasi median tahan outlier."
+  - q: "Validasi data dilakukan untuk…"
+    options: ["Menghapus indeks", "Menambah duplikat", "Memastikan aturan terpenuhi", "Mempercantik tampilan"]
+    answer: 2
+    explain: "Contoh: umur tidak boleh negatif."
+example:
+  code: |
+    data=[{"nama":" Ana "},{"nama":"Ana"},{"nama":"Budi","umur":None}]
+    bersih=[]
+    seen=set()
+    for row in data:
+        nama=row["nama"].strip().title()
+        if nama in seen: continue
+        seen.add(nama)
+        bersih.append({**row,"nama":nama})
+    print(bersih)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Langkah Pembersihan
+
+1. Periksa struktur dan tipe.
+2. Temukan duplikat.
+3. Tangani nilai kosong.
+4. Seragamkan format teks.
+5. Validasi aturan bisnis.
+
+## Mendeteksi Duplikat
+
+```python
+baris = [
+    {"kode": "A1", "nama": "Keyboard"},
+    {"kode": "A1", "nama": "Keyboard"},
+]
+kode = set()
+for r in baris:
+    if r["kode"] in kode:
+        print("Duplikat:", r["kode"])
+    kode.add(r["kode"])
+```
+
+## Nilai Kosong
+
+```python
+nilai = [10, None, 20, None]
+bersih = [x for x in nilai if x is not None]
+rata = sum(bersih) / len(bersih)
+
+diisi = [rata if x is None else x for x in nilai]
+print(diisi)
+```
+
+Memilih antara **membuang** dan **mengisi** bergantung pada jumlah data hilang. Kalau lebih dari 30% kolom kosong, mengisi dengan angka buatan bisa menyesatkan.
+
+## Menyamakan Teks
+
+```python
+data = [" jakarta ", "JAKARTA", "Jakarta"]
+bersih = sorted({x.strip().title() for x in data})
+print(bersih)  # ['Jakarta']
+```
+
+## Validasi
+
+```python
+def valid(umur, email):
+    return 0 <= umur <= 120 and "@" in email
+
+print(valid(25, "a@b.com"))
+```
+
+<div class="note">💡 Simpan log pembersihan: berapa baris dibuang, kolom apa diisi, dan dengan nilai apa. Tanpa log, hasil analisis sulit direproduksi.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`baris = [
+    {"kode": "A1", "nama": " keyboard "},
+    {"kode": "A1", "nama": "Keyboard"},
+    {"kode": "B2", "nama": "mouse", "harga": None},
+]
+
+bersih, terlihat = [], set()
+for r in baris:
+    if r["kode"] in terlihat:
+        continue
+    terlihat.add(r["kode"])
+    r = dict(r)
+    r["nama"] = r["nama"].strip().title()
+    if r.get("harga") is None:
+        r["harga"] = 0
+    bersih.append(r)
+
+print(bersih)`} />

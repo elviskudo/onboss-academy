@@ -1,0 +1,108 @@
+---
+title: "GROUP BY, HAVING, dan Agregat MySQL"
+description: "COUNT, SUM, AVG, GROUP_CONCAT, dan filter grup"
+order: 15
+quiz:
+  - q: "Fungsi untuk menggabungkan nilai string per grup adalah…"
+    options: ["GROUP_CONCAT()", "CONCAT()", "STRING_AGG() di MySQL", "JOIN()"]
+    answer: 0
+    explain: "GROUP_CONCAT menggabungkan nilai menjadi satu string."
+  - q: "COUNT(kolom) berbeda dari COUNT(*) karena…"
+    options: ["Mengabaikan NULL", "Lebih cepat", "Menghitung duplikat", "Menghitung kolom"]
+    answer: 0
+    explain: "COUNT(kolom) tidak menghitung baris dengan nilai NULL."
+  - q: "HAVING dipakai untuk memfilter…"
+    options: ["Baris mentah", "Hasil agregasi per grup", "Index", "Tabel"]
+    answer: 1
+    explain: "HAVING dijalankan setelah GROUP BY."
+  - q: "WITH ROLLUP pada GROUP BY menghasilkan…"
+    options: ["Baris total tambahan", "Error", "Duplikat grup", "Urutan terbalik"]
+    answer: 0
+    explain: "WITH ROLLUP menambah baris ringkasan tingkat atas."
+  - q: "GLOBAL di GROUP_CONCAT berarti…"
+    options: ["Semua grup digabung", "Semua nilai dipisah koma", "Group hanya satu", "Hasil diurutkan"]
+    answer: 1
+    explain: "GROUP_CONCAT default memisah dengan koma; SEPARATOR mengubahnya."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS n, ROUND(AVG(gaji)) AS rata FROM karyawan GROUP BY dept HAVING n>=2;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Agregasi merangkum banyak baris menjadi satu angka atau ringkasan per grup. MySQL menambahkan `GROUP_CONCAT` yang sangat berguna untuk mengumpulkan daftar nilai.
+
+## Fungsi Agregat
+
+| Fungsi | Arti |
+| --- | --- |
+| `COUNT(*)` | jumlah baris termasuk NULL |
+| `COUNT(kolom)` | jumlah nilai non-NULL |
+| `SUM` | total |
+| `AVG` | rata-rata |
+| `MIN`/`MAX` | nilai ekstrem |
+| `GROUP_CONCAT` | gabung nilai string |
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, SUM(gaji) AS total,
+       ROUND(AVG(gaji)) AS rata, MIN(gaji) AS terendah, MAX(gaji) AS tertinggi
+FROM karyawan GROUP BY dept;
+```
+
+## GROUP_CONCAT
+
+```sql
+SELECT dept, GROUP_CONCAT(nama ORDER BY nama SEPARATOR ', ') AS anggota
+FROM karyawan
+GROUP BY dept;
+```
+
+Panjang hasil dibatasi `group_concat_max_len` (default 1024). Untuk daftar panjang, naikkan dengan `SET SESSION group_concat_max_len = 10000;`.
+
+## WHERE vs HAVING
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata
+FROM karyawan
+WHERE gaji >= 7000000
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY rata DESC;
+```
+
+WHERE menyaring baris sebelum dihitung; HAVING menyaring grup setelah dihitung.
+
+## ROLLUP
+
+```sql
+SELECT dept, COUNT(*) AS jumlah
+FROM karyawan
+GROUP BY dept WITH ROLLUP;
+```
+
+Baris tambahan dengan `dept = NULL` adalah total keseluruhan. Bedakan dengan NULL asli memakai `GROUPING(dept)` di MySQL 8.0+.
+
+## ONLY_FULL_GROUP_BY
+
+MySQL 8 mengaktifkan mode SQL `ONLY_FULL_GROUP_BY`: kolom di SELECT harus masuk GROUP BY atau agregat. Ini mencegah hasil yang ambigu dan sejalan dengan standar SQL.
+
+<div class="note">💡 `HAVING jumlah >= 2` boleh memakai alias di MySQL. Di database lain, alias belum tersedia di HAVING sehingga agregat harus diulang.</div>
+
+## Di Dunia Nyata
+
+- **Ringkasan SDM**: jumlah dan rata-rata gaji per departemen.
+- **Daftar anggota**: GROUP_CONCAT untuk menampilkan tim dalam satu sel.
+- **Penjualan**: total omzet per wilayah dan produk terlaris.
+- **Log**: jumlah error per endpoint per hari.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT dept,
+       COUNT(*) AS jumlah,
+       ROUND(AVG(gaji)) AS rata,
+       GROUP_CONCAT(nama ORDER BY nama SEPARATOR ', ') AS anggota
+FROM karyawan
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY jumlah DESC;`} />

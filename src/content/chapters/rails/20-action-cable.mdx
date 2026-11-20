@@ -1,0 +1,107 @@
+---
+"title": "Action Cable"
+"description": "WebSocket realtime dengan channel, subscription, dan broadcast"
+"order": 20
+"quiz":
+- "q": "Action Cable memakai protokol…"
+  "options":
+  - "WebSocket"
+  - "FTP"
+  - "SMTP"
+  - "gRPC"
+  "answer": 0
+  "explain": "WebSocket menyediakan koneksi dua arah yang persistent."
+- "q": "Kelas induk channel adalah…"
+  "options":
+  - "ApplicationCable::Channel"
+  - "ActionCable::Base"
+  - "SocketChannel"
+  - "RealtimeChannel"
+  "answer": 0
+  "explain": "ApplicationCable::Channel mewarisi ActionCable::Channel::Base."
+- "q": "Metode untuk mengirim data ke subscriber adalah…"
+  "options":
+  - "broadcast_to"
+  - "stream_from"
+  - "transmit"
+  - "publish"
+  "answer": 0
+  "explain": "broadcast_to mengirim ke semua subscriber dari sebuah objek."
+- "q": "Metode subscribed dipanggil saat…"
+  "options":
+  - "Koneksi dibuka"
+  - "Client berlangganan channel"
+  - "Server restart"
+  - "Data dihapus"
+  "answer": 1
+  "explain": "subscribed berjalan setelah client meminta subscription."
+- "q": "Mount Action Cable biasanya di…"
+  "options":
+  - "config/routes.rb"
+  - "Gemfile"
+  - "app/views"
+  - "package.json"
+  "answer": 0
+  "explain": "mount ActionCable.server => \"/cable\" ditaruh di routes."
+"example":
+  "code": "class ChatChannel &lt; ApplicationCable::Channel\n  def subscribed\n    stream_from \"chat_#{params[:room]}\"\n  end\n\n  def speak(data)\n    Message.create!(room: params[:room], body: data[\"message\"])\n  end\nend\n\n# dari tempat lain\nActionCable.server.broadcast(\"chat_umum\", message: \"Halo semua!\")\n"
+---
+
+## Arsitektur Singkat
+
+```ruby
+class ChatChannel < ApplicationCable::Channel
+  def subscribed
+    stream_from "chat_#{params[:room]}"
+  end
+
+  def speak(data)
+    Message.create!(room: params[:room], body: data["message"])
+  end
+end
+
+# dari tempat lain
+ActionCable.server.broadcast("chat_umum", message: "Halo semua!")
+```
+
+| Komponen | Peran |
+|---|---|
+| Connection | koneksi WebSocket per browser |
+| Channel | topik logik tempat client berlangganan |
+| Subscriber | client yang bergabung ke channel |
+| Broadcast | pengiriman pesan ke semua subscriber |
+
+## Channel Pertama
+
+```ruby
+class ChatChannel < ApplicationCable::Channel
+  def subscribed
+    stream_from "chat_#{params[:room]}"
+  end
+end
+```
+
+`stream_from` memberi tahu server bahwa client ingin menerima semua pesan untuk nama stream tersebut.
+
+## Client JavaScript
+
+```javascript
+const subscription = consumer.subscriptions.create(
+  { channel: "ChatChannel", room: "umum" },
+  { received(data) { console.log(data.message); } }
+);
+```
+
+`received` dipanggil setiap kali server melakukan broadcast ke stream itu.
+
+## Broadcast dari Model
+
+```ruby
+after_create_commit do
+  ActionCable.server.broadcast("chat_#{room}", message: body)
+end
+```
+
+Di produksi, Action Cable bisa memakai adapter `redis` agar broadcast menjangkau beberapa proses server.
+
+<div class="note">💡 Autentikasi koneksi dilakukan di `ApplicationCable::Connection` lewat `identified_by :current_user`. Jangan mempercayai `params` dari client untuk menentukan identitas pengguna.</div>

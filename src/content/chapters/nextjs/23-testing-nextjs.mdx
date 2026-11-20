@@ -1,0 +1,110 @@
+---
+title: "Testing Next.js"
+description: "unit test, testing komponen, dan pengujian route handler"
+order: 23
+quiz:
+  - q: "Vitest bisa dipakai untuk…"
+    options: ["Membuat rute", "Mengubah CSS", "Unit dan komponen test", "Mengganti database"]
+    answer: 2
+    explain: "Kompatibel dengan proyek Next.js berbasis Vite-tooling."
+  - q: "Komponen Server yang async sebaiknya diuji…"
+    options: ["Tidak bisa", "Sebagai fungsi biasa dengan memanggilnya langsung", "Dengan mount browser", "Lewat CSS"]
+    answer: 1
+    explain: "Kembalikan JSX lalu periksa hasilnya."
+  - q: "Route Handler bisa dipanggil dalam test dengan…"
+    options: ["Membuka browser", "Mengirim email", "Mengubah middleware", "Memanggil GET()/POST() langsung"]
+    answer: 3
+    explain: "Karena berupa fungsi biasa yang mengembalikan Response."
+  - q: "Mock fetch berguna untuk…"
+    options: ["Menambah rute", "Menghindari jaringan sungguhan", "Mempercepat build", "Mengubah warna"]
+    answer: 1
+    explain: "Gunakan vi.fn() atau MSW."
+  - q: "Test end-to-end biasanya memakai…"
+    options: ["Playwright atau Cypress", "Vitest saja", "CSS Module", "next/font"]
+    answer: 0
+    explain: "Menguji alur nyata di browser."
+example:
+  code: |
+    import { GET } from './route';
+
+    test('mengembalikan daftar', async () => {
+      const res = await GET();
+      expect(res.status).toBe(200);
+    });
+---
+
+Next.js tidak punya test runner bawaan, tapi mudah dipasangi alat standar.
+
+## Unit Test Fungsi
+
+```ts
+import { describe, test, expect } from "vitest";
+import { formatHarga } from "@/lib/format";
+
+test("format rupiah", () => {
+  expect(formatHarga(25000)).toBe("Rp25.000");
+});
+```
+
+## Test Komponen
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import Kartu from "./Kartu";
+
+test("menampilkan judul", () => {
+  render(<Kartu judul="Kopi" />);
+  expect(screen.getByText("Kopi")).toBeTruthy();
+});
+```
+
+## Test Route Handler
+
+```ts
+import { GET } from "@/app/api/produk/route";
+
+test("GET mengembalikan 200", async () => {
+  const response = await GET();
+  expect(response.status).toBe(200);
+  const data = await response.json();
+  expect(Array.isArray(data)).toBe(true);
+});
+```
+
+## Mock fetch
+
+```ts
+import { vi } from "vitest";
+
+vi.stubGlobal("fetch", vi.fn(async () => ({
+  ok: true,
+  json: async () => [{ id: 1 }],
+})));
+```
+
+## End-to-End
+
+```bash
+npx playwright test
+```
+
+```ts
+test("user bisa menambah produk", async ({ page }) => {
+  await page.goto("/produk");
+  await page.getByRole("button", { name: "Tambah" }).click();
+  await expect(page.getByText("Berhasil")).toBeVisible();
+});
+```
+
+<div class="note">💡 Kombinasikan: unit test untuk logika, komponen test untuk tampilan, dan Playwright untuk alur penting. Tidak perlu semua lapisan untuk setiap fitur.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`import { GET } from './route';
+
+test('mengembalikan daftar', async () => {
+  const res = await GET();
+  expect(res.status).toBe(200);
+});`}</code></pre>

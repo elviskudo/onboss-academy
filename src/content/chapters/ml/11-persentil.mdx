@@ -1,0 +1,76 @@
+---
+title: "Persentil dan Kuantil"
+description: "persentil, quartil, IQR, box plot mental, dan deteksi outlier"
+order: 11
+quiz:
+  - q: "Persentil ke-90 berarti…"
+    options: ["Rata-rata 90", "90% data di bawahnya", "90% data di atasnya", "Nilai ke-90"]
+    answer: 1
+    explain: "P90 memotong 90% data di bawahnya."
+  - q: "IQR = …"
+    options: ["P90 - P10", "Max - Min", "Q3 - Q1", "Q3 + Q1"]
+    answer: 2
+    explain: "Rentang antarkuartil."
+  - q: "Aturan umum outlier adalah nilai di luar…"
+    options: ["2 × mean", "Std nol", "Median", "1.5 × IQR dari Q1/Q3"]
+    answer: 3
+    explain: "Rule of thumb yang lazim."
+  - q: "Kuartil kedua sama dengan…"
+    options: ["Range", "Median", "Mean", "Modus"]
+    answer: 1
+    explain: "Q2 = median."
+  - q: "Persentil berguna untuk…"
+    options: ["Mengubah label", "Membuat join", "Melihat posisi relatif suatu nilai", "Menghapus data"]
+    answer: 2
+    explain: "Contoh: nilai kamu di P80."
+example:
+  code: |
+    d=sorted([10,12,14,16,18,20])
+    q1=d[len(d)//4]; q3=d[3*len(d)//4]
+    print(q1,q3,q3-q1)
+---
+
+## Definisi
+
+Persentil membagi data menjadi 100 bagian. Kuartil membagi menjadi 4 bagian, desil menjadi 10 bagian.
+
+```python
+import statistics
+
+data = [10, 12, 14, 16, 18, 20]
+q1, q2, q3 = statistics.quantiles(data, n=4)
+print(q1, q2, q3)
+```
+
+## IQR
+
+```python
+iqr = q3 - q1
+bawah = q1 - 1.5 * iqr
+atas = q3 + 1.5 * iqr
+outlier = [x for x in data if x < bawah or x > atas]
+print(outlier)
+```
+
+## Membaca Posisi
+
+| Informasi | Arti |
+| --- | --- |
+| P50 | median |
+| P95 | 95% data lebih rendah |
+| P99 | sering dipakai untuk latensi aplikasi |
+
+<div class="note">💡 Dalam analisis performa, P95 lebih informatif daripada rata-rata: ia menggambarkan pengalaman pengguna yang paling lambat.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`import statistics
+
+data = [10, 12, 14, 16, 18, 20, 100]
+q1, q2, q3 = statistics.quantiles(data, n=4)
+iqr = q3 - q1
+bawah, atas = q1 - 1.5*iqr, q3 + 1.5*iqr
+print("Q1,Q2,Q3:", round(q1,1), round(q2,1), round(q3,1))
+print("Outlier:", [x for x in data if x &gt; atas])`}</code></pre>

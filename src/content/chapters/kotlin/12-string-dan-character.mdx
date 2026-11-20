@@ -1,0 +1,131 @@
+---
+"title": "String dan Character"
+"description": "Mengolah teks dengan string template, raw string, dan metode string Kotlin"
+"order": 12
+"quiz":
+- "q": "Cara menyisipkan variabel ke string Kotlin adalah…"
+  "options":
+  - "{nama}"
+  - "$nama"
+  - "%nama"
+  - "#nama"
+  "answer": 1
+  "explain": "String template memakai $nama atau ${ekspresi}."
+- "q": "Raw string ditulis dengan…"
+  "options":
+  - "Tanda kutip tunggal"
+  - "Backslash"
+  - "Tiga tanda kutip"
+  - "Tanda pagar"
+  "answer": 2
+  "explain": "\"\"\" ... \"\"\" menghasilkan teks apa adanya termasuk baris baru."
+- "q": "Tipe untuk satu karakter adalah…"
+  "options":
+  - "Character"
+  - "String1"
+  - "Byte"
+  - "Char"
+  "answer": 3
+  "explain": "'A' bertipe Char dengan tanda kutip tunggal."
+- "q": "Metode untuk mengubah string menjadi huruf besar adalah…"
+  "options":
+  - "uppercase()"
+  - "toUpper()"
+  - "upper()"
+  - "capitalize()"
+  "answer": 0
+  "explain": "uppercase() mengembalikan string baru dengan huruf kapital."
+- "q": "Hasil \"kotlin\".length adalah…"
+  "options":
+  - "7"
+  - "6"
+  - "8"
+  - "Error"
+  "answer": 1
+  "explain": "Kata \"kotlin\" terdiri dari enam karakter."
+"example":
+  "code": "fun main() {\n    val nama = \"OnBoss\"\n    println(\"Halo, $nama!\")\n    println(\"Panjang: ${nama.length}\")\n\n    val teks = \"\"\"\n        Baris pertama\n        Baris kedua\n    \"\"\".trimIndent()\n    println(teks)\n\n    println(nama.uppercase())\n    println(nama.replace(\"Boss\", \"Siswa\"))\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## String Biasa dan Template
+
+```kotlin
+fun main() {
+    val nama = "OnBoss"
+    println("Halo, $nama!")
+    println("Panjang: ${nama.length}")
+
+    val teks = """
+        Baris pertama
+        Baris kedua
+    """.trimIndent()
+    println(teks)
+
+    println(nama.uppercase())
+    println(nama.replace("Boss", "Siswa"))
+}
+```
+
+```kotlin
+val kota = "Bandung"
+println("Saya tinggal di $kota")
+println("Panjangnya ${kota.length} karakter")
+```
+
+Bentuk `${...}` dipakai untuk ekspresi yang lebih panjang dari sekadar nama variabel.
+
+## Raw String
+
+```kotlin
+val sql = """
+  SELECT * FROM users
+  WHERE aktif = true
+""".trimIndent()
+```
+
+Tiga tanda kutip menghasilkan teks multiline tanpa perlu `\n`. `trimIndent()` menghapus indentasi umum di awal setiap baris.
+
+## Metode yang Sering Dipakai
+
+| Metode | Fungsi | Contoh |
+|---|---|---|
+| `length` | jumlah karakter | `"abc".length` → 3 |
+| `uppercase()` / `lowercase()` | mengubah huruf | `"Kotlin".lowercase()` |
+| `trim()` | membuang spasi tepi | `"  hai  ".trim()` |
+| `replace()` | mengganti teks | `"a-b".replace("-", "/")` |
+| `split()` | memecah jadi list | `"a,b".split(",")` |
+| `contains()` | mengecek keberadaan | `"kotlin".contains("lin")` |
+
+## Char dan Escape
+
+```kotlin
+val huruf = 'A'
+val tab = '\t'
+val garisBaru = '\n'
+```
+
+`Char` selalu satu karakter dan ditulis dengan tanda kutip tunggal.
+
+<div class="note">💡 String di Kotlin bersifat immutable. Metode seperti <code>uppercase()</code> mengembalikan string baru — hasilnya harus ditampung bila ingin dipakai.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val nama = "OnBoss"
+    println("Halo, $nama!")
+    println("Panjang: \${nama.length}")
+
+    val teks = """
+        Baris pertama
+        Baris kedua
+    """.trimIndent()
+    println(teks)
+
+    println(nama.uppercase())
+    println(nama.replace("Boss", "Siswa"))
+}`} />

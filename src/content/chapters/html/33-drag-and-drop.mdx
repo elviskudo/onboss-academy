@@ -1,0 +1,113 @@
+---
+title: "Drag and Drop API"
+description: "Membuat elemen bisa diseret dan dijatuhkan dengan event HTML5"
+order: 33
+quiz:
+  - q: "Atribut yang membuat elemen bisa diseret adalah…"
+    options: ["draggable='true'", "movable='yes'", "drag='on'", "move='true'"]
+    answer: 0
+    explain: "Tambahkan draggable='true' pada elemen."
+  - q: "Event yang dipicu saat elemen mulai diseret adalah…"
+    options: ["dragstart", "drop", "dragend", "dragover"]
+    answer: 0
+    explain: "dragstart dipanggil di elemen yang diseret."
+  - q: "Agar drop diizinkan, event dragover harus…"
+    options: ["Dicegah default-nya", "Diabaikan", "Dihapus", "Diubah jadi click"]
+    answer: 0
+    explain: "event.preventDefault() pada dragover membuka area sebagai drop target."
+  - q: "Event saat elemen dilepas di target adalah…"
+    options: ["drag", "drop", "release", "dragstop"]
+    answer: 1
+    explain: "drop terjadi saat pengguna melepas elemen di area target."
+  - q: "Data dari elemen yang diseret biasanya disimpan dengan…"
+    options: ["event.dataTransfer.setData()", "localStorage", "cookie", "sessionStorage"]
+    answer: 0
+    explain: "dataTransfer adalah wadah resmi Drag and Drop API."
+example:
+  code: |
+    <div id="item" draggable="true"
+         style="width:100px;padding:20px;background:coral;">Seret aku</div>
+    <div id="target" style="width:200px;height:100px;border:2px dashed #888;margin-top:12px;">
+      Jatuhkan di sini
+    </div>
+    
+    <script>
+    const item = document.getElementById('item');
+    const target = document.getElementById('target');
+    
+    item.addEventListener('dragstart', e =>
+      e.dataTransfer.setData('text', e.target.id));
+    
+    target.addEventListener('dragover', e => e.preventDefault());
+    target.addEventListener('drop', e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text');
+      e.target.appendChild(document.getElementById(id));
+    });
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Drag and Drop API membuat elemen bisa diseret dengan mouse dan dijatuhkan di area lain — tanpa library tambahan.
+
+## Alur Event
+
+| Event | Terjadi saat |
+|-------|--------------|
+| `dragstart` | Mulai menyeret |
+| `drag` | Selama menyeret |
+| `dragenter` | Masuk area target |
+| `dragover` | Di atas target |
+| `dragleave` | Keluar target |
+| `drop` | Dilepas di target |
+| `dragend` | Selesai menyeret |
+
+## Langkah Minimal
+
+1. Tambahkan `draggable="true"` pada elemen
+2. Di `dragstart`, simpan identitas dengan `dataTransfer.setData()`
+3. Di target, panggil `event.preventDefault()` pada `dragover`
+4. Di `drop`, ambil data dan pindahkan elemen
+
+## Kenapa dragover Harus dicegah?
+
+Secara default browser tidak mengizinkan drop. Memanggil `preventDefault()` pada `dragover` memberi sinyal bahwa area ini menerima elemen.
+
+## Kasus Penggunaan
+
+- Upload file dengan cara menyeret file ke area
+- Mengurutkan item (to-do list, kanban)
+- Memindahkan foto antar album
+
+<div class="note">💡 Drag and Drop kurang ramah di layar sentuh. Selalu sediakan alternatif seperti tombol "Pindahkan" untuk pengguna mobile.</div>
+
+## Try it Yourself
+
+Seret kotak merah ke area kotak putus-putus.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Drag & Drop</h1>
+  <div id="item" draggable="true"
+       style="width:120px;padding:20px;background:#E44D26;color:white;cursor:grab;">
+    Seret aku
+  </div>
+  <div id="target" style="width:260px;height:100px;border:2px dashed #888;margin-top:12px;padding:10px;">
+    Jatuhkan di sini
+  </div>
+  <script>
+    const item = document.getElementById('item');
+    const target = document.getElementById('target');
+    item.addEventListener('dragstart', e =>
+      e.dataTransfer.setData('text', e.target.id));
+    target.addEventListener('dragover', e => e.preventDefault());
+    target.addEventListener('drop', e => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text');
+      e.target.appendChild(document.getElementById(id));
+    });
+  </script>
+</body>
+</html>`} />

@@ -1,0 +1,90 @@
+---
+title: "Popover API"
+description: "Membuat tooltip dan panel melayang native dengan atribut popover"
+order: 34
+quiz:
+  - q: "Atribut untuk menandai elemen sebagai popover adalah…"
+    options: ["popover", "modal", "overlay", "tooltip"]
+    answer: 0
+    explain: "Cukup tambahkan atribut popover pada elemen."
+  - q: "Atribut yang menghubungkan tombol ke popover adalah…"
+    options: ["popovertarget", "data-target", "href", "for"]
+    answer: 0
+    explain: "popovertarget='id' membuat tombol membuka popover tersebut."
+  - q: "Popover ditutup dengan menekan…"
+    options: ["Esc atau klik di luar", "F5", "Ctrl+C", "Tombol refresh"]
+    answer: 0
+    explain: "Popover native menutup dengan Esc dan light-dismiss."
+  - q: "Nilai popover='manual' berarti…"
+    options: ["Tidak bisa ditutup Esc/klik luar", "Selalu terbuka", "Hanya untuk tooltip", "Tidak didukung"]
+    answer: 0
+    explain: "manual menonaktifkan light-dismiss, cocok untuk menu khusus."
+  - q: "Keunggulan Popover API dibanding JS buatan sendiri adalah…"
+    options: ["Lebih lambat", "Perilaku native: fokus, Esc, stacking", "Hanya untuk gambar", "Perlu library"]
+    answer: 1
+    explain: "Browser mengurus focus management dan urutan lapisan secara otomatis."
+example:
+  code: |
+    <button popovertarget="info">Info</button>
+    <div id="info" popover>
+      <h3>Info Penting</h3>
+      <p>Ini panel popover native.</p>
+    </div>
+    
+    <button popovertarget="tip" popovertargetaction="show">Tampilkan Tip</button>
+    <div id="tip" popover="hint">Tooltip sederhana</div>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Popover API** adalah fitur relatif baru yang memungkinkan panel melayang tanpa JavaScript ribbon.
+
+## Contoh Paling Sederhana
+
+```html
+<button popovertarget="panel">Buka Panel</button>
+
+<div id="panel" popover>
+  Isi panel di sini.
+</div>
+```
+
+Klik tombol — panel muncul. Klik di luar atau tekan Esc — panel hilang.
+
+## Aksi yang Bisa Diatur
+
+```html
+<button popovertarget="panel" popovertargetaction="show">Tampilkan</button>
+<button popovertarget="panel" popovertargetaction="hide">Sembunyikan</button>
+<button popovertarget="panel" popovertargetaction="toggle">Toggle</button>
+```
+
+## Jenis popover
+
+- `popover` — default, mendukung light-dismiss
+- `popover="manual"` — hanya ditutup lewat tombol/JS
+- `popover="hint"` — untuk tooltip, tidak menutup popover lain
+
+## Kenapa Memakainya?
+
+Sebelum ada Popover API, setiap tooltip butuh JavaScript untuk mengatur fokus, urutan lapisan (z-index), dan tombol Esc. Sekarang browser melakukan semuanya.
+
+<div class="note">💡 Popover API didukung browser modern. Tetap sediakan fallback JavaScript untuk browser lama jika audiensmu masih memakainya.</div>
+
+## Try it Yourself
+
+Klik tombol untuk membuka panel popover.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 24px;">
+  <h1>Popover API</h1>
+  <button popovertarget="panel" style="padding:10px 16px;">
+    Buka Panel
+  </button>
+  <div id="panel" popover style="padding:20px;border:1px solid #ccc;border-radius:12px;">
+    <h3>Halo!</h3>
+    <p>Aku muncul tanpa JavaScript.</p>
+  </div>
+</body>
+</html>`} />

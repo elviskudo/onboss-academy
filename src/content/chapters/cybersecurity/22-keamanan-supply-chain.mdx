@@ -1,0 +1,84 @@
+---
+title: "Keamanan Rantai Pasok"
+description: "Dependensi, lockfile, SBOM, dan verifikasi artefak"
+order: 22
+quiz:
+  - q: "Lockfile berguna untuk…"
+    options: ["Menambah fitur UI", "Menghapus log", "Mengunci versi dependensi agar build reproducible", "Mengganti compiler"]
+    answer: 2
+    explain: "Tanpa lockfile, dua build bisa memakai versi library berbeda."
+  - q: "SBOM adalah…"
+    options: ["Cadangan database", "Laporan keuangan", "File konfigurasi jaringan", "Daftar komponen perangkat lunak dalam artefak"]
+    answer: 3
+    explain: "Software Bill of Materials membantu melacak dependensi saat ada kerentanan baru."
+  - q: "Serangan typosquatting memanfaatkan…"
+    options: ["Nama paket yang mirip dengan paket populer", "Kata sandi lemah", "Port terbuka", "Cookie"]
+    answer: 0
+    explain: "Salah ketik satu huruf bisa menginstal paket berbahaya."
+  - q: "Cara mengurangi risiko dependensi adalah…"
+    options: ["Memakai satu akun untuk semua", "Perbarui, audit, dan batasi sumber paket", "Menginstal paket terbaru tanpa pemeriksaan", "Menghapus lockfile"]
+    answer: 1
+    explain: "Audit otomatis membantu menemukan versi dengan CVE."
+  - q: "Tanda tangan artefak berguna untuk…"
+    options: ["Mengganti enkripsi", "Menambah ukuran file", "Memverifikasi bahwa artefak berasal dari pembangun sah", "Mempercepat download"]
+    answer: 2
+    explain: "Verifikasi dilakukan sebelum artefak dipakai di produksi."
+example:
+  code: |
+    # Contoh alur
+    npm ci                 # pakai lockfile, bukan npm install bebas
+    npm audit --omit=dev
+    syft . -o json > sbom.json
+    cosign verify image:1.4.2
+---
+
+Aplikasi modern jarang ditulis dari nol. Sebagian besar kode berasal dari library pihak ketiga—artinya rantai pasok menjadi bagian dari permukaan serangan.
+
+## Risiko Umum
+
+| Risiko | Contoh | Mitigasi |
+|---|---|---|
+| Typosquatting | `reqeusts` mirip `requests` | Teliti nama, gunakan registry tepercaya |
+| Dependency confusion | Paket internal tertarik dari publik | Scope & prioritas registry jelas |
+| Versi usang | CVE pada library lama | Audit + update terjadwal |
+| Paket berisiko | Script install mencurigakan | Tinjau sebelum menambah |
+
+## Lockfile
+
+```bash
+npm ci            # deterministik dari package-lock.json
+pip install -r requirements.txt --require-hashes
+go mod download   # dengan go.sum
+```
+
+Simpan lockfile di repository dan jangan mengabaikan perubahan besarnya tanpa peninjauan.
+
+## SBOM
+
+```bash
+syft . -o spdx-json > sbom.json
+grype sbom:sbom.json
+```
+
+Saat CVE baru diumumkan, SBOM menjawab dengan cepat: "apakah produk kita memakai komponen itu?" Tanpa SBOM, jawabannya butuh pencarian manual.
+
+## Tanda Tangan Artefak
+
+```bash
+cosign sign --key kms://... ghcr.io/tim/app:1.4.2
+cosign verify --key kms://... ghcr.io/tim/app:1.4.2
+```
+
+Verifikasi sebaiknya terjadi di pipeline deploy, bukan hanya di dokumentasi.
+
+<div class="note">💡 Audit otomatis sering menghasilkan temuan yang tidak relevan. Tetap prioritaskan berdasarkan apakah komponen benar-benar dipakai dan bisa dijangkau dari luar.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Pemeriksaan rantai pasok:
+  [ ] lockfile ada dan digunakan
+  [ ] dependensi produksi terpisah dari dev
+  [ ] SBOM dihasilkan tiap rilis
+  [ ] artefak ditandatangani
+  [ ] suspect package dilaporkan`}</code></pre>

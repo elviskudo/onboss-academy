@@ -1,0 +1,158 @@
+---
+title: "Namespace PHP"
+description: "Mengorganisir class dan fungsi dengan namespace serta autoloading"
+order: 16
+quiz:
+  - q: "Namespace dideklarasikan dengan keyword…"
+    options: ["package", "namespace", "module", "use"]
+    answer: 1
+    explain: "Ditulis di baris pertama setelah <?php."
+  - q: "Untuk memanggil class dari namespace lain digunakan…"
+    options: ["include", "use", "require", "import"]
+    answer: 1
+    explain: "Contoh: use App\\Models\\User;"
+  - q: "Dalam namespace, `__NAMESPACE__` berisi…"
+    options: ["Nama class", "Nama namespace saat ini", "Path file", "Nama fungsi"]
+    answer: 1
+    explain: "Magic constant ini berguna untuk debugging."
+  - q: "PSR-4 mengatur tentang…"
+    options: ["Format tanggal", "Autoload class berdasarkan path", "Gaya penamaan variabel", "Koneksi database"]
+    answer: 1
+    explain: "Composer memakai PSR-4 untuk memetakan namespace ke folder."
+  - q: "Deklarasi namespace harus berada…"
+    options: ["Di akhir file", "Sebelum kode lain (kecuali declare)", "Di dalam fungsi", "Setelah echo"]
+    answer: 1
+    explain: "Harus menjadi statement pertama setelah tag PHP."
+example:
+  code: |
+    <?php
+    namespace App\Models;
+    
+    class User {
+        public function __construct(public string $nama) {}
+    }
+    
+    // pemakaian:
+    // use App\Models\User;
+    // $u = new User("Sari");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat aplikasi bertambah besar, nama class seperti `User`, `Product`, atau `Config` mudah bentrok. **Namespace** memberi "folder logika" untuk mengatasi ini.
+
+## Deklarasi
+
+```php
+<?php
+namespace App\Models;
+
+class User {
+    public function __construct(public string $nama) {}
+}
+
+function formatUser(User $u): string {
+    return strtoupper($u->nama);
+}
+```
+
+Namespace dideklarasikan di awal file. Semua class, fungsi, dan konstanta setelahnya menjadi milik namespace tersebut.
+
+## Menggunakan Namespace Lain
+
+```php
+<?php
+namespace App\Controllers;
+
+use App\Models\User;
+use App\Services\EmailService as Mailer;
+
+class UserController {
+    public function __construct(
+        private User $user,
+        private Mailer $mailer
+    ) {}
+}
+```
+
+`use` hanya membuat alias — file tetap perlu di-autoload.
+
+## Tiga Cara Referensi
+
+```php
+<?php
+namespace App\Utils;
+
+new \App\Models\User("Sari"); // fully qualified
+new User("Sari");                 // relatif ke App\Utils
+use App\Models\User;
+new User("Sari");                 // lewat alias
+```
+
+Aturan resolusi: nama tanpa awalan `\` dicari relatif terhadap namespace saat ini, lalu jatuh ke global bila tidak ada.
+
+## Namespace Global
+
+```php
+<?php
+namespace {
+    // kode global di sini
+}
+```
+
+Kalau一处 file berisi beberapa namespace, gunakan kurawal blok seperti contoh di atas.
+
+## Autoload PSR-4 dengan Composer
+
+```json
+{
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  }
+}
+```
+
+Setelah `composer dump-autoload`, class `App\Models\User` otomatis dicari di `src/Models/User.php`.
+
+```php
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
+$user = new App\Models\User("Sari");
+```
+
+## Sub-Namespace
+
+```php
+<?php
+namespace App\Models;
+
+echo __NAMESPACE__; // "App\Models"
+```
+
+<div class="note">💡 Nama namespace memakai backslash (`\\`), bukan slash (`/`). Di dalam string PHP, backslash harus ditulis dua kali: `"App\\Models\\User"`.</div>
+
+## Di Dunia Nyata
+
+- Framework modern (Laravel, Symfony) memakai PSR-4 secara menyeluruh.
+- `App\Services`, `App\Repositories`, `App\Http` adalah struktur folder umum.
+- Konflik dengan class bawaan PHP dihindari dengan namespace aplikasi sendiri.
+
+## Try it Yourself
+
+Tambahkan sub-namespace atau coba referensi class dengan awalan backslash.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+namespace App\Models;
+
+class User {
+    public function __construct(public string $nama) {}
+    public function sapa(): string { return "Halo, " . $this->nama; }
+}
+
+$u = new User("Sari");
+echo $u->sapa() . PHP_EOL;
+echo "Namespace: " . __NAMESPACE__ . PHP_EOL;
+echo "Class: " . User::class . PHP_EOL;`} />

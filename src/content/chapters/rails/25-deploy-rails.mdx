@@ -1,0 +1,102 @@
+---
+"title": "Deploy Rails ke Produksi"
+"description": "Menyiapkan aplikasi untuk produksi: Puma, aset, environment, dan health check"
+"order": 25
+"quiz":
+- "q": "Server web bawaan Rails adalah…"
+  "options":
+  - "Nginx"
+  - "Puma"
+  - "Apache"
+  - "WEBrick"
+  "answer": 1
+  "explain": "Puma adalah server aplikasi default sejak Rails 5."
+- "q": "Perintah precompile aset adalah…"
+  "options":
+  - "bin/rails assets:build"
+  - "npm run build rails"
+  - "bin/rails assets:precompile"
+  - "rails assets:install"
+  "answer": 2
+  "explain": "Perintah ini menghasilkan file CSS/JS versi produksi di public/assets."
+- "q": "Environment produksi dijalankan dengan…"
+  "options":
+  - "RAILS_MODE=production"
+  - "NODE_ENV=production"
+  - "rails env production"
+  - "RAILS_ENV=production"
+  "answer": 3
+  "explain": "Variabel RAILS_ENV menentukan file konfigurasi yang dipakai."
+- "q": "Fungsi Rails credentials adalah…"
+  "options":
+  - "Menyimpan rahasia terenkripsi"
+  - "Mengompres gambar"
+  - "Mengganti migrasi"
+  - "Mengatur rute"
+  "answer": 0
+  "explain": "config/credentials.yml.enc dienkripsi dengan master key."
+- "q": "Health check berguna untuk…"
+  "options":
+  - "Menghapus log"
+  - "Memantau ketersediaan aplikasi"
+  - "Mengganti database"
+  - "Menulis test"
+  "answer": 1
+  "explain": "Endpoint sederhana seperti /up dipakai load balancer untuk mendeteksi instance mati."
+"example":
+  "code": "# config/environments/production.rb\nconfig.public_file_server.enabled = ENV[\"RAILS_SERVE_STATIC_FILES\"].present?\nconfig.force_ssl = true\nconfig.log_level = :info\n\n# perintah di server\nRAILS_ENV=production bin/rails assets:precompile\nRAILS_ENV=production bin/rails db:migrate\nbundle exec puma -C config/puma.rb\n"
+---
+
+
+## Checklist Sebelum Deploy
+
+```ruby
+# config/environments/production.rb
+config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+config.force_ssl = true
+config.log_level = :info
+
+# perintah di server
+RAILS_ENV=production bin/rails assets:precompile
+RAILS_ENV=production bin/rails db:migrate
+bundle exec puma -C config/puma.rb
+```
+
+| Langkah | Perintah / File | Alasan |
+|---|---|---|
+| Pasang gem produksi | `bundle install --without development test` | ukuran image lebih kecil |
+| Precompile aset | `bin/rails assets:precompile` | CSS/JS siap disajikan |
+| Migrasi database | `bin/rails db:migrate` | skema sesuai kode |
+| Rahasia | Rails credentials / ENV | jangan commit password |
+| Mode produksi | `RAILS_ENV=production` | caching dan error handling aktif |
+
+## Puma
+
+```ruby
+# config/puma.rb
+workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+threads threads_count, threads_count
+port ENV.fetch("PORT") { 3000 }
+```
+
+Worker adalah proses terpisah; thread berjalan di dalam worker. Di container, jumlah worker biasanya disesuaikan dengan CPU yang tersedia.
+
+## Logging dan Monitoring
+
+```ruby
+config.logger = ActiveSupport::Logger.new(STDOUT)
+config.log_tags = [:request_id]
+```
+
+Di platform container, log ke stdout dikumpulkan oleh orkestrator. `request_id` membantu melacak satu request lintas baris log.
+
+## Health Check
+
+```ruby
+get "/up" => "rails/health#show", as: :rails_health_check
+```
+
+Endpoint ini mengembalikan 200 bila aplikasi dan database bisa diakses. Load balancer memakainya untuk memutuskan apakah instance boleh menerima traffic.
+
+<div class="note">💡 Selalu jalankan migrasi sebagai langkah deploy terpisah, sebelum mengalihkan traffic ke versi baru. Migrasi yang mengubah data besar sebaiknya dilakukan saat jam sepi.</div>

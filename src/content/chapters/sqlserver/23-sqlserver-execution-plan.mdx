@@ -1,0 +1,92 @@
+---
+title: "Execution Plan dan Query Tuning"
+description: "Estimated vs Actual plan, operator scan/seek, statistik, parameter sniffing, dan hints"
+order: 23
+quiz:
+  - q: "Tombol untuk menampilkan rencana eksekusi aktual di SSMS adalah…"
+    options: ["Design Table", "Include Actual Execution Plan", "Show Results Only", "Messages"]
+    answer: 1
+    explain: "Actual plan menampilkan jumlah baris yang benar-benar lewat tiap operator."
+  - q: "Operator yang menandakan indeks terpakai adalah…"
+    options: ["Sort", "Hash Match", "Index Seek", "Table Scan"]
+    answer: 2
+    explain: "Index Seek langsung menuju rentang kunci."
+  - q: "Statistik used pada SQL Server membantu…"
+    options: ["Mengenkripsi data", "Membuat backup", "Mengurutkan indeks", "Optimizer memperkirakan jumlah baris"]
+    answer: 3
+    explain: "Statistik usang membuat estimasi salah dan rencana buruk."
+  - q: "Parameter sniffing terjadi ketika…"
+    options: ["Statistik di-update", "Optimizer memakai nilai parameter pertama saat menyusun plan", "Query tanpa parameter", "Indeks dihapus"]
+    answer: 1
+    explain: "Nilai parameter yang tidak representatif menghasilkan plan yang buruk untuk eksekusi berikutnya."
+  - q: "Perintah memperbarui statistik adalah…"
+    options: ["REBUILD INDEX saja", "DBCC STATS", "UPDATE STATISTICS", "REFRESH STATS"]
+    answer: 2
+    explain: "UPDATE STATISTICS dbo.tabel; memperbarui distribusi nilai."
+example:
+  code: |
+    SET STATISTICS IO ON;
+    SELECT nama FROM dbo.siswa WHERE kelas = 'A';
+    UPDATE STATISTICS dbo.siswa;
+    EXEC sp_who2;
+---
+
+## Membaca Rencana
+
+Rencana eksekusi dibaca **kanan ke kiri, bawah ke atas**. Operator di kanan menghasilkan data, operator di kiri mengonsumsinya.
+
+| Operator | Arti |
+| --- | --- |
+| Clustered Index Seek | indeks dipakai, langsung ke baris |
+| Clustered Index Scan | seluruh indeks dibaca |
+| Table Scan | tidak ada indeks yang cocok |
+| Key Lookup | mengambil field tambahan dari tabel |
+| Hash Match | join/agregasi berbasis hash |
+
+## Estimated versus Actual
+
+- **Estimated**: perkiraan optimizer sebelum query jalan.
+- **Actual**: jumlah baris dan waktu nyata setelah query jalan.
+
+Selisih besar antara estimasi dan aktual hampir selalu berarti statistik usang atau predikat yang sulit diperkirakan (misalnya fungsi pada kolom).
+
+## Statistik
+
+```sql
+UPDATE STATISTICS dbo.siswa;
+EXEC sp_refreshview dbo.vKaryawanAktif;
+```
+
+Auto Update Statistics biasanya aktif, tetapi tabel dengan perubahan sangat cepat kadang perlu pembaruan manual.
+
+## Parameter Sniffing
+
+```sql
+CREATE PROCEDURE dbo.cari @kota NVARCHAR(50) AS
+SELECT * FROM dbo.pelanggan WHERE kota = @kota;
+GO
+EXEC dbo.cari @kota = N'Jakarta';
+```
+
+Saat pertama dijalankan dengan `Jakarta` (jutaan baris), optimizer memilih scan. Eksekusi berikutnya dengan kota kecil tetap memakai plan itu. Solusinya: `OPTION (RECOMPILE)`, `OPTIMIZE FOR UNKNOWN`, atau memisahkan prosedur untuk pola data yang sangat berbeda.
+
+## Hints: Terakhir, Bukan Pertama
+
+```sql
+SELECT * FROM dbo.siswa WITH (INDEX(ix_kelas)) WHERE kelas = 'A';
+```
+
+Query hint memaksa pilihan optimizer. Pakai hanya setelah analisis matang — sering kali perbaikan yang lebih baik adalah indeks baru atau rewrite query.
+
+<div class="note">💡 Hindari `SELECT *`. Selain memakan bandwidth, ia mencegah covering index karena optimizer harus mengambil hampir semua kolom dari tabel.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`SET STATISTICS IO ON;
+CREATE TABLE #t (id INT, kelas CHAR(1));
+INSERT INTO #t VALUES (1, 'A'), (2, 'B');
+SELECT id FROM #t WHERE kelas = 'A';
+DROP TABLE #t;
+SET STATISTICS IO OFF;`}</code></pre>

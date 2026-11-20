@@ -1,0 +1,93 @@
+---
+title: "Symbol, Emoji, Charset & URL Encode"
+description: "Menampilkan simbol khusus, emoji, character set, dan pengkodean URL"
+order: 23
+quiz:
+  - q: "Cara menulis entity untuk tanda `<` adalah…"
+    options: ["&lt;", "&gt;", "&amp;", "&nbsp;"]
+    answer: 0
+    explain: "&lt; = less than, mencegah browser mengira itu tag."
+  - q: "Entity untuk spasi tanpa putus adalah…"
+    options: ["&amp;", "&nbsp;", "&copy;", "&quot;"]
+    answer: 1
+    explain: "&nbsp; = non-breaking space."
+  - q: "Charset yang paling disarankan untuk web modern adalah…"
+    options: ["ISO-8859-1", "UTF-8", "ASCII", "Windows-1252"]
+    answer: 1
+    explain: "UTF-8 mendukung hampir semua karakter dunia termasuk emoji."
+  - q: "Emoji 😊 di HTML bisa ditulis langsung asalkan…"
+    options: ["Charset UTF-8", "Memakai tag <img>", "File berekstensi .emoji", "Browser versi lama"]
+    answer: 0
+    explain: "Dengan UTF-8, emoji bisa ditulis langsung di file HTML."
+  - q: "Spasi pada URL dikodekan sebagai…"
+    options: ["%20", "&nbsp;", "+", "spasi biasa"]
+    answer: 0
+    explain: "URL encoding memakai %20 untuk spasi."
+example:
+  code: |
+    <p>Kurang: &lt;  Lebih: &gt;</p>
+    <p>Ampersand: &amp;  Kutip: &quot;</p>
+    <p>Hak cipta: &copy; 2026</p>
+    <p>Emoji: 😊 🚀 🎉</p>
+    <p><meta charset="UTF-8"></p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Kadang kamu butuh menampilkan karakter yang bentrok dengan sintaks HTML, atau karakter yang tidak ada di keyboard.
+
+## Character Entities
+
+Beberapa karakter punya arti khusus di HTML, jadi harus ditulis dengan entity:
+
+| Karakter | Entity | Nama |
+|----------|--------|------|
+| `<` | `&lt;` | less than |
+| `>` | `&gt;` | greater than |
+| `&` | `&amp;` | ampersand |
+| `"` | `&quot;` | quote |
+| spasi | `&nbsp;` | non-breaking space |
+| © | `&copy;` | copyright |
+
+## Simbol & Emoji
+
+Ada ribuan entity simbol, tapi emoji bisa langsung ditulis kalau charset UTF-8:
+
+```html
+<meta charset="UTF-8">
+<p>Halo 😊 selamat belajar 🚀</p>
+```
+
+Untuk simbol matematika atau panah, kamu juga bisa memakai **numeric entity**:
+
+```html
+<p>Panah: &#8594;  Sigma: &Sigma;</p>
+```
+
+## URL Encoding
+
+URL tidak boleh mengandung spasi atau karakter khusus tertentu. Karena itu spasi dikodekan jadi `%20`:
+
+```
+Belajar HTML  →  Belajar%20HTML
+```
+
+Fungsi JavaScript `encodeURIComponent()` bisa melakukan ini otomatis.
+
+<div class="note">💡 Selalu taruh <code>&lt;meta charset="UTF-8"&gt;</code> sebagai elemen pertama di <code>&lt;head&gt;</code> supaya emoji dan simbol terbaca dengan benar.</div>
+
+## Try it Yourself
+
+Tambahkan emoji favoritmu dan coba entity `&copy;`.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Simbol & Emoji 😊</h1>
+  <p>Kurang: &lt; Lebih: &gt; Ampersand: &amp;</p>
+  <p>&copy; 2026 OnBoss Academy 🚀</p>
+</body>
+</html>`} />

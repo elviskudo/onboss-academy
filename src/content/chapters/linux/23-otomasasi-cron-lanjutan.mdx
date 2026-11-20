@@ -1,0 +1,130 @@
+---
+title: 'Penjadwalan Lanjutan: cron, systemd timer, dan anacron'
+description: Memilih penjadwalah yang tepat untuk tugas berulang pada server.
+order: 23
+quiz:
+- q: Format cron memiliki berapa kolom waktu?
+  options:
+  - '3'
+  - '6'
+  - '7'
+  - '5'
+  answer: 3
+  explain: menit, jam, hari-bulan, bulan, hari-minggu.
+- q: Ekspresi `0 3 * * *` berarti…
+  options:
+  - Tiap jam 3 pagi
+  - Tiap menit ke-3
+  - Tiap 3 hari
+  - Setiap bulan Maret
+  answer: 0
+  explain: Jam 03:00 setiap hari.
+- q: Keunggulan systemd timer dibanding cron adalah…
+  options:
+  - Tidak bisa dijalankan
+  - Bisa menangani depends dan logging terintegrasi
+  - Lebih tua
+  - Hanya untuk root
+  answer: 1
+  explain: Timer bisa memakai OnBoot, OnCalendar, dan unit dependensi.
+- q: anacron berguna untuk…
+  options:
+  - Menghapus log
+  - Mengatur jaringan
+  - Menjalankan tugas yang terlewat saat mati
+  - Mengganti cron完全
+  answer: 2
+  explain: Cron tidak menjalankan job yang terlewat saat mesin mati.
+- q: Perintah melihat crontab pengguna saat ini adalah…
+  options:
+  - cron -list
+  - crontab -e -l
+  - cat /etc/cron
+  - crontab -l
+  answer: 3
+  explain: crontab -e untuk mengedit.
+example:
+  code: 'crontab -l
+
+    # 0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+
+
+    systemctl list-timers --all
+
+    # /etc/systemd/system/backup.timer
+
+    # OnCalendar=daily
+
+    # Persistent=true
+
+    '
+---
+
+
+Tugas berulang bisa dijalankan dengan cron klasik atau systemd timer modern. Memilih yang tepat menghindari jadwal yang diam-diam tidak jalan.
+
+## Cron
+
+```text
+* * * * *  perintah
+│ │ │ │ │
+│ │ │ │ └── hari dalam minggu (0-7)
+│ │ │ └──── bulan (1-12)
+│ │ └────── hari dalam bulan (1-31)
+│ └──────── jam (0-23)
+└────────── menit (0-59)
+```
+
+```bash
+0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1
+*/15 * * * * /usr/local/bin/cek-kesehatan.sh
+0 9 * * 1-5 /usr/local/bin/laporan-harian.sh
+```
+
+| Pola | Arti |
+|---|---|
+| `*/5` | tiap 5 unit |
+| `1,15` | pada 1 dan 15 |
+| `1-5` | rentang |
+| `0` | tepat pada 0 |
+
+## systemd Timer
+
+```ini
+# backup.timer
+[Unit]
+Description=Backup harian
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+```bash
+systemctl daemon-reload
+systemctl enable --now backup.timer
+systemctl list-timers
+```
+
+`Persistent=true` membuat tugas yang terlewat saat mesin mati dijalankan saat boot.
+
+## Perbandingan
+
+| Aspek | cron | systemd timer |
+|---|---|---|
+| Sintaks | ringkas | butuh unit file |
+| Log | sendiri | journald |
+| Job terlewat | tidak dijalankan | bisa ditunda |
+| Dependencies | tidak ada | ada |
+| Monitoring | perlu extra | `systemctl status` |
+
+<div class="note">💡 Selalu alihkan output cron ke log. Job yang gagal tanpa jejak adalah sumber masalah yang sulit dilacak.</div>
+
+## Praktik Baik
+
+- Simpan skrip di `/usr/local/bin`, bukan di home pengguna.
+- Gunakan path absolut di crontab — `PATH` di cron sangat terbatas.
+- Tambahkan locking (`flock`) agar job tidak tumpang tindih.

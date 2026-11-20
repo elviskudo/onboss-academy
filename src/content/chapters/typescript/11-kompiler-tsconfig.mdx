@@ -1,0 +1,138 @@
+---
+title: "Kompiler & tsconfig.json"
+description: "Memahami tsc, opsi kompilasi, dan konfigurasi proyek TypeScript"
+order: 11
+quiz:
+  - q: "Perintah untuk mengompilasi file TypeScript adalah…"
+    options: ["tsc", "node", "npm run", "ts-node saja"]
+    answer: 0
+    explain: "tsc adalah TypeScript Compiler bawaan."
+  - q: "Opsi `noEmit: true` pada tsconfig berarti…"
+    options: ["Tidak menghasilkan file JS", "Tidak ada error", "Tidak ada type checking", "Hanya untuk library"]
+    answer: 0
+    explain: "Cocok kalau build ditangani bundler seperti Vite."
+  - q: "Opsi `strict: true` akan…"
+    options: ["Mengaktifkan semua pemeriksaan ketat", "Menonaktifkan tipe", "Membuat kode lebih cepat", "Mengubah sintaks"]
+    answer: 0
+    explain: "Termasuk noImplicitAny, strictNullChecks, dan lainnya."
+  - q: "`target: ES2020` menentukan…"
+    options: ["Versi JavaScript hasil kompilasi", "Versi TypeScript", "Nama file output", "Level strict"]
+    answer: 0
+    explain: "Compiler menurunkan sintaks sesuai target yang diminta."
+  - q: "File yang dikecualikan dari kompilasi ditulis di…"
+    options: ["exclude", "skip", "ignore", "omit"]
+    answer: 0
+    explain: "Biasanya exclude berisi node_modules dan folder build."
+example:
+  code: |
+    {
+      "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "strict": true,
+        "outDir": "dist"
+      },
+      "include": ["src"]
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript bukan dijalankan langsung oleh browser. Kode kamu harus dikompilasi menjadi JavaScript oleh `tsc` atau oleh bundler yang memakai compiler tersebut.
+
+## Alur Kerja Kompilasi
+
+```bash
+npm install -D typescript
+npx tsc --init        # membuat tsconfig.json
+npx tsc               # kompilasi sekali
+npx tsc --noEmit      # hanya cek tipe
+npx tsc --watch       # pantau perubahan
+```
+
+File `.ts` berubah menjadi `.js`. Kalau memakai `sourceMap: true`, dihasilkan juga `.js.map` untuk memetakan error kembali ke kode aslinya.
+
+## Struktur tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
+```
+
+## Opsi yang Paling Berdampak
+
+| Opsi | Efek |
+|------|------|
+| `strict` | Paket pemeriksaan ketat sekaligus |
+| `noImplicitAny` | Error kalau tipe tidak bisa disimpulkan |
+| `strictNullChecks` | `null`/`undefined` tidak otomatis bisa ditugaskan |
+| `noUnusedLocals` | Error pada variabel yang tidak dipakai |
+| `exactOptionalPropertyTypes` | Opsional tidak sama dengan `undefined` eksplisit |
+| `noUncheckedIndexedAccess` | Akses array/record bisa `undefined` |
+
+## Target vs Module
+
+- `target` mengatur **sintaks** JavaScript output (apakah arrow function diturunkan ke `function`).
+- `module` mengatur **sistem module** (`ESNext`, `CommonJS`, `NodeNext`).
+
+Memilih keduanya harus selaras dengan tempat kode dijalankan. Proyek Next.js/Vite memakai `ESNext`; proyek Node lama bisa memakai `CommonJS`.
+
+## File Deklarasi (.d.ts)
+
+```ts
+declare module "pustaka-tanpa-tipe" {
+  export function proses(input: string): number;
+}
+```
+
+File `.d.ts` hanya berisi tipe, tanpa implementasi. `@types/nama-paket` dari npm adalah cara paling umum mendapatkan deklarasi untuk library JavaScript.
+
+## Type Checking di Editor vs Build
+
+Editor (VS Code) memakai TypeScript Language Service untuk memberi squiggly merah saat kamu mengetik. Itu berbeda dengan hasil `tsc`. Selalu jalankan `tsc --noEmit` di CI agar pemeriksaan tidak hanya bergantung pada editor.
+
+<div class="note">💡 `skipLibCheck: true` mempercepat kompilasi dengan tidak mengecek file `.d.ts` di node_modules. Aman untuk kebanyakan proyek aplikasi.</div>
+
+## Di Dunia Nyata
+
+- Monorepo memakai `extends` untuk membagi konfigurasi dasar antar paket.
+- `paths` memungkinkan import `@/components/Button` tanpa `../../../`.
+- `tsc --noEmit` dipasang sebagai script `npm run typecheck` sebelum deploy.
+
+## Try it Yourself
+
+Ubah salah satu nilai menjadi tipe yang salah untuk melihat bagaimana compiler bereaksi.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`// Contoh yang akan diperiksa tsc:
+interface Produk {
+  id: number;
+  nama: string;
+  harga?: number;
+}
+
+const daftar: Produk[] = [
+  { id: 1, nama: "Kopi" },
+  { id: 2, nama: "Teh", harga: 15000 }
+];
+
+const ringkas = daftar.map(p => ({
+  ...p,
+  harga: p.harga ?? 0
+}));
+
+console.log(JSON.stringify(ringkas, null, 2));`} />

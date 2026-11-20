@@ -1,0 +1,125 @@
+---
+title: "Let, Const & Scope"
+description: "Perbedaan var, let, const serta ruang lingkup blok dan global"
+order: 12
+quiz:
+  - q: "Deklarasi yang nilai variabelnya tidak bisa di-assign ulang adalah…"
+    options: ["var", "let", "const", "dynamic"]
+    answer: 2
+    explain: "const mencegah penugasan ulang, bukan membuat objek di dalamnya immutable."
+  - q: "Variabel `let` memiliki scope…"
+    options: ["Fungsi", "Blok", "Global", "Modul"]
+    answer: 1
+    explain: "Let hidup di dalam kurawal terdekat."
+  - q: "Variabel `var` memiliki scope…"
+    options: ["Blok", "Fungsi", "Global saja", "Modul"]
+    answer: 1
+    explain: "Var tidak mengenal blok — ia naik ke fungsi terdekat."
+  - q: "Mengakses variabel `let` sebelum deklarasi menyebabkan…"
+    options: ["undefined", "ReferenceError (TDZ)", "null", "Tidak apa-apa"]
+    answer: 1
+    explain: "Temporal Dead Zone membuatnya error sampai baris deklarasi tercapai."
+  - q: "`const objek = {a:1}; objek.a = 2;` akan…"
+    options: ["Error", "Berhasil mengubah properti", "Menghapus objek", "Membuat salinan"]
+    answer: 1
+    explain: "Const hanya mengunci binding, bukan isi objek/array."
+example:
+  code: |
+    const PI = 3.14;
+    let skor = 0;
+    skor += 10;
+    
+    if (true) {
+      let hanyaDiBlok = "halo";
+      var bocorKeFungsi = "masih ada";
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Pemilihan kata kunci deklarasi menentukan **di mana variabel bisa diakses** dan **apakah boleh diubah**. Kode modern hampir selalu memakai `const`, lalu `let` hanya saat memang perlu reassignment.
+
+## Perbandingan var, let, const
+
+| Fitur | `var` | `let` | `const` |
+|-------|-------|-------|---------|
+| Scope | Fungsi | Blok | Blok |
+| Bisa diubah | Ya | Ya | Tidak (binding) |
+| Hoisting | Ya (undefined) | TDZ | TDZ |
+| Deklarasi ulang | Boleh | Error | Error |
+| Dianjurkan | ❌ | ✅ | ✅✅ |
+
+## Scope Blok
+
+```js
+if (true) {
+  let pesan = "dalam blok";
+  var bocor = "keluar blok";
+}
+console.log(bocor);  // "keluar blok"
+console.log(pesan);  // ReferenceError
+```
+
+Blok adalah apa pun di antara `{` dan `}` — termasuk badan `if`, `for`, `while`, dan fungsi.
+
+## TDZ (Temporal Dead Zone)
+
+```js
+console.log(x); // undefined (var)
+var x = 5;
+
+console.log(y); // ReferenceError
+let y = 5;
+```
+
+Meski `let` secara teknis "diangkat" ke atas, ia tidak boleh diakses sampai baris deklarasinya dijalankan.
+
+## Const tidak Membekukan Objek
+
+```js
+const pengguna = { nama: "Sari" };
+pengguna.nama = "Budi";   // ✅ boleh
+pengguna = { nama: "Andi" }; // ❌ TypeError
+
+const daftar = [1, 2];
+daftar.push(3); // ✅ boleh
+```
+
+Kalau ingin benar-benar membekukan, pakai `Object.freeze(pengguna)` (dangkal) atau deep freeze.
+
+## Scope Global dan Window
+
+```js
+var legacy = "aku masuk window";
+let modern = "aku tidak";
+
+console.log(window.legacy); // "aku masuk window"
+console.log(window.modern); // undefined
+```
+
+Di browser, `var` di level teratas menjadi properti `window` — sumber banyak konflik. `let`/`const` tidak.
+
+<div class="note">💡 Mulailah dengan `const` untuk semua variabel. Kalau linter mengeluh karena nilai diubah, baru ganti ke `let`. Pola ini mencegah bug reassignment tidak sengaja.</div>
+
+## Di Dunia Nyata
+
+- Konfigurasi, URL API, dan konstanta matematika memakai `const`.
+- Counter perulangan memakai `let` karena nilainya berubah tiap iterasi.
+- Library modern memakai ES module, sehingga variabel tidak pernah mencemari `window`.
+
+## Try it Yourself
+
+Hapus komentar pada baris terakhir atau ubah `let` menjadi `var` untuk menguji scope.
+
+<TryIt lang="javascript" runtime="client-js" code={`const appName = "Belajar JS";
+let counter = 0;
+counter += 1;
+console.log(appName, counter);
+
+if (true) {
+  let blok = "hanya di sini";
+  var bocor = "masih terbaca";
+  console.log(blok);
+}
+console.log(bocor);
+// console.log(blok); // hapus komentar untuk melihat ReferenceError`} />

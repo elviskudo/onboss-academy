@@ -1,0 +1,67 @@
+---
+title: "Distribusi Normal"
+description: "lonceng, aturan 68-95-99.7, z-score, dan kenapa banyak model mengasumsikannya"
+order: 12
+quiz:
+  - q: "Distribusi normal berbentuk…"
+    options: ["Miring kanan", "Lonceng simetris", "Segitiga", "Rata"]
+    answer: 1
+    explain: "Mean, median, modus berada di tengah."
+  - q: "Aturan empiris menyebutkan sekitar 68% data berada dalam…"
+    options: ["3 std", "IQR", "1 std dari mean", "2 std"]
+    answer: 2
+    explain: "68-95-99.7."
+  - q: "z-score menunjukkan…"
+    options: ["Nilai mutlak", "Persentase data", "Jumlah sampel", "Jumlah std dari mean"]
+    answer: 3
+    explain: "z = (x - mean) / std."
+  - q: "z = 0 berarti nilai…"
+    options: ["Maksimum", "Sama dengan mean", "Outlier", "Negatif"]
+    answer: 1
+    explain: "Tidak ada penyimpangan."
+  - q: "Banyak algoritma mengasumsikan normal pada…"
+    options: ["Nama fitur", "Jumlah baris", "Residual atau error", "Label string"]
+    answer: 2
+    explain: "Asumsi lebih sering pada error, bukan fitur mentah."
+example:
+  code: |
+    m=50; s=10
+    for x in [40,50,70]:
+        print(x,(x-m)/s)
+---
+
+## Bentuk Distribusi
+
+Distribusi normal simetris di sekitar mean. Mean, median, dan modus berada di titik yang sama.
+
+```python
+def z(x, mean, std):
+    return (x - mean) / std
+
+print(z(60, 50, 10))  # 1.0
+print(z(30, 50, 10))  # -2.0
+```
+
+## Aturan Empiris
+
+| Rentang | Persentase perkiraan |
+| --- | --- |
+| mean ± 1 std | 68% |
+| mean ± 2 std | 95% |
+| mean ± 3 std | 99.7% |
+
+## Kenapa Penting di ML
+
+Beberapa metode statistik dan model linear mengasumsikan error berdistribusi normal. Ini lebih masuk akal untuk **residual**, bukan selalu untuk data mentah.
+
+<div class="note">💡 Jangan memaksa data menjadi normal hanya karena "aturan". Gunakan plot dan uji asumsi, atau pilih model yang tidak bergantung pada asumsi tersebut.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`mean = 50
+std = 10
+for x in [30, 40, 50, 60, 70]:
+    z = (x - mean) / std
+    print(f"x={x:&gt;3} z={z:&gt;5.1f}")`}</code></pre>

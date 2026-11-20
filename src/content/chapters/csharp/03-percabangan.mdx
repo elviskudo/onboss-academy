@@ -66,7 +66,7 @@ bool balik = !(a == b);         // negasi
 
 | Kategori | Jumlah | Operator | Kapan dipakai |
 |---|---|---|---|
-| Perbandingan | 6 | `==` `!=` `<` `>` `<=` `>=` | validasi, filter |
+| Perbandingan | 6 | `==` `!=` `<` `>` `&lt;=` `>=` | validasi, filter |
 | Logika | 3 | `&&` `\|\|` `!` | gabung syarat |
 | Penugasan | 1 + gabungan | `=`, `+=`, `-=` | tulis + ubah |
 
@@ -178,6 +178,10 @@ Bentuknya `kondisi ? nilai1 : nilai2` — tepat untuk menghasilkan nilai singkat
 - Membaca tipe data hasil deserialisasi: `if (obj is string s)` langsung pakai `s`.
 
 <div class="note">💡 Kesalahan klasik: menulis <code>=</code> (memberi nilai) saat seharusnya <code>==</code> (membandingkan). C# bahkan menolak <code>if (x = 5)</code> sebagai error kompilasi — lebih baik daripada diam-diam jalan seperti C++.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
 

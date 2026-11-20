@@ -1,0 +1,94 @@
+---
+title: "Internasionalisasi (i18n)"
+description: "terjemahan template, format tanggal, dan struktur multi-bahasa"
+order: 25
+quiz:
+  - q: "Angular i18n menandai teks dengan atribut…"
+    options: ["lang", "locale", "i18n", "translate"]
+    answer: 2
+    explain: "Atribut i18n bisa diberi ID dan deskripsi."
+  - q: "Perintah untuk mengekstrak teks terjemahan adalah…"
+    options: ["ng locale", "ng extract-i18n", "ng translate", "ng i18n build"]
+    answer: 1
+    explain: "Hasilnya file XLIFF yang bisa diterjemahkan."
+  - q: "Tanggal dan mata uang diformat dengan…"
+    options: ["CSS", "Router", "ngModel", "Pipe date/currency plus locale"]
+    answer: 3
+    explain: "Locale menentukan format yang sesuai wilayah."
+  - q: "RegisterLocaleData berguna untuk…"
+    options: ["Menyimpan token", "Menambahkan data lokal selain en-US", "Mengubah template", "Membuat rute"]
+    answer: 1
+    explain: "Contoh: registerLocaleData(localeId, 'id')."
+  - q: "LOCALE_ID disetel lewat…"
+    options: ["provide / provider di app.config", "File CSS", "index.html", "ngModel"]
+    answer: 0
+    explain: "Nilainya bisa 'id', 'en-US', dan sebagainya."
+example:
+  code: |
+    <h1 i18n="judul halaman||Judul utama">Selamat datang</h1>
+    {{ tanggal | date:'dd MMM yyyy':'':'id-ID' }}
+---
+
+Aplikasi yang siap pakai banyak wilayah perlu memisahkan teks dari kode. Angular memiliki dukungan i18n bawaan.
+
+## Menandai Teks
+
+```html
+<h1 i18n="judul||Judul di halaman utama">Selamat datang</h1>
+<p i18n>Pesanan kamu sudah diproses.</p>
+```
+
+`ng extract-i18n` menghasilkan `messages.xlf` berisi semua teks yang ditandai.
+
+## Menyiapkan Locale
+
+```typescript
+import { registerLocaleData } from "@angular/common";
+import localeId from "@angular/common/locales/id";
+
+registerLocaleData(localeId, "id");
+
+export const appConfig: ApplicationConfig = {
+  providers: [{ provide: LOCALE_ID, useValue: "id" }],
+};
+```
+
+## Format Tanggal dan Uang
+
+```html
+{{ 25000 | currency:'IDR':'symbol':'1.0-0' }}
+{{ hariIni | date:'EEEE, dd MMMM yyyy':'':'id-ID' }}
+{{ 0.125 | percent }}
+```
+
+## Struktur Terjemahan
+
+```
+src/
+  i18n/
+    messages.id.xlf
+    messages.en.xlf
+```
+
+Build per bahasa:
+
+```bash
+ng build --localize
+```
+
+Angular menghasilkan folder terpisah untuk tiap locale.
+
+## Tips
+
+- Beri deskripsi pada `i18n` agar penerjemah mengerti konteks.
+- Hindari menggabungkan dua kalimat dalam satu interpolasi.
+- Simpan format tanggal di pipe, bukan string manual.
+
+<div class="note">💡 i18n bukan hanya mengganti kata. Urutan kata, format tanggal, dan arah tulis juga bagian dari pengalaman lokal.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`<h1 i18n="judul halaman||Judul utama">Selamat datang</h1>
+{{ tanggal | date:'dd MMM yyyy':'':'id-ID' }}`}</code></pre>

@@ -1,0 +1,103 @@
+---
+title: "Media Elements"
+description: "Menggabungkan gambar, audio, dan video menjadi satu pengalaman media"
+order: 31
+quiz:
+  - q: "Elemen yang bukan elemen media HTML5 adalah…"
+    options: ["<video>", "<audio>", "<picture>", "<table>"]
+    answer: 3
+    explain: "table dipakai untuk data tabular, bukan media."
+  - q: "Elemen <picture> berguna untuk…"
+    options: ["Memilih gambar berdasarkan ukuran layar", "Memutar audio", "Membuat tabel", "Menulis CSS"]
+    answer: 0
+    explain: "picture + source media='...' mendukung responsive image."
+  - q: "Atribut srcset pada img dipakai untuk…"
+    options: ["Menentukan beberapa versi resolusi gambar", "Menambah alt", "Mengubah warna", "Membuat animasi"]
+    answer: 0
+    explain: "Browser memilih file yang paling sesuai dengan layar."
+  - q: "Atribut loading='lazy' pada img berguna untuk…"
+    options: ["Memuat gambar saat mendekati viewport", "Menghapus gambar", "Mengubah format", "Menyalin gambar"]
+    answer: 0
+    explain: "Lazy loading menghemat bandwidth awal."
+  - q: "Elemen <track> dipakai di dalam…"
+    options: ["<img>", "<video> atau <audio>", "<canvas>", "<svg>"]
+    answer: 1
+    explain: "track menyediakan subtitle/teks untuk media."
+example:
+  code: |
+    <picture>
+      <source media="(min-width: 800px)" srcset="besar.jpg">
+      <img src="kecil.jpg" alt="Gambar responsif" loading="lazy">
+    </picture>
+    
+    <video controls>
+      <source src="video.mp4" type="video/mp4">
+      <track src="subtitle.vtt" kind="subtitles" srclang="id" label="Indonesia">
+    </video>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTML5 menyediakan satu keluarga elemen untuk semua kebutuhan media: gambar, audio, video, dan teks pendukung.
+
+## Ringkasan Elemen
+
+| Elemen | Fungsi |
+|--------|--------|
+| `<img>` | Gambar |
+| `<picture>` | Beberapa pilihan gambar |
+| `<audio>` | Suara |
+| `<video>` | Video |
+| `<track>` | Subtitle |
+| `<canvas>` | Grafis berbasis piksel |
+| `<svg>` | Grafis vektor |
+
+## Responsive Image
+
+```html
+<picture>
+  <source media="(min-width: 800px)" srcset="besar.jpg">
+  <img src="kecil.jpg" alt="Deskripsi gambar">
+</picture>
+```
+
+Alternatif lebih ringkas:
+
+```html
+<img src="kecil.jpg"
+     srcset="sedang.jpg 600w, besar.jpg 1200w"
+     sizes="(max-width: 600px) 100vw, 50vw"
+     alt="Deskripsi">
+```
+
+## Lazy Loading
+
+```html
+<img src="foto.jpg" loading="lazy" alt="Foto">
+```
+
+Browser menunda unduhan sampai gambar hampir terlihat — sangat membantu halaman panjang.
+
+## Subtitle dengan track
+
+```html
+<track src="subtitle.vtt" kind="subtitles" srclang="id" label="Indonesia">
+```
+
+File `.vtt` berisi teks dengan penanda waktu.
+
+<div class="note">💡 Selalu sertakan atribut <code>alt</code> pada gambar dan <code>title</code> pada iframe/media untuk aksesibilitas.</div>
+
+## Try it Yourself
+
+Tambahkan `loading="lazy"` pada gambar di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Media Elements</h1>
+  <img src="https://via.placeholder.com/300x160?text=Gambar"
+       alt="Gambar contoh" loading="lazy"
+       style="max-width:100%;height:auto;border-radius:8px;">
+</body>
+</html>`} />

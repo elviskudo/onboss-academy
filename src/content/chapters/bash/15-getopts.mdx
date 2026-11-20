@@ -1,0 +1,143 @@
+---
+"title": "Memproses Opsi dengan getopts"
+"description": "Membangun CLI dengan flag pendek, argumen opsional, dan pesan bantuan"
+"order": 15
+"quiz":
+- "q": "Fungsi bawaan untuk memproses opsi pendek adalah…"
+  "options":
+  - "getopt"
+  - "getopts"
+  - "argparse"
+  - "parse_args"
+  "answer": 1
+  "explain": "getopts adalah builtin Bash yang portabel."
+- "q": "Spesifikasi \"n:\" pada getopts berarti…"
+  "options":
+  - "Opsi -n opsional"
+  - "Nama variabel n"
+  - "Opsi -n memerlukan argumen"
+  - "Opsi berulang"
+  "answer": 2
+  "explain": "Titik dua setelah huruf menandakan argumen wajib."
+- "q": "Variabel OPTARG berisi…"
+  "options":
+  - "Nama opsi"
+  - "Jumlah argumen"
+  - "Exit code"
+  - "Nilai argumen opsi"
+  "answer": 3
+  "explain": "Aturelah -n nilai, OPTARG berisi \"nilai\"."
+- "q": "Kata kunci shift berguna untuk…"
+  "options":
+  - "Menggeser argumen posisi"
+  - "Mengubah opsi"
+  - "Menghapus variabel"
+  - "Menutup getopts"
+  "answer": 0
+  "explain": "shift menggeser $2 menjadi $1 dan seterusnya."
+- "q": "Argumen tersisa setelah opsi bisa diakses lewat…"
+  "options":
+  - "$OPTIND"
+  - "\"$@\""
+  - "$#"
+  - "\"$*\""
+  "answer": 1
+  "explain": "Aturelah loop getopts, jalankan shift $((OPTIND-1))."
+"example":
+  "code": "#!/usr/bin/env bash\nnama=\"Dunia\"\nverbose=0\n\nwhile getopts \"n:v\" opsi; do\n  case \"$opsi\" in\n    n) nama=\"$OPTARG\" ;;\n    v) verbose=1 ;;\n    *) echo \"Pemakaian: $0 [-n nama] [-v]\" >&2; exit 1 ;;\n  esac\ndone\n\nshift $((OPTIND - 1))\n\n[ \"$verbose\" -eq 1 ] && echo \"[debug] argumen: $*\"\necho \"Halo, $nama!\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Anatomi getopts
+
+```bash
+#!/usr/bin/env bash
+nama="Dunia"
+verbose=0
+
+while getopts "n:v" opsi; do
+  case "$opsi" in
+    n) nama="$OPTARG" ;;
+    v) verbose=1 ;;
+    *) echo "Pemakaian: $0 [-n nama] [-v]" >&2; exit 1 ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+[ "$verbose" -eq 1 ] && echo "[debug] argumen: $*"
+echo "Halo, $nama!"
+```
+
+```bash
+while getopts "n:v" opt; do
+  ...
+done
+```
+
+String `"n:v"` berarti ada dua opsi: `-n` yang butuh nilai, dan `-v` yang berupa flag tanpa nilai.
+
+| Variabel | Isi |
+|---|---|
+| `opt` | huruf opsi yang sedang diproses |
+| `OPTARG` | nilai argumen opsi |
+| `OPTIND` | indeks argumen berikutnya |
+
+## Memisahkan Argumen
+
+```bash
+shift $((OPTIND - 1))
+echo "Sisa: $*"
+```
+
+Tanpa `shift`, argumen posisi masih menyertakan flag yang sudah diproses.
+
+## Opsi Panjang
+
+`getopts` hanya mendukung opsi pendek. Untuk `--nama`, biasanya dipakai loop manual:
+
+```bash
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --nama) nama="$2"; shift 2 ;;
+    --verbose) verbose=1; shift ;;
+    *) break ;;
+  esac
+done
+```
+
+## Pesan Bantuan
+
+```bash
+penggunaan() {
+  echo "Pemakaian: $0 [-n nama] [-v]" >&2
+  exit 1
+}
+```
+
+Tulis error ke stderr (`>&2`) dan kembalikan kode keluar bukan nol agar script bisa dipakai dalam pipeline otomasi.
+
+<div class="note">💡 `getopts` berhenti pada argumen pertama yang bukan opsi. Itu sebabnya opsi biasanya ditaruh sebelum argumen posisi, kecuali kamu memakai `--` sebagai pemisah eksplisit.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+nama="Dunia"
+verbose=0
+
+while getopts "n:v" opsi; do
+  case "$opsi" in
+    n) nama="$OPTARG" ;;
+    v) verbose=1 ;;
+    *) echo "Pemakaian: $0 [-n nama] [-v]" >&2; exit 1 ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+[ "$verbose" -eq 1 ] && echo "[debug] argumen: $*"
+echo "Halo, $nama!"`} />

@@ -1,0 +1,101 @@
+---
+title: "JOIN: Inner, Outer, dan Self Join"
+description: "Memilih jenis join yang tepat dan memahami kardinalitas hasil"
+order: 14
+quiz:
+  - q: "INNER JOIN menghasilkan baris…"
+    options: ["Semua baris tabel kiri", "Hanya yang cocok di kedua tabel", "Semua baris tabel kanan", "Semua kombinasi"]
+    answer: 1
+    explain: "Inner join hanya mempertahankan pasangan yang memenuhi kondisi."
+  - q: "LEFT JOIN mempertahankan…"
+    options: ["Semua baris tabel kiri", "Semua baris tabel kanan", "Hanya yang cocok", "Baris tanpa pasangan saja"]
+    answer: 0
+    explain: "Baris kiri tanpa pasangan tetap muncul dengan NULL di kolom kanan."
+  - q: "Untuk mengambil atasan dan bawahan dari satu tabel dipakai…"
+    options: ["Self join", "Cross join", "Natural join", "Union"]
+    answer: 0
+    explain: "Self join menggabungkan tabel dengan dirinya sendiri lewat alias berbeda."
+  - q: "CROSS JOIN menghasilkan…"
+    options: ["Produk kartesius", "Baris yang cocok saja", "Baris kosong", "Agregat"]
+    answer: 0
+    explain: "CROSS JOIN memasangkan setiap baris dengan setiap baris."
+  - q: "ON pada JOIN berfungsi untuk…"
+    options: ["Menentukan kondisi pencocokan", "Mengurutkan hasil", "Memfilter sebelum join", "Membatasi kolom"]
+    answer: 0
+    explain: "ON mendefinisikan bagaimana baris dari dua tabel dipasangkan."
+example:
+  code: |
+    SELECT k.nama, p.nama AS proyek FROM karyawan k LEFT JOIN proyek p ON p.lead_id = k.id;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JOIN menggabungkan baris dari beberapa tabel berdasarkan kolom kunci. Kesalahan paling umum bukan sintaks, melainkan memilih jenis join yang salah sehingga baris hilang atau berlipat.
+
+## Peta Jenis Join
+
+| JOIN | Baris yang muncul |
+| --- | --- |
+| `INNER JOIN` | hanya pasangan yang cocok |
+| `LEFT JOIN` | semua baris kiri + pasangan yang cocok |
+| `RIGHT JOIN` | semua baris kanan + pasangan yang cocok |
+| `FULL OUTER JOIN` | semua baris kedua tabel |
+| `CROSS JOIN` | semua kombinasi |
+
+SQLite di playground mendukung INNER, LEFT, dan CROSS; database lain seperti PostgreSQL mendukung RIGHT dan FULL.
+
+## Contohdasar
+
+```sql
+SELECT k.nama, p.nama AS proyek, p.budget
+FROM karyawan k
+INNER JOIN proyek p ON p.lead_id = k.id;
+```
+
+Alias `k` dan `p` membuat query pendek dan memperjelas asal kolom. Biasakan mengawali setiap kolom dengan alias saat ada lebih dari satu tabel.
+
+## LEFT JOIN untuk Menemukan yang Tidak Punya Pasangan
+
+```sql
+SELECT k.nama
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+WHERE p.id IS NULL;
+```
+
+Pola ini disebut *anti join*: ambil baris kiri yang tidak punya pasangan di kanan. Gunakan ini untuk mencari pelanggan yang belum pernah transaksi.
+
+## Self Join
+
+```sql
+SELECT a.nama AS karyawan, b.nama AS atasan
+FROM karyawan a
+LEFT JOIN karyawan b ON a.manager_id = b.id;
+```
+
+Satu tabel dipakai dua kali dengan alias berbeda. Tanpa alias, database tidak tahu sisi mana yang dimaksud.
+
+## Kardinalitas: Mengapa Baris Bisa Berlipat
+
+Jika tabel kanan punya 3 baris dengan `lead_id` sama, LEFT JOIN menghasilkan 3 baris untuk karyawan itu. Sebelum mengagregasi, periksa apakah kunci di tabel kanan benar-benar unik:
+
+```sql
+SELECT lead_id, COUNT(*) FROM proyek GROUP BY lead_id HAVING COUNT(*) > 1;
+```
+
+<div class="note">💡 WHERE pada LEFT JOIN bisa mengubahnya menjadi INNER JOIN secara tidak sengaja. Jika syarat membatasi tabel kanan, pindahkan ke klausa ON atau tambahkan `OR kolom_kanan IS NULL`.</div>
+
+## Di Dunia Nyata
+
+- **Laporan penjualan**: `pelanggan LEFT JOIN transaksi` tetap menampilkan pelanggan tanpa transaksi.
+- **Struktur organisasi**: self join membangun hubungan atasan–bawahan.
+- **Rekonsiliasi**: anti join menemukan data yang belum tersinkron.
+- **Produk katalog**: `produk LEFT JOIN stok` menampilkan stok NULL sebagai "belum tersedia".
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT k.nama AS karyawan, p.nama AS proyek, p.budget
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+ORDER BY k.nama;`} />

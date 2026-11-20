@@ -1,0 +1,138 @@
+---
+title: "Proyek: Aplikasi Vue Lengkap"
+description: "menggabungkan Composition API, Pinia, Router, dan validasi jadi aplikasi katalog"
+order: 26
+quiz:
+  - q: "Struktur proyek Vue modern memakai…"
+    options: ["Tanpa komponen", "Hanya HTML", "Composition API dengan <script setup>", "Options API wajib"]
+    answer: 2
+    explain: "Lebih ringkas dan bertipe baik."
+  - q: "State global sebaiknya disimpan di…"
+    options: ["index.html", "Pinia", "Template", "CSS"]
+    answer: 1
+    explain: "Satu sumber kebenaran untuk data lintas halaman."
+  - q: "Rute dikelola oleh…"
+    options: ["Pinia", "Vitest", "Vite", "Vue Router"]
+    answer: 3
+    explain: "Termasuk guard dan parameter."
+  - q: "Form dengan validasi bisa memakai…"
+    options: ["Suspense", "VeeValidate atau validasi manual", "Router", "Teleport"]
+    answer: 1
+    explain: "Pilih sesuai kompleksitas kebutuhan."
+  - q: "Langkah terakhir sebelum deploy adalah…"
+    options: ["npm run build dan uji hasilnya", "Menghapus semua test", "Mengubah semua nama file", "Menonaktifkan router"]
+    answer: 0
+    explain: "Pastikan bundle produksi berhasil."
+example:
+  code: |
+    src/
+      main.js
+      App.vue
+      router/index.js
+      stores/keranjang.js
+      composables/useFetch.js
+      components/KartuProduk.vue
+      views/Daftar.vue, Detail.vue
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saatnya menggabungkan semuanya menjadi aplikasi katalog produk dengan keranjang dan navigasi.
+
+## Struktur
+
+```
+src/
+  main.js
+  App.vue
+  router/index.js
+  stores/keranjang.js
+  composables/useFetch.js
+  components/KartuProduk.vue
+  views/Daftar.vue
+  views/Detail.vue
+```
+
+## Store Keranjang
+
+```js
+import { defineStore } from 'pinia'
+
+export const useKeranjang = defineStore('keranjang', {
+  state: () => ({ items: [] }),
+  getters: {
+    jumlah: (s) => s.items.length,
+    total: (s) => s.items.reduce((a, i) => a + i.harga, 0),
+  },
+  actions: {
+    tambah(p) { this.items.push(p) },
+  },
+})
+```
+
+## Halaman Daftar
+
+```vue
+<script setup>
+import { computed, ref } from 'vue'
+import { useFetch } from '@/composables/useFetch'
+import KartuProduk from '@/components/KartuProduk.vue'
+import { useKeranjang } from '@/stores/keranjang'
+
+const kata = ref('')
+const { data, loading } = useFetch('/api/produk')
+const keranjang = useKeranjang()
+
+const tersaring = computed(() =>
+  (data.value ?? []).filter((p) =>
+    p.nama.toLowerCase().includes(kata.value.toLowerCase())
+  )
+)
+</script>
+
+<template>
+  <h1>Katalog Produk</h1>
+  <input v-model="kata" placeholder="Cari…">
+
+  <p v-if="loading">Memuat…</p>
+  <div v-else class="grid">
+    <KartuProduk
+      v-for="p in tersaring"
+      :key="p.id"
+      :produk="p"
+      @tambah="keranjang.tambah"
+    />
+  </div>
+
+  <footer>{{ keranjang.jumlah }} item — Rp{{ keranjang.total }}</footer>
+</template>
+```
+
+## Checklist
+
+- [ ] Semua `v-for` punya `:key` stabil.
+- [ ] Data API ada di composable/service.
+- [ ] State lintas halaman ada di Pinia.
+- [ ] Rute sensitif punya guard.
+- [ ] `npm run build` sukses.
+
+<div class="note">💡 Bangun bertahap: daftar statis → fetch API → keranjang → routing → validasi. Setiap tahap bisa dijalankan dan dicek sebelum lanjut.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Ringkasan logika katalog: filter lalu hitung keranjang
+const produk = [
+  { id: 1, nama: "Kopi Susu", harga: 25000 },
+  { id: 2, nama: "Roti Bakar", harga: 12000 },
+];
+const kata = "kopi";
+const tersaring = produk.filter((p) =>
+  p.nama.toLowerCase().includes(kata.toLowerCase())
+);
+const keranjang = [tersaring[0]];
+const total = keranjang.reduce((s, p) => s + p.harga, 0);
+
+console.log(tersaring.map((p) => p.nama));
+console.log("Total:", total);`} />

@@ -131,7 +131,7 @@ WITH RECURSIVE angka(n) AS (
 SELECT n FROM angka;
 ```
 
-Blok pertama disebut *anchor* (nilai awal), blok kedua *recursive member* (langkah pengulangan), dan `WHERE n < 5` adalah kondisi berhenti. Untuk hierarki jabatan, ganti angka dengan tabel karyawan: anchor = atasan puncak, recursive = bawahan yang `manager_id`-nya cocok.
+Blok pertama disebut *anchor* (nilai awal), blok kedua *recursive member* (langkah pengulangan), dan `WHERE n &lt; 5` adalah kondisi berhenti. Untuk hierarki jabatan, ganti angka dengan tabel karyawan: anchor = atasan puncak, recursive = bawahan yang `manager_id`-nya cocok.
 
 `CURSOR` tetap dipakai bila satu baris harus memicu tindakan berurutan yang tidak bisa diekspresikan sebagai SELECT — misal memanggil API per baris. Alternatif set-based yang lebih baik hampir selalu ada: ubah jadi `UPDATE ... FROM`, `CASE WHEN`, atau `JOIN` ke tabel perantara.
 
@@ -143,6 +143,10 @@ Blok pertama disebut *anchor* (nilai awal), blok kedua *recursive member* (langk
 - **Menandai persentase kontribusi**: dua CTE (`total` dan `tinggi`) dihitung berdampingan untuk rasio dalam satu langkah.
 
 <div class="note">💡 CTE membuat query panjang terasa seperti resep masakan: langkah 1, langkah 2, hasil akhir. Utamakan CTE ketika subquery mulai bersarang dua tingkat ke atas.</div>
+
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
 
 <TryIt lang="sql" runtime="sql" code={`WITH rata_dept AS (
   SELECT dept, ROUND(AVG(gaji)) AS rata

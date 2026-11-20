@@ -1,0 +1,140 @@
+---
+"title": "Enum Lanjutan"
+"description": "Enum dengan data, Option, Result, dan pola destructuring"
+"order": 14
+"quiz":
+- "q": "Enum di Rust bisa menyimpan…"
+  "options":
+  - "hanya angka"
+  - "hanya fungsi"
+  - "hanya string"
+  - "data dengan tipe berbeda per varian"
+  "answer": 3
+  "explain": "Setiap varian enum bisa membawa field dengan tipe berbeda."
+- "q": "Option::None berarti…"
+  "options":
+  - "tidak ada nilai"
+  - "nilai nol"
+  - "error"
+  - "nilai default"
+  "answer": 0
+  "explain": "Option<T> adalahTCara Rust mengekspresikan kemungkinan ketiadaan tanpa null."
+- "q": "Untuk mengambil nilai Option dengan aman, gunakan…"
+  "options":
+  - "unwrap selalu"
+  - "panic!"
+  - "if let atau match"
+  - "as"
+  "answer": 2
+  "explain": "if let dan match memaksa kamu menangani None."
+- "q": "Result<T, E> dipakai untuk…"
+  "options":
+  - "operasi yang bisa gagal"
+  - "nilai opsional"
+  - "perulangan"
+  - "slice"
+  "answer": 0
+  "explain": "Ok(T) menandakan sukses, Err(E) menandakan gagal."
+- "q": "Operator ? pada Result akan…"
+  "options":
+  - "mengabaikan error"
+  - "mengubah jadi Option"
+  - "membuat panic"
+  - "mengembalikan Err lebih awal"
+  "answer": 3
+  "explain": "? menyebarkan error ke pemanggil bila hasilnya Err."
+"example":
+  "code": "enum Pesan { Teks(String), Jumlah(u32), Kosong }\nfn main() {\n    let p = Pesan::Jumlah(7);\n    match p {\n        Pesan::Teks(s) => println!(\"{}\", s),\n        Pesan::Jumlah(n) => println!(\"{}\", n),\n        Pesan::Kosong => {}\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Enum di Rust jauh lebih kuat daripada enum di kebanyakan bahasa. Tiap varian boleh membawa data, sehingga kamu bisa memodelkan domain dengan presisi.
+
+## Enum dengan Data
+
+```rust
+enum IpAddress {
+    V4(u8, u8, u8, u8),
+    V6(String),
+}
+
+let alamat = IpAddress::V4(192, 168, 1, 1);
+```
+
+Bandingkan dengan dua struct terpisah: satu enum membuat pemanggilan kode harus menangani semua varian.
+
+## Option&lt;T&gt;
+
+```rust
+let maybe: Option<i32> = Some(5);
+
+match maybe {
+    Some(n) => println!("{}", n),
+    None => println!("tidak ada"),
+}
+```
+
+Rust tidak punya `null`. `Option<T>` membuat ketiadaan nilai menjadi eksplisit dan harus ditangani.
+
+## Result&lt;T, E&gt;
+
+```rust
+use std::fs::read_to_string;
+
+fn baca(path: &str) -> Result<String, std::io::Error> {
+    let isi = read_to_string(path)?;
+    Ok(isi.to_uppercase())
+}
+```
+
+`?` hanya bisa dipakai pada fungsi yang mengembalikan `Result` (atau `Option`).
+
+## Destructuring
+
+```rust
+enum Perintah { Pindah { x: i32, y: i32 }, Berhenti }
+
+match perintah {
+    Perintah::Pindah { x, y } => println!("{},{}", x, y),
+    Perintah::Berhenti => {}
+}
+```
+
+## Parser Parsing
+
+```rust
+fn dari_teks(s: &str) -> Option<i32> {
+    s.parse().ok()
+}
+```
+
+`ok()` mengubah `Result` menjadi `Option` dengan membuang detail error.
+
+<div class="note">💡 Hindari <code>unwrap()</code> di kode produksi kecuali kamu benar-benar yakin nilainya ada. Gunakan <code>expect("alasan")</code> agar panic lebih informatif saat debugging.</div>
+
+
+## Try it Yourself
+
+Tambah varian baru atau ubah nilai menjadi `None`.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`enum Nilai { Angka(i32), Teks(String), Kosong }
+
+fn cetak(n: Nilai) {
+    match n {
+        Nilai::Angka(x) => println!("angka {}", x * 2),
+        Nilai::Teks(s) => println!("teks {}", s),
+        Nilai::Kosong => println!("kosong"),
+    }
+}
+
+fn main() {
+    cetak(Nilai::Angka(21));
+    cetak(Nilai::Teks(String::from("Rust")));
+    cetak(Nilai::Kosong);
+
+    let maybe: Option<i32> = "42".parse().ok();
+    if let Some(x) = maybe {
+        println!(" parsed: {}", x);
+    }
+}`} />

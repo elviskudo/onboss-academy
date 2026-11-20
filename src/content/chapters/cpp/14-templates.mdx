@@ -1,0 +1,145 @@
+---
+title: "Template"
+description: "template function, template class, parameter non-tipe, dan specialisasi"
+order: 14
+quiz:
+  - q: "Template di C++ memungkinkan…"
+    options: ["Kode generik berdasarkan tipe saat compile", "Runtime polymorphism", "Menghapus class", "Alokasi otomatis"]
+    answer: 0
+    explain: "Compiler membuat versi fungsi/class untuk tiap tipe yang dipakai."
+  - q: "Deklarasi template function yang benar adalah…"
+    options: ["template<typename T> T maks(T a,T b);", "template T maks(T a,T b);", "generic<T> T maks();", "T template maks();"]
+    answer: 0
+    explain: "`template <typename T>` diawali sebelum deklarasi."
+  - q: "Parameter template non-tipe contohnya…"
+    options: ["template<int N>", "template<T>", "template<class>", "template<*>"]
+    answer: 0
+    explain: "Dipakai untuk ukuran array statis, misal `std::array<int, 5>`."
+  - q: "Template berbeda dengan macro karena…"
+    options: ["Tipe dicek compiler & bisa di-debug", "Lebih lambat selalu", "Tidak bisa untuk class", "Sama persis"]
+    answer: 0
+    explain: "Template adalah fitur bahasa bertipe, bukan substitusi teks."
+  - q: "Specialisasi template berguna untuk…"
+    options: ["Perlakuan khusus pada tipe tertentu", "Menghapus tipe", "Mengubah ukuran", "Menghindari compile"]
+    answer: 0
+    explain: "Misalnya implementasi berbeda untuk `bool*`."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    
+    template <typename T>
+    T maks(const T &a, const T &b) {
+        return (a > b) ? a : b;
+    }
+    
+    template <typename T>
+    void tampil(const std::vector<T> &v) {
+        for (const auto &x : v) std::cout <&lt; x <&lt; " ";
+        std::cout <&lt; '\n';
+    }
+    
+    int main() {
+        std::cout <&lt; maks(3, 9) <&lt; " " <&lt; maks(2.5, 1.2) <&lt; '\n';
+        tampil(std::vector<int>{1,2,3});
+        tampil(std::vector<std::string>{"a","b"});
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Template adalah fondasi STL. Ia memungkinkan satu implementasi dipakai banyak tipe tanpa kehilangan type safety.
+
+## Template Function
+
+```cpp
+template <typename T>
+T absolut(T x) {
+    return x < 0 ? -x : x;
+}
+
+int a = absolut(-5);       // T = int
+double b = absolut(-2.5);  // T = double
+```
+
+Compiler membuat instansi fungsi terpisah untuk tiap kombinasi tipe.
+
+## Template Class
+
+```cpp
+template <typename T>
+class Kotak {
+    T isi;
+public:
+    explicit Kotak(T v) : isi(v) {}
+    T ambil() const { return isi; }
+};
+
+Kotak<int> a(5);
+Kotak<std::string> b("halo");
+```
+
+## Parameter Non-Tipe
+
+```cpp
+template <typename T, std::size_t N>
+class Buffer {
+    T data[N];
+public:
+    constexpr std::size_t ukuran() const { return N; }
+};
+
+Buffer<int, 10> b;
+```
+
+Nilai `N` harus konstanta saat compile.
+
+## typename vs class
+
+Pada deklarasi `template<typename T>` dan `template<class T>` identik. `typename` juga dipakai untuk menandai nested type yang bergantung:
+
+```cpp
+typename T::iterator it;   // memberitahu ini adalah tipe
+```
+
+## Specialisasi
+
+```cpp
+template <>
+bool maks<bool>(bool a, bool b) {
+    return a || b;   // perlakuan khusus
+}
+```
+
+## Kelebihan & Kekurangan
+
+| Kelebihan | Kekurangan |
+|---|---|
+| Type-safe | Error bisa panjang & sulit dibaca |
+| Tanpa overhead runtime | Waktu compile naik |
+| Bisa di-inline | Kode hasil bisa membengkak |
+
+<div class="note">💡 Sejak C++20, **concepts** membatasi tipe yang diterima template: `template<std::integral T> T maks(T a,T b)`. Error jadi jauh lebih ramah.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+
+template <typename T>
+T maks(const T &a, const T &b) {
+    return (a > b) ? a : b;
+}
+
+template <typename T>
+void tampil(const std::vector<T> &v) {
+    for (const auto &x : v) std::cout <&lt; x <&lt; " ";
+    std::cout <&lt; '\n';
+}
+
+int main() {
+    std::cout <&lt; maks(3, 9) <&lt; " " <&lt; maks(2.5, 1.2) <&lt; '\n';
+    tampil(std::vector<int>{1,2,3});
+    tampil(std::vector<std::string>{"a","b"});
+}`} />

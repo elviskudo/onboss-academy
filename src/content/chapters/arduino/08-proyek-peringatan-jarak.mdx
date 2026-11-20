@@ -54,12 +54,12 @@ Proyek akhir Arduino menyatukan **HC-SR04, 3 LED, dan buzzer** menjadi sistem pe
 
 | Zona | Rentang | LED | Buzzer | Arti |
 | --- | --- | --- | --- | --- |
-| Gagal baca | `cm < 0` | Semua mati | Senyap | Jangan memberi alarm palsu |
+| Gagal baca | `cm &lt; 0` | Semua mati | Senyap | Jangan memberi alarm palsu |
 | Aman | `cm >= 50` | Hijau | Senyap | Objek jauh |
-| Waspada | `20 <= cm < 50` | Kuning | Bip 1.000 Hz | Objek mendekat |
-| Bahaya | `0 <= cm < 20` | Merah | Nada 2.000 Hz | Berhenti |
+| Waspada | `20 &lt;= cm &lt; 50` | Kuning | Bip 1.000 Hz | Objek mendekat |
+| Bahaya | `0 &lt;= cm &lt; 20` | Merah | Nada 2.000 Hz | Berhenti |
 
-Urutan kondisi wajib dari kasus khusus (`cm < 0`), lalu paling dekat, lalu jauh. Jika mengecek `cm < 20` dulu, nilai gagal `-1` salah dianggap bahaya.
+Urutan kondisi wajib dari kasus khusus (`cm &lt; 0`), lalu paling dekat, lalu jauh. Jika mengecek `cm &lt; 20` dulu, nilai gagal `-1` salah dianggap bahaya.
 
 ## 6 Komponen dan Denah Pin
 
@@ -190,7 +190,7 @@ Jangan langsung menguji seluruh rangkaian. Tahap berurutan mengisolasi kegagalan
 ## Di Dunia Nyata
 
 1. **Sensor parkir sepeda** — dipasang menghadap belakang, getaran mounting wajib diuji.
-2. **Peringatan jarak antrean** — LED merah menyala bila orang berdiri terlalu dekat (< 100 cm).
+2. **Peringatan jarak antrean** — LED merah menyala bila orang berdiri terlalu dekat (&lt; 100 cm).
 3. **Tong sampah otomatis** — servo membuka tutup bila tangan berada 5–20 cm selama dua bacaan.
 4. **Pemantau isi tangki** — jarak kosong dikurangkan dari tinggi tangki lalu ditampilkan sebagai persen.
 5. **Robot penghindar halangan** — zona merah menghentikan motor, kuning memperlambat, hijau maju.

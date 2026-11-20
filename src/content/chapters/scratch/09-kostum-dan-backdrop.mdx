@@ -1,0 +1,85 @@
+---
+title: "Kostum dan Backdrop"
+description: "Menggambar, mengimpor, dan berpindah tampilan"
+order: 9
+quiz:
+  - q: "Bagian sprite yang bisa diganti tampilannya disebut…"
+    options: ["Layer", "Kostum", "Backdrop", "Topeng"]
+    answer: 1
+    explain: "Sprite bisa memiliki banyak kostum; panggung bisa memiliki banyak backdrop."
+  - q: "Blok untuk mengganti kostum adalah…"
+    options: ["ubah gambar", "set tampilan", "ganti kostum ke ...", "ganti warna ke ..."]
+    answer: 2
+    explain: "Bisa memilih kostum tertentu, berikutnya, atau yang dipilih secara acak."
+  - q: "Backdrop adalah…"
+    options: ["Kostum sprite", "Variabel teks", "Suara efek", "Latar panggung"]
+    answer: 3
+    explain: "Backdrop mengganti seluruh latar tempat sprite berada."
+  - q: "Blok \"ganti kostum ke berikutnya\" berguna untuk…"
+    options: ["Membuat animasi berurutan", "Menghapus sprite", "Mengubah volume", "Menyimpan skor"]
+    answer: 0
+    explain: "Animasi dibuat dari kostum-kostum yang sedikit berbeda."
+  - q: "Efek grafis seperti warna dan transparansi ada di kategori…"
+    options: ["Data", "Penampilan", "Gerak", "Kontrol"]
+    answer: 1
+    explain: "Kategori Penampilan juga berisi ubah ukuran, tampilkan, dan sembunyikan."
+example:
+  code: |
+    [ketika bendera diklik]
+    [ganti kostum ke [kostum1]]
+    [ulangi 10 [
+       ganti kostum ke [berikutnya]
+       tunggu 0.1 detik
+    ]]
+---
+
+Sprite dan panggung masing-masing punya "wajah" yang bisa diganti. Kostum membuat karakter terlihat bergerak; backdrop mengubah suasana tempat kejadian.
+
+## Perbedaan Kostum dan Backdrop
+
+| Elemen | Milik | Fungsi |
+|---|---|---|
+| Kostum | Sprite | Penampilan karakter |
+| Backdrop | Panggung | Latar tempat |
+
+Keduanya bisa digambar di editor Scratch, diimpor dari file, atau diambil dari pustaka bawaan.
+
+## Blok Penampilan yang Sering Dipakai
+
+```text
+[ganti kostum ke [..]]        [ganti backdrop ke [..]]
+[ubah ukuran sebesar 10]      [atur ukuran ke 100%]
+[tampilkan]                   [sembunyikan]
+[ubah efek [warna] sebesar 25]
+[hapus semua efek grafis]
+```
+
+## Membuat Animasi Sederhana
+
+```text
+[ketika bendera diklik]
+[atur ukuran ke 100%]
+[ulangi 12 [
+   ganti kostum ke [berikutnya]
+   tunggu 0.08 detik
+]]
+```
+
+Kunci animasi yang halus: perbedaan antar kostum kecil dan jeda pendek sekitar 0,05–0,15 detik.
+
+## Efek Grafis
+
+Menu dropdown efek mencakup warna, kecerahan, transparansi, dan lain-lain. Gunakan `[hapus semua efek grafis]` di awal tiap Adegan agar efek dari putaran sebelumnya tidak menempel.
+
+<div class="note">💡 Kostum bisa diberi nama yang bermakna, misalnya `jalan-1`, `jalan-2`, daripada `kostum3`. Penamaan memudahkan saat memilih kostum lewat blok.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Urutan percobaan:
+[ketika bendera diklik]
+[ganti kostum ke [kostum1]]
+[ulangi 8 [
+   ganti kostum ke [berikutnya]
+   tunggu 0.1 detik
+]]`}</code></pre>

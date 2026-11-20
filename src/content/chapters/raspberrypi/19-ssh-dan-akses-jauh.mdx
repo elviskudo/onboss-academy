@@ -1,0 +1,97 @@
+---
+title: "SSH dan Akses Jauh"
+description: "Koneksi aman, kunci SSH, dan pengelolaan sesi"
+order: 19
+quiz:
+  - q: "Protokol SSH digunakan untuk…"
+    options: ["Mengirim email", "Menyimpan gambar", "Mengatur GPIO", "Akses shell jarak jauh yang terenkripsi"]
+    answer: 3
+    explain: "SSH juga bisa meneruskan port dan menjalankan perintah satu kali."
+  - q: "Autentikasi dengan kunci SSH lebih baik karena…"
+    options: ["Lebih kuat dan bisa dinonaktifkan password login", "Lebih cepat dibuat", "Tidak perlu kata sandi sama sekali", "Selalu gratis"]
+    answer: 0
+    explain: "Kunci privat tetap di klien; server hanya menyimpan kunci publik."
+  - q: "Perintah menyalin kunci publik ke Pi adalah…"
+    options: ["ssh-add pi", "ssh-copy-id user@pi", "ssh-keygen copy", "scp key.pub pi"]
+    answer: 1
+    explain: "Perintah ini menambahkan kunci ke ~/.ssh/authorized_keys."
+  - q: "Berganti pasangan kunci SSH dengan perintah…"
+    options: ["keygen ssh", "ssh-password", "ssh-keygen -t ed25519", "ssh-key -make"]
+    answer: 2
+    explain: "Ed25519 adalah pilihan modern dengan kunci ringkas dan kuat."
+  - q: "Untuk menjalankan satu perintah tanpa masuk sesi, gunakan…"
+    options: ["ssh -one perintah", "ssh run perintah", "rsh perintah", "ssh user@pi 'perintah'"]
+    answer: 3
+    explain: "Contoh: ssh pi@raspberrypi.local 'vcgencmd measure_temp'."
+example:
+  code: |
+    ssh-keygen -t ed25519 -C "laptop-kerja"
+    ssh-copy-id pi@raspberrypi.local
+    ssh pi@raspberrypi.local
+    ssh pi@raspberrypi.local 'uptime'
+---
+
+SSH adalah cara standar mengelola Pi tanpa monitor. Dengan kunci dan beberapa pengaturan, akses menjadi nyaman sekaligus aman.
+
+## Koneksi Dasar
+
+```bash
+ssh pi@raspberrypi.local
+ssh pi@192.168.1.50
+ssh -p 2222 pi@host
+```
+
+## Kunci SSH
+
+```bash
+ssh-keygen -t ed25519 -C "laptop"
+ssh-copy-id pi@raspberrypi.local
+```
+
+Lalu uji login tanpa kata sandi. Jika berhasil, nonaktifkan login password di `/etc/ssh/sshd_config`:
+
+```text
+PasswordAuthentication no
+PermitRootLogin no
+```
+
+## Config SSH
+
+```text
+Host pi
+    HostName raspberrypi.local
+    User pi
+    IdentityFile ~/.ssh/id_ed25519
+```
+
+```bash
+ssh pi
+```
+
+## Port Forwarding
+
+```bash
+ssh -L 8080:localhost:80 pi@raspberrypi.local
+```
+
+Buka `http://localhost:8080` di komputer untuk mengakses web server yang berjalan di Pi.
+
+## Sesi Panjang
+
+Gunakan `tmux` atau `screen` agar proses tidak terputus saat koneksi putus:
+
+```bash
+tmux new -s sensor
+# keluar sementara: Ctrl+B lalu D
+tmux attach -t sensor
+```
+
+<div class="note">💡 Ubah kata sandi default pada installation pertama. Kredensial bawaan adalah target pertama bot yang memindai jaringan.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Alur kunci SSH:
+ssh-keygen -t ed25519
+ssh-copy-id pi@raspberrypi.local
+ssh pi@raspberrypi.local 'echo koneksi berhasil'`}</code></pre>

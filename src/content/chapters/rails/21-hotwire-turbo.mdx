@@ -1,0 +1,114 @@
+---
+"title": "Hotwire dan Turbo"
+"description": "Membuat aplikasi terasa cepat dengan Turbo Drive, Frames, dan Streams"
+"order": 21
+"quiz":
+- "q": "Hotwire adalah kumpulan teknologi dari…"
+  "options":
+  - "Rails"
+  - "React"
+  - "Angular"
+  - "Vue"
+  "answer": 0
+  "explain": "Hotwire diperkenalkan Rails sebagai alternatif JavaScript berat."
+- "q": "Turbo Drive mempercepat aplikasi dengan…"
+  "options":
+  - "Mengganti seluruh halaman lewat AJAX dan mempertahankan layout"
+  - "Mengompres gambar"
+  - "Menghapus CSS"
+  - "Menambah database"
+  "answer": 0
+  "explain": "Turbo Drive mengambil halaman baru lewat fetch lalu mengganti body."
+- "q": "Turbo Frame berguna untuk…"
+  "options":
+  - "Memperbarui bagian tertentu halaman saja"
+  - "Membuat animasi"
+  - "Mengganti database"
+  - "Menulis migrasi"
+  "answer": 0
+  "explain": "Frame adalah container dengan id yang bisa di-render ulang sendiri."
+- "q": "Format respons Turbo Stream adalah…"
+  "options":
+  - "HTML dengan tag <turbo-stream>"
+  - "JSON murni"
+  - "XML"
+  - "CSV"
+  "answer": 0
+  "explain": "Turbo Stream mengirim aksi append, replace, atau remove dalam tag HTML."
+- "q": "Stimulus berperan sebagai…"
+  "options":
+  - "Framework CSS"
+  - "JavaScript ringan untuk perilaku kecil"
+  - "Database"
+  - "Server web"
+  "answer": 1
+  "explain": "Stimulus mengikat perilaku ke elemen DOM lewat data-controller."
+"example":
+  "code": "&lt;%= turbo_frame_tag \"keranjang\" do %>\n  &lt;%= render \"keranjang/isi\" %>\n&lt;% end %>\n\n# controller\nrespond_to do |format|\n  format.turbo_stream { render turbo_stream: turbo_stream.replace(\"keranjang\", partial: \"keranjang/isi\") }\n  format.html { redirect_to cart_path }\nend\n"
+---
+
+## Tiga Pilar Hotwire
+
+```ruby
+<%= turbo_frame_tag "keranjang" do %>
+  <%= render "keranjang/isi" %>
+<% end %>
+
+# controller
+respond_to do |format|
+  format.turbo_stream { render turbo_stream: turbo_stream.replace("keranjang", partial: "keranjang/isi") }
+  format.html { redirect_to cart_path }
+end
+```
+
+| Teknologi | Fungsi | Analogi |
+|---|---|---|
+| Turbo Drive | navigasi cepat tanpa full reload | mengganti isi halaman |
+| Turbo Frames | memperbarui bagian tertentu | mengganti satu kotak saja |
+| Turbo Streams | mengirim perubahan dari server | mengirim perintah update |
+
+## Turbo Drive
+
+Secara bawaan Turbo Drive aktif pada aplikasi Rails modern. Klik link menyebabkan request fetch, lalu `<body>` diganti. Layout dan koneksi WebSocket tetap hidup.
+
+```erb
+<%= link_to "Artikel", article_path(@article), data: { turbo: false } %>
+```
+
+Gunakan `turbo: false` bila halaman perlu reload penuh, misalnya saat integrasi dengan library pihak ketiga.
+
+## Turbo Frame
+
+```erb
+<%= turbo_frame_tag "produk_#{@product.id}" do %>
+  <%= @product.name %>
+<% end %>
+```
+
+Link di dalam frame akan memuat responsnya ke frame itu saja selama respons mengandung frame dengan id yang sama.
+
+## Turbo Stream
+
+```ruby
+turbo_stream.append("daftar", partial: "items/item", locals: { item: @item })
+turbo_stream.remove("item_#{@item.id}")
+```
+
+Aksi umum: `append`, `prepend`, `replace`, `update`, dan `remove`.
+
+## Stimulus
+
+```javascript
+// app/javascript/controllers/halo_controller.js
+export default class extends Controller {
+  sapa() { alert("Halo dari Stimulus"); }
+}
+```
+
+```html
+<div data-controller="halo">
+  <button data-action="click->halo#sapa">Klik</button>
+</div>
+```
+
+<div class="note">💡 Hotwire bekerja paling baik bila server tetap menghasilkan HTML. Kamu mendapat interaksi modern tanpa menulis ulang seluruh aplikasi sebagai SPA.</div>

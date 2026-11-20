@@ -1,0 +1,145 @@
+---
+"title": "Concurrency dengan Thread"
+"description": "std::thread, move, join, dan sinkronisasi dasar"
+"order": 23
+"quiz":
+- "q": "Thread baru dibuat dengan…"
+  "options":
+  - "thread::spawn"
+  - "thread::new"
+  - "spawn()"
+  - "async thread"
+  "answer": 0
+  "explain": "thread::spawn menerima closure dan mengembalikan JoinHandle."
+- "q": "Kata kunci move pada closure thread berarti…"
+  "options":
+  - "memindahkan kepemilikan ke thread"
+  - "menghapus variabel"
+  - "menjadikan konstan"
+  - "menunda eksekusi"
+  "answer": 0
+  "explain": "move memastikan closure memiliki data sendiri, bukan meminjam variabel lokal."
+- "q": "Untuk menunggu thread selesai, gunakan…"
+  "options":
+  - "wait()"
+  - "join()"
+  - "close()"
+  - "sleep()"
+  "answer": 1
+  "explain": "handle.join() mengembalikan Result dari thread."
+- "q": "JoinHandle mengembalikan…"
+  "options":
+  - "nilai closure"
+  - "Result dengan nilai atau panic"
+  - "ID thread"
+  - "bool"
+  "answer": 1
+  "explain": "Err muncul bila thread panic."
+- "q": "Channel std::mpsc dipakai untuk…"
+  "options":
+  - "mengunci data"
+  - "mengirim nilai antar thread"
+  - "membuat thread"
+  - "menghentikan thread"
+  "answer": 1
+  "explain": "mpsc = multiple producer, single consumer."
+"example":
+  "code": "use std::thread;\nfn main() {\n    let h = thread::spawn(|| println!(\"dari thread\"));\n    h.join().unwrap();\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust menjamin keamanan konkurensi lewat sistem tipe. Thread standar mudah dibuat, dan aturan ownership mencegah data race sejak compile time.
+
+## Menjalankan Thread
+
+```rust
+use std::thread;
+
+let handle = thread::spawn(|| {
+    for i in 1..4 { println!("anak: {}", i); }
+});
+
+for i in 1..3 { println!("utama: {}", i); }
+handle.join().unwrap();
+```
+
+Urutan cetakan bisa saling menyela.
+
+## move
+
+```rust
+let nama = String::from("Rani");
+let h = thread::spawn(move || {
+    println!("Halo {}", nama);
+});
+h.join().unwrap();
+```
+
+Tanpa `move`, closure meminjam `nama` yang bisa habis sebelum thread selesai — kompiler menolak.
+
+## Mengembalikan Nilai
+
+```rust
+let h = thread::spawn(|| 40 + 2);
+let hasil = h.join().unwrap(); // 42
+```
+
+Jika thread panic, `join()` mengembalikan `Err`.
+
+## Channel mpsc
+
+```rust
+use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+thread::spawn(move || {
+    tx.send(String::from("pesan")).unwrap();
+});
+
+let pesan = rx.recv().unwrap();
+println!("{}", pesan);
+```
+
+`recv()` mem-blok sampai ada pesan. `try_recv()` tidak mem-blok.
+
+## Shared State
+
+```rust
+use std::{sync::{Arc, Mutex}, thread};
+
+let angka = Arc::new(Mutex::new(0));
+let r = Arc::clone(&angka);
+thread::spawn(move || {
+    *r.lock().unwrap() += 1;
+}).join().unwrap();
+```
+
+<div class="note"> 💡 Thread OS relatif mahal. Untuk banyak tugas I/O, pertimbangkan runtime async seperti Tokio.</div>
+
+
+## Try it Yourself
+
+Ubah jumlah thread atau kirim lebih banyak pesan lewat channel.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::sync::mpsc;
+use std::thread;
+
+fn main() {
+    let (tx, rx) = mpsc::channel();
+
+    for i in 1..=3 {
+        let t = tx.clone();
+        thread::spawn(move || {
+            t.send(i * i).unwrap();
+        });
+    }
+    drop(tx);
+
+    let mut hasil: Vec<i32> = rx.iter().collect();
+    hasil.sort();
+    println!("hasil: {:?}", hasil);
+
+    let h = thread::spawn(|| String::from("selesai"));
+    println!("pesan: {}", h.join().unwrap());
+}`} />

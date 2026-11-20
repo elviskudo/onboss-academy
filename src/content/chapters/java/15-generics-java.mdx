@@ -1,0 +1,149 @@
+---
+title: "Generics"
+description: "type parameter, bounded type, wildcard, dan kenapa generics aman saat compile"
+order: 15
+quiz:
+  - q: "Generics di Java berguna untuk…"
+    options: ["Mempercepat JVM", "Type safety saat compile time", "Menghapus class", "Mengganti inheritance"]
+    answer: 1
+    explain: "Generics menangkap kesalahan tipe sebelum program berjalan."
+  - q: "Deklarasi class generik yang benar adalah…"
+    options: ["class Kotak<T> {}", "class Kotak<T> {}", "class Kotak<T> { T isi; }", "class Kotak[] {}"]
+    answer: 2
+    explain: "Parameter T dipakai sebagai tipe field/method di dalam class."
+  - q: "Wildcard `? extends Number` berarti…"
+    options: ["Tipe apa pun", "Number atau turunannya", "Induk dari Number", "Hanya Number"]
+    answer: 1
+    explain: "upper bound: bisa menerima Integer, Double, dll."
+  - q: "Wildcard `? super Integer` berarti…"
+    options: ["Integer atau induknya", "Turunan Integer", "Semua tipe", "Hanya Object"]
+    answer: 0
+    explain: "lower bound: berguna untuk penulisan (consumer)."
+  - q: "Type erasure berarti…"
+    options: ["Tipe generik dihapus saat runtime", "Tipe diubah jadi String", "Generic tidak bisa dipakai", "Compile lebih lambat"]
+    answer: 0
+    explain: "Informasi T tidak tersedia saat runtime; JVM melihat Object/bound."
+example:
+  code: |
+    import java.util.*;
+    
+    class Kotak<T> {
+      private T isi;
+      Kotak(T isi) { this.isi = isi; }
+      T ambil() { return isi; }
+    }
+    
+    public class Main {
+      public static void main(String[] args) {
+        Kotak<String> a = new Kotak<>("Halo");
+        Kotak<Integer> b = new Kotak<>(42);
+        System.out.println(a.ambil() + " " + b.ambil());
+    
+        List<? extends Number> angka = new ArrayList<Integer>();
+        System.out.println(angka);
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Generics membuat collection dan class bisa dipakai untuk banyak tipe tanpa mengorbankan keamanan tipe.
+
+## Kenapa Generics?
+
+```java
+List daftar = new ArrayList();      // raw type (hindari)
+daftar.add("teks");
+daftar.add(123);                    // compile OK, runtime bahaya
+String s = (String) daftar.get(1);  // ClassCastException!
+
+List<String> aman = new ArrayList<>();
+aman.add("teks");
+// aman.add(123);  ← error saat COMPILE
+```
+
+## Class Generik
+
+```java
+class Pasangan<K, V> {
+    private K kunci;
+    private V nilai;
+
+    Pasangan(K kunci, V nilai) {
+        this.kunci = kunci;
+        this.nilai = nilai;
+    }
+
+    K kunci() { return kunci; }
+    V nilai() { return nilai; }
+}
+
+Pasangan<String, Integer> p = new Pasangan<>("nilai", 90);
+```
+
+Diamond operator `<>` (Java 7+) menghindari pengulangan tipe di sisi kanan.
+
+## Method Generik
+
+```java
+public static <T> T pertama(List<T> list) {
+    return list.isEmpty() ? null : list.get(0);
+}
+```
+
+## Bounded Type
+
+```java
+class Statistik<T extends Number> {
+    double rata(List<T> data) {
+        double total = 0;
+        for (T n : data) total += n.doubleValue();
+        return total / data.size();
+    }
+}
+```
+
+`T extends Number` juga bisa berupa `T extends Number & Comparable<T>` (batas jamak dengan interface).
+
+## Wildcard
+
+| Wildcard | Makna | Kegunaan |
+|---|---|---|
+| `List<?>` | tipe apa pun | konsumsi netral |
+| `List<? extends T>` | T atau turunan | **produser** (baca) |
+| `List<? super T>` | T atau induk | **konsumen** (tulis) |
+
+```java
+public static double jumlah(List<? extends Number> data) { ... }  // baca
+public static void tambah(List<? super Integer> data, int n) {
+    data.add(n);  // aman
+}
+```
+
+## Type Erasure
+
+Saat kompilasi, `List<String>` berubah menjadi `List` biasa. Itu sebabnya kamu tidak bisa `new T()` atau mengecek `obj instanceof List<String>` —Informasi tipe hilang di runtime.
+
+<div class="note">💡 Ingat pepatah <b>PECS</b>: <i>Producer extends, Consumer super</i>. Kalau method hanya membaca dari parameter, pakai `? extends`; kalau hanya menulis ke parameter, pakai `? super`.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.*;
+
+class Kotak<T> {
+  private T isi;
+  Kotak(T isi) { this.isi = isi; }
+  T ambil() { return isi; }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    Kotak<String> a = new Kotak<>("Halo");
+    Kotak<Integer> b = new Kotak<>(42);
+    System.out.println(a.ambil() + " " + b.ambil());
+
+    List<? extends Number> angka = new ArrayList<Integer>();
+    System.out.println(angka);
+  }
+}`} />

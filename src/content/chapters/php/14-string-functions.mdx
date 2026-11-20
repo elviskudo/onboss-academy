@@ -1,0 +1,149 @@
+---
+title: "Fungsi String PHP"
+description: "Fungsi bawaan untuk memanipulasi, mencari, dan memformat teks"
+order: 14
+quiz:
+  - q: "Fungsi untuk menghitung panjang string adalah…"
+    options: ["strlen()", "count()", "size()", "length()"]
+    answer: 0
+    explain: "strlen() menghitung jumlah byte."
+  - q: "`str_replace('a','b','a-a')` menghasilkan…"
+    options: ["a-a", "b-b", "b-a", "a-b"]
+    answer: 1
+    explain: "Semua kemunculan diganti."
+  - q: "`explode(',', 'a,b,c')` menghasilkan…"
+    options: ["String", "Array ['a','b','c']", "Object", "true"]
+    answer: 1
+    explain: "Fungsi kebalikannya adalah implode()."
+  - q: "`substr('abcdef', 1, 3)` menghasilkan…"
+    options: ["abc", "bcd", "cde", "def"]
+    answer: 1
+    explain: "Mulai indeks 1, ambil 3 karakter."
+  - q: "`ucfirst('halo dunia')` menghasilkan…"
+    options: ["Halo dunia", "Halo Dunia", "HALO DUNIA", "halo Dunia"]
+    answer: 0
+    explain: "Hanya huruf pertama string yang dikapitalkan."
+example:
+  code: |
+    <?php
+    $teks = "  Halo Dunia  ";
+    echo strlen(trim($teks));
+    echo strtoupper($teks);
+    echo str_replace('Dunia', 'PHP', $teks);
+    print_r(explode(',', 'a,b,c'));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP memiliki ratusan fungsi string bawaan. Menguasai yang paling umum membuat kode lebih pendek dan lebih aman daripada menulis loop manual.
+
+## Fungsi Paling Sering Dipakai
+
+| Fungsi | Fungsi |
+|--------|--------|
+| `strlen()` | Panjang string (byte) |
+| `strtolower()` / `strtoupper()` | Ubah huruf |
+| `ucfirst()` / `ucwords()` | Huruf awal kapital |
+| `trim()` / `ltrim()` / `rtrim()` | Hapus spasi |
+| `str_replace()` | Ganti teks |
+| `substr()` | Potong bagian string |
+| `strpos()` / `strrpos()` | Cari posisi |
+| `explode()` / `implode()` | String ↔ array |
+| `str_repeat()` | Ulangi string |
+| `strrev()` | Balik string |
+| `htmlspecialchars()` | Aman untuk HTML |
+| `nl2br()` | Newline jadi `<br>` |
+
+## Contoh Dasar
+
+```php
+<?php
+$teks = "  belajar php itu seru  ";
+
+echo strlen($teks);                  // dengan spasi
+echo strlen(trim($teks));            // tanpa spasi
+echo strtoupper(trim($teks));        // BELAJAR PHP ITU SERU
+echo ucwords(strtolower(trim($teks))); // Belajar Php Itu Seru
+```
+
+## Mencari dan Memotong
+
+```php
+<?php
+$kalimat = "Pemrograman Web dengan PHP";
+
+echo strpos($kalimat, "PHP");   // 24
+echo substr($kalimat, 0, 11);   // Pemrograman
+echo substr($kalimat, -3);      // PHP
+echo strstr($kalimat, "dengan"); // dengan PHP
+
+if (str_contains($kalimat, "PHP")) {
+    echo "Ada PHP";
+}
+```
+
+`str_contains()` (PHP 8+) lebih jelas daripada `strpos(...) !== false`.
+
+## explode & implode
+
+```php
+<?php
+$tags = "php,web,backend";
+$array = explode(",", $tags);
+// ["php", "web", "backend"]
+
+$array[] = "server";
+echo implode(" | ", $array); // php | web | backend | server
+```
+
+## Multibyte (UTF-8)
+
+`strlen()` menghitung byte, jadi karakter Indonesia atau emoji bisa terhitung lebih dari satu. Untuk teks Unicode pakai ekstensi `mbstring`:
+
+```php
+<?php
+echo strlen("café");     // 5 (é = 2 byte)
+echo mb_strlen("café");  // 4
+echo mb_substr("café", 0, 3); // caf
+```
+
+Pastikan file disimpan UTF-8 dan gunakan `mb_internal_encoding('UTF-8')` bila perlu.
+
+## Format untuk URL dan HTML
+
+```php
+<?php
+$judul = "Belajar PHP & Web";
+
+echo urlencode($judul);          // Belajar+PHP+%26+Web
+echo htmlspecialchars($judul);   // Belajar PHP &amp; Web
+echo htmlentities($judul);
+```
+
+Gunakan `urlencode()` untuk query URL dan `htmlspecialchars()` untuk output halaman.
+
+<div class="note">💡 `str_replace()` mengganti reversed secara berurutan dan bisa menyebabkan hasil tidak terduga jika pola saling overlapping. Untuk pola kompleks, pakai `preg_replace()` dengan regex.</div>
+
+## Di Dunia Nyata
+
+- Slug artikel: `strtolower(str_replace(' ', '-', $judul))`.
+- Pencarian sederhana: `stripos($judul, $kataKunci)`.
+- Membersihkan input: `trim(strip_tags($input))` sebelum disimpan.
+
+## Try it Yourself
+
+Ganti `str_replace` dengan `preg_replace` atau ubah daftar tag pada contoh ini.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$judul = "  Belajar PHP itu Seru  ";
+$bersih = trim($judul);
+
+echo "Panjang: " . strlen($bersih) . PHP_EOL;
+echo "Upper: " . strtoupper($bersih) . PHP_EOL;
+echo "Slug: " . strtolower(str_replace(' ', '-', $bersih)) . PHP_EOL;
+
+$tags = "php,web,backend";
+$arr = explode(',', $tags);
+$arr[] = "pemula";
+echo implode(' | ', $arr) . PHP_EOL;
+echo "Ada PHP? " . (str_contains($judul, 'PHP') ? 'ya' : 'tidak') . PHP_EOL;`} />

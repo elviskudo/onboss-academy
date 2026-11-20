@@ -1,0 +1,144 @@
+---
+"title": "Fungsi Lanjutan"
+"description": "Argument label, default value, variadic, inout, dan fungsi sebagai nilai"
+"order": 13
+"quiz":
+- "q": "Argument label ditulis dengan…"
+  "options":
+  - "func sapa(label nama: String)"
+  - "func sapa(nama label: String)"
+  - "func label(nama: String)"
+  - "func sapa(@label nama: String)"
+  "answer": 1
+  "explain": "Bentuknya `namaParameter label: Tipe` — label dipakai saat pemanggilan."
+- "q": "Label _ berarti…"
+  "options":
+  - "Argumen dihapus"
+  - "Fungsi privasi"
+  - "Argumen dipanggil tanpa label"
+  - "Nilai default"
+  "answer": 2
+  "explain": "Underscore menyembunyikan label saat memanggil."
+- "q": "Parameter inout berguna untuk…"
+  "options":
+  - "Membuat konstanta"
+  - "Mengganti tipe"
+  - "Menghapus argumen"
+  - "Mengubah nilai variabel luar"
+  "answer": 3
+  "explain": "inout meneruskan salinan masuk/keluar (copy-in copy-out)."
+- "q": "Parameter variadic ditandai dengan…"
+  "options":
+  - "..."
+  - "*"
+  - "&"
+  - "?"
+  "answer": 0
+  "explain": "Int... menerima nol atau lebih Int."
+- "q": "Fungsi bisa dikembalikan dari fungsi lain karena…"
+  "options":
+  - "Swift tidak bertipe"
+  - "Fungsi adalah first-class citizen"
+  - "Semua fungsi global"
+  - "Perlu class"
+  "answer": 1
+  "explain": "Fungsi bisa disimpan sebagai variabel dan dikembalikan."
+"example":
+  "code": "func sapa(_ nama: String, dengan sapaan: String = \"Halo\") -> String {\n    \"\\(sapaan), \\(nama)!\"\n}\n\nfunc tambah(_ angka: Int...) -> Int {\n    angka.reduce(0, +)\n}\n\nfunc naikkan(_ nilai: inout Int) {\n    nilai += 1\n}\n\nvar skor = 5\nnaikkan(&skor)\nprint(skor) // 6\nprint(sapa(\"Budi\"))\nprint(tambah(1, 2, 3)) // 6\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+| Fitur | Contoh | Manfaat |
+|---|---|---|
+| Argument label | `func pindah(dari asal: String)` | pemanggilan terbaca |
+| Default value | `keras: Bool = false` | mengurangi overload |
+| Variadic | `Int...` | menerima banyak nilai |
+| `inout` | `naikkan(&skor)` | mengubah variabel luar |
+
+## Argument Label
+
+```swift
+func sapa(_ nama: String, dengan sapaan: String = "Halo") -> String {
+    "\(sapaan), \(nama)!"
+}
+
+func tambah(_ angka: Int...) -> Int {
+    angka.reduce(0, +)
+}
+
+func naikkan(_ nilai: inout Int) {
+    nilai += 1
+}
+
+var skor = 5
+naikkan(&skor)
+print(skor) // 6
+print(sapa("Budi"))
+print(tambah(1, 2, 3)) // 6
+```
+
+```swift
+func pindah(dari asal: String, ke tujuan: String) {
+    print("\(asal) -> \(tujuan)")
+}
+
+pindah(dari: "Bandung", ke: "Jakarta")
+```
+
+`dari` dan `ke` adalah label; `asal` dan `tujuan` dipakai di dalam fungsi. Label membuat pemanggilan terbaca seperti kalimat.
+
+## Nilai Default dan Variadic
+
+```swift
+func panggil(_ nama: String, keras: Bool = false) { ... }
+func jumlah(_ angka: Int...) -> Int { angka.reduce(0, +) }
+```
+
+Nilai default mengurangi overload. Parameter variadic menjadi array di dalam fungsi.
+
+## Inout
+
+```swift
+func reset(_ nilai: inout Int) {
+    nilai = 0
+}
+
+var x = 9
+reset(&x)
+```
+
+Tanda `&` saat pemanggilan memberi tahu Swift bahwa nilai boleh ditulis kembali.
+
+## Function Type
+
+```swift
+var operasi: (Int, Int) -> Int = { $0 + $1 }
+operasi = { $0 * $1 }
+print(operasi(3, 4))
+```
+
+<div class="note">💡 Karena <code>inout</code> menyalin nilai masuk dan keluar, jangan menyimpan referensinya atau memakainya dari closure yang dijalankan setelah fungsi selesai.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`func sapa(_ nama: String, dengan sapaan: String = "Halo") -> String {
+    "\(sapaan), \(nama)!"
+}
+
+func tambah(_ angka: Int...) -> Int {
+    angka.reduce(0, +)
+}
+
+func naikkan(_ nilai: inout Int) {
+    nilai += 1
+}
+
+var skor = 5
+naikkan(&skor)
+print(skor) // 6
+print(sapa("Budi"))
+print(tambah(1, 2, 3)) // 6`} />

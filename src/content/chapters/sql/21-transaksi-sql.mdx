@@ -1,0 +1,105 @@
+---
+title: "Transaksi dan Konsistensi Data"
+description: "ACID, BEGIN/COMMIT/ROLLBACK, dan contoh transfer saldo"
+order: 21
+quiz:
+  - q: "Sifat transaksi yang menjamin semua atau tidak sama sekali disebut…"
+    options: ["Atomicity", "Isolation", "Durability", "Consistency"]
+    answer: 0
+    explain: "Atomicity memastikan transaksi tidak berhenti di tengah."
+  - q: "Perintah untuk membatalkan transaksi adalah…"
+    options: ["COMMIT", "ROLLBACK", "SAVEPOINT", "END"]
+    answer: 1
+    explain: "ROLLBACK mengembalikan perubahan ke keadaan sebelum transaksi."
+  - q: "Perintah menyimpan permanen perubahan transaksi adalah…"
+    options: ["ROLLBACK", "COMMIT", "CANCEL", "FLUSH"]
+    answer: 1
+    explain: "COMMIT membuat perubahan terlihat pihak lain dan permanen."
+  - q: "Isolation mencegah…"
+    options: ["Data hilang saat crash", "Gangguan antar transaksi konkuren", "Index rusak", "Query lambat"]
+    answer: 1
+    explain: "Isolation mengatur seberapa terlihat perubahan transaksi satu terhadap yang lain."
+  - q: "SAVEPOINT berguna untuk…"
+    options: ["Menandai titik rollback dalam transaksi", "Menghapus tabel", "Membuat index", "Mengubah hak akses"]
+    answer: 0
+    explain: "ROLLBACK TO SAVEPOINT membatalkan sebagian transaksi saja."
+example:
+  code: |
+    BEGIN; UPDATE rekening SET saldo=saldo-100 WHERE id=1; UPDATE rekening SET saldo=saldo+100 WHERE id=2; COMMIT;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Transaksi mengelompokkan beberapa perubahan menjadi satu unit logis. Transfer uang adalah contoh klasik: debet dan kredit harus berhasil berdua atau gagal berdua.
+
+## ACID Singkat
+
+| Huruf | Nama | Makna praktis |
+| --- | --- | --- |
+| A | Atomicity | semua perintah berhasil atau tidak sama sekali |
+| C | Consistency | data tetap mematuhi aturan/constraint |
+| I | Isolation | transaksi paralel tidak saling mengganggu |
+| D | Durability | setelah COMMIT, data bertahan walau server mati
+
+## Perintah Transaksi
+
+```sql
+BEGIN;
+UPDATE rekening SET saldo = saldo - 100000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 100000 WHERE id = 2;
+COMMIT;
+```
+
+Jika salah satu UPDATE gagal, jalankan `ROLLBACK;` agar saldo tidak setengah berubah.
+
+## SAVEPOINT
+
+```sql
+BEGIN;
+INSERT INTO log VALUES ('awal');
+SAVEPOINT sebelum_opsi;
+INSERT INTO log VALUES ('opsi');
+ROLLBACK TO sebelum_opsi;   -- batalkan 'opsi' saja
+COMMIT;                      -- 'awal' tetap tersimpan
+```
+
+SAVEPOINT berguna saat satu transaksi besar memiliki bagian yang boleh gagal tanpa membatalkan semuanya.
+
+## Autocommit
+
+Kebanyakan database menjalankan autocommit: setiap statement langsung menjadi transaksi tersendiri. Begitu `BEGIN` atau `START TRANSACTION` dipakai, autocommit ditunda sampai `COMMIT`/`ROLLBACK`.
+
+```sql
+-- MySQL
+START TRANSACTION;
+...
+COMMIT;
+```
+
+## Timeout dan Lock
+
+Transaksi yang dibiarkan terbuka terlalu lama bisa mengunci baris dan menghalangi transaksi lain. Selalu tutup dengan COMMIT atau ROLLBACK secepat mungkin, terutama di kode aplikasi yang menangani error.
+
+```text
+BEGIN → kerja → (sukses ? COMMIT : ROLLBACK)
+```
+
+<div class="note">💡 Jangan menyimpan hasil SELECT atau meminta input pengguna di tengah transaksi. Semakin lama transaksi terbuka, semakin besar risiko lock dan conflict.</div>
+
+## Di Dunia Nyata
+
+- **Transfer saldo**: dua UPDATE dalam satu transaksi.
+- **Pemesanan tiket**: kurangi stok + buat pesanan + catat pembayaran.
+- **Import data**: ROLLBACK bila baris ke-500 gagal validasi.
+- **Migration**: ubah struktur dan data lama dalam satu unit.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE TABLE rekening (id INTEGER PRIMARY KEY, saldo INTEGER);
+INSERT INTO rekening VALUES (1, 500000), (2, 200000);
+BEGIN;
+UPDATE rekening SET saldo = saldo - 50000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 50000 WHERE id = 2;
+COMMIT;
+SELECT * FROM rekening;`} />

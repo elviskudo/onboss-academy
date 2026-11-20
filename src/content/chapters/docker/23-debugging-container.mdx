@@ -1,0 +1,91 @@
+---
+title: "Debugging Container"
+description: "Menyelidiki container yang gagal lewat logs, exec, inspect, dan event"
+order: 23
+quiz:
+  - q: "Container langsung exit setelah docker run. Langkah pertama yang paling tepat adalah…"
+    options: ["docker rmi image", "docker network prune", "docker restart daemon", "docker logs <nama>"]
+    answer: 3
+    explain: "Log keluaran proses utama biasanya menjelaskan penyebab kegagalan."
+  - q: "docker exec berguna untuk…"
+    options: ["Menjalankan perintah di dalam container yang berjalan", "Membuat image baru", "Menghapus volume", "Mengganti tag"]
+    answer: 0
+    explain: "Biasa dipakai untuk membuka shell atau memeriksa file."
+  - q: "Perintah docker events menampilkan…"
+    options: ["Konfigurasi jaringan", "Aktivitas daemon secara real-time", "Isi file", "Daftar image"]
+    answer: 1
+    explain: "Event membantu melihat urutan create, start, stop, dan die."
+  - q: "Kode exit 137 umumnya berarti…"
+    options: ["Port bentrok", "Image tidak ditemukan", "Container dihentikan paksa (SIGKILL), sering karena OOM", "Berhasil"]
+    answer: 2
+    explain: "Periksa batas memori atau docker inspect untuk melihat OOMKilled."
+  - q: "docker inspect --format digunakan untuk…"
+    options: ["Menghapus container", "Membuat log", "Mengubah entrypoint", "Mengambil field tertentu dari metadata JSON"]
+    answer: 3
+    explain: "Go template memungkinkan output ringkas tanpa jq."
+example:
+  code: |
+    docker logs --tail 100 api
+    docker exec -it api sh
+    docker inspect --format '{{.State.ExitCode}} {{.State.OOMKilled}}' api
+    docker events --filter container=api
+---
+
+Debugging container mirip debugging proses biasa, dengan tambahan lapisan isolasi. Kuncinya: mulai dari log, lalu metadata, baru masuk ke dalam container.
+
+## Alur Investigasi
+
+```bash
+docker ps -a --filter name=api
+docker logs --tail 200 api
+docker inspect api
+docker events --since 5m --filter container=api
+```
+
+## Membaca Log
+
+```bash
+docker logs -f api                  # ikuti log langsung
+docker logs --since 10m api         # hanya 10 menit terakhir
+docker logs --timestamps api        # tambah waktu tiap baris
+```
+
+Aplikasi sebaiknya menulis log ke **stdout/stderr**, bukan ke file di dalam container. Docker lalu bisa mengumpulkannya dengan driver logging.
+
+## Masuk ke Container
+
+```bash
+docker exec -it api sh          # alpine/busybox
+docker exec -it api bash        # debian/ubuntu
+docker exec api env | sort
+docker exec api ls -la /app
+```
+
+`exec` hanya bekerja pada container yang sedang berjalan. Untuk container yang sudah mati, salin filenya dengan `docker cp api:/path ./local`.
+
+## Kode Exit yang Umum
+
+| Kode | Arti |
+|---|---|
+| 0 | Selesai sukses |
+| 1 | Error aplikasi umum |
+| 125 | Docker sendiri gagal menjalankan container |
+| 126 | Perintah tidak bisa dieksekusi |
+| 127 | Perintah tidak ditemukan |
+| 137 | SIGKILL, sering kehabisan memori |
+| 143 | SIGTERM diakhiri dengan rapi |
+
+## Memeriksa OOM
+
+```bash
+docker inspect --format '{{.State.OOMKilled}}' api
+docker stats --no-stream api
+```
+
+<div class="note">💡 `docker logs` hanya melihat proses PID 1. Jika aplikasinya memfork child yang mencetak ke file, log itu tidak muncul—ubah aplikasi agar menulis ke stdout.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' '---' 'perintah debugging:' '  docker logs --tail 20 &lt;nama&gt;' '  docker exec -it &lt;nama&gt; sh' '  docker inspect &lt;nama&gt;' '  docker events --since 5m' '---' &gt; panduan-debug.txt
+docker ps -a --format '{{.Names}}\\t{{.Status}}' | head -5`}</code></pre>

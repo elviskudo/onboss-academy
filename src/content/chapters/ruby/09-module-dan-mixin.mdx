@@ -101,7 +101,7 @@ Satu class boleh `include` **banyak module tanpa batas** — inilah keunggulan u
 
 ## Mixin Bawaan Ruby: Enumerable & Comparable
 
-Ruby sendiri memakai pola ini: `Array`, `Hash`, dan `Range` sama-sama `include Enumerable`, sehingga mereka otomatis mendapat `map`, `select`, `reduce`, `sort_by`, dan puluhan method lain dari satu definisi. `Comparable` melakukan hal yang sama untuk `+`, `<=>`, `min`, `max` pada Integer, String, dan Time.
+Ruby sendiri memakai pola ini: `Array`, `Hash`, dan `Range` sama-sama `include Enumerable`, sehingga mereka otomatis mendapat `map`, `select`, `reduce`, `sort_by`, dan puluhan method lain dari satu definisi. `Comparable` melakukan hal yang sama untuk `+`, `&lt;=>`, `min`, `max` pada Integer, String, dan Time.
 
 ## Instance Method dari Module
 
@@ -159,6 +159,10 @@ Tanda `::` menavigasi isi module — dua library boleh punya method `hitung` asa
 - **Library pihak ketiga**: `Money`, `Geocoder`, dan `Pagy` dipakai sebagai namespace/`include` tanpa mewarisi class kamu.
 
 <div class="note">💡 Pertanyaan praktisnya sederhana: kalau perilaku itu milik satu objek dan butuh state-nya, taruh di class. Kalau bisa dipakai class mana pun tanpa hubungan pewarisan, taruh di module. Dan bila hanya mengelompokkan fungsi tanpa instance sama sekali, module murni dengan `def self.` adalah jawabannya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`module Sapa
   def halo

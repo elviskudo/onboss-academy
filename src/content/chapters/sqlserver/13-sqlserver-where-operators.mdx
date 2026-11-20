@@ -1,0 +1,97 @@
+---
+title: "WHERE, AND, OR, NOT, dan Operator Perbandingan"
+description: "filter baris, precedence, IN, BETWEEN, LIKE, dan IS NULL"
+order: 13
+quiz:
+  - q: "Operator \"tidak sama dengan\" di T-SQL adalah…"
+    options: ["~=", "<> atau !=", "===", "NOT EQ"]
+    answer: 1
+    explain: "<> adalah bentuk standar; != juga diterima SQL Server."
+  - q: "BETWEEN 10 AND 20 mencakup…"
+    options: ["11 sampai 19", "Semua kecuali 10 dan 20", "Hanya 10 dan 20", "10 sampai 20 inklusif"]
+    answer: 3
+    explain: "BETWEEN inklusif pada kedua batas."
+  - q: "Untuk mencari baris dengan kolom kosong dipakai…"
+    options: ["IS NULL", "== NULL", "NULL()", "= NULL"]
+    answer: 0
+    explain: "NULL bukan nilai biasa, jadi perbandingan = NULL tidak pernah benar."
+  - q: "Wildcard untuk satu karakter tunggal pada LIKE adalah…"
+    options: ["?", "%", "_", "*"]
+    answer: 2
+    explain: "% = nol atau lebih karakter; _ = tepat satu karakter."
+  - q: "Evaluasi AND vs OR tanpa tanda kurung…"
+    options: ["Kiri ke kanan", "Acak", "AND didahulukan", "OR didahulukan"]
+    answer: 2
+    explain: "Gunakan tanda kurung agar niat query tidak ambigu."
+example:
+  code: |
+    SELECT nama, gaji FROM dbo.karyawan
+    WHERE (divisi = N'Teknik' OR divisi = N'IT')
+      AND gaji BETWEEN 5000000 AND 12000000
+      AND nama LIKE N'A%'
+      AND email IS NOT NULL;
+---
+
+## Filter Dasar
+
+```sql
+SELECT nama, gaji
+FROM dbo.karyawan
+WHERE gaji > 5000000;
+```
+
+`WHERE` dievaluasi sebelum `SELECT` dan `ORDER BY`, sehingga hanya baris yang lolos yang dihitung atau diurutkan.
+
+## Logika
+
+```sql
+WHERE divisi = N'Teknik' AND aktif = 1
+WHERE divisi = N'Teknik' OR divisi = N'IT'
+WHERE NOT (status = N'Nonaktif')
+```
+
+Ketika `AND` dan `OR` dicampur, selalu pakai tanda kurung. Pembaca query tidak perlu menghafal aturan precedence untuk memahami niatmu.
+
+## IN dan BETWEEN
+
+```sql
+WHERE kota IN (N'Jakarta', N'Bandung', N'Surabaya')
+WHERE umur BETWEEN 20 AND 35
+WHERE umur NOT BETWEEN 20 AND 35
+```
+
+`IN` setara dengan beberapa `OR`, tetapi lebih ringkas dan often lebih mudah dioptimasi.
+
+## LIKE
+
+| Pola | Arti |
+| --- | --- |
+| `'A%'` | diawali A |
+| `'%ah'` | diakhiri ah |
+| `'%budi%'` | mengandung budi |
+| `'A_i'` | A + satu karakter + i |
+| `'%[0-9]%'` | mengandung angka |
+
+```sql
+WHERE nama LIKE N'%[0-9]%'
+```
+
+## NULL
+
+```sql
+WHEREEmail IS NULL
+WHERE email IS NOT NULL
+```
+
+Karena `NULL` berarti "tidak diketahui", `NULL = NULL` menghasilkan `UNKNOWN`, bukan TRUE. Gunakan `IS NULL`.
+
+<div class="note">💡 `NOT IN` dengan daftar yang mengandung `NULL` selalu menghasilkan hasil kosong. Pakai `NOT EXISTS` bila datanya mungkin mengandung NULL.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (nama NVARCHAR(50), nilai INT);
+INSERT INTO #t VALUES (N'Ana', 88), (N'Budi', 45), (N'Rani', 92);
+SELECT nama FROM #t WHERE nilai BETWEEN 50 AND 100 AND nama LIKE N'A%';
+DROP TABLE #t;`}</code></pre>

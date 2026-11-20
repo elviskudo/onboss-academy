@@ -1,0 +1,108 @@
+---
+title: "State Machine"
+description: "Mengelola perilaku kompleks tanpa delay"
+order: 27
+quiz:
+  - q: "State machine digunakan untuk…"
+    options: ["Mengganti resistor", "Menyimpan EEPROM", "Mengubah baudrate", "Memodelkan perilaku sebagai keadaan dan transisi"]
+    answer: 3
+    explain: "Cocok untuk sistem dengan mode seperti idle, jalan, dan selesai."
+  - q: "Dalam state machine, transisi terjadi ketika…"
+    options: ["Suatu kondisi terpenuhi", "Setiap detik tanpa syarat", "Tombol tidak pernah ditekan", "Serial kosong"]
+    answer: 0
+    explain: "Kondisi bisa berupa tombol, sensor, atau waktu."
+  - q: "Enum berguna untuk…"
+    options: ["Mengganti clock", "Memberi nama keadaan yang jelas", "Menghapus variabel", "Menambah pin"]
+    answer: 1
+    explain: "Misalnya enum State { IDLE, JALAN, SELESAI };"
+  - q: "Keuntungan state machine dibanding banyak if bersarang adalah…"
+    options: ["Menghapus kebutuhan pin", "Tidak perlu loop", "Logika lebih mudah dipahami dan diperluas", "Lebih cepat dikompilasi"]
+    answer: 2
+    explain: "Tiap keadaan punya blok kode tersendiri."
+  - q: "Pada state JALAN, sistem sebaiknya…"
+    options: ["Menunggu delay", "Menghapus semua keadaan", "Keluar dari loop", "Menjalankan aksi keadaan itu lalu mengecek transisi"]
+    answer: 3
+    explain: "Struktur switch(state) umum dipakai."
+example:
+  code: |
+    enum State { IDLE, JALAN, SELESAI };
+    State state = IDLE;
+    
+    void loop() {
+      switch (state) {
+        case IDLE:
+          if (tombol()) state = JALAN;
+          break;
+        case JALAN:
+          jalankanMotor();
+          if (selesai()) state = SELESAI;
+          break;
+        case SELESAI:
+          motorStop();
+          state = IDLE;
+          break;
+      }
+    }
+---
+
+Saat proyek bertambah kompleks, kumpulan if bersarang menjadi sulit diikuti. State machine menyusun perilaku sebagai keadaan yang jelas dengan transisi yang terukur.
+
+## Konsep
+
+```text
+IDLE --tombol--> JALAN --sensor selesai--> SELESAI --reset--> IDLE
+```
+
+## Implementasi
+
+```cpp
+enum State { IDLE, JALAN, SELESAI };
+State state = IDLE;
+
+void loop() {
+  switch (state) {
+    case IDLE:
+      if (digitalRead(TOMBOL) == LOW) {
+        state = JALAN;
+        mulaiWaktu = millis();
+      }
+      break;
+    case JALAN:
+      jalankan();
+      if (millis() - mulaiWaktu > DURASI) state = SELESAI;
+      break;
+    case SELESAI:
+      berhenti();
+      if (digitalRead(TOMBOL) == LOW) state = IDLE;
+      break;
+  }
+}
+```
+
+## Aksi Entry dan Exit
+
+Saat memasuki keadaan, lakukan inisialisasi (misal mulai timer). Saat keluar, matikan aktuator. Ini mencegah motor tetap jalan setelah keadaan berubah.
+
+## Memberi Nama Keadaan
+
+Gunakan `enum class` pada C++11 untuk menghindari tabrakan nama:
+
+```cpp
+enum class Mode { SIAP, JALAN, ERROR };
+Mode m = Mode::SIAP;
+```
+
+<div class="note">💡 Hindari blocking di setiap keadaan. Kalau sebuah keadaan butuh menunggu, simpan waktunya dan gunakan pola `millis()`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`enum State { IDLE, AKTIF, SELESAI };
+State s = IDLE;
+void loop(){
+  switch(s){
+    case IDLE: if(random(10)&gt;8) s=AKTIF; break;
+    case AKTIF: s=SELESAI; break;
+    case SELESAI: s=IDLE; break;
+  }
+}`}</code></pre>

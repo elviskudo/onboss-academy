@@ -136,6 +136,10 @@ GROUP BY dept WITH ROLLUP;
 
 <div class="note">💡 Demo berjalan di SQLite untuk query standar. `WITH ROLLUP` dan detail ONLY_FULL_GROUP_BY harus diuji di server MySQL; tetap tulis GROUP BY ketat agar hasil portabel.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT dept,
        COUNT(*) AS jumlah,
        SUM(gaji) AS total_gaji,

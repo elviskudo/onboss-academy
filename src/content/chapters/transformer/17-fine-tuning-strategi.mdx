@@ -1,0 +1,106 @@
+---
+title: Strategi Fine-Tuning
+description: Menyesuaikan model pretrained untuk tugas dan domain tertentu secara efisien.
+order: 17
+quiz:
+- q: Fine-tuning penuh berarti…
+  options:
+  - Tokenizer diganti
+  - Semua parameter ikut diperbarui
+  - Hanya layer terakhir yang dipakai
+  - Model tidak dilatih lagi
+  answer: 1
+  explain: Full fine-tuning mengupdate seluruh bobot sehingga paling fleksibel tapi paling mahal.
+- q: LoRA bekerja dengan…
+  options:
+  - Mengganti tokenizer
+  - Menduplikasi dataset
+  - Menambah matriks rank rendah pada bobot yang dibekukan
+  - Menghapus beberapa layer
+  answer: 2
+  explain: LoRA membekukan bobot asli dan melatih dua matriks kecil yang ditambahkan pada update.
+- q: Keunggulan LoRA adalah…
+  options:
+  - Selalu lebih akurat dari fine-tuning penuh
+  - Tidak butuh data
+  - Menghapus bias
+  - Jauh lebih hemat memori dan storage
+  answer: 3
+  explain: Cukup menyimpan adapter kecil, bukan salinan seluruh model.
+- q: Instruction tuning bertujuan…
+  options:
+  - Membuat model mengikuti perintah dalam bahasa alami
+  - Menambah vocabulary
+  - Mengurangi panjang konteks
+  - Mengganti arsitektur
+  answer: 0
+  explain: Contoh pasangan instruksi–jawaban melatih model memahami format dan niat perintah.
+- q: RLHF digunakan untuk…
+  options:
+  - Menambah parameter
+  - Menyelaraskan jawaban dengan preferensi manusia
+  - Mempercepat tokenizer
+  - Menghapus positional encoding
+  answer: 1
+  explain: Reinforcement Learning from Human Feedback memakai ranking manusia sebagai sinyal reward.
+example:
+  code: '# LoRA: W'' = W + (alpha / r) * B @ A
+
+    # A: r x d_out, B: d_in x r, dengan r <&lt; d
+
+    '
+---
+
+
+**Fine-tuning** mengubah model umum menjadi spesialis. Bukan selalu harus melatih ulang seluruh miliaran parameter.
+
+## Spektrum Strategi
+
+| Strategi | Parameter dilatih | Biaya | Cocok untuk |
+|---|---|---|---|
+| Prompt engineering | nol | sangat rendah | tugas ringan |
+| RAG | nol | rendah | butuh data terbaru |
+| LoRA / QLoRA | &lt;1% | sedang | domain khusus |
+| Fine-tuning penuh | 100% | tinggi | perubahan perilaku besar |
+
+## LoRA
+
+```text
+W' = W + (alpha / r) · B · A
+```
+
+Bobot `W` dibekukan. Hanya matriks `A` dan `B` dengan rank kecil `r` yang dilatih.
+
+```python
+r, d_in, d_out = 8, 512, 512
+A = [[0.0] * d_out for _ in range(r)]  # r x d_out
+B = [[0.0] * r for _ in range(d_in)]   # d_in x r
+print("parameter LoRA:", r * d_in + r * d_out)
+```
+
+QLoRA menambah kuantisasi 4-bit pada bobot dasar sehingga model besar bisa dilatih pada GPU konsumen.
+
+## Instruction Tuning
+
+Dataset berisi pasangan seperti:
+
+```text
+Instruksi: "Ringkas kalimat berikut menjadi satu ayat."
+Input:    "..."
+Jawaban:  "..."
+```
+
+Format yang konsisten penting agar model tahu mana perintah, mana data, mana batas jawaban.
+
+## RLHF dan DPO
+
+RLHF melatih model hadiah (reward model) dari preferensi manusia, lalu mengoptimalkan kebijakan dengan PPO. DPO menyederhanakan dengan langsung mengoptimalkan pasangan jawaban disukai/tidak disukai.
+
+<div class="note">💡 Mulai dari prompt dan RAG. Fine-tuning baru diperlukan bila gaya, format, atau pola yang diinginkan tidak bisa dicapai hanya dengan konteks.</div>
+
+## Checklist Praktis
+
+- Siapkan data bersih dan beragam, bukan ribuan contoh yang hampir sama.
+- Sisihkan validation set untuk mendeteksi overfitting.
+- Simpan adapter bersama versi model dasar dan tokenizer yang dipakai.
+- Uji regresi: kemampuan lama tidak boleh hilang saat model menjadi spesialis.

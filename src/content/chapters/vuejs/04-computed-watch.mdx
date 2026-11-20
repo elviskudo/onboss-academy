@@ -136,6 +136,10 @@ Computed juga cocok untuk list rendering: `produkTampil = computed(() => produk.
 
 <div class="note">💡 computed bersifat **getter saja**. Jangan menulis `total.value = ...` — computed dibentuk dari state lain. Jika butuh nilai turunan yang bisa diubah, simpan di `ref` biasa dan perbarui lewat method.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`// Meniru computed (getter ber-cache) dan watch dengan JS biasa
 const state = { harga: 25000, qty: 2, diskon: 0 };
 

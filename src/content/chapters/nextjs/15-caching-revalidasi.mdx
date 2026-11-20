@@ -1,0 +1,91 @@
+---
+title: "Caching & Revalidasi"
+description: "cache default, fetch options, revalidate, tag, dan revalidatePath"
+order: 15
+quiz:
+  - q: "fetch di App Router secara default…"
+    options: ["Tidak pernah di-cache", "Hanya di client", "Di-cache oleh Next.js", "Selalu segar"]
+    answer: 2
+    explain: "Perilaku bisa diubah lewat opsi cache/next.revalidate."
+  - q: "`cache: 'no-store'` berarti…"
+    options: ["Error", "Tidak menyimpan respons sama sekali", "Cache selamanya", "Cache 1 detik"]
+    answer: 1
+    explain: "Cocok untuk data yang harus selalu terbaru."
+  - q: "`next: { revalidate: 60 }` berarti…"
+    options: ["Cache 60 menit", "Delay 60 ms", "Retry 60 kali", "Cache diperbarui maksimal tiap 60 detik"]
+    answer: 3
+    explain: "Strategi ISR — incremental static regeneration."
+  - q: "revalidateTag() berguna untuk…"
+    options: ["Menambah metadata", "Menghapus cache yang diberi tag tertentu", "Mengubah CSS", "Membuat rute"]
+    answer: 1
+    explain: "Misalnya tag 'produk' setelah admin menyimpan perubahan."
+  - q: "revalidatePath('/produk') menghapus cache untuk…"
+    options: ["Rute tersebut", "Seluruh situs", "Hanya gambar", "Tidak ada"]
+    answer: 0
+    explain: "Bisa dipanggil dari Server Action atau Route Handler."
+example:
+  code: |
+    await fetch(url, { next: { revalidate: 60, tags: ['produk'] } });
+
+    // di server action
+    revalidateTag('produk');
+---
+
+Cache adalah alasan Next.js terasa cepat. Tapi cache yang tidak dipahami bisa membuat data tampak "basi".
+
+## Opsi fetch
+
+```ts
+// di-cache, diperbarui tiap 60 detik
+const data = await fetch(url, { next: { revalidate: 60 } });
+
+// selalu ambil data baru
+const segar = await fetch(url, { cache: "no-store" });
+
+// beri tag agar bisa dihapus manual
+const berTag = await fetch(url, { next: { tags: ["produk"] } });
+```
+
+## Revalidate dari Aksi
+
+```ts
+"use server";
+
+import { revalidateTag, revalidatePath } from "next/cache";
+
+export async function simpanProduk(formData: FormData) {
+  await updateProduk(formData);
+  revalidateTag("produk");
+  revalidatePath("/produk");
+}
+```
+
+Setelah aksi selesai, halaman terkait diperbarui tanpa menunggu masa kedaluwarsa.
+
+## Route Segment Config
+
+```tsx
+// app/produk/page.tsx
+export const revalidate = 300; // 5 menit
+export const dynamic = "force-dynamic"; // selalu dinamis
+```
+
+## Memilih Strategi
+
+| Data | Strategi |
+|------|----------|
+| Harga saham | `no-store` |
+| Katalog produk | revalidate 60–3600 |
+| Artikel blog | revalidate / static |
+| Dashboard user | dinamis per request |
+
+<div class="note">💡 Mulai dari cache default, lalu ubah hanya bila data memang berubah cepat. Terlalu banyak `no-store` menghilangkan keuntungan server rendering.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`await fetch(url, { next: { revalidate: 60, tags: ['produk'] } });
+
+// di server action
+revalidateTag('produk');`}</code></pre>

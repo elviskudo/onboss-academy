@@ -1,5 +1,37 @@
 # Release Notes
 
+## v0.0.5 — Material Coverage & Google Sign-In
+
+### Highlights
+
+- Materi diperluas dari 338 menjadi **1005 chapter MDX** untuk 38 bahasa.
+- Cakupan tiap bahasa diselaraskan dengan urutan topik tutorial inti W3Schools; materi tetap ditulis ulang secara orisinal dalam bahasa Indonesia.
+- Seluruh chapter memakai pola konsisten: penjelasan, contoh, `## Try it Yourself`, dan kuis 5 soal.
+- Menambahkan **Sign in with Google** (OAuth 2.0) di halaman login dan register.
+- Alur OAuth memakai state cookie untuk CSRF, menukar kode di server, lalu membuat/mencari user berdasarkan email Google yang terverifikasi.
+- Akun Google memakai `passwordHash` acak sehingga tidak bisa masuk memakai password biasa.
+- `.env.example` didokumentasikan dengan `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, dan `PUBLIC_SITE_URL`.
+
+### Konfigurasi yang Diperlukan
+
+Redirect URI harus didaftarkan di Google Cloud Console pada OAuth client bertipe *Web application*:
+
+```text
+https://onboss-academy.elviskudo.workers.dev/api/auth/google/callback
+http://localhost:4321/api/auth/google/callback
+```
+
+Secret production dipasang lewat `npx wrangler secret put GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, dan `PUBLIC_SITE_URL`.
+
+### Verification
+
+- `/usr/bin/python3 scripts/check_content.py` berhasil (1005 MDX valid, 38 bahasa).
+- `npx astro build` berhasil dengan adapter Cloudflare.
+- Tombol Google tampil di `/login` dan `/register`.
+- Endpoint `/api/auth/google` menghasilkan authorization URL Google dengan `client_id`, `redirect_uri`, `scope`, dan `state` yang benar.
+- Validasi langsung ke Google menunjukkan `redirect_uri_mismatch` untuk localhost maupun production — redirect URI belum terdaftar di Google Console. Kode siap pakai begitu URI didaftarkan.
+
+
 ## v0.0.4 — HTML5 Forms & Runtime Preview
 
 ### Highlights

@@ -1,0 +1,117 @@
+---
+title: "Reactive Forms"
+description: "FormGroup, FormControl, Validators, dan validasi kustom"
+order: 19
+quiz:
+  - q: "FormGroup digunakan untuk…"
+    options: ["Membuat rute", "Menyimpan CSS", "Mengelompokkan beberapa FormControl", "Mengirim request GET"]
+    answer: 2
+    explain: "Bentuknya seperti object bertipe."
+  - q: "Validasi required ditambahkan dengan…"
+    options: ["FormControl.required", "Validators.required", "requiredOnly()", "Validators.min(1)"]
+    answer: 1
+    explain: "Validators.dapat digabung dalam array."
+  - q: "Nilai seluruh form dibaca lewat…"
+    options: ["form.data", "form.getRaw()", "form.state", "form.value"]
+    answer: 3
+    explain: "Untuk field disabled, pakai getRawValue()."
+  - q: "Status validitas form ada di…"
+    options: ["form.checked", "form.valid / form.invalid", "form.statusText", "form.error"]
+    answer: 1
+    explain: "Bisa dipakai untuk mengaktifkan tombol submit."
+  - q: "Validator kustom harus mengembalikan…"
+    options: ["ValidationErrors atau null", "boolean", "string", "Promise"]
+    answer: 0
+    explain: "null berarti valid."
+example:
+  code: |
+    this.form = new FormGroup({
+      email: new FormControl("", [Validators.required, Validators.email]),
+      umur: new FormControl(0, [Validators.min(17)]),
+    });
+---
+
+Reactive Forms menjadikan form sebagai model TypeScript yang eksplisit. Cocok untuk form kompleks dan dinamis.
+
+## Menyusun Form
+
+```typescript
+import { FormGroup, FormControl, Validators, ReactiveFormsModule } from "@angular/forms";
+
+@Component({
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="kirim()">
+      <input formControlName="email" placeholder="Email">
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <small>Email belum valid.</small>
+      }
+
+      <input formControlName="umur" type="number" placeholder="Umur">
+      <button type="submit" [disabled]="form.invalid">Daftar</button>
+    </form>
+  `,
+})
+export class DaftarComponent {
+  form = new FormGroup({
+    email: new FormControl("", [Validators.required, Validators.email]),
+    umur: new FormControl(0, [Validators.min(17)]),
+  });
+
+  kirim() {
+    if (this.form.invalid) return;
+    console.log(this.form.value);
+  }
+}
+```
+
+## FormArray
+
+```typescript
+form = new FormGroup({
+  tags: new FormArray<FormControl<string>>([]),
+});
+
+get tags() { return this.form.controls.tags; }
+
+tambahTag() {
+  this.tags.push(new FormControl(""));
+}
+```
+
+Cocok untuk daftar yang bisa ditambah/dihapus pengguna.
+
+## Validator Kustom
+
+```typescript
+function tanpaSpasi(control: AbstractControl): ValidationErrors | null {
+  return /\s/.test(control.value) ? { adaSpasi: true } : null;
+}
+
+const username = new FormControl("", [tanpaSpasi]);
+```
+
+## FormBuilder
+
+```typescript
+private fb = inject(FormBuilder);
+
+form = this.fb.group({
+  email: ["", [Validators.required, Validators.email]],
+  umur: [0, [Validators.min(17)]],
+});
+```
+
+Lebih ringkas untuk form besar.
+
+<div class="note">💡 Reactive Forms membuat state form bisa diuji tanpa DOM. Itu alasan utamanya dipilih untuk aplikasi enterprise dengan aturan validasi rumit.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`this.form = new FormGroup({
+  email: new FormControl("", [Validators.required, Validators.email]),
+  umur: new FormControl(0, [Validators.min(17)]),
+});`}</code></pre>

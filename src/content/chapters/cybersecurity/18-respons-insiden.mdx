@@ -1,0 +1,77 @@
+---
+title: "Respons Insiden"
+description: "Tahapan penanganan insiden dari deteksi hingga pelajaran yang diambil"
+order: 18
+quiz:
+  - q: "Tahap pertama setelah alert valid adalah…"
+    options: ["Menghubungi media", "Memformat server", "Triage untuk menentukan ruang lingkup", "Menghapus semua log"]
+    answer: 2
+    explain: "Triage menentukan apakah insiden nyata dan seberapa luas dampaknya."
+  - q: "Saat akun diduga ditembus, tindakan cepat yang tepat adalah…"
+    options: ["Tunggu sampai insiden hilang sendiri", "Tambah administrator", "Hapus backup", "Cabut sesi dan ganti kredensial"]
+    answer: 3
+    explain: "Menghentikan akses penyerang lebih penting daripada menyelidiki dulu."
+  - q: "Isolasi host bertujuan…"
+    options: ["Mencegah penyebaran sambil mempertahankan bukti", "Menghancurkan bukti", "Mempercepat internet", "Mengganti kata sandi"]
+    answer: 0
+    explain: "Putuskan jaringan, jangan langsung matikan mesin bila memori penting."
+  - q: "Post-mortem yang baik berfokus pada…"
+    options: ["Mengulang insiden", "Penyebab sistemik dan perbaikan", "Mencari orang untuk disalahkan", "Menghapus catatan"]
+    answer: 1
+    explain: "Budaya tanpa kesalahan mendorong pelaporan dan perbaikan nyata."
+  - q: "Indicator of compromise (IoC) contohnya…"
+    options: ["Jumlah halaman", "Nama perusahaan", "Alamat IP, hash file, dan domain pencuri data", "Warna logo"]
+    answer: 2
+    explain: "IoC dipakai untuk mencari jejak insiden di sistem lain."
+example:
+  code: |
+    1. Deteksi -> 2. Triage -> 3. Isolasi -> 4. Eradikasi
+    5. Pemulihan -> 6. Pelajaran -> 7. Perbaikan kontrol
+---
+
+Insiden bukan soal "apakah akan terjadi", melainkan "kapan". Respons yang terlatih membatasi kerusakan dan menghasilkan perbaikan.
+
+## Enam Langkah
+
+| Langkah | Tujuan |
+|---|---|
+| Persiapan | Tim, kontak, alat, dan wewenang sudah jelas |
+| Identifikasi | Tentukan apa terjadi dan sistem yang terdampak |
+| Kontainment | Hentikan penyebaran |
+| Eradikasi | Hapus akses, malware, dan akun jahat |
+| Pemulihan | Kembalikan layanan dengan keamanan diperbaiki |
+| Pelajaran | Tulis temuan dan tindak lanjut |
+
+## Kotak Alat Triage
+
+```bash
+who / last            # siapa yang login
+ps aux                # proses mencurigakan
+ss -tunap             # koneksi aktif
+find / -newermt ...   # file baru
+journalctl -u ssh     # log layanan
+```
+
+## Urutan Kontainment
+
+1. Cabut akses akun yang terdampak.
+2. Putus jaringan host bila perlu, tapi **jangan** matikan dulu bila analisis memori diperlukan.
+3. Simpan image disk dan log sebelum dibersihkan.
+4. Ganti kredensial yang mungkin bocor.
+5. Patches dan konfigurasi ulang sebelum host kembali masuk produksi.
+
+## Komunikasi
+
+Tentukan satu narasumber resmi dan saluran internal. Hindari menebak di depan publik; sampaikan fakta yang sudah diverifikasi dan perkiraan waktu pembaruan berikutnya.
+
+<div class="note">💡 Latih respons insiden dengan simulasi. Tim yang baru pertama kali membaca playbook saat insiden nyata hampir selalu lebih lambat.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Tulis ringkasan insiden singkat:
+  - kapan terdeteksi
+  - sistem terdampak
+  - bagaimana penyerang masuk
+  - apa yang sudah dilakukan
+  - apa yang harus diperbaiki`}</code></pre>

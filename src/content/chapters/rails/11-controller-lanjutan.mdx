@@ -1,0 +1,123 @@
+---
+"title": "Controller Lanjutan"
+"description": "Parameter, strong parameter, render, redirect, dan filter sebelum/sesudah aksi"
+"order": 11
+"quiz":
+- "q": "Strong parameter berfungsi untuk…"
+  "options":
+  - "Mempercepat query"
+  - "Membatasi atribut yang boleh disimpan"
+  - "Mengubah route"
+  - "Menambah CSS"
+  "answer": 1
+  "explain": "params.require(...).permit(...) mencegah atribut sensitif dikirim dari form."
+- "q": "Metode untuk menampilkan view lain tanpa mengubah URL adalah…"
+  "options":
+  - "redirect_to"
+  - "render"
+  - "send_data"
+  - "head"
+  "answer": 1
+  "explain": "render menghasilkan respons langsung; redirect_to mengirim status 302 ke browser."
+- "q": "Setelah create berhasil, praktik umum adalah…"
+  "options":
+  - "render :new"
+  - "redirect_to dengan status see_other"
+  - "head :ok"
+  - "return false"
+  "answer": 1
+  "explain": "Redirect mencegah form terkirim ulang saat browser di-refresh (PRG pattern)."
+- "q": "Filter yang dijalankan sebelum aksi adalah…"
+  "options":
+  - "after_action"
+  - "around_action"
+  - "before_action"
+  - "ensure_action"
+  "answer": 2
+  "explain": "before_action berjalan lebih dulu, misalnya untuk autentikasi."
+- "q": "Objek params di controller berisi…"
+  "options":
+  - "Hanya data database"
+  - "Data request seperti query, body, dan route"
+  - "Hanya session"
+  - "Konfigurasi Rails"
+  "answer": 1
+  "explain": "params menggabungkan parameter URL, query string, dan form."
+"example":
+  "code": "class ArticlesController &lt; ApplicationController\n  before_action :set_article, only: [:show, :edit, :update, :destroy]\n\n  def create\n    @article = Article.new(article_params)\n    if @article.save\n      redirect_to @article, status: :see_other\n    else\n      render :new, status: :unprocessable_entity\n    end\n  end\n\n  private\n  def set_article\n    @article = Article.find(params[:id])\n  end\n\n  def article_params\n    params.require(:article).permit(:title, :body)\n  end\nend\n"
+---
+
+## Alur Satu Aksi
+
+```ruby
+class ArticlesController < ApplicationController
+  before_action :set_article, only: [:show, :edit, :update, :destroy]
+
+  def create
+    @article = Article.new(article_params)
+    if @article.save
+      redirect_to @article, status: :see_other
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  private
+  def set_article
+    @article = Article.find(params[:id])
+  end
+
+  def article_params
+    params.require(:article).permit(:title, :body)
+  end
+end
+```
+
+Controller menerima request, mengambil data lewat model, lalu memilih respons.
+
+```ruby
+def show
+  @article = Article.find(params[:id])
+end
+```
+
+Secara bawaan Rails mencari view `app/views/articles/show.html.erb` dan meneruskan variabel instance `@article` ke sana.
+
+## Parameter dan Strong Parameter
+
+`params` berisi data request. Jangan pernah menyimpan seluruh `params` langsung ke model:
+
+```ruby
+params.require(:article).permit(:title, :body)
+```
+
+`require` memastikan kunci `article` ada; `permit` hanya mengizinkan dua kolom itu. Kolom seperti `user_id` atau `admin` tidak bisa disisipkan lewat form palsu.
+
+## Render versus Redirect
+
+| Metode | Status | URL browser | Kapan dipakai |
+|---|---|---|---|
+| `render :new` | 200 (atau 422) | tetap `/articles/new` | validasi gagal, form harus menampilkan error |
+| `redirect_to @article` | 302/303 | berubah ke `/articles/1` | setelah aksi berhasil |
+
+Gunakan `status: :see_other` (303) setelah create/update agar refresh tidak mengirim ulang POST/PATCH.
+
+## Filter Aksi
+
+```ruby
+before_action :authenticate!
+after_action :log_activity, only: :create
+```
+
+Filter menghindari pengulangan kode. Simpan method filter di bagian `private` supaya tidak dianggap sebagai aksi yang bisa dipanggil lewat URL.
+
+## Respons Non-HTML
+
+```ruby
+respond_to do |format|
+  format.html
+  format.json { render json: @article }
+end
+```
+
+<div class="note">💡 Variabel instance (`@nama`) otomatis tersedia di view, sedangkan variabel lokal biasa tidak. Itu sebabnya controller memakai <code>@article</code>, bukan <code>article</code>.</div>

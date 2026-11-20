@@ -27,7 +27,7 @@ example:
   code: |
     import csv
     import io
-
+    
     teks = "nama,nilai\nAndi,80\nBia,90\n"
     baris = csv.DictReader(io.StringIO(teks))
     for row in baris:
@@ -140,6 +140,10 @@ Gunakan `indent=2` agar hasil JSON mudah dibaca manusia saat disimpan atau dikir
 - **Laporan otomatis** — hasil hitung disimpan `json.dump` supaya dashboard web tinggal membangunkannya.
 
 <div class="note">💡 Selalu konversi kolom angka dengan int() atau float() sesaat setelah dibaca. Menjumlahkan string angka ("80" + "90") akan menggabungkan teks, bukan menjumlahkan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`import csv
 import io

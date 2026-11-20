@@ -1,0 +1,113 @@
+---
+title: "Data Rapi dengan tidyr"
+description: "Pivot panjang-lebar, pisah/gabung kolom, dan penanganan missing value dengan tidyr"
+order: 16
+quiz:
+  - q: "Fungsi untuk mengubah data lebar menjadi panjang adalah…"
+    options: ["pivot_longer()", "pivot_wider()", "spread() saja", "gather() saja"]
+    answer: 0
+    explain: "pivot_longer mengumpulkan beberapa kolom menjadi pasangan nama-nilai."
+  - q: "Fungsi untuk mengubah data panjang menjadi lebar adalah…"
+    options: ["pivot_longer()", "pivot_wider()", "unite()", "separate()"]
+    answer: 1
+    explain: "pivot_wider menyebarkan nilai unik menjadi kolom."
+  - q: "separate() digunakan untuk…"
+    options: ["Menggabungkan kolom", "Memisahkan satu kolom menjadi beberapa", "Mengurutkan data", "Menghapus duplikat"]
+    answer: 1
+    explain: "separate memecah teks berdasarkan pemisah menjadi beberapa kolom."
+  - q: "drop_na() berfungsi untuk…"
+    options: ["Mengisi NA", "Membuang baris yang mengandung NA", "Menandai NA", "Mengubah NA jadi nol"]
+    answer: 1
+    explain: "drop_na membuang baris dengan nilai hilang."
+  - q: "replace_na() berguna untuk…"
+    options: ["Menghapus kolom", "Mengisi NA dengan nilai tertentu", "Menambah baris", "Mengganti tipe kolom"]
+    answer: 1
+    explain: "replace_na mengisi nilai hilang, misalnya dengan 0 atau 'Unknown'."
+example:
+  code: |
+    library(tidyr)
+    df <- data.frame(id=1:2, a=c(5,7), b=c(6,8))
+    print(pivot_longer(df, cols=c(a,b), names_to="jenis", values_to="nilai"))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data **tidy** memiliki tiga sifat: setiap variabel satu kolom, setiap observasi satu baris, dan setiap sel satu nilai. `tidyr` membantu mengubah data mentah ke bentuk itu.
+
+## Lebar ke Panjang
+
+```r
+library(tidyr)
+lebar <- data.frame(kota = c("Bandung", "Surabaya"),
+                    jan = c(100, 120),
+                    feb = c(110, 130))
+
+panjang <- lebar %>%
+  pivot_longer(cols = c(jan, feb),
+               names_to = "bulan",
+               values_to = "omzet")
+```
+
+Sekarang `bulan` dan `omzet` masing-masing satu kolom — bentuk yang disukai `ggplot()` dan `group_by()`.
+
+## Panjang ke Lebar
+
+```r
+panjang %>%
+  pivot_wider(names_from = bulan, values_from = omzet)
+```
+
+Bila sebuah kombinasi muncul lebih dari sekali, tentukan agregasi: `values_fn = sum`. Tanpa itu `pivot_wider` akan mengingatkan adanya duplikat.
+
+## Memisah dan Menggabungkan Kolom
+
+```r
+data.frame(nama = c("Ana-Sari", "Budi-Santu")) %>%
+  separate(nama, into = c("depan", "belakang"), sep = "-")
+
+data.frame(depan = c("Ana"), belakang = c("Sari")) %>%
+  unite(nama, depan, belakang, sep = " ")
+```
+
+`separate_wider_delim()` adalah versi baru yang lebih eksplisit untuk kasus kompleks.
+
+## Menangani Nilai Hilang
+
+| Fungsi | Efek |
+| --- | --- |
+| `drop_na()` | buang baris yang memuat NA |
+| `replace_na(x, 0)` | isi NA dengan nilai tetap |
+| `fill(col, .direction = "down")` | isi NA dari nilai sebelumnya |
+| `complete()` | tambahkan kombinasi yang hilang sebagai baris baru |
+
+```r
+df %>% fill(kelas, .direction = "down") %>% replace_na(list(nilai = 0))
+```
+
+`fill()` berguna pada tabel yang baris pertamanya berisi label grup dan baris berikutnya kosong, misalnya hasil ekspor dari spreadsheet.
+
+## Bersarang dan Meratakan
+
+```r
+df %>% nest(data = -kota)        # satu baris per kota, kolom data berisi data frame
+df_nested %>% unnest(data)       # kembali ke bentuk panjang
+```
+
+Nest berguna saat ingin melatih satu model per kota: `mutate(model = map(data, ~lm(y ~ x, .x)))`.
+
+## Di Dunia Nyata
+
+- **Data survei**: kolom `q1, q2, q3` diubah menjadi `pertanyaan` + `jawaban` sebelum dibuat grafik.
+- **Penjualan bulanan**: format lebar per bulan dirapikan sebelum agregasi tahunan.
+- **Alamat**: `separate()` memecah "kota, provinsi" menjadi dua kolom.
+- **Time series**: `complete()` menambahkan tanggal yang tidak muncul agar grafik tidak melompat.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`library(tidyr)
+lebar <- data.frame(kota = c("Bandung", "Surabaya"), jan = c(100, 120), feb = c(110, 130))
+panjang <- pivot_longer(lebar, cols = c(jan, feb), names_to = "bulan", values_to = "omzet")
+print(panjang)
+print(pivot_wider(panjang, names_from = bulan, values_from = omzet))
+print(data.frame(nama = "Ana-Sari") %>% separate(nama, into = c("depan", "belakang"), sep = "-"))`} />

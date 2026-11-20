@@ -15,10 +15,10 @@ quiz:
     options: ["Minimal sekali", "Nol kali jika kondisi false", "Tepat 10 kali", "Hanya saat input kosong"]
     answer: 0
     explain: "do { ... } while (kondisi); — isi dijalankan dulu baru kondisi dicek."
-  - q: "Nilai i pada akhir for (int i = 0; i < 3; i++) adalah…"
+  - q: "Nilai i pada akhir for (int i = 0; i &lt; 3; i++) adalah…"
     options: ["3", "2", "4", "0"]
     answer: 0
-    explain: "Loop berhenti ketika i sudah tidak memenuhi i < 3, sehingga i = 3."
+    explain: "Loop berhenti ketika i sudah tidak memenuhi i &lt; 3, sehingga i = 3."
   - q: "Perulangan for-each (for (int x : arr)) paling cocok untuk…"
     options: ["Menelusuri semua elemen array", "Mengubah ukuran array", "Membuat array baru", "Menghapus elemen terakhir"]
     answer: 0
@@ -26,7 +26,7 @@ quiz:
 example:
   code: |
     int total = 0;
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 1; i &lt;= 5; i++) {
         total += i;
         System.out.println("i = " + i + ", total = " + total);
     }
@@ -158,10 +158,14 @@ Keempat pola ini muncul berulang di ujian, competitive programming, dan pemroses
 
 <div class="note">💡 Hati-hati loop tanpa update — kondisi <code>while</code> yang tak pernah berubah membuat loop berputar selamanya (infinite loop) dan menghabiskan CPU. Selalu pastikan ada jalur menuju <code>false</code>: counter bertambah, atau data menyusut.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     public static void main(String[] args) {
         int total = 0;
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i &lt;= 5; i++) {
             total += i;
         }
         System.out.println("Jumlah 1..5 = " + total);
@@ -177,9 +181,9 @@ Keempat pola ini muncul berulang di ujian, competitive programming, dan pemroses
         do {
             percobaan = 1;
             System.out.println("Menu tampil (percobaan " + percobaan + ")");
-        } while (percobaan < 0);
+        } while (percobaan &lt; 0);
 
-        for (int i = 1; i <= 7; i++) {
+        for (int i = 1; i &lt;= 7; i++) {
             if (i == 4) continue;
             if (i > 6) break;
             System.out.print(i + " ");
@@ -195,8 +199,8 @@ Keempat pola ini muncul berulang di ujian, competitive programming, dan pemroses
         System.out.println("Rata-rata: " + (double) totalNilai / nilai.length);
         System.out.println("Lulus: " + lulus + "/" + nilai.length);
 
-        for (int b = 1; b <= 3; b++) {
-            for (int k = 1; k <= 3; k++) System.out.print("*");
+        for (int b = 1; b &lt;= 3; b++) {
+            for (int k = 1; k &lt;= 3; k++) System.out.print("*");
             System.out.println();
         }
     }

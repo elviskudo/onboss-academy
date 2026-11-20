@@ -1,0 +1,103 @@
+---
+title: "Form Attributes"
+description: "Atribut pada form dan input: action, method, name, placeholder, autocomplete, dan lainnya"
+order: 40
+quiz:
+  - q: "Atribut form yang menentukan tujuan pengiriman adalah…"
+    options: ["action", "method", "target", "name"]
+    answer: 0
+    explain: "action berisi URL endpoint pemroses."
+  - q: "Metode GET mengirim data lewat…"
+    options: ["URL query string", "Body request", "Cookie", "LocalStorage"]
+    answer: 0
+    explain: "GET menempelkan data di URL, cocok untuk pencarian."
+  - q: "Atribut name pada input berfungsi…"
+    options: ["Menjadi kunci saat data dikirim", "Menentukan warna", "Menambah ikon", "Menyembunyikan input"]
+    answer: 0
+    explain: "Tanpa name, nilai input tidak ikut terkirim."
+  - q: "Atribut placeholder berfungsi untuk…"
+    options: ["Petunjuk singkat di dalam input", "Validasi email", "Menentukan panjang", "Mengirim data"]
+    answer: 0
+    explain: "Placeholder hilang saat pengguna mulai mengetik."
+  - q: "autocomplete='off' berguna untuk…"
+    options: ["Mencegah browser menyarankan nilai lama", "Mengirim data lebih cepat", "Mengubah tipe input", "Menambah required"]
+    answer: 0
+    explain: "Berguna pada field sensitif sekali pakai."
+example:
+  code: |
+    <form action="/proses" method="post" autocomplete="on">
+      <label for="nama">Nama:</label>
+      <input id="nama" name="nama" type="text"
+             placeholder="Nama lengkap" required autocomplete="name"><br>
+    
+      <label for="email">Email:</label>
+      <input id="email" name="email" type="email"
+             required autocomplete="email"><br>
+    
+      <input type="hidden" name="csrf" value="abc123">
+      <button type="submit">Kirim</button>
+    </form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Atribut pada `<form>` dan `<input>` mengontrol bagaimana data dikumpulkan dan dikirim.
+
+## Atribut pada form
+
+| Atribut | Fungsi |
+|---------|--------|
+| `action` | URL tujuan |
+| `method` | `get` atau `post` |
+| `target` | Di mana hasil ditampilkan |
+| `autocomplete` | Izinkan saran browser |
+| `enctype` | Encoding untuk upload file |
+
+## GET vs POST
+
+- **GET** — data di URL, bisa di-bookmark, cocok untuk pencarian
+- **POST** — data di body, tidak terlihat di URL, cocok untuk data sensitif
+
+## Atribut pada input
+
+- `name` — kunci data saat dikirim
+- `value` — nilai awal
+- `placeholder` — petunjuk singkat
+- `required` — wajib diisi
+- `readonly` — bisa dibaca, tidak diubah
+- `disabled` — tidak ikut dikirim
+- `autofocus` — fokus otomatis
+- `pattern` — pola regex untuk validasi
+
+## Label yang Benar
+
+```html
+<label for="email">Email:</label>
+<input id="email" type="email" name="email">
+```
+
+`for` pada label harus sama dengan `id` input. Ini membuat label bisa diklik dan dibaca pembaca layar.
+
+<div class="note">💡 Untuk upload file, wajib pakai <code>method="post"</code> dan <code>enctype="multipart/form-data"</code>.</div>
+
+## Try it Yourself
+
+Lihat bagaimana atribut `required` mencegah form kosong terkirim.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Form Attributes</h1>
+  <form action="#" method="post">
+    <p>
+      <label for="n">Nama:</label>
+      <input id="n" name="nama" required placeholder="Wajib diisi">
+    </p>
+    <p>
+      <label for="e">Email:</label>
+      <input id="e" name="email" type="email" required>
+    </p>
+    <button type="submit">Kirim</button>
+  </form>
+</body>
+</html>`} />

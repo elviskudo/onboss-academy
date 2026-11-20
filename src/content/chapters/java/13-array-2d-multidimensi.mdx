@@ -1,0 +1,113 @@
+---
+title: "Array Multidimensi"
+description: "array 2D, array bergigi, iterasi, dan operasi matriks dasar"
+order: 13
+quiz:
+  - q: "Deklarasi array 2D yang benar adalah…"
+    options: ["int[][] m = new int[3][4];", "int[3,4] m;", "int m[][] = new int[3,4];", "array int m[3][4];"]
+    answer: 0
+    explain: "Java memakai sepasang kurung siku per dimensi."
+  - q: "`matriks.length` pada array 2D mengembalikan…"
+    options: ["Total elemen", "Jumlah baris", "Jumlah kolom", "Ukuran byte"]
+    answer: 1
+    explain: "length pada array luar = jumlah baris; `matriks[0].length` = kolom."
+  - q: "Array bergigi (jagged) berarti…"
+    options: ["Semua baris sama panjang", "Tiap baris boleh beda panjang", "Array hanya 1 dimensi", "Array dari String"]
+    answer: 1
+    explain: "Deklarasi `int[][] j = new int[2][]` lalu isi tiap baris terpisah."
+  - q: "Cara terbaik iterasi seluruh elemen array 2D adalah…"
+    options: ["Satu for biasa", "for-each bersarang", "while tanpa indeks", "switch"]
+    answer: 1
+    explain: "`for (int[] baris : m) for (int v : baris)` paling mudah dibaca."
+  - q: "Nilai default elemen `int[][]` adalah…"
+    options: ["0", "null", "Error", "-1"]
+    answer: 0
+    explain: "Tipe primitif diisi 0; tipe objek diisi null."
+example:
+  code: |
+    public class Main {
+      public static void main(String[] args) {
+        int[][] m = {{1, 2, 3}, {4, 5, 6}};
+        for (int[] baris : m) {
+          for (int v : baris) System.out.print(v + " ");
+          System.out.println();
+        }
+        int total = 0;
+        for (int[] baris : m) for (int v : baris) total += v;
+        System.out.println("Total: " + total);
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Array multidimensi di Java adalah **array of arrays**. Ini penting untuk matriks, grid game, dan tabel data.
+
+## Array 2D
+
+```java
+int[][] m = new int[3][4];   // 3 baris, 4 kolom
+m[0][1] = 7;
+
+int[][] literal = {
+    {1, 2, 3},
+    {4, 5, 6}
+};
+```
+
+## Iterasi
+
+```java
+for (int i = 0; i < m.length; i++) {
+    for (int j = 0; j < m[i].length; j++) {
+        System.out.print(m[i][j] + " ");
+    }
+    System.out.println();
+}
+```
+
+Versi for-each lebih ringkas:
+
+```java
+for (int[] baris : m)
+    for (int nilai : baris)
+        System.out.print(nilai + " ");
+```
+
+## Array Bergigi
+
+```java
+int[][] segitiga = new int[3][];
+segitiga[0] = new int[1];
+segitiga[1] = new int[2];
+segitiga[2] = new int[3];
+```
+
+Panjang tiap baris berbeda — selalu pakai `baris.length`, jangan asumsikan sama.
+
+## Arrays.toString / deepToString
+
+```java
+import java.util.Arrays;
+
+System.out.println(Arrays.toString(m[0]));     // [1, 2, 3]
+System.out.println(Arrays.deepToString(m));    // [[1, 2, 3], [4, 5, 6]]
+```
+
+<div class="note">💡 Untuk data berbentuk tabel dengan ukuran berubah, pertimbangkan `List<List<T>>` atau library matriks seperti EJML/Apache Commons Math — array 2D ukurannya tetap setelah dibuat.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+  public static void main(String[] args) {
+    int[][] m = {{1, 2, 3}, {4, 5, 6}};
+    for (int[] baris : m) {
+      for (int v : baris) System.out.print(v + " ");
+      System.out.println();
+    }
+    int total = 0;
+    for (int[] baris : m) for (int v : baris) total += v;
+    System.out.println("Total: " + total);
+  }
+}`} />

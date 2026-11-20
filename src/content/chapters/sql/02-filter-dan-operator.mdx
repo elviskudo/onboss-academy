@@ -10,7 +10,7 @@ quiz:
   - q: "Berapa operator perbandingan standar yang dipakai di WHERE?"
     options: ["4", "5", "6", "8"]
     answer: 2
-    explain: "Ada 6: =, <>, <, >, <=, >= — dengan != sebagai alternatif penulisan <>."
+    explain: "Ada 6: =, <>, <, >, &lt;=, >= — dengan != sebagai alternatif penulisan <>."
   - q: "Operator LIKE '%an%' cocok untuk…"
     options: ["Mencari teks yang mengandung 'an' di posisi mana pun", "Mencari teks yang diawali 'an'", "Mencari teks persis 'an'", "Mencari angka"]
     answer: 0
@@ -41,9 +41,9 @@ Tanpa filter, query selalu mengembalikan **semua baris**. `WHERE` menambahkan sy
 |----------|------|--------|---------------------------|
 | `=` | sama dengan | `gaji = 9500000` | TRUE |
 | `<>` (atau `!=`) | tidak sama | `gaji <> 9000000` | TRUE |
-| `<` | kurang dari | `gaji < 10000000` | TRUE |
+| `<` | kurang dari | `gaji &lt; 10000000` | TRUE |
 | `>` | lebih dari | `gaji > 10000000` | FALSE |
-| `<=` | kurang dari atau sama | `gaji <= 9500000` | TRUE |
+| `&lt;=` | kurang dari atau sama | `gaji &lt;= 9500000` | TRUE |
 | `>=` | lebih dari atau sama | `gaji >= 9500000` | TRUE |
 
 ```sql
@@ -123,6 +123,10 @@ Urutan logis: `FROM` → `WHERE` (saring) → `SELECT` (pilih kolom) → `ORDER 
 - **Membersihkan data impor**: `WHERE email IS NULL OR email = ''` menandai baris yang belum lengkap sebelum dikirim ke tim data.
 
 <div class="note">💡 Tanda kutip tunggal (' ') dipakai untuk nilai teks — `WHERE dept = 'Data'`. Kutip ganda biasanya tidak diterima sebagai penanda string di SQL standar.</div>
+
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
 
 <TryIt lang="sql" runtime="sql" code={`SELECT nama, jabatan, gaji, dept
 FROM karyawan

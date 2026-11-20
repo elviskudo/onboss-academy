@@ -135,6 +135,10 @@ Alurnya selalu sama: hitung, cek error, tampilkan. Pola ini akan kamu temui di p
 
 <div class="note">💡 Kecil dulu, benar dulu, baru besar. Kalkulator 40 baris yang sudah lolos uji lebih berharga daripada aplikasi 1000 baris yang belum pernah dijalankan.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="go" runtime="piston" pistonName="go" code={`package main
 
 import "fmt"
@@ -194,7 +198,7 @@ func main() {
     }
 
     total := 0
-    for i := 1; i <= 3; i++ {
+    for i := 1; i &lt;= 3; i++ {
         total = k.Tambah(total, i)
         fmt.Println("Jumlah 1..", i, "=", total)
     }

@@ -1,0 +1,112 @@
+---
+title: "Referensi Cepat MySQL"
+description: "Rangkuman perintah, urutan query, dan langkah belajar berikutnya"
+order: 26
+quiz:
+  - q: "Perintah untuk melihat struktur tabel adalah…"
+    options: ["DESCRIBE tabel", "SHOW STRUCTURE", "LIST COLUMNS", "DESCRIBE DATABASE"]
+    answer: 0
+    explain: "DESCRIBE atau SHOW COLUMNS FROM tabel."
+  - q: "Urutan klausa SELECT yang benar adalah…"
+    options: ["SELECT FROM WHERE GROUP BY HAVING ORDER BY LIMIT", "SELECT WHERE FROM ORDER BY GROUP BY", "FROM WHERE SELECT HAVING GROUP BY", "SELECT FROM ORDER BY WHERE GROUP BY"]
+    answer: 0
+    explain: "Itulah urutan penulisan standar."
+  - q: "Fungsi agregat menghitung jumlah baris adalah…"
+    options: ["SUM", "COUNT", "AVG", "CONCAT"]
+    answer: 1
+    explain: "COUNT(*) menghitung baris."
+  - q: "Perintah untuk melihat koneksi aktif adalah…"
+    options: ["SHOW PROCESSLIST", "SHOW USERS", "LIST SESSIONS", "SELECT CONNECTIONS"]
+    answer: 0
+    explain: "SHOW PROCESSLIST menampilkan thread yang berjalan."
+  - q: "Storage engine dengan dukungan transaksi dan foreign key adalah…"
+    options: ["MyISAM", "InnoDB", "MEMORY", "CSV"]
+    answer: 1
+    explain: "InnoDB adalah engine default modern MySQL."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah FROM karyawan WHERE gaji >= 7000000 GROUP BY dept HAVING COUNT(*) >= 2 ORDER BY jumlah DESC LIMIT 5;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Chapter penutup ini merangkum perintah MySQL yang paling sering dipakai dan memberi arah belajar lanjutan. Jadikan daftar ini pengingat cepat, bukan pengganti praktik.
+
+## Perintah Inti
+
+| Kategori | Perintah |
+| --- | --- |
+| Database | CREATE, DROP, USE, SHOW DATABASES |
+| Tabel | CREATE, ALTER, DROP, DESCRIBE |
+| Data | SELECT, INSERT, UPDATE, DELETE |
+| Filter | WHERE, LIKE, IN, BETWEEN, IS NULL |
+| Agregat | COUNT, SUM, AVG, GROUP BY, HAVING |
+| Gabung | JOIN, UNION |
+| Lanjutan | CTE, window function, view, procedure |
+| Transaksi | START TRANSACTION, COMMIT, ROLLBACK |
+| Performa | EXPLAIN, ANALYZE TABLE, OPTIMIZE TABLE |
+| Hak | CREATE USER, GRANT, REVOKE
+
+## Template Query
+
+```sql
+WITH ringkas AS (
+  SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata
+  FROM karyawan
+  WHERE gaji >= 7000000
+  GROUP BY dept
+)
+SELECT dept, jumlah, ROUND(rata) AS rata,
+       CASE WHEN jumlah >= 3 THEN 'Besar' ELSE 'Kecil' END AS ukuran
+FROM ringkas
+HAVING jumlah >= 2
+ORDER BY rata DESC
+LIMIT 10;
+```
+
+## Storage Engine
+
+| Engine | Cocok untuk |
+| --- | --- |
+| InnoDB | transaksi, foreign key, aplikasi umum |
+| MyISAM | legacy, read-heavy tanpa transaksi |
+| MEMORY | data sementara sangat cepat |
+| ARCHIVE | log jarang dibaca |
+
+Gunakan InnoDB kecuali ada alasan khusus.
+
+## Rencana Latihan
+
+1. SELECT + WHERE + ORDER BY + LIMIT.
+2. Agregasi dengan GROUP BY dan HAVING.
+3. INNER/LEFT JOIN sampai bisa anti join.
+4. Subquery, lalu CTE dan window function.
+5. Index + EXPLAIN.
+6. Transaksi, prepared statement, dan migrasi aman.
+
+## Langkah Berikutnya
+
+- Pelajari *query optimization* dengan EXPLAIN ANALYZE.
+- Pahami replication dan backup restore.
+- Gunakan ORM dengan bijak — tetap pahami SQL yang dihasilkan.
+- Biasakan menulis tes integrasi terhadap MySQL versi produksi.
+
+<div class="note">💡 MySQL dan PostgreSQL itu mirip di permukaan, tetapi berbeda pada detail penting. Membaca chapter PostgreSQL setelah ini akan memperkuat pemahaman dialek keduanya.</div>
+
+## Di Dunia Nyata
+
+- **Backend web**: CRUD dengan prepared statement dan transaksi.
+- **Analitik ringan**: agregasi + CTE untuk laporan.
+- **Operasional**: backup, monitoring, dan migrasi.
+- **Skala**: replikasi dan partisi saat data bertumbuh.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata
+FROM karyawan
+WHERE gaji >= 7000000
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY rata DESC
+LIMIT 5;`} />

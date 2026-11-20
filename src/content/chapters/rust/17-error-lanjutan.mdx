@@ -1,0 +1,144 @@
+---
+"title": "Error Handling Lanjutan"
+"description": "thiserror, anyhow, error chain, dan strategi menangani error di aplikasi"
+"order": 17
+"quiz":
+- "q": "Method `.context()` dari anyhow berguna untuk…"
+  "options":
+  - "menghapus error"
+  - "menambah pesan pada error"
+  - "membuat panic"
+  - "mengubah tipe"
+  "answer": 1
+  "explain": "Context menambah informasi tapi tetap menyimpan error asli."
+- "q": "Crate thiserror dipakai untuk…"
+  "options":
+  - "mendefinisikan enum error kustom dengan derive"
+  - "mengganti Result"
+  - "membuat goroutine"
+  - "format string"
+  "answer": 0
+  "explain": "#[derive(Error)] menghasilkan implementasi Display dan Error otomatis."
+- "q": "Tanda `?` pada fungsi yang mengembalikan Result akan…"
+  "options":
+  - "mengabaikan error"
+  - "mengembalikan error lebih awal"
+  - "mengubah jadi Option"
+  - "panic"
+  "answer": 1
+  "explain": "Jika Err, fungsi langsung kembali dengan error itu."
+- "q": "Error utama aplikasi CLI biasanya didefinisikan sebagai…"
+  "options":
+  - "struct kosong"
+  - "enum dengan varian per sumber error"
+  - "string"
+  - "i32"
+  "answer": 1
+  "explain": "Enum membuat setiap jenis kegagalan punya konteks."
+- "q": "Panic sebaiknya dipakai untuk…"
+  "options":
+  - "input salah"
+  - "bug yang tak bisa dipulihkan"
+  - "file tidak ada"
+  - "jaringan lambat"
+  "answer": 1
+  "explain": "Kesalahan yang diharapkan harus dikembalikan sebagai Result."
+"example":
+  "code": "fn bagi(a: i32, b: i32) -> Result<i32, String> {\n    if b == 0 { Err(String::from(\"nol\")) } else { Ok(a / b) }\n}\nfn main() {\n    println!(\"{:?}\", bagi(10, 2));\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust tidak punya exception. Error adalah nilai, dan kompiler membantu memastikan kamu menangannya. Di proyek nyata, pola ini dibantu oleh crate `thiserror` dan `anyhow`.
+
+## Result Dasar
+
+```rust
+fn bagi(a: i32, b: i32) -> Result<i32, &'static str> {
+    if b == 0 { Err("pembagian dengan nol") } else { Ok(a / b) }
+}
+```
+
+## Menyebarkan dengan `?`
+
+```rust
+fn hitung(path: &str) -> Result<i32, Box<dyn std::error::Error>> {
+    let teks = std::fs::read_to_string(path)?;
+    let n: i32 = teks.trim().parse()?;
+    Ok(n)
+}
+```
+
+`Box<dyn Error>` menerima berbagai jenis error, cocok untuk aplikasi kecil.
+
+## Error Kustom dengan thiserror
+
+```toml
+# Cargo.toml
+thiserror = "1"
+```
+
+```rust
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+enum ErrorApp {
+    #[error("file tidak ditemukan: {0}")]
+    File(String),
+    #[error("format angka salah")]
+    Format(#[from] std::num::ParseIntError),
+}
+```
+
+Atribut `#[from]` otomatis membuat `From<ParseIntError>`, sehingga `?` bisa mengonversi.
+
+## Konteks dengan anyhow
+
+```rust
+use anyhow::{Context, Result};
+
+fn muat(path: &str) -> Result<String> {
+    std::fs::read_to_string(path)
+        .with_context(|| format!("gagal membaca {}", path))
+}
+```
+
+Error chain bisa dibaca dari bawah ke atas saat dicetak dengan `{:?}`.
+
+## Strategi per Lapisan
+
+| Lapisan | Strategi |
+|---|---|
+| Library | Error kustom bertipe konkret |
+| Aplikasi | `anyhow::Result` + context |
+| UI/CLI | Tampilkan pesan ramah, log detail |
+
+<div class="note">💡 Jangan pernah membuang error dengan `.unwrap()` pada jalur yang bisa dicapai pengguna. Gunakan `?` dan biarkan lapisan atas memutuskan.</div>
+
+
+## Try it Yourself
+
+Contoh tanpa crate eksternal agar bisa dijalankan di sandbox.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::num::ParseIntError;
+
+#[derive(Debug)]
+enum ErrorApp {
+    Kosong,
+    Salah(ParseIntError),
+}
+
+fn parse_umur(s: &str) -> Result<i32, ErrorApp> {
+    if s.is_empty() { return Err(ErrorApp::Kosong); }
+    s.parse::<i32>().map_err(ErrorApp::Salah)
+}
+
+fn main() {
+    for input in ["22", "abc", ""] {
+        match parse_umur(input) {
+            Ok(n) => println!("{} -> {}", input, n),
+            Err(ErrorApp::Kosong) => println!("{} -> input kosong", input),
+            Err(ErrorApp::Salah(e)) => println!("{} -> {}", input, e),
+        }
+    }
+}`} />

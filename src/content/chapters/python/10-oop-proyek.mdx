@@ -125,6 +125,10 @@ Gabungkan class, list, method, dan string formatting jadi aplikasi konsol nyata.
 
 <div class="note">💡 Python percaya pada duck typing: yang penting object punya method yang dibutuhkan, bukan keturunannya. Tulis class saat ada **state + aturan yang hidup bersama** — kalau hanya satu fungsi murni, cukup `def` biasa.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="python" runtime="piston" pistonName="python" code={`class ManajemenTugas:
     def __init__(self):
         self.daftar = []
@@ -134,7 +138,7 @@ Gabungkan class, list, method, dan string formatting jadi aplikasi konsol nyata.
         print(f"➕ Ditambahkan: {judul}")
 
     def selesaikan(self, i):
-        if 0 <= i < len(self.daftar):
+        if 0 &lt;= i &lt; len(self.daftar):
             self.daftar[i]["selesai"] = True
             print(f"✔ Selesai: {self.daftar[i]['judul']}")
 

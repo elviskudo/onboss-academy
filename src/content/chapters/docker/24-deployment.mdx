@@ -1,0 +1,97 @@
+---
+title: "Deploy ke Produksi"
+description: "Mengangkut image dari build ke server dengan strategi rollback dan zero-downtime"
+order: 24
+quiz:
+  - q: "Prinsip utama deploy container adalah…"
+    options: ["Bangun image sekali, pakai artefak yang sama di semua lingkungan", "Bangun ulang di tiap server", "Menyalin folder proyek manual", "Mengubah kode di container"]
+    answer: 0
+    explain: "Image yang diuji harus identik dengan image yang dirilis."
+  - q: "Rollback paling cepat adalah…"
+    options: ["Mengubah Dockerfile", "Menjalankan ulang tag versi sebelumnya", "Menghapus seluruh volume", "Menginstall ulang host"]
+    answer: 1
+    explain: "Karena image lama masih tersimpan, kembali ke versi sebelumnya cukup mengganti tag."
+  - q: "Zero-downtime deployment membutuhkan…"
+    options: ["Port statis", "Cache layer", "Lebih dari satu instance dan load balancer", "Satu container besar"]
+    answer: 2
+    explain: "Instance baru dihidupkan dan diverifikasi sebelum traffic dialihkan."
+  - q: "Healthcheck berperan dalam deploy dengan…"
+    options: ["Menghapus image lama", "Mengubah tag", "Membuka port", "Menentukan kapan instance baru siap menerima traffic"]
+    answer: 3
+    explain: "Orkestrator menunggu status healthy sebelum mengalihkan request."
+  - q: "Image digest lebih baik daripada tag untuk produksi karena…"
+    options: ["Bersifat immutable", "Lebih pendek", "Lebih murah", "Tidak bisa di-push"]
+    answer: 0
+    explain: "Digest SHA-256 menjamin isi image tidak berubah."
+example:
+  code: |
+    docker build -t app:1.4.2 .
+    docker tag app:1.4.2 registry/tim/app:1.4.2
+    docker push registry/tim/app:1.4.2
+    # di server:
+    docker pull registry/tim/app:1.4.2
+    docker run -d --name app-baru -p 8081:80 registry/tim/app:1.4.2
+---
+
+Deploy yang sehat memisahkan **build** dari **run**. Pipeline CI membangun image sekali, menyimpannya di registry, lalu setiap lingkungan menarik artefak yang sama.
+
+## Alur yang Disarankan
+
+```bash
+# CI
+docker build -t app:${GIT_SHA} .
+docker tag app:${GIT_SHA} registry/tim/app:1.4.2
+docker push registry/tim/app:1.4.2
+
+# Server
+docker pull registry/tim/app:1.4.2
+docker stop app-lama
+docker rm app-lama
+docker run -d --name app-baru -p 80:80 registry/tim/app:1.4.2
+```
+
+## Deploy Bertahap (Blue-Green)
+
+1. Jalankan versi baru di port sementara (`8081`).
+2. Jalankan healthcheck dan uji smoke.
+3. Arahkan load balancer ke versi baru.
+4. Biarkan versi lama hidup sebentar untuk rollback.
+5. Hentikan versi lama setelah yakin.
+
+## Deployment dengan Compose
+
+```bash
+docker compose pull api
+docker compose up -d --no-deps --build api
+docker compose ps
+```
+
+Compose akan membuat container baru hanya untuk layanan yang berubah. Tambahkan `--remove-orphans` bila ada layanan lama yang sudah tidak ada di file.
+
+## Runtime Configuration
+
+Konfigurasi yang berbeda per lingkungan sebaiknya disuntikkan saat run, bukan ditanam di image:
+
+```bash
+docker run -d \
+  -e APP_ENV=production \
+  --env-file /etc/app/prod.env \
+  -v /etc/app/certs:/certs:ro \
+  registry/tim/app:1.4.2
+```
+
+## Checklist Sebelum Rilis
+
+- [ ] Image sudah dipindai kerentanannya.
+- [ ] Tag atau digest dicatat di release notes.
+- [ ] Healthcheck aktif dan endpoint `/health` ringan.
+- [ ] Backup database terakhir diverifikasi.
+- [ ] Prosedur rollback sudah dilatih.
+
+<div class="note">💡 Jangan pernah menimpa tag `latest` sebagai satu-satunya penanda rilis. Jika ada masalah, kamu tidak punya nama lama untuk kembali.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'langkah deploy:' '  1. build image sekali' '  2. push ke registry' '  3. tarik di server' '  4. jalankan container baru' '  5. verifikasi health' '  6. alihkan traffic' &gt; checklist-deploy.txt
+docker images --format '{{.Repository}}:{{.Tag}}' | head -5`}</code></pre>

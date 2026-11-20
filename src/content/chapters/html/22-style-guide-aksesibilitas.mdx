@@ -1,0 +1,104 @@
+---
+title: "Style Guide & Aksesibilitas"
+description: "Kebiasaan menulis HTML yang konsisten dan membuat halaman ramah pembaca layar"
+order: 22
+quiz:
+  - q: "Penulisan tag yang disarankan adalah…"
+    options: ["HURUF BESAR SEMUA", "huruf kecil semua", "Campur bebas", "Tidak penting"]
+    answer: 1
+    explain: "HTML5 memperbolehkan huruf besar, tapi huruf kecil adalah konvensi yang konsisten."
+  - q: "Atribut alt pada gambar sebaiknya…"
+    options: ["Dikosongkan", "Berisi deskripsi singkat gambar", "Berisi nama file", "Berisi URL"]
+    answer: 1
+    explain: "alt membantu pengguna pembaca layar memahami gambar."
+  - q: "Label untuk input form sebaiknya memakai…"
+    options: ["<span>", "<label for='id'>", "<div>", "<p>"]
+    answer: 1
+    explain: "<label> yang terhubung dengan id input bisa diklik dan dibaca pembaca layar."
+  - q: "Atribut lang pada <html> berguna untuk…"
+    options: ["Menentukan bahasa dokumen", "Mengatur warna", "Membuat tabel", "Menentukan ukuran font"]
+    answer: 0
+    explain: "Pembaca layar memilih pengucapan yang tepat berdasarkan lang."
+  - q: "Berikut ini kebiasaan yang BAIK adalah…"
+    options: ["Menggunakan <div> untuk semua tombol", "Memakai elemen semantik yang sesuai", "Menghapus semua atribut title", "Menghindari heading"]
+    answer: 1
+    explain: "Elemen semantik memberi makna dan meningkatkan aksesibilitas."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="UTF-8">
+      <title>Contoh Aksesibel</title>
+    </head>
+    <body>
+      <h1>Judul Halaman</h1>
+      <img src="foto.jpg" alt="Anak sedang membaca buku di taman">
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email">
+      <button type="submit">Kirim</button>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Menulis HTML yang rapi bukan soal gaya pribadi saja — ini soal konsistensi dan aksesibilitas.
+
+## Panduan Gaya Penulisan
+
+- Gunakan **huruf kecil** untuk tag dan atribut
+- Tutup semua elemen yang memang butuh penutup
+- Pakai indentasi 2 spasi agar hierarchy jelas
+- Gunakan tanda kutip ganda untuk nilai atribut
+- Pisahkan bagian besar dengan komentar
+
+```html
+<!-- ===== Header ===== -->
+<header>
+  <h1>Judul</h1>
+</header>
+```
+
+## Aksesibilitas Dasar
+
+Aksesibilitas berarti halaman bisa dipakai semua orang, termasuk pengguna pembaca layar.
+
+| Praktik | Contoh |
+|---------|--------|
+| Alt gambar | `<img alt="Grafik penjualan 2026">` |
+| Label form | `<label for="nama">Nama</label>` |
+| Lang dokumen | `<html lang="id">` |
+| Urutan heading | h1 → h2 → h3, jangan loncat |
+| Fokus terlihat | CSS `:focus { outline: 2px solid blue; }` |
+
+## Tombol vs Div
+
+```html
+<!-- Baik -->
+<button onclick="kirim()">Kirim</button>
+
+<!-- Kurang baik -->
+<div onclick="kirim()">Kirim</div>
+```
+
+`<button>` sudah bisa diklik dengan keyboard dan dikenali pembaca layar. `<div>` tidak.
+
+<div class="note">💡 Aksesibilitas bukan fitur tambahan. Mulai dari kebiasaan kecil seperti alt dan label sejak menulis baris pertama HTML.</div>
+
+## Try it Yourself
+
+Tambahkan atribut `alt` pada gambar dan `label` pada input di bawah ini.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html lang="id">
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Forma Aksesibel</h1>
+  <img src="https://via.placeholder.com/150" alt="Gambar contoh">
+  <p>
+    <label for="nama">Nama:</label>
+    <input id="nama" type="text" placeholder="Tulis namamu">
+  </p>
+  <button>Kirim</button>
+</body>
+</html>`} />

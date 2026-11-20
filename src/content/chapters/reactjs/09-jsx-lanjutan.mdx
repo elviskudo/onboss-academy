@@ -1,0 +1,123 @@
+---
+title: "JSX Lebih Dalam"
+description: "Anak bersarang, atribut dinamis, spread props, dan bahaya dangerouslySetInnerHTML"
+order: 9
+quiz:
+  - q: "Anak komponen di React dibaca melalui props bernama…"
+    options: ["content", "slot", "children", "kids"]
+    answer: 2
+    explain: "Semua yang ditulis di antara tag pembuka dan penutup masuk ke props.children."
+  - q: "Spread props `{...pengaturan}` berguna untuk…"
+    options: ["Membuat CSS baru", "Menyalin seluruh pasangan kunci-nilai sebagai atribut", "Menghapus props", "Mengunci komponen"]
+    answer: 1
+    explain: "Spread membongkar object menjadi atribut JSX sekaligus."
+  - q: "Atribut gaya inline di JSX ditulis dengan…"
+    options: ["style={{ color: 'merah' }}", "css={color: merah}", "className=color", "style=\"color: merah\""]
+    answer: 0
+    explain: "style menerima object JavaScript, bukan string CSS."
+  - q: "dangerouslySetInnerHTML sebaiknya…"
+    options: ["Ditulis di CSS", "Dipakai untuk semua teks", "Dihindari kecuali HTML sudah disanitasi", "Dipakai sebagai pengganti children"]
+    answer: 2
+    explain: "Prop ini bisa membuka celah XSS bila menerima konten dari user."
+  - q: "Komentar di dalam JSX ditulis…"
+    options: ["<!-- komentar -->", "{/* komentar */}", "// komentar", "/* komentar */"]
+    answer: 1
+    explain: "Komentar HTML tidak dikenal JSX; gunakan ekspresi JS `{/* ... */}`."
+example:
+  code: |
+    const gaya = { color: "tomato", fontWeight: 700 };
+    const atribut = { title: "Klik untuk detail", id: "judul-1" };
+
+    <h1 {...atribut} style={gaya}>Halo</h1>
+    <Kartu><p>Ini masuk ke children</p></Kartu>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JSX terlihat seperti HTML, tapi sebenarnya ekspresi JavaScript. Memahami detail kecilnya membuat komponen lebih mudah dirawat.
+
+## Children
+
+Apa pun yang kamu tulis di antara tag komponen dikirim sebagai `props.children`.
+
+```jsx
+function Panel({ children, judul }) {
+  return (
+    <section className="panel">
+      <h2>{judul}</h2>
+      <div className="isi">{children}</div>
+    </section>
+  );
+}
+
+<Panel judul="Ringkasan">
+  <p>Ditulis bebas di sini.</p>
+  <button>Lihat detail</button>
+</Panel>
+```
+
+Ini berguna untuk komponen pembungkus: card, modal, layout, dan dropdown.
+
+## Atribut Dinamis
+
+Semua atribut bisa menerima ekspresi di dalam kurung kurawal.
+
+```jsx
+const lebar = 240;
+const aktif = true;
+
+<div
+  className={aktif ? "pill aktif" : "pill"}
+  style={{ width: lebar, marginTop: 12 }}
+  data-role={aktif ? "on" : "off"}
+>
+  Status
+</div>
+```
+
+Perhatikan gaya inline: `style` menerima **object**, dengan nama properti camelCase (`marginTop`, bukan `margin-top`).
+
+## Spread Props
+
+```jsx
+const pengaturan = { judul: "Promo", warna: "gold", ukuran: 18 };
+
+<Kartu {...pengaturan} />
+// sama dengan
+<Kartu judul="Promo" warna="gold" ukuran={18} />
+```
+
+Spread memangkas penulisan, tapi hati-hati: kuncinya bisa menimpa props yang sudah kamu berikan sebelumnya.
+
+## Konten Mentah
+
+```jsx
+<div dangerouslySetInnerHTML={{ __html: markupDariServer }} />
+```
+
+Nama prop itu sengaja dibuat menakutkan. Gunakan hanya jika `markupDariServer` sudah disanitasi. Untuk teks biasa, cukup `{teks}` — React meng-escape-nya secara otomatis.
+
+## Komentar dan Kunci
+
+| Kebutuhan | Penulisan |
+|-----------|-----------|
+| Komentar di JSX | `{/* ... */}` |
+| Tag tanpa anak | `<input />`, `<br />` |
+| Tag dengan anak | `<p>...</p>` |
+| Daftar | `key` unik per elemen |
+
+<div class="note">💡 JSX mengubah cara kamu membaca kode: "`&lt;Kartu /&gt;`" bukan perintah, melainkan deskripsi "tampilkan Kartu dengan data ini". React yang menentukan kapan dan bagaimana DOM diperbarui.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan children + spread props
+function Panel({ judul, children, ...atribut }) {
+  console.log("Judul:", judul);
+  console.log("Atribut:", atribut);
+  console.log("Anak:", children);
+}
+
+const pengaturan = { judul: "Ringkasan", role: "panel", id: "p1" };
+Panel({ ...pengaturan, children: ["Paragraf satu", "Tombol"] });`} />

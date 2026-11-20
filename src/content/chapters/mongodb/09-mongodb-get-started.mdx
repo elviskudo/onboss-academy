@@ -1,0 +1,84 @@
+---
+title: "Menyiapkan lingkungan Mongo dan mongosh"
+description: "Menjalankan mongod, terhubung lewat mongosh, perintah dasar, dan memahami prompt"
+order: 9
+quiz:
+  - q: "Proses server MongoDB yang dijalankan di lokal disebut…"
+    options: ["mongoexpress", "mongosh", "mongod", "mongoimport"]
+    answer: 2
+    explain: "mongod adalah daemon/server; mongosh adalah klien interaktifnya."
+  - q: "Perintah mongosh untuk menampilkan database yang tersedia adalah…"
+    options: ["db.databases()", "GET DATABASES", "SHOW DATABASES", "LIST DB"]
+    answer: 2
+    explain: "Perintah bantu show dbs (atau show databases) menampilkan daftar database."
+  - q: "Variabel db di mongosh merujuk pada…"
+    options: ["Database yang sedang aktif", "Koleksi pertama", "Server mongo", "Semua database sekaligus"]
+    answer: 0
+    explain: "db adalah handle ke database yang dipilih lewat use nama_database."
+  - q: "Database baru biasanya benar-benar muncul di show dbs setelah…"
+    options: ["Dijalankan explain()", "Dibuat dengan use saja", "Ada koleksi dan dokumen di dalamnya", "Restart server"]
+    answer: 2
+    explain: "use hanya mengubah konteks; database baru terlihat setelah ada data."
+  - q: "Perintah untuk keluar dari mongosh adalah…"
+    options: ["close db", "end", "exit() atau quit()", "stop()"]
+    answer: 2
+    explain: "both exit() dan quit() menutup sesi shell."
+example:
+  code: |
+    mongosh "mongodb://127.0.0.1:27017"
+    show dbs
+    use belajar_mongo
+    db.siswa.insertOne({nama: "Ana", nilai: 88})
+    show dbs
+---
+
+## Server dan Klien
+
+MongoDB bekerja seperti kebanyakan database: ada **server** yang menyimpan data dan **klien** yang mengirim perintah. Server disebut `mongod`; klien baris perintah resminya `mongosh`.
+
+```bash
+mongod --dbpath /data/db --port 27017
+mongosh "mongodb://127.0.0.1:27017"
+```
+
+Port `27017` adalah port bawaan. Kalau memakai MongoDB Atlas, alamatnya berupa URI `mongodb+srv://...` dan kamu tidak perlu menjalankan `mongod` sendiri.
+
+## Perintah Pertama di Shell
+
+```javascript
+db              // database aktif
+show dbs        // daftar database
+use sekolah     // pindah / membuat konteks database
+show collections
+```
+
+`use sekolah` tidak langsung membuat database di disk. MongoDB baru menuliskan database saat kamu menyimpan dokumen pertama.
+
+```javascript
+use sekolah
+db.siswa.insertOne({ nama: "Ana", nilai: 88 })
+show dbs
+```
+
+## Prompt dan Bantuan
+
+| Perintah | Fungsi |
+| --- | --- |
+| `help` | daftar perintah shell |
+| `db.help()` | bantuan metode database |
+| `db.siswa.help()` | bantuan metode koleksi |
+| `exit()` | keluar dari shell |
+
+Hasil `find()` di mongosh sudah dibatasi jumlah barisnya. Tambahkan `.pretty()` bila ingin tampilan yang lebih mudah dibaca.
+
+<div class="note">💡 `show collections` hanya menampilkan koleksi yang sudah punya dokumen atau indeks. Koleksi kosong hasil `createCollection()` tetap muncul, tetapi koleksi yang belum dibuat sama sekali tidak akan terlihat.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`db
+show dbs
+use sekolah
+db.siswa.insertOne({nama: "Ana", nilai: 88})
+db.siswa.find().pretty()`}</code></pre>

@@ -1,0 +1,121 @@
+---
+title: "Margin & Padding"
+description: "Mengatur jarak luar dan dalam elemen serta perilaku collapsing margin"
+order: 17
+quiz:
+  - q: "Padding berada di…"
+    options: ["Luar border", "Antara konten dan border", "Di luar margin", "Sama dengan margin"]
+    answer: 1
+    explain: "Padding adalah ruang di dalam elemen, di antara konten dan border."
+  - q: "Margin bernilai negatif akan…"
+    options: ["Error", "Menarik elemen mendekat/bertumpang", "Menghapus elemen", "Menjadi nol"]
+    answer: 1
+    explain: "Margin negatif dipakai untuk tumpang tindih atau overflow terkontrol."
+  - q: "`margin: 10px 20px` berarti…"
+    options: ["Atas/bawah 10px, kiri/kanan 20px", "Semua 10px kecuali kanan 20px", "Atas 10, kanan 20, bawah 10, kiri 20", "Kiri 10, kanan 20"]
+    answer: 0
+    explain: "Dua nilai: vertikal lalu horizontal."
+  - q: "`margin: 0 auto` pada elemen dengan lebar tertentu akan…"
+    options: ["Menggeser ke kiri", "Memusatkan secara horizontal", "Memusatkan vertikal", "Menghilangkan margin"]
+    answer: 1
+    explain: "Auto di kiri dan kanan membagi sisa ruang sama rata."
+  - q: "Margin collapsing terjadi pada…"
+    options: ["Padding atas dan bawah", "Margin atas/bawah elemen bersebelahan", "Border atas dan bawah", "Semua sisi kotak"]
+    answer: 1
+    explain: "Margin vertikal tetangga bisa bergabung menjadi satu nilai terbesar."
+example:
+  code: |
+    .kartu {
+      margin: 16px auto;
+      padding: 24px;
+      max-width: 400px;
+    }
+    .kartu + .kartu { margin-top: 8px; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua properti ini mengatur "napas" desain: **padding** memberi ruang di dalam, **margin** memberi ruang di luar. Tertukar keduanya adalah kesalahan klasik pemula.
+
+## Perbedaan Mendasar
+
+| Aspek | Padding | Margin |
+|-------|---------|--------|
+| Posisi | Antara konten dan border | Di luar border |
+| Latar | Mengikuti warna latar elemen | Transparan |
+| Bisa diklik | Ya (bagian dari elemen) | Tidak |
+| Collapsing | Tidak | Ya (vertikal) |
+| Negatif | Tidak | Boleh |
+
+## Pola Penulisan Nilai
+
+```css
+/* 1 nilai → semua sisi */
+margin: 16px;
+
+/* 2 nilai → atas/bawah, kiri/kanan */
+padding: 12px 24px;
+
+/* 3 nilai → atas, kiri/kanan, bawah */
+margin: 8px 16px 24px;
+
+/* 4 nilai → atas, kanan, bawah, kiri */
+padding: 4px 8px 12px 16px;
+```
+
+Selalu ingat arah **searah jarum jam** mulai dari atas.
+
+## Memusatkan Elemen
+
+```css
+.kotak {
+  width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+```
+
+Ini hanya bekerja kalau elemen punya lebar tertentu dan `display`-nya bukan inline. Untuk flexbox, gunakan `justify-content: center` pada induknya.
+
+## Margin Collapsing
+
+Dua elemen bersebelahan dengan `margin-bottom: 20px` dan `margin-top: 30px` tidak menghasilkan 50px, melainkan **30px** (nilai terbesar). Ini terjadi hanya pada **sumbu vertikal** dan hanya untuk margin, bukan padding.
+
+```css
+.section { margin-bottom: 20px; }
+.section + .section { margin-top: 30px; } /* jarak akhir 30px */
+```
+
+Cara menghindarinya: pakai padding, flex/grid `gap`, atau `display: flow-root` pada induk.
+
+## box-sizing
+
+```css
+*, *::before, *::after { box-sizing: border-box; }
+```
+
+Dengan `border-box`, `width: 300px` sudah termasuk padding dan border. Tanpa itu, padding menambah total lebar dan layout容易 meledak.
+
+<div class="note">💡 Gunakan `gap` pada flex/grid untuk jarak antar item. Selain lebih rapi, gap tidak ikut collapsing dan tidak perlu selector `+` untukitem pertama/terakhir.</div>
+
+## Di Dunia Nyata
+
+- Tombol memakai padding `10px 18px` supaya area klik nyaman (minimal 44px tinggi untuk aksesibilitas).
+- Kartu memakai margin `auto` agar berada di tengah kontainer.
+- Reset CSS global memakai `margin: 0` pada `body`, `h1`, dan `p` supaya jarawal konsisten.
+
+## Try it Yourself
+
+Ubah `padding` tombol atau margin kartu untuk melihat bagaimana jaraknya berubah.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; margin: 0; background: #F9FAFB; }
+.kotak {
+  box-sizing: border-box;
+  width: 300px;
+  margin: 16px auto;
+  padding: 20px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 10px;
+}
+.tombol { padding: 10px 20px; margin: 8px 4px; background: #4F46E5; color: white; border: none; border-radius: 6px; }`} />

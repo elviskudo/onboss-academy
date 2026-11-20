@@ -1,0 +1,130 @@
+---
+title: "HttpClient & Interceptor"
+description: "GET/POST, tipe generik, interceptor, dan penanganan error"
+order: 16
+quiz:
+  - q: "HttpClient didaftarkan lewat…"
+    options: ["@Injectable", "RouterModule", "provideHttpClient()", "import FormsModule"]
+    answer: 2
+    explain: "Sejak Angular 15, gunakan provideHttpClient di app.config."
+  - q: "Contoh GET yang benar adalah…"
+    options: ["http.load('/api/produk')", "http.get<Produk[]>('/api/produk')", "http.fetch('/api/produk')", "http.request('GET')"]
+    answer: 1
+    explain: "HttpClient punya metode get, post, put, delete."
+  - q: "Observable HttpClient bersifat…"
+    options: ["Selalu aktif", "Sekali pakai", "Sinkron", "Cold — request jalan saat subscribe"]
+    answer: 3
+    explain: "Tanpa subscribe, request tidak dikirim."
+  - q: "Interceptor berguna untuk…"
+    options: ["Mengubah CSS", "Menambah header auth ke semua request", "Mengganti template", "Membuat rute"]
+    answer: 1
+    explain: "Interceptor berada di tengah request/response."
+  - q: "catchError dalam pipe berfungsi untuk…"
+    options: ["Menangani error sebelum sampai subscriber", "Menghapus error", "Mengubah URL", "Mengirim request baru"]
+    answer: 0
+    explain: "Biasa dipasangkan dengan throwError atau fallback value."
+example:
+  code: |
+    this.http.get<Produk[]>("/api/produk").subscribe({
+      next: (data) => this.produk = data,
+      error: (e) => this.pesan = e.message,
+    });
+---
+
+HttpClient adalah cara standar Angular berkomunikasi dengan server. Responsnya berupa Observable yang bertipe.
+
+## Menyiapkan
+
+```typescript
+// app.config.ts
+import { ApplicationConfig } from "@angular/core";
+import { provideHttpClient, withInterceptors } from "@angular/common/http";
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideHttpClient(withInterceptors([authInterceptor]))],
+};
+```
+
+## Request Dasar
+
+```typescript
+import { HttpClient } from "@angular/common/http";
+import { inject } from "@angular/core";
+
+export class ProdukService {
+  private http = inject(HttpClient);
+
+  daftar() {
+    return this.http.get<Produk[]>("/api/produk");
+  }
+
+  detail(id: number) {
+    return this.http.get<Produk>(`/api/produk/${id}`);
+  }
+
+  simpan(data: Produk) {
+    return this.http.post<Produk>("/api/produk", data);
+  }
+
+  hapus(id: number) {
+    return this.http.delete(`/api/produk/${id}`);
+  }
+}
+```
+
+Generic `<Produk[]>` memberi tipe pada hasil — TypeScript membantu mencegah salah pakai field.
+
+## Memakai di Komponen
+
+```typescript
+export class DaftarComponent implements OnInit {
+  private api = inject(ProdukService);
+  produk: Produk[] = [];
+  error = "";
+
+  ngOnInit() {
+    this.api.daftar().subscribe({
+      next: (data) => this.produk = data,
+      error: (e) => this.error = "Gagal memuat: " + e.message,
+    });
+  }
+}
+```
+
+Atau pakai async pipe di template agar Angular yang mengelola subscription.
+
+## Interceptor
+
+```typescript
+import { HttpInterceptorFn } from "@angular/common/http";
+
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const token = localStorage.getItem("token");
+  const request = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+  return next(request);
+};
+```
+
+## Error Global
+
+```typescript
+return next(req).pipe(
+  catchError((err) => {
+    console.error(err.status, err.message);
+    return throwError(() => err);
+  })
+);
+```
+
+<div class="note">💡 Simpan request di service, bukan langsung di komponen. Saat endpoint berubah, kamu cukup mengubah satu tempat.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`this.http.get<Produk[]>("/api/produk").subscribe({
+  next: (data) => this.produk = data,
+  error: (e) => this.pesan = e.message,
+});`}</code></pre>

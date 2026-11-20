@@ -1,0 +1,140 @@
+---
+"title": "Extension Lanjutan"
+"description": "Menambah fungsionalitas tipe existing, computed property, dan subscript"
+"order": 20
+"quiz":
+- "q": "Extension tidak bisa menambahkan…"
+  "options":
+  - "Computed property"
+  - "Stored property"
+  - "Method"
+  - "Initializer"
+  "answer": 1
+  "explain": "Stored property akan mengubah ukuran tipe, jadi tidak diizinkan."
+- "q": "Computed property menyimpan…"
+  "options":
+  - "Alamat memori tetap"
+  - "Hanya konstanta"
+  - "Nilai yang dihitung saat diakses"
+  - "Closure"
+  "answer": 2
+  "explain": "Getter dijalankan setiap kali properti dibaca."
+- "q": "Subscript dipakai untuk…"
+  "options":
+  - "Membuat fungsi baru"
+  - "Mengganti tipe"
+  - "Menyimpan error"
+  - "Akses indeks seperti array"
+  "answer": 3
+  "explain": "Dapat ditambahkan ke tipe sendiri lewat extension."
+- "q": "Extension bisa memperluas…"
+  "options":
+  - "Tipe yang sudah ada, termasuk tipe standar"
+  - "Hanya class buatan sendiri"
+  - "Hanya protokol"
+  - "Tidak ada"
+  "answer": 0
+  "explain": "Contoh: extension Int { var kaliDua: Int { self * 2 } }."
+- "q": "Property observer akan dipanggil pada…"
+  "options":
+  - "Computed property"
+  - "Stored property"
+  - "Konstanta"
+  - "Enum case"
+  "answer": 1
+  "explain": "willSet dan didSet hanya untuk stored property."
+"example":
+  "code": "extension Int {\n    var kaliDua: Int { self * 2 }\n    var genap: Bool { self % 2 == 0 }\n\n    func repetisi(_ aksi: () -> Void) {\n        for _ in 0..<self { aksi() }\n    }\n}\n\nextension String {\n    subscript(indeks: Int) -> Character {\n        self[index(startIndex, offsetBy: indeks)]\n    }\n}\n\nprint(4.kaliDua)      // 8\nprint(\"Swift\"[0])     // S\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Bentuk Umum
+
+```swift
+extension Int {
+    var kaliDua: Int { self * 2 }
+    var genap: Bool { self % 2 == 0 }
+
+    func repetisi(_ aksi: () -> Void) {
+        for _ in 0..<self { aksi() }
+    }
+}
+
+extension String {
+    subscript(indeks: Int) -> Character {
+        self[index(startIndex, offsetBy: indeks)]
+    }
+}
+
+print(4.kaliDua)      // 8
+print("Swift"[0])     // S
+```
+
+```swift
+extension Tipe {
+    // method, computed property, initializer, nested type
+}
+```
+
+Extension tidak memerlukan akses ke kode sumber asli tipe — termasuk tipe dari framework.
+
+## Computed Property
+
+```swift
+extension Double {
+    var celciusKeFahrenheit: Double { self * 9 / 5 + 32 }
+}
+```
+
+Berbeda dengan stored property, computed property tidak memakan penyimpanan tambahan.
+
+## Subscript
+
+```swift
+extension Array {
+    subscript(aman indeks: Int) -> Element? {
+        indices.contains(indeks) ? self[indeks] : nil
+    }
+}
+```
+
+Subscript bernama membuat API lebih jelas: `array[aman: 10]`.
+
+## Property Observer
+
+```swift
+var skor: Int = 0 {
+    didSet { print("Skor berubah dari \(oldValue) ke \(skor)") }
+}
+```
+
+| Observer | Waktu |
+|---|---|
+| `willSet` | sebelum nilai disimpan (`newValue`) |
+| `didSet` | sesudah nilai disimpan (`oldValue`) |
+
+<div class="note">💡 Extension pada tipe standar boleh, tapi jangan menamai method yang mungkin ditambahkan Swift di versi berikutnya. Awalan seperti `oba_` mengurangi risiko tabrakan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`extension Int {
+    var kaliDua: Int { self * 2 }
+    var genap: Bool { self % 2 == 0 }
+
+    func repetisi(_ aksi: () -> Void) {
+        for _ in 0..<self { aksi() }
+    }
+}
+
+extension String {
+    subscript(indeks: Int) -> Character {
+        self[index(startIndex, offsetBy: indeks)]
+    }
+}
+
+print(4.kaliDua)      // 8
+print("Swift"[0])     // S`} />

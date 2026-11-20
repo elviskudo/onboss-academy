@@ -1,0 +1,137 @@
+---
+title: "Module TypeScript"
+description: "ES module, import/export, barrel file, dan tips struktur proyek"
+order: 16
+quiz:
+  - q: "Cara mengekspor nilai bernama adalah…"
+    options: ["export default", "export const nama", "module.exports", "publish nama"]
+    answer: 1
+    explain: "Named export memakai kata kunci export sebelum deklarasi."
+  - q: "`import * as util from './util'` akan…"
+    options: ["Mengambil default saja", "Mengambil semua export sebagai objek", "Menghapus file", "Error"]
+    answer: 1
+    explain: "Namespace import membungkus semua named export."
+  - q: "Barrel file biasanya bernama…"
+    options: ["main.ts", "index.ts", "barrel.ts", "export.ts"]
+    answer: 1
+    explain: "Index.ts mengumpulkan export dari banyak file dalam satu folder."
+  - q: "`export type { User }` berguna untuk…"
+    options: ["Mengekspor tipe tanpa runtime code", "Menghapus tipe", "Membuat class", "Mengubah nilai"]
+    answer: 0
+    explain: "Type-only export memastikan tidak ada output JS."
+  - q: "Opsi moduleResolution 'bundler' cocok untuk…"
+    options: ["Node.js lama", "Vite/Next.js modern", "Deno", "Semua"]
+    answer: 1
+    explain: "Bundler modern mendukung ekstensi import tanpa .js."
+example:
+  code: |
+    // utils.ts
+    export const formatRupiah = (n: number) => `Rp${n.toLocaleString('id-ID')}`;
+    export type Hasil = { ok: boolean };
+    
+    // main.ts
+    import { formatRupiah, type Hasil } from './utils';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Module memecah kode menjadi file-file yang bisa saling mengimpor. TypeScript mengikuti standar ES module, dengan tambahan pemeriksaan tipe lintas file.
+
+## export / import
+
+```ts
+// matematika.ts
+export const PI = 3.14;
+export function luasLingkaran(r: number) { return PI * r ** 2; }
+export default function jumlah(a: number, b: number) { return a + b; }
+
+// app.ts
+import jumlah, { PI, luasLingkaran } from "./matematika";
+import * as matematika from "./matematika";
+```
+
+Default export cukup satu per file. Named export bisa banyak dan lebih mudah di-refactor karena nama harus sama saat diimpor.
+
+## Type-Only Import
+
+```ts
+import type { Pengguna } from "./tipe";
+import { type Pengguna, ambilData } from "./api";
+```
+
+`import type` dihapus total saat kompilasi. Ini mencegah import runtime yang sebenarnya tidak diperlukan dan menghindari circular dependency pada tipe.
+
+## Barrel File
+
+```ts
+// components/index.ts
+export { Button } from "./Button";
+export { Card } from "./Card";
+export type { ButtonProps } from "./Button";
+```
+
+Lalu konsumen cukup:
+
+```ts
+import { Button, Card } from "@/components";
+```
+
+Hati-hati: barrel yang terlalu besar bisa memperlambat build karena bundler harus mengevaluasi banyak file.
+
+## Ekstensi File dalam Import
+
+```ts
+import { helper } from "./helper";       // ✅ dengan bundler
+import { helper } from "./helper.js";    // ✅ wajib di Node ESM murni
+```
+
+TypeScript tidak menulis ulang ekstensi. Kalau targetnya Node.js ESM, kamu tetap perlu menulis `.js` pada import meski file sumbernya `.ts`.
+
+## Deklarasi Global
+
+```ts
+declare global {
+  interface Window {
+    __APP_CONFIG__: { apiUrl: string };
+  }
+}
+export {}; // membuat file jadi module
+```
+
+Tanpa `export {}`, file dianggap script global.
+
+## Dynamic Import
+
+```ts
+const { default: Chart } = await import("./Chart");
+```
+
+Dynamic import menghasilkan chunk terpisah — dasar dari code splitting.
+
+<div class="note">💡 Aktifkan `verbatimModuleSyntax: true` kalau ingin TypeScript lebih ketat soal membedakan import tipe dan nilai. Ini sejalan dengan perilaku ESM modern.</div>
+
+## Di Dunia Nyata
+
+- Proyek React memakai barrel di folder `components/` dan `hooks/`.
+- Monorepo memakai `paths` di tsconfig untuk import internal.
+- Type-only import mencegah bundle menyertakan kode yang tidak dipakai.
+
+## Try it Yourself
+
+Pisahkan kode di atas menjadi dua file untuk mencoba import/export sungguhan.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`// Modul disimulasikan dalam satu file untuk contoh:
+interface Pengguna {
+  nama: string;
+  umur: number;
+}
+
+const sapa = (p: Pengguna): string => \`Halo \${p.nama}, umur \${p.umur}\`;
+const dewasa = (p: Pengguna): boolean => p.umur >= 18;
+
+export { sapa, dewasa };
+export type { Pengguna };
+
+const sari: Pengguna = { nama: "Sari", umur: 20 };
+console.log(sapa(sari));
+console.log("Dewasa?", dewasa(sari));`} />

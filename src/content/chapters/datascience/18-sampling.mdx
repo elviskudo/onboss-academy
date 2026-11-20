@@ -1,0 +1,87 @@
+---
+title: "Sampling dan Desain Eksperimen"
+description: "populasi, sampel, random sampling, bias, dan ukuran sampel"
+order: 18
+quiz:
+  - q: "Populasi adalah…"
+    options: ["Rata-rata", "Seluruh objek yang diteliti", "Bagian kecil data", "Hasil sampling"]
+    answer: 1
+    explain: "Sampel diambil dari populasi."
+  - q: "Random sampling bertujuan…"
+    options: ["Menghilangkan semua error", "Menambah bias", "Memberi tiap anggota peluang sama", "Mempercepat komputasi"]
+    answer: 2
+    explain: "Mengurangi bias pemilihan."
+  - q: "Bias sampling terjadi ketika…"
+    options: ["Data diacak", "Jumlah sampel besar", "Mean dihitung", "Sampel tidak mewakili populasi"]
+    answer: 3
+    explain: "Contoh: hanya survei pengunjung toko tertentu."
+  - q: "Ukuran sampel yang terlalu kecil menyebabkan…"
+    options: ["Mean pasti salah", "Estimasi tidak stabil", "Data otomatis valid", "Bias hilang"]
+    answer: 1
+    explain: "Interval kepercayaan menjadi lebar."
+  - q: "Stratified sampling membagi populasi menjadi…"
+    options: ["Hanya satu kelompok", "Baris pertama saja", "Kelompok homogen lalu diambil dari masing-masing", "Data acak tanpa aturan"]
+    answer: 2
+    explain: "Misalnya mahasiswa dibagi per fakultas."
+example:
+  code: |
+    import random
+    populasi=list(range(1,101))
+    sampel=random.sample(populasi,10)
+    print(sampel)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Populasi versus Sampel
+
+Mengukur seluruh populasi sering mahal atau mustahil. Kita mengambil **sampel**, lalu membuat kesimpulan untuk populasi dengan pengakuan ada ketidakpastian.
+
+## Random Sampling
+
+```python
+import random
+
+populasi = list(range(1, 101))
+sampel = random.sample(populasi, 10)
+print(sampel)
+```
+
+`random.sample` mengambil tanpa penggantian, sehingga satu anggota tidak muncul dua kali.
+
+## Stratified Sampling
+
+```python
+fakultas = {
+    "Teknik": list(range(1, 21)),
+    "Ekonomi": list(range(21, 41)),
+}
+sampel = []
+for anggota in fakultas.values():
+    sampel += random.sample(anggota, 5)
+print(sampel)
+```
+
+Ini memastikan tiap kelompok terwakili, terutama bila ukurannya tidak seimbang.
+
+## Sumber Bias
+
+| Bias | Contoh |
+| --- | --- |
+| Selection | survei hanya di jam kantor |
+| Non-response | yang menjawab hanya orang puas |
+| Measurement | pertanyaan yang menuntut jawaban tertentu |
+
+<div class="note">💡 Sampel besar tidak menyelamatkan desain yang bias. Lebih baik 500 responden representatif daripada 10.000 responden dari satu kelompok saja.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import random
+
+populasi = list(range(1, 101))
+sampel = random.sample(populasi, 12)
+rata = sum(sampel) / len(sampel)
+print("Sampel:", sampel)
+print("Rata-rata sampel:", round(rata, 2))`} />

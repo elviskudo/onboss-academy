@@ -1,0 +1,134 @@
+---
+"title": "Manajemen Memori"
+"description": "ARC, retain cycle, weak, unowned, dan closure capture list"
+"order": 21
+"quiz":
+- "q": "ARC secara otomatis mengelola…"
+  "options":
+  - "String literal"
+  - "Referensi objek class"
+  - "Enum case"
+  - "Fungsi global"
+  "answer": 1
+  "explain": "Automatic Reference Counting menghitung referensi ke instance class."
+- "q": "Retain cycle terjadi saat…"
+  "options":
+  - "Struct disalin"
+  - "Array kosong"
+  - "Dua objek saling memegang referensi kuat"
+  - "Fungsi dipanggil"
+  "answer": 2
+  "explain": "Keduanya tidak pernah dilepas sehingga memory leak."
+- "q": "Kata kunci weak membuat referensi…"
+  "options":
+  - "Menjadi konstanta"
+  - "Dihapus otomatis"
+  - "Menjadi opsional otomatis"
+  - "Tidak menambah hitungan referensi"
+  "answer": 3
+  "explain": "weak harus opsional karena bisa menjadi nil saat objek dilepas."
+- "q": "unowned cocok bila…"
+  "options":
+  - "Objek dijamin hidup lebih lama"
+  - "Objek bisa hilang"
+  - "Untuk struct"
+  - "Untuk enum"
+  "answer": 0
+  "explain": "Mengakses unowned setelah objek dilepas menyebabkan crash."
+- "q": "Capture list ditulis dengan…"
+  "options":
+  - "weak self di badan closure"
+  - "[weak self] di depan closure"
+  - "@weak"
+  - "let weak = self"
+  "answer": 1
+  "explain": "Contoh: { [weak self] in self?.perbarui() }."
+"example":
+  "code": "class Pengguna {\n    let nama: String\n    weak var akun: Akun?\n\n    init(nama: String) { self.nama = nama }\n    deinit { print(\"\\(nama) dilepas\") }\n}\n\nclass Akun {\n    let pemilik: Pengguna\n\n    init(pemilik: Pengguna) { self.pemilik = pemilik }\n}\n\nvar u: Pengguna? = Pengguna(nama: \"Budi\")\nu!.akun = Akun(pemilik: u!)\nu = nil // deinit dipanggil, tidak ada cycle\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Cara Kerja ARC
+
+```swift
+class Pengguna {
+    let nama: String
+    weak var akun: Akun?
+
+    init(nama: String) { self.nama = nama }
+    deinit { print("\(nama) dilepas") }
+}
+
+class Akun {
+    let pemilik: Pengguna
+
+    init(pemilik: Pengguna) { self.pemilik = pemilik }
+}
+
+var u: Pengguna? = Pengguna(nama: "Budi")
+u!.akun = Akun(pemilik: u!)
+u = nil // deinit dipanggil, tidak ada cycle
+```
+
+Setiap kali kamu menyimpan instance class ke properti atau variabel, ARC menambah hitungan referensi. Saat hitungan menjadi nol, objek dilepas dan `deinit` dipanggil.
+
+## Retain Cycle
+
+```swift
+class Orang {
+    var pasangan: Orang?   // kuat -> cycle
+}
+```
+
+Dua orang saling memegang pasangan, keduanya tidak pernah dilepas. Perbaiki dengan `weak` pada satu sisi.
+
+## weak vs unowned
+
+| Kata kunci | Opsional | Kapan dipakai |
+|---|---|---|
+| `weak` | ya | objek bisa dilepas lebih dulu |
+| `unowned` | tidak | objek dijamin hidup lebih lama |
+
+Delegate dan target-action biasanya `weak`. Hubungan child → parent yang selalu hidup bisa memakai `unowned`.
+
+## Closure
+
+```swift
+class Controller {
+    var onSelesai: (() -> Void)?
+
+    func pasang() {
+        onSelesai = { [weak self] in
+            self?.perbaruiUI()
+        }
+    }
+}
+```
+
+Tanpa `[weak self]`, closure menyimpan referensi kuat ke `self`, yang juga menyimpan closure — siklus klasik.
+
+<div class="note">💡 Struct tidak terkena ARC karena bukan reference type. Namun struct yang menyimpan class tetap bisa ikut membentuk cycle lewat properti class di dalamnya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`class Pengguna {
+    let nama: String
+    weak var akun: Akun?
+
+    init(nama: String) { self.nama = nama }
+    deinit { print("\(nama) dilepas") }
+}
+
+class Akun {
+    let pemilik: Pengguna
+
+    init(pemilik: Pengguna) { self.pemilik = pemilik }
+}
+
+var u: Pengguna? = Pengguna(nama: "Budi")
+u!.akun = Akun(pemilik: u!)
+u = nil // deinit dipanggil, tidak ada cycle`} />

@@ -1,0 +1,105 @@
+---
+title: "Membaca Query Plan dan Optimisasi"
+description: "EXPLAIN, biaya, selective filter, dan praktik query efisien"
+order: 23
+quiz:
+  - q: "Perintah untuk melihat rencana eksekusi di SQLite adalah…"
+    options: ["EXPLAIN QUERY PLAN", "SHOW PLAN", "DESCRIBE QUERY", "PLAN SELECT"]
+    answer: 0
+    explain: "EXPLAIN QUERY PLAN menampilkan bagaimana SQLite akan menjalankan query."
+  - q: "Operasi yang biasanya paling mahal adalah…"
+    options: ["Full table scan", "Index lookup", "Filter pada hasil 10 baris", "LIMIT 5"]
+    answer: 0
+    explain: "Memindai seluruh tabel membaca lebih banyak halaman data."
+  - q: "Indexes yang efektif ditandai dalam plan dengan…"
+    options: ["USING INDEX / SEARCH", "SCAN", "TEMP B-TREE", "COST 0"]
+    answer: 0
+    explain: "SQLite menunjukkan SEARCH ... USING INDEX bila index dipakai."
+  - q: "Filter yang paling selektif sebaiknya…"
+    options: ["Diletakkan di WHERE dan memakai index", "Dihapus", "Dipindah ke SELECT", "Dijadikan LIKE"]
+    answer: 0
+    explain: "Filter selektif mengurangi baris lebih awal dalam pipeline."
+  - q: "SELECT * sering kurang baik karena…"
+    options: ["Salah sintaks", "Mengambil kolom yang tidak dipakai", "Selalu lebih lambat 10x", "Tidak bisa di-ORDER BY"]
+    answer: 1
+    explain: "Kolom ekstra menambah I/O dan transfer jaringan."
+example:
+  code: |
+    EXPLAIN QUERY PLAN SELECT * FROM karyawan WHERE dept='Engineering';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Optimisasi dimulai dari pengukuran, bukan dari intuisi. Query plan menjelaskan apa yang akan dilakukan database: memindai tabel, mencari lewat index, menyortir, atau membuat tabel sementara.
+
+## Membaca Plan
+
+```sql
+EXPLAIN QUERY PLAN
+SELECT nama FROM karyawan WHERE dept = 'Engineering';
+```
+
+Tanpa index, keluaran biasanya menyebut `SCAN karyawan`. Setelah `CREATE INDEX idx_karyawan_dept ON karyawan(dept)`, plan berubah menjadi `SEARCH karyawan USING INDEX idx_karyawan_dept`.
+
+## Langkah Optimisasi
+
+1. Ukur waktu query dengan data volume realistis.
+2. Baca query plan.
+3. Periksa filter `WHERE` dan kunci `JOIN`.
+4. Tambah atau ubah index bila memang diperlukan.
+5. Ukur lagi; simpan bukti perbaikan.
+
+```sql
+-- PostgreSQL
+EXPLAIN ANALYZE SELECT ...
+-- MySQL
+EXPLAIN SELECT ...
+```
+
+## Filter Selektif
+
+```sql
+-- Baik: filter langsung pada kolom ter-index
+SELECT * FROM pesanan WHERE user_id = 7 AND status = 'lunas';
+
+-- Kurang baik: fungsi pada kolom membuat index tidak terpakai
+SELECT * FROM pesanan WHERE LOWER(status) = 'lunas';
+```
+
+Simpan data dalam bentuk yang sudah konsisten (misalnya semua huruf kecil) agar query tidak perlu mengubahnya tiap kali.
+
+## Join dan Sort
+
+- Pastikan kolom yang di-`JOIN` bertipe sama dan ter-index.
+- `ORDER BY` pada kolom tanpa index memaksa sort seluruh hasil.
+- `DISTINCT`, `GROUP BY`, dan `UNION` juga bisa memicu tabel sementara.
+- Batasi baris dengan `LIMIT` hanya setelah logika filter benar.
+
+## Query yang Sering Tidak Disadari Mahal
+
+```sql
+-- Subquery di SELECT berjalan per baris secara logis
+SELECT nama, (SELECT COUNT(*) FROM proyek WHERE lead_id = k.id) AS jumlah
+FROM karyawan k;
+
+-- Alternatif: agregat sekali lalu join
+WITH j AS (SELECT lead_id, COUNT(*) AS jumlah FROM proyek GROUP BY lead_id)
+SELECT k.nama, COALESCE(j.jumlah, 0) AS jumlah
+FROM karyawan k LEFT JOIN j ON j.lead_id = k.id;
+```
+
+<div class="note">💡 Optimizer modern sangat pintar, tetapi ia hanya bisa memilih dari index yang kamu sediakan. Menambah index secara acak bukan strategi — gunakan plan sebagai pemandu.</div>
+
+## Di Dunia Nyata
+
+- **Endpoint lambat**: EXPLAIN mengungkap full scan pada tabel 5 juta baris.
+- **Dashboard**: materialized view menggantikan agregasi real-time.
+- **Pencarian**: FTS menggantikan `LIKE '%...%'` yang tidak ter-index.
+- **Batch job**: index komposit sesuai pola filter mempercepat malam hari.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE INDEX idx_karyawan_dept ON karyawan(dept);
+EXPLAIN QUERY PLAN
+SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering' ORDER BY gaji DESC;`} />

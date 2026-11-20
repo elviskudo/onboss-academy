@@ -148,6 +148,10 @@ StringBuilder punya `append`, `insert`, `reverse`, `delete`, `substring` — tap
 
 <div class="note">💡 String <b>immutable</b>: setiap method menghasilkan string baru. Loop <code>teks = teks + "x"</code> ratusan kali membuang object lama dan memicu garbage collector — gunakan StringBuilder. Ringkasan aman: <b>baca pakai String, rakit pakai StringBuilder</b>.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     public static void main(String[] args) {
         String teks = "  Belajar Java di OnBoss  ";
@@ -172,7 +176,7 @@ StringBuilder punya `append`, `insert`, `reverse`, `delete`, `substring` — tap
         System.out.println(String.format("Format: %s berumur %d", "Sari", 20));
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i &lt;= 3; i++) {
             sb.append("ke-").append(i).append(" ");
         }
         System.out.println(sb.toString().trim());

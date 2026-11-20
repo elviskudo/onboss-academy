@@ -1,0 +1,150 @@
+---
+"title": "Cargo & Crates.io"
+"description": "Cargo.toml, dependensi, fitur, profil build, dan perintah sehari-hari"
+"order": 22
+"quiz":
+- "q": "File konfigurasi proyek Rust adalah…"
+  "options":
+  - "Cargo.toml"
+  - "package.json"
+  - "rust.json"
+  - "Makefile"
+  "answer": 0
+  "explain": "Cargo.toml berisi metadata, dependensi, dan fitur."
+- "q": "File Cargo.lock berfungsi untuk…"
+  "options":
+  - "mengunci versi dependensi"
+  - "menyimpan kode"
+  - "mengatur editor"
+  - "membuat dokumentasi"
+  "answer": 0
+  "explain": "Lock file memastikan build reproduksibel."
+- "q": "Perintah untuk menambah dependensi adalah…"
+  "options":
+  - "cargo add"
+  - "cargo install"
+  - "cargo new"
+  - "cargo get"
+  "answer": 0
+  "explain": "cargo add crate-name menambah ke Cargo.toml."
+- "q": "Fitur Cargo dipakai untuk…"
+  "options":
+  - "mengaktifkan bagian opsional crate"
+  - "mengganti nama crate"
+  - "menghapus dependensi"
+  - "membuat binary"
+  "answer": 0
+  "explain": "Dengan features, pengguna bisa memilih fungsionalitas yang dibutuhkan."
+- "q": "cargo build --release menghasilkan…"
+  "options":
+  - "build debug"
+  - "build dioptimasi"
+  - "test"
+  - "dokumentasi"
+  "answer": 1
+  "explain": "Profil release mengaktifkan optimasi dan mematikan debug assertions."
+"example":
+  "code": "[package]\nname = \"belajar\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\nserde = \"1\"\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Cargo adalah build system sekaligus package manager Rust. Hampir semua proyek Rust dimulai dengan `cargo new`.
+
+## Membuat Proyek
+
+```bash
+cargo new belajar-rust
+cd belajar-rust
+cargo run
+```
+
+Struktur:
+
+```
+belajar-rust/
+  Cargo.toml
+  src/main.rs
+  target/
+```
+
+## Cargo.toml
+
+```toml
+[package]
+name = "belajar-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+rand = "0.8"
+```
+
+Versi mengikuti aturan semver. `"1"` berarti kompatibel dengan 1.x.
+
+## Fitur
+
+```toml
+[features]
+default = ["json"]
+json = ["serde/json"]
+```
+
+Aktifkan dengan `cargo build --features json` atau matikan default dengan `--no-default-features`.
+
+## Perintah Penting
+
+| Perintah | Fungsi |
+|---|---|
+| `cargo build` | Kompilasi debug |
+| `cargo build --release` | Kompilasi optimasi |
+| `cargo run` | Build + jalankan |
+| `cargo test` | Jalankan test |
+| `cargo check` | Cek tanpa menghasilkan binary |
+| `cargo fmt` | Format kode |
+| `cargo clippy` | Lint saran idiom |
+| `cargo doc --open` | Dokumentasi |
+
+## Profil
+
+```toml
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+```
+
+## Workspace
+
+```toml
+[workspace]
+members = ["api", "core", "cli"]
+```
+
+Workspace memungkinkan beberapa crate berbagi `Cargo.lock` dan target build.
+
+<div class="note">💡 Jalankan <code>cargo check</code> saat iterasi — jauh lebih cepat daripada <code>cargo build</code> karena hanya memeriksa tipe tanpa linking.</div>
+
+
+## Try it Yourself
+
+Perintah ini dijalankan di terminal, bukan di playground. Perhatikan strukturnya.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`[package]
+name = "belajar-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+
+# cargo check
+# cargo test
+# cargo run --release`} />

@@ -1,0 +1,99 @@
+---
+title: "Query API: bentuk perintah dan filter"
+description: "Anatomi db.koleksi.operation(), filter, opsi, dan perbedaan find/ findOne"
+order: 10
+quiz:
+  - q: "Bentuk umum pemanggilan operasi MongoDB adalah…"
+    options: ["koleksi > db > operasi", "db.koleksi.operasi(filter, opsi)", "operasi(db.koleksi)", "db(filter).koleksi"]
+    answer: 1
+    explain: "Semua operasi koleksi diawali db.nama_koleksi diikuti metode."
+  - q: "findOne() mengembalikan…"
+    options: ["Jumlah dokumen", "Kursor", "Semua dokumen", "Satu dokumen pertama yang cocok"]
+    answer: 3
+    explain: "findOne mengembalikan objek dokumen atau null bila tidak ada yang cocok."
+  - q: "find() tanpa argumen berarti…"
+    options: ["Tidak ada hasil", "Semua dokumen dalam koleksi", "Hanya satu dokumen", "Error"]
+    answer: 1
+    explain: "Filter kosong / tanpa argumen cocok dengan semua dokumen."
+  - q: "Pilihan yang benar untuk menyembunyikan field _id adalah…"
+    options: ["{project: -_id}", "{_id: 0}", "{_id: false, hide: true}", "{hide: \"_id\"}"]
+    answer: 1
+    explain: "Proyeksi memakai 1 untuk tampil dan 0 untuk sembunyikan; _id tampil kecuali diminta 0."
+  - q: "Metode untuk menghitung dokumen hasil filter adalah…"
+    options: ["db.koleksi.size(filter)", "db.koleksi.total(filter)", "db.koleksi.length()", "db.koleksi.countDocuments(filter)"]
+    answer: 3
+    explain: "countDocuments() menghitung dokumen yang cocok dengan filter."
+example:
+  code: |
+    db.siswa.find({kelas: "A"}, {nama: 1, nilai: 1, _id: 0})
+    db.siswa.findOne({nilai: {$gte: 90}})
+    db.siswa.countDocuments({kelas: "A"})
+---
+
+## Anatomi Pemanggilan
+
+Hampir semua kode MongoDB mengikuti pola:
+
+```javascript
+db.nama_koleksi.metode(filter, opsi)
+```
+
+- `db` → database yang sedang aktif.
+- `nama_koleksi` → wadah dokumen.
+- `metode` → `find`, `insertOne`, `updateMany`, dan sebagainya.
+- `filter` → syarat pencarian, berupa objek.
+- `opsi` → pengaturan tambahan seperti proyeksi atau urutan.
+
+## Filter Kosong
+
+```javascript
+db.produk.find()
+db.produk.find({})
+```
+
+Keduanya mengembalikan seluruh dokumen. Koleksi besar sebaiknya dibatasi dengan `limit()` saat eksplorasi agar tidak membanjiri layar.
+
+## find versus findOne
+
+| Metode | Hasil | Kapan dipakai |
+| --- | --- | --- |
+| `find()` | kursor (bisa di-`limit`, `sort`) | daftar, laporan |
+| `findOne()` | satu objek atau `null` | cek keberadaan / ambil satu |
+
+```javascript
+db.produk.findOne({ kode: "KB-01" })
+```
+
+## Proyeksi
+
+Proyeksi memilih field yang ditampilkan. Nilai `1` berarti tampil, `0` berarti disembunyikan.
+
+```javascript
+db.produk.find({}, { nama: 1, harga: 1, _id: 0 })
+```
+
+Kecuali `_id`, kamu tidak boleh mencampur `1` dan `0` dalam satu proyeksi.
+
+## Rantai Metode
+
+```javascript
+db.produk.find({ stok: { $gt: 0 } })
+         .sort({ harga: -1 })
+         .limit(5)
+```
+
+Urutan rantai penting: filter dulu, lalu sort, lalu limit. Kursor bersifat malas — perintah benar-benar dieksekusi saat hasil diiterate.
+
+<div class="note">💡 `db.koleksi.find()` mengembalikan kursor, bukan array. Di mongosh kursor langsung ditampilkan, tetapi di driver Node.js kamu perlu `await cursor.toArray()` atau loop `for await`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar
+db.produk.insertMany([
+  {nama: "Keyboard", harga: 350000, stok: 12},
+  {nama: "Mouse", harga: 150000, stok: 0},
+  {nama: "Monitor", harga: 1200000, stok: 4}
+])
+db.produk.find({stok: {$gt: 0}}, {nama: 1, harga: 1, _id: 0}).sort({harga: -1})`}</code></pre>

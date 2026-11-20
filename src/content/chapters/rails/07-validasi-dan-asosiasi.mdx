@@ -25,16 +25,16 @@ quiz:
     explain: "Rails memeriksa tabel apakah email sudah dipakai."
 example:
   code: |
-    class Product < ApplicationRecord
+    class Product &lt; ApplicationRecord
       validates :name, presence: true, uniqueness: true
       validates :price, numericality: { greater_than: 0 }
     end
 
-    class Order < ApplicationRecord
+    class Order &lt; ApplicationRecord
       belongs_to :customer
     end
 
-    class Customer < ApplicationRecord
+    class Customer &lt; ApplicationRecord
       has_many :orders
     end
 ---

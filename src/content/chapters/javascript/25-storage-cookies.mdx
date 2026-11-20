@@ -1,0 +1,133 @@
+---
+title: "Cookies, localStorage & sessionStorage"
+description: "Menyimpan data di browser dengan Web Storage API dan cookies"
+order: 25
+quiz:
+  - q: "Data di localStorage akan…"
+    options: ["Hilang saat tab ditutup", "Tetap sampai dihapus", "Hanya untuk satu halaman", "Tersimpan di server"]
+    answer: 1
+    explain: "LocalStorage persisten dan tidak punya expiry."
+  - q: "sessionStorage berbeda karena…"
+    options: ["Hanya untuk sesi tab aktif", "Lebih besar kapasitasnya", "Bisa dibaca server", "Selalu terenkripsi"]
+    answer: 0
+    explain: "Data hilang saat tab/browser ditutup."
+  - q: "Cara menulis data ke localStorage adalah…"
+    options: ["localStorage.set(...)", "localStorage.setItem(...)", "localStorage.push(...)", "localStorage.write(...)"]
+    answer: 1
+    explain: "Gunakan setItem/getItem/removeItem/clear."
+  - q: "Karena localStorage menyimpan string, objek harus diubah dengan…"
+    options: ["JSON.stringify", "JSON.parse", "toString", "eval"]
+    answer: 0
+    explain: "Saat membaca, gunakan JSON.parse."
+  - q: "Cookie bisa dikirim ke server lewat…"
+    options: ["Header HTTP", "console.log", "DOM", "localStorage"]
+    answer: 0
+    explain: "Cookie otomatis menyertai request ke domain yang sama."
+example:
+  code: |
+    localStorage.setItem("tema", "gelap");
+    console.log(localStorage.getItem("tema"));
+    sessionStorage.setItem("draft", "belum selesai");
+    document.cookie = "user=Sari; max-age=3600; path=/";
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Browser menyediakan beberapa tempat menyimpan data sisi klien. Memilih yang tepat bergantung pada **siapa yang perlu membacanya** dan **berapa lama data harus bertahan**.
+
+## Perbandingan
+
+| Fitur | localStorage | sessionStorage | Cookie |
+|-------|--------------|----------------|--------|
+| Umur | Sampai dihapus | Sesi tab | Bisa diatur expiry |
+| Dikirim ke server | Tidak | Tidak | Ya (header) |
+| Kapasitas | ±5 MB | ±5 MB | ±4 KB |
+| Akses | JavaScript saja | JavaScript saja | JS + server |
+| HttpOnly | Tidak | Tidak | Bisa |
+
+## Web Storage API
+
+```js
+localStorage.setItem("nama", "Sari");
+localStorage.getItem("nama");      // "Sari"
+localStorage.removeItem("nama");
+localStorage.clear();              // semua data origin ini
+
+sessionStorage.setItem("draft", "tulisan...");
+```
+
+Semua nilai adalah **string**. Simpan objek dengan JSON:
+
+```js
+const keranjang = [{ id: 1, qty: 2 }];
+localStorage.setItem("keranjang", JSON.stringify(keranjang));
+
+const data = JSON.parse(localStorage.getItem("keranjang") || "[]");
+```
+
+## Event storage
+
+Perubahan localStorage di tab lain bisa didengar:
+
+```js
+window.addEventListener("storage", e => {
+  console.log(e.key, e.oldValue, e.newValue);
+});
+```
+
+Ini tidak terpicu di tab yang melakukan perubahan sendiri.
+
+## Cookies
+
+```js
+document.cookie = "tema=gelap; max-age=86400; path=/; SameSite=Lax";
+```
+
+Atribut penting:
+
+- `max-age` / `expires` — umur cookie (detik / tanggal).
+- `path` — cakupan URL.
+- `domain` — cakupan host.
+- `Secure` — hanya lewat HTTPS.
+- `HttpOnly` — tidak bisa dibaca JavaScript (wajib untuk session token).
+- `SameSite=Lax|Strict|None` — perlindungan CSRF.
+
+Membaca cookie:
+
+```js
+document.cookie.split("; ").reduce((acc, item) => {
+  const [k, ...v] = item.split("=");
+  acc[k] = v.join("=");
+  return acc;
+}, {});
+```
+
+## IndexedDB (Singkat)
+
+Untuk data besar dan terstruktur, ada IndexedDB — database NoSQL di browser. Kapasitasnya jauh lebih besar dan mendukung transaksi, tapi API-nya lebih rumit (biasanya dibungkus library seperti Dexie).
+
+## Keamanan
+
+<div class="note">💡 Jangan pernah menyimpan token akses atau kata sandi di localStorage. Rentan terhadap XSS. Simpan session token di cookie `HttpOnly; Secure; SameSite` yang diatur server.</div>
+
+## Di Dunia Nyata
+
+- Preferensi tema (terang/gelap) disimpan di localStorage.
+- Draft artikel sementara disimpan di sessionStorage.
+- Cookie session mengautentikasi pengguna pada request ke server.
+- "Jangan tampilkan lagi" untuk banner promo memakai cookie dengan expiry 30 hari.
+
+## Try it Yourself
+
+Ubah nilai yang disimpan atau hapus `removeItem` untuk mengamati isi Storage.
+
+<TryIt lang="javascript" runtime="client-js" code={`localStorage.setItem("tema", "gelap");
+sessionStorage.setItem("draft", "artikel belum selesai");
+console.log("Tema:", localStorage.getItem("tema"));
+console.log("Draft:", sessionStorage.getItem("draft"));
+const preferensi = { font: "Inter", ukuran: 16 };
+localStorage.setItem("preferensi", JSON.stringify(preferensi));
+console.log("Preferensi:", JSON.parse(localStorage.getItem("preferensi")));
+localStorage.removeItem("tema");
+console.log("Setelah dihapus:", localStorage.getItem("tema"));
+document.body.innerHTML = "<h3>Cek Application > Storage di DevTools</h3>";`} />

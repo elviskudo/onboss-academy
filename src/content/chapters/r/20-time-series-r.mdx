@@ -1,0 +1,117 @@
+---
+title: "Deret Waktu Dasar"
+description: "Membaca data tanggal, komponen tren-musim, Dekomposisi, dan peramalan sederhana"
+order: 20
+quiz:
+  - q: "Fungsi R untuk membuat objek tanggal dari teks adalah…"
+    options: ["as.Date()", "as.numeric()", "toDate()", "date()"]
+    answer: 0
+    explain: "as.Date('2026-11-20') membuat objek Date."
+  - q: "Fungsi untuk membaca nilai sebelumnya pada vektor adalah…"
+    options: ["lag() di dplyr atau stats::lag()", "shift() di base R", "prev()", "lead()"]
+    answer: 0
+    explain: "lag menggeser nilai ke kanan sehingga baris i berisi nilai i-1."
+  - q: "Komponen deret waktu yang berulang pada periode tetap disebut…"
+    options: ["Tren", "Musim", "Noise", "Level"]
+    answer: 1
+    explain: "Komponen musim (seasonal) berulang dengan periode tetap."
+  - q: "Fungsi dekomposisi klasik di R adalah…"
+    options: ["decompose()", "split.ts()", "season()", "decomp()"]
+    answer: 0
+    explain: "decompose(ts(x, frequency=12)) memisahkan tren, musim, dan residual."
+  - q: "Model peramalan eksponensial yang populer di R adalah…"
+    options: ["Holt-Winters lewat forecast::hw", "lm() biasa", "t.test()", "chisq.test()"]
+    answer: 0
+    explain: "Holt-Winters menangkap tren dan musim dalam peramalan eksponensial."
+example:
+  code: |
+    x <- ts(c(10,12,14,11,13,15), frequency=4)
+    print(decompose(x)$seasonal)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Deret waktu adalah kumpulan pengamatan yang diurutkan berdasarkan waktu. Berbeda dengan data biasa, urutan dan jarak antar pengamatan mengandung informasi.
+
+## Tanggal dan Waktu
+
+```r
+tanggal <- as.Date(c("2026-01-01", "2026-02-01"))
+format(tanggal, "%d/%m/%Y")
+seq(from = as.Date("2026-01-01"), by = "month", length.out = 6)
+```
+
+```r
+library(lubridate)
+ymd("2026-11-20")
+ymd_hms("2026-11-20 08:30:00", tz = "Asia/Jakarta")
+```
+
+## Objek ts
+
+```r
+omzet <- ts(c(100, 120, 130, 110, 125, 140,
+              135, 150, 160, 145, 155, 170),
+            start = c(2026, 1), frequency = 12)
+frequency(omzet)   # 12 = bulanan
+```
+
+`frequency` menentukan jumlah observasi per siklus: 12 untuk bulanan, 4 untuk kuartalan, 52 untuk mingguan, 7 untuk harian dengan siklus minggu.
+
+## Dekomposisi
+
+```r
+komponen <- decompose(omzet, type = "additive")
+plot(komponen)
+komponen$trend       # tren bergerak
+komponen$seasonal    # pola musim
+komponen$random      # sisa yang tak dijelaskan
+```
+
+Model **aditif** cocok bila amplitudo musim tetap; model **multiplikatif** (`type = "multiplicative"`) cocok bila ayunan musim membesar bersama tren.
+
+## Lag dan Differencing
+
+```r
+library(dplyr)
+df <- data.frame(bulan = 1:6, omzet = c(10, 12, 15, 13, 17, 20))
+df %>%
+  mutate(lag1 = lag(omzet),
+         selisih = omzet - lag(omzet))
+```
+
+Differencing membantu membuat data stasioner — rata-rata dan varians tidak berubah seiring waktu, syarat banyak model deret waktu.
+
+## Peramalan Sederhana
+
+```r
+library(forecast)
+model <- hw(omzet, seasonal = "additive")
+forecast(model, h = 6)
+plot(forecast(model, h = 6))
+```
+
+Sebagai baseline yang jujur, bandingkan dengan rata-rata bergerak atau *naive forecast* (nilai periode sebelumnya). Model kompleks yang kalah dari baseline tidak layak dipakai.
+
+<div class="note">💡 Selalu siapkan data validasi dengan memotong periode terakhir. Evaluasi model pada data yang tidak dipakai saat fitting, bukan hanya melihat seberapa dekat garis prediksi mengikuti data historis.</div>
+
+## Di Dunia Nyata
+
+- **Penjualan ritel**: musim liburan memberi lonjakan yang berulang tiap tahun.
+- **Penggunaan listrik**: pola harian dan musiman suhu memengaruhi beban.
+- **Trafik situs**: lonjakan mingguan dan efek kampanye.
+- **Arus kas**: tren pertumbuhan ditambah musim pembayaran.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`omzet <- ts(c(100, 120, 130, 110, 125, 140,
+              135, 150, 160, 145, 155, 170),
+            start = c(2026, 1), frequency = 12)
+komponen <- decompose(omzet)
+cat("Tren pada bulan 6:", round(komponen$trend[6], 2), "\n")
+cat("Musim pada bulan 1:", round(komponen$seasonal[1], 2), "\n")
+cat(" Residual terakhir:", round(tail(komponen$random, 1), 2), "\n")
+library(dplyr)
+df <- data.frame(bulan = 1:6, omzet = as.numeric(omzet)[1:6])
+print(df %>% mutate(lag1 = lag(omzet), selisih = omzet - lag(omzet)))`} />

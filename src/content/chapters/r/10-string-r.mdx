@@ -1,0 +1,100 @@
+---
+title: "String dan Teks"
+description: "Membuat, menggabungkan, memotong, dan mengubah teks dengan fungsi string bawaan R"
+order: 10
+quiz:
+  - q: "Fungsi untuk menghitung panjang string adalah…"
+    options: ["length()", "nchar()", "strlen()", "size()"]
+    answer: 1
+    explain: "nchar() menghitung jumlah karakter; length() menghitung elemen vektor."
+  - q: "Hasil dari substr('Rstudio', 1, 1) adalah…"
+    options: ["R", "Rs", "studio", "NA"]
+    answer: 0
+    explain: "substr mengambil karakter dari posisi 1 sampai 1."
+  - q: "Fungsi untuk memecah string基于 pemisah adalah…"
+    options: ["split()", "strsplit()", "paste()", "sub()"]
+    answer: 1
+    explain: "strsplit(x, split) menghasilkan list berisi potongan-potongan teks."
+  - q: "toupper('Halo') menghasilkan…"
+    options: ["halo", "HALO", "Halo", "Error"]
+    answer: 1
+    explain: "toupper mengubah semua huruf menjadi kapital."
+  - q: "Untuk mengganti semua kemunculan pola dipakai…"
+    options: ["sub()", "gsub()", "replace()", "change()"]
+    answer: 1
+    explain: "gsub mengganti semua kemunculan, sub hanya yang pertama."
+example:
+  code: |
+    s <- "Belajar R itu menyenangkan"
+    print(nchar(s)); print(toupper(s))
+    print(strsplit("a,b,c", ",")[[1]])
+    print(gsub(" ", "_", s))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Teks di R disimpan sebagai vektor `character`. Satunama pun sebenarnya vektor panjang satu, sehingga hampir semua operasi string bekerja secara vektorised.
+
+## Membuat dan Menggabungkan
+
+```r
+nama <- "Rizky"
+sapaan <- paste("Halo", nama)          # "Halo Rizky"
+lengkap <- paste("Depan", "Belakang", sep="-")
+vectorized <- paste0("item", 1:3)      # "item1" "item2" "item3"
+```
+
+`paste()` menyisipkan spasi secara default; `paste0()` langsung menggabungkan tanpa pemisah.
+
+## Fungsi Penting
+
+| Fungsi | Fungsi singkat |
+| --- | --- |
+| `nchar(x)` | jumlah karakter tiap elemen |
+| `substr(x, awal, akhir)` | mengambil bagian tertentu |
+| `strsplit(x, pola)` | memecah menjadi potongan |
+| `toupper` / `tolower` | mengubah huruf |
+| `trimws(x)` | membuang spasi tepi |
+| `sub` / `gsub` | mengganti pola |
+| `grepl(pola, x)` | cek keberadaan pola |
+
+```r
+trimws("  R  ")            # "R"
+substr("2026-11-20", 1, 4) # "2026"
+grepl("R", "Belajar R")    # TRUE
+```
+
+## Regular Expression Sederhana
+
+```r
+teks <- c("a101", "b52", "c7")
+grepl("[0-9]{3}", teks)          # hanya a101
+gsub("[0-9]+", "N", teks)        # "aN" "bN" "cN"
+```
+
+Karakter `[0-9]` berarti digit, `+` berarti satu atau lebih, `{3}` berarti tepat tiga. Pola ini dipakai `grep`, `grepl`, `sub`, `gsub`, dan `gregexpr`.
+
+## Encoding
+
+Teks Indonesia modern umumnya UTF-8. Bila membaca file dengan tanda baca atau emoji yang rusak, tentukan encoding saat import: `read.csv("data.csv", fileEncoding = "UTF-8")`. Fungsi `Encoding(x)` melaporkan penanda encoding yang melekat pada vektor.
+
+<div class="note">💡 `nchar()` menghitung karakter, bukan byte. Untuk emoji atau aksara ber-byte ganda, `length(charToRaw(s))` bisa lebih besar dari `nchar(s)`.</div>
+
+## Di Dunia Nyata
+
+- **Membersihkan nama**: `trimws()` dan `gsub("\s+", " ", nama)` merapikan spasi ganda.
+- **Ekstraksi tahun**: `substr(tanggal, 1, 4)` dari format ISO.
+- **Pencarian data**: `df[grepl("jakarta", tolower(df$kota)), ]`.
+- **Menyeragamkan kode**: `toupper(kode)` sebelum menggabungkan dua sumber data.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`teks <- "  Belajar R sangat Menyenangkan  "
+bersih <- trimws(teks)
+cat("Panjang:", nchar(bersih), "\n")
+cat("Kapital:", toupper(bersih), "\n")
+print(substr(bersih, 1, 7))
+print(gsub(" ", "_", tolower(bersih)))
+print(grepl("R", bersih))
+print(strsplit("merah,hijau,biru", ",")[[1]])`} />

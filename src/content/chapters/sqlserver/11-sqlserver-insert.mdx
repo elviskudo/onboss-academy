@@ -1,0 +1,90 @@
+---
+title: "INSERT: Menambah Baris"
+description: "INSERT VALUES, multi-row, OUTPUT, IDENTITY_INSERT, dan INSERT dengan DEFAULT"
+order: 11
+quiz:
+  - q: "Perintah menyisipkan satu baris adalah…"
+    options: ["PUT INTO tabel", "INSERT INTO tabel VALUES (...)", "ADD INTO tabel", "CREATE ROW"]
+    answer: 1
+    explain: "INSERT INTO dbo.tabel (kolom) VALUES (nilai);"
+  - q: "Klausa OUTPUT berguna untuk…"
+    options: ["Membuat indeks", "Mengubah tipe", "Mengembalikan baris yang baru disisipkan", "Menghapus duplikat"]
+    answer: 2
+    explain: "OUTPUT inserted.id mengembalikan nilai IDENTITY yang baru dibuat."
+  - q: "IDENTITY_INSERT dipakai untuk…"
+    options: ["Menghapus IDENTITY", "Mengubah urutan", "Membuat tabel", "Menyisipkan nilai eksplisit ke kolom IDENTITY"]
+    answer: 3
+    explain: "SET IDENTITY_INSERT dbo.tabel ON; membolehkan nilai id ditulis manual."
+  - q: "DEFAULT VALUES digunakan saat…"
+    options: ["Membuat kolom baru", "Semua kolom memakai nilai default", "Tabel kosong", "Query gagal"]
+    answer: 1
+    explain: "INSERT INTO tabel DEFAULT VALUES; membuat satu baris dengan nilai bawaan."
+  - q: "INSERT banyak baris dalam satu perintah ditulis…"
+    options: ["MULTI INSERT", "APPEND", "VALUES (..), (..), (..)", "VALUES (..); VALUES (..)"]
+    answer: 2
+    explain: "SQL Server mendukung daftar tuple setelah VALUES."
+example:
+  code: |
+    INSERT INTO dbo.siswa (nama, nilai)
+    OUTPUT inserted.id, inserted.nama
+    VALUES (N'Ana', 88), (N'Budi', 92);
+---
+
+## INSERT Dasar
+
+```sql
+INSERT INTO dbo.siswa (nama, nilai)
+VALUES (N'Ana', 88);
+```
+
+Awalan `N` menandakan literal Unicode — penting untuk `NVARCHAR`. Sebaiknya sebutkan daftar kolom agar perintah tetap benar saat tabel mendapat kolom baru.
+
+## Beberapa Baris
+
+```sql
+INSERT INTO dbo.siswa (nama, nilai, kelas)
+VALUES (N'Ana', 88, 'A'),
+       (N'Budi', 92, 'B'),
+       (N'Rani', 79, 'A');
+```
+
+Satu perintah multi-row lebih efisien daripada tiga perintah terpisah karena log transaksi ditulis lebih sedikit.
+
+## OUTPUT
+
+```sql
+INSERT INTO dbo.siswa (nama, nilai)
+OUTPUT inserted.id, inserted.nama
+VALUES (N'Sari', 95);
+```
+
+`inserted` adalah tabel virtual berisi baris baru. Ini cara terbaik mengambil nilai `IDENTITY` tanpa query tambahan seperti `SCOPE_IDENTITY()`.
+
+## IDENTITY_INSERT
+
+```sql
+SET IDENTITY_INSERT dbo.siswa ON;
+INSERT INTO dbo.siswa (id, nama) VALUES (100, N'Data lama');
+SET IDENTITY_INSERT dbo.siswa OFF;
+```
+
+Hanya satu tabel yang boleh aktif per sesi. Fitur ini terutama dipakai saat migrasi data dari sistem lama.
+
+## DEFAULT VALUES
+
+```sql
+INSERT INTO dbo.log DEFAULT VALUES;
+```
+
+Berguna untuk tabel yang seluruh kolomnya punya `DEFAULT`, misalnya kolom waktu dibuat dan status awal.
+
+<div class="note">💡 Untuk ribuan baris, jangan membangun string INSERT yang sangat panjang. Gunakan `bcp`, `BULK INSERT`, atau Table-Valued Parameter agar lebih cepat dan aman.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (id INT IDENTITY, nama NVARCHAR(50));
+INSERT INTO #t (nama) OUTPUT inserted.id VALUES (N'Ana'), (N'Budi');
+SELECT * FROM #t;
+DROP TABLE #t;`}</code></pre>

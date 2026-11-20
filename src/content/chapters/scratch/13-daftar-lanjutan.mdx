@@ -1,0 +1,87 @@
+---
+title: "Daftar Lanjutan"
+description: "Mengelola banyak nilai, pencarian, dan daftar sejajar"
+order: 13
+quiz:
+  - q: "Index pertama dalam daftar Scratch adalah…"
+    options: ["Tergantung panjang", "1", "0", "-1"]
+    answer: 1
+    explain: "Berbeda dari banyak bahasa teks yang mulai dari 0."
+  - q: "Blok \"panjang [daftar]\" mengembalikan…"
+    options: ["Nama daftar", "Posisi sprite", "Jumlah item", "Item terakhir"]
+    answer: 2
+    explain: "Pelapor ini berguna untuk loop berdasarkan jumlah item."
+  - q: "Untuk mengambil item ke-3, gunakan…"
+    options: ["daftar[3]", "ambil 3 dari daftar", "elemen 3", "item ke- 3 dari [daftar]"]
+    answer: 3
+    explain: "Blok pelapor ini bisa dimasukkan ke blok lain."
+  - q: "Menghapus semua item dari daftar memakai blok…"
+    options: ["hapus semua dari [daftar]", "kosongkan [daftar]", "hapus [daftar]", "reset [daftar]"]
+    answer: 0
+    explain: "Lakukan ini saat memulai putaran baru."
+  - q: "Untuk menyimpan data berpasangan tanpa struktur khusus, gunakan…"
+    options: ["Backdrop", "Dua daftar sejajar", "Satu variabel besar", "Kostum tambahan"]
+    answer: 1
+    explain: "Misalnya daftar `nama` dan daftar `skor` dengan index yang sama."
+example:
+  code: |
+    [ketika bendera diklik]
+    [hapus semua dari [nilai]]
+    [ulangi 5 [
+       tambahkan (acak dari 1 sampai 100) ke [nilai]
+    ]]
+    [ucap (gabung [Item pertama: ] (item ke- 1 dari [nilai])) selama 2]
+---
+
+Daftar memungkinkan proyek menyimpan banyak nilai dalam satu nama. Ini berguna untuk riwayat, inventaris, bank soal, dan papan peringkat.
+
+## Blok Daftar yang Penting
+
+```text
+[tambahkan [..] ke [daftar]]
+[hapus item ke- 1 dari [daftar]]
+[hapus semua dari [daftar]]
+[masukkan [..] pada item ke- 1 dari [daftar]]
+[ganti item ke- 1 dari [daftar] dengan [..]]
+(item ke- 1 dari [daftar])
+(panjang [daftar])
+([daftar] berisi [..]?)
+```
+
+## Iterasi dengan Panjang
+
+```text
+[atur [i] ke [1]]
+[ulangi sampai <(i) > (panjang [daftar])> [
+   [ucap (item ke- (i) dari [daftar]) selama 1]
+   [ubah [i] sebesar 1]
+]]
+```
+
+## Daftar Sejajar
+
+```text
+nama  = [Andi, Budi, Siti]
+skor  = [80, 95, 88]
+
+item ke- 2 dari [nama] = Budi
+item ke- 2 dari [skor] = 95
+```
+
+Index yang sama menghubungkan kedua data. Simpan aturan ini di komentar proyek agar tidak lupa.
+
+## Mencari Nilai
+
+Blok `([daftar] berisi [..]?)` hanya menjawab ada/tidak. Untuk mencari posisinya, loop tiap item dan bandingkan dengan nilai yang dicari.
+
+<div class="note">💡 Daftar yang ditampilkan di panggung memakan tempat. Sembunyikan daftar setelah digunakan kecuali memang menjadi bagian dari antarmuka.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[hapus semua dari [riwayat]]
+[ulangi 4 [
+  tambahkan (acak dari 1 sampai 6) ke [riwayat]
+]]
+[ucap (gabung [Dadu: ] (item ke- 1 dari [riwayat])) selama 1]`}</code></pre>

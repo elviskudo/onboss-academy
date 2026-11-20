@@ -1,0 +1,101 @@
+---
+title: "TRY...CATCH dan Penanganan Error"
+description: "TRY CATCH, ERROR_NUMBER, THROW, RAISERROR, XACT_STATE, dan transaksi aman"
+order: 21
+quiz:
+  - q: "Blok untuk menangkap error di T-SQL adalah…"
+    options: ["BEGIN...END", "TRY...CATCH", "IF...ELSE", "CASE"]
+    answer: 1
+    explain: "BEGIN TRY ... END TRY BEGIN CATCH ... END CATCH;"
+  - q: "Fungsi untuk melempar error modern adalah…"
+    options: ["RAISE", "ERROR", "THROW", "RAISERROR lama"]
+    answer: 2
+    explain: "THROW 50001, N'Pesan', 1; tersedia sejak SQL Server 2012."
+  - q: "ERROR_MESSAGE() mengembalikan…"
+    options: ["Nomor error", "Nama prosedur", "Baris kode", "Pesan error terakhir"]
+    answer: 3
+    explain: "Gunakan ERROR_NUMBER(), ERROR_SEVERITY(), ERROR_STATE() untuk detail lain."
+  - q: "XACT_STATE() = -1 berarti…"
+    options: ["Error fatal", "Transaksi aktif dan bisa di-commit", "Tidak ada transaksi", "Transaksi tidak bisa di-commit, hanya rollback"]
+    answer: 3
+    explain: "Nilai -1 = doomed transaction; harus ROLLBACK."
+  - q: "Di dalam CATCH, transaksi yang gagal sebaiknya…"
+    options: ["Di-COMMIT", "Diabaikan", "Dibiarkan", "Di-ROLLBACK"]
+    answer: 3
+    explain: "Cek XACT_STATE() lalu ROLLBACK bila masih ada transaksi."
+example:
+  code: |
+    BEGIN TRY
+      BEGIN TRANSACTION;
+      UPDATE dbo.rekening SET saldo = saldo - 100 WHERE id = 1;
+      UPDATE dbo.rekening SET saldo = saldo + 100 WHERE id = 2;
+      COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+      IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
+      THROW;
+    END CATCH;
+---
+
+## TRY...CATCH
+
+```sql
+BEGIN TRY
+  SELECT 1 / 0;
+END TRY
+BEGIN CATCH
+  SELECT ERROR_NUMBER() AS kode, ERROR_MESSAGE() AS pesan;
+END CATCH;
+```
+
+Kesalahan runtime seperti pembagian dengan nol atau constraint violation ditangkap di `CATCH`. Kesalahan kompilasi (misalnya nama kolom salah) tidak selalu tertangkap di level yang sama.
+
+## Informasi Error
+
+| Fungsi | Isi |
+| --- | --- |
+| `ERROR_NUMBER()` | kode error |
+| `ERROR_MESSAGE()` | teks pesan |
+| `ERROR_SEVERITY()` | tingkat keparahan |
+| `ERROR_STATE()` | state |
+| `ERROR_LINE()` | nomor baris |
+| `ERROR_PROCEDURE()` | nama prosedur |
+
+## THROW
+
+```sql
+THROW 50000, N'Saldo tidak mencukupi.', 1;
+```
+
+Nomor di atas 50000 dipakai untuk error buatan aplikasi. `THROW;` tanpa argumen di dalam `CATCH` melempar kembali error aslinya — cara terbaik untuk tetap menyimpan detail asli sambil menambah logging.
+
+## Transaksi yang Aman
+
+```sql
+BEGIN TRY
+  BEGIN TRAN;
+  -- beberapa perintah UPDATE/INSERT
+  COMMIT TRAN;
+END TRY
+BEGIN CATCH
+  IF XACT_STATE() <> 0 ROLLBACK TRAN;
+  INSERT INTO dbo.log_error (waktu, pesan)
+  VALUES (SYSDATETIME(), ERROR_MESSAGE());
+  THROW;
+END CATCH;
+```
+
+`XACT_STATE()` menghindari `ROLLBACK` ketika tidak ada transaksi aktif, yang sendiri akan memicu error baru.
+
+<div class="note">💡 Jangan menelan error dengan CATCH kosong. Minimal catat ke tabel log lalu lempar kembali — kalau tidak, aplikasi mengira perintah berhasil padahal data tidak berubah.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`BEGIN TRY
+ SELECT 10 / 2 AS hasil;
+END TRY
+BEGIN CATCH
+ SELECT ERROR_MESSAGE() AS pesan;
+END CATCH;`}</code></pre>

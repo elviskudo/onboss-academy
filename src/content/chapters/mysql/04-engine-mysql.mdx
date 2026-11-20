@@ -113,6 +113,10 @@ ALTER TABLE tabel_lama ENGINE=InnoDB;
 
 <div class="note">💡 Demo editor memakai SQLite, jadi klausa ENGINE tidak dapat dijalankan di sini. Pada MySQL produksi, pilih InnoDB; engine lain adalah pengecualian yang harus punya alasan terukur.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT k.nama AS ketua, p.nama AS proyek, p.budget
 FROM proyek p
 JOIN karyawan k ON p.lead_id = k.id

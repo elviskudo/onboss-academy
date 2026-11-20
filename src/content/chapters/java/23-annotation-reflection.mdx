@@ -1,0 +1,129 @@
+---
+title: "Annotation & Reflection"
+description: "annotation bawaan, custom annotation, dan membaca metadata class saat runtime"
+order: 23
+quiz:
+  - q: "Annotation `@Override` berguna untuk…"
+    options: ["Mempercepat method", "Memastikan method benar-benar meng-override induk", "Membuat method statis", "Menghapus method"]
+    answer: 1
+    explain: "Compiler error jika tanda tangan tidak cocok."
+  - q: "RetentionPolicy.RUNTIME berarti…"
+    options: ["Annotation hilang saat compile", "Tersedia saat runtime lewat reflection", "Hanya di javadoc", "Tidak bisa dipakai"]
+    answer: 1
+    explain: "Diperlukan jika framework membaca annotation saat aplikasi jalan."
+  - q: "Reflection digunakan untuk…"
+    options: ["Menulis file", "Memeriksa/memanggil class saat runtime", "Mengompile ulang", "Menghapus annotation"]
+    answer: 1
+    explain: "Class, method, field bisa diperiksa secara dinamis."
+  - q: "Method untuk mendapatkan Class object adalah…"
+    options: ["obj.getClass()", "obj.class", "Class.of(obj)", "obj.type()"]
+    answer: 0
+    explain: "Bisa juga `NamaClass.class` untuk tipe statis."
+  - q: "Contoh framework yang banyak memakai annotation adalah…"
+    options: ["Spring", "C compiler", "Notepad", "Git"]
+    answer: 0
+    explain: "Spring memakai @Component, @Autowired, @RequestMapping dll."
+example:
+  code: |
+    import java.lang.annotation.*;
+    import java.lang.reflect.*;
+    
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Catatan { String value(); }
+    
+    class Contoh {
+      @Catatan("method penting")
+      public void jalan() {}
+    }
+    
+    public class Main {
+      public static void main(String[] args) throws Exception {
+        Method m = Contoh.class.getMethod("jalan");
+        System.out.println(m.getAnnotation(Catatan.class).value());
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Annotation adalah metadata yang melekat pada class, method, atau field. Reflection adalah kemampuan program memeriksa strukturnya sendiri saat runtime.
+
+## Annotation Bawaan
+
+```java
+@Override          // cek override
+@Deprecated        // tandai usang
+@SuppressWarnings   // redam warning
+@FunctionalInterface // pastikan 1 method abstrak
+```
+
+## Membuat Annotation
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Rute {
+    String path();
+    String method() default "GET";
+}
+```
+
+- `RetentionPolicy.SOURCE` → dibuang setelah compile
+- `RetentionPolicy.CLASS` → ada di .class, tidak terbaca runtime
+- `RetentionPolicy.RUNTIME` → bisa dibaca lewat reflection
+
+## Reflection Dasar
+
+```java
+Class<?> c = Siswa.class;
+Field[] fields = c.getDeclaredFields();
+Method[] methods = c.getDeclaredMethods();
+Constructor<?> ctor = c.getDeclaredConstructor(String.class);
+Object obj = ctor.newInstance("Sari");
+```
+
+Untuk mengakses private, gunakan `setAccessible(true)` — tapi pikirkan dua kali, karena ini merusak encapsulation.
+
+## Membaca Annotation
+
+```java
+for (Method m : Controller.class.getMethods()) {
+    Rute r = m.getAnnotation(Rute.class);
+    if (r != null) {
+        daftarRute.put(r.path(), m);
+    }
+}
+```
+
+Ini adalah dasar cara kerja framework seperti Spring MVC dan JUnit.
+
+## Risiko
+
+| Masalah | Penjelasan |
+|---|---|
+| Performa | Reflection lebih lambat dari panggilan langsung |
+| Type safety | Error baru muncul saat runtime |
+| Refactor | IDE sulit mendeteksi ketergantungan string |
+
+<div class="note">💡 Reflection sangat berguna untuk membangun framework, tapi hindari dalam logika bisnis aplikasi. Kalau bisa dipanggil langsung, panggil langsung.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.lang.annotation.*;
+import java.lang.reflect.*;
+
+@Retention(RetentionPolicy.RUNTIME)
+@interface Catatan { String value(); }
+
+class Contoh {
+  @Catatan("method penting")
+  public void jalan() {}
+}
+
+public class Main {
+  public static void main(String[] args) throws Exception {
+    Method m = Contoh.class.getMethod("jalan");
+    System.out.println(m.getAnnotation(Catatan.class).value());
+  }
+}`} />

@@ -1,0 +1,86 @@
+---
+title: "Sinyal dan PID 1"
+description: "Perilaku sinyal, init process, dan shutdown container yang rapi"
+order: 15
+quiz:
+  - q: "Proses dengan PID 1 di dalam container bertugas…"
+    options: ["Mengatur jaringan host", "Menyimpan image", "Membackup volume", "Menjadi init dan menerima sinyal dari Docker"]
+    answer: 3
+    explain: "Docker mengirim SIGTERM ke PID 1 saat docker stop."
+  - q: "Masalah umum proses PID 1 adalah…"
+    options: ["Tidak memforward sinyal ke child process", "Terlalu kecil", "Tidak bisa membuka port", "Selalu crash"]
+    answer: 0
+    explain: "Shell atau node sebagai PID 1 sering tidak menangani SIGTERM dengan benar."
+  - q: "Opsi --init pada docker run akan…"
+    options: ["Membuka semua port", "Menambahkan init ringan sebagai PID 1", "Menghapus entrypoint", "Mengganti base image"]
+    answer: 1
+    explain: "Init (tini) akan meneruskan sinyal dan memanen zombie process."
+  - q: "docker stop mengirim sinyal apa lebih dulu?"
+    options: ["SIGHUP", "SIGUSR1", "SIGTERM", "SIGKILL"]
+    answer: 2
+    explain: "SIGKILL dikirim hanya jika proses belum keluar setelah timeout (default 10 detik)."
+  - q: "STOPSIGNAL di Dockerfile berguna untuk…"
+    options: ["Menentukan port", "Menambah user", "Mengubah storage driver", "Mengganti sinyal default saat stop"]
+    answer: 3
+    explain: "Beberapa aplikasi (misalnya nginx) lebih merespons SIGQUIT."
+example:
+  code: |
+    FROM node:20-alpine
+    RUN apk add --no-cache tini
+    ENTRYPOINT ["/sbin/tini", "--"]
+    CMD ["node", "server.js"]
+---
+
+Saat `docker stop` dipanggil, daemon mengirim **SIGTERM** ke PID 1 di dalam container, menunggu beberapa detik, lalu **SIGKILL** bila proses belum keluar. Shutdown yang rapi memberi aplikasi waktu menutup koneksi dan menyelesaikan pekerjaan.
+
+## Mengapa PID 1 Istimewa
+
+ PID 1 adalah **init**. Ia menerima sinyal langsung dari kernel dan bertugas meneruskannya ke proses anak. Banyak aplikasi tidak dirancang sebagai init: `node server.js` atau `sh -c ...` kerap mengabaikan SIGTERM, sehingga Docker terpaksa membunuhnya dengan SIGKILL.
+
+## Solusi 1: `--init`
+
+```bash
+docker run --init -d --name app app:1.0
+```
+
+Docker menyisipkan init ringan (turunan tini) yang meneruskan sinyal dan memanen proses zombie. Ini jalan tercepat tanpa mengubah image.
+
+## Solusi 2: tini di Dockerfile
+
+```dockerfile
+FROM node:20-alpine
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "server.js"]
+```
+
+`--` penting agar tini berhenti mem-parsing argumen dan meneruskan sisanya ke aplikasi.
+
+## Mengatur Sinyal dan Timeout
+
+```dockerfile
+STOPSIGNAL SIGQUIT
+```
+
+```bash
+docker stop --time 30 app     # tunggu 30 detik sebelum SIGKILL
+docker kill --signal SIGINT app
+```
+
+## Tanda Shutdown Bermasalah
+
+- Log berisi `SIGTERM received` tetapi tidak ada `server closed`.
+- Request yang sedang berjalan terputus saat deploy.
+- Muncul proses `<defunct>` di `docker top`.
+
+<div class="note">💡 Di Kubernetes, `terminationGracePeriodSeconds` harus lebih besar dari waktu yang dibutuhkan aplikasi untuk shutdown. Sinkronkan dengan `docker stop --time` saat menguji lokal.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'FROM alpine:3.20' 'CMD ["sh", "-c", "trap \\"echo SIGTERM diterima; exit 0\\" TERM; while true; do sleep 1; done"]' &gt; Dockerfile
+docker build -t latihan-sinyal . &gt;/dev/null
+docker run -d --name latihan-sinyal latihan-sinyal &gt;/dev/null
+docker stop latihan-sinyal &gt;/dev/null
+docker logs latihan-sinyal
+docker rm latihan-sinyal &gt;/dev/null`}</code></pre>

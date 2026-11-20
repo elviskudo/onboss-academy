@@ -1,0 +1,93 @@
+---
+title: "Fungsi Agregat dan GROUP BY"
+description: "COUNT, SUM, AVG, MIN, MAX, GROUP BY, HAVING, dan DISTINCT di dalam agregat"
+order: 15
+quiz:
+  - q: "Fungsi menghitung jumlah baris adalah…"
+    options: ["TOTAL", "COUNT", "SUM", "AVG"]
+    answer: 1
+    explain: "COUNT(*) menghitung baris; COUNT(kolom) mengabaikan NULL."
+  - q: "Klausa menyaring hasil GROUP BY adalah…"
+    options: ["ORDER BY", "TOP", "WHERE", "HAVING"]
+    answer: 3
+    explain: "WHERE menyaring baris sebelum grup; HAVING menyaring grup setelah agregasi."
+  - q: "AVG pada kolom yang berisi NULL akan…"
+    options: ["Mengabaikan NULL", "Menganggap 0", "Menghasilkan NULL", "Error"]
+    answer: 0
+    explain: "Fungsi agregat umumnya mengabaikan NULL."
+  - q: "COUNT(DISTINCT kolom) menghitung…"
+    options: ["NilaiNULL saja", "Semua baris", "Nilai unik bukan NULL", "Jumlah kolom"]
+    answer: 2
+    explain: "DISTINCT di dalam COUNT membuang duplikat."
+  - q: "Tanpa GROUP BY, agregat menghasilkan…"
+    options: ["Error", "Tidak ada hasil", "Satu baris untuk seluruh tabel", "Satu baris per baris data"]
+    answer: 2
+    explain: "Agregat tanpa GROUP BY meringkas seluruh hasil menjadi satu baris."
+example:
+  code: |
+    SELECT divisi, COUNT(*) AS jumlah, AVG(gaji) AS rata_gaji
+    FROM dbo.karyawan
+    GROUP BY divisi
+    HAVING COUNT(*) > 2
+    ORDER BY rata_gaji DESC;
+---
+
+## Fungsi Agregat
+
+| Fungsi | Fungsi |
+| --- | --- |
+| `COUNT(*)` | jumlah baris |
+| `COUNT(kolom)` | jumlah nilai bukan NULL |
+| `SUM` | total |
+| `AVG` | rata-rata |
+| `MIN` / `MAX` | nilai terkecil / terbesar |
+| `COUNT(DISTINCT ...)` | jumlah nilai unik |
+
+```sql
+SELECT COUNT(*) AS total, COUNT(email) AS punya_email
+FROM dbo.karyawan;
+```
+
+## GROUP BY
+
+```sql
+SELECT divisi, COUNT(*) AS jumlah, SUM(gaji) AS total_gaji
+FROM dbo.karyawan
+GROUP BY divisi;
+```
+
+Setiap kolom di `SELECT` harus muncul di `GROUP BY` atau berada di dalam fungsi agregat. SQL Server akan menolak query yang melanggar aturan ini.
+
+## HAVING versus WHERE
+
+```sql
+SELECT divisi, COUNT(*) AS jumlah
+FROM dbo.karyawan
+WHERE aktif = 1
+GROUP BY divisi
+HAVING COUNT(*) >= 5;
+```
+
+Urutan logis: `WHERE` → `GROUP BY` → `HAVING` → `SELECT` → `ORDER BY`.
+
+## GROUP BY dengan Ekspresi
+
+```sql
+SELECT YEAR(tanggal) AS tahun, MONTH(tanggal) AS bulan, SUM(total) AS omzet
+FROM dbo.pesanan
+GROUP BY YEAR(tanggal), MONTH(tanggal)
+ORDER BY tahun, bulan;
+```
+
+Ekspresi harus ditulis persis sama di `SELECT` dan `GROUP BY`, kecuali kamu memakai alias lewat subquery atau CTE.
+
+<div class="note">💡 `AVG(gaji)` bisa meleset bila gaji bertipe `INT` — hasil pembagian integer dibulatkan. Cast ke `DECIMAL` dulu: `AVG(CAST(gaji AS DECIMAL(18,2)))`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (divisi NVARCHAR(20), gaji INT);
+INSERT INTO #t VALUES (N'IT', 100), (N'IT', 120), (N'HR', 80);
+SELECT divisi, COUNT(*) AS n, AVG(CAST(gaji AS DECIMAL(10,2))) AS rata FROM #t GROUP BY divisi;
+DROP TABLE #t;`}</code></pre>

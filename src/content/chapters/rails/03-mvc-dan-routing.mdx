@@ -31,7 +31,7 @@ example:
       resources :products
     end
 
-    class ProductsController < ApplicationController
+    class ProductsController &lt; ApplicationController
       def index
         @products = Product.all
       end

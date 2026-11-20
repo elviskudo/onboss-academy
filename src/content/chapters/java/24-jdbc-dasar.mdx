@@ -1,0 +1,137 @@
+---
+title: "JDBC Dasar"
+description: "koneksi database, PreparedStatement, ResultSet, dan transaksi dengan JDBC"
+order: 24
+quiz:
+  - q: "JDBC adalah API Java untuk…"
+    options: ["Menggambar grafik", "Mengakses database relasional", "Membuat GUI", "Jaringan socket"]
+    answer: 1
+    explain: "JDBC = Java Database Connectivity."
+  - q: "Untuk mencegah SQL injection, gunakan…"
+    options: ["Statement", "PreparedStatement", "PreparedQuery", "Raw SQL"]
+    answer: 1
+    explain: "PreparedStatement memakai placeholder `?` dan parameter terikat."
+  - q: "`executeQuery()` dipakai untuk…"
+    options: ["INSERT", "SELECT", "UPDATE", "DELETE"]
+    answer: 1
+    explain: "SELECT mengembalikan ResultSet; DML memakai executeUpdate()."
+  - q: "`setAutoCommit(false)` memungkinkan…"
+    options: ["Query lebih cepat", "Transaksi manual dengan commit/rollback", "Koneksi otomatis", " ResultSet tertutup"]
+    answer: 1
+    explain: "Kamu menentukan kapan perubahan disimpan atau dibatalkan."
+  - q: "Resource JDBC sebaiknya ditutup dengan…"
+    options: ["try-finally biasa", "try-with-resources", "System.gc()", "Tidak perlu"]
+    answer: 1
+    explain: "Connection, Statement, ResultSet semuanya AutoCloseable."
+example:
+  code: |
+    import java.sql.*;
+    
+    public class Main {
+      public static void main(String[] args) throws SQLException {
+        String url = "jdbc:h2:mem:sekolah;DB_CLOSE_DELAY=-1";
+        try (Connection c = DriverManager.getConnection(url, "sa", "")) {
+          c.createStatement().execute("CREATE TABLE siswa(nama VARCHAR(50), nilai INT)");
+          try (PreparedStatement ps = c.prepareStatement("INSERT INTO siswa VALUES (?, ?)")) {
+            ps.setString(1, "Sari"); ps.setInt(2, 90); ps.executeUpdate();
+          }
+          try (ResultSet rs = c.createStatement().executeQuery("SELECT * FROM siswa")) {
+            while (rs.next()) System.out.println(rs.getString("nama") + ": " + rs.getInt("nilai"));
+          }
+        }
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+JDBC adalah jembatan standar Java ke database SQL. Walaupun sekarang banyak ORM (Hibernate, JPA), memahami JDBC penting untuk debugging dan query khusus.
+
+## Alur Umum
+
+```java
+try (Connection conn = DriverManager.getConnection(url, user, pass);
+     PreparedStatement ps = conn.prepareStatement("SELECT * FROM siswa WHERE kelas = ?")) {
+
+    ps.setString(1, "XII");
+    try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            System.out.println(rs.getString("nama"));
+        }
+    }
+}
+```
+
+## PreparedStatement vs Statement
+
+```java
+// BAHAYA: injection
+Statement s = conn.createStatement();
+s.executeQuery("SELECT * FROM user WHERE nama='" + input + "'");
+
+// AMAN
+PreparedStatement ps = conn.prepareStatement("SELECT * FROM user WHERE nama=?");
+ps.setString(1, input);
+```
+
+Selain aman, PreparedStatement sering lebih cepat karena query sudah ter-compile dan di-cache database.
+
+## Transaksi
+
+```java
+conn.setAutoCommit(false);
+try {
+    debit(conn, 100);
+    kredit(conn, 100);
+    conn.commit();
+} catch (SQLException e) {
+    conn.rollback();
+    throw e;
+} finally {
+    conn.setAutoCommit(true);
+}
+```
+
+## ResultSet
+
+```java
+while (rs.next()) {
+    int id = rs.getInt("id");
+    String nama = rs.getString("nama");
+}
+```
+
+Kursor awal berada **sebelum** baris pertama — selalu panggil `next()` dulu.
+
+## Connection Pool
+
+Di produksi jangan membuat koneksi per request. Gunakan pool seperti **HikariCP**:
+
+```java
+HikariConfig cfg = new HikariConfig();
+cfg.setJdbcUrl(url);
+HikariDataSource ds = new HikariDataSource(cfg);
+Connection c = ds.getConnection();
+```
+
+<div class="note">💡 Password jangan pernah ditulis di source code. Simpan di environment variable atau secret manager, lalu baca dengan `System.getenv("DB_PASSWORD")`.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.sql.*;
+
+public class Main {
+  public static void main(String[] args) throws SQLException {
+    String url = "jdbc:h2:mem:sekolah;DB_CLOSE_DELAY=-1";
+    try (Connection c = DriverManager.getConnection(url, "sa", "")) {
+      c.createStatement().execute("CREATE TABLE siswa(nama VARCHAR(50), nilai INT)");
+      try (PreparedStatement ps = c.prepareStatement("INSERT INTO siswa VALUES (?, ?)")) {
+        ps.setString(1, "Sari"); ps.setInt(2, 90); ps.executeUpdate();
+      }
+      try (ResultSet rs = c.createStatement().executeQuery("SELECT * FROM siswa")) {
+        while (rs.next()) System.out.println(rs.getString("nama") + ": " + rs.getInt("nilai"));
+      }
+    }
+  }
+}`} />

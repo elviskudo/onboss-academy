@@ -1,0 +1,103 @@
+---
+title: Normalisasi dan Koneksi Residual
+description: Dua trik arsitektur yang membuat blok Transformer stabil dilatih hingga ratusan lapis.
+order: 9
+quiz:
+- q: Fungsi utama koneksi residual adalah…
+  options:
+  - Mengganti attention
+  - Membantu gradien mengalir dan menjaga informasi
+  - Menghapus embedding
+  - Memperkecil vocabulary
+  answer: 1
+  explain: Residual menambahkan input langsung ke output sublayer sehingga gradien punya jalur pendek.
+- q: Operasi koneksi residual adalah…
+  options:
+  - Sublayer(x) - x
+  - x / Sublayer(x)
+  - x + Sublayer(x)
+  - x * Sublayer(x)
+  answer: 2
+  explain: Nilai input ditambahkan ke hasil sublayer, biasanya diikuti layer normalization.
+- q: Layer normalization menghitung statistik…
+  options:
+  - Hanya pada output akhir
+  - Di seluruh korpus
+  - Di seluruh batch
+  - Per token melintasi dimensi fitur
+  answer: 3
+  explain: LayerNorm normalisasi per contoh/token, cocok untuk urutan dengan panjang berbeda.
+- q: Pre-norm berarti…
+  options:
+  - Normalisasi sebelum sublayer
+  - Normalisasi setelah sublayer
+  - Tanpa normalisasi
+  - Normalisasi hanya di output
+  answer: 0
+  explain: Pre-norm menempatkan LayerNorm di sebelum attention/FFN dan umumnya lebih stabil pada model dalam.
+- q: Efek khas residual terhadap pelatihan model dalam adalah…
+  options:
+  - Gradien mudah hilang
+  - Gradien lebih mudah mengalir
+  - Ukuran vocabulary membesar
+  - Attention tidak diperlukan
+  answer: 1
+  explain: Jalur identitas memberi gradien jalan pintas, mencegah degradasi saat many layer.
+example:
+  code: 'x = vector token
+
+    out = x + attention(x)      # residual
+
+    out = layernorm(out)        # normalisasi
+
+    '
+---
+
+
+Blok Transformer bukan sekadar tumpukan attention. Tanpa **residual** dan **normalisasi**, model dalam sulit dilatih: gradien memudar dan distribusi aktivasi berubah di setiap lapis.
+
+## Koneksi Residual
+
+```text
+output = LayerNorm(x + Sublayer(x))
+```
+
+Jalur `x` langsung dilewatkan sehingga informasi asli tidak hilang. Saat melakukan backpropagation, gradien juga punya jalan pintas.
+
+```python
+class Residual:
+    def forward(self, x, sublayer):
+        return x + sublayer(x)
+```
+
+## Layer Normalization
+
+LayerNorm menstandarkan nilai fitur pada **satu token** agar rata-rata近 0 dan varians近 1, lalu memakai parameter skala dan bias yang dipelajari.
+
+```text
+norm(x) = gamma * (x - mean) / sqrt(var + eps) + beta
+```
+
+| Aspek | BatchNorm | LayerNorm |
+|---|---|---|
+| Sumbu statistik | lintas batch | per token |
+| Cocok untuk urutan | kurang | ya |
+| Bergantung ukuran batch | ya | tidak |
+| Pemakaian di Transformer | jarang | standar |
+
+## Pre-norm vs Post-norm
+
+```text
+Post-norm: LayerNorm(x + Sublayer(x))
+Pre-norm:  x + Sublayer(LayerNorm(x))
+```
+
+Pre-norm lebih populer pada LLM modern karena pelatihannya lebih stabil saat kedalaman meningkat.
+
+<div class="note">💡 Residual bukan berarti sublayer tidak penting. Jika sublayer menghasilkan nol, blok berubah menjadi identitas — itulah alasan jalur ini aman sebagai fondasi.</div>
+
+## Di Dunia Nyata
+
+- Model dengan ratusan blok memakai pre-norm agar training tidak divergen.
+- Residual connection membantu fine-tuning: lapis awal bisa tetap berguna walau lapis atas berubah.
+- Normalisasi juga dipakai pada representasi akhir sebelum cosine similarity di pencarian vektor.

@@ -125,3 +125,13 @@ Nilai mendekati 1 berarti arah sangat mirip, 0 tidak berkorelasi, dan -1 berlawa
 - **Clustering ulasan** — embedding kalimat mengelompokkan keluhan pengiriman, harga, dan kualitas.
 
 <div class="note">💡 Embedding bukan sekadar "kode rahasia" per kata. Ia adalah representasi yang dipelajari dari data — kualitasnya mengikuti kualitas korpus pelatihan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`vektor_a = [0.2, 0.8, -0.1]
+vektor_b = [0.1, 0.9, 0.0]
+dot = sum(a*b for a,b in zip(vektor_a, vektor_b))
+print("kesamaan:", round(dot, 3))
+`}</code></pre>

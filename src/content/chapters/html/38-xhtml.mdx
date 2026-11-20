@@ -1,0 +1,86 @@
+---
+title: "HTML vs XHTML"
+description: "Perbedaan HTML dan XHTML serta aturan penulisan XML yang ketat"
+order: 38
+quiz:
+  - q: "XHTML adalah versi HTML yang mengikuti aturan…"
+    options: ["XML", "CSS", "JSON", "SQL"]
+    answer: 0
+    explain: "XHTML = HTML yang ditulis sebagai XML yang valid."
+  - q: "Di XHTML, tag harus…"
+    options: ["Ditutup dengan benar", "Boleh tidak ditutup", "Huruf besar", "Tanpa atribut"]
+    answer: 0
+    explain: "Semua elemen wajib punya tag penutup atau self-closing."
+  - q: "Penulisan void element yang benar di XHTML adalah…"
+    options: ["<br>", "<br/>", "<BR>", "<br></br>"]
+    answer: 1
+    explain: "<br/> adalah self-closing tag ala XML."
+  - q: "Atribut di XHTML harus…"
+    options: ["Dikutip", "Tanpa nilai", "Huruf besar", "Tidak boleh ada"]
+    answer: 0
+    explain: "class='x' harus memakai tanda kutip ganda di nilai atribut."
+  - q: "Status XHTML saat ini adalah…"
+    options: ["Standar utama web", "Jarang dipakai; HTML5 yang dominan", "Dilarang", "Hanya untuk mobile"]
+    answer: 1
+    explain: "HTML5 menggantikan XHTML sebagai standar praktis."
+example:
+  code: |
+    <!-- HTML5: santai -->
+    <br>
+    <img src="foto.jpg">
+    
+    <!-- XHTML: ketat -->
+    <br />
+    <img src="foto.jpg" alt="Foto" />
+    <p>Ini paragraf.</p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dulu sempat populer perdebatan: HTML atau XHTML? Sekarang jawabannya jelas — **HTML5** yang dipakai hampir semua situs. Tapi memahami XHTML tetap berguna saat membaca kode lama.
+
+## Perbedaan Utama
+
+| Aspek | HTML5 | XHTML |
+|-------|-------|-------|
+| Sintaks | Longgar | Ketat (XML) |
+| Tag penutup | Boleh diabaikan sebagian | Wajib |
+| Huruf | Bebas | Huruf kecil |
+| Atribut | Boleh tanpa tanda kutip | Wajib dikutip |
+| Void element | `<br>` | `<br />` |
+
+## Contoh XHTML yang Valid
+
+```html
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="id">
+<head>
+  <title>Contoh</title>
+</head>
+<body>
+  <p>Ini paragraf.</p>
+  <img src="foto.jpg" alt="Foto" />
+</body>
+</html>
+```
+
+## Kenapa HTML5 Menang?
+
+HTML5 lebih pragmatis: browser tetap bisa merender halaman meski ada tag yang lupa ditutup. XHTML memaksa penulisan sempurna, dan satu kesalahan kecil bisa membuat halaman kosong.
+
+<div class="note">💡 Kamu tetap bisa menulis HTML5 dengan disiplin ala XHTML (tag ditutup, atribut dikutip). Itu kebiasaan bagus, tanpa harus memakai DTD XHTML.</div>
+
+## Try it Yourself
+
+Bandingkan dua gaya penulisan di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Gaya HTML5</h1>
+  <p>Tag boleh sesederhana ini.<br>Baris tetap pindah.</p>
+  <hr>
+  <img src="https://via.placeholder.com/120x60?text=Foto" alt="Foto">
+</body>
+</html>`} />

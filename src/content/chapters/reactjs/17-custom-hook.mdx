@@ -1,0 +1,136 @@
+---
+title: "Custom Hook"
+description: "menggabungkan hook bawaan menjadi logika reusable yang bersih"
+order: 17
+quiz:
+  - q: "Custom hook adalah…"
+    options: ["File CSS khusus", "API browser baru", "Fungsi yang diawali use dan memanggil hook lain", "Komponen tanpa JSX"]
+    answer: 2
+    explain: "Konvensi nama `use...` membantu React memeriksa aturan hook."
+  - q: "Hook hanya boleh dipanggil di…"
+    options: ["Di event handler", "Top level komponen atau hook lain", "Dalam if/else", "Dalam loop"]
+    answer: 1
+    explain: "Urutan panggilan hook harus konsisten tiap render."
+  - q: "Hook useFetch sebaiknya mengembalikan…"
+    options: ["JSX", "elemen DOM", "CSS", "Objek berisi data, loading, error"]
+    answer: 3
+    explain: "Konsumen hook tinggal membaca hasilnya."
+  - q: "Dua komponen memakai custom hook yang sama akan…"
+    options: ["Saling menimpa", "Mendapat state yang terpisah", "Berbagi state identik", "Error"]
+    answer: 1
+    explain: "Tiap pemanggilan hook menciptakan instance state sendiri."
+  - q: "Nama hook yang benar adalah…"
+    options: ["useKeranjang", "KeranjangHook", "makeKeranjang", "hookKeranjang"]
+    answer: 0
+    explain: "React mengharuskan awalan `use`."
+example:
+  code: |
+    function useFetch(url) {
+      const [data, setData] = React.useState(null);
+      const [loading, setLoading] = React.useState(true);
+
+      React.useEffect(() => {
+        fetch(url).then((r) => r.json()).then((d) => {
+          setData(d); setLoading(false);
+        });
+      }, [url]);
+
+      return { data, loading };
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Custom hook adalah cara paling rapi untuk memakai ulang **logika berstate**. Bukan komponen, bukan utilitas biasa — tapi fungsi yang memanggil hook lain.
+
+## Aturan Emas
+
+1. Nama diawali `use` (misal `useFetch`, `useLocalStorage`).
+2. Dipanggil hanya di top level komponen atau hook lain.
+3. Tidak dipanggil di dalam kondisi, loop, atau callback.
+
+## Contoh: useFetch
+
+```jsx
+function useFetch(url) {
+  const [data, setData] = React.useState(null);
+  const [error, setError] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+
+    fetch(url, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error("Request gagal");
+        return res.json();
+      })
+      .then((hasil) => setData(hasil))
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      })
+      .finally(() => setLoading(false));
+
+    return () => controller.abort();
+  }, [url]);
+
+  return { data, error, loading };
+}
+```
+
+Pemakaiannya:
+
+```jsx
+function DaftarUser() {
+  const { data, loading, error } = useFetch("/api/user");
+  if (loading) return <p>Memuat…</p>;
+  if (error) return <p>{error}</p>;
+  return <ul>{data.map((u) => <li key={u.id}>{u.nama}</li>)}</ul>;
+}
+```
+
+## Contoh: useLocalStorage
+
+```jsx
+function useLocalStorage(kunci, awal) {
+  const [nilai, setNilai] = React.useState(() => {
+    const simpan = localStorage.getItem(kunci);
+    return simpan ? JSON.parse(simpan) : awal;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem(kunci, JSON.stringify(nilai));
+  }, [kunci, nilai]);
+
+  return [nilai, setNilai];
+}
+```
+
+Sekarang `const [tema, setTema] = useLocalStorage("tema", "terang")` — state otomatis bertahan setelah refresh.
+
+## Kapan Membuat Custom Hook?
+
+- Logika yang sama dipakai minimal dua komponen.
+- Ada kombinasi `useState` + `useEffect` yang berulang.
+- Ingin menyembunyikan detail teknis (fetch, timer, storage) dari tampilan.
+
+<div class="note">💡 Custom hook membuat komponen kembali fokus pada tampilan. Kalau nama hook-mu sulit dijelaskan dalam satu kalimat, mungkin logikanya masih terlalu lebar.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi custom hook useLocalStorage dengan Map sebagai pengganti browser storage
+const storage = new Map();
+
+function useLocalStorage(kunci, awal) {
+  const tersimpan = storage.get(kunci);
+  const nilai = tersimpan === undefined ? awal : JSON.parse(tersimpan);
+  return [nilai, (baru) => storage.set(kunci, JSON.stringify(baru))];
+}
+
+const [tema, setTema] = useLocalStorage("tema", "terang");
+console.log("awal:", tema);
+setTema("gelap");
+console.log("setelah:", useLocalStorage("tema", "terang")[0]);`} />

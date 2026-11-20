@@ -1,0 +1,82 @@
+---
+title: "Keamanan API"
+description: "Otorisasi, paginasi, CORS, dan perlindungan endpoint"
+order: 20
+quiz:
+  - q: "Autentikasi menjawab pertanyaan…"
+    options: ["Siapa kamu", "Apa yang boleh kamu lakukan", "Kapan server mati", "Berapa ukuran data"]
+    answer: 0
+    explain: "Otorisasi yang menjawab apa yang boleh dilakukan, biasanya setelah autentikasi."
+  - q: "IDOR terjadi ketika…"
+    options: ["CORS salah", "Objek diakses dengan mengubah ID tanpa cek kepemilikan", "Token kedaluwarsa", "Server down"]
+    answer: 1
+    explain: "Contoh: mengganti /order/12 menjadi /order/13 untuk melihat pesanan orang lain."
+  - q: "CORS mengatur…"
+    options: ["Jumlah user", "Versi TLS", "Domain mana yang boleh memakai API dari browser", "Enkripsi disk"]
+    answer: 2
+    explain: "CORS adalah kebijakan browser, bukan kontrol autentikasi."
+  - q: "Paginasi membantu mencegah…"
+    options: ["SQL injection", "XSS", "CSRF", "Pengambilan seluruh data sekaligus"]
+    answer: 3
+    explain: "Batas halaman juga mengurangi beban server dan risiko kebocoran massal."
+  - q: "Respons error yang aman…"
+    options: ["Tidak membocorkan detail internal", "Menampilkan stack trace", "Mengandung kata sandi", "Menampilkan query SQL"]
+    answer: 0
+    explain: "Detail teknis disimpan di log server, bukan dikirim ke klien."
+example:
+  code: |
+    GET /api/order/12
+     -> cek: order.user_id == token.user_id
+     -> jika tidak sama: 403
+    
+    Respons error aman:
+    { "error": "Akses ditolak" }
+---
+
+API sering menjadi pintu depan aplikasi modern. Karena sifatnya terprogram, satu celah otorisasi bisa dieksploitasi secara massal dalam hitungan detik.
+
+## Autentikasi vs Otorisasi
+
+```text
+token -> siapa pemilik request (autentikasi)
+aturan -> apakah ia boleh mengakses objek ini (otorisasi)
+```
+
+Keduanya harus dijalankan di server untuk setiap permintaan yang sensitif.
+
+## IDOR
+
+```text
+GET /api/invoice/1042   -> milik saya
+GET /api/invoice/1043   -> milik orang lain?
+```
+
+Selalu bandingkan kepemilikan objek dengan identitas pengguna. Jangan mengandalkan kerahasiaan ID acak sebagai satu-satunya perlindungan.
+
+## CORS
+
+```http
+Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Credentials: true
+```
+
+Jangan menggunakan `*` bersama kredensial. Daftar asal yang diizinkan sebaiknya eksplisit dan tervalidasi.
+
+## Batas dan Kuota
+
+- Batasi ukuran body request.
+- Batasi jumlah field dan kedalaman JSON.
+- Gunakan paginasi dengan batas maksimal.
+- Terapkan kuota per token dan rate limit.
+
+<div class="note">💡 Endpoint yang "internal" tetap harus diamankan. Jaringan bisa berubah, dan layanan lain bisa saja terekspos tidak sengaja.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Contoh pemeriksaan otorisasi:
+  1. token valid?
+  2. peran cukup?
+  3. objek milik pengguna ini?
+  4. aksi diizinkan pada status objek sekarang?
+  5. catat keputusan di log`}</code></pre>

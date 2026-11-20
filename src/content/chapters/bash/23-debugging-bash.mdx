@@ -1,0 +1,117 @@
+---
+"title": "Debugging Skrip Bash"
+"description": "Mode debug, pengecekan sintaks, dan strategi mencari bug skrip"
+"order": 23
+"quiz":
+- "q": "Opsi bash untuk mencetak setiap perintah sebelum dijalankan adalah…"
+  "options":
+  - "bash -v skrip.sh"
+  - "bash -x skrip.sh"
+  - "bash -n skrip.sh"
+  - "bash -e skrip.sh"
+  "answer": 1
+  "explain": "-x menampilkan trace ekspansi perintah."
+- "q": "Opsi untuk hanya mengecek sintaks tanpa menjalankan adalah…"
+  "options":
+  - "bash -x"
+  - "bash -c"
+  - "bash -n"
+  - "bash -p"
+  "answer": 2
+  "explain": "-n melakukan syntax check."
+- "q": "Variabel PS4 dipakai untuk…"
+  "options":
+  - "Mengganti prompt interaktif"
+  - "Menyimpan path"
+  - "Mengatur kecepatan"
+  - "Mengatur format prompt debug -x"
+  "answer": 3
+  "explain": "Secara bawaan PS4 adalah \"+ \"."
+- "q": "Perintah shellcheck berguna untuk…"
+  "options":
+  - "Menganalisis skrip dan memberi peringatan"
+  - "Menjalankan skrip lebih cepat"
+  - "Mengganti bash"
+  - "Menghapus komentar"
+  "answer": 0
+  "explain": "ShellCheck menemukan pola rentan dan bug umum."
+- "q": "set -x sebaiknya dimatikan saat…"
+  "options":
+  - "Skrip selesai"
+  - "Skrip memproses password atau token"
+  - "Ada loop"
+  - "Ada fungsi"
+  "answer": 1
+  "explain": "Lacak bisa membocorkan nilai rahasia ke log."
+"example":
+  "code": "#!/usr/bin/env bash\nset -euo pipefail\n\nPS4='+ [${BASH_SOURCE}:${LINENO}] '\nset -x\n\nnama=\"OnBoss\"\necho \"Halo, $nama\"\n\nset +x\necho \"Bagian sensitif tidak dicetak di trace\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Alat Bawaan
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+PS4='+ [${BASH_SOURCE}:${LINENO}] '
+set -x
+
+nama="OnBoss"
+echo "Halo, $nama"
+
+set +x
+echo "Bagian sensitif tidak dicetak di trace"
+```
+
+| Perintah | Fungsi |
+|---|---|
+| `bash -n skrip.sh` | cek sintaks |
+| `bash -x skrip.sh` | trace ekspansi perintah |
+| `set -x` / `set +x` | nyalakan / matikan trace |
+| `echo "$?"` | lihat kode keluar terakhir |
+
+## Lacak yang Mudah Dibaca
+
+```bash
+PS4='+ ${BASH_SOURCE[0]}:${LINENO}: '
+set -x
+```
+
+`LINENO` menunjukkan nomor baris sehingga jejak debug langsung menuju lokasi yang tepat.
+
+## ShellCheck
+
+```bash
+shellcheck skrip.sh
+```
+
+ShellCheck memberi peringatan seperti variabel tanpa kutip, penggunaan `[ ]` yang salah, atau redireksi yang tertukar. Ini seperti linter untuk Bash.
+
+## Strategi Umum
+
+1. Jalankan `bash -n` untuk memastikan sintaks valid.
+2. Tambahkan `set -euo pipefail`.
+3. Jalankan dengan `bash -x` pada data kecil.
+4. Sempitkan dengan `set -x` hanya di sekitar bagian bermasalah.
+5. Periksa kode keluar setiap tahap pipeline.
+
+<div class="note">💡 Bug Bash paling sering berasal dari variabel yang tidak dikutip. Sebelum mencari yang rumit, coba kutip semua <code>"$variabel"</code> dan jalankan ShellCheck.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+set -euo pipefail
+
+PS4='+ [\${BASH_SOURCE}:\${LINENO}] '
+set -x
+
+nama="OnBoss"
+echo "Halo, $nama"
+
+set +x
+echo "Bagian sensitif tidak dicetak di trace"`} />

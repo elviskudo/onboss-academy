@@ -179,6 +179,10 @@ for (const id of ids) await simpan(id);
 - **Login**: `await` POST credentials, simpan token, tangkap error 401 jadi pesan "Password salah".
 - **Timeout request**: `Promise.race([fetch(url), tolakSetelah(5000)])` agar UI tidak muter selamanya.
 
+## Try it Yourself
+
+Perbarui URL atau cara penanganan respons di contoh fetch.
+
 <TryIt lang="javascript" runtime="client-js" code={`async function getUsers() {
   console.log("Mengambil data pengguna…");
   try {

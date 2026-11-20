@@ -1,0 +1,118 @@
+---
+title: Membaca dan Menulis File dari Terminal
+description: Menampilkan isi file, mencari teks, dan mengalihkan keluaran perintah.
+order: 10
+quiz:
+- q: Perintah untuk menampilkan seluruh isi file adalah…
+  options:
+  - tail
+  - wc
+  - cat
+  - head
+  answer: 2
+  explain: cat menggabungkan dan mencetak isi file.
+- q: Untuk melihat 10 baris pertama gunakan…
+  options:
+  - tail
+  - cat
+  - less
+  - head
+  answer: 3
+  explain: '`head -n 20 file` menampilkan 20 baris awal.'
+- q: Perintah untuk mencari teks dalam file adalah…
+  options:
+  - grep
+  - find
+  - awk
+  - sort
+  answer: 0
+  explain: grep mencocokkan pola per baris.
+- q: Simbol > berfungsi untuk…
+  options:
+  - Menyambung perintah
+  - Mengalihkan output ke file (menimpa)
+  - Menambah input
+  - Menjalankan di latar belakang
+  answer: 1
+  explain: '`>` menimpa, `>>` menambah di akhir.'
+- q: Perintah untuk menghitung baris, kata, dan karakter adalah…
+  options:
+  - df
+  - stat
+  - wc
+  - du
+  answer: 2
+  explain: '`wc -l file` menghitung jumlah baris.'
+example:
+  code: 'echo "Halo Linux" > catatan.txt
+
+    cat catatan.txt
+
+    grep -n "Halo" catatan.txt
+
+    wc -l catatan.txt
+
+    tail -f /var/log/syslog
+
+    '
+---
+
+
+Banyak pekerjaan server dilakukan tanpa editor grafis. Linux menyediakan perintah kecil yang bisa dirangkai.
+
+## Membaca
+
+```bash
+cat file.txt
+head -n 20 file.txt
+tail -n 20 file.txt
+tail -f /var/log/nginx/access.log
+less file.txt
+```
+
+`less` menampilkan halaman demi halaman. Tekan `q` untuk keluar, `/kata` untuk mencari.
+
+## Pipa (Pipe)
+
+```bash
+cat access.log | grep "404" | wc -l
+```
+
+Simbol `|` meneruskan output perintah sebelumnya sebagai input perintah berikutnya. Ini kekuatan utama shell.
+
+## Redirection
+
+| Simbol | Fungsi |
+|---|---|
+| `>` | tulis output, timpa file |
+| `>>` | tambahkan ke akhir file |
+| `<` | baca input dari file |
+| `2>` | alihkan error |
+| `&>` | alihkan output dan error |
+
+```bash
+ls /tidak/ada 2> error.log
+echo "baris baru" >> catatan.txt
+```
+
+## grep
+
+```bash
+grep "error" app.log
+grep -i "error" app.log        # abaikan huruf besar/kecil
+grep -n "error" app.log        # tampilkan nomor baris
+grep -r "TODO" src/            # rekursif
+grep -v "DEBUG" app.log        # barang yang tidak cocok
+```
+
+<div class="note">💡 `tail -f` sangat berguna saat mengamati log langsung. Tekan Ctrl+C untuk berhenti.</div>
+
+## Perintah Pendukung
+
+```bash
+sort data.txt | uniq -c | sort -rn
+cut -d: -f1 /etc/passwd
+awk '{print $1}' access.log
+```
+
+`awk` dan `sed` adalah alat pemroses teks tingkat lanjut yang layak dipelajari setelah perintah dasar nyaman dipakai.

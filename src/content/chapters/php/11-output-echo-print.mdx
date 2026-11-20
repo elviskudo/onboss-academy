@@ -1,0 +1,130 @@
+---
+title: "Output, Echo & Print"
+description: "Menampilkan hasil dengan echo, print, dan interpolasi string"
+order: 11
+quiz:
+  - q: "Pilihan yang paling umum untuk menampilkan output di PHP adalah…"
+    options: ["echo", "print", "write", "display"]
+    answer: 0
+    explain: "Echo lebih populer dan sedikit lebih cepat."
+  - q: "Perbedaan echo dan print adalah…"
+    options: ["Echo mengembalikan nilai, print tidak", "Print mengembalikan nilai 1, echo tidak", "Keduanya identik", "Echo hanya untuk HTML"]
+    answer: 1
+    explain: "Print adalah fungsi yang mengembalikan 1; echo adalah language construct."
+  - q: "InterpolasiVariabel dalam string PHP memakai…"
+    options: ["Kurawal {}", "Tanda dolar $ langsung", "Tanda persen %", "Backtick"]
+    answer: 1
+    explain: "String bertanda kutip ganda akan mengganti $nama dengan nilainya."
+  - q: "Untuk menggabungkan string di PHP digunakan…"
+    options: ["+", ".", "&", "~"]
+    answer: 1
+    explain: "Operator titik adalah concatenation operator."
+  - q: "`print_r()` berguna untuk…"
+    options: ["Mencetak struktur array", "Membuat error", "Menghapus variabel", "Mengirim email"]
+    answer: 0
+    explain: "Fungsi ini menampilkan information array/objek yang mudah dibaca."
+example:
+  code: |
+    <?php
+    $nama = "Sari";
+    echo "Halo, $nama!\n";
+    print "Jumlah: " . (2 + 3);
+    print_r(["a", "b"]);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Output adalah jembatan antara logika PHP dan apa yang dilihat pengguna. PHP bisa mencetak ke halaman HTML, ke terminal, atau ke file log.
+
+## echo vs print
+
+```php
+<?php
+echo "Halo";
+echo "Dunia", " lagi"; // beberapa argumen boleh
+
+print "Halo";
+// print "a", "b"; // ❌ tidak boleh lebih dari satu argumen
+```
+
+| Aspek | echo | print |
+|-------|------|-------|
+| Jenis | Language construct | Fungsi |
+| Nilai balik | none | `1` |
+| Beberapa argumen | Boleh | Tidak |
+| Kecepatan | Sedikit lebih cepat | Sedikit lebih lambat |
+
+## Interpolasi String
+
+```php
+<?php
+$nama = "Sari";
+$umur = 20;
+
+echo "Halo, $nama! Umur $umur tahun.\n"; // kutip ganda → variabel dibaca
+echo 'Halo, $nama!';                      // kutip tunggal → teks apa adanya
+echo "Nilai: {$umur}th\n";               // kurawal memisahkan variabel
+```
+
+Kurawal `{}` penting kalau variabel diikuti huruf, misalnya `"{$umur}th"` supaya tidak dibaca sebagai variabel `$umurth`.
+
+## Concatenation
+
+```php
+<?php
+echo "Halo " . $nama . "!";
+echo "Total: " . (10 + 5); // hasil hitungan harus pakai tanda kurung
+```
+
+Operator `.` juga bisa dipakai sebagai `.=`:
+
+```php
+$pesan = "Halo";
+$pesan .= " dunia!";
+```
+
+## Debugging Output
+
+```php
+<?php
+$data = ["nama" => "Sari", "skor" => [8, 9]];
+
+print_r($data);                    // manusia-friendly
+var_dump($data);                   // lengkap dengan tipe dan panjang
+error_log(print_r($data, true));   // kirim ke log, bukan ke layar
+```
+
+Argumen kedua `print_r` bernilai `true` membuat hasil dikembalikan sebagai string, bukan langsung dicetak.
+
+## Escape Karakter
+
+| Kode | Arti |
+|------|------|
+| `\n` | Baris baru (di kutip ganda) |
+| `\t` | Tab |
+| `\"` | Tanda kutip ganda |
+| `\\` | Backslash |
+| `\$` | Tanda dolar literal |
+
+<div class="note">💡 Di browser, `\n` tidak membuat baris baru karena HTML memakai `<br>`. Gunakan `nl2br()` kalau ingin newline tampil sebagai baris baru di halaman.</div>
+
+## Di Dunia Nyata
+
+- Template PHP sering memakai `<?= $nama ?>` — shorthand untuk `<?php echo $nama ?>`.
+- Output JSON dari API memakai `json_encode()`, bukan `echo` langsung pada array.
+- Logging error memakai `error_log()` agar tidak mengganggu tampilan pengguna.
+
+## Try it Yourself
+
+Ganti kutip ganda menjadi tunggal atau ubah nilai variabel pada contoh ini.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$nama = "Sari";
+$umur = 20;
+echo "Halo, $nama!\n";
+echo 'Kutip tunggal: $nama\n';
+echo "Umur: {$umur} tahun\n";
+$pesan = "Belajar";
+$pesan .= " PHP itu seru!";
+echo $pesan . "\n";
+print_r(["nama" => $nama, "umur" => $umur]);`} />

@@ -1,0 +1,102 @@
+---
+title: "Baris Perintah Raspberry Pi"
+description: "Perintah Linux harian, hak sudo, dan pengelolaan paket"
+order: 10
+quiz:
+  - q: "Perintah untuk melihat direktori saat ini adalah…"
+    options: ["ls", "mkdir", "pwd", "cd"]
+    answer: 2
+    explain: "pwd = print working directory."
+  - q: "Opsi -l pada ls menampilkan…"
+    options: ["Hanya folder", "File tersembunyi saja", "Versi sistem", "Detail izin, pemilik, dan ukuran"]
+    answer: 3
+    explain: "ls -lah menggabungkan detail, semua file, dan ukuran yang mudah dibaca."
+  - q: "sudo digunakan untuk…"
+    options: ["Menjalankan perintah dengan hak administrator", "Menghapus file saja", "Mengganti kata sandi", "Mematikan Pi"]
+    answer: 0
+    explain: "Gunakan hanya saat diperlukan; sebagian besar perintah tidak butuh sudo."
+  - q: "Perintah untuk memasang paket adalah…"
+    options: ["sudo pip add", "sudo apt install nama-paket", "sudo apt get nama-paket", "apt make nama-paket"]
+    answer: 1
+    explain: "apt adalah pengelola paket pada Raspberry Pi OS berbasis Debian."
+  - q: "Untuk melihat alamat IP, gunakan…"
+    options: ["netstat -ip", "cat /etc/ip", "hostname -I atau ip addr", "ipconfig"]
+    answer: 2
+    explain: "hostname -I memberi daftar alamat IPv4 dan IPv6 yang aktif."
+example:
+  code: |
+    pwd
+    ls -lah
+    cd /home/pi
+    sudo apt update
+    sudo apt install vim
+    hostname -I
+---
+
+Sebagian besar konfigurasi Raspberry Pi dilakukan lewat terminal. Menguasai beberapa perintah dasar membuat proses jauh lebih cepat daripada mengklik antarmuka grafis.
+
+## Perintah Navigasi
+
+| Perintah | Fungsi |
+|---|---|
+| `pwd` | Tampilkan direktori saat ini |
+| `ls -lah` | Daftar file lengkap |
+| `cd folder` | Pindah direktori |
+| `cd ..` | Naik satu level |
+| `mkdir nama` | Buat folder |
+| `touch file` | Buat file kosong |
+
+## Melihat Isi File
+
+```bash
+cat config.txt
+less /var/log/syslog     # keluar dengan q
+head -n 20 file.log
+tail -f /var/log/syslog  # ikuti log baru
+```
+
+## Hak Akses
+
+```bash
+chmod +x skrip.sh        # jadikan bisa dijalankan
+chown pi:pi file.txt     # ubah pemilik
+sudo command             # jalankan sebagai root
+```
+
+Izin ditampilkan seperti `-rw-r--r--`: pemilik boleh tulis, grup dan lain-lain hanya baca.
+
+## Paket
+
+```bash
+sudo apt update          # segarkan daftar paket
+sudo apt upgrade         # perbarui paket terpasang
+sudo apt install ghc     # pasang paket
+sudo apt remove ghc      # hapus paket
+apt search kata-kunci    # cari paket
+```
+
+## Informasi Sistem
+
+```bash
+hostname -I
+uname -a
+cat /etc/os-release
+free -h
+df -h
+uptime
+vcgencmd measure_temp
+```
+
+<div class="note">💡 Gunakan `Ctrl+C` untuk menghentikan perintah yang berjalan, dan `Ctrl+D` untuk keluar dari shell. Tab melengkapi nama file secara otomatis.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Latihan singkat:
+pwd
+ls -lah /home
+mkdir latihan &amp;&amp; cd latihan
+touch catatan.txt
+ls -l
+echo 'Halo Pi' &gt; catatan.txt
+cat catatan.txt`}</code></pre>

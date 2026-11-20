@@ -1,0 +1,82 @@
+---
+title: "Animasi dan Interpolasi"
+description: "Membuat gerak halus dengan perubahan bertahap"
+order: 22
+quiz:
+  - q: "Animasi halus dibuat dengan…"
+    options: ["Menghapus kostum", "Mengubah volume", "Perubahan kecil berulang dengan jeda pendek", "Satu loncatan besar"]
+    answer: 2
+    explain: "Makin kecil langkah dan makin pendek jeda, gerak makin halus."
+  - q: "Blok geser ... langkah di dalam loop menghasilkan…"
+    options: ["Satu gerakan saja", "Perubahan warna", "Pembuatan klon", "Gerak terus-menerus"]
+    answer: 3
+    explain: "Tiap iterasi memindahkan sprite sejauh nilai yang diberikan."
+  - q: "Interpolasi sederhana antara dua titik dapat dilakukan dengan…"
+    options: ["Menghitung posisi tengah secara bertahap", "Mengganti backdrop", "Menambah suara", "Membuat daftar baru"]
+    answer: 0
+    explain: "Misalnya posisi x berubah 10 piksel per frame hingga mencapai target."
+  - q: "Efek pulse pada ukuran sprite dibuat dengan…"
+    options: ["Mengubah arah", "Menambah lalu mengurangi ukuran berulang", "Mengatur ukuran sekali", "Menghapus efek"]
+    answer: 1
+    explain: "Pola naik-turun menciptakan kesan bernapas."
+  - q: "Blok tunggu 0,05 detik digunakan untuk…"
+    options: ["Menyimpan skor", "Mengganti kostum", "Mengatur kecepatan animasi", "Menghapus sprite"]
+    answer: 2
+    explain: "Jeda mengontrol kecepatan efektif animasi."
+example:
+  code: |
+    [ketika bendera diklik]
+    [ulangi 20 [
+      [ubah ukuran sebesar 5]
+      [tunggu 0,05 detik]
+    ]]
+    [ulangi 20 [
+      [ubah ukuran sebesar -5]
+      [tunggu 0,05 detik]
+    ]]
+---
+
+Animasi pada Scratch pada dasarnya adalah rangkaian perubahan kecil. Tidak perlu pustaka khusus—cukup loop, jeda, dan perubahan posisi atau ukuran.
+
+## Prinsip Animasi
+
+```text
+perubahan kecil + jeda pendek + pengulangan = ilusi gerak
+```
+
+## Contoh Gerak Halus
+
+```text
+[ulangi 30 [
+  [geser x sebesar 8]
+  [geser y sebesar 3]
+  [tunggu 0,03 detik]
+]]
+```
+
+## Interpolasi Posisi
+
+```text
+[atur [x] ke [0]]
+[ulangi sampai <(x) = [200]> [
+  [atur x ke (x)]
+  [ubah [x] sebesar 10]
+  [tunggu 0,02 detik]
+]]
+```
+
+## Efek Napas
+
+Gabungkan `ubah ukuran sebesar 5` dan `-5` dalam dua loop berurutan untuk efek membesar-mengecil.
+
+<div class="note">💡 Scratch memperbarui layar sekitar 30 frame per detik. Jeda di bawah 0,03 detik umumnya tidak terlihat lebih halus.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[ulangi 15 [
+  [ubah efek [kecerahan] sebesar 10]
+  [tunggu 0,05 detik]
+]]
+[hapus semua efek grafis]`}</code></pre>

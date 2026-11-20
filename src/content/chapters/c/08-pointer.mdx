@@ -149,6 +149,10 @@ C **tidak punya garbage collector**. Setiap `malloc`/`calloc`/`realloc` yang suk
 
 <div class="note">💡 Dua aturan emas pointer: (1) jangan dereference pointer yang belum diisi, sudah <code>free</code>, atau bernilai <code>NULL</code>; (2) selalu <code>free</code> setiap <code>malloc</code>. Melanggar keduanya = memory leak atau crash yang baru terasa jauh setelah kodenya ditulis.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 #include <stdlib.h>
 
@@ -182,12 +186,12 @@ int main(void) {
     int *data = malloc(5 * sizeof(int));
     if (data == NULL) return 1;
     int total = 0;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i &lt; 5; i++) {
         data[i] = (i + 1) * 10;
         total += data[i];
     }
     printf("Isi array dinamis: ");
-    for (int i = 0; i < 5; i++) printf("%d ", data[i]);
+    for (int i = 0; i &lt; 5; i++) printf("%d ", data[i]);
     printf("\\nTotal: %d\\n", total);
     free(data);
     return 0;

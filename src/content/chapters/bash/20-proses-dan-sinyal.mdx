@@ -1,0 +1,138 @@
+---
+"title": "Proses dan Sinyal"
+"description": "Memantau proses, mengirim sinyal, dan mengelola job di shell"
+"order": 20
+"quiz":
+- "q": "Perintah melihat daftar proses adalah…"
+  "options":
+  - "ls proc"
+  - "ps aux"
+  - "proc list"
+  - "top -p"
+  "answer": 1
+  "explain": "ps aux menampilkan semua proses beserta user dan penggunaan resource."
+- "q": "Sinyal untuk menghentikan proses secara halus adalah…"
+  "options":
+  - "SIGKILL (9)"
+  - "SIGSTOP (19)"
+  - "SIGTERM (15)"
+  - "SIGHUP (1)"
+  "answer": 2
+  "explain": "SIGTERM memberi kesempatan proses membersihkan diri."
+- "q": "Sinyal yang tidak bisa ditangkap proses adalah…"
+  "options":
+  - "SIGTERM"
+  - "SIGINT"
+  - "SIGHUP"
+  - "SIGKILL"
+  "answer": 3
+  "explain": "SIGKILL langsung dihentikan kernel tanpa cleanup."
+- "q": "Perintah menjalankan proses di latar belakang adalah…"
+  "options":
+  - "perintah &"
+  - "perintah @"
+  - "bg perintah"
+  - "run --background"
+  "answer": 0
+  "explain": "& mengembalikan prompt langsung."
+- "q": "Perintah menampilkan job aktif adalah…"
+  "options":
+  - "ps jobs"
+  - "jobs"
+  - "bg"
+  - "fg all"
+  "answer": 1
+  "explain": "jobs melihat daftar pekerjaan shell saat ini."
+"example":
+  "code": "#!/usr/bin/env bash\nps aux | grep nginx\npgrep -f \"nginx\" | head -5\n\n# kirim sinyal berdasarkan PID\nkill 1234           # SIGTERM\nkill -9 1234        # SIGKILL (terakhir)\n\n# berdasarkan nama\npkill -f \"script-lama.sh\"\n\n# jalankan di latar belakang\nsleep 60 &\npid=$!\necho \"PID: $pid\"\njobs\nwait \"$pid\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Melihat Proses
+
+```bash
+#!/usr/bin/env bash
+ps aux | grep nginx
+pgrep -f "nginx" | head -5
+
+# kirim sinyal berdasarkan PID
+kill 1234           # SIGTERM
+kill -9 1234        # SIGKILL (terakhir)
+
+# berdasarkan nama
+pkill -f "script-lama.sh"
+
+# jalankan di latar belakang
+sleep 60 &
+pid=$!
+echo "PID: $pid"
+jobs
+wait "$pid"
+```
+
+| Perintah | Fungsi |
+|---|---|
+| `ps aux` | daftar lengkap semua proses |
+| `ps -ef` | format UNIX standar |
+| `top` / `htop` | tampilan interaktif |
+| `pgrep nama` | cari PID berdasarkan nama |
+| `pstree` | pohon hubungan proses |
+
+## Sinyal
+
+```bash
+kill -l              # daftar sinyal
+kill 1234            # kirim SIGTERM
+kill -HUP 1234       # minta proses memuat ulang konfigurasi
+kill -9 1234         # paksa mati
+```
+
+Prinsipnya: coba SIGTERM dulu, tunggu beberapa detik, baru SIGKILL bila perlu.
+
+## Job Control
+
+```bash
+perintah &      # latar belakang
+Ctrl+Z          # jeda proses depan
+bg              # lanjutkan di latar belakang
+fg %1           # bawa ke depan
+jobs            # lihat daftar job
+```
+
+`$!` berisi PID dari perintah latar belakang terakhir, sementara `$$` adalah PID skrip saat ini.
+
+## Wait
+
+```bash
+Unduh & Unduh2 &
+wait
+echo "Semua selesai"
+```
+
+`wait` tanpa argumen menunggu semua child process selesai — sangat berguna dalam skrip paralel.
+
+<div class="note">💡 `pkill -f` mencocokkan seluruh baris perintah, bukan hanya nama proses. Periksa hasil `pgrep -f` dulu agar tidak menghentikan proses yang salah.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+ps aux | grep nginx
+pgrep -f "nginx" | head -5
+
+# kirim sinyal berdasarkan PID
+kill 1234           # SIGTERM
+kill -9 1234        # SIGKILL (terakhir)
+
+# berdasarkan nama
+pkill -f "script-lama.sh"
+
+# jalankan di latar belakang
+sleep 60 &
+pid=$!
+echo "PID: $pid"
+jobs
+wait "$pid"`} />

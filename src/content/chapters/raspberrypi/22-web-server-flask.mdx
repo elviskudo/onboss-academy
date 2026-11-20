@@ -1,0 +1,104 @@
+---
+title: "Web Server dengan Flask"
+description: "Menyajikan data sensor lewat endpoint HTTP"
+order: 22
+quiz:
+  - q: "Framework Python ringan untuk web di Pi adalah…"
+    options: ["Spring", "Rails", "Flask", "Django"]
+    answer: 2
+    explain: "Flask cocok untuk endpoint kecil dan API sensor."
+  - q: "Decorator untuk mendefinisikan rute Flask adalah…"
+    options: ["@app.path", "@route.get", "@flask.url", "@app.route"]
+    answer: 3
+    explain: "Contoh: @app.route('/suhu')."
+  - q: "Untuk mengembalikan data JSON, Flask menyediakan…"
+    options: ["jsonify", "jsonout", "to_json", "response.json()"]
+    answer: 0
+    explain: "jsonify menetapkan Content-Type application/json dengan benar."
+  - q: "Menjalankan Flask di semua interface gunakan…"
+    options: ["app.run(all=True)", "app.run(host='0.0.0.0')", "app.run(host='localhost')", "app.run(public=True)"]
+    answer: 1
+    explain: "Tanpa itu, server hanya bisa diakses dari Pi sendiri."
+  - q: "Untuk produksi, sebaiknya…"
+    options: ["Menghapus firewall", "Menonaktifkan HTTPS", "Pakai WSGI server seperti Gunicorn", "Pakai app.run tanpa pengaturan"]
+    answer: 2
+    explain: "Server development Flask tidak dirancang untuk traffic produksi."
+example:
+  code: |
+    from flask import Flask, jsonify
+    app = Flask(__name__)
+    
+    @app.route('/suhu')
+    def suhu():
+        return jsonify({'suhu': 27.3, 'satuan': 'C'})
+    
+    app.run(host='0.0.0.0', port=5000)
+---
+
+Flask mengubah Pi menjadi server kecil yang bisa menyajikan data sensor atau menerima perintah lewat HTTP.
+
+## Aplikasi Minimal
+
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return 'Server Pi siap'
+
+@app.route('/suhu')
+def suhu():
+    return jsonify({'nilai': baca_suhu(), 'satuan': 'C'})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+## Endpoint POST
+
+```python
+from flask import request
+
+@app.route('/led', methods=['POST'])
+def led():
+    data = request.get_json()
+    if data.get('nyala'):
+        led_pin.on()
+    else:
+        led_pin.off()
+    return jsonify({'status': 'ok'})
+```
+
+## Menjalankan sebagai Service
+
+```ini
+[Service]
+ExecStart=/home/pi/proyek/venv/bin/gunicorn -b 0.0.0.0:5000 app:app
+WorkingDirectory=/home/pi/proyek
+Restart=always
+User=pi
+```
+
+## Reverse Proxy
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:5000;
+    proxy_set_header Host $host;
+}
+```
+
+Nginx di depan memberi HTTPS, kompresi, dan pembatasan request.
+
+<div class="note">💡 Simpan API key di environment variable, bukan di source code. Endpoint yang mengubah hardware sebaiknya memerlukan autentikasi.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Uji endpoint:
+curl http://localhost:5000/
+curl http://localhost:5000/suhu
+curl -X POST -H 'Content-Type: application/json' \\
+     -d '{"nyala":true}' http://localhost:5000/led`}</code></pre>

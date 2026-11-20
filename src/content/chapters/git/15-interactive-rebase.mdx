@@ -1,0 +1,121 @@
+---
+title: Interactive Rebase untuk Riwayat Bersih
+description: Merapikan, menggabungkan, dan mengubah urutan commit sebelum dibagikan.
+order: 15
+quiz:
+- q: Perintah memulai interactive rebase 3 commit terakhir adalah…
+  options:
+  - git rebase HEAD~3 -m
+  - git merge -i
+  - git log -i 3
+  - git rebase -i HEAD~3
+  answer: 3
+  explain: Opsi -i membuka editor daftar aksi untuk commit yang dipilih.
+- q: Aksi squash pada rebase melakukan…
+  options:
+  - Menggabungkan commit ke commit sebelumnya
+  - Menghapus file
+  - Membuat branch baru
+  - Mengubah remote
+  answer: 0
+  explain: squash menggabungkan patch sambil mempertahankan pesan untuk disunting.
+- q: Aksi reword digunakan untuk…
+  options:
+  - Menambah tag
+  - Mengubah pesan commit
+  - Menghapus commit
+  - Menukar file
+  answer: 1
+  explain: reword hanya mengganti pesan, isi commit tetap.
+- q: Aksi drop berarti…
+  options:
+  - Memindahkan commit ke tag
+  - Menggabungkan commit
+  - Membuang commit tersebut
+  - Menunda commit
+  answer: 2
+  explain: Commit dan perubahannya dihapus dari riwayat hasil rebase.
+- q: Kapan interactive rebase sebaiknya dipakai?
+  options:
+  - Pada commit yang sudah dipakai banyak orang
+  - Pada tag rilis
+  - Pada file konfigurasi
+  - Pada commit lokal yang belum di-push
+  answer: 3
+  explain: Mengubah riwayat yang sudah dibagikan menyebabkan masalah bagi rekan tim.
+example:
+  code: 'git rebase -i HEAD~4
+
+
+    pick a1b2c3d Tambah form login
+
+    squash d4e5f6g Perbaiki typo label
+
+    reword h7i8j9k Tambah validasi
+
+    drop   l0m1n2o Commit coba-coba
+
+    '
+---
+
+
+Interactive rebase memberi kendali atas **riwayat commit sebelum dibagikan**. Gunakan untuk merapikan commit coba-coba menjadi unit kerja yang masuk akal.
+
+## Memulai
+
+```bash
+git log --oneline -5
+git rebase -i HEAD~4
+```
+
+Editor akan menampilkan daftar commit dari yang tertua ke terbaru.
+
+## Aksi Utama
+
+| Aksi | Singkatan | Efek |
+|---|---|---|
+| pick | p | pakai commit apa adanya |
+| reword | r | ubah pesan |
+| edit | e | berhenti untuk mengubah isi |
+| squash | s | gabung ke commit sebelumnya |
+| fixup | f | gabung, buang pesan |
+| drop | d | hapus commit |
+
+## Contoh Hasil
+
+```text
+Sebelum:
+a1b2  Tambah form login
+d4e5  Perbaiki typo label
+h7i8  Tambah validasi
+l0m1  Commit coba-coba
+
+Sesudah:
+p9q8  Tambah form login dan validasi (perbaikan typo)
+```
+
+## Menangani Konflik
+
+```bash
+# edit file yang konflik
+git add file_yang_diperbaiki
+git rebase --continue
+
+# atau membatalkan
+git rebase --abort
+```
+
+Rebase bisa berhenti beberapa kali bila konflik muncul di beberapa commit.
+
+<div class="note">💡 Aturan emas: **jangan rebase commit yang sudah di-push ke branch bersama**. Gunakan revert untuk membatalkan perubahan yang sudah dibagikan.</div>
+
+## Alternatif Lebih Aman
+
+Bila ingin menggabungkan beberapa commit terakhir tanpa editor interaktif:
+
+```bash
+git reset --soft HEAD~3
+git commit -m "Satu commit gabungan"
+```
+
+Ini menggeser HEAD tanpa menghapus perubahan di working tree.

@@ -1,0 +1,128 @@
+---
+title: "Gradient & Shadow"
+description: "Membuat transisi warna dan efek bayangan tanpa gambar"
+order: 23
+quiz:
+  - q: "Fungsi untuk gradien lurus adalah…"
+    options: ["radial-gradient", "linear-gradient", "conic-gradient", "repeating-gradient"]
+    answer: 1
+    explain: "Linear gradient mengikuti garis lurus dengan arah tertentu."
+  - q: "Arah `to right` pada linear-gradient berarti warna berubah…"
+    options: ["Atas ke bawah", "Kiri ke kanan", "Kanan ke kiri", "Dari tengah"]
+    answer: 1
+    explain: "Arah menunjukkan ke mana gradien bergerak."
+  - q: "`box-shadow: 0 4px 12px rgba(0,0,0,.2)` memiliki blur sebesar…"
+    options: ["0", "4px", "12px", "0.2"]
+    answer: 2
+    explain: "Urutan: offset-x, offset-y, blur, warna."
+  - q: "`inset` pada box-shadow membuat bayangan…"
+    options: ["Di luar elemen", "Di dalam elemen", "Lebih gelap", "Hilang"]
+    answer: 1
+    explain: "Kata kunci inset membalik arah bayangan ke dalam."
+  - q: "`text-shadow` dipakai untuk…"
+    options: ["Bayangan kotak", "Bayangan pada teks", "Bayangan gambar", "Gradien teks"]
+    answer: 1
+    explain: "Properti ini khusus untuk teks dan menerima offset, blur, dan warna."
+example:
+  code: |
+    .tombol {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+    .cahaya { background: radial-gradient(circle, #FDE68A, transparent 70%); }
+    .tulisan { text-shadow: 1px 2px 4px rgba(0,0,0,.3); }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Gradien dan bayangan menggantikan banyak gambar dekoratif. Keduanya dirender oleh browser, jadi tajam di semua resolusi dan mudah diubah lewat CSS.
+
+## Linear Gradient
+
+```css
+.tombol {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+}
+```
+
+Arah bisa berupa kata kunci (`to right`, `to bottom left`) atau derajat (`90deg` = ke kanan, `180deg` = ke bawah). Titik warna (*color stop*) bisa lebih dari dua:
+
+```css
+background: linear-gradient(to right, #2563EB 0%, #38BDF8 50%, #2563EB 100%);
+```
+
+## Radial & Conic
+
+```css
+.cahaya  { background: radial-gradient(circle at center, #FDE68A, transparent 70%); }
+.pie     { background: conic-gradient(#4F46E5 0 25%, #E5E7EB 25% 100%); }
+```
+
+- `radial-gradient` menyebar dari satu titik ke segala arah.
+- `conic-gradient` berputar mengelilingi titik — cocok untuk grafik donat.
+
+## Gradien Berulang
+
+```css
+.garis {
+  background: repeating-linear-gradient(45deg, #EEF2FF 0 8px, white 8px 16px);
+}
+```
+
+## Box Shadow
+
+```css
+.kartu {
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.12);
+}
+```
+
+Bentuk lengkap: `offset-x offset-y blur spread color inset`. Beberapa bayangan bisa digabung dengan koma:
+
+```css
+.tombol {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.1),
+    0 8px 16px rgb(0 0 0 / 0.08);
+}
+```
+
+Spread positif memperbesar bayangan, negatif menyusutkannya. `inset` menjadikan bayangan interior — berguna untuk efek tombol tertekan.
+
+## Text Shadow
+
+```css
+.judul {
+  color: white;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.55);
+}
+```
+
+Hati-hati: bayangan teks berlebihan membuat teks sulit dibaca. Gunakan secukupnya untuk judul di atas gambar.
+
+<div class="note">💡 Gradien tidak bisa dianimasikan langsung lewat perubahan `background-image` di banyak browser. Triknya: animasikan `background-position` dengan `background-size: 200% 200%`.</div>
+
+## Drop Shadow untuk SVG
+
+```css
+.ikon { filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.3)); }
+```
+
+Berbeda dengan `box-shadow`, `drop-shadow` mengikuti **bentuk** gambar (termasuk area transparan), jadi lebih pas untuk ikon SVG.
+
+## Di Dunia Nyata
+
+- Tombol CTA memakai gradien + shadow lembut agar tampak "bisa diklik".
+- Kartu memakai shadow bertingkat untuk memberi kesan kedalaman (elevasi).
+- Grafik donat memakai `conic-gradient` tanpa library chart.
+- Skeleton loading memakai gradien bergerak (shimmer).
+
+## Try it Yourself
+
+Ganti derajat gradien atau nilai blur bayangan pada contoh di bawah.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 16px; }
+.tombol { display: inline-block; padding: 12px 22px; color: white; border-radius: 8px; background: linear-gradient(135deg, #4F46E5, #7C3AED); box-shadow: 0 6px 16px rgb(79 70 229 / 0.35); }
+.kartu { margin-top: 20px; padding: 16px; border-radius: 12px; background: white; box-shadow: 0 4px 14px rgb(0 0 0 / 0.10); }
+.cahaya { margin-top: 20px; height: 90px; border-radius: 8px; background: radial-gradient(circle, #FDE68A, #FEF3C7 60%, transparent 75%); }
+.tulisan { color: white; background: #111827; padding: 8px; text-shadow: 1px 2px 4px rgb(0 0 0 / 0.5); }`} />

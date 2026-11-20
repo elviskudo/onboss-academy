@@ -19,10 +19,10 @@ quiz:
     options: ["Berjalan selamanya sampai dihentikan dari luar", "Berhenti otomatis setelah 100 iterasi", "Compile error", "Berjalan tepat satu kali"]
     answer: 0
     explain: "Loop tak berujung — pastikan ada break atau kondisi yang akhirnya menjadi false."
-  - q: "Nilai i setelah for (int i = 0; i < 4; i++) selesai adalah…"
+  - q: "Nilai i setelah for (int i = 0; i &lt; 4; i++) selesai adalah…"
     options: ["3", "5", "0", "4"]
     answer: 3
-    explain: "Loop berhenti ketika i tidak lagi memenuhi i < 4, sehingga i = 4."
+    explain: "Loop berhenti ketika i tidak lagi memenuhi i &lt; 4, sehingga i = 4."
 example:
   code: |
     #include <iostream>
@@ -35,7 +35,7 @@ example:
         for (int n : data) {
             total += n;
         }
-        cout << "Jumlah = " << total << endl;
+        cout <&lt; "Jumlah = " <&lt; total <&lt; endl;
         return 0;
     }
 ---
@@ -48,7 +48,7 @@ C++ punya **4 bentuk perulangan**: `for` gaya C, range-based `for` (C++11), `whi
 
 | Bentuk | Sintaks singkat | Pakai saat | Minimal jalan |
 |---|---|---|---|
-| `for` | `for (int i = 0; i < n; i++)` | jumlah iterasi diketahui | 0 kali |
+| `for` | `for (int i = 0; i &lt; n; i++)` | jumlah iterasi diketahui | 0 kali |
 | range-based `for` | `for (int n : data)` | menelusuri seluruh elemen | 0 kali |
 | `while` | `while (kondisi)` | berhenti saat syarat berubah | 0 kali |
 | `do-while` | `do { } while (kondisi);` | isi pasti dijalankan sekali | 1 kali |
@@ -176,6 +176,10 @@ Menghasilkan pola tangga — latihan klasik untuk memahami interaksi dua indeks.
 
 <div class="note">💡 Di C++17, deklarasi <code>int</code> di dalam for boleh diganti dengan <code>auto</code> — <code>for (auto n : data)</code> membuat kode tetap benar walau tipe elemen berubah. Untuk elemen besar, tulis <code>for (const auto &n : data)</code> agar tidak tersalin diam-diam.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <vector>
 using namespace std;
@@ -184,32 +188,32 @@ int main() {
     vector<int> data = {5, 3, 8, 1, 9};
     int total = 0;
     for (int n : data) total += n;
-    cout << "Jumlah = " << total << endl;
-    cout << "Rata-rata = " << (double) total / data.size() << endl;
+    cout <&lt; "Jumlah = " <&lt; total <&lt; endl;
+    cout <&lt; "Rata-rata = " <&lt; (double) total / data.size() <&lt; endl;
 
     int n = 5;
     while (n > 0) {
-        cout << n << " ";
+        cout <&lt; n <&lt; " ";
         n--;
     }
-    cout << endl;
+    cout <&lt; endl;
 
     int percobaan = 0;
     do {
         percobaan++;
-    } while (percobaan < 3);
-    cout << "Percobaan: " << percobaan << endl;
+    } while (percobaan &lt; 3);
+    cout <&lt; "Percobaan: " <&lt; percobaan <&lt; endl;
 
-    for (int i = 1; i <= 7; i++) {
+    for (int i = 1; i &lt;= 7; i++) {
         if (i == 4) continue;
         if (i > 6) break;
-        cout << i << " ";
+        cout <&lt; i <&lt; " ";
     }
-    cout << endl;
+    cout <&lt; endl;
 
-    for (int b = 1; b <= 3; b++) {
-        for (int k = 1; k <= b; k++) cout << "*";
-        cout << endl;
+    for (int b = 1; b &lt;= 3; b++) {
+        for (int k = 1; k &lt;= b; k++) cout <&lt; "*";
+        cout <&lt; endl;
     }
     return 0;
 }`} />

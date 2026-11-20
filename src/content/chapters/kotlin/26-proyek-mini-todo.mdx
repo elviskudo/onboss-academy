@@ -1,0 +1,146 @@
+---
+"title": "Proyek Mini: Aplikasi Todo Konsol"
+"description": "Menggabungkan data class, koleksi, lambda, when, dan exception dalam satu program"
+"order": 26
+"quiz":
+- "q": "Struktur yang tepat untuk satu Todo adalah…"
+  "options":
+  - "sealed interface"
+  - "data class"
+  - "object"
+  - "enum class"
+  "answer": 1
+  "explain": "data class memberi equals, toString, dan copy secara otomatis."
+- "q": "Koleksi yang cocok untuk menyimpan daftar todo yang berubah adalah…"
+  "options":
+  - "listOf"
+  - "setOf"
+  - "mutableListOf"
+  - "mapOf"
+  "answer": 2
+  "explain": "mutableListOf mengizinkan tambah dan hapus."
+- "q": "Operator untuk memilih todo yang selesai adalah…"
+  "options":
+  - "map"
+  - "sorted"
+  - "fold"
+  - "filter"
+  "answer": 3
+  "explain": "filter menghasilkan list berisi elemen yang memenuhi kondisi."
+- "q": "Pemisahan logik per menu sebaiknya memakai…"
+  "options":
+  - "when"
+  - "while(true) saja"
+  - "if bersarang"
+  - "goto"
+  "answer": 0
+  "explain": "when membuat percabangan menu lebih mudah dibaca."
+- "q": "Cara aman mengubah status selesai adalah…"
+  "options":
+  - "ubah langsung tanpa copy"
+  - "copy(selesai = true)"
+  - "hapus todo"
+  - "toString()"
+  "answer": 1
+  "explain": "copy menghasilkan objek baru dengan sebagian field diubah."
+"example":
+  "code": "data class Todo(val id: Int, val judul: String, var selesai: Boolean = false)\n\nfun main() {\n    val daftar = mutableListOf<Todo>()\n    var id = 1\n\n    while (true) {\n        println(\"1. Tambah  2. Selesai  3. Lihat  4. Keluar\")\n        when (readLine()) {\n            \"1\" -> {\n                print(\"Judul: \")\n                daftar += Todo(id++, readLine().orEmpty())\n            }\n            \"2\" -> daftar.firstOrNull { !it.selesai }?.selesai = true\n            \"3\" -> daftar.forEach { println(\"${it.id}. ${it.judul} \" + if (it.selesai) \"[x]\" else \"[ ]\") }\n            \"4\" -> return\n            else -> println(\"Pilihan tidak dikenal\")\n        }\n    }\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Spesifikasi Singkat
+
+```kotlin
+data class Todo(val id: Int, val judul: String, var selesai: Boolean = false)
+
+fun main() {
+    val daftar = mutableListOf<Todo>()
+    var id = 1
+
+    while (true) {
+        println("1. Tambah  2. Selesai  3. Lihat  4. Keluar")
+        when (readLine()) {
+            "1" -> {
+                print("Judul: ")
+                daftar += Todo(id++, readLine().orEmpty())
+            }
+            "2" -> daftar.firstOrNull { !it.selesai }?.selesai = true
+            "3" -> daftar.forEach { println("${it.id}. ${it.judul} " + if (it.selesai) "[x]" else "[ ]") }
+            "4" -> return
+            else -> println("Pilihan tidak dikenal")
+        }
+    }
+}
+```
+
+Aplikasi konsol ini harus bisa:
+
+| Fitur | Konsep Kotlin |
+|---|---|
+| Menyimpan todo | `data class` + `mutableListOf` |
+| Menambah todo | operator `+=` |
+| Menandai selesai | `firstOrNull` + properti mutable |
+| Menampilkan daftar | `forEach` + string template |
+| Memilih menu | `when` |
+
+## Model
+
+```kotlin
+data class Todo(
+    val id: Int,
+    val judul: String,
+    var selesai: Boolean = false
+)
+```
+
+`val` untuk id dan judul, `var` untuk status yang boleh berubah.
+
+## Logika Utama
+
+```kotlin
+fun selesaikan(daftar: MutableList<Todo>, id: Int): Boolean {
+    val todo = daftar.firstOrNull { it.id == id } ?: return false
+    todo.selesai = true
+    return true
+}
+```
+
+`Elvis operator ?:` mengembalikan false lebih awal bila todo tidak ditemukan.
+
+## Ringkasan
+
+```kotlin
+val selesai = daftar.count { it.selesai }
+println("Selesai: $selesai dari ${daftar.size}")
+```
+
+Proyek kecil ini merangkum hampir semua dasar Kotlin: variabel, tipe, koleksi, lambda, when, perulangan, dan data class.
+
+<div class="note">💡 Kembangkan proyek ini bertahap: tambahkan validasi judul kosong, penyimpanan ke file, lalu ubah status menjadi immutable dengan <code>copy()</code> setelah kamu nyaman dengan konsepnya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`data class Todo(val id: Int, val judul: String, var selesai: Boolean = false)
+
+fun main() {
+    val daftar = mutableListOf<Todo>()
+    var id = 1
+
+    while (true) {
+        println("1. Tambah  2. Selesai  3. Lihat  4. Keluar")
+        when (readLine()) {
+            "1" -> {
+                print("Judul: ")
+                daftar += Todo(id++, readLine().orEmpty())
+            }
+            "2" -> daftar.firstOrNull { !it.selesai }?.selesai = true
+            "3" -> daftar.forEach { println("\${it.id}. \${it.judul} " + if (it.selesai) "[x]" else "[ ]") }
+            "4" -> return
+            else -> println("Pilihan tidak dikenal")
+        }
+    }
+}`} />

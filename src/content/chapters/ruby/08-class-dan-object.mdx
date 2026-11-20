@@ -120,7 +120,7 @@ end
 | Pilar | Implementasi Ruby | Status |
 | --- | --- | --- |
 | Encapsulation | `private`, `protected`, `public` (3 visibilitas) + `attr_*` | Ada, berbasis konvensi method |
-| Inheritance | `class Anak < Induk` — pewarisan **tunggal** | Ada, dibatasi 1 induk |
+| Inheritance | `class Anak &lt; Induk` — pewarisan **tunggal** | Ada, dibatasi 1 induk |
 | Polymorphism | Duck typing: "jika memanggil method yang sama, dianggap tipe sama" | Ada tanpa interface |
 | Abstraction | Module/mixin + method yang melempar `NotImplementedError` | Tidak ada kata kunci `abstract` |
 
@@ -167,11 +167,15 @@ puts Titik.new(3, 4).x
 
 - **Model transaksi bank**: class `Rekening` menjaga saldo tetap positif lewat validasi di setter.
 - **Keranjang belanja sesi user**: tiap sesi punya objek `Keranjang` sendiri — `add`, `remove`, `total` tidak saling tabrak.
-- **Simulasi game**: `Pemain < Karakter` mewarisi `pindah` dan `serang` lalu menambah `level_up`.
+- **Simulasi game**: `Pemain &lt; Karakter` mewarisi `pindah` dan `serang` lalu menambah `level_up`.
 - **Integrasi payment gateway**: dua class `Midtrans` dan `Xendit` menjawab `charge(...)` — pemanggil tidak perlu tahu pakai yang mana.
 - **Konfigurasi lintas file**: module `Konfigurasi` berisi konstanta `PPN`, di-`include` ke mana pun butuh.
 
 <div class="note">💡 Enkapsulasi Ruby adalah kesepakatan, bukan pengamanan: instance variable `@harga` tetap bisa dibaca dari luar lewat `obj.instance_variable_get(:@harga)`, dan semua method bersifat public secara default. Tandailah `private` secara sadar — di Ruby, melindungi data berarti menulis batas yang jelas bagi pemakai class-mu.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`class Siswa
   attr_accessor :nama, :nilai
@@ -195,7 +199,7 @@ puts s.info
 s.nilai = 70
 puts s.info
 
-class Programmer < Siswa
+class Programmer &lt; Siswa
   def sapa
     "Saya #{@nama}, programmer"
   end

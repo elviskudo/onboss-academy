@@ -1,0 +1,107 @@
+---
+title: "Operator dan Ekspresi"
+description: "Operator perbandingan, aritmetika, logika, dan konkatenasi dalam query"
+order: 13
+quiz:
+  - q: "Operator untuk cek rentang nilai adalah…"
+    options: ["BETWEEN", "IN", "LIKE", "IS"]
+    answer: 0
+    explain: "BETWEEN a AND b mencakup kedua batas."
+  - q: "Operator LIKE dengan wildcard '%' berarti…"
+    options: ["Satu karakter", "Nol atau lebih karakter", "Karakter tepat satu digit", "Nilai kosong"]
+    answer: 1
+    explain: "% cocok dengan urutan karakter apa pun, termasuk kosong."
+  - q: "Untuk memeriksa NULL gunakan…"
+    options: ["= NULL", "IS NULL", "== NULL", "NULL()"]
+    answer: 1
+    explain: "Perbandingan = NULL menghasilkan unknown, bukan TRUE."
+  - q: "Hasil logika AND dari TRUE dan NULL adalah…"
+    options: ["TRUE", "FALSE", "NULL", "Error"]
+    answer: 2
+    explain: "NULL berarti tidak diketahui; AND dengan TRUE tetap tidak diketahui."
+  - q: "Operator konkatenasi standar SQL adalah…"
+    options: ["+", "||", "&", "."]
+    answer: 1
+    explain: "|| menggabungkan dua string menurut standar SQL; MySQL memakai CONCAT()."
+example:
+  code: |
+    SELECT nama FROM karyawan WHERE gaji BETWEEN 8000000 AND 11000000 AND departemen IS NOT NULL;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ekspresi SQL bisa muncul di `SELECT`, `WHERE`, `ORDER BY`, dan `HAVING`. Memahami tipe hasilnya membantu menghindari filter yang diam-diam salah.
+
+## Aritmetika dan Perbandingan
+
+```sql
+SELECT nama, gaji, gaji * 12 AS tahunan
+FROM karyawan
+WHERE gaji >= 8000000 AND gaji < 12000000;
+```
+
+Operator aritmetika: `+ - * / %`. Operator perbandingan: `= <> != &lt; > &lt;= >=`.
+
+## IN, BETWEEN, LIKE
+
+| Operator | Contoh | Arti |
+| --- | --- | --- |
+| `IN` | `dept IN ('Data','Product')` | salah satu dari daftar |
+| `BETWEEN` | `gaji BETWEEN 8e6 AND 11e6` | inklusif kedua ujung |
+| `LIKE` | `nama LIKE 'A%'` | awalan huruf A |
+| `LIKE` | `nama LIKE '%i'` | berakhiran i |
+| `LIKE` | `nama LIKE '%an%'` | mengandung "an" |
+
+Wildcard `_` mewakili **tepat satu** karakter, `%` mewakili nol atau lebih.
+
+## NULL adalah Keadaan Khusus
+
+```sql
+SELECT * FROM karyawan WHERE dept IS NULL;
+SELECT * FROM karyawan WHERE dept IS NOT NULL;
+```
+
+`NULL` bukan nol dan bukan string kosong. `NULL = NULL` menghasilkan *unknown*, jadi baris tidak lolos filter. Gunakan `IS NULL` / `IS NOT NULL`, atau `COALESCE(dept, 'Tanpa dept')` untuk memberi nilai pengganti.
+
+## Logika Tiga Nilai
+
+| A | B | A AND B | A OR B |
+| --- | --- | --- | --- |
+| TRUE | TRUE | TRUE | TRUE |
+| TRUE | NULL | NULL | TRUE |
+| FALSE | NULL | FALSE | NULL |
+| NULL | NULL | NULL | NULL |
+
+Karena itu, `WHERE dept != 'Data'` **tidak** mengembalikan baris yang `dept`-nya NULL. Tambahkan `OR dept IS NULL` bila itu yang dimaksud.
+
+## CASE sebagai Ekspresi
+
+```sql
+SELECT nama,
+       CASE
+         WHEN gaji >= 10000000 THEN 'Tinggi'
+         WHEN gaji >= 8000000 THEN 'Menengah'
+         ELSE 'Rendah'
+       END AS kategori
+FROM karyawan;
+```
+
+CASE mengevaluasi kondisi berurutan dan berhenti pada yang pertama terpenuhi.
+
+<div class="note">💡 Hindari `LIKE '%kata'` pada tabel jutaan baris: wildcard di awal mencegah index dipakai. Untuk pencarian teks penuh, gunakan FTS (full-text search).</div>
+
+## Di Dunia Nyata
+
+- **Filter tanggal**: `tanggal >= '2026-01-01' AND tanggal &lt; '2026-02-01'` lebih aman daripada BETWEEN pada kolom bertipe timestamp.
+- **Pencarian nama**: `LIKE '%Sari%'` untuk pencarian cepat di dropsown.
+- **Kategorisasi otomatis**: CASE mengubah angka menjadi label laporan.
+- **Data opsional**: COALESCE mengganti NULL agar grafik tidak kosong.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT nama, gaji,
+       CASE WHEN gaji >= 10000000 THEN 'Tinggi' ELSE 'Standar' END AS kelas
+FROM karyawan
+WHERE gaji BETWEEN 8000000 AND 12000000
+ORDER BY gaji DESC;`} />

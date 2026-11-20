@@ -1,0 +1,80 @@
+---
+title: "Firewall dan Segmentasi Jaringan"
+description: "Aturan trafik, DMZ, dan pembatasan akses lintas jaringan"
+order: 13
+quiz:
+  - q: "Firewall beroperasi pada lapisan…"
+    options: ["Lapisan fisik saja", "Jaringan dan transport (tergantung jenisnya)", "Lapisan presentasi saja", "Lapisan aplikasi saja"]
+    answer: 1
+    explain: "Firewall paket bekerja pada IP/port, WAF bekerja pada HTTP."
+  - q: "Aturan default yang aman adalah…"
+    options: ["Izinkan hanya port 80", "Tolak hanya port 22", "Tolak semua, lalu izinkan yang diperlukan", "Izinkan semua, lalu tolak yang mencurigakan"]
+    answer: 2
+    explain: "Prinsip default deny mengurangi permukaan yang terlupa."
+  - q: "DMZ digunakan untuk…"
+    options: ["Menyimpan password", "Mengganti router", "Menghapus log", "Menempatkan server publik terpisah dari jaringan internal"]
+    answer: 3
+    explain: "Jika server publik jebol, penyerang tidak langsung berada di jaringan internal."
+  - q: "Stateful firewall berbeda dengan stateless karena…"
+    options: ["Mengingat status koneksi", "Lebih lambat selalu", "Hanya untuk HTTP", "Tanpa aturan"]
+    answer: 0
+    explain: "Stateful bisa mengenali paket balasan dari koneksi yang sudah diizinkan."
+  - q: "Segmentasi jaringan bertujuan…"
+    options: ["Mengganti DNS", "Membatasi pergerakan lateral penyerang", "Menambah kecepatan internet", "Menghapus kebutuhan password"]
+    answer: 1
+    explain: "Jarak antar segmen memaksa trafik melewati kontrol."
+example:
+  code: |
+    # Konsep aturan (urutan penting)
+    1. allow  internal -> db:5432
+    2. allow  internet -> web:443
+    3. deny   internet -> db:5432
+    4. deny   any -> any
+---
+
+Firewall mengendalikan lalu lintas, tetapi kekuatannya bergantung pada aturan yang dibuat. Aturan yang terlalu longgar membuat investasi perangkat menjadi sia-sia.
+
+## Default Deny
+
+```text
+[ blokir semua ]
+[ izinkan HTTP/HTTPS dari publik ke DMZ ]
+[ izinkan DMZ -> database hanya di port 5432 ]
+[ izinkan admin -> DMZ lewat bastion ]
+```
+
+Aturan dievaluasi dari atas; aturan pertama yang cocok biasanya menang.
+
+## Zona
+
+| Zona | Isi | Akses keluar |
+|---|---|---|
+| Internet | Publik | Terbatas ke DMZ |
+| DMZ | Web, mail, API publik | Hanya ke service yang dibutuhkan |
+| Internal | Karyawan & aplikasi | Internet lewat proxy |
+| Management | Bastion, monitoring | Sangat terbatas |
+
+## Stateful vs Stateless
+
+Stateless memeriksa tiap paket secara mandiri. Stateful menyimpan tabel koneksi sehingga paket balasan diizinkan otomatis. Kebanyakan firewall modern stateful, tetapi aturan eksplisit tetap diperlukan untuk trafik baru.
+
+## Segmentasi Mikro
+
+```text
+web  ──> api  ──> db
+ │       │       │
+ └── hanya port yang dibutuhkan yang dibuka
+```
+
+Micro-segmentasi membatasi jalur antar layanan. Penyerang yang menguasai web tidak otomatis bisa masuk database.
+
+<div class="note">💡 Aturan firewall perlu ditinjau saat aplikasi berubah. Aturan "sementara untuk debugging" yang dibiarkan sering menjadi pintu masuk permanen.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Contoh daftar port yang perlu ditinjau:
+  22   SSH (batasi IP sumber)
+  443  HTTPS (publik)
+  5432 PostgreSQL (internal saja)
+  6379 Redis (jangan diekspos ke internet)`}</code></pre>

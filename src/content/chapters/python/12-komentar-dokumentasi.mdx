@@ -1,0 +1,109 @@
+---
+title: "Komentar & Dokumentasi"
+description: "Komentar baris, komentar blok, docstring, dan type hint sebagai dokumentasi hidup"
+order: 12
+quiz:
+  - q: "Cara menulis komentar satu baris di Python adalah…"
+    options: ["// komentar", "# komentar", "<!-- komentar -->", "-- komentar"]
+    answer: 1
+    explain: "Tanda pagar mengawali komentar sampai akhir baris."
+  - q: "Docstring ditulis dengan…"
+    options: ["Tiga tanda kutip setelah header fungsi", "Tanda // sebelum fungsi", "Kata kunci comment", "Tabulation khusus"]
+    answer: 0
+    explain: "Docstring memakai \"\"\" ... \"\"\" atau ''' ... ''' dan menjadi atribut __doc__."
+  - q: "Fungsi help() pada Python menampilkan…"
+    options: ["Daftar variabel global", "Docstring objek", "Isi file sumber", "Waktu eksekusi"]
+    answer: 1
+    explain: "help(fungsi) membaca docstring dan signature objek."
+  - q: "Type hint `def f(x: int) -> str` bersifat…"
+    options: ["Wajib dan memblokir runtime", "Hanya anotasi, tidak memaksa tipe saat runtime", "Pengganti return", "Fitur Python 2"]
+    answer: 1
+    explain: "Anotasi membantu tools statis; Python tetap dinamis saat dijalankan."
+  - q: "Komentar yang sebaiknya ditulis adalah…"
+    options: ["Menjelaskan 'apa' kode melakukan", "Menjelaskan 'mengapa' keputusan diambil", "Menduplikasi semua baris", "Menulis versi Python"]
+    answer: 1
+    explain: "Kode yang jelas menjelaskan 'apa'; komentar menjelaskan alasan atau constraint."
+example:
+  code: |
+    # komentar satu baris
+    def luas(p, l):
+        """Hitung luas persegi panjang.
+    
+        Args:
+            p: panjang (cm)
+            l: lebar (cm)
+        """
+        return p * l
+    
+    print(luas(4, 5))
+    print(luas.__doc__)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Komentar adalah catatan untuk pembaca kode, bukan untuk mesin. Python mengabaikannya saat mengeksekusi program.
+
+## Komentar Baris
+
+```python
+# ini komentar
+x = 10  # komentar di akhir baris
+```
+
+Gunakan spasi dua kali sebelum `#` inline agar mudah dibaca. Hindari komentar yang hanya mengulang kode: `x = 10  # set x ke 10` tidak menambah informasi.
+
+## Docstring
+
+Docstring adalah string literal pada baris pertama modul, class, atau fungsi. Ia menjadi dokumentasi resmi yang bisa dibaca `help()`.
+
+```python
+def rata_rata(nilai):
+    """Kembalikan rata-rata dari list angka.
+
+   .List angka kosong mengembalikan 0 agar pemanggil tidak perlu cek dulu.
+    """
+    return sum(nilai) / len(nilai) if nilai else 0
+```
+
+| Objek | Letak docstring | Diakses lewat |
+|---|---|---|
+| Modul | baris paling atas file | `help(modul)` |
+| Fungsi | baris pertama setelah `def` | `help(f)` / `f.__doc__` |
+| Class | baris pertama setelah `class` | `help(Kelas)` |
+
+## Type Hint
+
+Sejak Python 3.5, kamu bisa menulis tipe parameter dan hasil. Ini bukan paksaan runtime, tapi petunjuk untuk editor, `mypy`, dan rekan tim.
+
+```python
+def sapa(nama: str, umur: int = 0) -> str:
+    return f"Halo {nama}, umur {umur}"
+
+def total(items: list[float]) -> float:
+    return sum(items)
+```
+
+<div class="note">💡 Tulis komentar untuk menjelaskan <b>alasan</b>, bukan <b>apa</b> yang terjadi. `x = x * 0.9` sudah jelas menghitung diskon 10%; komentar yang berguna adalah "diskon diberikan sebelum pajak sesuai aturan SO-2024".</div>
+
+## Kapan Berkomentar
+
+- Konstanta ajaib: jelaskan mengapa batasnya 30, bukan 31.
+- Workaround: sebutkan issue/library versi yang bermasalah.
+- Algoritma kompleks: ringkas strategi di atas blok sebelum kode.
+- API publik: selalu pakai docstring agar `help()` berguna.
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`# komentar satu baris
+def luas(p, l):
+    """Hitung luas persegi panjang.
+
+    Args:
+        p: panjang (cm)
+        l: lebar (cm)
+    """
+    return p * l
+
+print(luas(4, 5))
+print(luas.__doc__)`} />

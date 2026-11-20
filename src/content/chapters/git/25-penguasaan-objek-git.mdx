@@ -1,0 +1,116 @@
+---
+title: Mengenal Objek Git di Balik Layar
+description: Memahami blob, tree, commit, dan referensi yang membentuk database Git.
+order: 25
+quiz:
+- q: Empat jenis objek dasar Git adalah…
+  options:
+  - head, index, stage, work
+  - blob, tree, commit, tag
+  - file, folder, branch, remote
+  - text, image, video, audio
+  answer: 1
+  explain: Semua objek disimpan di .git/objects dan diidentifikasi oleh hash SHA.
+- q: Blob menyimpan…
+  options:
+  - Daftar commit
+  - Konfigurasi remote
+  - Isi file tanpa nama
+  - Nama file saja
+  answer: 2
+  explain: Nama file dan struktur disimpan objek tree.
+- q: Commit objek berisi…
+  options:
+  - Hanya pesan
+  - Hanya hash file
+  - Hanya branch
+  - Pointer ke tree, parent, penulis, dan pesan
+  answer: 3
+  explain: Commit adalah snapshot lengkap yang merujuk ke tree akar.
+- q: Perintah melihat isi objek adalah…
+  options:
+  - git cat-file -p <hash>
+  - git show-object
+  - git object read
+  - git hash print
+  answer: 0
+  explain: -p menampilkan isi objek dalam bentuk yang bisa dibaca.
+- q: Index pada Git adalah…
+  options:
+  - File konfigurasi
+  - Area staging yang berisi snapshot yang akan di-commit
+  - Tempat menyimpan remote
+  - Folder objek
+  answer: 1
+  explain: git add memperbarui index; git commit membuat objek commit dari index.
+example:
+  code: 'echo "halo" | git hash-object --stdin
+
+    git cat-file -t <hash>
+
+    git cat-file -p <hash>
+
+    '
+---
+
+
+Git sering terasa seperti sihir sampai Anda melihat **objek**-nya. Semuanya adalah empat jenis dasar yang disimpan berdasarkan hash konten.
+
+## Jenis Objek
+
+| Objek | Berisi |
+|---|---|
+| blob | isi file mentah |
+| tree | daftar nama file dan pointer blob/tree |
+| commit | tree, parent, penulis, waktu, pesan |
+| tag | penanda ke objek lain (+ metadata) |
+
+```bash
+echo "halo" | git hash-object --stdin
+# 3b18e512dba79e4c8300dd08aeb37f8e728b8dad
+```
+
+Hash dihitung dari isi + header, sehingga isi sama selalu menghasilkan hash sama.
+
+## Membongkar Satu Commit
+
+```bash
+git log --oneline -1
+git cat-file -p HEAD
+git cat-file -p HEAD^{tree}
+git cat-file -p <hash-blob>
+```
+
+```text
+tree 9a3f...
+parent 2b7c...
+author Sinta <sinta@x.id> 1700000000 +0700
+
+Tambah README
+```
+
+## Area Staging
+
+```text
+working tree --git add--> index --git commit--> objek commit
+```
+
+Index adalah snapshot sementara. Itu sebabnya file yang diubah setelah `git add` tidak otomatis masuk commit — Anda harus `git add` lagi.
+
+## Referensi
+
+```bash
+cat .git/HEAD
+ls .git/refs/heads
+git show-ref
+```
+
+Branch hanyalah **pointer ke commit**. Saat commit baru dibuat, pointer branch bergerak maju.
+
+<div class="note">💡 Karena objek bersifat content-addressed, Git sangat efisien: dua file identik hanya disimpan sekali, walau muncul di banyak commit.</div>
+
+## Kapan Pengetahuan Ini Berguna
+
+- Memahami mengapa `reset --soft`, `--mixed`, dan `--hard` berbeda.
+- Memulihkan objek yang “hilang” lewat hash dari `git fsck`.
+- Men-debug alat yang menulis objek secara langsung.

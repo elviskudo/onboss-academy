@@ -1,0 +1,142 @@
+---
+"title": "Regular Expression"
+"description": "Pola pencocokan teks dengan Regex: character class, quantifier, group, dan validasi"
+"order": 23
+"quiz":
+- "q": "Kelas yang dipakai untuk regex di C# adalah…"
+  "options":
+  - "Regex"
+  - "Pattern"
+  - "Matcher"
+  - "RegEx"
+  "answer": 0
+  "explain": "Kelas System.Text.RegularExpressions.Regex."
+- "q": "Pola \\d artinya…"
+  "options":
+  - "huruf apa saja"
+  - "satu digit angka"
+  - "spasi"
+  - "titik"
+  "answer": 1
+  "explain": "\\d cocok dengan satu karakter angka 0–9."
+- "q": "Quantifier + berarti…"
+  "options":
+  - "nol atau lebih"
+  - "satu atau lebih"
+  - "tepat satu"
+  - "opsional"
+  "answer": 1
+  "explain": "a+ cocok dengan satu atau lebih huruf a."
+- "q": "Method Regex.IsMatch mengembalikan…"
+  "options":
+  - "string"
+  - "bool"
+  - "int"
+  - "MatchCollection"
+  "answer": 1
+  "explain": "IsMatch bernilai true jika pola ditemukan di teks."
+- "q": "Untuk menangkap bagian tertentu dari pola, gunakan…"
+  "options":
+  - "kurung siku []"
+  - "kurung bulat ()"
+  - "kurung kurawal {}"
+  - "tanda pipe |"
+  "answer": 1
+  "explain": "Group ditulis dengan kurung bulat dan dibaca lewat Match.Groups."
+"example":
+  "code": "using System;\nusing System.Text.RegularExpressions;\nclass Program\n{\n    static void Main()\n    {\n        Console.WriteLine(Regex.IsMatch(\"abc123\", @\"\\d+\"));\n        Match m = Regex.Match(\"Rani, 22\", @\"(\\w+), (\\d+)\");\n        Console.WriteLine(m.Groups[1].Value + \" \" + m.Groups[2].Value);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Regex adalah mini-bahasa untuk mencocokkan pola teks. Di C#, semua ada di namespace `System.Text.RegularExpressions`.
+
+## Dasar Pola
+
+| Pola | Arti |
+|---|---|
+| `.` | Karakter apa saja kecuali newline |
+| `\d` | Digit |
+| `\w` | Huruf, digit, atau underscore |
+| `\s` | Spasi |
+| `[abc]` | Salah satu dari a, b, c |
+| `[^abc]` | Bukan a, b, atau c |
+| `^` / `$` | Awal / akhir teks |
+
+## Quantifier
+
+| Quantifier | Arti |
+|---|---|
+| `*` | Nol atau lebih |
+| `+` | Satu atau lebih |
+| `?` | Nol atau satu |
+| `{n}` | Tepat n kali |
+| `{n,m}` | Antara n sampai m |
+
+```csharp
+Regex.IsMatch("a123", @"^[a-z]+\d+$"); // true
+```
+
+## Method Utama
+
+```csharp
+bool cocok = Regex.IsMatch(teks, pola);
+Match pertama = Regex.Match(teks, pola);
+MatchCollection semua = Regex.Matches(teks, pola);
+string hasil = Regex.Replace(teks, pola, "ganti");
+string[] pecahan = Regex.Split(teks, @",\s*");
+```
+
+## Group
+
+Kurung bulat menangkap bagian pola:
+
+```csharp
+Match m = Regex.Match("Rani|22", @"^(\w+)\|(\d+)$");
+Console.WriteLine(m.Groups[1].Value); // Rani
+Console.WriteLine(m.Groups[2].Value); // 22
+```
+
+## Verbatim String
+
+Gunakan `@"..."` agar backslash tidak perlu ditulis dobel:
+
+```csharp
+Regex.IsMatch(email, @"^[\w.]+@[\w.]+\.\w+$");
+```
+
+## Opsi & Performance
+
+```csharp
+var re = new Regex(@"abc", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+```
+
+`Compiled` menguntungkan bila pola dipakai berulang kali. Untuk input yang tak dipercaya, batasi waktu dengan `TimeSpan` agar tidak terjadi *catastrophic backtracking*.
+
+<div class="note">💡 Regex bagus untuk validasi sederhana, tapi jangan dipakai untuk mem-parsing HTML. Gunakan parser HTML khusus untuk itu.</div>
+
+## Try it Yourself
+
+Ganti pola `^\d+$` dengan pola lain untuk mencocokkan data berbeda.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Text.RegularExpressions;
+
+class Program
+{
+    static void Main()
+    {
+        string[] data = { "Rani22", "12345", "abc-def", "rani@example.com" };
+
+        Console.WriteLine("-- Hanya digit --");
+        foreach (string s in data)
+            Console.WriteLine(s + " -> " + Regex.IsMatch(s, @"^\d+$"));
+
+        Match m = Regex.Match("Rani, 22", @"^(\w+), (\d+)$");
+        if (m.Success)
+            Console.WriteLine("Tangkap: " + m.Groups[1].Value + " umur " + m.Groups[2].Value);
+
+        Console.WriteLine(Regex.Replace("a1b2c3", @"\d", "#"));
+        Console.WriteLine(string.Join(" | ", Regex.Split("a, b,  c", @",\s*")));
+    }
+}`} />

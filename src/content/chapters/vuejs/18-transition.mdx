@@ -1,0 +1,119 @@
+---
+title: "Transition & Animation"
+description: "komponen Transition, transition group, dan CSS animation"
+order: 18
+quiz:
+  - q: "Komponen untuk animasi elemen masuk/keluar adalah…"
+    options: ["<Motion>", "<Fade>", "<Transition>", "<Animate>"]
+    answer: 2
+    explain: "Transition membungkus satu elemen atau komponen."
+  - q: "Kelas `v-enter-from` dipakai saat…"
+    options: ["Saat error", "Sebelum elemen masuk", "Sesudah elemen masuk", "Saat elemen keluar"]
+    answer: 1
+    explain: "Diikuti v-enter-active dan v-enter-to."
+  - q: "<TransitionGroup> berguna untuk…"
+    options: ["Satu tombol", "Header", "CSS saja", "Daftar yang bisa ditambah/dihapus"]
+    answer: 3
+    explain: "Juga perlu key unik pada tiap item."
+  - q: "Prop mode=\"out-in\" berarti…"
+    options: ["Urutan dibalik", "Elemen lama keluar dulu yang baru masuk", "Keduanya bersamaan", "Tidak ada animasi"]
+    answer: 1
+    explain: "Menghindari tumpang tindih saat berganti komponen."
+  - q: "Transition dengan JavaScript memakai…"
+    options: ["Hook @before-enter, @enter, @after-enter", "v-if saja", "computed", "watch"]
+    answer: 0
+    explain: "Bisa dipasangkan dengan library seperti GSAP."
+example:
+  code: |
+    <Transition name="fade">
+      <p v-if="tampil">Halo!</p>
+    </Transition>
+
+    .fade-enter-active, .fade-leave-active { transition: opacity .3s; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Transisi membuat perubahan state terasa lebih halus. Vue menyediakan pembungkus yang mengelola kelas CSS otomatis.
+
+## Transition Sederhana
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const tampil = ref(true)
+</script>
+
+<template>
+  <button @click="tampil = !tampil">Toggle</button>
+
+  <Transition name="fade">
+    <p v-if="tampil">Selamat datang!</p>
+  </Transition>
+</template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity .3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
+```
+
+## Enam Kelas
+
+| Masuk | Keluar |
+|-------|--------|
+| `v-enter-from` | `v-leave-from` |
+| `v-enter-active` | `v-leave-active` |
+| `v-enter-to` | `v-leave-to` |
+
+Ganti `v` dengan nama pada `name="fade"`.
+
+## Daftar
+
+```vue
+<TransitionGroup name="daftar" tag="ul">
+  <li v-for="item in items" :key="item.id">{{ item.nama }}</li>
+</TransitionGroup>
+```
+
+```css
+.daftar-move { transition: transform .3s; }
+.daftar-enter-active, .daftar-leave-active { transition: all .3s; }
+.daftar-enter-from, .daftar-leave-to { opacity: 0; transform: translateX(20px); }
+```
+
+## Ganti Komponen
+
+```vue
+<Transition name="geser" mode="out-in">
+  <component :is="komponenSaatIni" :key="komponenSaatIni" />
+</Transition>
+```
+
+## Hook JavaScript
+
+```vue
+<Transition
+  @enter="(el, done) => { el.animate([...]).finished.then(done) }"
+>
+  ...
+</Transition>
+```
+
+Call `done()` saat animasi selesai supaya Vue tahu kapan menghapus elemen.
+
+<div class="note">💡 Selalu sertakan `prefers-reduced-motion` bila animasinya kuat. Sebagian pengguna lebih nyaman tanpa gerakan.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan urutan kelas transition
+function kelasTransisi(fase, arah) {
+  return \`\${arah}-\${fase}\`;
+}
+
+console.log(kelasTransisi("enter-from", "fade"));
+console.log(kelasTransisi("enter-active", "fade"));
+console.log(kelasTransisi("enter-to", "fade"));`} />

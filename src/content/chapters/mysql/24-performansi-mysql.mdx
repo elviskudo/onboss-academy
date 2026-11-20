@@ -1,0 +1,111 @@
+---
+title: "Diagnostik Performansi MySQL"
+description: "Slow query log, EXPLAIN ANALYZE, profiling, dan konfigurasi buffer"
+order: 24
+quiz:
+  - q: "Tempat mencari query lambat adalah…"
+    options: ["Slow query log", "Error log saja", "Binary log", "General log saja"]
+    answer: 0
+    explain: "Slow query log mencatat query yang melewati long_query_time."
+  - q: "Perintah analisis rencana dengan eksekusi nyata adalah…"
+    options: ["EXPLAIN ANALYZE", "DESCRIBE", "SHOW CREATE", "PROFILE TABLE"]
+    answer: 0
+    explain: "MySQL 8.0.18+ menyediakan EXPLAIN ANALYZE."
+  - q: "innodb_buffer_pool_size sebaiknya…"
+    options: ["Sekecil mungkin", "Cukup besar untuk data aktif", "Selalu 1 GB", "Sama dengan log size"]
+    answer: 1
+    explain: "Buffer pool menyimpan halaman data dan index yang sering dipakai."
+  - q: "Using filesort dalam EXPLAIN berarti…"
+    options: ["Sorting biasanya di memori/disk", "File rusak", "Index FULLTEXT", "Query gagal"]
+    answer: 0
+    explain: "Filesort adalah istilah internal untuk sorting di luar index."
+  - q: "Penyebab umum query lambat adalah…"
+    options: ["Index tidak dipakai", "Terlalu banyak kolom di SELECT", "Semua sudah benar", "Koneksi terlalu cepat"]
+    answer: 0
+    explain: "Full table scan dan sort tanpa index paling sering ditemukan."
+example:
+  code: |
+    SET long_query_time=1; EXPLAIN SELECT * FROM karyawan WHERE dept='Engineering'; SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Diagnostik performansi dimulai dari bukti: query mana yang lambat, berapa sering, dan apa rencananya. MySQL menyediakan slow query log, EXPLAIN, dan berbagai status variable.
+
+## Slow Query Log
+
+```sql
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;
+SET GLOBAL log_queries_not_using_indexes = 'ON';
+SHOW VARIABLES LIKE 'slow_query%';
+```
+
+Di produksi, sebaiknya gunakan konfigurasi file agar tetap aktif setelah restart. Analisis dengan `mysqldumpslow` atau tools lain.
+
+## EXPLAIN
+
+```sql
+EXPLAIN SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering';
+```
+
+Kolom penting:
+
+| Kolom | Arti |
+| --- | --- |
+| `type` | ALL = full scan; const/ref/range = baik |
+| `key` | index yang dipakai |
+| `rows` | estimasi baris dibaca |
+| `Extra` | Using index bagus; Using temporary/filesort perlu perhatian
+
+## EXPLAIN ANALYZE
+
+```sql
+EXPLAIN ANALYZE
+SELECT dept, COUNT(*) FROM karyawan GROUP BY dept;
+```
+
+Berbeda dengan EXPLAIN biasa, perintah ini benar-benar menjalankan query dan menunjukkan waktu serta jumlah baris aktual.
+
+## Konfigurasi Utama
+
+| Variabel | Fungsi |
+| --- | --- |
+| `innodb_buffer_pool_size` | cache data + index |
+| `innodb_log_file_size` | ukuran redo log |
+| `max_connections` | batas koneksi bersamaan |
+| `query_cache_size` | dihapus di MySQL 8 |
+
+Ubah satu variabel pada satu waktu dan ukur dampaknya.
+
+## Pola Query yang Sering Lambat
+
+```sql
+-- Fungsi pada kolom menghalangi index
+WHERE YEAR(tanggal) = 2026
+
+-- Wildcard di awal
+WHERE nama LIKE '%kopi'
+
+-- Select kolom tak perlu
+SELECT * FROM pesanan
+
+-- OFFSET besar
+LIMIT 10000, 20
+```
+
+<div class="note">💡 Optimizer bisa salah memilih index bila statistik basi. Jalankan `ANALYZE TABLE` setelah perubahan data besar sebelum menyimpulkan index itu "tidak berguna".</div>
+
+## Di Dunia Nyata
+
+- **Endpoint lambat**: slow log menunjukkan query yang dipanggil 500 kali per menit.
+- **Dashboard**: GROUP BY tanpa index menyebabkan temporary table.
+- **Paging**: keyset pagination menggantikan OFFSET besar.
+- **Kapasitas**: buffer pool terlalu kecil membuat I/O disk tinggi.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`EXPLAIN SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering' ORDER BY gaji DESC;
+SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
+SHOW STATUS LIKE 'Slow_queries';`} />

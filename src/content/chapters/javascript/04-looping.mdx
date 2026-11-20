@@ -25,7 +25,7 @@ quiz:
     explain: "Selalu pastikan ada update variabel kondisi di dalam loop."
 example:
   code: |
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i &lt;= 5; i++) {
       console.log("Perulangan ke-" + i);
     }
     const buah = ["apel", "jeruk", "mangga"];
@@ -38,7 +38,7 @@ Looping membuat komputer mengulang pekerjaan membosankan jadi satu baris. JavaSc
 
 | Bentuk | Kapan dipakai | Contoh |
 |--------|---------------|--------|
-| `for` | Jumlah iterasi diketahui / perlu index | `for (let i = 0; i < 5; i++)` |
+| `for` | Jumlah iterasi diketahui / perlu index | `for (let i = 0; i &lt; 5; i++)` |
 | `while` | Iterasi berhenti saat kondisi berubah | `while (saldo > 0)` |
 | `do...while` | Minimal sekali jalan (dicek di akhir) | `do { … } while (kondisi)` |
 | `for...of` | Iterasi **nilai** array/iterable | `for (const b of buah)` |
@@ -157,13 +157,17 @@ const ketemu = [1, 2, 3].some((n) => n > 2); // true — berhenti di 3
 
 <div class="note">💡 Loop tak terbatas (*infinite loop*) membekukan tab browser. Aturan emas: setiap `while` wajib punya baris yang mengubah kondisi menuju `false` — kalau ragu, pakai `for` yang batasnya eksplisit.</div>
 
+## Try it Yourself
+
+Ubah batas perulangan untuk melihat jumlah iterasinya.
+
 <TryIt lang="javascript" runtime="client-js" code={`// Tabel perkalian
-for (let i = 1; i <= 5; i++) {
+for (let i = 1; i &lt;= 5; i++) {
   let baris = "";
-  for (let j = 1; j <= 5; j++) baris += (i * j).toString().padStart(4);
+  for (let j = 1; j &lt;= 5; j++) baris += (i * j).toString().padStart(4);
   console.log(baris);
 }
 // Deret bilangan ganjil sampai 15
 const ganjil = [];
-for (let n = 1; n <= 15; n += 2) ganjil.push(n);
+for (let n = 1; n &lt;= 15; n += 2) ganjil.push(n);
 console.log("Ganjil:", ganjil.join(", "));`} />

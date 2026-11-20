@@ -1,0 +1,125 @@
+---
+title: "View dan Stored Routine MySQL"
+description: "View, stored procedure, function, dan trigger untuk logika di database"
+order: 20
+quiz:
+  - q: "View adalah…"
+    options: ["Tabel fisik", "Query tersimpan yang tampil seperti tabel", "Index", "Trigger"]
+    answer: 1
+    explain: "View tidak menyimpan data, hanya definisi SELECT."
+  - q: "Perintah membuat view adalah…"
+    options: ["CREATE VIEW", "MAKE VIEW", "NEW VIEW", "SET VIEW"]
+    answer: 0
+    explain: "CREATE VIEW nama AS SELECT ...;"
+  - q: "Stored procedure dipanggil dengan…"
+    options: ["CALL", "EXECUTE VIEW", "RUN PROCEDURE", "SELECT PROCEDURE"]
+    answer: 0
+    explain: "CALL nama_prosedur();"
+  - q: "Trigger dijalankan saat…"
+    options: ["SELECT", "INSERT/UPDATE/DELETE", "CREATE INDEX", "COMMIT saja"]
+    answer: 1
+    explain: "Trigger melekat pada event DML pada tabel."
+  - q: "Kelemahan logic di database adalah…"
+    options: ["Tidak bisa dipakai aplikasi", "Sulit di-version-control dan di-test", "Selalu lebih lambat", "Tidak ada kelemahan"]
+    answer: 1
+    explain: "Routine perlu tooling testing dan deployment yang disiplin."
+example:
+  code: |
+    CREATE VIEW v_ringkas AS SELECT dept, COUNT(*) AS n FROM karyawan GROUP BY dept; SELECT * FROM v_ringkas;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+MySQL menyimpan logika tidak hanya di aplikasi, tetapi juga di dalam database lewat view, stored procedure, function, dan trigger. Gunakan dengan bijak: ini bisa menyederhanakan, tapi juga menyembunyikan kompleksitas.
+
+## View
+
+```sql
+CREATE VIEW v_karyawan_publik AS
+SELECT id, nama, jabatan FROM karyawan;
+
+SELECT * FROM v_karyawan_publik WHERE jabatan LIKE '%Developer%';
+CREATE OR REPLACE VIEW v_karyawan_publik AS SELECT id, nama FROM karyawan;
+DROP VIEW IF EXISTS v_karyawan_publik;
+```
+
+View bisa membatasi kolom sensitif dan menyederhanakan join berulang.
+
+## Stored Procedure
+
+```sql
+DELIMITER //
+CREATE PROCEDURE ringkas_dept(IN p_dept VARCHAR(50))
+BEGIN
+  SELECT COUNT(*) AS jumlah, AVG(gaji) AS rata
+  FROM karyawan
+  WHERE dept = p_dept;
+END//
+DELIMITER ;
+
+CALL ringkas_dept('Engineering');
+```
+
+`DELIMITER //` diperlukan di klien mysql agar titik koma di dalam badan prosedur tidak mengakhiri statement pembuat.
+
+## Stored Function
+
+```sql
+DELIMITER //
+CREATE FUNCTION level_gaji(g DECIMAL(12,2))
+RETURNS VARCHAR(10)
+DETERMINISTIC
+BEGIN
+  IF g >= 10000000 THEN RETURN 'Tinggi';
+  ELSE RETURN 'Standar';
+  END IF;
+END//
+DELIMITER ;
+```
+
+Fungsi bisa dipakai di SELECT seperti fungsi bawaan. Hindari fungsi yang melakukan query berat per baris.
+
+## Trigger
+
+```sql
+CREATE TABLE audit_karyawan (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ aksi VARCHAR(20), id_karyawan INT, waktu DATETIME DEFAULT NOW()
+);
+
+DELIMITER //
+CREATE TRIGGER trg_karyawan_ai AFTER INSERT ON karyawan
+FOR EACH ROW
+BEGIN
+  INSERT INTO audit_karyawan(aksi, id_karyawan)
+  VALUES ('INSERT', NEW.id);
+END//
+DELIMITER ;
+```
+
+## Kapan Dipakai
+
+| Kebutuhan | Pilihan |
+| --- | --- |
+| Menyederhanakan query laporan | View |
+| Validasi lintas tabel di DB | Trigger |
+| Proses berulang dengan transaksi | Procedure |
+| Perhitungan kecil dipakai query | Function |
+
+<div class="note">💡 Simpan definisi routine di file SQL yang masuk version control. Routine yang hanya ada di server dan tidak didokumentasikan sangat sulit dipelihara.</div>
+
+## Di Dunia Nyata
+
+- **RBAC**: view tanpa kolom gaji untuk akun tertentu.
+- **Audit**: trigger mencatat perubahan data sensitif.
+- **Laporan**: view standar dipakai banyak dashboard.
+- **Batch**: procedure menjalankan serangkaian UPDATE dalam transaksi.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE VIEW v_ringkas AS
+SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata
+FROM karyawan GROUP BY dept;
+SELECT * FROM v_ringkas ORDER BY rata DESC;
+SELECT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE();`} />

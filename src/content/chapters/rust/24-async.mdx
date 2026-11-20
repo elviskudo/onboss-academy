@@ -1,0 +1,142 @@
+---
+"title": "Async/Await dengan Tokio"
+"description": "Future, async fn, await, Tokio runtime, dan konkurensi I/O"
+"order": 24
+"quiz":
+- "q": "async fn mengembalikan…"
+  "options":
+  - "nilai langsung"
+  - "Future"
+  - "Thread"
+  - "Result"
+  "answer": 1
+  "explain": "async fn menghasilkan tipe yang mengimplementasikan Future."
+- "q": "Agar Future benar-benar jalan, perlu…"
+  "options":
+  - "dipanggil saja"
+  - "di-await atau di-spawn"
+  - "di-clone"
+  - "di-cast"
+  "answer": 1
+  "explain": "Future lazy — tidak ada kerja sampai di-poll oleh executor."
+- "q": "Crate runtime async populer untuk Rust adalah…"
+  "options":
+  - "Tokio"
+  - "Django"
+  - "Spring"
+  - "Gin"
+  "answer": 0
+  "explain": "Tokio menyediakan executor, timer, networking, dan sinkronisasi async."
+- "q": "Atribut untuk menjalankan fungsi async sebagai titik masuk adalah…"
+  "options":
+  - "#[tokio::main]"
+  - "#[async]"
+  - "#[runtime]"
+  - "#[main(async)]"
+  "answer": 0
+  "explain": "Makro ini membuat runtime dan mem-blok sampai future selesai."
+- "q": "tokio::join! berguna untuk…"
+  "options":
+  - "menjalankan future secara konkuren"
+  - "menghentikan runtime"
+  - "membuat thread"
+  - "mengunci mutex"
+  "answer": 0
+  "explain": "join! menunggu beberapa future bersamaan pada thread yang sama."
+"example":
+  "code": "#[tokio::main]\nasync fn main() {\n    println!(\"halo async\");\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Async Rust cocok untuk aplikasi dengan banyak operasi I/O: server web, klien API, atau database. Beda dengan thread, task async sangat murah dan dijalankan di atas sedikit thread.
+
+## Future
+
+```rust
+async fn ambil() -> i32 {
+    42
+}
+```
+
+Memanggil `ambil()` belum menjalankan apa pun. Ia mengembalikan `Future` yang akan di-poll oleh runtime.
+
+## Tokio
+
+```toml
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+```
+
+```rust
+#[tokio::main]
+async fn main() {
+    let hasil = ambil().await;
+    println!("{}", hasil);
+}
+```
+
+## Konkurensi
+
+```rust
+let (a, b) = tokio::join!(tugas(1), tugas(2));
+```
+
+`join!` menjalankan keduanya secara konkuren di task yang sama. Untuk task yang benar-benar latar belakang:
+
+```rust
+let h = tokio::spawn(async {
+    // kerja panjang
+});
+h.await.unwrap();
+```
+
+## Sleep & Timeout
+
+```rust
+tokio::time::sleep(Duration::from_millis(100)).await;
+
+let hasil = tokio::time::timeout(
+    Duration::from_secs(2),
+    ambil_data(),
+).await;
+```
+
+Gunakan timer async, bukan `std::thread::sleep`, agar runtime bisa memakai thread untuk task lain.
+
+## Async Mutex
+
+```rust
+use tokio::sync::Mutex;
+let data = Arc::new(Mutex::new(0));
+*data.lock().await += 1;
+```
+
+`tokio::Mutex` tidak mem-blok thread saat menunggu.
+
+<div class="note">💡 Jangan memanggil fungsi blocking yang lama di dalam task async — itu membekukan worker. Pindahkan ke `spawn_blocking` bila perlu.</div>
+
+
+## Try it Yourself
+
+Contoh ini memakai async-std style sederhana tanpa crate:Future langsung.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+struct Siap(i32);
+
+impl Future for Siap {
+    type Output = i32;
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<i32> {
+        Poll::Ready(self.0)
+    }
+}
+
+fn main() {
+    // Demonstrasi konsep: Future tidak jalan sampai di-poll.
+    let fut = Siap(21);
+    println!("future dibuat: {:?}", std::any::type_name_of_val(&fut));
+    println!("nilainya: {}", fut.0 * 2);
+}`} />

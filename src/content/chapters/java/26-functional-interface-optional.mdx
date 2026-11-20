@@ -1,0 +1,115 @@
+---
+title: "Optional & Functional Style"
+description: "Optional, default method, dan pola functional untuk kode Java modern"
+order: 26
+quiz:
+  - q: "Optional berguna untuk…"
+    options: ["Mengganti semua null", "Menandai nilai yang mungkin tidak ada secara eksplisit", "Menyimpan list", "Mempercepat loop"]
+    answer: 1
+    explain: "Optional membuat kontrak API lebih jujur."
+  - q: "Cara aman membuat Optional dari nilai yang bisa null adalah…"
+    options: ["Optional.of(x)", "Optional.ofNullable(x)", "new Optional(x)", "Optional.create(x)"]
+    answer: 1
+    explain: "of() akan NPE bila null; ofNullable() menghasilkan Optional.empty()."
+  - q: "`orElse(...)` berbeda dengan `orElseGet(...)` karena…"
+    options: ["orElse selalu dievaluasi", "orElseGet selalu dievaluasi", "Tidak ada beda", "orElse hanya untuk String"]
+    answer: 0
+    explain: "orElse menghitung argumen di awal; orElseGet malas (lazy)."
+  - q: "Default method pada interface memungkinkan…"
+    options: ["Implementasi method tanpa abstract", "Multiple inheritance field", "Menghapus class", "Membuat constructor"]
+    answer: 0
+    explain: "Sejak Java 8, interface boleh punya method dengan body."
+  - q: "`ifPresent(v -> ...)` menjalankan lambda saat…"
+    options: ["Optional kosong", "Optional berisi nilai", "Selalu", "Tidak pernah"]
+    answer: 1
+    explain: "Ini alternatif ringkas dari cek isPresent()."
+example:
+  code: |
+    import java.util.*;
+    
+    public class Main {
+      static Optional<String> cari(int id) {
+        return id == 1 ? Optional.of("Sari") : Optional.empty();
+      }
+    
+      public static void main(String[] args) {
+        String nama = cari(2).orElse("Tamu");
+        System.out.println(nama);
+        cari(1).ifPresent(n -> System.out.println("Ditemukan: " + n));
+        System.out.println(cari(3).map(String::toUpperCase).orElse("KOSONG"));
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Java modern mendorong gaya lebih deklaratif: Optional untuk nilai yang bisa tidak ada, method reference, dan pipeline Stream.
+
+## Optional
+
+```java
+Optional<User> user = repository.cari(id);
+
+user.ifPresent(u -> System.out.println(u.nama()));
+String nama = user.map(User::nama).orElse("Anonim");
+```
+
+## Membuat Optional
+
+```java
+Optional.of("ada");            // harus non-null
+Optional.ofNullable(bisaNull); // aman
+Optional.empty();              // kosong
+```
+
+## orElse vs orElseGet vs orElseThrow
+
+```java
+String a = opt.orElse(buatDefaultMahal());   // dipanggil selalu
+String b = opt.orElseGet(() -> buatDefaultMahal()); // hanya jika kosong
+String c = opt.orElseThrow(() -> new NotFoundException());
+```
+
+Gunakan `orElseGet` bila pembuatan default mahal (query, I/O).
+
+## Hindari Pola Ini
+
+```java
+if (opt.isPresent()) { return opt.get(); }  // ← sama saja dengan null check
+```
+
+Lebih baik: `map`, `filter`, `ifPresent`, `orElse`.
+
+## Default & Static Method di Interface
+
+```java
+interface Pembayaran {
+    double total();
+
+    default double pajak() { return total() * 0.1; }
+
+    static String deskripsi() { return "Modul pembayaran"; }
+}
+```
+
+Default method memungkinkan menambah method ke interface tanpa memaksa semua implementasi berubah — kunci evolusi API JDK.
+
+<div class="note">💡 Optional paling cocok sebagai <b>return value</b>. Jangan dipakai sebagai field atau parameter method — itu menambah objek wrapper tanpa manfaat besar dan membuat API lebih berisik.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.*;
+
+public class Main {
+  static Optional<String> cari(int id) {
+    return id == 1 ? Optional.of("Sari") : Optional.empty();
+  }
+
+  public static void main(String[] args) {
+    String nama = cari(2).orElse("Tamu");
+    System.out.println(nama);
+    cari(1).ifPresent(n -> System.out.println("Ditemukan: " + n));
+    System.out.println(cari(3).map(String::toUpperCase).orElse("KOSONG"));
+  }
+}`} />

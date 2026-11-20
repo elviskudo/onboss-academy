@@ -1,0 +1,135 @@
+---
+"title": "Goroutine"
+"description": "Thread ringan, keyword go, dan sinkronisasi dasar dengan WaitGroup"
+"order": 18
+"quiz":
+- "q": "Goroutine adalah…"
+  "options":
+  - "thread OS"
+  - "thread ringan yang dikelola Go runtime"
+  - "proses baru"
+  - "fungsi async JavaScript"
+  "answer": 1
+  "explain": "Runtime Go menjadwal goroutine ke sejumlah thread OS."
+- "q": "Cara menjalankan fungsi sebagai goroutine adalah…"
+  "options":
+  - "go fungsi()"
+  - "async fungsi()"
+  - "thread fungsi()"
+  - "spawn fungsi()"
+  "answer": 0
+  "explain": "Kata kunci go di depan pemanggilan fungsi."
+- "q": "WaitGroup dipakai untuk…"
+  "options":
+  - "mengunci data"
+  - "menunggu beberapa goroutine selesai"
+  - "mengirim sinyal"
+  - "membuat channel"
+  "answer": 1
+  "explain": "Add, Done, dan Wait mengoordinasi sejumlah goroutine."
+- "q": "Method yang menandakan satu goroutine selesai adalah…"
+  "options":
+  - "wg.Add(1)"
+  - "wg.Done()"
+  - "wg.Wait()"
+  - "wg.Close()"
+  "answer": 1
+  "explain": "Done biasanya dipanggil lewat defer di awal goroutine."
+- "q": "Tanpa sinkronisasi, program utama bisa…"
+  "options":
+  - "menunggu otomatis"
+  - "selesai sebelum goroutine jalan"
+  - "error kompilasi"
+  - "mengulang goroutine"
+  "answer": 1
+  "explain": "main tidak menunggu goroutine; program keluar begitu main selesai."
+"example":
+  "code": "package main\nimport (\n    \"fmt\"\n    \"sync\"\n)\nfunc main() {\n    var wg sync.WaitGroup\n    wg.Add(1)\n    go func() {\n        defer wg.Done()\n        fmt.Println(\"dari goroutine\")\n    }()\n    wg.Wait()\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Goroutine adalah unit konkurensi termurah di Go. Ribuan goroutine bisa berjalan di atas segelintir thread OS karena runtime melakukan penjadwalan sendiri.
+
+## Menjalankan Goroutine
+
+```go
+go sapa("Rani")
+```
+
+Pemanggilan langsung kembali; fungsi berjalan di latar belakang.
+
+## WaitGroup
+
+```go
+var wg sync.WaitGroup
+
+for i := 0; i < 3; i++ {
+    wg.Add(1)
+    go func(n int) {
+        defer wg.Done()
+        fmt.Println("pekerjaan", n)
+    }(i)
+}
+wg.Wait()
+```
+
+Tiga aturan penting:
+1. `Add(1)` sebelum `go`
+2. `defer wg.Done()` di awal goroutine
+3. `Wait()` di titik yang ingin menunggu
+
+## Menangkap Variabel Loop
+
+Kirim `i` sebagai argumen. Jika langsung memakai `i` dari loop, semua goroutine bisa melihat nilai akhir variabel tersebut.
+
+## Race Condition
+
+```go
+var hitung int
+// dua goroutine menulis hitung++ secara bersamaan -> data race
+```
+
+Deteksi dengan:
+
+```bash
+go run -race main.go
+```
+
+## Alternatif Sinkronisasi
+
+| Alat | Kegunaan |
+|---|---|
+| `sync.WaitGroup` | Menunggu banyak goroutine |
+| `sync.Mutex` | Melindungi data bersama |
+| `channel` | Komunikasi & koordinasi |
+| `context.Context` | Pembatalan & deadline |
+
+<div class="note">💡 Goroutine murah, tapi bukan gratis. Batasi jumlahnya untuk tugas yang benar-benar bisa paralel, misalnya dengan worker pool.</div>
+
+
+## Try it Yourself
+
+Tambah jumlah worker atau ubah urutan cetakan.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "fmt"
+    "sync"
+)
+
+func kerja(id int, wg *sync.WaitGroup) {
+    defer wg.Done()
+    fmt.Printf("Worker %d mulai\n", id)
+    fmt.Printf("Worker %d selesai\n", id)
+}
+
+func main() {
+    var wg sync.WaitGroup
+    for i := 1; i &lt;= 4; i++ {
+        wg.Add(1)
+        go kerja(i, &wg)
+    }
+    wg.Wait()
+    fmt.Println("Semua selesai")
+}`} />

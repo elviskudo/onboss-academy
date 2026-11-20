@@ -1,0 +1,81 @@
+---
+title: "SSRF dan Upload Berbahaya"
+description: "Mencegah server dipakai sebagai proxy dan membatasi file yang diterima"
+order: 16
+quiz:
+  - q: "SSRF terjadi ketika…"
+    options: ["Server mengambil URL yang ditentukan penyerang", "Klien lupa mengisi form", "Database kehabisan ruang", "Cookie terlalu panjang"]
+    answer: 0
+    explain: "Penyerang bisa menjangkau layanan internal yang tidak bisa diakses dari internet."
+  - q: "Cara mengurangi SSRF adalah…"
+    options: ["Menghapus DNS", "Allowlist domain dan.blokir IP privat", "Mengizinkan semua URL", "Menambah header Referer"]
+    answer: 1
+    explain: "Perlu juga memblokir redirect ke alamat internal."
+  - q: "Upload aman harus memeriksa…"
+    options: ["Judul halaman", "Jumlah baris kode", "Tipe nyata, ukuran, dan nama file", "Warna ikon"]
+    answer: 2
+    explain: "Ekstensi saja mudah dipalsukan."
+  - q: "File upload disimpan sebaiknya…"
+    options: ["Di folder publik dengan nama asli", "Di database sebagai plaintext", "Di URL query", "Di luar document root dengan nama acak"]
+    answer: 3
+    explain: "Mencegah file langsung dieksekusi lewat browser."
+  - q: "Tanda file berbahaya adalah…"
+    options: ["Berisi skrip PHP/JSP meski berekstensi gambar", "Ukuran kecil", "Nama pendek", "Format PNG"]
+    answer: 0
+    explain: "Penyerang menyisipkan payload pada metadata atau konten file."
+example:
+  code: |
+    # Konsep validasi upload
+    - ukuran maksimal 2 MB
+    - tipe dari magic bytes, bukan ekstensi
+    - nama acak: 8f3a...png
+    - simpan di /var/uploads (bukan /public)
+---
+
+Dua celah yang sering muncul pada aplikasi modern: fitur "ambil URL" (SSRF) dan fitur unggah berkas. Keduanya memberi penyerang kendali atas sumber data.
+
+## SSRF
+
+```text
+POST /preview
+{ "url": "http://169.254.169.254/latest/meta-data/" }
+```
+
+Endpoint metadata cloud sering menjadi target. Jika server mengambil URL itu, kredensial sementara bisa bocor.
+
+## Pertahanan SSRF
+
+1. Allowlist hostname yang diizinkan.
+2. Resolve DNS lalu blokir IP privat, loopback, link-local, dan IPv6 lokal.
+3. **Matikan redirect** atau validasi ulang setiap tujuan.
+4. Batasi protokol hanya `http`/`https`.
+5. Terapkan proxy keluar khusus dengan aturan ketat.
+
+## Upload Aman
+
+```text
+terima file -> cek ukuran -> cek magic bytes -> ubah nama
+          -> simpan di luar web root -> sajikan lewat endpoint kontrol
+```
+
+## Tipe vs Ekstensi
+
+```text
+file bernama  foto.jpg
+isi sebenarnya: <?php system($_GET['cmd']); ?>
+```
+
+Cek beberapa byte awal (magic bytes), bukan hanya nama. Untuk gambar, bisa juga diproses ulang (re-encode) agar metadata berbahaya hilang.
+
+<div class="note">💡 Jangan mengandalkan `Content-Type` dari request—nilainya dikirim klien dan mudah dipalsukan.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Daftar alamat yang harus diblokir untuk SSRF:
+  127.0.0.0/8
+  10.0.0.0/8
+  172.16.0.0/12
+  192.168.0.0/16
+  169.254.0.0/16
+  ::1`}</code></pre>

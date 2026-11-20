@@ -1,0 +1,102 @@
+---
+title: "Komunikasi SPI"
+description: "MOSI, MISO, SCK, CS, dan mode clock"
+order: 20
+quiz:
+  - q: "SPI memakai pin CS untuk…"
+    options: ["Memilih perangkat", "Mengirim clock", "Menyimpan alamat", "Mengatur tegangan"]
+    answer: 0
+    explain: "Setiap perangkat butuh CS sendiri, tapi bisa berbagi tiga jalur lainnya."
+  - q: "Pin MOSI pada Uno adalah…"
+    options: ["10", "11", "12", "13"]
+    answer: 1
+    explain: "MISO = 12, SCK = 13, SS/CS = 10."
+  - q: "Kecepatan SPI diatur lewat…"
+    options: ["analogReference", "pinMode saja", "SPISettings(clock, bitOrder, mode)", "Serial.begin"]
+    answer: 2
+    explain: "Mode menentukan polaritas dan fase clock."
+  - q: "SPI biasanya lebih cepat daripada I2C karena…"
+    options: ["Menggunakan 5 V", "Tanpa clock", "Hanya satu perangkat", "Tidak perlu alamat dan transfer per byte lebih sederhana"]
+    answer: 3
+    explain: "Trade-off-nya adalah lebih banyak pin."
+  - q: "BitOrder MSBFIRST berarti…"
+    options: ["Bit paling signifikan dikirim lebih dulu", "Bit terkecil dulu", "Tanpa urutan", "Hanya 4 bit"]
+    answer: 0
+    explain: "Kebanyakan modul memakai MSBFIRST."
+example:
+  code: |
+    #include <SPI.h>
+    const int CS = 10;
+    
+    void setup() {
+      pinMode(CS, OUTPUT);
+      SPI.begin();
+    }
+    
+    void loop() {
+      digitalWrite(CS, LOW);
+      byte hasil = SPI.transfer(0x01);
+      digitalWrite(CS, HIGH);
+    }
+---
+
+SPI adalah bus sinkron cepat untuk sensor, layar, dan kartu memori. Protokolnya sederhana: clock, data keluar, data masuk, dan chip select.
+
+## Pin Uno
+
+| Sinyal | Pin | Fungsi |
+|---|---|---|
+| MOSI | 11 | Master ke slave |
+| MISO | 12 | Slave ke master |
+| SCK | 13 | Clock |
+| SS/CS | 10 | Pilih slave |
+
+## Mode Clock
+
+| Mode | CPOL | CPHA |
+|---|---|---|
+| 0 | 0 | 0 |
+| 1 | 0 | 1 |
+| 2 | 1 | 0 |
+| 3 | 1 | 1 |
+
+Mode 0 paling umum. Cek datasheet modul bila data tidak terbaca.
+
+## Transaksi
+
+```cpp
+SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+digitalWrite(CS, LOW);
+byte jawaban = SPI.transfer(0x00);
+digitalWrite(CS, HIGH);
+SPI.endTransaction();
+```
+
+`beginTransaction`/`endTransaction` mengunci pengaturan agar tidak bertabrakan dengan library lain.
+
+## Multi Perangkat
+
+```cpp
+digitalWrite(CS_SENSOR, LOW);
+// transaksi sensor
+digitalWrite(CS_SENSOR, HIGH);
+
+digitalWrite(CS_LAYAR, LOW);
+// transaksi layar
+digitalWrite(CS_LAYAR, HIGH);
+```
+
+<div class="note">💡 Menghubungkan lebih dari satu perangkat dengan CS aktif bersamaan bisa merusak output. Pastikan hanya satu CS LOW pada satu waktu.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;SPI.h&gt;
+void setup(){ pinMode(10,OUTPUT); SPI.begin(); Serial.begin(9600); }
+void loop(){
+  digitalWrite(10,LOW);
+  byte x=SPI.transfer(0x00);
+  digitalWrite(10,HIGH);
+  Serial.println(x,HEX);
+  delay(500);
+}`}</code></pre>

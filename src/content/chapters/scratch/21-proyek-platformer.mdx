@@ -1,0 +1,91 @@
+---
+title: "Studi Kasus: Platformer Sederhana"
+description: "Gravitasi, lompat, dan tabrakan dengan panggung"
+order: 21
+quiz:
+  - q: "Gravitasi dalam platformer disimulasikan dengan…"
+    options: ["Mengirim pesan", "Mengurangi y secara bertahap setiap frame", "Mengubah kostum", "Menambah skor"]
+    answer: 1
+    explain: "Kecepatan vertikal disimpan dalam variabel lalu diterapkan ke posisi y."
+  - q: "Blok yang menahan pemain agar tidak tembus lantai adalah…"
+    options: ["klon lantai", "ganti backdrop", "jika menyentuh warna lantai, geser y ke atas", "ubah volume"]
+    answer: 2
+    explain: "Deteksi warna atau tabrakan sprite platform digunakan sebagai batas."
+  - q: "Variabel \"kecepatan-y\" berguna untuk…"
+    options: ["Menyimpan skor", "Mengubah warna", "Menghapus daftar", "Menyimpan laju jatuh dan lompat"]
+    answer: 3
+    explain: "Nilainya berubah tiap frame agar gerak terasa alami."
+  - q: "Agar lompat hanya saat menyentuh lantai, gunakan…"
+    options: ["Penanda di-lantai yang dicek sebelum lompat", "Variabel skor", "Panjang daftar", "Efek suara"]
+    answer: 0
+    explain: "Tanpa penanda, pemain bisa lompat di udara berulang kali."
+  - q: "Kamera sederhana pada platformer bisa dibuat dengan…"
+    options: ["Menghapus backdrop", "Menggeser semua sprite ketika pemain bergerak", "Mengubah kostum pemain", "Menambah suara"]
+    answer: 1
+    explain: "Untuk proyek kecil, panggung statis biasanya cukup."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur [kecepatan-y] ke [0]]
+    [ulangi sampai <(nyawa) = [0]> [
+      [ubah [kecepatan-y] sebesar -1]
+      [geser y sebesar (kecepatan-y)]
+      [jika <menyentuh [hijau]> [ubah [kecepatan-y] sebesar 0; geser y sebesar 3]]
+      [tunggu 0,03 detik]
+    ]]
+---
+
+Platformer adalah latihan klasik untuk memahami gravitasi, tabrakan, dan state. Versi Scratch tetap bisa dibuat tanpa fisika yang rumit.
+
+## Variabel Utama
+
+```text
+kecepatan-y   -> laju vertikal
+di-lantai     -> penanda boleh lompat atau tidak
+nyawa         -> sisa kesempatan
+skor          -> koin yang dikumpulkan
+```
+
+## Loop Gravitasi
+
+```text
+[ubah [kecepatan-y] sebesar -1]
+[geser y sebesar (kecepatan-y)]
+[jika <menyentuh [warna hijau]> [
+  [atur [kecepatan-y] ke [0]]
+  [geser y sebesar 2]
+  [atur [di-lantai] ke [benar]]
+]]
+```
+
+## Lompat
+
+```text
+[ketika tombol [spasi] ditekan]
+[jika <(di-lantai) = [benar]> [
+  [atur [kecepatan-y] ke [12]]
+  [atur [di-lantai] ke [salah]]
+  [mainkan suara [lompat]]
+]]
+```
+
+## Rintangan dan Koin
+
+Musuh dibuat sebagai klon yang bergerak bolak-balik. Koin juga klon yang menghapus diri saat disentuh pemain sambil menambah skor.
+
+<div class="note">💡 Gunakan `tunggu 0,02–0,05 detik` di loop utama. Terlalu cepat membuat gerak melompat; terlalu lambat membuatnya terasa berat.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[atur [kecepatan-y] ke [0]]
+[ulangi 200 [
+  [ubah [kecepatan-y] sebesar -1]
+  [geser y sebesar (kecepatan-y)]
+  [jika &lt;(y posisi) &lt; [-150]&gt; [
+     [atur [kecepatan-y] ke [0]]
+     [atur y ke [-150]]
+  ]]
+  [tunggu 0,03 detik]
+]]`}</code></pre>

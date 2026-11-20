@@ -1,0 +1,108 @@
+---
+title: "Performansi & Profiling"
+description: "mendeteksi render berlebih, memo, virtualisasi, dan React DevTools"
+order: 21
+quiz:
+  - q: "React DevTools Profiler dipakai untuk…"
+    options: ["Membuat rute", "Mengirim email", "Mengukur durasi dan frekuensi render", "Menulis CSS"]
+    answer: 2
+    explain: "Profiler membantu menemukan komponen yang sering render ulang."
+  - q: "Render ulang terjadi saat…"
+    options: ["Browser Refresh saja", "State/props berubah atau induk render", "CSS berubah", "File ditambah"]
+    answer: 1
+    explain: "Anak ikut render bila induk render, kecuali di-memo."
+  - q: "Virtualisasi berguna untuk…"
+    options: ["Form pendek", "Satu tombol", "Header saja", "Daftar sangat panjang"]
+    answer: 3
+    explain: "Hanya baris yang terlihat yang dirender."
+  - q: "React.memo membandingkan props secara…"
+    options: ["Tidak membandingkan", "Shallow", "Deep", "Acak"]
+    answer: 1
+    explain: "Perubahan object/array baru selalu dianggap berbeda."
+  - q: "Optimasi yang paling sering benar adalah…"
+    options: ["Mengurangi state yang tidak perlu", "Menambah useMemo di semua tempat", "Menghapus semua komponen", "Menggunakan inline style"]
+    answer: 0
+    explain: "Struktur state yang tepat biasanya lebih berdampak daripada memoisasi."
+example:
+  code: |
+    const Baris = React.memo(function Baris({ item }) {
+      return <li>{item.nama}</li>;
+    });
+
+    // virtualization konseptual
+    const terlihat = items.slice(start, start + 20);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+React sudah cepat untuk sebagian besar aplikasi. Masalah muncul saat daftar besar atau state tersebar terlalu luas.
+
+## Langkah Pertama: Ukur
+
+Gunakan React DevTools → tab **Profiler**, rekam interaksi, lalu lihat komponen mana yang lama. Jangan menebak.
+
+## Penyebab Umum
+
+| Penyebab | Solusi |
+|----------|--------|
+| Induk render → semua anak render | `React.memo` pada anak |
+| Fungsi baru tiap render | `useCallback` |
+| Hitung berat tiap render | `useMemo` |
+| 10.000 baris sekaligus | virtualisasi |
+
+## React.memo
+
+```jsx
+const Baris = React.memo(function Baris({ produk, onPilih }) {
+  console.log("render baris", produk.id);
+  return (
+    <li>
+      {produk.nama}
+      <button onClick={() => onPilih(produk.id)}>Pilih</button>
+    </li>
+  );
+});
+```
+
+`memo` hanya efektif bila props benar-benar stabil. Itulah sebabnya `useCallback` sering dipasangkan.
+
+## Virtualisasi
+
+```jsx
+// konsep: render hanya window yang terlihat
+const UkuranBaris = 40;
+const mulai = Math.floor(scrollTop / UkuranBaris);
+const akhir = mulai + 20;
+const terlihat = items.slice(mulai, akhir);
+```
+
+Di produksi gunakan librari seperti `react-window` atau `@tanstack/react-virtual`.
+
+## State yang Terlalu Tinggi
+
+```jsx
+// ❌ ketikan di satu input merender seluruh halaman
+function App() {
+  const [kata, setKata] = useState("");
+  return <><Header /><FormCari kata={kata} ubah={setKata} /><DaftarBesar /></>;
+}
+```
+
+Pindahkan `kata` ke `FormCari` atau gunakan context terpisah.
+
+<div class="note">💡 Urutan yang disarankan: ukur → perbaiki struktur state → baru memo/virtualisasi. Optimasi tanpa pengukuran sering membuat kode lebih rumit tanpa hasil.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi virtualisasi: hanya ambil window yang terlihat
+const items = Array.from({ length: 1000 }, (_, i) => "Baris " + (i + 1));
+const tinggiBaris = 40;
+const scrollTop = 1200;
+const mulai = Math.floor(scrollTop / tinggiBaris);
+const akhir = mulai + 5;
+
+console.log("indices", mulai, "-", akhir - 1);
+console.log(items.slice(mulai, akhir));
+console.log("dirender:", akhir - mulai, "dari", items.length);`} />

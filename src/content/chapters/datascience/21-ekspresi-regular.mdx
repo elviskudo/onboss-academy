@@ -1,0 +1,91 @@
+---
+title: "Ekspresi Regular untuk Pembersihan Teks"
+description: "re.search, findall, sub, character class, quantifier, dan contoh validasi"
+order: 21
+quiz:
+  - q: "Modul Python untuk regex adalah…"
+    options: ["pattern", "re", "regexp", "strmatch"]
+    answer: 1
+    explain: "import re;"
+  - q: "re.findall berguna untuk…"
+    options: ["Menghapus file", "Membuat list kosong", "Mengambil semua kecocokan", "Mengganti teks"]
+    answer: 2
+    explain: "findall mengembalikan list."
+  - q: "Pola \\d berarti…"
+    options: ["Spasi", "Huruf", "Titik", "Digit"]
+    answer: 3
+    explain: "Digit 0-9."
+  - q: "Quantifier + berarti…"
+    options: ["Hanya di awal", "Satu atau lebih", "Nol atau lebih", "Tepat satu"]
+    answer: 1
+    explain: "* = nol atau lebih, ? = opsional."
+  - q: "re.sub digunakan untuk…"
+    options: ["Menghitung baris", "Membuka file", "Mengganti kecocokan", "Mencari indeks"]
+    answer: 2
+    explain: "sub(pattern, replacement, teks)."
+example:
+  code: |
+    import re
+    teks="Hubungi 021-555-1234 atau 0812-3456-7890"
+    print(re.findall(r"\d{4}-\d{3,4}",teks))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Pola Dasar
+
+| Pola | Arti |
+| --- | --- |
+| `\d` | digit |
+| `\w` | huruf/angka/garis bawah |
+| `\s` | spasi |
+| `.` | karakter apa pun |
+| `^` / `$` | awal / akhir teks |
+| `+` | satu atau lebih |
+| `*` | nol atau lebih |
+| `?` | opsional |
+| `{n,m}` | antara n dan m |
+
+## Mencari dan Mengambil
+
+```python
+import re
+
+teks = "Kode: AB-123, CD-456"
+kode = re.findall(r"[A-Z]{2}-\d{3}", teks)
+print(kode)
+```
+
+## Mengganti
+
+```python
+bersih = re.sub(r"\s+", " ", "  banyak   spasi  ").strip()
+print(bersih)
+```
+
+`\s+` mencocokkan satu atau lebih spasi, sehingga whitespace beruntun menjadi satu.
+
+## Validasi Sederhana
+
+```python
+def email_valid(s):
+    return bool(re.fullmatch(r"[\w.]+@[\w.]+\.[a-z]{2,}", s))
+
+print(email_valid("ana@contoh.com"))
+```
+
+Regex bukan parser email lengkap, tetapi cukup untuk menyaring kesalahan format umum.
+
+<div class="note">💡 Gunakan raw string `r"..."` untuk pola regex agar backslash tidak dikonsumsi Python. Simpan pola yang rumit dalam variabel bernama agar mudah dirawat.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import re
+
+teks = "  Halo   dunia  "
+print("Spasi rapi:", re.sub(r"\s+", " ", teks).strip())
+
+kode = re.findall(r"[A-Z]{2}-\d{3}", "AB-123 and CD-456")
+print("Kode:", kode)`} />

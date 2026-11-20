@@ -1,0 +1,78 @@
+---
+title: "Cross Validation"
+description: "k-fold, stratified k-fold,Leave-one-out, dan pemilihan model yang stabil"
+order: 20
+quiz:
+  - q: "K-fold membagi data menjadi…"
+    options: ["k label", "k bagian bergiliran sebagai uji", "k model permanen", "k fitur"]
+    answer: 1
+    explain: "Tiap bagian pernah jadi uji."
+  - q: "Nilai k yang umum adalah…"
+    options: ["2 selalu", "Sama dengan jumlah fitur", "5 atau 10", "1000"]
+    answer: 2
+    explain: "5 dan 10 seimbang antara biaya dan stabilitas."
+  - q: "Stratified k-fold menjaga…"
+    options: ["Urutan waktu", "Jumlah kolom", "Skala fitur", "Proporsi kelas tiap fold"]
+    answer: 3
+    explain: "Penting untuk klasisi imbalance."
+  - q: "Keuntungan cross validation dibanding split tunggal adalah…"
+    options: ["Model otomatis lebih akurat", "Estimasi lebih stabil", "Lebih cepat selalu", "Tidak butuh data uji"]
+    answer: 1
+    explain: "Mengurangi keberuntungan dari satu split."
+  - q: "Untuk time series, pendekatan yang tepat adalah…"
+    options: ["Stratified k-fold", "Leave-one-out", "Time-series split acak biasa", "Rolling-origin split"]
+    answer: 3
+    explain: "Urutan waktu tidak boleh diacak."
+example:
+  code: |
+    data=list(range(10)); k=5
+    for i in range(k):
+        uji=data[i*2:(i+1)*2]
+        latih=[x for x in data if x not in uji]
+        print(i,uji,latih)
+---
+
+## Ide K-Fold
+
+Data dibagi `k` bagian. model dilatih `k` kali, setiap kali menyisakan satu bagian sebagai uji. Rata-rata skor lebih stabil daripada satu kali split.
+
+```python
+def kfold(data, k=5):
+    n = len(data)
+    for i in range(k):
+        uji = data[i*n//k:(i+1)*n//k]
+        latih = data[:i*n//k] + data[(i+1)*n//k:]
+        yield latih, uji
+
+for latih, uji in kfold(list(range(10))):
+    print("uji", uji, "latih", latih)
+```
+
+## Varian
+
+| Varian | Cocok untuk |
+| --- | --- |
+| K-fold | regresi, klasifikasi umum |
+| Stratified | kelas tidak seimbang |
+| Leave-one-out | data sangat kecil |
+| Time-series | data berurutan waktu |
+
+## Trade-off
+
+k besar → estimasi lebih stabil, tapi waktu latih lebih lama. k = 5 atau 10 adalah pilihan umum.
+
+<div class="note">💡 Lakukan scaling dan feature selection **di dalam** tiap fold. Kalau dilakukan sebelum split, informasi uji bocor ke latih.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`def kfold(data, k=5):
+    n = len(data)
+    for i in range(k):
+        uji = data[i*n//k:(i+1)*n//k]
+        latih = data[:i*n//k] + data[(i+1)*n//k:]
+        yield latih, uji
+
+for i, (latih, uji) in enumerate(kfold(list(range(10)), 5), 1):
+    print(f"Fold {i}: uji={uji}")`}</code></pre>

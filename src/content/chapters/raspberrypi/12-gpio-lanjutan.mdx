@@ -1,0 +1,91 @@
+---
+title: "GPIO Lanjutan"
+description: "Mode pin, internal pull-up, dan pustaka GPIO modern"
+order: 12
+quiz:
+  - q: "Mode pin GPIO dapat diatur sebagai…"
+    options: ["Input atau output", "Hanya output", "Hanya input", " tautan memori (bukan mode GPIO)"]
+    answer: 0
+    explain: "Input membaca level, output menghasilkan level HIGH/LOW."
+  - q: "Resistor pull-up internal berfungsi…"
+    options: ["Mengubah nomor pin", "Menjaga pin tetap HIGH saat tombol tidak ditekan", "Menambah tegangan menjadi 5 V", "Menghapus noise"]
+    answer: 1
+    explain: "Tanpa pull-up, pin mengambang (floating) dan nilainya tidak menentu."
+  - q: "Logika HIGH pada GPIO Raspberry Pi adalah…"
+    options: ["12 volt", "1,8 volt", "3,3 volt", "5 volt"]
+    answer: 2
+    explain: "Pin GPIO **tidak** toleran 5 V—gunakan pembagi tegangan atau level shifter."
+  - q: "Pustaka gpiozero menyederhanakan kode karena…"
+    options: ["Menghapus kebutuhan kabel", "Mengganti sistem operasi", "Menambah tegangan", "Menyediakan objek seperti LED dan Button"]
+    answer: 3
+    explain: "Kode jadi lebih dekat dengan dunia nyata."
+  - q: "Arus maksimal per pin GPIO sekitar…"
+    options: ["16 mA (disarankan jauh lebih rendah)", "500 mA", "2 A", "Tidak ada batas"]
+    answer: 0
+    explain: "Untuk motor atau LED banyak, gunakan transistor atau driver eksternal."
+example:
+  code: |
+    from gpiozero import LED, Button
+    from signal import pause
+    
+    led = LED(17)
+    tombol = Button(2, pull_up=True)
+    
+    tombol.when_pressed = led.on
+    tombol.when_released = led.off
+    pause()
+---
+
+Pin GPIO adalah jembatan antara dunia digital Pi dan komponen elektronik. Memahami mode dan batas listriknya mencegah kerusakan board.
+
+## Tegangan dan Arus
+
+| Pin | Level | Catatan |
+|---|---|---|
+| 3V3 | 3,3 V output | Maksimal sekitar 51 mA total |
+| 5V | 5 V output | Langsung dari sumber USB |
+| GPIO | 3,3 V logika | Jangan beri 5 V |
+| GND | 0 V | Referensi bersama |
+
+## Pull-up vs Pull-down
+
+```text
+pull-up   : tombol tidak ditekan = HIGH, ditekan = GND (LOW)
+pull-down : tombol tidak ditekan = LOW,  ditekan = 3V3 (HIGH)
+```
+
+gpiozero secara default memakai `pull_up=True` untuk `Button`, sehingga rangkaian hanya butuh tombol antara pin dan GND.
+
+## Numerasi Pin
+
+```text
+BCM  = nomor sesuai chip (17, 18, 27...)
+BOARD = nomor urut physical (11, 12, 13...)
+```
+
+Tentukan satu skema di awal proyek dan konsisten. gpiozero memakai **BCM** secara default.
+
+## Contoh gpiozero
+
+```python
+from gpiozero import LED, Button
+
+led = LED(17)
+tombol = Button(2)
+tombol.when_pressed = led.toggle
+```
+
+## Men cleanup
+
+Selalu hubungkan GNDPi dengan GND modul. Tanpa referensi bersama, pembacaan bisa meloncat-loncat meski kabel sinyal sudah benar.
+
+<div class="note">💡 Sebelum menyambung kabel, matikan Pi. kesalahan 5 V pada pin GPIO bisa merusak SoC secara permanen.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Cek pin yang terpakai:
+gpio readall
+
+# Contoh mode BCM
+pinout`}</code></pre>

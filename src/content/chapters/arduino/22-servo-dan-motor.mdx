@@ -1,0 +1,89 @@
+---
+title: "Servo dan Motor DC"
+description: "Kontrol sudut, arah, dan kecepatan"
+order: 22
+quiz:
+  - q: "Servo standar menerima sinyal PWM dengan periode sekitar…"
+    options: ["1 detik", "100 ms", "20 ms (50 Hz)", "1 ms"]
+    answer: 2
+    explain: "Lebar pulsa 1–2 ms menentukan posisi."
+  - q: "Library Servo pada Arduino memakai pin…"
+    options: ["Hanya pin 13", "Hanya A0", "Pin 0 dan 1", "Digital yang mendukung timer"]
+    answer: 3
+    explain: "Beberapa pin tidak bisa dipakai bersamaan karena timer yang sama dengan PWM."
+  - q: "Untuk membalik arah motor DC, gunakan…"
+    options: ["H-bridge / driver motor", "Resistor besar", "Kapasitor", "Pull-up"]
+    answer: 0
+    explain: "L298N dan TB6612 adalah pilihan umum."
+  - q: "Dioda flyback dipasang paralel dengan motor untuk…"
+    options: ["Menghemat pin", "Membuang lonjakan tegangan balik", "Menambah kecepatan", "Mengubah arah"]
+    answer: 1
+    explain: "Tanpa dioda, transients bisa merusak transistor."
+  - q: "Servo.write(90) biasanya menghasilkan sudut…"
+    options: ["180 derajat", "Tergantung baudrate", "Sekitar 90 derajat", "0 derajat"]
+    answer: 2
+    explain: "Nilai 0 dan 180 adalah batas umum, tapi tiap servo bisa berbeda."
+example:
+  code: |
+    #include <Servo.h>
+    Servo s;
+    void setup() { s.attach(9); }
+    void loop() {
+      s.write(0);   delay(1000);
+      s.write(90);  delay(1000);
+      s.write(180); delay(1000);
+    }
+---
+
+Servo cocok untuk gerakan sudut tertentu; motor DC cocok untuk rotasi terus-menerus. Keduanya butuh daya lebih besar daripada pin GPIO.
+
+## Servo
+
+```cpp
+#include <Servo.h>
+Servo servo;
+
+servo.attach(9);
+servo.write(90);                // derajat
+servo.writeMicroseconds(1500);  // kontrol lebih presisi
+```
+
+Berikan daya servo dari sumber eksternal 5 V, dan hubungkan **GND bersama** dengan Arduino.
+
+## Kalibrasi Servo
+
+Tidak semua servo mencapai sudut penuh pada pulsa 1000–2000 µs. Temukan batas aman dengan `writeMicroseconds()` dan simpan nilainya sebagai konstanta.
+
+## Motor DC dengan L298N
+
+```cpp
+pinMode(IN1, OUTPUT);
+pinMode(IN2, OUTPUT);
+pinMode(ENA, OUTPUT);
+
+digitalWrite(IN1, HIGH);
+digitalWrite(IN2, LOW);
+analogWrite(ENA, 150);   // kecepatan
+```
+
+## Rangkaian Transistor
+
+```text
+Arduino pin -> resistor 1k -> basis transistor
+motor -> supply 5-12 V -> kolektor
+dioda 1N4007 paralel dengan motor
+emitter -> GND
+```
+
+<div class="note">💡 Jangan memberi daya motor dari pin 5V Arduino saat motor menarik arus besar—regulator bisa panas dan board reset sendiri.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;Servo.h&gt;
+Servo s;
+void setup(){ s.attach(9); }
+void loop(){
+  for(int a=0;a&lt;=180;a+=30){ s.write(a); delay(300); }
+  for(int a=180;a&gt;=0;a-=30){ s.write(a); delay(300); }
+}`}</code></pre>

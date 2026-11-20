@@ -1,0 +1,112 @@
+---
+title: "Statistik Inferensi"
+description: "Distribusi, interval kepercayaan, uji hipotesis, dan interpretasi p-value"
+order: 18
+quiz:
+  - q: "Interval kepercayaan 95% berarti…"
+    options: ["95% data berada di rentang itu", "Prosedur yang menghasilkan rentang menangkap parameter sebenarnya 95% kali", "Probabilitas parameter benar 95%", "Selalu mencakup nol"]
+    answer: 1
+    explain: "Interpretasi frekuentistik: 95% dari banyak pengambilan sampel menghasilkan interval yang memuat parameter."
+  - q: "Hipotesis nol dilambangkan…"
+    options: ["H1", "H0", "Ha", "H2"]
+    answer: 1
+    explain: "H0 adalah pernyataan default 'tidak ada efek' yang diuji."
+  - q: "Jika p-value = 0,03 pada alpha 0,05, keputusannya…"
+    options: ["Gagal tolak H0", "Tolak H0", "Terima H0", "Tidak bisa diputuskan"]
+    answer: 1
+    explain: "p &lt; alpha sehingga cukup bukti untuk menolak H0."
+  - q: "Uji t untuk dua sampel independen di R adalah…"
+    options: ["t.test(x, y)", "ttest(x,y)", "anova(x,y)", "chisq.test(x,y)"]
+    answer: 0
+    explain: "t.test melakukan uji t, termasuk dua sampel."
+  - q: "Uji untuk asosiasi dua variabel kategori adalah…"
+    options: ["cor.test()", "chisq.test()", "t.test()", "var.test()"]
+    answer: 1
+    explain: "chi-square test membandingkan frekuensi observed dengan expected."
+example:
+  code: |
+    x <- c(10,12,11,13,12)
+    print(t.test(x, mu=10)$p.value)
+    print(chisq.test(matrix(c(20,30,25,25),2)))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Statistik deskriptif merangkum sampel; **statistik inferensi** menarik kesimpulan tentang populasi dengan mengakui ketidakpastian.
+
+## Populasi, Sampel, dan Distribusi
+
+Parameter populasi seperti `mu` tidak diketahui. Kita mengambil sampel, menghitung statistik seperti `x̄`, lalu memakai distribusi sampling untuk mengukur seberapa jauh mungkin simpangannya.
+
+```r
+set.seed(42)
+sampel <- rnorm(30, mean = 50, sd = 10)
+mean(sampel)
+sd(sampel) / sqrt(length(sampel))  # standard error
+```
+
+## Interval Kepercayaan
+
+```r
+x <- c(48, 52, 50, 47, 55, 51, 49, 53)
+t.test(x)$conf.int     # interval 95% untuk mean
+```
+
+Interval yang lebih sempit tidak selalu lebih baik: ia bisa berasal dari sampel kecil yang kebetulan homogen. Selalu laporkan ukuran sampel.
+
+## Kerangka Uji Hipotesis
+
+1. Rumuskan `H0` (misal: rata-rata = 50) dan `H1` (misal: ≠ 50).
+2. Pilih uji yang sesuai dengan jenis data dan desain.
+3. Hitung statistik uji dan p-value.
+4. Bandingkan p-value dengan `alpha` yang ditetapkan **sebelum** melihat data.
+5. Nyimpulkan dalam konteks masalah, bukan sekadar "signifikan".
+
+```r
+t.test(x, mu = 50)             # uji t satu sampel
+t.test(x, y, var.equal = TRUE) # dua sampel independen
+t.test(x, y, paired = TRUE)    # pengukuran berulang
+```
+
+## Jenis Uji Umum
+
+| Pertanyaan | Uji di R |
+| --- | --- |
+| Rata-rata vs nilai tetap | `t.test(x, mu = ...)` |
+| Dua kelompok independent | `t.test(x, y)` |
+| Lebih dari dua kelompok | `aov(y ~ grup)` lalu `TukeyHSD()` |
+| Asosiasi kategori | `chisq.test(tabel)` |
+| Korelasi | `cor.test(x, y)` |
+| Normalitas | `shapiro.test(x)` |
+
+```r
+tabel <- matrix(c(30, 20, 25, 35), nrow = 2)
+chisq.test(tabel)
+```
+
+## Kesalahan yang Sering Muncul
+
+- **p-value bukan probabilitas H0 benar** — ia adalah probabilitas melihat data se-extrem itu bila H0 benar.
+- **Signifikan ≠ penting** — dengan sampel besar, selisih kecil pun bisa signifikan.
+- **Uji berulang tanpa koreksi** — 20 uji pada alpha 0,05 memberi risiko false positive yang jauh lebih besar.
+- **Post-hoc choice** — memilih uji setelah melihat data merusak makna p-value.
+
+<div class="note">💡 Sertakan effect size dan interval kepercayaan di samping p-value. Pembaca lebih terbantu oleh "selisih 3,2 jam dengan CI 1,5–4,9" daripada "p < 0,001" saja.</div>
+
+## Di Dunia Nyata
+
+- **A/B testing**: uji perbedaan konversi dua versi halaman.
+- **Klinis**: uji apakah obat baru mengubah rata-rata tekanan darah.
+- **Manufaktur**: uji apakah batch baru berbeda dari standar historis.
+- **Survei**: chi-square menguji apakah preferensi berbeda antar wilayah.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`set.seed(7)
+sebelum <- rnorm(40, 50, 8)
+sesudah <- sebelum + rnorm(40, 2, 5)
+cat("Rata-rata awal:", round(mean(sebelum), 2), "\n")
+print(t.test(sesudah, mu = 50, conf.level = 0.95))
+tabel <- matrix(c(35, 15, 20, 30), nrow = 2)
+print(chisq.test(tabel))`} />

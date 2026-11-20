@@ -1,0 +1,115 @@
+---
+title: 'Pencocokan String: KMP dan Rabin-Karp'
+description: Algoritma mencari pola dalam teks tanpa memeriksa ulang setiap kemungkinan secara naif.
+order: 15
+quiz:
+- q: Pencarian naif memiliki kompleksitas…
+  options:
+  - O(n + m)
+  - O(log n)
+  - O(m)
+  - O(n·m)
+  answer: 3
+  explain: n panjang teks, m panjang pola; setiap posisi bisa membandingkan hingga m karakter.
+- q: KMP memanfaatkan…
+  options:
+  - Prefix function / LPS dari pola
+  - Hash acak
+  - Heap
+  - Binary search
+  answer: 0
+  explain: LPS memberitahu seberapa banyak karakter bisa dilewati saat terjadi ketidakcocokan.
+- q: Rabin-Karp menggunakan…
+  options:
+  - Union-Find
+  - Rolling hash untuk membandingkan substring
+  - Pohon BFS
+  - Rekursi tanpa memo
+  answer: 1
+  explain: Hash dihitung ulang dengan operasi konstan saat jendela bergeser.
+- q: Kolisi hash pada Rabin-Karp ditangani dengan…
+  options:
+  - Menambah panjang pola
+  - Menghapus teks
+  - Membandingkan string asli setelah hash cocok
+  - Mengabaikan hasil
+  answer: 2
+  explain: Hash hanya filter; verifikasi final tetap dilakukan.
+- q: KMP menjamin kompleksitas…
+  options:
+  - O(n·m)
+  - O(n^2)
+  - O(m^2)
+  - O(n + m)
+  answer: 3
+  explain: Indeks teks tidak pernah mundur sehingga total perbandingan linier.
+example:
+  code: "def lps(pola):\n    arr, j = [0], 0\n    for i in range(1, len(pola)):\n        while j and pola[i] != pola[j]:\n            j = arr[j-1]\n        if pola[i] == pola[j]:\n            j += 1\n        arr.append(j)\n    return arr\n\nprint(lps(\"ababaca\"))\n"
+---
+
+
+Mencari pola di dalam teks terlihat sederhana, tetapi Pendekatan naif bisa lambat ketika pola memiliki banyak awalan yang mirip.
+
+## Pendekatan Naif
+
+```python
+def naif(teks, pola):
+    n, m = len(teks), len(pola)
+    for i in range(n - m + 1):
+        if teks[i:i+m] == pola:
+            return i
+    return -1
+```
+
+Paling buruk O(n·m), misalnya teks `aaaaaaaaab` dan pola `aaab`.
+
+## KMP
+
+KMP membangun tabel **LPS** (longest proper prefix yang juga suffix).
+
+```python
+def lps(pola):
+    arr, j = [0] * len(pola), 0
+    for i in range(1, len(pola)):
+        while j and pola[i] != pola[j]:
+            j = arr[j - 1]
+        if pola[i] == pola[j]:
+            j += 1
+        arr[i] = j
+    return arr
+
+def kmp(teks, pola):
+    if not pola:
+        return 0
+    arr = lps(pola)
+    j = 0
+    for i, ch in enumerate(teks):
+        while j and ch != pola[j]:
+            j = arr[j - 1]
+        if ch == pola[j]:
+            j += 1
+            if j == len(pola):
+                return i - j + 1
+    return -1
+```
+
+| Algoritma | Waktu | Catatan |
+|---|---|---|
+| Naif | O(n·m) | mudah tapi lambat |
+| KMP | O(n + m) | deterministik |
+| Rabin-Karp | O(n + m) rata-rata | rolling hash |
+| Boyer-Moore | sering &lt; O(n) | lompat dari kanan |
+
+## Rabin-Karp Singkat
+
+```python
+def hash_string(s):
+    h = 0
+    for c in s:
+        h = (h * 31 + ord(c)) % 10**9
+    return h
+```
+
+Hash jendela diperbarui tanpa menghitung ulang dari awal. Cocok juga untuk mencari beberapa pola sekaligus.
+
+<div class="note">💡 KMP menjamin teks tidak pernah dibaca mundur. Sifat ini penting saat input berupa stream yang tidak bisa disimpan seluruhnya.</div>

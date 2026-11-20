@@ -1,0 +1,124 @@
+---
+title: "Fungsi dan Milieu"
+description: "Argumen default, argumen titik-titik, lazy evaluation, closure, dan fungsi orde tinggi"
+order: 21
+quiz:
+  - q: "Cara menetapkan nilai default argumen adalah…"
+    options: ["f <- function(x = 1)", "f <- function(x := 1)", "default(x, 1)", "f <- function(x) x = 1"]
+    answer: 0
+    explain: "Nilai default ditulis langsung di daftar argumen."
+  - q: "Argumen ... berfungsi untuk…"
+    options: ["Menambah argumen variadik", "Mengakhiri fungsi", "Menandai error", "Membuat komentar"]
+    answer: 0
+    explain: "... menampung jumlah argumen yang tidak ditentukan sebelumnya."
+  - q: "R mengevaluasi argumen fungsi secara…"
+    options: ["Eager, langsung", "Lazy, saat dipakai", "Acak", "Paralel"]
+    answer: 1
+    explain: "Argumen R baru dihitung ketika benar-benar dibaca di dalam fungsi."
+  - q: "Closure adalah…"
+    options: ["Fungsi yang menyimpan lingkungan pembuatnya", "Fungsi tanpa argumen", "Fungsi yang selalu mengembalikan NA", "Fungsi bawaan R"]
+    answer: 0
+    explain: "Fungsi bersama lingkungan tempat ia diciptakan disebut closure."
+  - q: "Fungsi orde tinggi adalah fungsi yang…"
+    options: ["Menerima atau mengembalikan fungsi", "Selalu memilki banyak argumen", "Hanya bekerja pada matriks", "Tidak bisa dipanggil"]
+    answer: 0
+    explain: "Contohnya lapply(), Filter(), dan Map()."
+example:
+  code: |
+    pangkat <- function(x, n=2) x^n
+    print(pangkat(3)); print(pangkat(3,3))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fungsi R adalah objek. Ia bisa disimpan dalam variabel, dimasukkan ke list, dan dikirim ke fungsi lain. Lingkungan tempat fungsi dibuat ikut bersamanya.
+
+## Dasar dan Default
+
+```r
+luas <- function(panjang, lebar = 2) panjang * lebar
+luas(5)        # 10
+luas(5, 3)     # 15
+luas(lebar = 3, panjang = 5)
+```
+
+## Argumen ...
+
+```r
+rata_aman <- function(..., na.rm = TRUE) {
+  nilai <- c(...)
+  mean(nilai, na.rm = na.rm)
+}
+rata_aman(1, 2, NA, 4)
+```
+
+`...` sering diteruskan ke fungsi lain: `plot(x, ...)` memungkinkan pengguna menambahkan `col`, `main`, dan sebagainya tanpa fungsi kita mendefinisikan semuanya.
+
+## Evaluasi Malas
+
+```r
+f <- function(x) {
+  cat("Fungsi dipanggil\n")
+  42
+}
+g <- function(arg) 10      # arg tidak pernah dipakai
+g(f())                     # tidak mencetak apa pun
+```
+
+Karena `arg` tidak dibaca, `f()` tidak pernah berjalan. Sifat ini menghemat komputasi, tetapi bisa mengejutkan bila efek samping diharapkan.
+
+## Closure
+
+```r
+pembuat <- function(offset) {
+  function(x) x + offset
+}
+tambah5 <- pembuat(5)
+tambah5(10)     # 15
+environment(tambah5)
+```
+
+`tambah5` menyimpan `offset` dari lingkungan induk meskipun `pembuat()` sudah selesai. Ini dasar pembuatan fungsi yang dikonfigurasi sekali lalu dipakai berulang.
+
+## Fungsi Orde Tinggi
+
+```r
+Filter(function(x) x %% 2 == 0, 1:10)
+Map(function(a, b) a + b, 1:3, 10:12)
+Reduce(function(acc, x) acc * x, 1:5)
+```
+
+`Filter` menyaring, `Map` menerapkan fungsi ke beberapa vektor sejajar, `Reduce` menggabungkan elemen secara berurutan.
+
+## Validasi Argumen
+
+```r
+skor <- function(x) {
+  stopifnot(is.numeric(x), all(x >= 0), all(x <= 100))
+  mean(x)
+}
+```
+
+`stopifnot()` singkat dan jelas untuk invariant. Untuk pesan error yang ramah pengguna, gunakan `stop("nilai harus 0–100")`. Gunakan `warning()` bila masalah tidak membatalkan hasil.
+
+<div class="note">💡 Fungsi yang baik memiliki satu tanggung jawab. Bila fungsi mulai memuat logika filter, agregasi, dan plotting sekaligus, pecah menjadi beberapa fungsi agar bisa diuji terpisah.</div>
+
+## Di Dunia Nyata
+
+- **Pipelines**: setiap langkah adalah fungsi kecil yang bisa dipanggil ulang.
+- **Shiny**: `server <- function(input, output, session)` memakai closure untuk menyimpan state.
+- **Statistik khusus**: closure membuat generator distribusi dengan parameter tetap.
+- **API client**: fungsi pembuat menangkap base URL dan token, lalu mengembalikan fungsi `get()`/`post()`.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`pangkat <- function(x, n = 2) x^n
+cat("Default:", pangkat(3), "\n")
+cat("Eksplisit:", pangkat(3, 3), "\n")
+tambah <- function(offset) function(x) x + offset
+tambah10 <- tambah(10)
+cat("Closure:", tambah10(5), "\n")
+rata_aman <- function(..., na.rm = TRUE) mean(c(...), na.rm = na.rm)
+cat("Rata-rata:", rata_aman(1, 2, NA, 4), "\n")
+print(Filter(function(x) x %% 2 == 0, 1:10))`} />

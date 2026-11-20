@@ -1,0 +1,111 @@
+---
+title: 'Git Hooks: Otomatisasi Lokal'
+description: Mengjalankan skrim otomatis sebelum commit, saat push, dan pada tahap lain alur Git.
+order: 18
+quiz:
+- q: Git hook disimpan di direktori…
+  options:
+  - /etc/git/hooks
+  - node_modules/.bin
+  - .git/hooks
+  - src/hooks
+  answer: 2
+  explain: Hook lokal berada di .git/hooks dan tidak ikut ter-commit.
+- q: Hook yang dijalankan sebelum pesan commit ditulis adalah…
+  options:
+  - prepare-commit-msg
+  - post-commit
+  - post-merge
+  - pre-commit
+  answer: 3
+  explain: pre-commit bisa menjalankan lint dan test cepat sebelum commit dibuat.
+- q: Agar hook bisa dibagikan ke tim, pendekatan yang umum adalah…
+  options:
+  - Simpan skrip di repo dan kelola dengan tools seperti Husky
+  - Taruh di .gitignore
+  - Kirim lewat email
+  - Simpan di /tmp
+  answer: 0
+  explain: Husky atau lefthook memasang hook dari konfigurasi yang tersimpan di repo.
+- q: Hook pre-push dijalankan saat…
+  options:
+  - Saat merge selesai
+  - Sebelum perubahan dikirim ke remote
+  - Setelah commit dibuat
+  - Saat clone
+  answer: 1
+  explain: pre-push bisa menjalankan test penuh sebelum data dikirim.
+- q: File hook harus…
+  options:
+  - Berisi YAML
+  - Ditempatkan di root
+  - Dapat dieksekusi (executable)
+  - Berextensi .md
+  answer: 2
+  explain: Tanpa izin execute, hook tidak akan dijalankan Git.
+example:
+  code: '#!/bin/sh
+
+    # .git/hooks/pre-commit
+
+    npm test -- --runInBand || exit 1
+
+    echo "Lulus, commit boleh lanjut."
+
+    '
+---
+
+
+**Git hook** adalah skrip yang berjalan otomatis pada titik tertentu dalam alur Git. Ia membantu menegakkan kualitas tanpa mengingatkan manual setiap kali.
+
+## Anatomi Hook
+
+```bash
+ls .git/hooks
+# sample
+```
+
+File dengan akhiran `.sample` hanya contoh. Buat file tanpa akhiran itu dan beri izin eksekusi.
+
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+## Hook yang Umum
+
+| Hook | Waktu jalan | Contoh penggunaan |
+|---|---|---|
+| pre-commit | sebelum commit | lint, format, unit test |
+| prepare-commit-msg | sebelum editor pesan | template otomatis |
+| commit-msg | setelah pesan ditulis | validasi format pesan |
+| post-commit | setelah commit | notifikasi |
+| pre-push | sebelum push | test integrasi |
+| post-merge | setelah merge | install dependency baru |
+
+## Contoh commit-msg
+
+```sh
+#!/bin/sh
+pesan=$(cat "$1")
+case "$pesan" in
+  feat:*|fix:*|docs:*|chore:*) exit 0 ;;
+esac
+echo "Pesan harus diawali feat:, fix:, docs:, atau chore:"
+echo "Contoh: fix: perbaiki format tanggal"
+exit 1
+```
+
+## Membagikan ke Tim
+
+Karena `.git/hooks` tidak ikut ter-commit, simpan skrip di folder seperti `scripts/hooks/` lalu pakai pengelola hook:
+
+```bash
+npx husky init
+npx husky add .husky/pre-commit "npm test"
+```
+
+<div class="note">💡 Jangan taruh test berjam-jam di pre-commit. Hook yang terlalu lama membuat orang tergoda memakai `--no-verify`, yang mengalahkan tujuan awalnya.</div>
+
+## Catatan Penting
+
+Hook bisa dilewati dengan `--no-verify`, jadi tetap pasang pemeriksaan juga di CI. Perlakukan hook sebagai pagar pelindung, bukan satu-satunya garda keamanan.

@@ -1,0 +1,99 @@
+---
+title: "millis() dan Kode Non-blocking"
+description: "Mengganti delay dengan penanda waktu"
+order: 11
+quiz:
+  - q: "millis() mengembalikan…"
+    options: ["Detik sejak kompilasi", "Nilai analog", "Nomor pin", "Milidetik sejak board terakhir di-reset"]
+    answer: 3
+    explain: "Nilainya bertambah terus dan melacak paling lama sekitar 49 hari."
+  - q: "Kelemahan delay() adalah…"
+    options: ["Menghentikan seluruh eksekusi", "Mengubah tegangan", "Menghapus variabel", "Mengunci pin"]
+    answer: 0
+    explain: "Selama delay, tombol atau sensor lain tidak dibaca."
+  - q: "Pola if (millis() - lalu >= interval) berguna untuk…"
+    options: ["Mengubah baudrate", "Menjalankan tugas berkala tanpa membekukan program", "Mengganti pinMode", "Menyimpan EEPROM"]
+    answer: 1
+    explain: "Variabel lalu diperbarui setiap kali tugas dijalankan."
+  - q: "Tipe data yang disarankan untuk menyimpan hasil millis() adalah…"
+    options: ["char", "float", "unsigned long", "int"]
+    answer: 2
+    explain: "unsigned long 32-bit cukup untuk menampung nilai millis."
+  - q: "Agar dua LED berkedip dengan periode berbeda, gunakan…"
+    options: ["Satu delay panjang", "Dua Serial.begin", "Satu pinMode", "Dua variabel waktu terpisah"]
+    answer: 3
+    explain: "Tiap jadwal punya penanda waktu sendiri."
+example:
+  code: |
+    unsigned long lalu = 0;
+    const long interval = 500;
+    
+    void loop() {
+      unsigned long sekarang = millis();
+      if (sekarang - lalu >= interval) {
+        lalu = sekarang;
+        digitalWrite(13, !digitalRead(13));
+      }
+      // kode lain tetap berjalan di sini
+    }
+---
+
+`delay()` sederhana, tetapi membekukan MCU. Pola `millis()` memungkinkan banyak tugas berjalan bersamaan secara cooperatif.
+
+## Perbandingan
+
+| Pendekatan | Efek | Cocok untuk |
+|---|---|---|
+| `delay(1000)` | MCU diam 1 detik | Eksperimen sangat sederhana |
+| `millis()` | MCU tetap aktif | Tombol + LED + sensor sekaligus |
+
+## Pola Dasar
+
+```cpp
+unsigned long waktuTerakhir = 0;
+const long interval = 1000;
+
+void loop() {
+  if (millis() - waktuTerakhir >= interval) {
+    waktuTerakhir = millis();
+    jalankanTugas();
+  }
+  bacaTombol();   // tetap responsif
+}
+```
+
+Gunakan **pengurangan**, bukan `millis() > waktu + interval`, agar aman saat nilai melacak (overflow).
+
+## Dua Jadwal
+
+```cpp
+unsigned long tLed = 0, tSensor = 0;
+
+void loop() {
+  if (millis() - tLed >= 250) { tLed = millis(); toggleLed(); }
+  if (millis() - tSensor >= 2000) { tSensor = millis(); bacaSensor(); }
+}
+```
+
+## State Machine Sederhana
+
+```cpp
+enum State { MENUNGGU, BERDENYUT };
+State state = MENUNGGU;
+```
+
+Kombinasikan `millis()` dengan keadaan untuk perilaku kompleks tanpa `delay`.
+
+<div class="note">💡 Jika butuh presisi mikrodetik atau interupsi nyata, gunakan timer hardware atau `attachInterrupt()`—bukan loop `millis()`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`unsigned long t = 0;
+void loop() {
+  if (millis() - t &gt;= 1000) {
+    t = millis();
+    Serial.println('tugas tiap detik');
+  }
+  // tombol tetap bisa dibaca di sini
+}`}</code></pre>

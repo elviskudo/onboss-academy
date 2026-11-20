@@ -1,0 +1,74 @@
+---
+title: "Kriptografi Dasar"
+description: "Enkripsi simetris, asimetris, hash, dan tanda tangan digital"
+order: 11
+quiz:
+  - q: "Enkripsi simetris menggunakan…"
+    options: ["Dua kunci berbeda", "Tanpa kunci", "Hash saja", "Satu kunci yang sama untuk enkripsi dan dekripsi"]
+    answer: 3
+    explain: "AES adalah contoh umum enkripsi simetris yang cepat untuk data besar."
+  - q: "Enkripsi asimetris memiliki…"
+    options: ["Kunci publik dan kunci privat", "Satu kunci umum", "Tiga kunci rahasia", "Kunci yang selalu sama"]
+    answer: 0
+    explain: "Kunci publik dibagikan; kunci privat tidak boleh keluar dari pemiliknya."
+  - q: "Fungsi hash bersifat…"
+    options: ["Selalu sama untuk input berbeda", "Satu arah dan deterministik", "Dua arah", "Bisa didekripsi"]
+    answer: 1
+    explain: "Hash yang sama untuk input yang sama, tetapi tidak bisa dikembalikan ke input asal."
+  - q: "Tanda tangan digital berguna untuk…"
+    options: ["Mempercepat internet", "Mengganti password", "Membuktikan asal dan integritas pesan", "Menyembunyikan isi pesan"]
+    answer: 2
+    explain: "Tanda tangan memakai kunci privat dan diverifikasi dengan kunci publik."
+  - q: "Salt pada hashing password berfungsi…"
+    options: ["Mengganti enkripsi", "Menambah panjang password", "Menghapus hash lama", "Menggagalkan tabel rainbow"]
+    answer: 3
+    explain: "Salt unik per pengguna membuat hash password yang sama tetap berbeda."
+example:
+  code: |
+    # Enkripsi simetris (konsep)
+    kunci = "rahasia-bersama"
+    terenkripsi = Enkrip(kunci, "pesan")
+    
+    # Asimetris (konsep)
+    terenkripsi = Enkrip(kunci_publik_penerima, "pesan")
+    pesan = Dekrip(kunci_privat_penerima, terenkripsi)
+---
+
+Kriptografi bukan sihir: ia adalah alat dengan sifat yang berbeda-beda. Memilih alat yang salah sering menyebabkan sistem terasa aman padahal tidak.
+
+## Tiga Kelompok
+
+| Jenis | Arah | Contoh | Dipakai untuk |
+|---|---|---|---|
+| Simetris | Satu kunci | AES, ChaCha20 | Data besar, cepat |
+| Asimetris | Pasangan kunci | RSA, ECC | Pertukaran kunci, sertifikat |
+| Hash | Satu arah | SHA-256, bcrypt | Integritas, password |
+
+## Alur Hybrid HTTPS
+
+1. Client dan server sepakat pada kunci sesi lewat pertukaran kunci asimetris.
+2. Seluruh komunikasi berikutnya memakai enkripsi simetris.
+3. Hash + MAC menjaga integritas tiap pesan.
+
+Perpaduan ini memberi keamanan asimetris dengan kecepatan simetris.
+
+## Hash Password
+
+```text
+bcrypt("sandiku", salt="x7f...") = $2b$12$x7f...
+```
+
+Gunakan fungsi yang **sengaja lambat** seperti bcrypt, scrypt, atau Argon2. SHA-256 biasa terlalu cepat sehingga brute force menjadi murah.
+
+## Tanda Tangan Digital
+
+Pengirim membuat hash pesan lalu mengenkripsinya dengan kunci privat. Penerima mendekripsi dengan kunci publik dan membandingkan hash-nya. Kecocokan membuktikan pesan tidak berubah dan berasal dari pemilik kunci privat.
+
+<div class="note">💡 Jangan merancang protokol kriptografi sendiri. Gunakan library terawat dan ikuti rekomendasi terkini—algoritma yang dulu aman bisa usang.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Contoh hash (ilustrasi, bukan nilai asli):
+  SHA-256('halo') = 2cf24dba...
+Ubah satu huruf -&gt; seluruh hash berubah drastis.`}</code></pre>

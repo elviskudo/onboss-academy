@@ -1,0 +1,102 @@
+---
+title: "Compose Lanjutan"
+description: "depends_on, healthcheck, restart, dan konfigurasi layanan yang tangguh"
+order: 17
+quiz:
+  - q: "depends_on tanpa condition hanya menjamin…"
+    options: ["Port terbuka", "Urutan pembuatan container", "Layanan benar-benar siap", "Kesehatan database"]
+    answer: 1
+    explain: "Untuk menunggu kesiapan, pakai condition: service_healthy."
+  - q: "Opsi restart: unless-stopped berarti…"
+    options: ["Tidak pernah restart", "Restart hanya saat error", "Restart kecuali dihentikan manual", "Restart selamanya"]
+    answer: 2
+    explain: "Berbeda dengan always, container yang sengaja distop tidak akan hidup lagi saat daemon restart."
+  - q: "env_file dalam compose berfungsi…"
+    options: ["Membuat volume", "Mengganti image", "Menentukan healthcheck", "Memuat variabel dari file eksternal"]
+    answer: 3
+    explain: "Berguna memisahkan konfigurasi lingkungan dari file compose."
+  - q: "Perintah untuk menjalankan compose di latar belakang adalah…"
+    options: ["docker compose up -d", "docker compose run", "docker compose start -b", "docker compose build -d"]
+    answer: 0
+    explain: "-d = detached, sama seperti docker run -d."
+  - q: "docker compose down -v akan…"
+    options: ["Menghapus Dockerfile", "Menghapus container, network, dan volume bernama", "Hanya menghentikan container", "Menghapus image"]
+    answer: 1
+    explain: "Hati-hati: data di volume ikut terhapus."
+example:
+  code: |
+    services:
+      db:
+        image: postgres:16-alpine
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U app"]
+          interval: 5s
+          retries: 5
+      api:
+        build: .
+        depends_on:
+          db:
+            condition: service_healthy
+        env_file: .env
+        restart: unless-stopped
+---
+
+File `docker-compose.yml` dasar sudah cukup untuk proyek kecil. Saat aplikasi bertumbuh, beberapa opsi tambahan membuatnya lebih andal.
+
+## Menunggu Kesediaan, Bukan Sekadar Urutan
+
+```yaml
+services:
+  db:
+    image: postgres:16-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+```
+
+Tanpa `condition`, Compose hanya menunggu container db **dibuat**, bukan siap menerima koneksi—sumber error `connection refused` saat startup.
+
+## Kebijakan Restart
+
+| Nilai | Perilaku |
+|---|---|
+| `no` | Tidak restart otomatis (default) |
+| `always` | Selalu restart, termasuk setelah daemon restart |
+| `on-failure` | Restart hanya saat exit code bukan 0 |
+| `unless-stopped` | Seperti always, kecuali container sengaja distop |
+
+## Override per Lingkungan
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+File kedua menggabung/menimpa nilai file pertama. Ini cara rapi menyimpan pengaturan produksi tanpa menggandakan seluruh konfigurasi.
+
+## Perintah Sehari-hari
+
+```bash
+docker compose config          # lihat hasil gabungan & substitusi variabel
+docker compose up -d --build   # rebuild image lalu jalankan
+docker compose logs -f api     # log satu layanan
+docker compose exec db psql -U app
+docker compose ps
+docker compose down            # stop + hapus container & network
+docker compose down -v         # + hapus volume (hati-hati!)
+```
+
+<div class="note">💡 Gunakan `${VARIABLE:-default}` di file compose untuk memberi nilai cadangan. Simpan nilai nyata di `.env`, dan jangan commit file itu ke repository.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'services:' '  web:' '    image: alpine:3.20' '    command: sh -c "echo layanan siap; sleep 5"' '    restart: unless-stopped' &gt; docker-compose.yml
+docker compose up -d &gt;/dev/null &amp;&amp; docker compose ps &amp;&amp; docker compose down &gt;/dev/null`}</code></pre>

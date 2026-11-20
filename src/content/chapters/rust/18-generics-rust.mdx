@@ -1,0 +1,138 @@
+---
+"title": "Generic di Rust"
+"description": "Parameter tipe, trait bound, monomorphization, dan PhantomData"
+"order": 18
+"quiz":
+- "q": "Generic di Rust dikompilasi dengan…"
+  "options":
+  - "boxing"
+  - "monomorphization"
+  - "interpretasi"
+  - "GC"
+  "answer": 1
+  "explain": "Kompiler membuat salinan kode untuk tiap tipe konkret."
+- "q": "Fungsi generic ditulis…"
+  "options":
+  - "fn F<T>(x: T)"
+  - "fn F(x: T)"
+  - "generic fn F"
+  - "fn<T> F"
+  "answer": 0
+  "explain": "Parameter tipe diletakkan setelah nama fungsi."
+- "q": "Bound yang membatasi T hanya tipe yang bisa disalin adalah…"
+  "options":
+  - "Copy"
+  - "Debug"
+  - "Display"
+  - "Send"
+  "answer": 0
+  "explain": "Copy menandakan tipe bisa diduplikasi bit-wise tanpa move."
+- "q": "PhantomData dipakai untuk…"
+  "options":
+  - "menyimpan data phantom"
+  - "menandakan kepemilikan tipe tanpa menyimpan nilai"
+  - "menghapus tipe"
+  - "membuat enum"
+  "answer": 1
+  "explain": "Berguna saat generic parameter tidak muncul di field mana pun."
+- "q": "Keunggulan monomorphization adalah…"
+  "options":
+  - "binary lebih kecil"
+  - "tanpa biaya dispatch dinamis"
+  - "kompilasi lebih cepat"
+  - "semua tipe jadi dyn"
+  "answer": 1
+  "explain": "Kode spesifik tiap tipe dioptimasi secara statis."
+"example":
+  "code": "fn pertama<T>(data: &[T]) -> Option<&T> { data.first() }\nfn main() {\n    println!(\"{:?}\", pertama(&[1, 2]));\n    println!(\"{:?}\", pertama(&[\"a\", \"b\"]));\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Generic membuat fungsi dan tipe bisa dipakai ulang untuk banyak tipe dengan tetap aman. Rust mengimplementasikannya lewat **monomorphization**: kompiler menghasilkan versi kode untuk tiap tipe yang dipakai.
+
+## Fungsi Generic
+
+```rust
+fn pertama<T>(data: &[T]) -> Option<&T> {
+    data.first()
+}
+```
+
+Tidak ada biaya runtime — tidak seperti `dyn Trait`.
+
+## Struct Generic
+
+```rust
+struct Kotak<T> { isi: T }
+
+impl<T> Kotak<T> {
+    fn baru(isi: T) -> Self { Kotak { isi } }
+    fn ambil(&self) -> &T { &self.isi }
+}
+```
+
+## Trait Bound
+
+```rust
+fn tampil<T: std::fmt::Debug>(x: &T) {
+    println!("{:?}", x);
+}
+
+// bentuk where lebih rapi untuk banyak bound
+fn hitung<T>(x: T) -> T
+where
+    T: Copy + PartialOrd,
+{
+    x
+}
+```
+
+## Multiple Type Parameter
+
+```rust
+fn pasangan<A, B>(a: A, b: B) -> (A, B) { (a, b) }
+```
+
+## Const Generic
+
+```rust
+struct Buffer<const N: usize> { data: [u8; N] }
+
+let b = Buffer::<16> { data: [0; 16] };
+```
+
+## PhantomData
+
+```rust
+use std::marker::PhantomData;
+struct Pemberi<T> { id: i32, _tipe: PhantomData<T> }
+```
+
+Ini memberi tahu kompiler bahwa struct "seolah" memiliki `T`, berguna untuk pointer atau indeks bertipe.
+
+<div class="note">💡 Trade-off monomorphization: binary bisa lebih besar. Jika ukuran menjadi masalah, pertimbangkan <code>dyn Trait</code> untuk batas API yang jelas.</div>
+
+
+## Try it Yourself
+
+Coba panggil `pertama` dengan tipe `char` atau buat `Kotak<bool>`.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn pertama<T>(data: &[T]) -> Option<&T> { data.first() }
+
+struct Kotak<T> { isi: T }
+impl<T> Kotak<T> {
+    fn baru(isi: T) -> Self { Kotak { isi } }
+    fn ambil(&self) -> &T { &self.isi }
+}
+
+fn main() {
+    println!("{:?}", pertama(&[10, 20, 30]));
+    println!("{:?}", pertama(&['a', 'b']));
+
+    let k = Kotak::baru(String::from("halo"));
+    println!("{}", k.ambil());
+
+    let angka = Kotak::baru(42);
+    println!("{}", angka.ambil());
+}`} />

@@ -1,0 +1,83 @@
+---
+title: "Merancang Dashboard dan Storytelling Data"
+description: "pertanyaan bisnis, KPI, layout, warna, narasi, dan audience"
+order: 27
+quiz:
+  - q: "Langkah pertama membuat dashboard adalah…"
+    options: ["Menambah logo", "Menentukan pertanyaan bisnis", "Memilih warna", "Membuat grafik"]
+    answer: 1
+    explain: "Desain mengikuti kebutuhan pengguna."
+  - q: "KPI sebaiknya…"
+    options: ["Tanpa satuan", "Selalu persentase", "Jelas dan dapat ditindaklanjuti", "Banyak dan kecil"]
+    answer: 2
+    explain: "KPI menjawab pertanyaan utama."
+  - q: "Warna pada dashboard sebaiknya…"
+    options: ["Sebanyak mungkin", "Acak", "Hanya merah", "Konsisten dan bermakna"]
+    answer: 3
+    explain: "Warna membantu membedakan kategori."
+  - q: "Storytelling data berarti…"
+    options: ["Membuat grafik tanpa judul", "Menyusun narasi dari data untuk keputusan", "Menulis cerita fiksi", "Menghapus angka"]
+    answer: 1
+    explain: "Data perlu konteks agar dipahami."
+  - q: "Audience eksekutif biasanya ingin…"
+    options: ["Kode Python", "Log query", "Ringkasan singkat dan implikasi", "Semua baris mentah"]
+    answer: 2
+    explain: "Mereka butuh keputusan, bukan detail teknis."
+example:
+  code: |
+    kpi={"Omzet":120,"Pelanggan":34,"Rata-rata":88}
+    for k,v in kpi.items(): print(f"{k}: {v}")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Struktur Dashboard
+
+| Bagian | Isi |
+| --- | --- |
+| Judul | pertanyaan yang dijawab |
+| KPI | 3–5 angka kunci |
+| Tren | grafik waktu |
+| Rincian | bar/tabel per kategori |
+| Catatan | sumber & keterbatasan |
+
+## Memilih KPI
+
+```python
+data = [
+    {"omzet": 100, "pelanggan": 10},
+    {"omzet": 120, "pelanggan": 12},
+]
+total_omzet = sum(r["omzet"] for r in data)
+rata = total_omzet / len(data)
+print(total_omzet, rata)
+```
+
+KPI yang baik punya definisi yang disepakati. "Pelanggan aktif" harus punya kriteria yang sama di seluruh tim.
+
+## Narasi
+
+Susun kalimat seperti:
+
+1. Apa yang terjadi? (omzet naik 12%)
+2. Mengapa penting? (melebihi target)
+3. Apa yang harus dilakukan? (tambah stok produk A)
+
+## Kesalahan Umum
+
+- Terlalu banyak grafik sehingga pesan hilang.
+- Tanpa label waktu pada sumbu.
+- Warna berbeda untuk makna yang sama.
+- Tidak menyebut sumber data.
+
+<div class="note">💡 Dashboard bukan laporan mentah. Kalau pembaca harus bertanya "terus kenapa?", dashboard itu belum selesai.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`kpi = {"Omzet (juta)": 120, "Pelanggan": 34, "Rata-rata nilai": 88}
+print("=== RINGKASAN ===")
+for nama, nilai in kpi.items():
+    print(f"{nama:>18}: {nilai}")
+print("\nKesimpulan: omzet di atas target, fokuskan stok produk terlaris.")`} />

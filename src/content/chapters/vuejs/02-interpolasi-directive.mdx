@@ -4,7 +4,7 @@ description: "v-bind, v-if, v-for — menampilkan dan menyembunyikan data di tem
 order: 2
 quiz:
   - q: "Sintaks interpolasi di template Vue memakai…"
-    options: ["<%= %>", "{{ ekspresi }}", "${}", "console.log()"]
+    options: ["&lt;%= %>", "{{ ekspresi }}", "${}", "console.log()"]
     answer: 1
     explain: "Contoh: <h1>{{ judul }}</h1> — isinya ekspresi JavaScript yang dievaluasi Vue."
   - q: "v-bind:src (atau :src) berfungsi…"
@@ -130,6 +130,10 @@ console.log(baris.join(" | "));
 - **Empty state**: `v-if="items.length"` menampilkan list; `v-else` menampilkan "Belum ada data".
 
 <div class="note">💡 Sembunyikan elemen berat (tabel besar, form kompleks) dengan `v-if` supaya benar-benar tidak dirender. Gunakan `v-show` untuk tombol/panel yang sering bolak-balik tampil — menghapus dan menambah DOM lebih mahal daripada menyembunyikan.</div>
+
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
 
 <TryIt lang="javascript" runtime="client-js" code={`// Logika yang dijalankan Vue di balik v-for & v-if
 const daftar = [

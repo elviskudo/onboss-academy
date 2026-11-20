@@ -1,0 +1,132 @@
+---
+title: Manajemen Disk dan Filesystem
+description: Melihat usage, memformat, dan memasang perangkat penyimpanan.
+order: 18
+quiz:
+- q: Perintah melihat penggunaan disk berdasarkan partisi adalah…
+  options:
+  - lsblk
+  - fdisk
+  - df -h
+  - du -sh
+  answer: 2
+  explain: df = disk free, -h membuat angka mudah dibaca.
+- q: Perintah melihat ukuran direktori adalah…
+  options:
+  - df -h
+  - mount
+  - stat
+  - du -sh folder/
+  answer: 3
+  explain: du = disk usage, -s ringkas, -h human readable.
+- q: Perintah menampilkan daftar perangkat blok adalah…
+  options:
+  - lsblk
+  - df -h
+  - du
+  - free
+  answer: 0
+  explain: lsblk menampilkan pohon disk dan partisi.
+- q: Perintah untuk memasang filesystem adalah…
+  options:
+  - fdisk /mnt
+  - mount /dev/sdb1 /mnt/data
+  - umount /dev/sdb1
+  - mkfs /mnt/data
+  answer: 1
+  explain: Mount point harus berupa direktori yang sudah ada.
+- q: File /etc/fstab berisi…
+  options:
+  - Konfigurasi jaringan
+  - Riwayat perintah
+  - Daftar filesystem yang dipasang saat boot
+  - Daftar pengguna
+  answer: 2
+  explain: Salah edit fstab bisa membuat sistem gagal boot.
+example:
+  code: 'df -h
+
+    du -sh /var/log/*
+
+    lsblk
+
+    sudo mount /dev/sdb1 /mnt/data
+
+    sudo umount /mnt/data
+
+    '
+---
+
+
+Server bisa kehabisan ruang kapan saja. Tiga perintah awal yang selalu dipakai: `df`, `du`, dan `lsblk`.
+
+## Melihat Kapasitas
+
+```bash
+df -h
+df -i              # penggunaan inode
+du -sh /var/*
+du -h --max-depth=1 /home
+```
+
+```text
+Filesystem  Size  Used  Avail  Use%  Mounted on
+/dev/sda1   100G   82G   12G   88%  /
+```
+
+Perhatikan juga inode. Disk bisa “penuh” walau ruang tersisa bila terlalu banyak file kecil.
+
+## Perangkat dan Partisi
+
+```bash
+lsblk
+sudo fdisk -l
+sudo blkid
+```
+
+```text
+NAME   SIZE TYPE MOUNTPOINT
+sda    256G disk
+├─sda1 512M part /boot/efi
+└─sda2 255G part /
+sdb    1T   disk /mnt/data
+```
+
+## Mount
+
+```bash
+sudo mkdir -p /mnt/data
+sudo mount /dev/sdb1 /mnt/data
+sudo umount /mnt/data
+```
+
+Agar permanen, tambahkan ke `/etc/fstab`:
+
+```text
+UUID=abcd-1234  /mnt/data  ext4  defaults  0  2
+```
+
+Lebih aman memakai UUID daripada `/dev/sdb1` karena nama perangkat bisa berubah setelah reboot.
+
+## Filesystem Umum
+
+| Nama | Catatan |
+|---|---|
+| ext4 | standar Linux, stabil |
+| XFS | baik untuk file besar |
+| Btrfs | snapshot dan checksum |
+| ZFS | fitur kaya, butuh modul tambahan |
+
+```bash
+sudo mkfs.ext4 /dev/sdb1
+```
+
+<div class="note">💡 `mkfs` menghancurkan data lama. Pastikan target perangkat sudah benar sebelum menjalankannya.</div>
+
+## Investigasi Cepat
+
+```bash
+du -ah / | sort -rh | head -20
+```
+
+Perintah ini menemukan direktori atau file terbesar — biasanya log, cache, atau dump database.

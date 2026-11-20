@@ -36,8 +36,8 @@ example:
 
     int main() {
         string nama = "Dunia";
-        cout << "Halo, " << nama << "!" << endl;
-        cout << "2 + 2 = " << 2 + 2 << endl;
+        cout <&lt; "Halo, " <&lt; nama <&lt; "!" <&lt; endl;
+        cout <&lt; "2 + 2 = " <&lt; 2 + 2 <&lt; endl;
         return 0;
     }
 ---
@@ -69,7 +69,7 @@ int main() {
 | `#include <header>` | menyertakan library | `#include <string>` |
 | `int main()` | titik masuk program — **wajib tepat satu** | `int main() { ... }` |
 | `return 0;` | keluar dengan kode 0 = sukses | `return 0;` |
-| `std::cout` | tulis ke layar | `cout << nilai;` |
+| `std::cout` | tulis ke layar | `cout <&lt; nilai;` |
 | `std::cin` | baca dari keyboard | `cin >> umur;` |
 | `//` dan `/* */` | komentar 1 baris / multi-baris | `// catatan` |
 | `;` | penutup pernyataan — wajib | `int a = 1;` |
@@ -139,6 +139,10 @@ C++ punya **3 paradigma utama** yang bisa dicampur dalam satu program:
 
 <div class="note">💡 C++ mengompilasi ke kode mesin, bukan ke bytecode. Karena itu program C++ tidak butuh interpreter apa pun di komputer tujuan — cukup executable-nya. Tukar dengan kecepatan: satu kesalahan pointer bisa langsung membuat program crash tanpa pesan ramah.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <string>
 #include <vector>
@@ -146,16 +150,16 @@ using namespace std;
 
 int main() {
     string nama = "OnBoss Academy";
-    cout << "Halo dari " << nama << "!\\n";
+    cout <&lt; "Halo dari " <&lt; nama <&lt; "!\\n";
 
     int a = 7, b = 5;
-    cout << a << " + " << b << " = " << a + b << endl;
+    cout <&lt; a <&lt; " + " <&lt; b <&lt; " = " <&lt; a + b <&lt; endl;
 
-    for (int i = 1; i <= 3; i++) {
-        cout << "Perulangan ke-" << i << endl;
+    for (int i = 1; i &lt;= 3; i++) {
+        cout <&lt; "Perulangan ke-" <&lt; i <&lt; endl;
     }
 
     vector<int> data = {10, 20, 30};
-    cout << "Jumlah elemen: " << data.size() << endl;
+    cout <&lt; "Jumlah elemen: " <&lt; data.size() <&lt; endl;
     return 0;
 }`} />

@@ -1,0 +1,113 @@
+---
+"title": "Migrasi Lanjutan"
+"description": "Mengubah skema dengan aman: index, foreign key, rollback, dan migrasi data"
+"order": 15
+"quiz":
+- "q": "Perintah membuat migrasi baru adalah…"
+  "options":
+  - "bin/rails generate migration NamaMigrasi"
+  - "bin/rails db new"
+  - "rails schema add"
+  - "bundle migration"
+  "answer": 0
+  "explain": "Generator membuat file dengan timestamp di db/migrate."
+- "q": "Metode untuk membatalkan perubahan migrasi adalah…"
+  "options":
+  - "down"
+  - "up"
+  - "revert"
+  - "undo"
+  "answer": 0
+  "explain": "Metode down dipakai saat rollback."
+- "q": "Fungsi index pada kolom database adalah…"
+  "options":
+  - "Menyimpan backup"
+  - "Mempercepat pencarian"
+  - "Menghapus duplikat otomatis"
+  - "Mengubah tipe data"
+  "answer": 1
+  "explain": "Index mempercepat WHERE dan JOIN, dengan biaya tulis sedikit lebih lambat."
+- "q": "Perintah menjalankan migrasi yang belum diterapkan adalah…"
+  "options":
+  - "bin/rails db:migrate"
+  - "bin/rails db:setup"
+  - "bundle exec rails schema"
+  - "bin/rails db:reset"
+  "answer": 0
+  "explain": "db:migrate menjalankan file migrasi yang belum tercatat di schema_migrations."
+- "q": "Alasan memisahkan migrasi struktur dan data adalah…"
+  "options":
+  - "Agar rollback lebih terkendali"
+  - "Agar file lebih panjang"
+  - "Karena Rails melarang keduanya"
+  - "Tidak ada alasan khusus"
+  "answer": 0
+  "explain": "Migrasi data yang besar sebaiknya terpisah agar rollback struktur tidak menghapus data penting secara tidak sengaja."
+"example":
+  "code": "class AddIndexAndRoleToUsers &lt; ActiveRecord::Migration[7.1]\n  def up\n    add_column :users, :role, :string, default: \"member\"\n    add_index :users, :email, unique: true\n    add_reference :articles, :author, foreign_key: true\n  end\n\n  def down\n    remove_reference :articles, :author, foreign_key: true\n    remove_index :users, :email\n    remove_column :users, :role\n  end\nend\n"
+---
+
+## Migrasi sebagai Riwayat Skema
+
+```ruby
+class AddIndexAndRoleToUsers < ActiveRecord::Migration[7.1]
+  def up
+    add_column :users, :role, :string, default: "member"
+    add_index :users, :email, unique: true
+    add_reference :articles, :author, foreign_key: true
+  end
+
+  def down
+    remove_reference :articles, :author, foreign_key: true
+    remove_index :users, :email
+    remove_column :users, :role
+  end
+end
+```
+
+Migrasi adalah file Ruby yang mengubah struktur database. Setiap file punya timestamp, sehingga urutan eksekusinya jelas.
+
+```bash
+bin/rails generate migration AddRoleToUsers role:string
+bin/rails db:migrate
+```
+
+## Pasangan Up dan Down
+
+```ruby
+def up
+  add_column :users, :role, :string
+end
+
+def down
+  remove_column :users, :role
+end
+```
+
+`down` membuat migrasi bisa dibatalkan dengan `bin/rails db:rollback`. Untuk perubahan sederhana, metode `change` sudah cukup karena Rails tahu cara membalikkan `add_column`.
+
+## Index dan Foreign Key
+
+| Perubahan | Alasan |
+|---|---|
+| `add_index :users, :email, unique: true` | mempercepat lookup sekaligus mencegah email ganda |
+| `add_reference :articles, :author, foreign_key: true` | menambah `author_id` + constraint database |
+| `change_column_null` | menegaskan kolom wajib diisi |
+
+Foreign key di database adalah perlindungan terakhir meskipun validasi model sudah ada.
+
+## Migration Data
+
+```ruby
+def up
+  User.where(role: nil).update_all(role: "member")
+end
+```
+
+Gunakan `update_all` untuk update massal — jauh lebih cepat daripada loop `save`. Namun `update_all` melewati callback dan validasi, jadi pahami risikonya.
+
+## Schema.rb
+
+Setiap `db:migrate` memperbarui `db/schema.rb`. File ini adalah gambaran akhir skema yang dipakai saat menyiapkan database baru lewat `bin/rails db:setup`.
+
+<div class="note">💡 Hindari mengedit migrasi yang sudah dijalankan di produksi. Buat migrasi baru untuk perubahan lanjutan agar riwayat tetap jujur dan rollback tetap bisa dilakukan.</div>

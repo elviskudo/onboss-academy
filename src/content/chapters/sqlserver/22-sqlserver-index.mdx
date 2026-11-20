@@ -1,0 +1,94 @@
+---
+title: "Index Clustered, Nonclustered, dan Covering"
+description: "struktur indeks, INCLUDE, filtered index, indeks kolomstore, dan DMV performa"
+order: 22
+quiz:
+  - q: "Satu tabel hanya boleh memiliki satu…"
+    options: ["Columnstore index", "Clustered index", "Nonclustered index", "Filtered index"]
+    answer: 1
+    explain: "Clustered index menentukan urutan fisik data."
+  - q: "INCLUDE pada indeks berguna untuk…"
+    options: ["Membuat tabel baru", "Mengurutkan hasil", "Menambah kolom ke leaf tanpa mengubah kunci", "Menghapus duplikat"]
+    answer: 2
+    explain: "INCLUDE membuat indeks covering sehingga tidak perlu key lookup."
+  - q: "Indeks filtered hanya mengindeks…"
+    options: ["Baris yang memenuhi predikat", "Kolom pertama saja", "Baris NULL saja", "Semua baris"]
+    answer: 0
+    explain: "Contoh: WHERE aktif = 1 menghasilkan indeks kecil untuk data aktif."
+  - q: "Columnstore paling cocok untuk…"
+    options: ["Log transaksi", "Analitik dan agregasi besar", "Transaksi baris tunggal", "Primary key"]
+    answer: 1
+    explain: "Columnstore mengompres dan memindai kolom secara batch."
+  - q: "DMV untuk melihat indeks yang tidak terpakai adalah…"
+    options: ["sys.tables", "sys.columns", "sys.dm_db_index_usage_stats", "sys.indexes saja"]
+    answer: 2
+    explain: "DMV mencatat seek/scan/update sejak statistik terakhir direset."
+example:
+  code: |
+    CREATE CLUSTERED INDEX ix_siswa_id ON dbo.siswa(id);
+    CREATE NONCLUSTERED INDEX ix_siswa_kelas_nilai
+      ON dbo.siswa(kelas, nilai) INCLUDE (nama);
+    CREATE NONCLUSTERED INDEX ix_siswa_aktif
+      ON dbo.siswa(id) WHERE aktif = 1;
+---
+
+## Clustered versus Nonclustered
+
+| Jenis | Karakter |
+| --- | --- |
+| Clustered | mengurutkan baris data fisik; satu per tabel |
+| Nonclustered | struktur terpisah berisi kunci + penunjuk baris; banyak per tabel |
+
+Biasanya `PRIMARY KEY` otomatis menjadi clustered index. Pilih kunci yang sempit, stabil, dan sering dipakai untuk rentang.
+
+## INCLUDE untuk Covering Index
+
+```sql
+CREATE NONCLUSTERED INDEX ix_siswa_kelas_nilai
+ON dbo.siswa(kelas, nilai)
+INCLUDE (nama);
+```
+
+Query `SELECT nama FROM siswa WHERE kelas = 'A' ORDER BY nilai` kini bisa dijawab langsung dari indeks tanpa membaca tabel — disebut **covering index**.
+
+## Filtered Index
+
+```sql
+CREATE NONCLUSTERED INDEX ix_pesanan_belum
+ON dbo.pesanan(tanggal)
+WHERE status = N'Belum Dibayar';
+```
+
+Indeks menjadi jauh lebih kecil bila sebagian besar baris sudah lunas. Predikat di query harus cocok dengan predikat indeks agar indeks terpakai.
+
+## Columnstore
+
+```sql
+CREATE NONCLUSTERED COLUMNSTORE INDEX cci_penjualan
+ON dbo.penjualan(tanggal, produk_id, jumlah, total);
+```
+
+Sangat efektif untuk `SUM`, `AVG`, dan scan jutaan baris. Tidak cocok untuk tabel yang terus menerus di-update baris per baris.
+
+## Memantau
+
+```sql
+SELECT i.name, s.user_seeks, s.user_scans, s.user_updates
+FROM sys.dm_db_index_usage_stats s
+JOIN sys.indexes i ON s.object_id = i.object_id AND s.index_id = i.index_id
+WHERE s.database_id = DB_ID();
+```
+
+Indeks dengan `user_updates` besar tetapi `user_seeks` nol adalah kandidat untuk dihapus. Tetap pertimbangkan siklus aplikasi sebelum memutuskan.
+
+<div class="note">💡 Indeks berlebih memperlambat INSERT/UPDATE/DELETE karena setiap indeks harus ikut diperbarui. Ukuran dan manfaatnya harus dievaluasi secara berkala.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (id INT, kelas CHAR(1), nama NVARCHAR(20));
+INSERT INTO #t VALUES (1, 'A', N'Ana'), (2, 'B', N'Budi');
+CREATE NONCLUSTERED INDEX ix_kelas ON #t(kelas) INCLUDE (nama);
+SELECT nama FROM #t WHERE kelas = 'A';
+DROP TABLE #t;`}</code></pre>

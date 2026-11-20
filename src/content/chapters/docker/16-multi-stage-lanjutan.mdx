@@ -1,0 +1,107 @@
+---
+title: "Multi-stage Lanjutan"
+description: "Pola build lintas bahasa, target stage, dan image final minimal"
+order: 16
+quiz:
+  - q: "Perintah untuk membangun stage tertentu adalah…"
+    options: ["docker build --target nama-stage", "docker build --stage nama", "docker build -s nama", "docker build --only nama"]
+    answer: 0
+    explain: "--target menghentikan build pada stage yang diminta, berguna untuk testing."
+  - q: "Manfaat utama multi-stage adalah…"
+    options: ["Tanpa perlu Dockerfile", "Image final tidak membawa tool build", "Container lebih cepat start", "Port otomatis terbuka"]
+    answer: 1
+    explain: "Hanya artifact yang disalin dari stage builder ke stage runtime."
+  - q: "COPY --from=builder menyalin…"
+    options: ["File dari registry", "File dari volume", "File dari stage sebelumnya", "File dari host saja"]
+    answer: 2
+    explain: "Sumber bisa berupa nama stage, index, atau image eksternal."
+  - q: "Image scratch cocok untuk…"
+    options: ["Aplikasi Node.js biasa", "Python dengan pustaka C", "Web server dengan modul", "Binary statis tanpa dependensi sistem"]
+    answer: 3
+    explain: "scratch tidak punya shell, libc, atau file sistem sama sekali."
+  - q: "Alasan memakai `--target builder` saat CI adalah…"
+    options: ["Menjalankan test dengan tool build tanpa membuat image final", "Menghapus cache", "Mengubah tag", "Menutup port"]
+    answer: 0
+    explain: "Stage builder berisi compiler dan dependency test yang tidak ingin dikirim."
+example:
+  code: |
+    FROM golang:1.22-alpine AS builder
+    WORKDIR /src
+    COPY go.mod go.sum ./
+    RUN go mod download
+    COPY . .
+    RUN CGO_ENABLED=0 go build -o /out/app .
+    
+    FROM scratch
+    COPY --from=builder /out/app /app
+    ENTRYPOINT ["/app"]
+---
+
+Multi-stage memisahkan **dunia build** dari **dunia runtime**. Stage awal boleh besar karena berisi compiler dan cache; stage akhir hanya membawa hasil kompilasi.
+
+## Pola Go ke scratch
+
+```dockerfile
+FROM golang:1.22-alpine AS builder
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /out/app .
+
+FROM scratch
+COPY --from=builder /out/app /app
+USER 65532:65532
+ENTRYPOINT ["/app"]
+```
+
+`CGO_ENABLED=0` menghasilkan binary statis sehingga tidak membutuhkan libc di image final.
+
+## Pola Node.js
+
+```dockerfile
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+CMD ["node", "dist/server.js"]
+```
+
+## Target Stage untuk CI
+
+```bash
+docker build --target build -t app:test .   # jalankan lint & test
+docker test ...                             # atau docker run app:test npm test
+docker build -t app:1.0 .                   # build final setelah hijau
+```
+
+Build.cache pada stage awal terpakai ulang oleh build berikutnya, sehingga pipeline tetap cepat.
+
+## Menyalin dari Image Eksternal
+
+```dockerfile
+COPY --from=nginx:alpine /etc/nginx/nginx.conf /etc/nginx/nginx.conf
+```
+
+Ini berguna untuk mengambil konfigurasi default tanpa mengunduhnya lewat `RUN curl`.
+
+<div class="note">💡 `scratch` tidak punya sertifikat CA. Jika aplikasi melakukan HTTPS, salin `ca-certificates.crt` dari stage builder atau pakai `distroless` yang sudah menyediakannya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'FROM alpine:3.20 AS builder' 'RUN echo hasil-build &gt; /out.txt' 'FROM alpine:3.20' 'COPY --from=builder /out.txt /out.txt' 'CMD ["cat", "/out.txt"]' &gt; Dockerfile
+docker build -t latihan-multistage . &gt;/dev/null
+docker run --rm latihan-multistage`}</code></pre>

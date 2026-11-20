@@ -1,0 +1,105 @@
+---
+title: "Middleware"
+description: "mencegat request, redirect, rewrite, dan pembatasan akses"
+order: 14
+quiz:
+  - q: "Middleware Next.js berjalan…"
+    options: ["Setelah render", "Saat build saja", "Di edge sebelum request selesai diproses", "Di browser saja"]
+    answer: 2
+    explain: "Cocok untuk redirect dan pengecekan token ringan."
+  - q: "File middleware ditempatkan di…"
+    options: ["components/", "Root proyek atau src/", "app/api/", "public/"]
+    answer: 1
+    explain: "Lokasi menentukan cakupan rutenya."
+  - q: "Untuk mengarahkan, gunakan…"
+    options: ["res.send()", "router.push()", "window.location", "NextResponse.redirect()"]
+    answer: 3
+    explain: "Kembalikan objek respons dari middleware."
+  - q: "Rewrite berbeda dari redirect karena…"
+    options: ["Hanya untuk API", "URL di browser tetap sama", "Selalu ke halaman login", "Menghapus cookie"]
+    answer: 1
+    explain: "Rewrite berguna untuk proxy atau A/B testing."
+  - q: "matcher berguna untuk…"
+    options: ["Membatasi rute yang terkena middleware", "Mengubah warna", "Menambah font", "Membuat metadata"]
+    answer: 0
+    explain: "Hindari menjalankan middleware pada aset statis."
+example:
+  code: |
+    export function middleware(request) {
+      if (!request.cookies.get('session') && request.nextUrl.pathname.startsWith('/admin')) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+    }
+
+    export const config = { matcher: ['/admin/:path*'] };
+---
+
+Middleware adalah lapisan penjaga di depan rute. Ia berjalan sebelum halaman atau route handler diproses.
+
+## Contoh Auth Redirect
+
+```ts
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const session = request.cookies.get("session")?.value;
+
+  if (!session && request.nextUrl.pathname.startsWith("/dashboard")) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("next", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/dashboard/:path*"],
+};
+```
+
+## Rewrite
+
+```ts
+if (request.nextUrl.pathname.startsWith("/blog")) {
+  const url = request.nextUrl.clone();
+  url.pathname = `/artikel${url.pathname}`;
+  return NextResponse.rewrite(url);
+}
+```
+
+Browser tetap menampilkan `/blog/...` tapi konten berasal dari `/artikel/...`.
+
+## Matcher
+
+```ts
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
+```
+
+Ini mengabaikan aset internal agar middleware tidak dipanggil sia-sia.
+
+## Header Respons
+
+```ts
+const response = NextResponse.next();
+response.headers.set("x-request-id", crypto.randomUUID());
+return response;
+```
+
+<div class="note">💡 Middleware cepat dan dekat dengan pengguna, tapi jangan menyimpan logika sensitif di sini. Otorisasi akhir tetap dilakukan di server/API.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`export function middleware(request) {
+  if (!request.cookies.get('session') && request.nextUrl.pathname.startsWith('/admin')) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+}
+
+export const config = { matcher: ['/admin/:path*'] };`}</code></pre>

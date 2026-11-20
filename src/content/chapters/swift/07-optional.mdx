@@ -137,6 +137,10 @@ print(wajib.count)
 
 <div class="note">💡 Utamakan guard let di awal fungsi agar alur utama tetap sedikit bersarang. Bila kamu menumpuk if let bertingkat, pertimbangkan mengembalikan opsional dan membiarkannya ditangani di satu tempat.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="swift" runtime="piston" pistonName="swift" code={`func panjang(_ teks: String?) -> Int {
     guard let isi = teks else { return 0 }
     return isi.count

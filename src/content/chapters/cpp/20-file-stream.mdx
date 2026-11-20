@@ -1,0 +1,127 @@
+---
+title: "File Stream"
+description: "ifstream, ofstream, stringstream, dan format I/O modern"
+order: 20
+quiz:
+  - q: "Kelas untuk membaca file adalah…"
+    options: ["ifstream", "ofstream", "fstream", "sstream"]
+    answer: 0
+    explain: "Turunan dari istream."
+  - q: "`std::getline(file, baris)` membaca…"
+    options: ["Satu baris hingga newline", "Satu kata", "Seluruh file", "Satu byte"]
+    answer: 0
+    explain: "Newline dibuang dari hasil."
+  - q: "`std::stringstream` berguna untuk…"
+    options: ["Memformat/parse string seperti stream", "Membaca file biner", "Membuat thread", "Menyimpan object"]
+    answer: 0
+    explain: "Sering dipakai untuk parse angka dari teks."
+  - q: "Mode `std::ios::app` berarti…"
+    options: ["Tambah di akhir file", "Timpa file", "Baca saja", "Biner"]
+    answer: 0
+    explain: "File dibuat bila belum ada."
+  - q: "`while (file >> x)` berhenti saat…"
+    options: ["Pembacaan gagal / EOF", "File terlalu besar", "Ada spasi", "Selalu"]
+    answer: 0
+    explain: "Operator >> mengembalikan stream yang bisa dikonversi ke bool."
+example:
+  code: |
+    #include <fstream>
+    #include <sstream>
+    #include <iostream>
+    #include <string>
+    
+    int main() {
+        std::ofstream out("data.txt");
+        out <&lt; "Sari 90\nBudi 85\n";
+        out.close();
+    
+        std::ifstream in("data.txt");
+        std::string baris;
+        while (std::getline(in, baris)) {
+            std::istringstream ss(baris);
+            std::string nama; int nilai;
+            ss >> nama >> nilai;
+            std::cout <&lt; nama <&lt; " => " <&lt; nilai <&lt; "\n";
+        }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C++ menyediakan stream API untuk file dan string. Pola yang sama dipakai untuk `cin`, `cout`, dan file — mudah dipelajari sekali.
+
+## Kelas Stream
+
+| Kelas | Fungsi |
+|---|---|
+| `ifstream` | baca file |
+| `ofstream` | tulis file |
+| `fstream` | keduanya |
+| `istringstream` | parse dari string |
+| `ostringstream` | format ke string |
+
+## Membaca
+
+```cpp
+std::ifstream f("data.txt");
+if (!f) { /* gagal dibuka */ }
+
+std::string baris;
+while (std::getline(f, baris)) {
+    // proses baris
+}
+```
+
+Jangan loop dengan `while (!f.eof())` — sering memproses baris terakhir dua kali.
+
+## Menulis
+
+```cpp
+std::ofstream f("log.txt", std::ios::app);
+f << "Baris log " << 42 << '
+';
+```
+
+## Parsing dengan stringstream
+
+```cpp
+std::string teks = "2026-11-20";
+std::istringstream ss(teks);
+int y, m, d;
+char dash1, dash2;
+ss >> y >> dash1 >> m >> dash2 >> d;
+```
+
+## Format Modern (C++20)
+
+```cpp
+#include <format>
+std::string s = std::format("Nama: {}, Nilai: {}", nama, nilai);
+```
+
+Alternatif sebelum C++20: `std::ostringstream` atau `{fmt}` library.
+
+<div class="note">💡 Stream otomatis menutup file saat objek keluar scope (RAII). Tidak perlu `close()` manual kecuali kamu ingin segera membuka ulang dengan mode berbeda.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <string>
+
+int main() {
+    std::ofstream out("data.txt");
+    out <&lt; "Sari 90\nBudi 85\n";
+    out.close();
+
+    std::ifstream in("data.txt");
+    std::string baris;
+    while (std::getline(in, baris)) {
+        std::istringstream ss(baris);
+        std::string nama; int nilai;
+        ss >> nama >> nilai;
+        std::cout <&lt; nama <&lt; " => " <&lt; nilai <&lt; "\n";
+    }
+}`} />

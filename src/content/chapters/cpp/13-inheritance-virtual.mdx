@@ -1,0 +1,148 @@
+---
+title: "Inheritance & Virtual Function"
+description: "public inheritance, override, virtual destructor, abstract class, dan multiple inheritance"
+order: 13
+quiz:
+  - q: "Pewarisan `class B : public A` berarti…"
+    options: ["public inheritance (is-a)", "private inheritance", "Komposisi", "Aggregasi"]
+    answer: 0
+    explain: "Antarmuka public A tetap public di B."
+  - q: "Fungsi virtual memungkinkan…"
+    options: ["Dynamic dispatch saat runtime", "Compile lebih cepat", "Menghapus class", "Static binding"]
+    answer: 0
+    explain: "Panggilan lewat pointer/reference base memilih override turunan."
+  - q: "Kenapa destructor base sebaiknya virtual?"
+    options: ["Agar destructor turunan ikut dipanggil saat delete via base*", "Agar lebih cepat", "Agar class jadi abstract", "Tidak perlu"]
+    answer: 0
+    explain: "Tanpa virtual, resource turunan bisa bocor."
+  - q: "Abstract class punya paling sedikit…"
+    options: ["Satu pure virtual function", "Dua constructor", "Tidak ada method", "Field public"]
+    answer: 0
+    explain: "`virtual void f() = 0;` membuat class tidak bisa di-instantiate."
+  - q: "Kata kunci `override` berguna untuk…"
+    options: ["Memastikan tanda tangan cocok dengan method base", "Membuat method statis", "Menghapus virtual", "Mengubah akses"]
+    answer: 0
+    explain: "Compiler error bila ternyata tidak meng-override."
+example:
+  code: |
+    #include <iostream>
+    #include <memory>
+    
+    class Hewan {
+    public:
+        virtual ~Hewan() = default;
+        virtual std::string suara() const = 0;   // pure virtual
+        void info() const { std::cout <&lt; "Suara: " <&lt; suara() <&lt; '\n'; }
+    };
+    
+    class Kucing : public Hewan {
+    public:
+        std::string suara() const override { return "Meong"; }
+    };
+    
+    class Anjing : public Hewan {
+    public:
+        std::string suara() const override { return "Guk"; }
+    };
+    
+    int main() {
+        std::unique_ptr<Hewan> h = std::make_unique<Kucing>();
+        h->info();
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Pewarisan dan virtual function adalah inti polymorphism C++. Gunakan dengan bijak — komposisi sering lebih sederhana.
+
+## Bentuk Pewarisan
+
+```cpp
+class B : public A    { };  // is-a, antarmuka A tetap public
+class B : protected A { };  // jarang dipakai
+class B : private A   { };  // has-a terimplementasi (lebih baik pakai komposisi)
+```
+
+## Virtual & override
+
+```cpp
+class Base {
+public:
+    virtual void gambar() const { std::cout << "base\n"; }
+    virtual ~Base() = default;
+};
+
+class Turunan : public Base {
+public:
+    void gambar() const override { std::cout << "turunan\n"; }
+};
+
+Base *p = new Turunan();
+p->gambar();   // "turunan" — dynamic dispatch
+delete p;      // destructor Turunan ikut jalan
+```
+
+## Abstract Class
+
+```cpp
+class Bentuk {
+public:
+    virtual double luas() const = 0;  // wajib diisi turunan
+    virtual ~Bentuk() = default;
+};
+```
+
+Class dengan pure virtual tidak bisa dibuat objeknya — ia berfungsi sebagai kontrak.
+
+## Multiple Inheritance
+
+```cpp
+class A { ... };
+class B { ... };
+class C : public A, public B { ... };
+```
+
+Masalah "diamond problem" muncul bila A muncul dua kali. Solusinya **virtual inheritance**:
+
+```cpp
+class B : virtual public A { };
+class C : virtual public A { };
+class D : public B, public C { };
+```
+
+## Komposisi vs Inheritance
+
+| Pertanyaan | Pilihan |
+|---|---|
+| "Kucing **adalah** Hewan" | inheritance |
+| "Mobil **mempunyai** Mesin" | komposisi |
+
+<div class="note">💡 Selalu tandai method yang me-override dengan `override`, dan buat destructor base `virtual` bila class punya fungsi virtual. Dua kebiasaan ini mencegah bug yang sulit dilacak.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <memory>
+
+class Hewan {
+public:
+    virtual ~Hewan() = default;
+    virtual std::string suara() const = 0;   // pure virtual
+    void info() const { std::cout <&lt; "Suara: " <&lt; suara() <&lt; '\n'; }
+};
+
+class Kucing : public Hewan {
+public:
+    std::string suara() const override { return "Meong"; }
+};
+
+class Anjing : public Hewan {
+public:
+    std::string suara() const override { return "Guk"; }
+};
+
+int main() {
+    std::unique_ptr<Hewan> h = std::make_unique<Kucing>();
+    h->info();
+}`} />

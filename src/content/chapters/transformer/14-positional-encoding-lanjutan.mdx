@@ -1,0 +1,108 @@
+---
+title: 'Positional Encoding: Relatif dan Rotary'
+description: Berbagai cara menyisipkan informasi urutan ke model tanpa recurrence.
+order: 14
+quiz:
+- q: Masalah utama self-attention tanpa positional encoding adalah…
+  options:
+  - Vocabulary terlalu kecil
+  - Gradien terlalu besar
+  - Tidak tahu urutan token
+  - Tidak bisa menghitung softmax
+  answer: 2
+  explain: 'Attention bersifat permutation-equivariant: tanpa posisi, “aku suka kamu” dan “kamu suka aku” terlihat sama.'
+- q: Sinusoidal encoding memakai fungsi…
+  options:
+  - log dan exp
+  - tanh saja
+  - random noise
+  - sin dan cos pada frekuensi berbeda
+  answer: 3
+  explain: Vaswani dkk. memakai sinusoid dengan frekuensi menurun sepanjang dimensi.
+- q: Keunggulan RoPE adalah…
+  options:
+  - Menyandikan posisi relatif lewat rotasi
+  - Menghapus attention
+  - Menambah vocabulary
+  - Mengurangi panjang token
+  answer: 0
+  explain: Rotary Position Embedding memutar vektor Q dan K sesuai posisi sehingga dot product memuat info relatif.
+- q: ALiBi bekerja dengan…
+  options:
+  - Menambah layer baru
+  - Menambah bias linear pada skor attention berdasarkan jarak
+  - Mengganti softmax
+  - Menghapus mask
+  answer: 1
+  explain: Attention with Linear Biases memberi penalti proporsional jarak antar token.
+- q: Learned positional embedding memiliki kelemahan…
+  options:
+  - Hanya untuk decoder
+  - Tidak cocok dengan GPU
+  - Sulit generalization ke panjang di luar training
+  - Tidak bisa dipelajari
+  answer: 2
+  explain: Karena tabel posisi punya ukuran tetap, input lebih panjang dari training tidak punya embedding siap pakai.
+example:
+  code: 'pos = 3
+
+    d = 8
+
+    pe = [sin(pos / 10000**(2*i/d)) if i%2==0 else cos(pos / 10000**(2*(i-1)/d)) for i in range(d)]
+
+    '
+---
+
+
+Self-attention melihat semua token sekaligus. Tanpa informasi posisi, model tidak bisa membedakan urutan kata. Berbagai skema positional encoding menyelesaikan ini.
+
+## Sinusoidal (Paper Asli)
+
+```text
+PE(pos, 2i)   = sin(pos / 10000^(2i/d))
+PE(pos, 2i+1) = cos(pos / 10000^(2i/d))
+```
+
+```python
+import math
+
+def sinusoidal(pos, d=8):
+    out = []
+    for i in range(d):
+        freq = 10000 ** (-(2 * (i // 2)) / d)
+        out.append(math.sin(pos * freq) if i % 2 == 0 else math.cos(pos * freq))
+    return [round(x, 3) for x in out]
+
+print(sinusoidal(3))
+```
+
+Frekuensi rendah merepresentasikan jarak jauh; frekuensi tinggi membedakan posisi berdekatan.
+
+## Learned Embedding
+
+Cara paling sederhana: siapkan tabel `posisi -> vektor` yang ikut dilatih. Mudah, tetapi umumnya hanya bekerja sampai panjang yang terlihat saat training.
+
+## RoPE
+
+```text
+Q'_m = rotate(Q_m, m * theta)
+K'_n = rotate(K_n, n * theta)
+skor = Q'_m · K'_n   -> bergantung pada (m - n)
+```
+
+Rotary memutar pasangan dimensi dengan sudut proporsional posisi. Dot product akhir hanya bergantung pada **selisih posisi**, bukan posisi absolut. Dipakai Llama, Mistral, dan Qwen.
+
+| Metode | Jenis info | Ekstrapolasi panjang |
+|---|---|---|
+| Sinusoidal | absolut + relatif implisit | lumayan |
+| Learned | absolut | buruk |
+| RoPE | relatif | baik dengan modifikasi |
+| ALiBi | bias jarak linear | baik |
+
+<div class="note">💡 RoPE tidak menambah parameter yang bisa dilatih. Posisi disisipkan murni lewat transformasi geometris pada Q dan K.</div>
+
+## Dampak Praktis
+
+- Model dengan RoPE sering bisa diperpanjang konteksnya lewat teknik seperti NTK-aware scaling.
+- ALiBi terkenal karena bisa dilatih pada panjang pendek lalu dipakai lebih panjang.
+- Pilihan positional encoding memengaruhi perilaku extrapolasi, bukan sekadar detail implementasi.

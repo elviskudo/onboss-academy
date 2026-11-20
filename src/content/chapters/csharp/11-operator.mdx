@@ -1,0 +1,124 @@
+---
+"title": "Operator"
+"description": "Operator aritmetika, perbandingan, logika, bit, dan penugasan dalam C#"
+"order": 11
+"quiz":
+- "q": "Operator untuk mencari sisa pembagian adalah…"
+  "options":
+  - "%"
+  - "/"
+  - "//"
+  - "mod"
+  "answer": 0
+  "explain": "Operator % (modulo) menghasilkan sisa, misal 7 % 3 = 1."
+- "q": "Hasil dari 7 / 2 pada tipe int adalah…"
+  "options":
+  - "\"3.5\""
+  - "\"3\""
+  - "\"4\""
+  - "\"error\""
+  "answer": 1
+  "explain": "Pembagian dua int membuang pecahan, jadi 3. Tambahkan .0 agar dapat 3.5."
+- "q": "Operator yang mengecek kesamaan nilai adalah…"
+  "options":
+  - "="
+  - "=="
+  - "==="
+  - "equals"
+  "answer": 1
+  "explain": "== membandingkan nilai; = adalah penugasan."
+- "q": "Operator && akan bernilai benar hanya jika…"
+  "options":
+  - "salah satu benar"
+  - "dua-duanya benar"
+  - "dua-duanya salah"
+  - "pertama salah"
+  "answer": 1
+  "explain": "&& adalah AND logika: kedua operand harus true."
+- "q": "x += 5 setara dengan…"
+  "options":
+  - "x = x + 5"
+  - "x = 5"
+  - "x + 5"
+  - "x = x * 5"
+  "answer": 0
+  "explain": "Operator penugasan gabungan menambah nilai lama x dengan 5."
+"example":
+  "code": "using System;\nclass Program\n{\n    static void Main()\n    {\n        int a = 7, b = 2;\n        Console.WriteLine(a + b);  // 9\n        Console.WriteLine(a % b);  // 1\n        Console.WriteLine(a / b);  // 3\n        Console.WriteLine(a == b); // False\n        a += b;\n        Console.WriteLine(a);      // 9\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operator adalah simbol yang memerintahkan C# melakukan operasi pada nilai. Menguasainya membuat ekspresi jadi ringkas dan mudah dibaca.
+
+## Aritmetika
+
+| Operator | Arti | Contoh | Hasil |
+|---|---|---|---|
+| `+` | Tambah | `7 + 2` | `9` |
+| `-` | Kurang | `7 - 2` | `5` |
+| `*` | Kali | `7 * 2` | `14` |
+| `/` | Bagi | `7 / 2` | `3` (int) |
+| `%` | Sisa | `7 % 2` | `1` |
+
+Perhatikan pembagian: selama kedua operand `int`, hasilnya juga `int`. Ubah salah satu ke `double` jika ingin pecahan.
+
+```csharp
+int bulat = 7 / 2;        // 3
+double pecahan = 7 / 2.0; // 3.5
+```
+
+## Perbandingan
+
+`==`, `!=`, `>`, `<`, `>=`, dan `&lt;=` menghasilkan `bool`. Untuk string, `==` membandingkan isi teks, bukan alamat memori — beda dengan Java.
+
+```csharp
+string kota = "Bandung";
+Console.WriteLine(kota == "Bandung"); // True
+```
+
+## Logika
+
+- `&&` — AND, benar jika keduanya benar
+- `||` — OR, benar jika salah satu benar
+- `!` — NOT, membalik nilai
+
+Keduanya memakai *short-circuit*: bagian kanan tidak dievaluasi kalau bagian kiri sudah menentukan hasil.
+
+```csharp
+int x = 0;
+if (x != 0 && 10 / x > 2) { } // aman, 10 / x tidak pernah jalan
+```
+
+## Penugasan Gabungan
+
+`+=`, `-=`, `*=`, `/=`, `%=` adalah versi pendek dari `x = x op nilai`.
+
+## Increment & Decrement
+
+`x++` menambah satu, `++x` juga menambah satu tapi mengembalikan nilai setelah penambahan saat dipakai dalam ekspresi.
+
+<div class="note">💡 Operator `??` (null-coalescing) memilih nilai kiri jika tidak null, misal <code>nama ?? "Anonim"</code>. Sangat berguna untuk memberi nilai default.</div>
+
+## Try it Yourself
+
+Ubah nilai `a` dan `b`, lalu amati bagaimana hasil pembagian dan sisa berubah.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+class Program
+{
+    static void Main()
+    {
+        int a = 17, b = 5;
+        Console.WriteLine("a + b = " + (a + b));
+        Console.WriteLine("a - b = " + (a - b));
+        Console.WriteLine("a * b = " + (a * b));
+        Console.WriteLine("a / b = " + (a / b));
+        Console.WriteLine("a % b = " + (a % b));
+        Console.WriteLine("a > b  = " + (a > b));
+        Console.WriteLine("a == b = " + (a == b));
+        a += b;
+        Console.WriteLine("setelah a += b, a = " + a);
+        Console.WriteLine("default: " + ((string)null ?? "Anonim"));
+    }
+}`} />

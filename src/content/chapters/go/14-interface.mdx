@@ -1,0 +1,137 @@
+---
+"title": "Interface"
+"description": "Kontrak perilaku, implementasi implisit, dan interface kosong di Go"
+"order": 14
+"quiz":
+- "q": "Cara Go mengimplementasikan interface adalah…"
+  "options":
+  - "dengan keyword implements"
+  - "dengan keyword extends"
+  - "secara implisit lewat method"
+  - "dengan deklarasi struct khusus"
+  "answer": 2
+  "explain": "Jika sebuah tipe punya semua method interface, ia otomatis memenuhi interface."
+- "q": "Interface dengan satu method sering dinamai…"
+  "options":
+  - "Interface"
+  - "I..."
+  - "...er"
+  - "...Impl"
+  "answer": 2
+  "explain": "Konvensi Go: Reader, Writer, Stringer — diakhiri -er."
+- "q": "Interface kosong ditulis…"
+  "options":
+  - "interface{}"
+  - "interface()"
+  - "any type"
+  - "null"
+  "answer": 0
+  "explain": "interface{} (atau any sejak Go 1.18) bisa menampung nilai dari tipe apa pun."
+- "q": "Method Stringer harus memiliki signature…"
+  "options":
+  - "String() int"
+  - "String() string"
+  - "String(string)"
+  - "ToString() string"
+  "answer": 1
+  "explain": "fmt memanggil String() string saat mencetak nilai yang memenuhi Stringer."
+- "q": "Interface kosongEventHandler sebaiknya…"
+  "options":
+  - "dibuat besar sekali"
+  - "dibuat kecil dan spesifik"
+  - "tidak pernah dipakai"
+  - "selalu pointer"
+  "answer": 1
+  "explain": "Interface kecil lebih mudah diimplementasikan dan diganti."
+"example":
+  "code": "package main\nimport \"fmt\"\ntype Pencetak interface { Cetak() string }\ntype Buku struct{ Judul string }\nfunc (b Buku) Cetak() string { return b.Judul }\nfunc main() {\n    var p Pencetak = Buku{\"Go\"}\n    fmt.Println(p.Cetak())\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Interface di Go adalah **kumpulan signature method**. Tidak ada kata kunci `implements`: jika tipe memiliki semua method yang diminta, tipe itu otomatis memenuhinya.
+
+## Deklarasi & Implementasi
+
+```go
+type Suara interface {
+    Bersuara() string
+}
+
+type Anjing struct{ Nama string }
+
+func (a Anjing) Bersuara() string {
+    return a.Nama + " woof"
+}
+```
+
+`Anjing` tidak pernah menyebut `Suara` secara eksplisit. Hubungan ditemukan oleh kompiler saat penugasan.
+
+## Interface Kecil
+
+```go
+type Pembaca interface { Baca([]byte) (int, error) }
+type Penulis interface { Tulis([]byte) (int, error) }
+```
+
+Bandingkan dengan satu interface besar berisi keduanya: tipe yang hanya bisa membaca tetap bisa dipakai. Ini prinsip *Interface Segregation*.
+
+## Stringer
+
+```go
+type Titik struct{ X, Y int }
+func (t Titik) String() string {
+    return fmt.Sprintf("(%d,%d)", t.X, t.Y)
+}
+fmt.Println(Titik{2, 3}) // (2,3)
+```
+
+## any / interface{}
+
+Sejak Go 1.18, `any` adalah alias untuk `interface{}`. Berguna untuk fungsi generik sebelum ada generics, atau data JSON yang tipenya beragam.
+
+```go
+func cetak(v any) { fmt.Println(v) }
+```
+
+Tapi hindari memakainya secara berlebihan — kamu kehilangan keamanan tipe.
+
+## Type Assertion
+
+```go
+nilai, ok := v.(int)
+if ok {
+    fmt.Println(nilai + 1)
+}
+```
+
+Selalu gunakan bentuk dua nilai untuk menghindari panic.
+
+<div class="note">💡 Interface di Go biasanya didefinisikan di sisi **pemakai**, bukan di sisi implementasi. Ini membuat paket tetap mandiri.</div>
+
+
+## Try it Yourself
+
+Tambahkan implementasi interface lain, misal `Kucing`.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+
+type Bersuara interface { Suara() string }
+
+type Anjing struct{ Nama string }
+type Kucing struct{ Nama string }
+
+func (a Anjing) Suara() string { return a.Nama + ": Woof!" }
+func (k Kucing) Suara() string { return k.Nama + ": Meong!" }
+
+func dengar(b Bersuara) { fmt.Println(b.Suara()) }
+
+func main() {
+    hewan := []Bersuara{Anjing{"Buddy"}, Kucing{"Mimi"}}
+    for _, h := range hewan { dengar(h) }
+
+    var v any = 42
+    n, ok := v.(int)
+    fmt.Println("assert:", n, ok)
+}`} />

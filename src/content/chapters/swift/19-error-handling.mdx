@@ -1,0 +1,160 @@
+---
+"title": "Error Handling Lanjutan"
+"description": "Error enum, throwing, do-catch, defer, dan结果 type"
+"order": 19
+"quiz":
+- "q": "Error di Swift direpresentasikan sebagai…"
+  "options":
+  - "String biasa"
+  - "Tipe yang conform Error"
+  - "Int"
+  - "Bool"
+  "answer": 1
+  "explain": "Enum dengan conformance Error adalah pola idiomatik."
+- "q": "Kata kunci untuk menandai fungsi yang bisa melempar adalah…"
+  "options":
+  - "throw"
+  - "try"
+  - "throws"
+  - "catch"
+  "answer": 2
+  "explain": "func f() throws ditulis di sebelum tipe kembalian."
+- "q": "Blok defer dijalankan…"
+  "options":
+  - "Hanya saat sukses"
+  - "Sebelum fungsi dipanggil"
+  - "Tidak pernah"
+  - "Saat scope keluar, termasuk karena error"
+  "answer": 3
+  "explain": "defer cocok untuk membersihkan resource."
+- "q": "try? mengubah error menjadi…"
+  "options":
+  - "nil"
+  - "Exception"
+  - "String"
+  - "0"
+  "answer": 0
+  "explain": "Hasilnya menjadi opsional."
+- "q": "Cara menangkap error spesifik adalah…"
+  "options":
+  - "error if"
+  - "catch ErrorEnum.gagal"
+  - "catch when type"
+  - "case error"
+  "answer": 1
+  "explain": "Pola catch bisa mencocokkan kasus enum error."
+"example":
+  "code": "enum SaldoError: Error {\n    case tidakCukup\n    case akunTidakAda\n}\n\nfunc tarik(_ jumlah: Int, dari saldo: Int) throws -> Int {\n    guard saldo > 0 else { throw SaldoError.akunTidakAda }\n    guard saldo >= jumlah else { throw SaldoError.tidakCukup }\n    return saldo - jumlah\n}\n\ndo {\n    let sisa = try tarik(150, dari: 100)\n    print(sisa)\n} catch SaldoError.tidakCukup {\n    print(\"Saldo tidak cukup\")\n} catch {\n    print(\"Error lain: \\(error)\")\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+| Konsep | Contoh | Fungsi |
+|---|---|---|
+| Error enum | `enum FormError: Error` | mendefinisikan kasus gagal |
+| `throws` | `func validasi() throws` | menandai fungsi bisa gagal |
+| `do-catch` | `catch FormError.kosong` | menangani error spesifik |
+| `defer` | `defer { tutup() }` | membersihkan resource |
+
+## Mendefinisikan Error
+
+```swift
+enum SaldoError: Error {
+    case tidakCukup
+    case akunTidakAda
+}
+
+func tarik(_ jumlah: Int, dari saldo: Int) throws -> Int {
+    guard saldo > 0 else { throw SaldoError.akunTidakAda }
+    guard saldo >= jumlah else { throw SaldoError.tidakCukup }
+    return saldo - jumlah
+}
+
+do {
+    let sisa = try tarik(150, dari: 100)
+    print(sisa)
+} catch SaldoError.tidakCukup {
+    print("Saldo tidak cukup")
+} catch {
+    print("Error lain: \(error)")
+}
+```
+
+```swift
+enum FormError: Error {
+    case kosong
+    case terlaluPendek(minimum: Int)
+}
+```
+
+Enum bisa membawa nilai terkait, misalnya jumlah minimum karakter.
+
+## Melempar dan Menangkap
+
+```swift
+func validasi(_ s: String) throws {
+    guard !s.isEmpty else { throw FormError.kosong }
+}
+
+do {
+    try validasi(nama)
+} catch {
+    print(error.localizedDescription)
+}
+```
+
+`try` wajib ditulis pada pemanggilan fungsi `throws`.
+
+## defer
+
+```swift
+func bacaFile() throws {
+    let handle = buka()
+    defer { tutup(handle) }
+    try bacaIsi(handle)
+}
+```
+
+`defer` dijamin berjalan saat scope selesai, baik sukses maupun gagal.
+
+## Result
+
+```swift
+let hasil: Result<Int, Error> = Result {
+    try hitungRisiko()
+}
+
+switch hasil {
+case .success(let nilai): print(nilai)
+case .failure(let error): print(error)
+}
+```
+
+`Result` cocok bila error perlu disimpan atau diteruskan lewat callback asynchronous.
+
+<div class="note">💡 Jangan memakai exception untuk alur bisnis normal. Error handling paling tepat untuk keadaan luar biasa seperti file hilang atau jaringan putus.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`enum SaldoError: Error {
+    case tidakCukup
+    case akunTidakAda
+}
+
+func tarik(_ jumlah: Int, dari saldo: Int) throws -> Int {
+    guard saldo > 0 else { throw SaldoError.akunTidakAda }
+    guard saldo >= jumlah else { throw SaldoError.tidakCukup }
+    return saldo - jumlah
+}
+
+do {
+    let sisa = try tarik(150, dari: 100)
+    print(sisa)
+} catch SaldoError.tidakCukup {
+    print("Saldo tidak cukup")
+} catch {
+    print("Error lain: \(error)")
+}`} />

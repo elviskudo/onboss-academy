@@ -1,0 +1,91 @@
+---
+title: "Mengenal .dockerignore"
+description: "Mengecilkan build context dan menjaga file sensitif tetap di luar image"
+order: 12
+quiz:
+  - q: "File .dockerignore dibaca saat…"
+    options: ["Mengirim build context ke daemon", "Menjalankan container", "Membuat jaringan", "Push ke registry"]
+    answer: 0
+    explain: "Docker menggunakannya untuk menyaring file sebelum context dikirim."
+  - q: "Pola `node_modules` dalam .dockerignore berarti…"
+    options: ["Port node diblokir", "Semua folder dengan nama itu tidak dikirim", "Node dipasang otomatis", "Folder dihapus dari host"]
+    answer: 1
+    explain: "Pola mengikuti aturan glob mirip .gitignore."
+  - q: "Tanda `!` di awal pola berfungsi…"
+    options: ["Menandai file rahasia", "Menghapus file", "Mengecualikan dari pengecualian (force include)", "Mengomentari baris"]
+    answer: 2
+    explain: "Negasi dipakai setelah pola umum untuk menyisipkan kembali satu berkas."
+  - q: "Alasan utama memakai .dockerignore adalah…"
+    options: ["Mengganti Dockerfile", "Menambah kecepatan container", "Mengubah basis image", "Context lebih kecil dan file rahasia tidak masuk layer"]
+    answer: 3
+    explain: "File yang tidak masuk context tidak bisa disalin dengan COPY, meski ada perintah COPY . ."
+  - q: "Baris `.git` dalam .dockerignore berguna untuk…"
+    options: ["Menghindari riwayat commit masuk image", "Menghapus git dari host", "Menonaktifkan VCS", "Mengubah user"]
+    answer: 0
+    explain: "Folder .git sering jauh lebih besar dari aplikasi itu sendiri."
+example:
+  code: |
+    .git
+    node_modules
+    __pycache__
+    .env
+    *.log
+    !config/contoh.env
+---
+
+`.dockerignore` bekerja seperti `.gitignore`, tetapi diskonsultasi **sebelum** build context dikirim ke daemon. File yang terfilter tidak bisa diakses oleh perintah `COPY` maupun `ADD`.
+
+## Contoh Minimal
+
+```dockerignore
+.git
+.github
+node_modules
+__pycache__
+*.pyc
+.env
+.env.*
+*.log
+Dockerfile
+docker-compose*.yml
+README.md
+```
+
+Meletakkan `Dockerfile` sendiri di ignore list aman: Docker tetap membacanya secara terpisah, hanya tidak menyalinnya ke dalam image bila ada `COPY . .`.
+
+## Pola dan Negasi
+
+| Pola | Arti |
+|---|---|
+| `*.log` | Semua berkas berakhir `.log` di semua level |
+| `/temp/*` | Hanya di root context |
+| `data/**` | Seluruh isi folder data |
+| `!config/contoh.env` | Sertakan kembali satu file |
+| `**/.DS_Store` | File sistem di folder mana pun |
+
+Urutan penting: aturan terakhir yang cocok yang menang.
+
+## File Sensitif
+
+```dockerignore
+.env
+.env.production
+*.pem
+id_rsa
+credentials.json
+```
+
+Ini **bukan pengganti** secret manager. File yang sudah masuk layer tidak bisa dihapus dengan aman hanya dengan `rm` di layer berikutnya—riwayat layer tetap menyimpannya. Gunakan BuildKit secret mount untuk data saat build.
+
+## Dampak pada Cache
+
+Context yang kecil membuat hash cache lebih stabil. Misalnya, perubahan di `README.md` tidak membatalkan cache layer `RUN npm install` bila README sudah dikecualikan. Sebaliknya, menyalin seluruh folder proyek membuat perubahan kecil pada file apa pun membatalkan hampir semua layer berikutnya.
+
+<div class="note">💡 Jalankan `docker build` dari folder sedekat mungkin dengan Dockerfile. Semakin luas context, semakin banyak data yang perlu dikirim—bahkan yang akhirnya diabaikan.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' '.git' 'node_modules' '*.log' &gt; .dockerignore
+docker build -t latihan-context .
+printf '%s\\n' 'Isi .dockerignore siap dipakai.'`}</code></pre>

@@ -1,0 +1,89 @@
+---
+title: "Display dan LCD"
+description: "Menampilkan data ke layar I2C LCD dan OLED"
+order: 16
+quiz:
+  - q: "Modul LCD 16x2 yang hanya butuh dua pin memakai…"
+    options: ["Adapter I2C (PCF8574)", "SPI langsung", "HDMI", "VGA"]
+    answer: 0
+    explain: "Adapter mengubah kontrol parallel LCD menjadi I2C."
+  - q: "Alamat umum modul LCD I2C adalah…"
+    options: ["0x10", "0x27 atau 0x3F", "0x00", "0xFF"]
+    answer: 1
+    explain: "Gunakan i2cdetect untuk memastikan alamat modulmu."
+  - q: "OLED SSD1306 biasanya terhubung lewat…"
+    options: ["USB", "1-Wire", "I2C dengan alamat 0x3C", "HDMI"]
+    answer: 2
+    explain: "Beberapa modul memakai 0x3D tergantung konfigurasi alamat."
+  - q: "Perintah membersihkan layar LCD adalah…"
+    options: ["lcd.reset()", "lcd.hide()", "i2c.clear()", "lcd.clear()"]
+    answer: 3
+    explain: "Bersihkan sebelum menulis konten baru untuk menghindari sisa karakter."
+  - q: "Kontras LCD diatur dengan…"
+    options: ["Potensiometer di modul atau perintah set_backlight", "Mengubah baudrate", "Menambah pin GPIO", "Mengganti font"]
+    answer: 0
+    explain: "Bila teks tidak terlihat, coba putar potensiometer kontras."
+example:
+  code: |
+    import board
+    import busio
+    from adafruit_ssd1306 import SSD1306_I2C
+    
+    i2c = busio.I2C(board.SCL, board.SDA)
+    oled = SSD1306_I2C(128, 64, i2c)
+    oled.fill(0)
+    oled.text("Halo Pi!", 0, 0)
+    oled.show()
+---
+
+Layar kecil membuat proyek bisa berdiri sendiri tanpa monitor. Modul LCD 16x2 dan OLED 128x64 adalah dua pilihan yang paling mudah ditemukan.
+
+## LCD 16x2 I2C
+
+```bash
+sudo i2cdetect -y 1
+# cari 27 atau 3f
+```
+
+```python
+import lcddriver
+lcd = lcddriver.lcd()
+lcd.lcd_display_string("Suhu: 27.3C", 1)
+lcd.lcd_display_string("Kelembapan: 60%", 2)
+```
+
+## OLED SSD1306
+
+```python
+from adafruit_ssd1306 import SSD1306_I2C
+oled.text("Baris 1", 0, 0)
+oled.text("Baris 2", 0, 10)
+oled.show()
+```
+
+Perubahan tidak langsung terlihat sampai `show()` dipanggil—ini berbeda dengan LCD karakter yang langsung menampilkan.
+
+## Perbandingan
+
+| Aspek | LCD 16x2 | OLED |
+|---|---|---|
+| Konsumsi | Lampu latar terus menyala | Tiap piksel menyala sendiri |
+| Resolusi | 16 karakter × 2 baris | 128 × 64 piksel |
+| Kontras | Terbatas | Sangat tajam |
+| Harga | Murah | Sedang |
+
+## Praktik Baik
+
+- Batasi pembaruan layar (misal 1 detik sekali) agar tidak berkedip.
+- Gunakan string dengan panjang tetap atau tambahkan spasi untuk menimpa karakter lama.
+- Jangan biarkan kabel I2C terlalu panjang.
+
+<div class="note">💡 OLED yang dibiarkan menampilkan gambar statis terlalu lama bisa mengalami burn-in. Tambahkan screensaver atau matikan layar saat tidak dipakai.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Pemeriksaan cepat:
+sudo i2cdetect -y 1
+# 0x27 -&gt; LCD I2C umum
+# 0x3C -&gt; OLED SSD1306`}</code></pre>

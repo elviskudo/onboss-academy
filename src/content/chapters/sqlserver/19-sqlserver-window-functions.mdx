@@ -1,0 +1,96 @@
+---
+title: "Window Functions"
+description: "ROW_NUMBER, RANK, DENSE_RANK, LAG, LEAD, dan OVER(PARTITION BY)"
+order: 19
+quiz:
+  - q: "Fungsi memberi nomor urut unik dalam partisi adalah…"
+    options: ["NTILE()", "ROW_NUMBER()", "RANK()", "DENSE_RANK()"]
+    answer: 1
+    explain: "ROW_NUMBER selalu 1, 2, 3 tanpa duplikat."
+  - q: "Perbedaan RANK dan DENSE_RANK adalah…"
+    options: ["Tidak ada beda", "RANK hanya untuk string", "RANK melompati nomor setelah duplikat", "DENSE_RANK melompati nomor"]
+    answer: 2
+    explain: "RANK: 1,1,3. DENSE_RANK: 1,1,2."
+  - q: "Klausa PARTITION BY pada OVER berfungsi seperti…"
+    options: ["WHERE", "ORDER BY", "JOIN", "GROUP BY tapi baris tetap ada"]
+    answer: 3
+    explain: "Partisi merupakan kelompok untuk menghitung fungsi jendela."
+  - q: "LAG berguna untuk…"
+    options: ["Mengurutkan", "Mengambil nilai baris sebelumnya", "Mengambil baris berikutnya", "Menghitung total"]
+    answer: 1
+    explain: "LEAD mengambil nilai baris berikutnya."
+  - q: "Window function ditulis dengan kata kunci…"
+    options: ["GROUP()", "PARTITION()", "OVER()", "WITH()"]
+    answer: 2
+    explain: "Contoh: ROW_NUMBER() OVER (PARTITION BY divisi ORDER BY gaji DESC)."
+example:
+  code: |
+    SELECT nama, divisi, gaji,
+      ROW_NUMBER() OVER (PARTITION BY divisi ORDER BY gaji DESC) AS urut,
+      LAG(gaji) OVER (PARTITION BY divisi ORDER BY gaji DESC) AS gaji_sebelum
+    FROM dbo.karyawan;
+---
+
+## Konsep
+
+Window function menghitung nilai **lintas baris** tanpa menggabungkan baris menjadi satu seperti `GROUP BY`. Setiap baris tetap tampil, tapi mendapat kolom tambahan hasil perhitungan jendela.
+
+```sql
+SELECT nama, divisi, gaji,
+       ROW_NUMBER() OVER (PARTITION BY divisi ORDER BY gaji DESC) AS urut
+FROM dbo.karyawan;
+```
+
+## Fungsi Peringkat
+
+| Fungsi | Contoh urutan dengan nilai 100,100,90 |
+| --- | --- |
+| `ROW_NUMBER()` | 1, 2, 3 |
+| `RANK()` | 1, 1, 3 |
+| `DENSE_RANK()` | 1, 1, 2 |
+| `NTILE(4)` | membagi menjadi 4 kelompok |
+
+## Nilai Tetangga
+
+```sql
+SELECT tanggal, omzet,
+       LAG(omzet) OVER (ORDER BY tanggal) AS omzet_kemarin,
+       omzet - LAG(omzet) OVER (ORDER BY tanggal) AS selisih
+FROM dbo.harian;
+```
+
+`LEAD` kebalikan dari `LAG`. Nilai baris pertama untuk `LAG` adalah `NULL` — bisa diganti dengan argumen default ketiga.
+
+## Agregat sebagai Window
+
+```sql
+SELECT nama, gaji,
+       SUM(gaji) OVER (PARTITION BY divisi) AS total_divisi,
+       AVG(gaji) OVER () AS rata_perusahaan
+FROM dbo.karyawan;
+```
+
+`PARTITION BY` menggantikan peran `GROUP BY`, tetapi hasil tetap per baris.
+
+## Filter Hasil Window
+
+Window function tidak bisa dipakai di `WHERE`. Bungkus dengan CTE atau derived table:
+
+```sql
+WITH Urut AS (
+  SELECT nama, ROW_NUMBER() OVER (ORDER BY gaji DESC) AS rn
+  FROM dbo.karyawan
+)
+SELECT * FROM Urut WHERE rn <= 5;
+```
+
+<div class="note">💡 Ingin mengambil karyawan tertinggi **per divisi**? Pakai `ROW_NUMBER() OVER (PARTITION BY divisi ORDER BY gaji DESC)` lalu filter `rn = 1` di CTE luar — ini pola yang jauh lebih cepat daripada correlated subquery.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (divisi NVARCHAR(20), nama NVARCHAR(20), gaji INT);
+INSERT INTO #t VALUES (N'IT', N'Ana', 100), (N'IT', N'Budi', 120), (N'HR', N'Rani', 90);
+SELECT nama, ROW_NUMBER() OVER (PARTITION BY divisi ORDER BY gaji DESC) rn FROM #t;
+DROP TABLE #t;`}</code></pre>

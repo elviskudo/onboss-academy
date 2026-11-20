@@ -1,0 +1,108 @@
+---
+title: "Subquery dan Derived Table MySQL"
+description: "Subquery skalar, IN, EXISTS, dan tabel turunan"
+order: 16
+quiz:
+  - q: "Subquery skalar harus menghasilkan…"
+    options: ["Satu baris satu kolom", "Banyak baris", "Tabel penuh", "Tidak ada hasil"]
+    answer: 0
+    explain: "Operator perbandingan membutuhkan satu nilai."
+  - q: "EXISTS hanya peduli…"
+    options: ["Nilai kolomnya", "Ada atau tidaknya baris", "Jumlah kolom", "Urutan baris"]
+    answer: 1
+    explain: "EXISTS berhenti pada baris pertama yang cocok."
+  - q: "Derived table harus diberi…"
+    options: ["Alias", "Index", "Primary key", "Comment"]
+    answer: 0
+    explain: "Subquery di FROM wajib punya alias di MySQL."
+  - q: "NOT IN berisiko bila daftar berisi…"
+    options: ["NULL", "Angka", "String", "Alias"]
+    answer: 0
+    explain: "Satu NULL membuat NOT IN menghasilkan unknown untuk semua baris."
+  - q: "Subquery correlated merujuk…"
+    options: ["Kolom query luar", "Tabel lain saja", "Index", "Session variable"]
+    answer: 0
+    explain: "Nilai query luar dipakai di dalam subquery per baris."
+example:
+  code: |
+    SELECT nama FROM karyawan WHERE gaji > (SELECT AVG(gaji) FROM karyawan);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Subquery adalah SELECT di dalam SELECT. MySQL mendukungnya di WHERE, SELECT, FROM, dan HAVING. Bentuk yang dipilih memengaruhi keterbacaan dan performa.
+
+## Skalar
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE gaji > (SELECT AVG(gaji) FROM karyawan);
+```
+
+Jika subquery menghasilkan lebih dari satu baris, MySQL mengeluarkan error "Subquery returns more than 1 row".
+
+## IN dan EXISTS
+
+```sql
+SELECT nama FROM karyawan
+WHERE id IN (SELECT lead_id FROM proyek);
+
+SELECT nama FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+```
+
+`EXISTS` sering lebih cepat karena berhenti setelah menemukan satu baris.
+
+## Derived Table
+
+```sql
+SELECT ringkas.dept, ringkas.jumlah
+FROM (
+  SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept
+) AS ringkas
+WHERE ringkas.jumlah >= 2;
+```
+
+Subquery di FROM berlaku seperti tabel sementara dan wajib diberi alias.
+
+## Subquery di SELECT
+
+```sql
+SELECT nama,
+       (SELECT AVG(gaji) FROM karyawan) AS rata_semua
+FROM karyawan;
+```
+
+Secara logis dihitung per baris, meski optimizer bisa meng-cache nilainya. Untuk laporan besar, CTE lebih transparan.
+
+## Alternatif: JOIN
+
+Banyak subquery bisa ditulis ulang dengan JOIN:
+
+```sql
+SELECT k.nama, COUNT(p.id) AS jumlah_proyek
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+GROUP BY k.id;
+```
+
+JOIN biasanya lebih ramah optimizer, tetapi correlated subquery terkadang lebih jelas secara logis.
+
+<div class="note">💡 MySQL sering mengerjakan subquery di FROM lebih baik setelah versi 8.0, namun tetap ukur dengan EXPLAIN sebelum berkesimpulan.</div>
+
+## Di Dunia Nyata
+
+- **Perbandingan rata-rata**: karyawan di atas rata-rata gaji.
+- **Cek kepemilikan**: EXISTS untuk melihat apakah pengguna punya pesanan.
+- **Filter agregat**: derived table menyaring hasil GROUP BY.
+- **Laporan**: subquery di SELECT memberi konteks tiap baris.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT k.nama, k.gaji,
+       (SELECT ROUND(AVG(gaji)) FROM karyawan) AS rata_semua
+FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id)
+ORDER BY k.gaji DESC;`} />

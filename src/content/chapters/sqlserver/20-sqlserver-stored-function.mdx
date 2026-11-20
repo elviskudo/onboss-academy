@@ -1,0 +1,109 @@
+---
+title: "Function, View, dan Trigger"
+description: "scalar function, inline table-valued function, view, serta trigger INSERT/UPDATE/DELETE"
+order: 20
+quiz:
+  - q: "Function yang mengembalikan satu nilai disebut…"
+    options: ["Trigger", "Scalar function", "Table-valued function", "View"]
+    answer: 1
+    explain: "RETURNS tipe_data → scalar function."
+  - q: "View pada SQL Server…"
+    options: ["Sama dengan trigger", "Tidak bisa di-SELECT", "Menyimpan query, bukan data", "Menyalin data fisik selalu"]
+    answer: 2
+    explain: "View adalah query tersimpan; data tetap di tabel asli."
+  - q: "Trigger AFTER INSERT diaktifkan oleh…"
+    options: ["SELECT", "CREATE INDEX", "DROP TABLE", "Perintah INSERT"]
+    answer: 3
+    explain: "Trigger merespons event DML pada tabel."
+  - q: "Tabel virtual inserted pada trigger berisi…"
+    options: ["Hasil agregat", "Baris baru", "Baris lama", "Semua baris tabel"]
+    answer: 1
+    explain: "deleted berisi baris lama saat UPDATE/DELETE."
+  - q: "WITH SCHEMABINDING pada view berguna untuk…"
+    options: ["Menghapus duplikat", "Membuat backup", "Mengikat skema tabel agar tidak diubah sembarangan", "Membuat view lebih cepat selalu"]
+    answer: 2
+    explain: "Mencegah perubahan skema yang merusak definisi view."
+example:
+  code: |
+    CREATE FUNCTION dbo.Luas (@p INT, @l INT) RETURNS INT AS BEGIN RETURN @p * @l; END;
+    GO
+    CREATE VIEW dbo.vKaryawan AS SELECT nama, gaji FROM dbo.karyawan WHERE aktif = 1;
+    GO
+---
+
+## Scalar Function
+
+```sql
+CREATE FUNCTION dbo.LuasPersegi (@panjang INT, @lebar INT)
+RETURNS INT
+AS
+BEGIN
+  RETURN @panjang * @lebar;
+END;
+GO
+
+SELECT dbo.LuasPersegi(4, 5);
+```
+
+Pemanggilan harus menyertakan skema (`dbo.`). Scalar function yang dipanggil per baris pada query besar bisa lambat — pertimbangkan ekspresi inline atau computed column.
+
+## Table-Valued Function
+
+```sql
+CREATE FUNCTION dbo.KaryawanDivisi (@divisi NVARCHAR(50))
+RETURNS TABLE
+AS RETURN (
+  SELECT id, nama, gaji
+  FROM dbo.karyawan
+  WHERE divisi = @divisi
+);
+GO
+
+SELECT * FROM dbo.KaryawanDivisi(N'Teknik');
+```
+
+Inline TVF sering dioptimasi seperti view dan lebih cepat daripada multi-statement TVF.
+
+## View
+
+```sql
+CREATE VIEW dbo.vKaryawanAktif
+AS
+SELECT id, nama, gaji
+FROM dbo.karyawan
+WHERE aktif = 1;
+GO
+
+SELECT * FROM dbo.vKaryawanAktif;
+```
+
+View menyederhanakan query kompleks, menyembunyikan kolom sensitif, dan memberi lapisan kompatibilitas saat struktur tabel berubah.
+
+## Trigger
+
+```sql
+CREATE TRIGGER dbo.trgAuditSiswa
+ON dbo.siswa
+AFTER UPDATE
+AS
+BEGIN
+  INSERT INTO dbo.audit_siswa (id, nilai_lama, nilai_baru, waktu)
+  SELECT i.id, d.nilai, i.nilai, SYSDATETIME()
+  FROM inserted i JOIN deleted d ON i.id = d.id;
+END;
+```
+
+Trigger memproses **seluruh batch baris**, bukan satu per satu. Selalu tulis logic berbasis set seperti contoh di atas.
+
+<div class="note">💡 Trigger mudah menjadi "magic" yang tidak terlihat aplikasi. Dokumentasikan dengan jelas dan hindari trigger untuk aturan bisnis yang bisa diletakkan di stored procedure.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE FUNCTION #tidakbisa;
+GO
+CREATE TABLE #t (a INT, b INT);
+INSERT INTO #t VALUES (3, 4);
+SELECT a * b AS luas FROM #t;
+DROP TABLE #t;`}</code></pre>

@@ -1,0 +1,83 @@
+---
+title: "Build & Optimasi Produksi"
+description: "Angular CLI build, budget, lazy chunk, dan analisis bundle"
+order: 24
+quiz:
+  - q: "Perintah build produksi Angular adalah…"
+    options: ["ng test", "ng lint", "ng build", "ng serve"]
+    answer: 2
+    explain: "Secara default konfigurasi production dipakai saat build."
+  - q: "Budget di angular.json berguna untuk…"
+    options: ["Menyimpan data", "Membatasi ukuran bundle dan memberi peringatan", "Mengubah warna", "Mengatur rute"]
+    answer: 1
+    explain: "Mencegah bundle membengkak tanpa disadari."
+  - q: "sourceMap di produksi sebaiknya…"
+    options: ["Selalu aktif penuh", "Dihapus dari proyek", "Disimpan di URL", "Dinonaktifkan atau dibatasi"]
+    answer: 3
+    explain: "Source map bisa membocorkan kode sumber."
+  - q: "Lazy loading membantu karena…"
+    options: ["Menambah rute", "Fitur dimuat saat dibutuhkan", "Menghapus test", "Mengubah CSS"]
+    answer: 1
+    explain: "Bundle awal lebih ringan."
+  - q: "Untuk menganalisis bundle, kamu bisa memakai…"
+    options: ["source-map-explorer", "ng model", "ng generate", "npm install saja"]
+    answer: 0
+    explain: "Alat ini menunjukkan modul mana yang paling besar."
+example:
+  code: |
+    ng build --configuration production
+    npx source-map-explorer dist/app/browser/*.js
+---
+
+Build produksi bukan sekadar "ng build". Ada beberapa pengaturan yang membuat aplikasi lebih cepat dan aman.
+
+## Konfigurasi Budget
+
+```json
+"budgets": [
+  { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" },
+  { "type": "anyComponentStyle", "maximumWarning": "4kB" }
+]
+```
+
+CLI akan memberi peringatan atau gagal bila batas terlampaui.
+
+## Opsi Build
+
+```json
+"production": {
+  "optimization": true,
+  "outputHashing": "all",
+  "sourceMap": false,
+  "namedChunks": false,
+  "extractLicenses": true,
+  "budgets": [...]
+}
+```
+
+`outputHashing` membuat nama file berubah konten — browser bisa cache agresif.
+
+## Analisis Bundle
+
+```bash
+ng build --stats-json
+npx source-map-explorer dist/app/browser/main*.js
+```
+
+Perhatikan pustaka besar yang hanya dipakai sekali.mungkin bisa diganti dengan import langsung atau lazy load.
+
+## Pemeriksaan Sebelum Deploy
+
+- [ ] `ng build` sukses tanpa error.
+- [ ] Tidak ada secret di dalam bundle.
+- [ ] Lazy route sudah dipakai untuk fitur berat.
+- [ ] Error boundary / fallback tersedia.
+
+<div class="note">💡 Optimasi terbaik biasanya bukan micro-tuning, tapi mengurangi apa yang dikirim. Hapus dependensi yang tidak terpakai sebelum memikirkan minifikasi.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`ng build --configuration production
+npx source-map-explorer dist/app/browser/*.js`}</code></pre>

@@ -1,0 +1,117 @@
+---
+"title": "Operator"
+"description": "Operator aritmetika, perbandingan, logika, dan rentang dalam Swift"
+"order": 11
+"quiz":
+- "q": "Operator pembagian integer Swift adalah…"
+  "options":
+  - "/"
+  - "//"
+  - "div"
+  - "%"
+  "answer": 0
+  "explain": "7 / 2 menghasilkan 3 untuk Int; gunakan Double untuk desimal."
+- "q": "Operator sisa bagi adalah…"
+  "options":
+  - "%"
+  - "^"
+  - "mod"
+  - "//"
+  "answer": 0
+  "explain": "7 % 3 menghasilkan 1."
+- "q": "Operator perbandingan samadengan nilai adalah…"
+  "options":
+  - "=="
+  - "==="
+  - "="
+  - "is"
+  "answer": 0
+  "explain": "== membandingkan nilai; === membandingkan identitas referensi."
+- "q": "Operator logika AND adalah…"
+  "options":
+  - "&&"
+  - "&"
+  - "and"
+  - "&&&"
+  "answer": 0
+  "explain": "&& melakukan short-circuit evaluation."
+- "q": "Hasil dari 7.0 / 2 adalah…"
+  "options":
+  - "3"
+  - "3.5"
+  - "4"
+  - "Error"
+  "answer": 1
+  "explain": "Salah satu operand Double membuat hasilnya Double."
+"example":
+  "code": "let a = 7\nlet b = 2\nprint(a + b)   // 9\nprint(a - b)   // 5\nprint(a * b)   // 14\nprint(a / b)   // 3\nprint(a % b)   // 1\nprint(7.0 / 2) // 3.5\nprint(a > b && b != 0) // true\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Aritmetika dan Tipe Hasil
+
+```swift
+let a = 7
+let b = 2
+print(a + b)   // 9
+print(a - b)   // 5
+print(a * b)   // 14
+print(a / b)   // 3
+print(a % b)   // 1
+print(7.0 / 2) // 3.5
+print(a > b && b != 0) // true
+```
+
+| Operator | Arti | Contoh |
+|---|---|---|
+| `+` | tambah | `7 + 2` → 9 |
+| `-` | kurang | `7 - 2` → 5 |
+| `*` | kali | `7 * 2` → 14 |
+| `/` | bagi | `7 / 2` → 3 |
+| `%` | sisa | `7 % 2` → 1 |
+
+Swift tidak melakukan konversi tipe otomatis. `Int + Double` menghasilkan error — kamu harus memilih tipe secara eksplisit.
+
+## Operator Perbandingan
+
+```swift
+let sama = 5 == 5
+let beda = 5 != 3
+let lebih = 5 >= 5
+let identik = object1 === object2
+```
+
+`===` hanya berlaku untuk `AnyObject` dan mengecek apakah dua konstanta menunjuk objek yang sama.
+
+## Logika
+
+```swift
+if usia >= 18 && punyaKartu { print("Boleh masuk") }
+if nama.isEmpty || nama == "anonim" { print("Tanpa nama") }
+```
+
+## Operator Rentang
+
+| Bentuk | Arti |
+|---|---|
+| `1...5` | 1 sampai 5 (inklusif) |
+| `1..&lt;5` | 1 sampai 4 (eksklusif) |
+| `...5` | sampai 5 |
+| `5...` | dari 5 terus |
+
+<div class="note">💡 Operator overflow seperti `Int.max + 1` menyebabkan error saat runtime. Bila memang ingin perilaku melingkar, pakai operator `&+`, `&-`, dan `&*`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`let a = 7
+let b = 2
+print(a + b)   // 9
+print(a - b)   // 5
+print(a * b)   // 14
+print(a / b)   // 3
+print(a % b)   // 1
+print(7.0 / 2) // 3.5
+print(a > b && b != 0) // true`} />

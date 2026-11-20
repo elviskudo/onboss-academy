@@ -1,0 +1,90 @@
+---
+title: "UNION, EXCEPT, dan INTERSECT"
+description: "menggabungkan hasil query, aturan tipe/kolom, UNION ALL, dan urutan hasil"
+order: 17
+quiz:
+  - q: "UNION secara bawaan…"
+    options: ["Membuat tabel", "Menghapus duplikat", "Menyimpan duplikat", "Mengurutkan hasil"]
+    answer: 1
+    explain: "UNION = DISTINCT; UNION ALL mempertahankan duplikat."
+  - q: "Syarat dua query yang digabung UNION adalah…"
+    options: ["Jumlah baris sama", "Harus punya ORDER BY", "Jumlah dan tipe kolom kompatibel", "Nama tabel sama"]
+    answer: 2
+    explain: "Nama kolom diambil dari query pertama."
+  - q: "EXCEPT menghasilkan…"
+    options: ["Baris yang sama di keduanya", "Semua baris", "Baris duplikat", "Baris dari query pertama yang tidak ada di kedua"]
+    answer: 3
+    explain: "EXCEPT = selisih himpunan."
+  - q: "INTERSECT menghasilkan…"
+    options: ["Hanya duplikat", "Baris yang ada di kedua query", "Selisih", "Gabungan semua"]
+    answer: 1
+    explain: "INTERSECT = irisan himpunan."
+  - q: "ORDER BY pada gabungan ditulis…"
+    options: ["Tidak boleh", "Di awal", "Di akhir gabungan", "Di setiap query"]
+    answer: 2
+    explain: "Satu ORDER BY di akhir berlaku untuk seluruh hasil."
+example:
+  code: |
+    SELECT nama FROM dbo.karyawan_2025
+    UNION ALL
+    SELECT nama FROM dbo.karyawan_2026
+    ORDER BY nama;
+---
+
+## UNION
+
+```sql
+SELECT kota FROM dbo.pelanggan
+UNION
+SELECT kota FROM dbo.supplier;
+```
+
+Dua query harus menghasilkan jumlah kolom sama dan tipe yang bisa dikonversi. Header hasil memakai nama kolom dari query pertama.
+
+## UNION ALL
+
+```sql
+SELECT kota FROM dbo.pelanggan
+UNION ALL
+SELECT kota FROM dbo.supplier;
+```
+
+`UNION` hemoduplikasi dan karenanya butuh kerja sort/hash tambahan. `UNION ALL` lebih cepat dan dipakai kalau duplikat memang diinginkan atau data sudah dipastikan berbeda.
+
+## EXCEPT dan INTERSECT
+
+```sql
+SELECT produk_id FROM dbo.terjual
+EXCEPT
+SELECT produk_id FROM dbo.diretur;
+
+SELECT produk_id FROM dbo.terjual
+INTERSECT
+SELECT produk_id FROM dbo.promo;
+```
+
+Keduanya membandingkan baris lengkap dan secara bawaan menghilangkan duplikat.
+
+## Mengurutkan Hasil
+
+```sql
+SELECT nama, 1 AS urutan FROM dbo.karyawan
+UNION ALL
+SELECT nama, 2 FROM dbo.mantan_karyawan
+ORDER BY urutan, nama;
+```
+
+Kolom tambahan berupa konstanta sering dipakai untuk menjaga urutan grup sebelum mengurutkan nama.
+
+<div class="note">💡 `UNION` mengubah tipe hasil mengikuti aturan prioritas tipe SQL Server. kalau satu query menghasilkan `INT` dan lainnya `DECIMAL`, hasil akhirnya `DECIMAL` — kadang dengan Pembulatan yang tidak terduga.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #a (n NVARCHAR(20)); CREATE TABLE #b (n NVARCHAR(20));
+INSERT INTO #a VALUES (N'Ana'), (N'Budi');
+INSERT INTO #b VALUES (N'Budi'), (N'Rani');
+SELECT n FROM #a UNION SELECT n FROM #b;
+SELECT n FROM #a INTERSECT SELECT n FROM #b;
+DROP TABLE #a; DROP TABLE #b;`}</code></pre>

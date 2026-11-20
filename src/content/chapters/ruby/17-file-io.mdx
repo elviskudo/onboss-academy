@@ -1,0 +1,131 @@
+---
+"title": "File I/O"
+"description": "File.read, File.write, File.open, CSV, dan manipulasi path dengan Pathname"
+"order": 17
+"quiz":
+- "q": "Method singkat membaca seluruh file adalah…"
+  "options":
+  - "File.read"
+  - "File.open_only"
+  - "IO.load"
+  - "File.gets_all"
+  "answer": 0
+  "explain": "File.read(path) mengembalikan seluruh isi sebagai string."
+- "q": "File.write akan…"
+  "options":
+  - "menambah di akhir"
+  - "menimpa isi file"
+  - "membaca file"
+  - "menghapus file"
+  "answer": 1
+  "explain": "Gunakan mode 'a' pada File.open untuk menambah."
+- "q": "Mode 'w' pada File.open berarti…"
+  "options":
+  - "baca saja"
+  - "tulis dan timpa"
+  - "tambah di akhir"
+  - "baca dan tulis"
+  "answer": 1
+  "explain": "w membuat file baru atau mengosongkan yang sudah ada."
+- "q": "Kelas untuk memanipulasi path dengan rapi adalah…"
+  "options":
+  - "Pathname"
+  - "Path"
+  - "FileInfo"
+  - "DirPath"
+  "answer": 0
+  "explain": "Pathname dari pustaka standar menyediakan join, extname, dll."
+- "q": "Blok File.open akan…"
+  "options":
+  - "membiarkan file terbuka"
+  - "menutup file otomatis"
+  - "menghapus file"
+  - "mengubah mode"
+  "answer": 1
+  "explain": "File otomatis ditutup saat blok selesai."
+"example":
+  "code": "File.write(\"data.txt\", \"halo\")\nputs File.read(\"data.txt\")\nFile.open(\"data.txt\", \"a\") { |f| f.puts \"baris baru\" }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby memperlakukan file sebagai objek `File` (turunan `IO`). Ada API singkat untuk sekali baca/tulis dan API blok untuk kontrol penuh.
+
+## Sekali Jalan
+
+```ruby
+File.write("catatan.txt", "Isi awal")
+puts File.read("catatan.txt")
+baris = File.readlines("catatan.txt")
+```
+
+## File.open dengan Blok
+
+```ruby
+File.open("data.txt", "w") do |f|
+  f.puts "Baris satu"
+  f.puts "Baris dua"
+end
+```
+
+File ditutup otomatis saat blok selesai — lebih aman daripada menutup manual.
+
+| Mode | Arti |
+|---|---|
+| `"r"` | Baca (default) |
+| `"w"` | Tulis, timpa |
+| `"a"` | Tambah di akhir |
+| `"r+"` | Baca + tulis |
+| `"b"` | Mode biner |
+
+## Membaca per Baris
+
+```ruby
+File.foreach("data.txt").with_index(1) do |baris, n|
+  puts "#{n}: #{baris.chomp}"
+end
+```
+
+`foreach` tidak memuat seluruh file ke memori.
+
+## Pathname
+
+```ruby
+require "pathname"
+path = Pathname.new("data") + "user.json"
+puts path.extname      # ".json"
+puts path.basename     # "user.json"
+```
+
+## CSV
+
+```ruby
+require "csv"
+CSV.open("orang.csv", "w") do |csv|
+  csv << ["nama", "umur"]
+  csv << ["Rani", 22]
+end
+```
+
+<div class="note">💡 Selalu tentukan encoding saat membaca data non-ASCII: <code>File.read("data.txt", encoding: "UTF-8")</code>.</div>
+
+
+## Try it Yourself
+
+Tambahkan baris baru atau baca hasilnya dengan foreach.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`require "pathname"
+
+path = Pathname.new(Dir.tmpdir) + "onboss-catatan.txt"
+File.write(path, "Baris satu\nBaris dua\n")
+
+File.open(path, "a") { |f| f.puts "Baris tiga" }
+
+File.foreach(path).with_index(1) do |baris, n|
+  puts "#{n}: #{baris.chomp.upcase}"
+end
+
+puts "nama file: #{path.basename}"
+puts "ekstensi: #{path.extname.inspect}"
+puts "ukuran: #{path.size} byte"
+File.delete(path)`} />

@@ -1,0 +1,108 @@
+---
+title: Rekursi dan Divide-and-Conquer
+description: Pola memecah masalah menjadi submasalah lebih kecil dan menggabungkan hasilnya.
+order: 12
+quiz:
+- q: Rekursi adalah…
+  options:
+  - Fungsi yang memanggil dirinya sendiri
+  - Loop tak berujung
+  - Array multidimensi
+  - Hash function
+  answer: 0
+  explain: Setiap pemanggilan memecah masalah sampai mencapai base case.
+- q: Base case berfungsi…
+  options:
+  - Menghapus argumen
+  - Menghentikan rekursi
+  - Menambah kedalaman
+  - Mengubah tipe data
+  answer: 1
+  explain: Tanpa base case, rekursi berujung pada stack overflow.
+- q: Kompleksitas merge sort adalah…
+  options:
+  - O(log n)
+  - O(n)
+  - O(n log n)
+  - O(n^2)
+  answer: 2
+  explain: Pembagian log n level, tiap level menggabungkan n elemen.
+- q: Divide-and-conquer terdiri dari…
+  options:
+  - Input, output, error
+  - Push, pop, peek
+  - Read, write, delete
+  - Divide, conquer, combine
+  answer: 3
+  explain: Tiga tahap ini menjadi kerangka banyak algoritma klasik.
+- q: Kedalaman rekursi binary search pada n elemen adalah…
+  options:
+  - O(log n)
+  - O(n)
+  - O(n log n)
+  - O(n^2)
+  answer: 0
+  explain: Tiap langkah membagi ruang menjadi dua.
+example:
+  code: "def faktorial(n):\n    if n &lt;= 1:       # base case\n        return 1\n    return n * faktorial(n - 1)\n\nprint(faktorial(5))\n"
+---
+
+
+**Rekursi** memecah masalah menjadi versi lebih kecil dari dirinya. Pola ini menjadi fondasi divide-and-conquer.
+
+## Anatomi Rekursi
+
+```python
+def faktorial(n):
+    if n <= 1:            # base case
+        return 1
+    return n * faktorial(n - 1)  # recursive case
+
+print(faktorial(5))
+```
+
+Dua syarat wajib: **base case** dan langkah yang mendekati base case.
+
+## Divide-and-Conquer
+
+```text
+Divide   -> pecah masalah
+Conquer  -> selesaikan submasalah secara rekursif
+Combine  -> gabungkan hasil
+```
+
+```python
+def merge_sort(a):
+    if len(a) <= 1:
+        return a
+    tengah = len(a) // 2
+    kiri = merge_sort(a[:tengah])
+    kanan = merge_sort(a[tengah:])
+    return gabung(kiri, kanan)
+
+def gabung(kiri, kanan):
+    hasil, i, j = [], 0, 0
+    while i < len(kiri) and j < len(kanan):
+        if kiri[i] <= kanan[j]:
+            hasil.append(kiri[i]); i += 1
+        else:
+            hasil.append(kanan[j]); j += 1
+    return hasil + kiri[i:] + kanan[j:]
+```
+
+## Rekursi vs Iterasi
+
+| Aspek | Rekursi | Iterasi |
+|---|---|---|
+| Kode | sering lebih pendek | lebih eksplisit |
+| Memori | stack frame per level | variabel tetap |
+| Risiko | stack overflow | loop tak berujung |
+| Cocok untuk | tree, divide-conquer | state sederhana |
+
+<div class="note">💡 Python membatasi kedalaman rekursi (sekitar 1000). Untuk urutan sangat panjang, gunakan iterasi atau naikkan batas dengan `sys.setrecursionlimit` secara bijak.</div>
+
+## Teknik Optimization
+
+- **Memoization** — simpan hasil submasalah yang berulang.
+- **Tail recursion** — bentuk khusus yang bisa diubah ke loop (belum dioptimasi Python).
+- **Explicit stack** — mensimulasikan rekursi dengan list.

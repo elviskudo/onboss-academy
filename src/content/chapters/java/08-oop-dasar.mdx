@@ -205,6 +205,10 @@ if (h instanceof Kucing k) {   // cek tipe + smart cast (Java 16+)
 
 <div class="note">💡 Urutan belajar 4 pilar: kuasai dulu <b>encapsulation</b> (private + getter/setter) karena paling sering dipakai sehari-hari; inheritance dan polymorphism menyusul; abstraction dipakai saat kamu sudah punya 2+ implementasi berbeda dari konsep yang sama. Jangan memaksakan pewarisan hanya karena "ada class induk" — komposisi sering lebih sederhana.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`abstract class Bayar {
     abstract double hitung(double total);
     void cetakStruk(double total) {
@@ -247,7 +251,7 @@ public class Main {
 
         Bayar[] metode = { new BayarTunai(), new BayarKartu() };
         String[] namaMetode = { "Tunai", "Kartu" };
-        for (int i = 0; i < metode.length; i++) {
+        for (int i = 0; i &lt; metode.length; i++) {
             System.out.println("Bayar " + namaMetode[i] + " (total 100000):");
             metode[i].cetakStruk(100000);
         }

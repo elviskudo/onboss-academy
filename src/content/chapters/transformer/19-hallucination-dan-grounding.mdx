@@ -1,0 +1,101 @@
+---
+title: Halusinasi dan Grounding
+description: Mengapa model mengarang fakta dan cara menguranginya dengan sumber eksternal.
+order: 19
+quiz:
+- q: Halusinasi pada LLM adalah…
+  options:
+  - Error kompilasi
+  - Token terlalu panjang
+  - Proses training
+  - Jawaban palsu yang disajikan secara meyakinkan
+  answer: 3
+  explain: Model menghasilkan teks yang plausibel tetapi tidak didukung data atau kenyataan.
+- q: Grounding berarti…
+  options:
+  - Mengaitkan jawaban dengan sumber bukti
+  - Meninggikan temperatur
+  - Menghapus prompt
+  - Memperpendek konteks
+  answer: 0
+  explain: Jawaban ditopang oleh dokumen, database, atau alat yang bisa diperiksa.
+- q: Cara paling langsung mengurangi halusinasi faktual adalah…
+  options:
+  - Menghapus system prompt
+  - RAG dengan sumber terpercaya
+  - Menambah jumlah emoji
+  - Menurunkan ukuran model
+  answer: 1
+  explain: Dokumen yang diambil saat inference memberi bukti yang tidak harus dihafal model.
+- q: Suhu (temperature) rendah membuat jawaban…
+  options:
+  - Lebih panjang
+  - Lebih acak
+  - Lebih deterministik
+  - Lebih kreatif
+  answer: 2
+  explain: Temperature rendah memfokuskan sampling pada token probabilitas tertinggi.
+- q: Kalimat “saya tidak tahu” dalam jawaban model itu…
+  options:
+  - Selalu kesalahan
+  - Hasil bug tokenizer
+  - Tidak mungkin
+  - Tanda baik kalau memang tidak ada bukti
+  answer: 3
+  explain: Menolak menjawab lebih aman daripada mengarang saat informasi tidak tersedia.
+example:
+  code: 'Jawaban: "Kebijakan cuti 2024 adalah 12 hari."
+
+    Sumber: HR Handbook 2024, halaman 7.
+
+    Jika sumber tidak ada -> jawab "data tidak tersedia".
+
+    '
+---
+
+
+Model bahasa dioptimalkan untuk menghasilkan teks yang **mungkin**, bukan teks yang **benar**. Karena itu ia bisa terdengar sangat yakin walau mengarang.
+
+## Mengapa Halusinasi Terjadi
+
+- Data training mengandung informasi usang atau kontradiktif.
+- Model tidak punya akses ke dunia nyala saat inference.
+- Prompt meminta detail yang memang tidak ada di konteks.
+- Sampling kreatif memilih token yang terdengar masuk akal.
+
+## Contoh Kasus
+
+```text
+Pertanyaan: "Berapa kuota internet paket X tahun ini?"
+Tanpa data: "Paket X memberikan 25 GB."   <- bisa karangan
+Dengan RAG: "Berdasarkan halaman 4 dokumen produk, kuota 25 GB."
+```
+
+## Strategi Mitigasi
+
+| Strategi | Cara kerja |
+|---|---|
+| RAG | ambil dokumen relevan sebelum menjawab |
+| Kutipan | sertakan sumber tiap klaim |
+| Constraint prompt | perintah “jawab hanya dari konteks” |
+| Tools | hitung dengan kalkulator, cari dengan database |
+| Verifier | model kedua memeriksa konsistensi |
+
+```python
+prompt = """
+Jawab HANYA berdasarkan konteks di bawah.
+Jika tidak ada jawaban, tulis: 'Informasi tidak tersedia'.
+
+Konteks: {dokumen}
+Pertanyaan: {pertanyaan}
+"""
+```
+
+<div class="note">💡 Kutipan bukan jaminan benar — model tetap bisa salah membaca sumber. Tetapi kutipan membuat kesalahan lebih mudah ditemukan oleh manusia.</div>
+
+## Budaya Produksi
+
+- Tampilkan label “dikenakan dari dokumen” dan tautan sumber.
+- Catat versi dokumen yang dipakai tiap jawaban.
+- Sediakan jalur eskalasi ke manusia untuk keputusan berisiko tinggi.
+- Uji secara berkala dengan pertanyaan yang jawabannya memang tidak tersedia.

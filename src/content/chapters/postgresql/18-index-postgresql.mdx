@@ -1,0 +1,105 @@
+---
+title: "Index di PostgreSQL"
+description: "B-Tree, GIN, GiST, BRIN, partial, expression, dan INCLUDE"
+order: 18
+quiz:
+  - q: "Index default di PostgreSQL adalah…"
+    options: ["B-Tree", "Hash", "GIN", "BRIN"]
+    answer: 0
+    explain: "CREATE INDEX tanpa USING memakai B-Tree."
+  - q: "Index cocok untuk pencarian full-text dan array adalah…"
+    options: ["GIN", "B-Tree", "BRIN", "SP-GiST"]
+    answer: 0
+    explain: "GIN mendukung contain pada array, jsonb, dan tsvector."
+  - q: "Index pada hasil fungsi disebut…"
+    options: ["Expression index", "Partial index", "Covering index", "Bitmap index"]
+    answer: 0
+    explain: "CREATE INDEX ON tabel (lower(nama))."
+  - q: "Partial index hanya berisi…"
+    options: ["Semua baris", "Baris yang memenuhi WHERE", "Kolom pertama saja", "Baris NULL saja"]
+    answer: 1
+    explain: "CREATE INDEX ... WHERE aktif = true menghemat ruang."
+  - q: "Klausa INCLUDE pada index berfungsi untuk…"
+    options: ["Menambah kolom non-kunci untuk covering index", "Menghapus baris", "Mengubah tipe", "Membuat index partial"]
+    answer: 0
+    explain: "INCLUDE menyimpan kolom tambahan di daun index tanpa dipakai sebagai kunci."
+example:
+  code: |
+    CREATE INDEX idx_karyawan_dept ON karyawan(dept); EXPLAIN SELECT * FROM karyawan WHERE dept='Engineering';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL punya beberapa metode index. Memilih yang sesuai dengan jenis data dan operator filter adalah kunci query cepat.
+
+## Jenis Index
+
+| Metode | Cocok untuk |
+| --- | --- |
+| B-Tree | `=`, `<`, `>`, BETWEEN, LIKE awalan |
+| Hash | hanya `=` |
+| GIN | array, jsonb, full-text |
+| GiST | geometri, range, nearest-neighbor |
+| BRIN | tabel besar yang terurut fisik |
+| SP-GiST | struktur partisi seperti trie
+
+## B-Tree Dasar
+
+```sql
+CREATE INDEX idx_karyawan_dept ON karyawan (dept);
+CREATE UNIQUE INDEX idx_karyawan_email ON karyawan (email);
+DROP INDEX idx_karyawan_dept;
+```
+
+Index komposit `(a, b)` melayani filter `a` dan `a+b`, bukan `b` saja.
+
+## Expression Index
+
+```sql
+CREATE INDEX idx_nama_lower ON karyawan (lower(nama));
+SELECT * FROM karyawan WHERE lower(nama) = 'ana';
+```
+
+Tanpa expression index, fungsi pada kolom membuat B-Tree biasa tidak terpakai.
+
+## Partial Index
+
+```sql
+CREATE INDEX idx_pesanan_aktif ON pesanan (tanggal)
+WHERE status = 'aktif';
+```
+
+Index ini hanya berisi baris aktif. Sangat hemat bila mayoritas baris berstatus selesai.
+
+## INCLUDE / Covering
+
+```sql
+CREATE INDEX idx_produk_kategori
+ON produk (kategori) INCLUDE (nama, harga);
+```
+
+Kolom di INCLUDE tidak dipakai untuk pencarian, tetapi tersedia di index sehingga query tidak perlu membaca tabel (index-only scan).
+
+## GIN untuk JSONB
+
+```sql
+CREATE INDEX idx_event_data ON event_log USING GIN (data jsonb_path_ops);
+SELECT * FROM event_log WHERE data @> '{"aksi":"login"}';
+```
+
+<div class="note">💡 Index hanya dipakai bila optimizer memperkirakan hasilnya cukup selektif. Pada tabel kecil, sequential scan memang bisa lebih cepat — ini bukan tanda index rusak.</div>
+
+## Di Dunia Nyata
+
+- **Login**: unique index pada email.
+- **Feed**: `(user_id, created_at DESC)` untuk daftar terbaru.
+- **Log**: BRIN pada kolom waktu yang terurut.
+- **Filter status**: partial index untuk baris aktif saja.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE INDEX idx_karyawan_dept ON karyawan (dept);
+EXPLAIN SELECT nama, gaji FROM karyawan WHERE dept = 'Engineering';
+CREATE INDEX idx_nama_lower ON karyawan (lower(nama));
+EXPLAIN SELECT nama FROM karyawan WHERE lower(nama) = 'ana';`} />

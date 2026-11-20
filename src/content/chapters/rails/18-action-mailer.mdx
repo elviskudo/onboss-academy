@@ -1,0 +1,112 @@
+---
+"title": "Action Mailer"
+"description": "Mengirim email transaksional dengan template, layout, dan background job"
+"order": 18
+"quiz":
+- "q": "Kelas induk mailer Rails adalah…"
+  "options":
+  - "ActionMailer::Base"
+  - "ApplicationMailer"
+  - "MailController"
+  - "EmailService"
+  "answer": 1
+  "explain": "ApplicationMailer mewarisi ActionMailer::Base."
+- "q": "Metode untuk mengirim email segera adalah…"
+  "options":
+  - "send_now"
+  - "deliver"
+  - "deliver_now"
+  - "mail_now"
+  "answer": 2
+  "explain": "deliver_now mengirim langsung di request thread."
+- "q": "Metode untuk mengantre email adalah…"
+  "options":
+  - "deliver_async"
+  - "send_later"
+  - "queue_mail"
+  - "deliver_later"
+  "answer": 3
+  "explain": "deliver_later menyerahkan ke Active Job."
+- "q": "File template mailer ditempatkan di…"
+  "options":
+  - "app/views/nama_mailer/"
+  - "app/mailers/templates/"
+  - "app/views/emails/"
+  - "public/mail/"
+  "answer": 0
+  "explain": "Rails mencari app/views/<mailer>/<aksi>.html.erb dan .text.erb."
+- "q": "Konfigurasi SMTP biasanya ditaruh di…"
+  "options":
+  - "app/mailers/application_mailer.rb"
+  - "config/environments/production.rb"
+  - "Gemfile"
+  - "routes.rb"
+  "answer": 1
+  "explain": "Pengaturan delivery_method dan SMTP berada di file environment."
+"example":
+  "code": "class UserMailer &lt; ApplicationMailer\n  default from: \"no-reply@onboss.test\"\n\n  def welcome(user)\n    @user = user\n    mail(to: @user.email, subject: \"Selamat datang!\")\n  end\nend\n\n# pemanggilan\nUserMailer.welcome(user).deliver_later\n"
+---
+
+
+## Membuat Mailer
+
+```ruby
+class UserMailer < ApplicationMailer
+  default from: "no-reply@onboss.test"
+
+  def welcome(user)
+    @user = user
+    mail(to: @user.email, subject: "Selamat datang!")
+  end
+end
+
+# pemanggilan
+UserMailer.welcome(user).deliver_later
+```
+
+```bash
+bin/rails generate mailer UserMailer welcome
+```
+
+Generator membuat kelas mailer dan dua template (HTML serta plain text).
+
+```ruby
+class UserMailer < ApplicationMailer
+  def welcome(user)
+    @user = user
+    mail(to: user.email, subject: "Selamat datang!")
+  end
+end
+```
+
+Variabel instance `@user` dapat dipakai di template seperti di view biasa.
+
+## Segera atau Antre
+
+| Metode | Eksekusi | Risiko |
+|---|---|---|
+| `deliver_now` | langsung | request menunggu koneksi SMTP |
+| `deliver_later` | lewat Active Job | butuh worker berjalan di produksi |
+
+Email reset password, invoice, dan notifikasi sebaiknya memakai `deliver_later` agar pengguna tidak menunggu.
+
+## Template dan Layout
+
+```erb
+<!-- app/views/user_mailer/welcome.html.erb -->
+<h1>Halo <%= @user.nama %></h1>
+<p>Terima kasih sudah bergabung.</p>
+```
+
+Layout email berada di `app/views/layouts/mailer.html.erb`. Berbeda dari layout web, email sebaiknya memakai tabel dan CSS inline agar kompatibel dengan klien email.
+
+## Konfigurasi development
+
+```ruby
+config.action_mailer.delivery_method = :smtp
+config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+```
+
+Di development, `letter_opener` bisa membuka email di browser daripada benar-benar mengirimkannya.
+
+<div class="note">💡 Jangan menyimpan kredensial SMTP di source code. Rails credentials atau environment variable menjaga rahasia tetap keluar dari repository.</div>

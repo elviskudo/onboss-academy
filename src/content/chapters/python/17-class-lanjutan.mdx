@@ -1,0 +1,159 @@
+---
+title: "Class Lanjutan"
+description: "classmethod, staticmethod, property, inheritance, dan method special Python"
+order: 17
+quiz:
+  - q: "Decorator `@property` digunakan untuk…"
+    options: ["Menjadikan method jadi atribut turunan", "Membuat method statis", "Menghapus atribut", "Mengubah class jadi fungsi"]
+    answer: 0
+    explain: "property memungkinkan akses `obj.nilai` tapi tetap ada logika getter."
+  - q: "`@staticmethod` menerima parameter…"
+    options: ["self", "cls", "Tidak ada parameter khusus", "Selalu dua argumen"]
+    answer: 2
+    explain: "staticmethod tidak mendapat self maupun cls secara otomatis."
+  - q: "`@classmethod` menerima parameter pertama…"
+    options: ["self", "cls", "args", "Tidak ada"]
+    answer: 1
+    explain: "classmethod menerima class sebagai argumen pertama (biasa bernama cls)."
+  - q: "Method `__str__` dipakai untuk…"
+    options: ["Representasi pengembang", "Representasi string pengguna", "Konstruktor", "Perbandingan"]
+    answer: 1
+    explain: "__str__ dipakai print()/str(); __repr__ untuk debug."
+  - q: "`super()` di Python berguna untuk…"
+    options: ["Membuat object baru", "Memanggil method parent", "Menghapus parent", "Mengganti tipe"]
+    answer: 1
+    explain: "super() mendelegasikan ke class induk dalam MRO."
+example:
+  code: |
+    class Siswa:
+        def __init__(self, nama, nilai):
+            self.nama = nama
+            self._nilai = nilai
+    
+        @property
+        def nilai(self):
+            return self._nilai
+    
+        @nilai.setter
+        def nilai(self, v):
+            self._nilai = max(0, min(100, v))
+    
+        @classmethod
+        def dari_string(cls, teks):
+            n, v = teks.split(":")
+            return cls(n, int(v))
+    
+        def __str__(self):
+            return f"{self.nama} = {self.nilai}"
+    
+    s = Siswa.dari_string("Sari:90")
+    s.nilai = 150
+    print(s)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Class Python lebih fleksibel daripada banyak bahasa statically typed. Decorator dan method special membuat API class terasa natural.
+
+## Property
+
+```python
+class Suhu:
+    def __init__(self, c):
+        self.c = c
+
+    @property
+    def f(self):
+        return self.c * 9 / 5 + 32
+
+    @f.setter
+    def f(self, nilai):
+        self.c = (nilai - 32) * 5 / 9
+```
+
+Pemakai menulis `s.f = 100` seolah atribut biasa, padahal ada konversi di belakangnya — ini encapsulation ala Python.
+
+## classmethod & staticmethod
+
+```python
+class Tanggal:
+    def __init__(self, y, m, d): ...
+
+    @classmethod
+    def dari_iso(cls, teks):        # cls = class, bukan object
+        y, m, d = map(int, teks.split("-"))
+        return cls(y, m, d)
+
+    @staticmethod
+    def valid_bulan(n):             # tidak butuh cls/self
+        return 1 <= n <= 12
+```
+
+classmethod sering dipakai sebagai **constructor alternatif**; staticmethod untuk utilitas yang secara logis berada di class.
+
+## Pewarisan & super()
+
+```python
+class Hewan:
+    def __init__(self, nama):
+        self.nama = nama
+    def suara(self):
+        return "..."
+
+class Kucing(Hewan):
+    def __init__(self, nama, warna):
+        super().__init__(nama)
+        self.warna = warna
+    def suara(self):
+        return "Meong"
+```
+
+Python mendukung multiple inheritance. Urutan pencarian method disebut **MRO** (Method Resolution Order), bisa dilihat lewat `Kucing.__mro__`.
+
+## Method Special (Dunder)
+
+| Method | Dipicu oleh |
+|---|---|
+| `__init__` | `Kelas(...)` |
+| `__str__` | `str(obj)`, `print(obj)` |
+| `__repr__` | `repr(obj)`, debug |
+| `__len__` | `len(obj)` |
+| `__eq__` | `a == b` |
+| `__call__` | `obj()` |
+
+```python
+class Kantong:
+    def __init__(self): self.isi = []
+    def __len__(self): return len(self.isi)
+    def __repr__(self): return f"Kantong({self.isi!r})"
+```
+
+<div class="note">💡 Gunakan <code>_awalan</code> untuk "private secara konvensi" dan <code>__awalan</code> jika ingin name-mangling. Python tidak punya private sungguhan — ini soal disiplin, bukan pembatasan mesin.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`class Siswa:
+    def __init__(self, nama, nilai):
+        self.nama = nama
+        self._nilai = nilai
+
+    @property
+    def nilai(self):
+        return self._nilai
+
+    @nilai.setter
+    def nilai(self, v):
+        self._nilai = max(0, min(100, v))
+
+    @classmethod
+    def dari_string(cls, teks):
+        n, v = teks.split(":")
+        return cls(n, int(v))
+
+    def __str__(self):
+        return f"{self.nama} = {self.nilai}"
+
+s = Siswa.dari_string("Sari:90")
+s.nilai = 150
+print(s)`} />

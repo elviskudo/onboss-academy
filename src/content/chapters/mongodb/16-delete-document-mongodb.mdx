@@ -1,0 +1,82 @@
+---
+title: "Menghapus Dokumen"
+description: "deleteOne, deleteMany, findOneAndDelete, dan perbedaan drop"
+order: 16
+quiz:
+  - q: "Metode menghapus satu dokumen yang cocok adalah…"
+    options: ["db.koleksi.erase(filter)", "db.koleksi.deleteOne(filter)", "db.koleksi.removeOne(filter)", "db.koleksi.drop(filter)"]
+    answer: 1
+    explain: "deleteOne(filter) menghapus paling banyak satu dokumen."
+  - q: "deleteMany({}) berarti…"
+    options: ["Menghapus koleksi", "Error", "Tidak melakukan apa-apa", "Menghapus semua dokumen"]
+    answer: 3
+    explain: "Filter kosong cocok dengan semua dokumen."
+  - q: "Untuk mengembalikan dokumen yang baru saja dihapus, gunakan…"
+    options: ["findOneAndDelete()", "getDeleted()", "removeOne()", "deleteAndReturn()"]
+    answer: 0
+    explain: "findOneAndDelete mengembalikan dokumen sebelum dihapus."
+  - q: "Perbedaan deleteMany({}) dan drop() adalah…"
+    options: ["deleteMany tidak bisa di MongoDB", "Tidak ada bedanya", "drop juga menghapus indeks dan definisi koleksi", "drop lebih lambat"]
+    answer: 2
+    explain: "drop() menghapus koleksi beserta indeks; deleteMany hanya isinya."
+  - q: "Hasil deleteOne memuat…"
+    options: ["modifiedCount", "upsertedId", "deletedCount", "insertedId"]
+    answer: 2
+    explain: "deletedCount menunjukkan jumlah dokumen yang terhapus (0 atau 1)."
+example:
+  code: |
+    db.siswa.deleteOne({nama: "Budi"})
+    db.siswa.deleteMany({aktif: false})
+    const terhapus = db.siswa.findOneAndDelete({nama: "Rani"})
+---
+
+## deleteOne dan deleteMany
+
+```javascript
+db.siswa.deleteOne({ nama: "Budi" })
+db.siswa.deleteMany({ aktif: false })
+```
+
+Selalu sertakan filter yang spesifik. `deleteMany({})` akan mengosongkan seluruh koleksi.
+
+## Mengambil Dokumen yang Dihapus
+
+```javascript
+const dok = db.siswa.findOneAndDelete({ nim: "2026001" })
+printjson(dok)
+```
+
+`findOneAndDelete` berguna kalau aplikasi perlu menampilkan data yang baru dihapus, misalnya dalam notifikasi "Anda menghapus pesanan #123".
+
+## Hitungan Hasil
+
+```javascript
+const hasil = db.siswa.deleteMany({ kelas: "Lulus" })
+print(hasil.deletedCount)
+```
+
+| Hasil | Arti |
+| --- | --- |
+| `acknowledged` | server menerima permintaan |
+| `deletedCount` | jumlah dokumen terhapus |
+
+## Hati-hati dengan drop
+
+```javascript
+db.siswa.deleteMany({})   // koleksi tetap ada, indeks tetap ada
+db.siswa.drop()           // koleksi dan indeks hilang
+```
+
+Setelah `drop()`, aplikasi yang masih memanggil `db.siswa.find()` akan membuat ulang koleksi secara implisit saat ada `insert`, tetapi indeks lama tidak kembali.
+
+<div class="note">💡 Di produksi, pertimbangkan **soft delete**: tambahkan field `deletedAt` dan `updateOne` daripada benar-benar menghapus. Data tetap tersedia untuk audit dan bisa dipulihkan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_delete
+db.siswa.insertMany([{nama: "Ana", aktif: true}, {nama: "Budi", aktif: false}])
+print(db.siswa.deleteOne({nama: "Budi"}).deletedCount)
+print(db.siswa.deleteMany({aktif: false}).deletedCount)
+db.siswa.find({}, {_id: 0})`}</code></pre>

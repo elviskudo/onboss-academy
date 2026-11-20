@@ -1,0 +1,158 @@
+---
+title: "Type Guard & Narrowing Lanjutan"
+description: "Mempersempit tipe dengan typeof, in, instanceof, dan predicate"
+order: 14
+quiz:
+  - q: "Operator yang cocok mengecek tipe primitif adalah…"
+    options: ["instanceof", "typeof", "in", "as"]
+    answer: 1
+    explain: "typeof bekerja untuk string, number, boolean, dll."
+  - q: "Operator `in` dipakai untuk…"
+    options: ["Mengecek instanceof", "Mengecek keberadaan properti", "Membuat union", "Mengubah tipe"]
+    answer: 1
+    explain: "Contoh: `'email' in orang`."
+  - q: "`x is string` pada fungsi disebut…"
+    options: ["Type predicate", "Type assertion", "Generic", "Cast"]
+    answer: 0
+    explain: "Predicate memberi tahu compiler hasil pengecekan runtime."
+  - q: "`instanceof` berguna untuk…"
+    options: ["Cek instance class", "Cek string", "Cek array kosong", "Cek null"]
+    answer: 0
+    explain: "Ia memeriksa prototype chain."
+  - q: "`strictNullChecks` membuat…"
+    options: ["null otomatis jadi string", "null/undefined tidak bisa ditugaskan sembarangan", "Semua jadi any", "Tidak ada efek"]
+    answer: 1
+    explain: "Kamu harus menangani null secara eksplisit."
+example:
+  code: |
+    function adalahString(x: unknown): x is string {
+      return typeof x === "string";
+    }
+    
+    if (adalahString(nilai)) {
+      console.log(nilai.toUpperCase());
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+*Narrowing* adalah proses memberi tahu compiler: "di cabang kode ini, tipe nilai lebih sempit daripada sebelumnya." Makin presisi narrowing, makin sedikit assertion yang kamu butuhkan.
+
+## Cara Narrowing
+
+| Teknik | Contoh |
+|--------|--------|
+| `typeof` | `if (typeof x === "string")` |
+| `instanceof` | `if (x instanceof Date)` |
+| `in` | `if ("email" in x)` |
+| Truthiness | `if (x)` |
+| Equality | `if (x !== null)` |
+| Discriminated union | `if (x.kind === "lingkaran")` |
+| Type predicate | `function adalahX(x): x is X` |
+| Assertion function | `assert(x)` |
+
+## typeof & Truthiness
+
+```ts
+function cetak(nilai: string | number | null) {
+  if (nilai === null) return;
+  if (typeof nilai === "string") {
+    console.log(nilai.toUpperCase());
+  } else {
+    console.log(nilai.toFixed(2));
+  }
+}
+```
+
+## Discriminated Union (Paling Andal)
+
+```ts
+type Bentuk =
+  | { kind: "lingkaran"; jari: number }
+  | { kind: "kotak"; sisi: number };
+
+function luas(b: Bentuk): number {
+  switch (b.kind) {
+    case "lingkaran": return Math.PI * b.jari ** 2;
+    case "kotak": return b.sisi ** 2;
+  }
+}
+```
+
+Properti `kind` disebut **discriminant**. Ia harus berupa literal type agar switch bisa mempersempit tipe.
+
+## Type Predicate
+
+```ts
+interface Pengguna { nama: string; email: string }
+
+function adalahPengguna(x: unknown): x is Pengguna {
+  return (
+    typeof x === "object" &&
+    x !== null &&
+    "nama" in x &&
+    "email" in x
+  );
+}
+```
+
+Predicate berguna untuk pengecekan runtime yang tidak bisa diungkapkan dengan `typeof` saja.
+
+## Assertion Function
+
+```ts
+function assert(cond: unknown, pesan: string): asserts cond {
+  if (!cond) throw new Error(pesan);
+}
+
+const nilai: unknown = "halo";
+assert(typeof nilai === "string", "harus string");
+nilai.toUpperCase(); // ✅ sudah string
+```
+
+## Kesalahan Umum
+
+```ts
+const x: string | null = "halo";
+// if (x) ... ✅
+// x.toUpperCase(); ❌ bisa saja null
+
+const arr: number[] = [];
+arr[0].toFixed(); // ⚠️ bisa undefined kalau noUncheckedIndexedAccess aktif
+
+let status: "idle" | "run" = "idle";
+status = "jalan"; // ❌ typo terdeteksi
+```
+
+<div class="note">💡 `as` bukan narrowing — itu assertions. Ia memaksa compiler percaya tanpa membuktikan. Pakai narrowing nyata supaya perubahan kode tetap aman.</div>
+
+## Di Dunia Nyata
+
+- Fungsi `isError(err): err is AppError` menyaring error dari library.
+- Reducer Redux/state machine memakai discriminated union pada field `type`.
+- Validasi form menulis `parseInput(raw): UserInput` dengan pengecekan runtime lengkap.
+
+## Try it Yourself
+
+Ubah `kind` atau tambahkan varian baru untuk melihat exhaustiveness check bekerja.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Hasil =
+  | { kind: "sukses"; data: string }
+  | { kind: "gagal"; pesan: string };
+
+function tampilkan(h: Hasil): string {
+  if (h.kind === "sukses") {
+    return "Data: " + h.data.toUpperCase();
+  }
+  return "Error: " + h.pesan;
+}
+
+function adalahString(x: unknown): x is string {
+  return typeof x === "string";
+}
+
+const masukan: unknown = "TypeScript";
+if (adalahString(masukan)) {
+  console.log(tampilkan({ kind: "sukses", data: masukan }));
+}
+console.log(tampilkan({ kind: "gagal", pesan: "tidak ada data" }));`} />

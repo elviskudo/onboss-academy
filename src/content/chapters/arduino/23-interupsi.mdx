@@ -1,0 +1,87 @@
+---
+title: "Interrupt"
+description: "attachInterrupt, ISR, dan variabel volatile"
+order: 23
+quiz:
+  - q: "Interrupt berguna untuk…"
+    options: ["Mengganti loop", "Menambah memori", "Mengubah analogRead", "Merespons event yang mendesak segera"]
+    answer: 3
+    explain: "ISR dipanggil otomatis saat kondisi pin terpenuhi."
+  - q: "Pada Uno, interrupt eksternal tersedia di pin…"
+    options: ["2 dan 3", "0 dan 1", "A0 dan A1", "Semua pin"]
+    answer: 0
+    explain: "Board lain punya jumlah berbeda."
+  - q: "Fungsi yang dipanggil interrupt disebut…"
+    options: ["handler serial", "ISR", "callback loop", "setup"]
+    answer: 1
+    explain: "ISR harus singkat dan cepat."
+  - q: "Variabel yang diubah di dalam ISR harus dinyatakan…"
+    options: ["static saja", "float", "volatile", "const"]
+    answer: 2
+    explain: "volatile mencegah compiler mengoptimalkan pembacaan variabel."
+  - q: "Di dalam ISR sebaiknya hindari…"
+    options: ["digitalRead()", "Penugasan variabel", "Operasi aritmatika sederhana", "delay() dan Serial.print()"]
+    answer: 3
+    explain: "ISR yang lama membuat event lain terlewat."
+example:
+  code: |
+    volatile int hitung = 0;
+    
+    void setup() {
+      attachInterrupt(digitalPinToInterrupt(2), perubahan, RISING);
+      Serial.begin(9600);
+    }
+    
+    void perubahan() {
+      hitung++;
+    }
+    
+    void loop() {
+      Serial.println(hitung);
+      delay(500);
+    }
+---
+
+Interrupt memungkinkan Arduino merespons kejadian eksternal tanpa terus-menerus mengecek pin. Namun ISR punya aturan ketat agar sistem tetap stabil.
+
+## Pin Interrupt
+
+| Board | Pin interrupt eksternal |
+|---|---|
+| Uno / Nano | 2, 3 |
+| Mega | 2, 3, 18, 19, 20, 21 |
+| Leonardo | 0, 1, 2, 3, 7 |
+
+## Mode Trigger
+
+```cpp
+attachInterrupt(pin, isr, RISING);   // LOW ke HIGH
+attachInterrupt(pin, isr, FALLING);  // HIGH ke LOW
+attachInterrupt(pin, isr, CHANGE);   // keduanya
+```
+
+## ISR yang Baik
+
+```cpp
+volatile unsigned long jumlah = 0;
+
+void isr() {
+  jumlah++;     // singkat, tanpa delay
+}
+```
+
+Lakukan publikasi ke Serial atau tampilan di `loop()`, bukan di ISR.
+
+## Debounce Tetap Perlu
+
+Interrupt tidak menghilangkan bouncing. Tambahkan filter waktu di ISR menggunakan `micros()`, atau gunakan hardware RC.
+
+<div class="note">💡 Matikan interrupt sementara dengan `noInterrupts()` saat mengakses variabel multi-byte yang diubah ISR, lalu aktifkan lagi dengan `interrupts()`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`volatile byte flag = 0;
+void isr(){ flag = 1; }
+void setup(){ attachInterrupt(digitalPinToInterrupt(2), isr, FALLING); }
+void loop(){ if(flag){ flag=0; Serial.println('ada event'); } }`}</code></pre>

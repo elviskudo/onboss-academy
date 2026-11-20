@@ -157,6 +157,10 @@ Pecah menjadi method ketika: (1) blok kode dipakai di **2+ tempat**, (2) blok it
 
 <div class="note">💡 Beri nama method dengan kata kerja (<code>hitungLuas</code>, <code>ambilNilai</code>) dan parameter yang menjelaskan isinya — nama method yang baik menggantikan komentar. Hindari method "doEverything" — satu method idealnya punya satu tanggung jawab.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     static int tambah(int a, int b) {
         return a + b;
@@ -173,7 +177,7 @@ Pecah menjadi method ketika: (1) blok kode dipakai di **2+ tempat**, (2) blok it
     }
 
     static void sapa(String nama, int kali) {
-        for (int i = 1; i <= kali; i++) {
+        for (int i = 1; i &lt;= kali; i++) {
             System.out.println("Halo ke-" + i + ", " + nama + "!");
         }
     }
@@ -183,7 +187,7 @@ Pecah menjadi method ketika: (1) blok kode dipakai di **2+ tempat**, (2) blok it
     }
 
     static long faktorial(int n) {
-        if (n <= 1) return 1;
+        if (n &lt;= 1) return 1;
         return n * faktorial(n - 1);
     }
 
@@ -192,7 +196,7 @@ Pecah menjadi method ketika: (1) blok kode dipakai di **2+ tempat**, (2) blok it
         System.out.println("int: " + tambah(4, 6));
         System.out.println("double: " + tambah(2.5, 3.1));
         System.out.println("varargs: " + jumlah(1, 2, 3, 4));
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i &lt;= 5; i++) {
             System.out.print(i + (isGenap(i) ? " (genap) " : " (ganjil) "));
         }
         System.out.println();

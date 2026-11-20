@@ -1,0 +1,142 @@
+---
+title: "Literal & Template Literal Types"
+description: "Membatasi nilai dengan tipe literal dan menyusun tipe string dinamis"
+order: 13
+quiz:
+  - q: "Tipe literal `'merah' | 'biru'` berarti…"
+    options: ["String apa saja", "Hanya dua nilai itu yang boleh", "Array warna", "Enum"]
+    answer: 1
+    explain: "Union of literal types membatasi nilai yang diterima."
+  - q: "`as const` pada objek akan…"
+    options: ["Membuat semua properti readonly dan literal", "Menghapus tipe", "Membuat any", "Mengubah ke number"]
+    answer: 0
+    explain: "Nilai string tidak diperlebar jadi string biasa."
+  - q: "`type Rute = \\`/api/${string}\\`` adalah contoh…"
+    options: ["Template literal type", "Generic", "Conditional type", "Mapped type"]
+    answer: 0
+    explain: "Ia menerima semua string yang diawali /api/."
+  - q: "`type Huruf = Uppercase<'abc'>` menghasilkan…"
+    options: ["abc", "ABC", "Error", "Abc"]
+    answer: 1
+    explain: "Utility type intrinsik ini mengubah huruf menjadi kapital."
+  - q: "Literal type paling berguna untuk…"
+    options: ["Data acak", "Status, mode, dan konstanta terbatas", "Semua input pengguna", "Angka desimal"]
+    answer: 1
+    explain: "Misalnya status: 'loading' | 'success' | 'error'."
+example:
+  code: |
+    type Status = "loading" | "success" | "error";
+    const status: Status = "success";
+    
+    type Rute = `/api/\${string}`;
+    const rute: Rute = "/api/produk";
+    
+    const konfigurasi = { mode: "gelap" } as const;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tipe literal membatasi nilai ke satu kemungkinan tertentu. Bila digabung dengan union, kamu bisa memodelkan domain aplikasi dengan sangat presisi.
+
+## Literal Type Dasar
+
+```ts
+type Arah = "utara" | "selatan" | "timur" | "barat";
+type Level = 1 | 2 | 3;
+type Aktif = true; // hanya true
+
+function arahKeDerajat(a: Arah): number {
+  switch (a) {
+    case "utara": return 0;
+    case "timur": return 90;
+    case "selatan": return 180;
+    case "barat": return 270;
+  }
+}
+```
+
+Karena semua kasus tercakup, TypeScript tahu fungsi di atas selalu mengembalikan `number`.
+
+## as const
+
+```ts
+const warna = ["merah", "biru"]; // string[]
+const warnaKaku = ["merah", "biru"] as const; // readonly ["merah", "biru"]
+
+type Warna = typeof warnaKaku[number]; // "merah" | "biru"
+```
+
+Pola `typeof array[number]` adalah cara populer membuat union dari daftar konstanta.
+
+```ts
+const STATUS = {
+  MENUNGGU: "menunggu",
+  SUKSES: "sukses",
+  GAGAL: "gagal"
+} as const;
+
+type Status = typeof STATUS[keyof typeof STATUS];
+```
+
+## Template Literal Types
+
+```ts
+type EventName = `on${Capitalize<string>}`;
+type RuteApi = `/api/${string}`;
+type Kelas = `btn-\${"primary" | "danger"}`;
+// "btn-primary" | "btn-danger"
+```
+
+TypeScript juga menyediakan utility string intrinsik: `Uppercase<T>`, `Lowercase<T>`, `Capitalize<T>`, `Uncapitalize<T>`.
+
+```ts
+type Metode = "get" | "post";
+type Handler = `handle${Capitalize<Metode>}`;
+// "handleGet" | "handlePost"
+```
+
+## Combined dengan Generics
+
+```ts
+type EventMap = {
+  klik: { x: number; y: number };
+  ketik: { teks: string };
+};
+
+type Handler<E extends keyof EventMap> = (data: EventMap[E]) => void;
+type SemuaHandler = {
+  [K in keyof EventMap as `on${Capitalize<K>}`]: Handler<K>;
+};
+// onClick, onKetik
+```
+
+## Kapan Pakai vs Enum
+
+Literal union lebih ringan daripada `enum` karena tidak menghasilkan kode JavaScript tambahan. Enum tetap berguna kalau kamu ingin nilai numerik atau iterasi runtime.
+
+<div class="note">💡 Tanpa `as const`, objek `{ mode: "gelap" }` memiliki tipe `{ mode: string }`, bukan `{ mode: "gelap" }`. Itu sebabnya union bisa "hilang" kalau lupa.</div>
+
+## Di Dunia Nyata
+
+- Status request API didefinisikan sebagai literal union agar typo terdeteksi.
+- Nama kelas utilitas (`btn-primary`, `text-lg`) dibangun dengan template literal type.
+- Konstanta konfigurasi memakai `as const` supaya nilai tidak melebar.
+
+## Try it Yourself
+
+Coba ganti nilai `status` menjadi string lain untuk melihat error compiler.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Status = "menunggu" | "sukses" | "gagal";
+const STATUS = ["menunggu", "sukses", "gagal"] as const;
+type StatusDariArray = typeof STATUS[number];
+
+const status: StatusDariArray = "sukses";
+console.log("Status:", status);
+
+type Rute = \`/api/\${string}\`;
+const rute: Rute = "/api/produk/42";
+console.log("Rute:", rute);
+
+type Kelas = \`btn-\${"primary" | "danger"}\`;
+const kelas: Kelas = "btn-primary";
+console.log("Kelas:", kelas.toUpperCase());`} />

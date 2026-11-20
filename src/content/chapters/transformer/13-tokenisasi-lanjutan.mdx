@@ -1,0 +1,104 @@
+---
+title: 'Tokenisasi Lanjutan: BPE dan Unigram'
+description: Algoritma pembentukan vocabulary subword yang dipakai tokenizer modern.
+order: 13
+quiz:
+- q: BPE membangun vocabulary dengan…
+  options:
+  - Menggunakan kamus tetap
+  - Menggabungkan pasangan token paling sering
+  - Menghapus huruf vokal
+  - Mengurutkan kata alphabetis
+  answer: 1
+  explain: Byte Pair Encoding menggabungkan pasangan simbol paling frekuen secara iteratif.
+- q: Alasan memakai subword adalah…
+  options:
+  - Menghapus tanda baca
+  - Mengganti embedding
+  - Mengurangi token tidak dikenal
+  - Membuat kalimat lebih panjang
+  answer: 2
+  explain: Kata langka dipecah menjadi potongan yang sudah dikenal sehingga tidak perlu token UNK.
+- q: Unigram model berbeda dari BPE karena…
+  options:
+  - Selalu menggabungkan pasangan
+  - Hanya untuk bahasa Inggris
+  - Tanpa vocabulary
+  - Berbasis probabilitas dan menghapus kandidat kurang berguna
+  answer: 3
+  explain: SentencePiece unigram memilih sekumpulan token yang memaksimalkan likelihood korpus.
+- q: Byte-level BPE memungkinkan…
+  options:
+  - Mengkodekan karakter apa pun termasuk emoji
+  - Menghapus spasi
+  - Mengurangi panjang teks
+  - Menghindari embedding
+  answer: 0
+  explain: Dengan bekerja pada byte, semua kemungkinan karakter bisa direpresentasikan.
+- q: Token "ing" pada kata "berlari" adalah contoh…
+  options:
+  - Label
+  - Subword
+  - Kalimat penuh
+  - Dokumen
+  answer: 1
+  explain: Potongan imbuhan sering menjadi token tersendiri dalam vocabulary subword.
+example:
+  code: 'kata = "berlari"
+
+    potongan = ["ber", "lari"]
+
+    print(potongan)  # [''ber'', ''lari'']
+
+    '
+---
+
+
+Tokenizer level kata cepat menghasilkan vocabulary besar dan banyak token tidak dikenal. **Subword tokenization** memecah kata langka menjadi potongan yang lebih umum.
+
+## Byte Pair Encoding (BPE)
+
+```text
+korpus: low lower newest widest
+iterasi 1: gabungkan "l" + "o" -> "lo"
+iterasi 2: gabungkan "lo" + "w" -> "low"
+iterasi 3: gabungkan "e" + "r" -> "er"
+```
+
+```python
+def bpe_merge(kata, pasangan):
+    hasil, i = [], 0
+    while i < len(kata):
+        if kata[i:i+len(pasangan)] == pasangan:
+            hasil.append(pasangan)
+            i += len(pasangan)
+        else:
+            hasil.append(kata[i])
+            i += 1
+    return hasil
+
+print(bpe_merge("lower", "lo"))  # ['lo', 'w', 'e', 'r']
+```
+
+## Unigram dan SentencePiece
+
+Model unigram menila semua kandidat subword dengan probabilitas, lalu membuang yang kontribusinya kecil. SentencePiece populer karena bekerja langsung pada teks mentah dan tidak bergantung pada aturan spasi bahasa tertentu.
+
+| Aspek | BPE | Unigram |
+|---|---|---|
+| Arah | bottom-up (gabung) | top-down (buang) |
+| Kriteria | frekuensi | likelihood |
+| Tokenizer populer | GPT, RoBERTa | Llama, T5 |
+| Perlakuan spasi | eksplisit | bisa disandikan |
+
+## Byte-level BPE
+
+Dengan memakai 256 byte sebagai dasar, tokenizer bisa merekonstruksi **semua** input termasuk emoji, simbol aneh, dan teks dalam bahasa apa pun.
+
+<div class="note">💡 Jumlah token tidak selalu sama dengan jumlah kata. Satu kata bahasa Indonesia bisa menjadi 2–5 token, dan biaya API LLM biasanya dihitung per token.</div>
+
+## Dampak ke Model
+
+- Vocabulary kecil → embedding lebih hemat, tapi urutan token lebih panjang.
+- Vocabulary besar → token lebih sedikit, tapi matriks embedding membengkak.
+- Tokenizer harus sama persis antara training dan inference, kalau tidak representasinya berubah.

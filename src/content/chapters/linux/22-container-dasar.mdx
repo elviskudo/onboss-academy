@@ -1,0 +1,110 @@
+---
+title: Konsep Dasar Container
+description: Memahami isolasi proses, namespace, dan cgroup antesipasi penggunaan Docker.
+order: 22
+quiz:
+- q: Container berbeda dari VM karena…
+  options:
+  - Lebih berat
+  - Tidak bisa dijalankan di Linux
+  - Berbagi kernel host
+  - Selalu punya kernel sendiri
+  answer: 2
+  explain: Container mengisolasi proses dengan fitur kernel, bukan mesin virtual penuh.
+- q: Fitur kernel Linux yang mengisolasi tampilan sistem disebut…
+  options:
+  - Ext4
+  - Systemd
+  - Cron
+  - Namespace
+  answer: 3
+  explain: PID, network, mount, dan user namespace memberi ilusi lingkungan terpisah.
+- q: cgroup digunakan untuk…
+  options:
+  - Membatasi sumber daya
+  - Mengenkripsi disk
+  - Mengatur DNS
+  - Membuat pengguna
+  answer: 0
+  explain: CPU, memori, dan I/O bisa dibatasi per grup proses.
+- q: Image container adalah…
+  options:
+  - Partisi disk
+  - Template read-only untuk membuat container
+  - Proses yang sedang jalan
+  - File log
+  answer: 1
+  explain: Container adalah instance-running dari image.
+- q: Keunggulan utama container adalah…
+  options:
+  - Tidak butuh jaringan
+  - Hanya untuk aplikasi kecil
+  - Portabel dan konsisten antarlingkungan
+  - Selalu lebih aman dari VM
+  answer: 2
+  explain: Dependensi ikut terkemas sehingga “works on my machine” berkurang.
+example:
+  code: 'ps -eo pid,pidns,pid,comm --sort=pid | head
+
+    cat /proc/self/cgroup
+
+    ls /proc/self/ns
+
+    uname -r
+
+    '
+---
+
+
+Sebelum memakai Docker, penting tahu bahwa container bukan teknologi sihir — ia adalah **fitur kernel Linux yang dirangkai rapi**.
+
+## Namespace
+
+Namespace membuat proses melihat “dunia” yang berbeda:
+
+| Namespace | Isolasi |
+|---|---|
+| PID | daftar proses |
+| NET | interface dan routing |
+| MNT | mount point |
+| UTS | hostname |
+| USER | UID/GID |
+| IPC | shared memory |
+
+```bash
+ls -l /proc/self/ns
+```
+
+## cgroup
+
+```bash
+cat /proc/self/cgroup
+```
+
+cgroup mengontrol berapa CPU dan memori yang boleh dipakai sebuah grup proses. Tanpa batas, satu container bisa menguras seluruh host.
+
+## Image vs Container
+
+```text
+Image  = cetakan read-only (layer)
+Container = image + lapisan writable + proses berjalan
+```
+
+## Perbandingan
+
+| Aspek | VM | Container |
+|---|---|---|
+| Kernel | tamu masing-masing | berbagi host |
+| Ukuran | GB | MB |
+| Startup | menit | detik |
+| Isolasi | kuat | sedang |
+| Use case | OS berbeda | aplikasi mikroservis |
+
+<div class="note">💡 Container bukan pengganti VM untuk semua kasus. Isolasi kernel shared berarti kernel rentan tetap berdampak ke semua container di host yang sama.</div>
+
+## Kapan Dipakai
+
+- Menstandarkan lingkungan development dan produksi.
+- Mengemas mikroservis beserta dependensinya.
+- Menjalankan banyak aplikasi pada satu host secara efisien.
+- Membangun pipeline CI yang reproducible.

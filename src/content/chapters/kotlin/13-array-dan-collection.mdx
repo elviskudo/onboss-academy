@@ -1,0 +1,124 @@
+---
+"title": "Array dan Collection"
+"description": "Membedakan Array, List, Set, dan Map serta memilih yang tepat"
+"order": 13
+"quiz":
+- "q": "Koleksi yang tidak mengizinkan elemen duplikat adalah…"
+  "options":
+  - "List"
+  - "Set"
+  - "Array"
+  - "MutableList"
+  "answer": 1
+  "explain": "Set menyimpan setiap nilai hanya sekali."
+- "q": "Fungsi untuk membuat List hanya-baca adalah…"
+  "options":
+  - "listOf"
+  - "mutableListOf"
+  - "arrayOf"
+  - "setOf"
+  "answer": 0
+  "explain": "listOf menghasilkan List yang tidak bisa diubah."
+- "q": "Koleksi yang memetakan kunci ke nilai adalah…"
+  "options":
+  - "Map"
+  - "List"
+  - "Set"
+  - "Array"
+  "answer": 0
+  "explain": "Map menyimpan pasangan key-value."
+- "q": "Cara mengakses elemen pertama list adalah…"
+  "options":
+  - "list[0]"
+  - "list(0)"
+  - "list.first{0}"
+  - "list.at(0)"
+  "answer": 0
+  "explain": "Operator indeks [] setara dengan get(0)."
+- "q": "Hasil dari setOf(1, 2, 2).size adalah…"
+  "options":
+  - "3"
+  - "2"
+  - "1"
+  - "Error"
+  "answer": 1
+  "explain": "Set membuang duplikat sehingga hanya menyisakan 1 dan 2."
+"example":
+  "code": "fun main() {\n    val angka = listOf(3, 1, 2, 1)\n    println(angka.sorted())       // [1, 1, 2, 3]\n    println(angka.distinct())     // [3, 1, 2]\n\n    val unik = setOf(\"a\", \"b\", \"a\")\n    println(unik)                 // [a, b]\n\n    val nilai = mapOf(\"Budi\" to 85, \"Sari\" to 92)\n    println(nilai[\"Sari\"])        // 92\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Empat Jenis Koleksi
+
+```kotlin
+fun main() {
+    val angka = listOf(3, 1, 2, 1)
+    println(angka.sorted())       // [1, 1, 2, 3]
+    println(angka.distinct())     // [3, 1, 2]
+
+    val unik = setOf("a", "b", "a")
+    println(unik)                 // [a, b]
+
+    val nilai = mapOf("Budi" to 85, "Sari" to 92)
+    println(nilai["Sari"])        // 92
+}
+```
+
+| Jenis | Urutan | Duplikat | Fungsi pembuat |
+|---|---|---|---|
+| `List` | ya | ya | `listOf()` |
+| `Set` | tidak dijamin | tidak | `setOf()` |
+| `Map` | kunci → nilai | kunci unik | `mapOf()` |
+| `Array` | ya, ukuran tetap | ya | `arrayOf()` |
+
+## Read-only versus Mutable
+
+```kotlin
+val tetap = listOf(1, 2, 3)
+// tetap.add(4)  // error saat kompilasi
+
+val ubah = mutableListOf(1, 2, 3)
+ubah.add(4)
+ubah[0] = 9
+```
+
+Perlu dicatat: `val` berarti referensi tidak bisa diganti, bukan isi koleksi tidak bisa berubah. `listOf` benar-benar tidak menyediakan metode mutasi.
+
+## Map
+
+```kotlin
+val harga = mapOf("kopi" to 18000, "teh" to 12000)
+println(harga["kopi"])
+println(harga.getOrDefault("susu", 0))
+```
+
+`to` adalah infix function yang membuat pasangan `Pair`.
+
+## Operasi Umum
+
+```kotlin
+val angka = listOf(5, 2, 8, 1)
+println(angka.maxOrNull())  // 8
+println(angka.sum())        // 16
+println(angka.filter { it > 3 }) // [5, 8]
+println(angka.map { it * 2 })     // [10, 4, 16, 2]
+```
+
+<div class="note">💡 Utamakan <code>List</code> daripada <code>Array</code> untuk data sehari-hari. List punya banyak operator (filter, map, sorted) dan ukurannya bisa berubah bila memakai versi mutable.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val angka = listOf(3, 1, 2, 1)
+    println(angka.sorted())       // [1, 1, 2, 3]
+    println(angka.distinct())     // [3, 1, 2]
+
+    val unik = setOf("a", "b", "a")
+    println(unik)                 // [a, b]
+
+    val nilai = mapOf("Budi" to 85, "Sari" to 92)
+    println(nilai["Sari"])        // 92
+}`} />

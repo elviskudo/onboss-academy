@@ -1,0 +1,93 @@
+---
+title: Attention Masking
+description: Mask padding dan causal mask untuk mengatur token mana yang boleh dilihat.
+order: 12
+quiz:
+- q: Causal mask dipakai agar decoder…
+  options:
+  - Tidak melihat token di masa depan
+  - Tidak melihat token saat ini
+  - Melihat seluruh input
+  - Menghapus padding
+  answer: 0
+  explain: Mask segitiga atas menghalangi akses ke token setelah posisi saat ini.
+- q: Padding mask berfungsi untuk…
+  options:
+  - Menghapus attention
+  - Menyembunyikan token padding agar tidak dihitung
+  - Menambah token baru
+  - Mengubah urutan kalimat
+  answer: 1
+  explain: Token padding diberi skor sangat negatif sehingga bobot softmax-nya mendekati nol.
+- q: Nilai yang biasa ditambahkan ke skor sebelum softmax adalah…
+  options:
+  - '0'
+  - '1'
+  - -infinity (atau angka sangat negatif)
+  - +infinity
+  answer: 2
+  explain: Nilai sangat negatif membuat bobot softmax menjadi nol.
+- q: Pada encoder BERT, mask yang umum dipakai adalah…
+  options:
+  - Tidak ada mask
+  - Sliding window
+  - Causal mask
+  - Padding mask dan mask token khusus
+  answer: 3
+  explain: BERT bidirectional memakai padding mask dan token [MASK] untuk pretraining.
+- q: Efek causal mask terhadap generasi teks adalah…
+  options:
+  - Model memprediksi token berikutnya hanya dari masa lalu
+  - Model berhenti lebih cepat
+  - Model tidak butuh softmax
+  - Model bisa melihat jawaban di depan
+  answer: 0
+  explain: 'Ini menjaga sifat autoregresif: hasil di posisi t tidak bergantung pada token setelah t.'
+example:
+  code: "mask = [[1, 0, 0, 0],\n        [1, 1, 0, 0],\n        [1, 1, 1, 0],\n        [1, 1, 1, 1]]  # 1 = boleh dilihat\n"
+---
+
+
+Attention memberi setiap token akses ke token lain, tetapi terkadang akses itu harus **dibatasi**. Di sinilah masking berperan.
+
+## Dua Jenis Mask
+
+| Mask | Tujuan | Dipakai di |
+|---|---|---|
+| Padding mask | mengabaikan token pengisi | encoder dan decoder |
+| Causal mask | melarang melihat masa depan | decoder autoregresif |
+
+## Causal Mask
+
+```text
+token 1 boleh melihat: 1
+token 2 boleh melihat: 1 2
+token 3 boleh melihat: 1 2 3
+```
+
+```python
+n = 4
+causal = [[1 if j <= i else 0 for j in range(n)] for i in range(n)]
+for row in causal:
+    print(row)
+```
+
+Matriks segitiga bawah ini ditambahkan ke skor sebelum softmax dengan nilai `-inf` pada posisi terlarang.
+
+## Padding Mask
+
+Kalimat pendek dalam satu batch diberi token `<pad>` sampai panjangnya sama. Tanpa mask, model akan “memperhatikan” token palsu itu.
+
+```text
+skor = Q·K / sqrt(d_k)
+skor = skor + (-1e9 jika terlarang)
+bobot = softmax(skor)
+```
+
+<div class="note">💡 Causal masklah yang membuat decoder bersifat autoregresif. Tanpa itu, model bisa “membaca” jawaban saat dilatih dan gagal saat diminta menghasilkan teks baru.</div>
+
+## Variasi Modern
+
+- **Prefix LM** — awal prompt boleh saling melihat, bagian jawaban memakai causal mask.
+- **Sliding window** — token hanya melihat tetangga terdekat agar biaya tetap linier.
+- **Doc mask** — topik berbeda dalam satu batch tidak saling mengganggu.

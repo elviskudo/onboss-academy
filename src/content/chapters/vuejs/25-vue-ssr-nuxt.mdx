@@ -1,0 +1,96 @@
+---
+title: "Vue SSR & Nuxt"
+description: "kenalan dengan server-side rendering dan kerangka Nuxt"
+order: 25
+quiz:
+  - q: "SSR berarti…"
+    options: ["Tanpa JavaScript", "Hanya untuk API", "Halaman dirender di server lalu dikirim ke browser", "Hanya CSS di server"]
+    answer: 2
+    explain: "HTML awal sudah lengkap saat sampai di browser."
+  - q: "Keuntungan SSR adalah…"
+    options: ["Menghapus rute", "SEO lebih baik dan first paint lebih cepat", "Bundle lebih besar", "Tidak butuh server"]
+    answer: 1
+    explain: "Mesin pencari menerima konten langsung."
+  - q: "Nuxt adalah…"
+    options: ["Library CSS", "Test runner", "Editor", "Framework Vue untuk SSR, routing, dan struktur proyek"]
+    answer: 3
+    explain: "Mirip Next.js di dunia React."
+  - q: "Di Nuxt, halaman ditempatkan di folder…"
+    options: ["app/routes/", "pages/", "views/", "src/pages/"]
+    answer: 1
+    explain: "Nama file menjadi rute otomatis."
+  - q: "`useFetch` di Nuxt berjalan…"
+    options: ["Di server saat SSR dan di client saat navigasi", "Hanya di client", "Hanya di build", "Tidak pernah"]
+    answer: 0
+    explain: "Nuxt mengelola proses hidrasi."
+example:
+  code: |
+    <!-- pages/produk/[id].vue -->
+    <script setup>
+    const route = useRoute()
+    const { data } = await useFetch(`/api/produk/${route.params.id}`)
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Aplikasi Vue pada umumnya dirender di browser (CSR). SSR merender HTML di server terlebih dahulu, lalu Vue "menghidupkannya" di browser.
+
+## Kapan SSR
+
+| Kebutuhan | Pilihan |
+|-----------|---------|
+| Dashboard internal | CSR biasa sudah cukup |
+| Situs publik/SEO | SSR / SSG |
+| Blog dan dokumentasi | SSG |
+
+## Nuxt
+
+```bash
+npx nuxi@latest init proyek
+```
+
+Struktur:
+
+```
+pages/
+  index.vue
+  produk/[id].vue
+components/
+composables/
+server/api/
+```
+
+Rute dibuat otomatis dari nama file — mirip App Router di Next.js.
+
+## Data Fetching
+
+```vue
+<script setup>
+const { data: produk, pending, error } = await useFetch('/api/produk')
+</script>
+
+<template>
+  <p v-if="pending">Memuat…</p>
+  <ul v-else>
+    <li v-for="p in produk" :key="p.id">{{ p.nama }}</li>
+  </ul>
+</template>
+```
+
+## Hydration
+
+Setelah HTML sampai, Vue memasang event listener dan state. Pastikan markup server dan client sama — beda kecil bisa memicu peringatan *hydration mismatch*.
+
+<div class="note">💡 CSR tidak salah. Pilih SSR bila SEO dan waktu muat awal benar-benar penting; kalau tidak, aplikasi SPA lebih sederhana.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi SSR: HTML dibuat di server sebelum dikirim
+function renderServer(produk) {
+  return \`<ul>\${produk.map((p) => \`<li>\${p.nama}</li>\`).join("")}</ul>\`;
+}
+
+console.log(renderServer([{ nama: "Kopi" }, { nama: "Roti" }]));`} />

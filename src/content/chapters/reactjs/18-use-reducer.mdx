@@ -1,0 +1,129 @@
+---
+title: "useReducer untuk State Kompleks"
+description: "action, reducer murni, dispatch, dan perbandingan dengan useState"
+order: 18
+quiz:
+  - q: "Reducer harus bersifat…"
+    options: ["Bergantung pada waktu", "Mengubah argumen", "Murni: sama input → sama output, tanpa efek samping", "Selalu async"]
+    answer: 2
+    explain: "Kemurnian membuat state mudah diuji dan diprediksi."
+  - q: "Fungsi reducer menerima…"
+    options: ["(props) → JSX", "(state, action) → state baru", "(action) → state", "(state) → action"]
+    answer: 1
+    explain: "Reducer menerima state terkini dan aksi, lalu mengembalikan state baru."
+  - q: "Untuk memicu perubahan, komponen memanggil…"
+    options: ["setState(action)", "useEffect()", "render()", "dispatch(action)"]
+    answer: 3
+    explain: "dispatch mengirim aksi ke reducer."
+  - q: "useReducer paling cocok untuk…"
+    options: ["Nama file", "State dengan banyak transisi terkait", "Satu boolean sederhana", "Warna CSS"]
+    answer: 1
+    explain: "Misalnya keranjang: tambah, kurangi, hapus, kosongkan."
+  - q: "State yang dikembalikan reducer harus…"
+    options: ["Objek/array baru bila berubah", "Objek lama yang dimutasi", "String JSON", "Promise"]
+    answer: 0
+    explain: "Immutability membantu React mendeteksi perubahan."
+example:
+  code: |
+    function reducer(state, action) {
+      switch (action.type) {
+        case "tambah": return { ...state, qty: state.qty + 1 };
+        case "kurangi": return { ...state, qty: Math.max(0, state.qty - 1) };
+        default: return state;
+      }
+    }
+
+    const [state, dispatch] = React.useReducer(reducer, { qty: 0 });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saat state punya beberapa transisi yang saling terkait, `useReducer` lebih rapi daripada beberapa `useState`.
+
+## Konsep Dasar
+
+```jsx
+const awal = { qty: 0, harga: 25000 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "tambah":
+      return { ...state, qty: state.qty + 1 };
+    case "kurangi":
+      return { ...state, qty: Math.max(0, state.qty - 1) };
+    case "kosongkan":
+      return { ...state, qty: 0 };
+    default:
+      return state; // aksi tak dikenal → state tetap
+  }
+}
+
+function Keranjang() {
+  const [state, dispatch] = React.useReducer(reducer, awal);
+  const total = state.qty * state.harga;
+
+  return (
+    <div>
+      <p>{state.qty} item — Rp{total.toLocaleString("id-ID")}</p>
+      <button onClick={() => dispatch({ type: "tambah" })}>+</button>
+      <button onClick={() => dispatch({ type: "kurangi" })}>−</button>
+      <button onClick={() => dispatch({ type: "kosongkan" })}>Kosongkan</button>
+    </div>
+  );
+}
+```
+
+## Aksi yang Membawa Data
+
+```jsx
+dispatch({ type: "set", qty: 5 });
+// di reducer:
+case "set":
+  return { ...state, qty: action.qty };
+```
+
+## Kenapa Reducer Murni itu Penting
+
+```jsx
+// ❌ salah: mengubah state lama
+state.qty += 1;
+return state;
+
+// ✅ benar: objek baru
+return { ...state, qty: state.qty + 1 };
+```
+
+React membandingkan referensi. Kalau objeknya sama, ia mengira tidak ada perubahan.
+
+## Perbandingan
+
+| | useState | useReducer |
+|---|----------|------------|
+| State sederhana | ✅ | berlebihan |
+| Banyak aksi terkait | bisa berantakan | ✅ rapi |
+| Logika bisa diuji terpisah | agak sulit | ✅ mudah |
+| Boilerplate | sedikit | lebih banyak |
+
+<div class="note">💡 Reducer juga jadi fondasi Redux. Menguasai pola ini membuatmu lebih siap saat proyek membutuhkan state global yang kompleks.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Reducer murni yang bisa dijalankan tanpa React
+const awal = { qty: 0, harga: 25000 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case "tambah": return { ...state, qty: state.qty + 1 };
+    case "kurangi": return { ...state, qty: Math.max(0, state.qty - 1) };
+    case "set": return { ...state, qty: action.qty };
+    default: return state;
+  }
+}
+
+let state = awal;
+for (const a of [{type:"tambah"},{type:"tambah"},{type:"kurangi"},{type:"set",qty:4}]) {
+  state = reducer(state, a);
+  console.log(a.type, "->", state.qty, "total", state.qty * state.harga);
+}`} />

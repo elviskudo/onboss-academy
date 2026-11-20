@@ -1,0 +1,146 @@
+---
+"title": "Kontrol Alur"
+"description": "If, guard, switch, dan pola pencocokan pada Swift"
+"order": 12
+"quiz":
+- "q": "Pernyataan guard berguna untuk…"
+  "options":
+  - "Mengulang blok"
+  - "Menghentikan fungsi lebih awal bila syarat tidak terpenuhi"
+  - "Mengganti switch"
+  - "Membuat variabel"
+  "answer": 1
+  "explain": "guard else harus keluar dari scope lewat return, break, atau throw."
+- "q": "Switch di Swift…"
+  "options":
+  - "Boleh tanpa default selalu"
+  - "Hanya untuk Int"
+  - "Harus exhaustive"
+  - "Tidak memakai case"
+  "answer": 2
+  "explain": "Semua kemungkinan nilai harus ditangani atau ada default."
+- "q": "Fallthrough di switch berarti…"
+  "options":
+  - "Mengulang switch"
+  - "Keluar fungsi"
+  - "Membandingkan string"
+  - "Melanjutkan ke case berikutnya"
+  "answer": 3
+  "explain": "Secara bawaan Swift tidak fallthrough; gunakan kata kunci fallthrough bila diinginkan."
+- "q": "Kata kunci untuk mengikat nilai opsional pada if adalah…"
+  "options":
+  - "if let"
+  - "let if"
+  - "optional if"
+  - "unwrap"
+  "answer": 0
+  "explain": "if let membuka opsional hanya bila ada nilainya."
+- "q": "Cara mencocokkan rentang di switch adalah…"
+  "options":
+  - "case range 1,5:"
+  - "case 1...5:"
+  - "case between:"
+  - "case in 1...5:"
+  "answer": 1
+  "explain": "Pola rentang bisa langsung dipakai setelah case."
+"example":
+  "code": "func status(_ skor: Int) -> String {\n    switch skor {\n    case 90...100: return \"Luar biasa\"\n    case 70..&lt;90: return \"Baik\"\n    case 0..&lt;70: return \"Perlu belajar\"\n    default: return \"Nilai di luar rentang\"\n    }\n}\n\nfunc daftar(_ nama: String?) {\n    guard let nama = nama, !nama.isEmpty else {\n        print(\"Nama kosong\")\n        return\n    }\n    print(\"Halo, \\(nama)\")\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## If dan If Let
+
+```swift
+func status(_ skor: Int) -> String {
+    switch skor {
+    case 90...100: return "Luar biasa"
+    case 70..<90: return "Baik"
+    case 0..<70: return "Perlu belajar"
+    default: return "Nilai di luar rentang"
+    }
+}
+
+func daftar(_ nama: String?) {
+    guard let nama = nama, !nama.isEmpty else {
+        print("Nama kosong")
+        return
+    }
+    print("Halo, \(nama)")
+}
+```
+
+```swift
+if suhu > 30 {
+    print("Panas")
+} else if suhu > 20 {
+    print("Sejuk")
+} else {
+    print("Dingin")
+}
+
+if let kota = opsionalKota {
+    print("Kota: \(kota)")
+}
+```
+
+## Guard
+
+```swift
+func login(token: String?) {
+    guard let token = token, !token.isEmpty else {
+        print("Token tidak valid")
+        return
+    }
+    print("Login dengan \(token)")
+}
+```
+
+Guard membuat jalur bahagia tetap rata — tidak perlu bersarang di dalam else.
+
+## Switch
+
+```swift
+switch hari {
+case "Senin", "Selasa":
+    print("Awal pekan")
+case "Sabtu", "Minggu":
+    print("Libur")
+default:
+    print("Hari kerja biasa")
+}
+```
+
+Switch pada Swift tidak memerlukan `break`, dan bisa mencocokkan rentang, tuple, serta tipe.
+
+| Pola | Contoh |
+|---|---|
+| Rentang | `case 1...5:` |
+| Beberapa nilai | `case "a", "b":` |
+| Tuple | `case (0, 0):` |
+| Tipe | `case let x as String:` |
+| Where | `case let x where x > 10:` |
+
+<div class="note">💡 Gunakan <code>guard</code> untuk validasi awal dan <code>if let</code> untuk cabang opsional yang hanya berlaku lokal. Keduanya membuat kode lebih dangkal dan mudah dibaca.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`func status(_ skor: Int) -> String {
+    switch skor {
+    case 90...100: return "Luar biasa"
+    case 70..&lt;90: return "Baik"
+    case 0..&lt;70: return "Perlu belajar"
+    default: return "Nilai di luar rentang"
+    }
+}
+
+func daftar(_ nama: String?) {
+    guard let nama = nama, !nama.isEmpty else {
+        print("Nama kosong")
+        return
+    }
+    print("Halo, \(nama)")
+}`} />

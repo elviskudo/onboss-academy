@@ -1,0 +1,80 @@
+---
+title: "Grid Search dan Hyperparameter Tuning"
+description: "parameter versus hyperparameter, grid, random search, nested CV, dan biaya"
+order: 21
+quiz:
+  - q: "Hyperparameter adalah…"
+    options: ["Label data", "Pengaturan yang dipilih sebelum latih", "Bobot yang dipelajari model", "Nama kolom"]
+    answer: 1
+    explain: "Contoh: kedalaman pohon, learning rate."
+  - q: "Grid search mencoba…"
+    options: ["Satu kombinasi", "Tanpa evaluasi", "Semua kombinasi dalam daftar", "Kombinasi acak"]
+    answer: 2
+    explain: "Lengkap tetapi bisa mahal."
+  - q: "Random search sering lebih efisien karena…"
+    options: ["Selalu lebih akurat", "Tanpa validasi", "Menghapus data", "Tidak mencoba semua kombinasi"]
+    answer: 3
+    explain: "Cocok bila hanya sebagian parameter yang penting."
+  - q: "Nested cross-validation dipakai untuk…"
+    options: ["Menghapus outlier", "Menghindari bias saat tuning + evaluasi", "Mempercepat latih", "Menambah fitur"]
+    answer: 1
+    explain: "Loop luar untuk evaluasi, loop dalam untuk tuning."
+  - q: "Hasil tuning sebaiknya diuji pada…"
+    options: ["Data validasi saja", "Tidak perlu diuji", "Data uji yang benar-benar baru", "Data latih"]
+    answer: 2
+    explain: "Agar estimasi tetap jujur."
+example:
+  code: |
+    params={"k":[1,3,5],"metric":["euclid","manhattan"]}
+    for k in params["k"]:
+        for m in params["metric"]:
+            print(k,m)
+---
+
+## Parameter vs Hyperparameter
+
+| Jenis | Contoh | Siapa menentukan |
+| --- | --- | --- |
+| Parameter | bobot regresi | dipelajari dari data |
+| Hyperparameter | `k` di KNN, `max_depth` | dipilih manusia |
+
+## Grid Search Sederhana
+
+```python
+grid = {
+    "k": [1, 3, 5],
+    "jarak": ["euclid", "manhattan"],
+}
+
+for k in grid["k"]:
+    for jarak in grid["jarak"]:
+        print(k, jarak)  # di sini akan dilatih & dievaluasi
+```
+
+Enam kombinasi → enam kali pelatihan. Tambah satu parameter dengan 4 nilai → 24 kombinasi.
+
+## Random Search
+
+```python
+import random
+
+kombinasi = [(random.choice(grid["k"]), random.choice(grid["jarak"]))
+             for _ in range(4)]
+print(kombinasi)
+```
+
+Kalau hanya `k` yang benar-benar berpengaruh, random search menemukan nilai baik lebih cepat.
+
+<div class="note">💡 Jangan tuning sampai data uji "bagus". Itu bentuk overfitting terhadap uji. Sisihkan satu set terakhir yang benar-benar tidak pernah disentuh.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`import random
+
+grid_k = [1, 3, 5, 7, 9]
+print("Grid:")
+for k in grid_k:
+    print(" k =", k)
+print("Random 4 percobaan:", random.sample(grid_k, 4))`}</code></pre>

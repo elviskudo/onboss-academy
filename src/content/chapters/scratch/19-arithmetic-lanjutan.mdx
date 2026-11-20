@@ -1,0 +1,76 @@
+---
+title: "Operator Lanjutan"
+description: "Pembulatan, modulo, string, dan perbandingan majemuk"
+order: 19
+quiz:
+  - q: "Blok \"mod\" menghasilkan…"
+    options: ["Hasil kali", "Pembulatan", "Rata-rata", "Sisa pembagian"]
+    answer: 3
+    explain: "7 mod 3 bernilai 1."
+  - q: "Blok \"bulatkan (3,6)\" menghasilkan…"
+    options: ["4", "3", "3,5", "Error"]
+    answer: 0
+    explain: "Bulatkan mengikuti aturan pembulatan biasa."
+  - q: "Blok \"gabung [halo] [dunia]\" menghasilkan…"
+    options: ["Angka 2", "halodunia", "halo dunia", "Error"]
+    answer: 1
+    explain: "Tidak ada spasi otomatis—tambahkan sendiri bila diperlukan."
+  - q: "Blok \"panjang [teks]\" mengembalikan…"
+    options: ["Ukuran font", "Posisi huruf", "Jumlah karakter", "Jumlah kata"]
+    answer: 2
+    explain: "Spasi ikut dihitung sebagai karakter."
+  - q: "Blok \"huruf ke- 1 dari [abc]\" menghasilkan…"
+    options: ["b", "c", "abc", "a"]
+    answer: 3
+    explain: "Index teks pada Scratch mulai dari 1."
+example:
+  code: |
+    [ucap (gabung [Skor kamu: ] (skor)) selama 2]
+    [jika <<(skor) > [10]> dan <(nyawa) > [0]>> [
+       [ucap [Menang!] selama 2]
+    ]
+---
+
+Kategori Operator memuat hitungan, perbandingan, logika, dan manipulasi teks. Blok-blok ini bisa disarangkan untuk membentuk ekspresi yang lebih kompleks.
+
+## Aritmatika
+
+```text
+(a) + (b)      (a) - (b)      (a) * (b)     (a) / (b)
+(a) mod (b)    bulatkan (a)
+akar kuadrat   sin/cos/tan    ln dan exp
+```
+
+## Perbandingan dan Logika
+
+```text
+(a) < (b)    (a) = (b)    (a) > (b)
+<..> dan <..>    <..> atau <..>    tidak <..>
+```
+
+## Teks
+
+```text
+(gabung [Halo, ] (nama))
+(huruf ke- 1 dari [Scratch])
+(panjang [Scratch])
+([Scratch] berisi [cra]?)
+```
+
+## Sarang Blok
+
+```text
+(gabung [Total: ] ((a) + (b)))
+```
+
+Karena tidak ada aturan prioritas seperti bahasa teks, susunan sarang menentukan urutan hitung. Susun blok dari dalam ke luar.
+
+<div class="note">💡 Gunakan operator `dan`/`atau` hanya di dalam blok berbentuk heksagonal. Operator `+` menghasilkan angka/teks, bukan nilai benar-salah.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[atur [s] ke (gabung [Nilai: ] ((7 mod 3) + 1))]
+[ucap (s) selama 2]
+[ucap (huruf ke- 1 dari (s)) selama 1]`}</code></pre>

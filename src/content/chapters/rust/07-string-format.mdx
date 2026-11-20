@@ -129,10 +129,14 @@ println!("jumlah huruf: {}", teks.chars().count());
 - **Template notifikasi**: `format!("Halo {}, tagihan Rp{}", nama, total)` untuk email massal
 - **Pencarian**: `contains("promo")` memfilter produk yang sedang diskon
 - **Validasi form**: `trim().is_empty()` mendeteksi input hanya berisi spasi
-- **Ekspor laporan**: `format!("{:<12} {:>8}", nama, total)` menyusun kolom rapi di file teks
+- **Ekspor laporan**: `format!("{:&lt;12} {:>8}", nama, total)` menyusun kolom rapi di file teks
 - **Log debugging**: `format!("{:?}")` mencetak struct/Vec lengkap beserta isinya
 
 <div class="note">💡 Aturan praktis: tulis parameter teks sebagai &str supaya pemanggil bebas memakai String maupun literal. Rust otomatis mengonversi &String menjadi &str.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
     let mut s = String::from("Halo");

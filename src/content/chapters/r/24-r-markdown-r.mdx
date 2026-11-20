@@ -1,0 +1,133 @@
+---
+title: "Laporan Reproducible dengan R Markdown"
+description: "Struktur Rmd, chunk, parameter, dan rendering ke HTML/PDF"
+order: 24
+quiz:
+  - q: "Ekstensi file R Markdown adalah…"
+    options: [".Rmd", ".R", ".md", ".qmd"]
+    answer: 1
+    explain: "Dokumen R Markdown memakai ekstensi .Rmd."
+  - q: "Chunk kode diawali dengan…"
+    options: ["```{r}", "<r>", "@@r", "tiga dash"]
+    answer: 2
+    explain: "Chunk ditulis ```{r nama} ... ```."
+  - q: "Fungsi untuk merender Rmd adalah…"
+    options: ["rmarkdown::render()", "knit.only()", "build.rmd()", "compile()"]
+    answer: 3
+    explain: "render() menjalankan knitr lalu pandoc menghasilkan keluaran akhir."
+  - q: "Agar angka acak tetap sama tiap render, gunakan…"
+    options: ["set.seed()", "randomize()", "options(digits=7)", "cleanup()"]
+    answer: 0
+    explain: "set.seed mengunci urutan bilangan acak."
+  - q: "Output statis yang umum dari R Markdown adalah…"
+    options: ["HTML, PDF, Word", "MP4, WAV", "EXE, DLL", "JSON saja"]
+    answer: 1
+    explain: "Pandoc mendukung HTML, PDF via LaTeX, dan Word dan lain-lain."
+example:
+  code: |
+    # Di file .Rmd, metadata YAML diapit oleh tiga tanda dash.
+    # title: "Laporan"
+    # output: html_document
+    ```{r}
+    summary(cars)
+    ```
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+R Markdown menggabungkan narasi dan kode dalam satu dokumen. Saat dirender, kode dijalankan ulang dan hasilnya disisipkan — laporan selalu selaras dengan data terbaru.
+
+## Struktur Dokumen
+
+````text
+---
+title: "Laporan Penjualan"
+author: "Tim Analitik"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+## Ringkasan
+
+```{r}
+summary(penjualan)
+```
+````
+
+Bagian antara tiga tanda `---` pertama adalah YAML metadata. Sisanya markdown biasa dengan chunk kode.
+
+## Opsi Chunk
+
+| Opsi | Efek |
+| --- | --- |
+| `echo=FALSE` | kode tidak ditampilkan |
+| `include=FALSE` | chunk dijalankan tapi seluruhnya disembunyikan |
+| `eval=FALSE` | kode ditampilkan tanpa dijalankan |
+| `fig.width`, `fig.height` | ukuran gambar |
+| `cache=TRUE` | menyimpan hasil agar render berikut cepat |
+
+```r
+```{r plot-omzet, fig.cap="Omzet bulanan", fig.width=8}
+library(ggplot2)
+ggplot(df, aes(bulan, omzet)) + geom_col()
+```
+```
+
+## Reproducibility
+
+```r
+set.seed(123)
+sumber <- "data/mentah.csv"
+```
+
+Tiga kebiasaan yang menentukan laporan benar-benar bisa diulang:
+
+1. Simpan data mentah dan tentukan path relatif terhadap dokumen.
+2. Lock versi paket — `sessionInfo()` atau `renv::snapshot()`.
+3. Hindari angka yang ditulis manual; hitung dari data di chunk.
+
+## Parameter dan Format
+
+```yaml
+params:
+  bulan: "2026-11"
+  wilayah: "Semua"
+```
+
+Nilai parameter dipakai dengan `params$bulan`, lalu render dengan:
+
+```r
+rmarkdown::render("laporan.Rmd",
+                  params = list(bulan = "2026-12"),
+                  output_file = "laporan-desember.html")
+```
+
+## Output yang Didukung
+
+| Output | Kebutuhan |
+| --- | --- |
+| `html_document` | bawaan, paling mudah |
+| `pdf_document` | LaTeX terpasang |
+| `word_document` | pandoc |
+| `github_document` | markdown untuk README |
+
+<div class="note">💡 `knitr::kable(df)` mengubah data frame menjadi tabel markdown/HTML yang rapi, jauh lebih baik daripada `print(df)` di dalam laporan.</div>
+
+## Di Dunia Nyata
+
+- **Laporan bulanan**: satu Rmd dirender ulang tiap awal bulan dengan parameter berbeda.
+- **Notebook riset**: narasi menjelaskan mengapa suatu uji dipilih.
+- **Dokumentasi model**: cara memuat model dan contoh prediksi hidup berdampingan.
+- **Pengajaran**: mahasiswa melihat kode dan hasilnya dalam satu halaman.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`judul <- 'Contoh Laporan'
+baris <- c('---', paste('title:', judul), 'output: html_document', '---', '',
+           '\`\`\`{r}', 'set.seed(1)', 'x <- rnorm(5)', 'round(mean(x), 3)', '\`\`\`')
+cat(paste(baris, collapse = '\\n'))
+cat('\\n\\nRender dengan: rmarkdown::render("laporan.Rmd")\\n')`} />

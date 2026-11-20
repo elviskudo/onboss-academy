@@ -1,0 +1,129 @@
+---
+title: "Positioning CSS"
+description: "Static, relative, absolute, fixed, dan sticky beserta properti offset"
+order: 19
+quiz:
+  - q: "Posisi default semua elemen adalah…"
+    options: ["relative", "static", "absolute", "fixed"]
+    answer: 1
+    explain: "Static mengikuti alur dokumen normal."
+  - q: "`position: absolute` diposisikan relatif terhadap…"
+    options: ["Induk terdekat yang diposisikan", "Viewport selalu", "Body selalu", "Dirinya sendiri"]
+    answer: 0
+    explain: "Induk dengan position selain static menjadi kontainer acuan."
+  - q: "`position: fixed` mengunci elemen terhadap…"
+    options: ["Induk", "Viewport", "Dokumen", "Grid"]
+    answer: 1
+    explain: "Elemen tetap di tempat saat halaman digulir."
+  - q: "`position: sticky` berperilaku seperti…"
+    options: ["Fixed lalu relative", "Relative lalu fixed", "Absolute lalu static", "Static saja"]
+    answer: 1
+    explain: "Elemen mengikuti alur sampai mencapai ambang batas, lalu menempel."
+  - q: "`z-index` hanya bekerja pada elemen dengan position…"
+    options: ["Static", "Selain static", "Inline", "Apa saja"]
+    answer: 1
+    explain: "Static tidak menerima z-index; gunakan relative, absolute, fixed, atau sticky."
+example:
+  code: |
+    .induk { position: relative; }
+    .badge { position: absolute; top: 8px; right: 8px; }
+    .navbar { position: sticky; top: 0; z-index: 10; }
+    .tombol-bantuan { position: fixed; bottom: 20px; right: 20px; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Secara default, elemen mengikuti alur dokumen dari atas ke bawah. Properti `position` memberi kamu kontrol untuk menggeser atau mengunci elemen keluar dari alur itu.
+
+## Lima Nilai Position
+
+| Nilai | Keluar alur? | Acuan | Kegunaan |
+|-------|--------------|-------|----------|
+| `static` | Tidak | Alur normal | Default |
+| `relative` | Tidak | Posisi aslinya | Menggeser sedikit, jadi acuan anak absolute |
+| `absolute` | Ya | Induk terdekat yang diposisikan | Tooltip, badge, dropdown |
+| `fixed` | Ya | Viewport | Navbar, tombol mengambang |
+| `sticky` | Tidak (sampai titik tertentu) | Viewport + alur | Header yang menempel |
+
+## Properti Offset
+
+`top`, `right`, `bottom`, `left` menentukan geseran. `z-index` mengatur urutan tumpukan (semakin besar semakin depan).
+
+```css
+.induk {
+  position: relative;        /* jadi acuan untuk anak */
+}
+.badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  z-index: 5;
+}
+```
+
+## Contoh: Badge pada Kartu
+
+```html
+<div class="produk">
+  <img src="sepatu.jpg" alt="Sepatu">
+  <span class="badge">Diskon 20%</span>
+</div>
+```
+
+```css
+.produk { position: relative; display: inline-block; }
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #DC2626;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+```
+
+## Sticky yang Sering Disalahpahami
+
+```css
+thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+}
+```
+
+Sticky tetap menempati ruang aslinya. Ia baru "menempel" saat posisi scroll melewati `top: 0`. Syarat penting: induknya tidak boleh punya `overflow: hidden` atau `overflow: auto` yang membatasi area lengket.
+
+## Fixed dan Viewport
+
+```css
+.chat-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+}
+```
+
+Elemen fixed tidak ikut bergulir dan tidak memengaruhi layout saudara-saudaranya. Hati-hati di perangkat mobile — tombol fixed bisa menutupi konten atau keyboard.
+
+<div class="note">💡 `z-index` bekerja dalam **stacking context**. Elemen dengan `z-index: 9999` di dalam konteks yang rendah tetap berada di bawah elemen dari konteks yang lebih tinggi.</div>
+
+## Di Dunia Nyata
+
+- Dropdown menu memakai `absolute` di bawah tombol yang `relative`.
+- Header situs memakai `sticky` supaya tetap terlihat saat artikel panjang.
+- Tombol "Kembali ke atas" memakai `fixed`.
+- Overlay modal memakai `fixed; inset: 0` untuk menutup seluruh layar.
+
+## Try it Yourself
+
+Geser nilai `top`/`right` pada badge atau ganti `sticky` menjadi `static` untuk membandingkan.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; margin: 0; padding: 16px; }
+.kotak { position: relative; width: 260px; height: 120px; background: #EEF2FF; border-radius: 8px; padding: 12px; }
+.badge { position: absolute; top: -8px; right: -8px; background: #DC2626; color: white; padding: 4px 10px; border-radius: 999px; }
+.sticky { position: sticky; top: 0; background: #4F46E5; color: white; padding: 10px; border-radius: 6px; }
+.fixed { position: fixed; bottom: 16px; right: 16px; background: #111827; color: white; padding: 10px 14px; border-radius: 999px; }`} />

@@ -1,0 +1,106 @@
+---
+title: "INSERT, UPDATE, DELETE, dan RETURNING"
+description: "Sintaks DML, ON CONFLICT, MERGE, dan RETURNING"
+order: 15
+quiz:
+  - q: "Fitur khas PostgreSQL yang mengembalikan baris setelah INSERT adalah…"
+    options: ["RETURNING", "OUTPUT", "RESULT", "ECHO"]
+    answer: 1
+    explain: "INSERT ... RETURNING id mengembalikan nilai yang baru dibuat."
+  - q: "ON CONFLICT DO NOTHING berarti…"
+    options: ["Lewati baris yang bentrok", "Hapus semua baris", "Error", "Perbarui semua baris"]
+    answer: 2
+    explain: "Baris dengan unique constraint yang sama dilewati."
+  - q: "Untuk memperbarui nilai konflik dipakai…"
+    options: ["DO UPDATE SET", "DO REPLACE", "DO CHANGE", "ON UPDATE"]
+    answer: 3
+    explain: "INSERT ... ON CONFLICT ... DO UPDATE SET ... adalah UPSERT."
+  - q: "Perintah menggabungkan insert/update/delete berdasarkan sumber adalah…"
+    options: ["MERGE", "UPSERT saja", "REPLACE INTO", "COMBINE"]
+    answer: 0
+    explain: "MERGE tersedia sejak PostgreSQL 15."
+  - q: "DELETE ... RETURNING menghasilkan…"
+    options: ["Baris yang dihapus", "Jumlah tabel", "Error", "Baris tersisa"]
+    answer: 1
+    explain: "RETURNING bekerja juga pada DELETE dan UPDATE."
+example:
+  code: |
+    INSERT INTO produk(nama,harga) VALUES ('Kopi',25000) RETURNING id, nama;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL mengembalikan data dari perintah DML dengan RETURNING. Fitur ini memungkinkan aplikasi mendapat id generated tanpa query tambahan.
+
+## INSERT
+
+```sql
+INSERT INTO produk (nama, harga)
+VALUES ('Kopi', 25000), ('Teh', 18000)
+RETURNING id, nama, harga;
+```
+
+Untuk kolom identity, jangan menyertakan nilainya kecuali memakai `OVERRIDING SYSTEM VALUE`.
+
+## ON CONFLICT (UPSERT)
+
+```sql
+INSERT INTO produk (id, nama, harga)
+VALUES (1, 'Kopi Susu', 27000)
+ON CONFLICT (id) DO UPDATE
+SET nama = EXCLUDED.nama, harga = EXCLUDED.harga
+RETURNING id, nama;
+```
+
+`EXCLUDED` adalah baris yang diusulkan untuk disisipkan. `DO NOTHING` melewati konflik tanpa perubahan.
+
+## UPDATE
+
+```sql
+UPDATE produk
+SET harga = harga * 1.1
+WHERE kategori = 'minuman'
+RETURNING id, harga;
+```
+
+Tanpa WHERE, semua baris berubah. Biasakan menjalankan SELECT dengan WHERE yang sama terlebih dahulu.
+
+## DELETE
+
+```sql
+DELETE FROM produk
+WHERE aktif = false
+RETURNING id, nama;
+```
+
+`TRUNCATE produk` lebih cepat untuk mengosongkan seluruh tabel, tetapi tidak bisa difilter dan tidak memicu trigger DELETE per baris.
+
+## MERGE
+
+```sql
+MERGE INTO stok s
+USING pendatang p ON s.id = p.id
+WHEN MATCHED THEN UPDATE SET jumlah = p.jumlah
+WHEN NOT MATCHED THEN INSERT (id, jumlah) VALUES (p.id, p.jumlah);
+```
+
+MERGE cocok untuk sinkronisasi dua tabel dalam satu pernyataan. Tersedia sejak PostgreSQL 15.
+
+<div class="note">💡 RETURNING mengembalikan nilai **setelah** trigger BEFORE diterapkan. Ini sangat membantu saat default atau trigger mengubah kolom.</div>
+
+## Di Dunia Nyata
+
+- **Form input**: INSERT ... RETURNING id langsung dipakai untuk redirect.
+- **Sinkronisasi**: UPSERT dari API eksternal.
+- **Audit**: RETURNING pada UPDATE memberi nilai lama/baru.
+- **Batch cleanup**: DELETE ... RETURNING mencatat baris yang dihapus.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE TABLE stok (id integer PRIMARY KEY, nama text, jumlah integer);
+INSERT INTO stok VALUES (1, 'Kopi', 10), (2, 'Teh', 5);
+INSERT INTO stok VALUES (2, 'Teh', 20)
+ON CONFLICT (id) DO UPDATE SET jumlah = EXCLUDED.jumlah
+RETURNING id, nama, jumlah;
+UPDATE stok SET jumlah = jumlah + 1 WHERE id = 1 RETURNING jumlah;`} />

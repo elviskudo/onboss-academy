@@ -1,0 +1,104 @@
+---
+title: "JOIN di MySQL"
+description: "Inner, left, right, cross join, dan penggunaan USING"
+order: 14
+quiz:
+  - q: "INNER JOIN menghasilkan…"
+    options: ["Semua baris kiri", "Hanya baris yang cocok", "Semua kombinasi", "Baris kanan saja"]
+    answer: 1
+    explain: "Inner join hanya mempertahankan pasangan yang cocok."
+  - q: "LEFT JOIN menyimpan baris kiri yang tidak cocok dengan nilai…"
+    options: ["0", "NULL", "Kosong", "Error"]
+    answer: 1
+    explain: "Kolom tabel kanan diisi NULL."
+  - q: "Kata kunci USING dipakai untuk…"
+    options: ["Join saat nama kolom sama di dua tabel", "Mengurutkan hasil", "Menghapus duplikat", "Membatasi hasil"]
+    answer: 0
+    explain: "JOIN ... USING(id) menggantikan ON a.id = b.id."
+  - q: "CROSS JOIN menghasilkan…"
+    options: ["Produk kartesius", "Tidak ada baris", "Hanya baris sama", "Agregat"]
+    answer: 0
+    explain: "CROSS JOIN memasangkan semua baris dari kedua tabel."
+  - q: "Agar anti join bekerja, filter tabel kanan ditaruh di…"
+    options: ["WHERE dengan IS NULL setelah LEFT JOIN", "SELECT", "GROUP BY", "LIMIT"]
+    answer: 0
+    explain: "WHERE p.id IS NULL menyisakan baris kiri yang tidak punya pasangan."
+example:
+  code: |
+    SELECT k.nama, p.nama AS proyek FROM karyawan k LEFT JOIN proyek p ON p.lead_id=k.id;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JOIN menggabungkan data dari beberapa tabel. Di MySQL, bentuk paling umum adalah INNER JOIN dan LEFT JOIN; RIGHT JOIN tersedia tetapi jarang diperlukan.
+
+## Contoh Join
+
+```sql
+SELECT k.nama, p.nama AS proyek, p.budget
+FROM karyawan k
+INNER JOIN proyek p ON p.lead_id = k.id;
+```
+
+Gunakan alias agar query tetap pendek dan kolom tidak ambigu.
+
+## LEFT JOIN dan Anti Join
+
+```sql
+SELECT k.nama
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+WHERE p.id IS NULL;
+```
+
+Ini mencari karyawan yang belum memimpin proyek apa pun.
+
+## USING
+
+```sql
+SELECT *
+FROM karyawan k
+JOIN proyek p USING (id);
+```
+
+`USING` hanya bisa dipakai bila nama kolom kunci identik di kedua tabel. Hasilnya kolom kunci tidak duplikat.
+
+## RIGHT dan CROSS
+
+```sql
+-- RIGHT JOIN: semua baris tabel kanan (jarang diperlukan)
+SELECT * FROM karyawan k RIGHT JOIN proyek p ON p.lead_id = k.id;
+
+-- CROSS JOIN: semua kombinasi, hati-hati ukurannya
+SELECT k.nama, h.nama AS hari
+FROM karyawan k CROSS JOIN hari h;
+```
+
+CROSS JOIN berguna untuk membuat kalender atau kombinasi produk-ukuran.
+
+## Kardinalitas
+
+Jika tabel kanan punya 3 baris untuk satu kunci, hasil join punya 3 baris. Sebelum agregasi, cek duplikat:
+
+```sql
+SELECT lead_id, COUNT(*) FROM proyek GROUP BY lead_id HAVING COUNT(*) > 1;
+```
+
+<div class="note">💡 Filter pada tabel kanan di LEFT JOIN sebaiknya ditaruh di klausa ON, bukan WHERE. Jika tidak, baris yang tidak cocok akan terbuang dan LEFT JOIN berubah menjadi INNER JOIN.</div>
+
+## Di Dunia Nyata
+
+- **Katalog**: `produk JOIN kategori` menampilkan nama kategori.
+- **Laporan penjualan**: `pelanggan LEFT JOIN transaksi` tetap memuat pelanggan baru.
+- **Kalender**: CROSS JOIN tanggal dan cabang menghasilkan baris untuk setiap kombinasi.
+- **Rekonsiliasi**: anti join menemukan data yang belum tersinkron.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT k.nama AS karyawan,
+       COALESCE(p.nama, '-') AS proyek,
+       COALESCE(p.budget, 0) AS budget
+FROM karyawan k
+LEFT JOIN proyek p ON p.lead_id = k.id
+ORDER BY k.nama;`} />

@@ -37,7 +37,7 @@ example:
             HashMap<String, Integer> skor = new HashMap<>();
             skor.put("Quiz 1", 90);
 
-            for (int i = 0; i < tugas.size(); i++) {
+            for (int i = 0; i &lt; tugas.size(); i++) {
                 System.out.println((i + 1) + ". " + tugas.get(i));
             }
             System.out.println("Skor Quiz 1: " + skor.get("Quiz 1"));
@@ -147,6 +147,10 @@ Jalankan contoh di bawah, lalu tambahkan fitur **hapus tugas** dan **hitung prog
 - **Validasi username unik**: `HashSet<String> terdaftar` menolak duplikat secara struktural — tanpa pengecekan manual.
 
 <div class="note">💡 Kumpulan penguasaanmu sekarang: tipe data, percabangan, looping, method, array/ArrayList, String, OOP, exception, dan collection. Di dunia nyata kamu hampir tidak pernah memakai array mentah untuk data dinamis — ArrayList/HashMap adalah default, dan penguasaan 4 interface (List, Set, Queue, Map) sudah cukup untuk 90% kasus harian.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
 
 <TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,0 +1,118 @@
+---
+title: Mencari File dengan find dan locate
+description: Menemukan file berdasarkan nama, ukuran, waktu, dan isi.
+order: 15
+quiz:
+- q: Perintah mencari file berdasarkan nama adalah…
+  options:
+  - grep -name "*.log"
+  - locate -name
+  - ls -find
+  - find /path -name "*.log"
+  answer: 3
+  explain: find berjalan langsung pada direktori yang ditentukan.
+- q: Opsi find untuk nama tanpa membedakan huruf besar/kecil adalah…
+  options:
+  - -iname
+  - -namei
+  - -ignore-case
+  - -ci
+  answer: 0
+  explain: '`find . -iname "README*"` cocok dengan readme.md juga.'
+- q: Perintah untuk menghapus hasil find adalah…
+  options:
+  - find . -name "*.tmp" | rm
+  - find . -name "*.tmp" -delete
+  - find . -delete "*.tmp"
+  - rm find *.tmp
+  answer: 1
+  explain: '`-delete` langsung menghapus; -exec rm {} + juga umum.'
+- q: Perintah locate memakai…
+  options:
+  - Cache browser
+  - Log kernel
+  - Database indeks yang diperbarui berkala
+  - Pemindaian disk langsung
+  answer: 2
+  explain: Lebih cepat, tapi hasil bisa basi sampai updatedb dijalankan.
+- q: Untuk mencari teks di dalam file gunakan…
+  options:
+  - find -text "teks"
+  - ls -g "teks"
+  - locate "teks"
+  - grep -r "teks" direktori
+  answer: 3
+  explain: grep -r membaca isi file secara rekursif.
+example:
+  code: 'find . -type f -name "*.log"
+
+    find . -type f -size +10M
+
+    find . -type d -mtime -7
+
+    find . -name "*.tmp" -delete
+
+    grep -r "TODO" src/
+
+    '
+---
+
+
+Tahu nama file tapi lupa lokasinya? `find` dan `locate` menyelesaikan masalah itu dengan cara berbeda.
+
+## find
+
+```bash
+find /var/log -type f -name "*.log"
+find . -type d -name "node_modules"
+find . -type f -iname "readme*"
+find . -type f -size +50M
+find . -mtime -7
+```
+
+| Opsi | Fungsi |
+|---|---|
+| `-type f` | file biasa |
+| `-type d` | direktori |
+| `-name` | pola nama |
+| `-iname` | abaikan huruf besar |
+| `-size +10M` | lebih dari 10 MB |
+| `-mtime -7` | diubah &lt; 7 hari lalu |
+| `-empty` | kosong |
+
+## Aksi
+
+```bash
+find . -name "*.tmp" -delete
+find . -name "*.sh" -exec chmod +x {} \;
+find . -type f -name "*.log" -exec ls -lh {} +
+```
+
+`{}` diganti dengan nama file yang ditemukan, `\;` mengakhiri perintah per file, `+` mengelompokkan.
+
+## locate
+
+```bash
+locate nginx.conf
+sudo updatedb
+```
+
+`locate` membaca database indeks, sehingga jauh lebih cepat daripada `find /`, tetapi bisa ketinggalan file baru.
+
+## Mencari Isi
+
+```bash
+grep -r "ERROR" /var/log
+grep -rn "TODO" src/
+grep -rl "rahasia" .
+```
+
+<div class="note">💡 Mulai pencarian dari direktori serendah mungkin. `find / -name ...` bisa memakan waktu lama dan memicu banyak error permission.</div>
+
+## Kombinasi Berguna
+
+```bash
+find . -name "*.js" -not -path "./node_modules/*" | xargs grep "TODO"
+```
+
+`xargs` mengubah daftar hasil menjadi argumen perintah lain secara efisien.

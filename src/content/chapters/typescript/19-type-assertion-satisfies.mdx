@@ -1,0 +1,155 @@
+---
+title: "Assertion & Operator satisfies"
+description: "Perbedaan as, non-null assertion, dan satisfies untuk keamanan tipe"
+order: 19
+quiz:
+  - q: "`nilai as string` melakukan…"
+    options: ["Pengecekan runtime", "Assertion ke compiler", "Konversi nilai", "Narrowing otomatis"]
+    answer: 1
+    explain: "Assertion tidak mengubah data saat runtime."
+  - q: "Operator `!` setelah variabel disebut…"
+    options: ["Non-null assertion", "Negasi", "Optional chaining", "Spread"]
+    answer: 0
+    explain: "Contoh: `elemen!.value` memberi tahu compiler bahwa valor tidak null."
+  - q: "`satisfies` berguna untuk…"
+    options: ["Mengecek tipe tanpa mengubah tipe ekspresi", "Membuat tipe baru", "Menghapus error", "Mengubah nilai"]
+    answer: 0
+    explain: "Nilai tetap mempertahankan tipe spesifiknya."
+  - q: "`const x = 'halo' as const` menghasilkan tipe…"
+    options: ["string", "'halo'", "any", "unknown"]
+    answer: 1
+    explain: "Nilai literal dipertahankan."
+  - q: "Assertion berlebihan bisa menyebabkan…"
+    options: ["Kode lebih aman", "Error runtime karena compiler tidak bisa melindungi", "Kompilasi gagal", "Tidak ada efek"]
+    answer: 1
+    explain: "Karena kamu memaksa compiler mempercayai sesuatu yang belum terbukti."
+example:
+  code: |
+    const config = {
+      tema: "gelap",
+      ukuran: 14
+    } satisfies Record<string, string | number>;
+    
+    const elemen = document.querySelector('#app')!;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript memberi beberapa cara untuk "berbicara" kepada compiler soal tipe. Memilih yang tepat menentukan apakah kamu benar-benar aman atau hanya membungkam error.
+
+## Assertion (as)
+
+```ts
+const masukan: unknown = "halo";
+const teks = masukan as string; // kamu yang bertanggung jawab
+teks.toUpperCase();
+```
+
+Assertion juga bisa menyatakan tipe yang lebih spesifik:
+
+```ts
+const elemen = document.getElementById("app") as HTMLDivElement;
+```
+
+Kalau elemen ternyata bukan div, tidak ada error runtime sampai kamu memakai method khusus div.
+
+## Non-null Assertion (!)
+
+```ts
+const input = document.querySelector("input")!;
+input.value = "halo";
+```
+
+Operator `!` menghilangkan `null | undefined` dari tipe. Gunakan hanya kalau kamu **benar-benar yakin** elemennya ada.
+
+```ts
+const nilai: string | undefined = mungkinAda();
+nilai.length;        // ❌
+nilai!.length;       // ⚠️ bisa crash kalau undefined
+nilai?.length ?? 0;  // ✅ lebih aman
+```
+
+## Operator satisfies (TS 4.9+)
+
+```ts
+type Config = {
+  tema: "terang" | "gelap";
+  ukuran: number;
+};
+
+const config = {
+  tema: "gelap",
+  ukuran: 14
+} satisfies Config;
+```
+
+Bedanya dengan anotasi `: Config`:
+
+```ts
+const a: Config = { tema: "gelap", ukuran: 14 };
+a.tema; // tipe: "terang" | "gelap"
+
+const b = { tema: "gelap", ukuran: 14 } satisfies Config;
+b.tema; // tipe: "gelap" (lebih spesifik)
+```
+
+`satisfies` memeriksa bahwa nilai memenuhi tipe, **tanpa melebarkan** tipe nilai itu sendiri. Sangat berguna untuk object map:
+
+```ts
+const rute = {
+  home: "/",
+  user: "/user/:id"
+} satisfies Record<string, `/${string}`>;
+
+type NamaRute = keyof typeof rute; // "home" | "user"
+```
+
+## Double Assertion
+
+```ts
+const angka = ("abc" as unknown) as number; // bisa, tapi berbahaya
+```
+
+Kalau kamu butuh double assertion, itu tanda desain tipe perlu diperbaiki.
+
+## Assertion Function
+
+```ts
+function assertString(x: unknown): asserts x is string {
+  if (typeof x !== "string") throw new Error("bukan string");
+}
+```
+
+Berbeda dengan `as x is string` (predicate), `asserts` mengubah tipe variabel **di scope setelah pemanggilannya**.
+
+<div class="note">💡 Urutan preferensi: narrowing nyata → `satisfies` → `as const` → `as` → `!`. Makin ke kanan, makin besar tanggung jawabmu.</div>
+
+## Di Dunia Nyata
+
+- Konfigurasi memakai `satisfies` supaya nilai tetap presisi tapi tetap divalidasi.
+- Query DOM memakai `!` di aplikasi yang elemennya dijamin ada oleh template.
+- Data API selalu melewati validator sebelum di-`as` ke tipe domain.
+
+## Try it Yourself
+
+Coba hapus `satisfies` lalu ubah nilai `tema` menjadi string bebas.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Config = {
+  tema: "terang" | "gelap";
+  ukuran: number;
+};
+
+const config = {
+  tema: "gelap",
+  ukuran: 14
+} satisfies Config;
+
+console.log("Tema:", config.tema);
+console.log("Ukuran:", config.ukuran);
+
+const masukan: unknown = "TypeScript";
+const teks = masukan as string;
+console.log("Huruf pertama:", teks[0]);
+
+const mungkin: string | undefined = "ada";
+console.log("Panjang aman:", mungkin?.length ?? 0);`} />

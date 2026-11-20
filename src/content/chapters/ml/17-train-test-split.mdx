@@ -1,0 +1,81 @@
+---
+title: "Train/Test Split dan Validasi"
+description: "pemisahan data, stratifikasi, random seed, dan mengapa data uji tidak boleh dilatih"
+order: 17
+quiz:
+  - q: "Data uji berfungsi untuk…"
+    options: ["Membuat fitur", "Mengukur generalisasi model", "Melatih model", "Menghapus outlier"]
+    answer: 1
+    explain: "Data uji simulasi data baru."
+  - q: "Pembagian umum adalah…"
+    options: ["90% uji 10% latih", "Semua untuk latih", "80% latih 20% uji", "50% latih 50% uji"]
+    answer: 2
+    explain: "Proporsi bervariasi, tapi 80/20 sering dipakai."
+  - q: "Stratifikasi penting ketika…"
+    options: ["Data sangat banyak", "Fitur numerik", "Label kosong", "Kelas tidak seimbang"]
+    answer: 3
+    explain: "Proporsi kelas dijaga tetap."
+  - q: "Random seed berguna untuk…"
+    options: ["Mempercepat training", "Hasil yang dapat direproduksi", "Menambah akurasi", "Menghapus bias"]
+    answer: 1
+    explain: "Seed membuat split sama tiap kali."
+  - q: "Menggunakan data uji saat tuning termasuk…"
+    options: ["Regularisasi", "Feature engineering", "Data leakage", "Cross validation"]
+    answer: 2
+    explain: "Data uji harus benar-benar tidak terlihat sampai akhir."
+example:
+  code: |
+    data=list(range(10))
+    latih=data[:8]; uji=data[8:]
+    print(latih,uji)
+---
+
+## Split Sederhana
+
+```python
+import random
+
+data = list(range(20))
+random.seed(42)
+random.shuffle(data)
+
+batas = int(0.8 * len(data))
+latih, uji = data[:batas], data[batas:]
+print(len(latih), len(uji))
+```
+
+## Kenapa Diacak
+
+Kalau data asli sudah diurutkan menurut waktu atau kelas, mengambil 80% pertama akan menghasilkan sampel yang bias.
+
+## Stratifikasi
+
+```python
+kelas_a = [("A", i) for i in range(10)]
+kelas_b = [("B", i) for i in range(2)]
+
+# ambil proporsi yang sama dari tiap kelas
+latih = kelas_a[:8] + kelas_b[:1]
+uji = kelas_a[8:] + kelas_b[1:]
+print(latih, uji)
+```
+
+## Kumpulan Data Kecil
+
+Kalau data cuma 30 baris, split 80/20 menyisakan 6 baris uji — terlalu kecil untuk kesimpulan stabil. Gunakan **cross-validation** atau kumpulkan lebih banyak data.
+
+<div class="note">💡 Data uji adalah "ujian akhir". Kalau kamu mengintip dan mengubah model berdasarkan nilainya berulang kali, hasilnya tidak lagi objektif.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`import random
+
+data = list(range(20))
+random.seed(7)
+random.shuffle(data)
+batas = int(0.8 * len(data))
+latih, uji = data[:batas], data[batas:]
+print("Latih:", latih)
+print("Uji  :", uji)`}</code></pre>

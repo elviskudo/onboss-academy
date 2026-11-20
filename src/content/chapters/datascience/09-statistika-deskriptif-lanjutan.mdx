@@ -1,0 +1,95 @@
+---
+title: "Statistik Deskriptif Lanjutan"
+description: "mean, median, modus, rentang, variance, standar deviasi, dan interpretasinya"
+order: 9
+quiz:
+  - q: "Nilai tengah setelah data diurutkan disebut…"
+    options: ["Range", "Mean", "Median", "Modus"]
+    answer: 2
+    explain: "Median adalah nilai posisi tengah."
+  - q: "Nilai yang paling sering muncul disebut…"
+    options: ["Modus", "Varian", "Mean", "Median"]
+    answer: 0
+    explain: "Modus = nilai dengan frekuensi tertinggi."
+  - q: "Rata-rata biasa disebut…"
+    options: ["Median", "Modus", "Std", "Mean"]
+    answer: 3
+    explain: "Mean = jumlah nilai dibanyak data."
+  - q: "Standar deviasi mengukur…"
+    options: ["Pola整个", "Penyebaran data", "Jumlah data", "Nilai tengah"]
+    answer: 1
+    explain: "Std mengukur seberapa jauh data dari rata-rata."
+  - q: "Median lebih tahan terhadap…"
+    options: ["Sorting", "Rata-rata", "Outlier", "Data kosong"]
+    answer: 2
+    explain: "Nilai ekstrem tidak terlalu menggeser median."
+example:
+  code: |
+    nilai=[70,80,80,85,90,100]
+    rata=sum(nilai)/len(nilai)
+    urutan=sorted(nilai)
+    median=(urutan[2]+urutan[3])/2
+    print("Mean:",rata,"Median:",median)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Mean, Median, Modus
+
+| Ukuran | Cara | Tahan outlier? |
+| --- | --- | --- |
+| Mean | jumlah / banyak data | tidak |
+| Median | nilai tengah setelah diurutkan | ya |
+| Modus | nilai paling sering | ya |
+
+```python
+from statistics import mean, median, mode
+
+data = [70, 80, 80, 85, 90, 100]
+print(mean(data))    # 84.17
+print(median(data))  # 82.5
+print(mode(data))    # 80
+```
+
+## Rentang dan Kuartil
+
+```python
+data = sorted([7, 2, 9, 4, 6, 8, 5])
+rentang = data[-1] - data[0]
+print(rentang)
+```
+
+Kuartil membagi data menjadi empat bagian. `statistics.quantiles(data, n=4)` menghasilkan tiga titik potong.
+
+## Varians dan Standar Deviasi
+
+```python
+from statistics import variance, pvariance, stdev
+
+sampel = [10, 12, 14, 16]
+print(variance(sampel))    # sampel (n-1)
+print(pvariance(sampel))   # populasi (n)
+print(stdev(sampel))
+```
+
+Gunakan `variance` bila data adalah contoh dari populasi besar, `pvariance` bila data sudah mencakup seluruh populasi.
+
+## Mana yang Dipakai?
+
+- Distribusi simetris tanpa outlier → **mean + std**.
+- Ada nilai ekstrem (gaji, harga rumah) → **median + IQR**.
+- Data kategori → **modus**.
+
+<div class="note">💡 Rata-rata gaji bisa melonjak karena satu direktur; median tetap menggambarkan karyawan biasa. Selalu lihat sebaran data sebelum memilih ringkasan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from statistics import mean, median, mode, stdev
+
+nilai = [70, 80, 80, 85, 90, 100]
+print("mean  =", round(mean(nilai), 2))
+print("median=", median(nilai))
+print("modus =", mode(nilai))
+print("std   =", round(stdev(nilai), 2))`} />

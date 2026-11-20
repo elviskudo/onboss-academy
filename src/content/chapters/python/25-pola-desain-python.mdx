@@ -1,0 +1,154 @@
+---
+title: "Pola Desain Umum"
+description: "Singleton, Factory, Observer, Strategy, dan Repository dalam idiom Python"
+order: 25
+quiz:
+  - q: "Pola Factory berguna untuk…"
+    options: ["Menyembunyikan proses pembuatan object", "Menghapus class", "Mengganti nama variabel", "Menghitung baris kode"]
+    answer: 0
+    explain: "Factory memindahkan logika `new`/konstruksi ke satu tempat."
+  - q: "Pola Observer mendefinisikan hubungan…"
+    options: ["Satu-ke-satu", "Satu-ke-banyak dependency", "Many-to-many database", "Inheritance"]
+    answer: 1
+    explain: "Saat subjek berubah, semua observer diberi tahu."
+  - q: "Pola Strategy memungkinkan…"
+    options: ["Mengganti algoritma saat runtime", "Menghapus exception", "Mempercepat import", "Mengganti tipe data"]
+    answer: 0
+    explain: "Strategy membungkus keluarga algoritma yang bisa dipilih silang."
+  - q: "Decorator pattern berbeda dengan decorator Python karena…"
+    options: ["Selalu memakai class", "Fokus pada pewarisan", "Tidak ada bedanya", "Hanya untuk fungsi"]
+    answer: 0
+    explain: "GoF Decorator memakai komposisi class; @decorator Python memakai fungsi pembungkus."
+  - q: "Repository pattern memisahkan…"
+    options: ["UI dari database", "Logika akses data dari logika bisnis", "Thread dari proses", "HTML dari CSS"]
+    answer: 1
+    explain: "Repository menyediakan API akses data sebagai lapisan abstraksi."
+example:
+  code: |
+    from abc import ABC, abstractmethod
+    
+    class Bayar(ABC):
+        @abstractmethod
+        def bayar(self, total): pass
+    
+    class Tunai(Bayar):
+        def bayar(self, total): return f"Tunai {total}"
+    
+    class Ewallet(Bayar):
+        def bayar(self, total): return f"Ewallet {total*0.98}"
+    
+    metode = {"tunai": Tunai(), "ewallet": Ewallet()}
+    print(metode["ewallet"].bayar(100000))
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Design pattern adalah solusi umum untuk masalah yang berulang. Python sering bisa memakai fitur bahasa (fungsi kelas satu, decorator) agar polanya lebih pendek daripada versi Java/C++.
+
+## Strategy
+
+```python
+from abc import ABC, abstractmethod
+
+class Diskon(ABC):
+    @abstractmethod
+    def hitung(self, total): ...
+
+class DiskonMember(Diskon):
+    def hitung(self, total): return total * 0.9
+
+class TanpaDiskon(Diskon):
+    def hitung(self, total): return total
+
+def checkout(total, strategi):
+    return strategi.hitung(total)
+```
+
+Algoritma bisa diganti tanpa mengubah `checkout`.
+
+## Factory
+
+```python
+def buat_koneksi(jenis):
+    if jenis == "mysql":
+        return KoneksiMySQL()
+    if jenis == "postgres":
+        return KoneksiPostgres()
+    raise ValueError(jenis)
+```
+
+Memusatkan pembuatan object membuat kode pemanggil tidak tahu detail class konkret.
+
+## Observer
+
+```python
+class Subjek:
+    def __init__(self): self._observer = []
+
+    def tambah(self, o): self._observer.append(o)
+
+    def kirim(self, pesan):
+        for o in self._observer:
+            o(pesan)
+
+subjek = Subjek()
+subjek.tambah(lambda p: print("Log:", p))
+subjek.tambah(lambda p: print("Notif:", p))
+subjek.kirim("stok habis")
+```
+
+Callback sederhana sering cukup tanpa class Observer formal.
+
+## Singleton (Idiom Python)
+
+```python
+class Konfigurasi:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.data = {}
+        return cls._instance
+
+a = Konfigurasi()
+b = Konfigurasi()
+print(a is b)  # True
+```
+
+Untuk kasus sederhana, modul Python sudah otomatis singleton — cukup simpan state di level modul.
+
+## Repository
+
+```python
+class UserRepository:
+    def __init__(self, db): self.db = db
+
+    def cari(self, id):
+        return self.db.query("SELECT * FROM users WHERE id=?", (id,))
+
+class UserService:
+    def __init__(self, repo): self.repo = repo
+```
+
+Service tidak perlu tahu apakah data berasal dari SQL, API, atau cache.
+
+<div class="note">💡 Jangan memaksakan pattern di awal. Tulis kode langsung dulu; saat muncul duplikasi atau coupling yang menyakitkan, baru refactor ke pattern yang sesuai. Pattern adalah alat, bukan target.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from abc import ABC, abstractmethod
+
+class Bayar(ABC):
+    @abstractmethod
+    def bayar(self, total): pass
+
+class Tunai(Bayar):
+    def bayar(self, total): return f"Tunai {total}"
+
+class Ewallet(Bayar):
+    def bayar(self, total): return f"Ewallet {total*0.98}"
+
+metode = {"tunai": Tunai(), "ewallet": Ewallet()}
+print(metode["ewallet"].bayar(100000))`} />

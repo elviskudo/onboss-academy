@@ -1,0 +1,131 @@
+---
+"title": "Dasar Coroutine"
+"description": "Menjalankan tugas asynchronous dengan launch, async, dan Dispatchers"
+"order": 22
+"quiz":
+- "q": "Fungsi pembangun coroutine yang menghasilkan Job adalah…"
+  "options":
+  - "async"
+  - "launch"
+  - "runBlocking"
+  - "withContext"
+  "answer": 1
+  "explain": "launch menjalankan tugas fire-and-forget."
+- "q": "Fungsi yang menghasilkan Deferred adalah…"
+  "options":
+  - "launch"
+  - "delay"
+  - "async"
+  - "coroutineScope"
+  "answer": 2
+  "explain": "Deferred punya await() untuk mengambil hasil."
+- "q": "Dispatcher untuk pekerjaan CPU berat adalah…"
+  "options":
+  - "Dispatchers.Main"
+  - "Dispatchers.IO"
+  - "Dispatchers.Unconfined"
+  - "Dispatchers.Default"
+  "answer": 3
+  "explain": "Default dioptimalkan untuk komputasi."
+- "q": "Fungsi delay berfungsi untuk…"
+  "options":
+  - "Menunda coroutine tanpa memblokir thread"
+  - "Menghentikan program"
+  - "Menunggu input"
+  - "Menghapus Job"
+  "answer": 0
+  "explain": "delay adalah suspend function yang tidak memblokir thread."
+- "q": "Fungsi runBlocking biasanya dipakai di…"
+  "options":
+  - "Setiap tombol UI"
+  - "Titik masuk utama atau test"
+  - "Semua repository"
+  - "Thread IO"
+  "answer": 1
+  "explain": "runBlocking memblokir thread saat ini sampai selesai."
+"example":
+  "code": "import kotlinx.coroutines.*\n\nfun main() = runBlocking {\n    val jobs = List(3) { i ->\n        launch(Dispatchers.Default) {\n            delay(100L * i)\n            println(\"Selesai $i di ${Thread.currentThread().name}\")\n        }\n    }\n    jobs.joinAll()\n\n    val hasil = async { 6 * 7 }\n    println(\"Hasil: ${hasil.await()}\")\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Model Mental
+
+```kotlin
+import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+    val jobs = List(3) { i ->
+        launch(Dispatchers.Default) {
+            delay(100L * i)
+            println("Selesai $i di ${Thread.currentThread().name}")
+        }
+    }
+    jobs.joinAll()
+
+    val hasil = async { 6 * 7 }
+    println("Hasil: ${hasil.await()}")
+}
+```
+
+Coroutine adalah **thread ringan** yang dijadwalkan oleh Kotlin. Banyak coroutine bisa berbagi satu thread karena mereka menunda diri (suspend) alih-alih memblokir.
+
+| Fungsi | Hasil | Kapan dipakai |
+|---|---|---|
+| `launch` | `Job` | efek samping tanpa nilai |
+| `async` | `Deferred<T>` | butuh nilai lewat `await()` |
+| `runBlocking` | `T` | menjembatani kode blocking |
+| `coroutineScope` | `T` | mengelompokkan child coroutine |
+
+## Dispatcher
+
+| Dispatcher | Kegunaan |
+|---|---|
+| `Main` | UI di Android |
+| `IO` | jaringan dan disk |
+| `Default` | komputasi CPU |
+
+## Suspend Function
+
+```kotlin
+suspend fun ambilData(): String {
+    delay(500)   // tidak memblokir thread
+    return "Data siap"
+}
+```
+
+Fungsi `suspend` hanya bisa dipanggil dari coroutine atau fungsi suspend lain.
+
+## Structuring dan Pembatalan
+
+```kotlin
+coroutineScope {
+    val a = async { ambilA() }
+    val b = async { ambilB() }
+    println(a.await() + b.await())
+}
+```
+
+Bila satu child gagal, scope membatalkan child lain secara otomatis (structured concurrency).
+
+<div class="note">💡 Jangan memakai <code>Thread.sleep()</code> di dalam coroutine — itu memblokir thread. Gunakan <code>delay()</code> supaya thread bisa dipakai coroutine lain.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`import kotlinx.coroutines.*
+
+fun main() = runBlocking {
+    val jobs = List(3) { i ->
+        launch(Dispatchers.Default) {
+            delay(100L * i)
+            println("Selesai $i di \${Thread.currentThread().name}")
+        }
+    }
+    jobs.joinAll()
+
+    val hasil = async { 6 * 7 }
+    println("Hasil: \${hasil.await()}")
+}`} />

@@ -1,0 +1,105 @@
+---
+title: "Styling di Next.js"
+description: "CSS Module, Tailwind, global CSS, dan CSS-in-JS di App Router"
+order: 10
+quiz:
+  - q: "CSS global di App Router diimpor di…"
+    options: ["next.config", "public/style.css", "app/layout.tsx", "app/page.tsx saja"]
+    answer: 2
+    explain: "Layout root adalah tempat yang tepat untuk style seluruh situs."
+  - q: "CSS Module menghasilkan…"
+    options: ["Inline style", "Nama kelas ter-scope otomatis", "CSS global biasa", "File JS baru"]
+    answer: 1
+    explain: "Mencegah bentrok antar komponen."
+  - q: "Tailwind CSS adalah…"
+    options: ["Library state", "Database", "Test runner", "Framework utility-first"]
+    answer: 3
+    explain: "Kelas seperti flex, p-4, text-white dipakai langsung di JSX."
+  - q: "CSS-in-JS yang memakai runtime sering bermasalah di…"
+    options: ["middleware", "Server Component", "Client Component", "Route Handler"]
+    answer: 1
+    explain: "Karena itu banyak proyek memindahkannya ke 'use client'."
+  - q: "File globals.css sebaiknya berisi…"
+    options: ["Reset dan variabel tema", "Semua gaya komponen", "Kode JS", "Endpoint API"]
+    answer: 0
+    explain: "Gaya spesifik lebih baik di CSS Module."
+example:
+  code: |
+    // app/layout.tsx
+    import './globals.css';
+
+    // Kartu.module.css -> .kartu { padding: 16px }
+    import s from './Kartu.module.css';
+    <div className={s.kartu}>...</div>
+---
+
+Next.js tidak memaksa satu metode styling. Yang penting tahu di mana meletakkan tiap jenis CSS.
+
+## CSS Global
+
+```css
+/* app/globals.css */
+:root { --warna: #61dafb; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; }
+```
+
+```tsx
+// app/layout.tsx
+import "./globals.css";
+```
+
+## CSS Module
+
+```css
+/* Kartu.module.css */
+.kartu {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+}
+```
+
+```tsx
+import s from "./Kartu.module.css";
+
+export function Kartu({ children }: { children: React.ReactNode }) {
+  return <div className={s.kartu}>{children}</div>;
+}
+```
+
+## Tailwind
+
+```bash
+npx create-next-app --tailwind
+```
+
+```tsx
+<div className="rounded-xl border p-4 shadow-sm">
+  <h2 className="text-lg font-semibold">Judul</h2>
+</div>
+```
+
+## CSS Variable untuk Tema
+
+```css
+:root { --latarbelakang: white; --teks: #111; }
+[data-tema="gelap"] { --latarbelakang: #111; --teks: #eee; }
+```
+
+```tsx
+<body data-tema="gelap">...</body>
+```
+
+<div class="note">💡 Simpan reset dan token desain di CSS global, gaya komponen di CSS Module/Tailwind. Pemisahan ini membuat perubahan tema tidak menyentuh tiap komponen.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`// app/layout.tsx
+import './globals.css';
+
+// Kartu.module.css -> .kartu { padding: 16px }
+import s from './Kartu.module.css';
+<div className={s.kartu}>...</div>`}</code></pre>

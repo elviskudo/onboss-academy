@@ -1,0 +1,122 @@
+---
+title: "Pengantar Kubernetes"
+description: "Hubungan Docker dengan orkestrator: Pod, Deployment, Service, dan ConfigMap"
+order: 25
+quiz:
+  - q: "Unit terkecil yang dijadwalkan Kubernetes adalah…"
+    options: ["Cluster", "Pod", "Container", "Node"]
+    answer: 1
+    explain: "Pod membungkus satu atau lebih container yang berbagi jaringan dan storage."
+  - q: "Objek yang menjaga jumlah replika Pod adalah…"
+    options: ["ConfigMap", "Secret", "Deployment", "Service"]
+    answer: 2
+    explain: "Deployment mengelola ReplicaSet dan melakukan rolling update."
+  - q: "Service berguna untuk…"
+    options: ["Menyimpan file", "Membangun image", "Menghapus namespace", "Memberi alamat stabil kumpulan Pod yang berubah-ubah"]
+    answer: 3
+    explain: "Service melakukan load balancing ke Pod yang cocok lewat selector."
+  - q: "ConfigMap menyimpan…"
+    options: ["Konfigurasi non-sensitif dalam bentuk key-value", "Kata sandi terenkripsi", "Image container", "Log aplikasi"]
+    answer: 0
+    explain: "Untuk data sensitif gunakan Secret, bukan ConfigMap."
+  - q: "Perintah untuk melihat Pod adalah…"
+    options: ["kubectl show pods", "kubectl get pods", "kubectl list pod", "kube pods"]
+    answer: 1
+    explain: "Tambahkan -n untuk namespace tertentu atau -A untuk semua namespace."
+example:
+  code: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: web
+    spec:
+      replicas: 2
+      selector:
+        matchLabels:
+          app: web
+      template:
+        metadata:
+          labels:
+            app: web
+        spec:
+          containers:
+          - name: web
+            image: nginx:alpine
+            ports:
+            - containerPort: 80
+---
+
+Docker menyediakan **container**; Kubernetes mengatur kapan dan di mana container itu berjalan, berapa banyak salinan, serta bagaimana traffic dibagikan.", 
+
+## Peta Konsep
+
+| Objek | Peran | Analogi Docker |
+|---|---|---|
+| Pod | Tempat container berjalan | Container + jaringan bersama |
+| Deployment | Menjaga replika & update | `docker compose up --scale` + rollback |
+| Service | Alamat stabil | DNS internal + load balancer |
+| ConfigMap | Konfigurasi teks | `--env-file` |
+| Secret | Konfigurasi sensitif | `--env-file` terenkripsi |
+| Ingress | Routing HTTP dari luar | Reverse proxy |
+
+## Manifest Minimal
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+```
+
+```bash
+kubectl apply -f deployment.yaml
+kubectl get pods
+kubectl rollout status deployment/web
+kubectl rollout undo deployment/web
+```
+
+## Probe = Healthcheck
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+```
+
+- **Liveness** — jika gagal, Pod direstart.
+- **Readiness** — jika gagal, Pod tidak menerima traffic.
+
+Keduanya memakai endpoint yang sama dengan `HEALTHCHECK` di Dockerfile, jadi logikanya bisa dipakai ulang.
+
+## Kapan Compose, Kapan Kubernetes
+
+Compose cocok untuk satu host dan pengembangan lokal. Kubernetes dipakai ketika dibutuhkan multi-node, auto-scaling, self-healing, dan rollout terkendali. Kompleksitasnya jauh lebih tinggi, jadi jangan pindah hanya karena "trend".
+
+<div class="note">💡 Kubernetes tidak membangun image. CI tetap bertugas membangun dan mendorong image ke registry; cluster hanya menarik dan menjalankannya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'kubectl get pods' 'kubectl get svc' 'kubectl describe pod &lt;nama&gt;' 'kubectl logs &lt;nama&gt;' 'kubectl apply -f deployment.yaml' &gt; perintah-kubectl.txt
+printf '%s\\n' 'Simpan perintah kubectl untuk latihan.'`}</code></pre>

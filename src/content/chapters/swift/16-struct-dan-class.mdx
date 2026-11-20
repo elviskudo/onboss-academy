@@ -1,0 +1,148 @@
+---
+"title": "Struct dan Class"
+"description": "Perbedaan value type dan reference type, initializer, serta identity"
+"order": 16
+"quiz":
+- "q": "Struct di Swift adalah…"
+  "options":
+  - "Value type"
+  - "Reference type"
+  - "Subclass dari NSObject"
+  - "Hanya untuk data"
+  "answer": 0
+  "explain": "Nilai struct disalin saat ditugaskan ke variabel lain."
+- "q": "Class adalah…"
+  "options":
+  - "Value type"
+  - "Reference type"
+  - "Enum khusus"
+  - "Protokol"
+  "answer": 1
+  "explain": "Dua variabel bisa menunjuk instance class yang sama."
+- "q": "Operator identitas untuk class adalah…"
+  "options":
+  - "==="
+  - "=="
+  - "="
+  - "!="
+  "answer": 0
+  "explain": "=== mengecek apakah dua referensi menunjuk objek yang sama."
+- "q": "Saat init kustom pada struct, yang wajib terjadi adalah…"
+  "options":
+  - "Semua properti harus terisi"
+  - "deinit dipanggil"
+  - "override init ditulis"
+  - "copy() dipanggil"
+  "answer": 0
+  "explain": "Semua stored property harus punya nilai sebelum init selesai."
+- "q": "Struct tidak bisa…"
+  "options":
+  - "Diwariskan"
+  - "Memiliki method"
+  - "Memiliki properti"
+  - "Memakai protokol"
+  "answer": 0
+  "explain": "Struct tidak mendukung inheritance."
+"example":
+  "code": "struct Titik {\n    var x: Int\n    var y: Int\n\n    func jarakDariAsal() -> Int { x * x + y * y }\n}\n\nvar a = Titik(x: 1, y: 2)\nvar b = a\nb.x = 9\n\nprint(a.x) // 1 — salinan tidak berubah\nprint(b.x) // 9\n\nclass Akun {\n    var saldo: Int\n    init(saldo: Int) { self.saldo = saldo }\n}\n\nlet p = Akun(saldo: 100)\nlet q = p\nq.saldo = 50\nprint(p.saldo) // 50 — referensi sama\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Value vs Reference
+
+```swift
+struct Titik {
+    var x: Int
+    var y: Int
+
+    func jarakDariAsal() -> Int { x * x + y * y }
+}
+
+var a = Titik(x: 1, y: 2)
+var b = a
+b.x = 9
+
+print(a.x) // 1 — salinan tidak berubah
+print(b.x) // 9
+
+class Akun {
+    var saldo: Int
+    init(saldo: Int) { self.saldo = saldo }
+}
+
+let p = Akun(saldo: 100)
+let q = p
+q.saldo = 50
+print(p.saldo) // 50 — referensi sama
+```
+
+| Aspek | Struct | Class |
+|---|---|---|
+| Penyalinan | nilai disalin | referensi disalin |
+| Inheritance | tidak ada | ada |
+| Deinitializer | tidak ada | ada (`deinit`) |
+| Identitas (`===`) | tidak berlaku | berlaku |
+| Penyimpanan | stack umumnya | heap |
+
+## Initializer
+
+```swift
+struct Pengguna {
+    let nama: String
+    var usia: Int = 0
+
+    init(nama: String) {
+        self.nama = nama
+    }
+}
+```
+
+Struct dengan properti yang belum punya nilai otomatis mendapat memberwise initializer.
+
+## Mutating
+
+```swift
+struct Counter {
+    var nilai = 0
+    mutating func naik() { nilai += 1 }
+}
+```
+
+Method yang mengubah properti struct harus ditandai `mutating`.
+
+## Kapan Memilih
+
+- Gunakan **struct** untuk model data, nilai, dan tipe kecil seperti `CGPoint`.
+- Gunakan **class** untuk objek dengan identitas, siklus hidup, atau hierarki warisan.
+- Utamakan struct — Swift dan Apple mendorong value semantics karena lebih mudah diprediksi.
+
+<div class="note">💡 Array dan Dictionary juga value type. Menyalin array ke variabel lain membuat salinan logis; perubahan pada salah satu tidak merusak yang lain.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`struct Titik {
+    var x: Int
+    var y: Int
+
+    func jarakDariAsal() -> Int { x * x + y * y }
+}
+
+var a = Titik(x: 1, y: 2)
+var b = a
+b.x = 9
+
+print(a.x) // 1 — salinan tidak berubah
+print(b.x) // 9
+
+class Akun {
+    var saldo: Int
+    init(saldo: Int) { self.saldo = saldo }
+}
+
+let p = Akun(saldo: 100)
+let q = p
+q.saldo = 50
+print(p.saldo) // 50 — referensi sama`} />

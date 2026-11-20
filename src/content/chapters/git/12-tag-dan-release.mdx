@@ -1,0 +1,100 @@
+---
+title: Tag dan Manajemen Release
+description: Menandai titik penting dalam riwayat dengan tag ringan dan annotate.
+order: 12
+quiz:
+- q: Tag Git digunakan untuk…
+  options:
+  - Menandai commit tertentu, misalnya versi rilis
+  - Mengganti branch
+  - Menyimpan password
+  - Menghapus commit
+  answer: 0
+  explain: Tag adalah penanda tetap pada sebuah commit.
+- q: Perintah membuat annotated tag adalah…
+  options:
+  - git mark v1.0
+  - git tag -a v1.0 -m "Rilis pertama"
+  - git tag v1.0 --message
+  - git branch v1.0
+  answer: 1
+  explain: Opsi -a membuat annotated tag yang menyimpan penulis, tanggal, dan pesan.
+- q: Perbedaan lightweight dan annotated tag adalah…
+  options:
+  - Annotated tidak bisa dihapus
+  - Tidak ada perbedaan
+  - Annotated menyimpan metadata tambahan
+  - Lightweight lebih panjang
+  answer: 2
+  explain: Lightweight hanya pointer ke commit, annotated adalah objek Git lengkap.
+- q: Untuk mengirim tag ke remote gunakan…
+  options:
+  - git push --tags-only
+  - git commit --tag
+  - git remote add tag
+  - git push origin v1.0
+  answer: 3
+  explain: Tag tidak ikut ter-push otomatis bersama branch.
+- q: Konvensi penomoran SemVer yang benar adalah…
+  options:
+  - MAJOR.MINOR.PATCH
+  - YEAR.MONTH.DAY
+  - A.B.C.D
+  - v1-v2-v3
+  answer: 0
+  explain: 'SemVer memakai tiga angka: perubahan breaking, fitur kompatibel, dan perbaikan.'
+example:
+  code: 'git tag -a v1.2.0 -m "Rilis fitur ekspor"
+
+    git tag
+
+    git push origin v1.2.0
+
+    '
+---
+
+
+**Tag** memberi nama permanen pada sebuah commit. Berbeda dengan branch yang terus bergerak, tag biasanya dipakai untuk rilis.
+
+## Dua Jenis Tag
+
+```bash
+git tag v1.0.0                              # lightweight
+git tag -a v1.1.0 -m "Tambah ekspor CSV"    # annotated
+```
+
+| Jenis | Isi | Direkomendasikan |
+|---|---|---|
+| Lightweight | pointer ke commit | untuk penanda sementara |
+| Annotated | penulis, tanggal, pesan, tanda tangan | untuk rilis resmi |
+
+## Melihat dan Mengelola
+
+```bash
+git tag
+git tag -l "v1.*"
+git show v1.1.0
+git tag -d v1.0.0
+git push origin --delete v1.0.0
+```
+
+```bash
+git checkout v1.1.0        # masuk ke tagged commit (detached HEAD)
+git switch -c rilis-1-1    # buat branch dari tag bila perlu edit
+```
+
+## SemVer Secara Singkat
+
+```text
+1.4.2
+| | |
+| | +-- patch: perbaikan bug, kompatibel
+| +---- minor: fitur baru, kompatibel
++------ major: perubahan yang memutus kompatibilitas
+```
+
+<div class="note">💡 Tag yang sudah di-push sebaiknya tidak dipindah. Bila rilis perlu diperbaiki, buat tag patch baru seperti v1.1.1.</div>
+
+## Integrasi CI
+
+Banyak pipeline memicu deploy ketika tag dengan pola `v*` didorong. Itulah sebabnya annotated tag dengan pesan rilis sangat membantu: changelog bisa dibuat otomatis dari commit sejak tag sebelumnya.

@@ -1,0 +1,91 @@
+---
+title: "Studi Kasus: Perawatan Berkala"
+description: "Menyusun rutinitas pemeliharaan dan cadangan sistem"
+order: 28
+quiz:
+  - q: "Cadangan kartu SD paling praktis adalah…"
+    options: ["Membuat image lengkap secara berkala", "Menyalin satu file saja", "Menghapus log", "Mengganti hostname"]
+    answer: 0
+    explain: "Image lengkap bisa ditulis kembali ke kartu baru saat kartu rusak."
+  - q: "Perintah untuk membuat image kartu dari komputer adalah…"
+    options: ["img write sdX", "dd if=/dev/sdX of=pi.img bs=4M", "copy /dev/sdX pi.img", "dd to=pi.img"]
+    answer: 1
+    explain: "Pastikan nama perangkat (/dev/sdX) benar—salah pilih bisa menghapus disk komputer."
+  - q: "Pembaruan sistem sebaiknya…"
+    options: ["Ditunda selamanya", "Dihapus dari rutinitas", "Dijadwalkan dan dicatat", "Dilakukan tanpa pencatatan"]
+    answer: 2
+    explain: "Catatan versi membantu saat ada masalah setelah update."
+  - q: "Log yang terlalu besar dapat diatasi dengan…"
+    options: ["Menghapus seluruh partisi", "Menonaktifkan waktu", "Menghapus kunci SSH", "journalctl --vacuum-size dan rotasi log"]
+    answer: 3
+    explain: "Rotasi menjaga log tetap berguna tanpa mengisi disk."
+  - q: "Tanda kartu SD mulai gagal adalah…"
+    options: ["Error I/O dan file corrupt", "Wi-Fi lebih cepat", "GPIO berubah", "Warna layar berubah"]
+    answer: 0
+    explain: "Segera buat image cadangan dan ganti kartu."
+example:
+  code: |
+    # Backup dari komputer Linux/macOS
+    diskutil list          # macOS: cari disk SD
+    sudo dd if=/dev/disk4 of=pi-backup.img bs=4m status=progress
+    
+    #Restore:
+    sudo dd if=pi-backup.img of=/dev/disk4 bs=4m status=progress
+---
+
+Perawatan yang ringan tapi rutin lebih efektif daripada perbaikan besar setelah sistem rusak. Siapkan kebiasaan berikut sejak proyek pertama.
+
+## Checklist Mingguan
+
+```text
+[ ] vcgencmd measure_temp
+[ ] df -h
+[ ] systemctl --failed
+[ ] journalctl -p err --since "7 days ago"
+[ ] cek cadangan terakhir
+```
+
+## Backup Image
+
+```bash
+# dari komputer, dengan perangkat yang sudah dipastikan
+sudo dd if=/dev/sdX of=pi-2026-01-12.img bs=4M status=progress
+```
+
+Verifikasi dengan `sha256sum`, lalu simpan di lokasi berbeda dari kartu aslinya.
+
+## Backup Data saja
+
+Untuk proyek yang datanya lebih penting daripada sistem, cukup salin folder proyek dan database:
+
+```bash
+tar czf proyek.tar.gz /home/pi/proyek /home/pi/data
+```
+
+## Rotasi Log
+
+```bash
+sudo journalctl --vacuum-time=14d
+sudo journalctl --vacuum-size=200M
+```
+
+## Jadwal Pembaruan
+
+```bash
+sudo apt update && sudo apt full-upgrade
+sudo reboot
+```
+
+Lakukan di jam yang tidak mengganggu proyek, dan catat tanggal serta versi sebelum/sesudah.
+
+<div class="note">💡 SIM card rasanya mirip, tapi jangan pernah menebak nama perangkat `/dev/diskN`. Cek dengan `diskutil list` (macOS) atau `lsblk` (Linux).</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Rutinitas 10 menit:
+vcgencmd measure_temp
+df -h
+systemctl --failed
+journalctl -p err --since '7 days ago'
+tar czf backup-proyek.tar.gz /home/pi/proyek`}</code></pre>

@@ -1,0 +1,135 @@
+---
+title: "Tipe Data PostgreSQL"
+description: "Numerik, teks, tanggal, boolean, enum, array, dan UUID"
+order: 10
+quiz:
+  - q: "Tipe yang tepat untuk uang di PostgreSQL adalah…"
+    options: ["real", "numeric", "float8", "text"]
+    answer: 1
+    explain: "numeric menyimpan desimal presisi."
+  - q: "Tipe untuk identifier unik 128-bit adalah…"
+    options: ["serial", "uuid", "bytea", "jsonb"]
+    answer: 1
+    explain: "uuid menyimpan nilai 128 bit standar."
+  - q: "Perbedaan timestamp dan timestamptz adalah…"
+    options: ["Tidak ada", "timestamptz menyimpan zona waktu/absolut", "timestamp lebih cepat selalu", "timestamptz hanya tanggal"]
+    answer: 1
+    explain: "timestamptz mengonversi ke UTC dan menyesuaikan zona sesi saat dibaca."
+  - q: "Tipe array ditulis dengan…"
+    options: ["[]", "{}", "<>", "list()"]
+    answer: 0
+    explain: "integer[] atau text[] adalah deklarasi array."
+  - q: "Fungsi menghasilkan UUID v4 adalah…"
+    options: ["gen_random_uuid()", "make_uuid()", "uuid_new()", "random_id()"]
+    answer: 0
+    explain: "gen_random_uuid() tersedia bawaan sejak PostgreSQL 13."
+example:
+  code: |
+    CREATE TABLE contoh (
+     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     nama text NOT NULL,
+     harga numeric(12,2),
+     aktif boolean DEFAULT true,
+     tag text[],
+     dibuat timestamptz DEFAULT now()
+    );
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL kaya tipe data. Memilih tipe yang tepat memberi validasi gratis dan sering menghemat ruang dibanding menyimpan semuanya sebagai teks.
+
+## Numerik
+
+| Tipe | Keterangan |
+| --- | --- |
+| `smallint` | 2 byte |
+| `integer` | 4 byte |
+| `bigint` | 8 byte |
+| `numeric(p,s)` | desimal presisi |
+| `real` / `double precision` | floating point |
+
+Untuk uang dan perhitungan eksak selalu gunakan `numeric`, bukan `double precision`.
+
+## Teks
+
+```sql
+nama text
+kode varchar(10)
+deskripsi text
+```
+
+`text` dan `varchar` di PostgreSQL hampir sama performanya. `char(n)` akan menambah spasi sampai panjang n — jarang dibutuhkan.
+
+## Tanggal dan Waktu
+
+```sql
+CREATE TABLE event (
+ id integer PRIMARY KEY,
+ tanggal date,
+ jam time,
+ dibuat timestamp,
+ dibuat_utc timestamptz DEFAULT now(),
+ durasi interval
+);
+```
+
+Gunakan `timestamptz` untuk data waktu lintas zona. Lihat dengan `SET TIME ZONE 'Asia/Jakarta';`.
+
+## Boolean, Enum, UUID
+
+```sql
+aktif boolean DEFAULT true;
+
+CREATE TYPE status AS ENUM ('baru', 'proses', 'selesai');
+status status DEFAULT 'baru';
+
+id uuid PRIMARY KEY DEFAULT gen_random_uuid();
+```
+
+## Array
+
+```sql
+CREATE TABLE artikel (
+ id integer PRIMARY KEY,
+ tag text[]
+);
+INSERT INTO artikel VALUES (1, ARRAY['sql','database','tips']);
+SELECT tag[1] FROM artikel;
+SELECT * FROM artikel WHERE 'sql' = ANY(tag);
+```
+
+Array nyaman untuk daftar kecil. Untuk relasi yang perlu di-query dan di-index, tabel terpisah lebih tepat.
+
+## JSON dan JSONB
+
+```sql
+CREATE TABLE event_log (data jsonb);
+INSERT INTO event_log VALUES ('{"user": 1, "aksi": "login"}');
+SELECT data->>'user' AS user_id FROM event_log;
+```
+
+`json` menyimpan teks apa adanya; `jsonb` menyimpan biner yang bisa di-index dengan GIN.
+
+<div class="note">💡 `SERIAL` adalah alias lama untuk `GENERATED ALWAYS AS IDENTITY` pada versi modern. Gunakan identity untuk skema baru agar perilaku lebih jelas.</div>
+
+## Di Dunia Nyata
+
+- **E-commerce**: numeric untuk harga, timestamptz untuk waktu transaksi.
+- **Multi-cabang**: uuid agar id tidak bentrok saat digabung.
+- **Log**: jsonb untuk payload yang fleksibel.
+- **Artikel**: array tag untuk label sederhana.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE TABLE demo.produk (
+ id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ nama text NOT NULL,
+ harga numeric(10,2) CHECK (harga >= 0),
+ aktif boolean DEFAULT true,
+ tag text[],
+ dibuat timestamptz DEFAULT now()
+);
+INSERT INTO demo.produk(nama, harga, tag) VALUES ('Kopi', 25000, ARRAY['minuman','panas']);
+SELECT nama, harga, tag[1] AS tag_pertama FROM demo.produk;`} />

@@ -1,0 +1,144 @@
+---
+"title": "defer, panic, dan recover"
+"description": "Manajemen resource dan penanganan kondisi luar biasa ala Go"
+"order": 13
+"quiz":
+- "q": "Pernyataan defer akan dijalankan…"
+  "options":
+  - "segera"
+  - "sebelum program mulai"
+  - "saat fungsi selesai"
+  - "tidak pernah"
+  "answer": 2
+  "explain": "Defer menunda eksekusi sampai fungsi pemanggil kembali."
+- "q": "Jika ada beberapa defer dalam satu fungsi, urutannya…"
+  "options":
+  - "terbalik (LIFO)"
+  - "sesuai penulisan"
+  - "acak"
+  - "berdasarkan panjang"
+  "answer": 0
+  "explain": "Defer terakhir yang didaftarkan adalah yang pertama jalan."
+- "q": "panic berguna untuk…"
+  "options":
+  - "menangani error bisnis biasa"
+  - "menutup file"
+  - "membuat perulangan"
+  - "menghentikan alur karena kondisi tak pulihkan"
+  "answer": 3
+  "explain": "Panic bukan pengganti error; pakai untuk kondisi benar-benar fatal."
+- "q": "recover hanya efektif jika dipanggil di dalam…"
+  "options":
+  - "fungsi deferred pada fungsi yang panic"
+  - "goroutine mana pun"
+  - "main"
+  - "init"
+  "answer": 0
+  "explain": "Recover harus berada di fungsi yang ditunda oleh defer pada frame yang panic."
+- "q": "Setelah recover berhasil, fungsi…"
+  "options":
+  - "melanjutkan baris setelah panic"
+  - "mengulang dari awal"
+  - "kembali normal ke pemanggil"
+  - "tetap crash"
+  "answer": 2
+  "explain": "Fungsi yang panic tidak melanjutkan kode setelah titik panic."
+"example":
+  "code": "package main\nimport \"fmt\"\nfunc main() {\n    defer fmt.Println(\"ditutup\")\n    fmt.Println(\"bekerja\")\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go tidak punya `try/catch`. Sebagai gantinya ada tiga alat: `defer` untuk membersihkan resource, `panic` untuk kondisi fatal, dan `recover` untuk mencegah program berhenti.
+
+## defer
+
+```go
+func baca(nama string) {
+    f, err := os.Open(nama)
+    if err != nil { return }
+    defer f.Close()   // dijalankan tepat sebelum fungsi kembali
+
+    // ... gunakan f ...
+}
+```
+
+Beberapa `defer` berjalan dengan urutan terbalik:
+
+```go
+defer fmt.Println("satu")
+defer fmt.Println("dua")
+// Output: dua, satu
+```
+
+Argumen `defer` dievaluasi **saat didaftarkan**, bukan saat dieksekusi:
+
+```go
+i := 1
+defer fmt.Println(i) // tetap mencetak 1
+i = 2
+```
+
+## panic
+
+```go
+if divisor == 0 {
+    panic("pembagian dengan nol")
+}
+```
+
+Panic menghentikan eksekusi fungsi, menjalankan semua `defer`, lalu menuliskan stack trace. Gunakan hanya untuk bug yang tidak bisa dipulihkan.
+
+## recover
+
+```go
+func aman() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("tertahan:", r)
+        }
+    }()
+    panic("boom")
+}
+```
+
+Tanpa `defer`, `recover()` selalu mengembalikan `nil`. Setelah pulih, fungsi **tidak** melanjutkan baris setelah `panic` — ia langsung kembali.
+
+## Praktik Baik
+
+| Situasi | Gunakan |
+|---|---|
+| File tidak ditemukan | `error` |
+| Argumen salah dari input pengguna | `error` |
+| Invariant internal rusak | `panic` |
+| membersihkan resource | `defer` |
+
+<div class="note">💡 Di library, hindari <code>panic</code> untuk kesalahan yang bisa dikembalikan sebagai <code>error</code>. Biarkan aplikasi yang memutuskan cara menangani.</div>
+
+
+## Try it Yourself
+
+Coba pindahkan `panic` ke sebelum `defer` atau hapus `recover` untuk melihat perbedaan.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+
+func aman(label string, boom bool) {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println(label, "tertahan:", r)
+        }
+    }()
+    if boom {
+        panic("ada masalah")
+    }
+    fmt.Println(label, "selesai normal")
+}
+
+func main() {
+    fmt.Println("mulai")
+    defer fmt.Println("defer terakhir jalan duluan")
+    aman("Fungsi A", false)
+    aman("Fungsi B", true)
+    fmt.Println("program tetap lanjut")
+}`} />

@@ -1,0 +1,116 @@
+---
+title: "Layout Halaman"
+description: "Menyusun halaman dengan elemen semantik, float, flexbox, dan grid"
+order: 19
+quiz:
+  - q: "Elemen semantik untuk bagian navigasi adalah…"
+    options: ["<div class='nav'>", "<nav>", "<section>", "<aside>"]
+    answer: 1
+    explain: "<nav> secara eksplisit menandai area navigasi."
+  - q: "Elemen untuk konten samping/sidebar adalah…"
+    options: ["<aside>", "<footer>", "<article>", "<main>"]
+    answer: 0
+    explain: "<aside> dipakai untuk konten pendukung seperti sidebar."
+  - q: "CSS Flexbox diaktifkan dengan…"
+    options: ["display: block", "display: flex", "display: grid", "position: absolute"]
+    answer: 1
+    explain: "display: flex pada container membuat anak-anaknya mengikuti model flex."
+  - q: "CSS Grid diaktifkan dengan…"
+    options: ["display: flex", "display: grid", "float: left", "position: relative"]
+    answer: 1
+    explain: "display: grid membuat container dengan baris dan kolom."
+  - q: "Elemen <main> digunakan untuk…"
+    options: ["Konten utama halaman", "Menu navigasi", "Catatan kaki", "Iklan"]
+    answer: 0
+    explain: "Hanya boleh satu <main> per halaman, berisi konten inti."
+example:
+  code: |
+    <header>Header</header>
+    <nav>Menu</nav>
+    <main>
+      <article>Konten utama</article>
+      <aside>Sidebar</aside>
+    </main>
+    <footer>Footer</footer>
+    
+    <style>
+      main { display: flex; gap: 16px; }
+      article { flex: 2; }
+      aside { flex: 1; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Layout yang rapi membuat halaman mudah dipahami baik oleh manusia maupun mesin pencari.
+
+## Elemen Semantik untuk Layout
+
+```html
+<header>  <!-- kepala halaman -->
+<nav>     <!-- navigasi -->
+<main>    <!-- konten utama (hanya satu) -->
+  <article>...</article>
+  <aside>...</aside>   <!-- sidebar -->
+</main>
+<footer>  <!-- kaki halaman -->
+```
+
+## Flexbox
+
+```css
+.container {
+  display: flex;
+  gap: 16px;
+}
+.item { flex: 1; }
+```
+
+Flexbox cocok untuk tata letak satu dimensi: baris **atau** kolom.
+
+## CSS Grid
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+```
+
+Grid cocok untuk layout dua dimensi: baris **dan** kolom sekaligus.
+
+## Float (Cara Lama)
+
+```css
+.sidebar { float: right; width: 30%; }
+.content { float: left; width: 70%; }
+```
+
+Float masih sering ditemui di kode lama, tapi Flexbox dan Grid lebih disarankan untuk proyek baru.
+
+<div class="note">💡 Gunakan elemen semantik dulu untuk 'makna', lalu CSS untuk 'tampilan'. Keduanya saling melengkapi.</div>
+
+## Try it Yourself
+
+Ubah `grid-template-columns` menjadi `1fr 1fr 1fr` untuk membuat tiga kolom.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 0; }
+  header, footer { background: #222; color: white; padding: 12px 20px; }
+  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; padding: 16px; }
+  .box { background: #eef; padding: 20px; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <header>Header Situsku</header>
+  <div class="row">
+    <div class="box">Konten utama</div>
+    <div class="box">Sidebar</div>
+  </div>
+  <footer>Footer © 2026</footer>
+</body>
+</html>`} />

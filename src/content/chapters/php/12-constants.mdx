@@ -1,0 +1,143 @@
+---
+title: "Konstanta PHP"
+description: "define, const, dan konstanta magic yang tersedia di PHP"
+order: 12
+quiz:
+  - q: "Cara membuat konstanta dengan fungsi adalah…"
+    options: ["const NAME = 1;", "define('NAME', 1);", "let NAME = 1;", "static NAME = 1;"]
+    answer: 1
+    explain: "Fungsi define() membuat konstanta saat runtime."
+  - q: "Konstanta tidak bisa…"
+    options: ["Dibaca", "Diubah nilainya setelah dibuat", "Dipakai dalam fungsi", "Berupa array (PHP 7+)"]
+    answer: 1
+    explain: "Sifat utama konstanta adalah immutable."
+  - q: "`__FILE__` menghasilkan…"
+    options: ["Nama fungsi", "Path lengkap file saat ini", "Nomor baris", "Nama class"]
+    answer: 1
+    explain: "Magic constant ini berisi path absolut file."
+  - q: "Keyword `const` di PHP bisa dipakai untuk…"
+    options: ["Konstanta class dan global", "Hanya variabel", "Hanya function", "Hanya array"]
+    answer: 0
+    explain: "Sejak PHP 5.3, const juga bisa di level global."
+  - q: "`PHP_EOL` berisi…"
+    options: ["Tanda akhir baris sesuai sistem operasi", "Nama PHP", "Path file", "Error terakhir"]
+    answer: 0
+    explain: "Berguna supaya newline konsisten di Linux dan Windows."
+example:
+  code: |
+    <?php
+    define("APP_NAME", "OnBoss Academy");
+    const MAX_ITEM = 10;
+    
+    echo APP_NAME . PHP_EOL;
+    echo __DIR__ . PHP_EOL;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Konstanta mirip variabel, tetapi nilainya **tidak bisa diubah** setelah didefinisikan. Cocok untuk konfigurasi yang tidak bergantung pada input.
+
+## define() vs const
+
+```php
+<?php
+define("APP_NAME", "OnBoss Academy");
+const MAX_ITEM = 10;
+
+echo APP_NAME; // OnBoss Academy
+echo MAX_ITEM; // 10
+```
+
+| Aspek | `define()` | `const` |
+|-------|-----------|---------|
+| Waktu dibuat | Runtime | Compile time |
+| Bisa di dalam if | Ya | Tidak (kecuali blok kondisional khusus) |
+| Nama dinamis | Ya | Tidak |
+| Nilai array | PHP 7+ | PHP 5.6+ |
+| Di dalam class | Tidak | Ya |
+
+```php
+<?php
+if (true) {
+    define("MODE", "dev"); // ✅
+    // const MODE = "dev"; // ❌ di dalam if tidak diperbolehkan
+}
+
+$nama = "DINAMIS";
+define($nama, 42); // ✅ nama konstanta dari variabel
+echo DINAMIS;
+```
+
+## Konstanta Class
+
+```php
+<?php
+class Produk {
+    const PPN = 0.11;
+    const SATUAN = "pcs";
+
+    public function hargaSetelahPajak(float $harga): float {
+        return $harga * (1 + self::PPN);
+    }
+}
+
+echo Produk::PPN;
+echo Produk::SATUAN;
+```
+
+Akses memakai `::` (scope resolution operator). Di dalam class gunakan `self::`, `static::`, atau `parent::`.
+
+## Magic Constants
+
+| Konstanta | Isi |
+|-----------|-----|
+| `__LINE__` | Nomor baris saat ini |
+| `__FILE__` | Path lengkap file |
+| `__DIR__` | Direktori file |
+| `__FUNCTION__` | Nama fungsi |
+| `__CLASS__` | Nama class |
+| `__METHOD__` | Nama class + method |
+| `__NAMESPACE__` | Namespace saat ini |
+
+```php
+<?php
+echo "Error di " . __FILE__ . " baris " . __LINE__;
+```
+
+Nilainya berubah tergantung lokasi pemakaian — itulah sebabnya disebut *magic*.
+
+## Konstanta vs Environment Variable
+
+Untuk konfigurasi yang berbeda per lingkungan (development/production), gunakan `getenv()` atau file `.env`, bukan konstanta:
+
+```php
+<?php
+$dbHost = getenv("DB_HOST") ?: "localhost";
+define("DB_HOST", $dbHost);
+```
+
+<div class="note">💡 `define()` menghasilkan konstanta global. `const` di dalam namespace akan menjadi `Namespace\NAMA`, jadi pemanggilannya juga perlu diawali namespace.</div>
+
+## Di Dunia Nyata
+
+- Versi aplikasi, batas upload, dan nama session disimpan sebagai konstanta.
+- `PHP_EOL` menjaga format log tetap benar di berbagai sistem operasi.
+- Konstanta class dipakai untuk status: `Order::STATUS_LUNAS`.
+
+## Try it Yourself
+
+Ubah nilai MAX_ITEM atau tambahkan konstanta class baru pada contoh ini.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+define("APP_NAME", "OnBoss Academy");
+const MAX_ITEM = 10;
+
+echo APP_NAME . PHP_EOL;
+echo "Maksimal item: " . MAX_ITEM . PHP_EOL;
+echo "File: " . basename(__FILE__) . PHP_EOL;
+echo "Baris: " . __LINE__ . PHP_EOL;
+
+class Produk {
+    const PPN = 0.11;
+}
+echo "PPN: " . (Produk::PPN * 100) . "%" . PHP_EOL;`} />

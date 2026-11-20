@@ -1,0 +1,71 @@
+---
+title: "Regresi Linier Multiple"
+description: "beberapa fitur, koefisien, intercept, multikolinearitas, dan interpretasi"
+order: 15
+quiz:
+  - q: "Regresi multiple memiliki…"
+    options: ["Hanya kategori", "Satu fitur", "Beberapa fitur", "Tanpa fitur"]
+    answer: 2
+    explain: "y = b0 + b1x1 + b2x2 + ..."
+  - q: "Koefisien b1 berarti…"
+    options: ["Jumlah fitur", "Error model", "Perubahan y per unit x1 dengan fitur lain tetap", "Nilai minimum y"]
+    answer: 2
+    explain: "Interpretasi \"ceteris paribus\"."
+  - q: "Multikolinearitas terjadi ketika…"
+    options: ["Data kosong", "Label hilang", "Std nol", "Fitur saling berkorelasi kuat"]
+    answer: 3
+    explain: "Koefisien jadi tidak stabil."
+  - q: "Intercept adalah nilai y saat…"
+    options: ["Data uji", "Semua x = 0", "x maksimum", "Mean x"]
+    answer: 1
+    explain: "Bisa tidak bermakna secara fisik."
+  - q: "Sebelum regresi multiple, sebaiknya…"
+    options: ["Menambah label", "Membuang data uji", "Cek korelasi antarfitur", "Menghapus semua fitur"]
+    answer: 2
+    explain: "Mendeteksi redundancy."
+example:
+  code: |
+    # y = 2 + 3*x1 + 5*x2
+    x1,x2=2,4
+    print(2+3*x1+5*x2)
+---
+
+## Persamaan
+
+```text
+y = b0 + b1·x1 + b2·x2 + ... + error
+```
+
+Contoh prediksi harga rumah memakai luas, jumlah kamar, dan jarak ke pusat kota.
+
+## Hitung Manual Sederhana
+
+```python
+b0, b1, b2 = 2, 3, 5
+x1, x2 = 2, 4
+y = b0 + b1*x1 + b2*x2
+print(y)  # 28
+```
+
+## Interpretasi Koefisien
+
+Dengan model di atas, menambah `x1` satu unit menaikkan prediksi 3 — **selama x2 tetap**. Kalau x1 dan x2 bergerak bersama, interpretasi ini tidak bisa dipercaya.
+
+## Multikolinearitas
+
+| Gejala | Penanganan |
+| --- | --- |
+| Dua fitur korelasi > 0.9 | buang salah satu |
+| Koefisien berubah drastis | gabungkan fitur / regularisasi |
+| Tanda koefisien aneh | cek skalanya |
+
+<div class="note">💡 scaling fitur penting pada regresi multiple agar koefisien bisa dibandingkan dan optimasi numerik stabil.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`b0, b1, b2 = 2, 3, 5
+print("Pola: y = 2 + 3*x1 + 5*x2")
+for x1, x2 in [(1,1), (2,4), (3,0)]:
+    print(f"x1={x1}, x2={x2} -&gt; y={b0 + b1*x1 + b2*x2}")`}</code></pre>

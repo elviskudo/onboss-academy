@@ -1,0 +1,125 @@
+---
+title: "Membaca dan Menulis File"
+description: "CSV, TSV, Excel, RDS, koneksi teks, dan pertimbangan encoding"
+order: 22
+quiz:
+  - q: "Fungsi bawaan R untuk membaca CSV adalah…"
+    options: ["read.csv()", "load.csv()", "open.csv()", "import.csv()"]
+    answer: 0
+    explain: "read.csv() adalah pembungkus read.table dengan pemisah koma dan header TRUE."
+  - q: "Secara default read.csv menganggap baris pertama sebagai…"
+    options: ["Data", "Header", "Komentar", "Indeks"]
+    answer: 1
+    explain: "Argumen header default-nya TRUE."
+  - q: "Format RDS berguna untuk…"
+    options: ["Menyimpan satu objek R lengkap dengan atribut", "Menyimpan gambar", "Menyimpan query SQL", "Mengompres video"]
+    answer: 0
+    explain: "saveRDS/ readRDS menyimpan satu objek R apa pun dengan tipe dan atributnya."
+  - q: "Untuk membaca file Excel .xlsx dipakai paket…"
+    options: ["readxl", "csvx", "xlsx only", "excelreader"]
+    answer: 0
+    explain: "readxl::read_excel membaca xlsx tanpa memerlukan Java."
+  - q: "Argumen stringsAsFactors = FALSE membuat kolom teks menjadi…"
+    options: ["Factor", "Character", "Numeric", "Date"]
+    answer: 1
+    explain: "Teks tetap bertipe character; sejak R 4.0 ini adalah default."
+example:
+  code: |
+    df <- read.csv("data.csv", stringsAsFactors=FALSE)
+    write.csv(df, "salinan.csv", row.names=FALSE)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Analisis dimulai dan berakhir dengan data di disk. Memilih fungsi dan argumen yang tepat mencegah tipe kolom berubah tanpa sengaja.
+
+## CSV dan TSV
+
+```r
+df <- read.csv("data.csv", header = TRUE, stringsAsFactors = FALSE)
+write.csv(df, "bersih.csv", row.names = FALSE)
+
+tab <- read.delim("data.tsv", quote = "")
+```
+
+`row.names = FALSE` mencegah kolom nomor baris tambahan muncul saat file ditulis ulang — kesalahan klasik yang menghasilkan kolom `X` di file berikutnya.
+
+## Argumen yang Sering Dibutuhkan
+
+| Argumen | Fungsi |
+| --- | --- |
+| `sep` | pemisah antar kolom |
+| `header` | apakah ada baris judul |
+| `na.strings` | teks yang dianggap missing |
+| `fileEncoding` | encoding sumber |
+| `colClasses` | paksa tipe kolom |
+| `check.names = FALSE` | jangan ubah nama kolom |
+| `quote` | karakter pembungkus teks |
+
+```r
+df <- read.csv("data.csv", na.strings = c("", "NA", "-"),
+               colClasses = c(id = "character", tanggal = "character"),
+               fileEncoding = "UTF-8")
+```
+
+## Excel
+
+```r
+library(readxl)
+df <- read_excel("laporan.xlsx", sheet = "Data", skip = 2)
+excel_sheets("laporan.xlsx")
+```
+
+`skip` berguna bila baris judul bukan di baris pertama, misalnya ada judul laporan dan tanggal di atasnya.
+
+## RDS dan RData
+
+```r
+saveRDS(model, "model.rds")
+model2 <- readRDS("model.rds")
+
+save(df, model, file = "sesi.RData")
+load("sesi.RData")
+```
+
+`saveRDS()` menyimpan **satu** objek dan memberi nama saat dibaca. `save()` menyimpan **beberapa** objek beserta nama aslinya dan mengembalikannya ke lingkungan saat `load()`.
+
+## Teks dan JSON
+
+```r
+baris <- readLines("catatan.txt", encoding = "UTF-8")
+writeLines(c("baris satu", "baris dua"), "hasil.txt")
+
+library(jsonlite)
+data <- fromJSON("respons.json")
+toJSON(data, pretty = TRUE)
+```
+
+## Path yang Aman
+
+```r
+file.path("data", "2026", "penjualan.csv")
+list.files("data", pattern = "\.csv$", full.names = TRUE)
+```
+
+`file.path()` membuat path sesuai platform. `full.names = TRUE` menghasilkan path lengkap sehingga `lapply()` bisa langsung membaca semua file.
+
+<div class="note">💡 Simpan data mentah apa adanya dan tulis hasil pembersihan ke file baru. Menimpa sumber asli membuat proses tidak bisa diaudit ulang.</div>
+
+## Di Dunia Nyata
+
+- **Ekspor ERP**: CSV dengan `;` sebagai pemisah pada sistem Eropa.
+- **Laporan Excel**: `read_excel` untuk sheet yang diberi jumlah baris header.
+- **Model produksi**: `saveRDS` menyimpan model yang akan dimuat API.
+- **Batch processing**: `list.files` + `lapply` memproses ratusan file sekaligus.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`df <- data.frame(id = c("A1", "A2"), nilai = c(80, NA), stringsAsFactors = FALSE)
+write.csv(df, "contoh.csv", row.names = FALSE)
+kembali <- read.csv("contoh.csv", na.strings = c("", "NA"))
+print(kembali)
+saveRDS(kembali, "contoh.rds")
+print(readRDS("contoh.rds"))
+cat("Path:", file.path("data", "2026", "penjualan.csv"), "\n")`} />

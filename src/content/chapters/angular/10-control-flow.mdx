@@ -1,0 +1,107 @@
+---
+title: "Control Flow @if & @for"
+description: "sintaks kontrol baru Angular 17+, @switch, dan perbandingan dengan *ngIf"
+order: 10
+quiz:
+  - q: "Sintaks control flow baru Angular diperkenalkan di versi…"
+    options: ["8", "15", "17", "12"]
+    answer: 2
+    explain: "Angular 17 membawa blok @if, @for, dan @switch bawaan."
+  - q: "Blok alternatif dari @if adalah…"
+    options: ["otherwise", "@else", "else", "@else if"]
+    answer: 1
+    explain: "Ditulis `@else { ... }` langsung setelah blok @if."
+  - q: "Pada @for, variabel indeks diambil dengan…"
+    options: ["let i = index", "#i", "@index", "track id; let i = $index"]
+    answer: 3
+    explain: "`$index` menyediakan posisi; `track` wajib untuk identitas stabil."
+  - q: "Track expression berguna untuk…"
+    options: ["Mengirim request", "Menjaga identitas tiap item saat daftar berubah", "Mengurutkan data", "Mengubah warna"]
+    answer: 1
+    explain: "Sama seperti key di React — mencegah DOM dibuat ulang tanpa perlu."
+  - q: "Blok @empty pada @for dipakai saat…"
+    options: ["Array kosong", "Terjadi error", "Data masih dimuat", "Ada lebih dari 10 item"]
+    answer: 0
+    explain: "Fallback yang jelas untuk daftar kosong."
+example:
+  code: |
+    @if (user) {
+      <p>Halo {{ user.nama }}</p>
+    } @else {
+      <p>Silakan login.</p>
+    }
+
+    @for (item of items; track item.id) {
+      <li>{{ item.nama }}</li>
+    } @empty {
+      <li>Belum ada data.</li>
+    }
+---
+
+Angular 17 memperkenalkan sintaks control flow yang lebih mudah dibaca daripada direktif struktural lama.
+
+## @if
+
+```html
+@if (sudahLogin) {
+  <p>Selamat datang kembali!</p>
+} @else if (memuat) {
+  <p>Memeriksa sesi…</p>
+} @else {
+  <a routerLink="/login">Masuk</a>
+}
+```
+
+## @for
+
+```html
+<ul>
+  @for (produk of produkList; track produk.id; let i = $index) {
+    <li>
+      {{ i + 1 }}. {{ produk.nama }} — Rp{{ produk.harga }}
+    </li>
+  } @empty {
+    <li>Belum ada produk.</li>
+  }
+</ul>
+```
+
+`track` bersifat wajib. Pilih ID yang stabil, jangan index bila daftar bisa diurut ulang.
+
+## @switch
+
+```html
+@switch (status) {
+  @case ("lunas") { <span class="hijau">Lunas</span> }
+  @case ("pending") { <span class="kuning">Menunggu</span> }
+  @default { <span>Status tidak diketahui</span> }
+}
+```
+
+## Perbandingan dengan Direktif Lama
+
+| Lama | Baru |
+|------|------|
+| `*ngIf="kondisi"` | `@if (kondisi) { }` |
+| `*ngFor="let i of items"` | `@for (i of items; track i.id) { }` |
+| `ngSwitch` | `@switch` |
+
+Keduanya masih didukung, tapi blok baru lebih disarankan untuk proyek baru.
+
+<div class="note">💡 Control flow baru tidak perlu mengimpor `CommonModule` untuk `@if`/`@for` — compiler Angular menangani langsung bloknya.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`@if (user) {
+  <p>Halo {{ user.nama }}</p>
+} @else {
+  <p>Silakan login.</p>
+}
+
+@for (item of items; track item.id) {
+  <li>{{ item.nama }}</li>
+} @empty {
+  <li>Belum ada data.</li>
+}`}</code></pre>

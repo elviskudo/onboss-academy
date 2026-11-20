@@ -1,0 +1,80 @@
+---
+title: "Keamanan Cloud"
+description: "IAM, prinsip least privilege, dan perlindungan konfigurasi cloud"
+order: 19
+quiz:
+  - q: "IAM mengatur…"
+    options: ["Kecepatan jaringan", "Ukuran disk", "Versi browser", "Siapa boleh melakukan apa pada resource"]
+    answer: 3
+    explain: "Identity and Access Management menjadi pusat kontrol akses cloud."
+  - q: "Prinsip least privilege berarti…"
+    options: ["Memberi izin minimum yang cukup untuk bekerja", "Memberi semua izin agar mudah", "Menghapus semua peran", "Menggunakan akun root"]
+    answer: 0
+    explain: "Izin yang berlebih memperparah dampak akun yang ditembus."
+  - q: "Akun root sebaiknya…"
+    options: ["Disimpan di browser", "Dikunci dan tidak dipakai harian", "Dipakai untuk semua deploy", "Dibagikan ke tim"]
+    answer: 1
+    explain: "Gunakan peran khusus dengan MFA dan audit."
+  - q: "Bucket penyimpanan publik sering menyebabkan…"
+    options: ["Biaya turun", "Enkripsi otomatis", "Kebocoran data", "Latency tinggi"]
+    answer: 2
+    explain: "Konfigurasi default tiap penyedia berbeda, jadi perlu diverifikasi."
+  - q: "Cloud security posture management (CSPM) membantu…"
+    options: ["Menulis aplikasi", "Mengganti DNS", "Menambah ukuran instance", "Menemukan konfigurasi berisiko"]
+    answer: 3
+    explain: "CSPM memindai resource terhadap baseline keamanan."
+example:
+  code: |
+    Kebijakan IAM (konsep):
+      peran: deployer
+      izinkan: s3:PutObject pada bucket/app/*
+      tolak: s3:DeleteBucket
+      syarat: MFA aktif
+---
+
+Cloud memindahkan sebagian tanggung jawab ke penyedia, tetapi **konfigurasi** tetap menjadi tanggung jawab pelanggan. Kesalahan izin adalah penyebab kebocoran yang paling sering.
+
+## Model Tanggung Jawab Bersama
+
+| Area | Penyedia | Pelanggan |
+|---|---|---|
+| Pusat data | ✓ | — |
+| Hypervisor | ✓ | — |
+| Sistem operasi guest | tergantung layanan | ✓ |
+| Aplikasi & data | — | ✓ |
+| IAM & jaringan | sebagian | ✓ |
+
+## IAM yang Sehat
+
+1. Gunakan **peran**, bukan kunci akses jangka panjang bila bisa.
+2. Beri izin spesifik pada resource tertentu.
+3. Wajib MFA untuk akun manusia.
+4. Rotasi dan cabut kunci yang tidak terpakai.
+5. Audit akses secara berkala.
+
+## Contoh Izin Berlebih
+
+```json
+{ "Action": "*", "Resource": "*" }
+```
+
+Izin seperti ini memberi penyerang kendali penuh bila kunci bocor. Persempit menjadi daftar aksi dan ARN yang benar-benar dibutuhkan.
+
+## Lindungi Penyimpanan
+
+- Pastikan bucket tidak publik kecuali memang untuk aset statis.
+- Aktifkan enkripsi at-rest dan in-transit.
+- Gunakan versioning agar penghapusan tidak permanen.
+- Terapkan lifecycle rule untuk mengontrol biaya dan retensi.
+
+<div class="note">💡 Kunci API yang tertanam di aplikasi mobile atau repo git harus dianggap sudah bocor. Cabut dan terbitkan ulang, jangan hanya menghapus dari commit terakhir.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Daftar pemeriksaan cloud:
+  [ ] root diamankan dengan MFA
+  [ ] tidak ada kunci akses lama
+  [ ] bucket tidak publik
+  [ ] enkripsi aktif
+  [ ] log audit tersimpan`}</code></pre>

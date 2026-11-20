@@ -1,0 +1,66 @@
+---
+title: "Scatter Plot untuk Machine Learning"
+description: "hubungan dua variabel, arah, kekuatan, nonlinearitas, dan clustering visual"
+order: 13
+quiz:
+  - q: "Scatter plot menampilkan…"
+    options: ["Tabel", "Pasangan nilai dua variabel", "Frekuensi satu variabel", "Teks"]
+    answer: 1
+    explain: "Satu titik = satu observasi."
+  - q: "Pola titik menaik dari kiri ke kanan menunjukkan…"
+    options: ["Tidak ada hubungan", "Error", "Korelasi positif", "Korelasi negatif"]
+    answer: 2
+    explain: "Naiknya x diikuti naiknya y."
+  - q: "Pola berbentuk busana menunjukkan…"
+    options: ["Data rusak", "Korelasi nol", "Outlier", "Hubungan nonlinear"]
+    answer: 3
+    explain: "Pearson bisa kecil meski ada pola kuat."
+  - q: "Gugus titik yang terpisah bisa mengisyaratkan…"
+    options: ["Error regex", "Klaster", "Outlier tunggal", "Nilai kosong"]
+    answer: 1
+    explain: "Dasar visual unsupervised learning."
+  - q: "Sebelum regresi, scatter plot berguna untuk…"
+    options: ["Menyimpan model", "Membuat token", "Memeriksa apakah hubungan linear", "Menghapus label"]
+    answer: 2
+    explain: "Asumsi linear dapat diverifikasi secara visual."
+example:
+  code: |
+    titik=[(1,2),(2,4),(3,6),(4,8)]
+    for x,y in titik:
+        print(" "*(x*2)+f"({x},{y})")
+---
+
+## Membaca Pola
+
+| Bentuk | Interpretasi |
+| --- | --- |
+| Naik | korelasi positif |
+| Turun | korelasi negatif |
+| Awacan | hubungan lemah/tiada |
+| Lengkung | hubungan nonlinear |
+| Gugus | kemungkinan klaster |
+
+## Scatter Tekstual
+
+```python
+titik = [(1, 2), (2, 4), (3, 6), (4, 9)]
+for x, y in titik:
+    print(" " * (x * 3) + f"({x},{y})")
+```
+
+Versiproduksi memakai matplotlib, tetapi pola dasarnya tetap sama.
+
+## Outlier dan Leverage
+
+Titik yang jauh di kanan atas bisa menarik garis regresi dengan kuat. Ini disebut **leverage point**. Periksa apakah ia data sah atau kesalahan input.
+
+<div class="note">💡 Selalu lihat scatter plot sebelum mempercayai koefisien korelasi. Angka tunggal tidak bisa membedakan hubungan linear dan lengkung.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`titik = [(1,2), (2,4), (3,5), (4,8), (5,11)]
+for x, y in titik:
+    baris = " " * (x*3) + f"({x},{y})"
+    print(baris)`}</code></pre>

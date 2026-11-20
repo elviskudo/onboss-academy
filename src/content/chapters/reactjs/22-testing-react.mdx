@@ -1,0 +1,118 @@
+---
+title: "Testing Komponen React"
+description: "Vitest, React Testing Library, query berbasis peran, dan test interaksi"
+order: 22
+quiz:
+  - q: "React Testing Library menganjurkan query berdasarkan…"
+    options: ["Nama kelas CSS", "Struktur DOM persis", "Peran dan teks yang terlihat user", "ID internal komponen"]
+    answer: 2
+    explain: "Ini membuat test tetap lolos saat implementasi internal berubah."
+  - q: "Fungsi getByRole mencari elemen berdasarkan…"
+    options: ["Nama file", "Atribut role/a11y", "Warna", "Ukuran"]
+    answer: 1
+    explain: "Tombol punya role button secara bawaan."
+  - q: "Untuk simulasi klik dipakai…"
+    options: ["element.click() murni", "console.log", "setTimeout", "fireEvent.click atau userEvent.click"]
+    answer: 3
+    explain: "userEvent lebih mendekati perilaku pengguna sungguhan."
+  - q: "Vitest adalah…"
+    options: ["Browser", "Test runner cepat untuk ekosistem Vite", "Framework CSS", "Library state"]
+    answer: 1
+    explain: "API-nya mirip Jest."
+  - q: "Test yang baik biasanya memeriksa…"
+    options: ["Hasil yang teramati user", "Jumlah baris kode", "Nama variabel internal", "Warna hex"]
+    answer: 0
+    explain: "Uji perilaku, bukan detail implementasi."
+example:
+  code: |
+    import { render, screen } from "@testing-library/react";
+    import userEvent from "@testing-library/user-event";
+
+    test("tombol menambah jumlah", async () => {
+      render(<Counter />);
+      await userEvent.click(screen.getByRole("button", { name: /tambah/i }));
+      expect(screen.getByText(/1/)).toBeInTheDocument();
+    });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Test membuat perubahan di masa depan lebih aman. Fokusnya: **apa yang dilihat dan dilakukan user**.
+
+## Menyiapkan
+
+```bash
+npm i -D vitest @testing-library/react @testing-library/user-event jsdom
+```
+
+```js
+// vitest.config.js
+export default { test: { environment: "jsdom", globals: true } };
+```
+
+## Test Pertama
+
+```jsx
+// Counter.jsx
+export default function Counter() {
+  const [n, setN] = React.useState(0);
+  return (
+    <div>
+      <output>{n}</output>
+      <button onClick={() => setN(n + 1)}>Tambah</button>
+    </div>
+  );
+}
+```
+
+```jsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import Counter from "./Counter";
+
+test("menampilkan 0 lalu bertambah", async () => {
+  render(<Counter />);
+  expect(screen.getByRole("status")).toHaveTextContent("0");
+
+  await userEvent.click(screen.getByRole("button", { name: "Tambah" }));
+  expect(screen.getByRole("status")).toHaveTextContent("1");
+});
+```
+
+Catatan: elemen `<output>` punya peran `status`, sehingga lebih stabil daripada mencari tag.
+
+## Query yang Disarankan
+
+| Prioritas | Contoh |
+|-----------|--------|
+| 1 | `getByRole` |
+| 2 | `getByLabelText` |
+| 3 | `getByText` |
+| 4 | `getByTestId` (terakhir) |
+
+## Test Form
+
+```jsx
+await userEvent.type(screen.getByLabelText(/nama/i), "Sari");
+await userEvent.click(screen.getByRole("button", { name: /simpan/i }));
+expect(screen.getByText(/halo, sari/i)).toBeInTheDocument();
+```
+
+<div class="note">💡 Hindari test yang mengecek state internal atau snapshot besar. Test yang terlalu rapuh justru memperlambat tim saat UI diperbarui.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi alur test: render -> klik -> assert
+let tampilan = 0;
+function klikTambah() { tampilan += 1; }
+
+function assert(aktual, ekspektasi, pesan) {
+  if (aktual !== ekspektasi) throw new Error(pesan);
+  console.log("✓", pesan);
+}
+
+assert(tampilan, 0, "awal 0");
+klikTambah();
+assert(tampilan, 1, "setelah klik jadi 1");`} />

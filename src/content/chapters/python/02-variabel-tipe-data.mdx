@@ -95,7 +95,7 @@ Python melakukan *promotion* otomatis (coercion) hanya di operasi aritmatika: `2
 2 ** 10 # 1024 — pangkat
 ```
 
-**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `<=`
+**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `&lt;=`
 **3 operator logika**: `and` `or` `not` (short-circuit: `x != 0 and 10/x > 1` tidak error saat `x == 0`)
 **Operator penugasan**: `=` plus varian gabungan seperti `+=`, `-=`, `*=`, `//=`.
 **Operator keanggotaan & identitas**: `in`, `not in`, `is`, `is not`.
@@ -157,6 +157,10 @@ unik = {1, 2, 2, 3}      # set — {1, 2, 3}
 - Cek duplikat email peserta webinar dengan `set` — ribuan data jadi unik dalam satu baris.
 
 <div class="note">💡 Float di Python adalah bilangan biner: `0.1 + 0.2` menghasilkan `0.30000000000000004`. Untuk uang, simpan dalam `int` (rupiah bulat) atau bulatkan dengan `round(total, 2)`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`kota = {"Jakarta": 10, "Bandung": 7, "Surabaya": 6}
 kota["Medan"] = 4

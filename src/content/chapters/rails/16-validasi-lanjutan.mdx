@@ -1,0 +1,111 @@
+---
+"title": "Validasi Lanjutan"
+"description": "Validasi kustom, konteks, pesan error, dan callback pada model"
+"order": 16
+"quiz":
+- "q": "Validasi yang memastikan kolom tidak kosong adalah…"
+  "options":
+  - "validates :nama, required: true"
+  - "validates :nama, presence: true"
+  - "validates :nama, filled: true"
+  - "validate :nama"
+  "answer": 1
+  "explain": "presence: true menolak nil dan string kosong."
+- "q": "Cara menampilkan error validasi di view adalah…"
+  "options":
+  - "@article.messages"
+  - "@article.error_list"
+  - "@article.errors.full_messages"
+  - "flash[:error]"
+  "answer": 2
+  "explain": "errors.full_messages berisi array kalimat error siap ditampilkan."
+- "q": "Opsi on: :create berarti validasi…"
+  "options":
+  - "Hanya saat dihapus"
+  - "Selalu"
+  - "Hanya di test"
+  - "Hanya saat dibuat"
+  "answer": 3
+  "explain": "Konteks create membatasi kapan validasi dijalankan."
+- "q": "Metode kustom untuk validasi yang kompleks adalah…"
+  "options":
+  - "validate :nama_metode"
+  - "validates :nama_metode"
+  - "validation :nama_metode"
+  - "before_save always"
+  "answer": 0
+  "explain": "validate (tanpa s) menerima nama method kustom."
+- "q": "Metode yang mengembalikan false saat validasi gagal adalah…"
+  "options":
+  - "save!"
+  - "save"
+  - "create!"
+  - "update!"
+  "answer": 1
+  "explain": "save mengembalikan false; varian dengan tanda seru melempar exception."
+"example":
+  "code": "class Article &lt; ApplicationRecord\n  validates :title, presence: true, length: { minimum: 5 }\n  validates :slug, uniqueness: { case_sensitive: false }\n  validate :tanggal_tidak_masa_depan\n\n  private\n  def tanggal_tidak_masa_depan\n    return if published_at.blank?\n    errors.add(:published_at, \"tidak boleh di masa depan\") if published_at > Time.current\n  end\nend\n"
+---
+
+
+## Validasi Bawaan
+
+```ruby
+class Article < ApplicationRecord
+  validates :title, presence: true, length: { minimum: 5 }
+  validates :slug, uniqueness: { case_sensitive: false }
+  validate :tanggal_tidak_masa_depan
+
+  private
+  def tanggal_tidak_masa_depan
+    return if published_at.blank?
+    errors.add(:published_at, "tidak boleh di masa depan") if published_at > Time.current
+  end
+end
+```
+
+```ruby
+validates :email, presence: true, uniqueness: true
+validates :usia, numericality: { greater_than_or_equal_to: 17 }
+validates :title, length: { in: 5..100 }
+```
+
+Rails menyediakan validator untuk keberadaan, keunikan, format, panjang, dan tipe angka. Semua error terkumpul di `objek.errors`.
+
+## Validator Kustom
+
+```ruby
+validate :tanggal_tidak_masa_depan
+
+def tanggal_tidak_masa_depan
+  return if published_at.blank?
+  errors.add(:published_at, "tidak boleh di masa depan") if published_at > Time.current
+end
+```
+
+Gunakan `validate` (tunggal) untuk method kustom, `validates` (jamak) untuk validator bawaan.
+
+## Konteks dan Pesan
+
+| Opsi | Fungsi | Contoh |
+|---|---|---|
+| `on:` | membatasi konteks | `on: :create` |
+| `message:` | mengganti pesan default | `message: "wajib diisi"` |
+| `allow_nil:` | lewat jika nil | `allow_nil: true` |
+| `if:` | validasi bersyarat | `if: :published?` |
+
+## Callback vs Validasi
+
+`before_validation` bisa membersihkan data sebelum validasi berjalan:
+
+```ruby
+before_validation :normalisasi_slug
+
+def normalisasi_slug
+  self.slug = title.parameterize if title.present?
+end
+```
+
+Callback dipakai untuk **mengubah** data, validasi untuk **menolak** data. Jangan mencampur keduanya dalam satu method.
+
+<div class="note">💡 Uniqueness validator rentan race condition. Tambahkan index unik di database — validasi memberi pesan ramah, index memberi jaminan di tingkat database.</div>

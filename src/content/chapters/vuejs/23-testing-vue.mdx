@@ -1,0 +1,118 @@
+---
+title: "Testing Vue"
+description: "Vitest, Vue Test Utils, mount, dan test interaksi"
+order: 23
+quiz:
+  - q: "Vue Test Utils dipakai untuk…"
+    options: ["Mengirim API", "Membuat rute", "Merender komponen dalam lingkungan test", "Membuat CSS"]
+    answer: 2
+    explain: "Fungsi utamanya mount/shallowMount."
+  - q: "Vitest adalah…"
+    options: ["Browser", "Test runner yang cepat dan kompatibel dengan Vite", "Framework CSS", "Library state"]
+    answer: 1
+    explain: "Sering dipakai bersama Vue Test Utils."
+  - q: "Untuk meniru ketikan pada input, gunakan…"
+    options: ["click()", "trigger('focus')", "render()", "setValue()"]
+    answer: 3
+    explain: "Misalnya await input.setValue('Sari')."
+  - q: "Untuk meniru klik, gunakan…"
+    options: ["mount()", "trigger('click')", "setValue()", "emit()"]
+    answer: 1
+    explain: "Kembalikan Promise, jadi gunakan await."
+  - q: "Test yang baik memeriksa…"
+    options: ["Perilaku yang terlihat pengguna", "Nama variabel internal", "Jumlah baris kode", "Warna hex"]
+    answer: 0
+    explain: "Lebih tahan terhadap refactor."
+example:
+  code: |
+    const wrapper = mount(Counter);
+    await wrapper.find('button').trigger('click');
+    expect(wrapper.text()).toContain('1');
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Test memberi kepercayaan diri saat mengubah kode. Vue Test Utils memudahkan merender komponen tanpa browser sungguhan.
+
+## Persiapan
+
+```bash
+npm i -D vitest @vue/test-utils jsdom
+```
+
+```js
+// vitest.config.js
+export default {
+  test: { environment: 'jsdom', globals: true },
+};
+```
+
+## Test Komponen
+
+```vue
+<!-- Counter.vue -->
+<script setup>
+import { ref } from 'vue'
+const n = ref(0)
+</script>
+
+<template>
+  <output>{{ n }}</output>
+  <button @click="n++">Tambah</button>
+</template>
+```
+
+```js
+import { mount } from '@vue/test-utils'
+import { test, expect } from 'vitest'
+import Counter from './Counter.vue'
+
+test('tombol menambah angka', async () => {
+  const wrapper = mount(Counter)
+  expect(wrapper.text()).toContain('0')
+
+  await wrapper.find('button').trigger('click')
+  expect(wrapper.text()).toContain('1')
+})
+```
+
+## Test Form
+
+```js
+const input = wrapper.find('input');
+await input.setValue('Sari');
+await wrapper.find('form').trigger('submit.prevent');
+expect(wrapper.text()).toContain('Halo, Sari');
+```
+
+## Mock Store / Router
+
+```js
+const keranjang = { items: [], tambah: vi.fn() };
+
+mount(Komponen, {
+  global: {
+    provide: { [KunciKeranjang]: keranjang },
+    mocks: { $router: { push: vi.fn() } },
+  },
+});
+```
+
+<div class="note">💡 Uji satu perilaku per test dan beri nama yang menjelaskan skenario. Test yang gagal lalu harus langsung memberi tahu apa yang rusak.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi alur test mount -> trigger -> assert
+let tampilan = 0;
+function triggerKlik() { tampilan++; }
+
+function assert(aktual, ekspektasi, pesan) {
+  if (aktual !== ekspektasi) throw new Error(pesan);
+  console.log("✓", pesan);
+}
+
+assert(tampilan, 0, "awal 0");
+triggerKlik();
+assert(tampilan, 1, "setelah klik 1");`} />

@@ -1,0 +1,115 @@
+---
+"title": "Asosiasi Lanjutan"
+"description": "has_many through, dependent, polymorphic, dan inverse_of pada model"
+"order": 14
+"quiz":
+- "q": "Asosiasi untuk relasi many-to-many lewat tabel penghubung adalah…"
+  "options":
+  - "has_many :through"
+  - "has_one :through"
+  - "belongs_to"
+  - "has_many biasa"
+  "answer": 0
+  "explain": "Model penghubung memetakan dua model dan diakses lewat has_many :through."
+- "q": "Opsi dependent: :destroy berarti…"
+  "options":
+  - "Menghapus tabel"
+  - "Turut menghapus record terkait"
+  - "Membatalkan migrasi"
+  - "Mengubah kolom"
+  "answer": 1
+  "explain": "Saat induk dihapus, child yang terkait ikut dihapus lewat callback."
+- "q": "Asosiasi polymorphic dipakai saat…"
+  "options":
+  - "Satu model bisa dimiliki banyak tipe model lain"
+  - "Semua model punya tipe sama"
+  - "Database tidak punya foreign key"
+  - "Ingin query lebih cepat"
+  "answer": 0
+  "explain": "Contoh: Comment bisa dimiliki Article maupun Video."
+- "q": "Foreign key untuk belongs_to :author secara bawaan adalah…"
+  "options":
+  - "author_key"
+  - "author_id"
+  - "user_id"
+  - "owner_id"
+  "answer": 1
+  "explain": "Rails menyimpulkan author_id dari nama asosiasi."
+- "q": "Opsi inverse_of berguna untuk…"
+  "options":
+  - "Mengganti primary key"
+  - "Menghubungkan dua sisi asosiasi dalam memori"
+  - "Menghapus duplikat baris"
+  - "Mengubah tipe kolom"
+  "answer": 1
+  "explain": "inverse_of membuat perubahan di satu objek terlihat di objek lawannya sebelum disimpan."
+"example":
+  "code": "class Author &lt; ApplicationRecord\n  has_many :articles, dependent: :destroy\n  has_many :categories, through: :articles\nend\n\nclass Article &lt; ApplicationRecord\n  belongs_to :author\n  has_many :comments, as: :commentable, dependent: :destroy\n  has_many :article_categories\n  has_many :categories, through: :article_categories\nend\n"
+---
+
+## Relasi Satu ke Banyak
+
+```ruby
+class Author < ApplicationRecord
+  has_many :articles, dependent: :destroy
+  has_many :categories, through: :articles
+end
+
+class Article < ApplicationRecord
+  belongs_to :author
+  has_many :comments, as: :commentable, dependent: :destroy
+  has_many :article_categories
+  has_many :categories, through: :article_categories
+end
+```
+
+```ruby
+class Author < ApplicationRecord
+  has_many :articles, dependent: :destroy
+end
+
+class Article < ApplicationRecord
+  belongs_to :author
+end
+```
+
+Rails mengharapkan kolom `author_id` di tabel `articles`. Opsi `dependent: :destroy` menjaga agar tidak ada artikel yatim saat penulis dihapus.
+
+## Many-to-Many dengan Model Penghubung
+
+```ruby
+class Article < ApplicationRecord
+  has_many :article_categories
+  has_many :categories, through: :article_categories
+end
+```
+
+`article_categories` adalah model penghubung berisi `article_id` dan `category_id`. Lewat `through`, kamu bisa memanggil `article.categories` seolah relasi langsung.
+
+| Asosiasi | Arah | Contoh |
+|---|---|---|
+| `belongs_to` | child → parent | `article.author` |
+| `has_many` | parent → banyak child | `author.articles` |
+| `has_one` | parent → satu child | `user.profile` |
+| `has_many :through` | lewat model penghubung | `article.categories` |
+| `has_many :as` | polymorphic | `comment.commentable` |
+
+## Polymorphic
+
+```ruby
+class Comment < ApplicationRecord
+  belongs_to :commentable, polymorphic: true
+end
+```
+
+Tabel `comments` butuh dua kolom: `commentable_id` dan `commentable_type`. Kolom type menyimpan nama kelas seperti `"Article"` atau `"Video"`.
+
+## Inverse dan Autosave
+
+```ruby
+has_many :articles, inverse_of: :author
+```
+
+Dengan `inverse_of`, `author.articles.build` langsung mengenali `author`-nya tanpa queries tambahan. Sementara `autosave: true` menyimpan record terkait otomatis saat induk disimpan.
+
+<div class="note">💡 Pilih <code>dependent: :restrict_with_error</code> bila data child tidak boleh dihapus sembarangan — Rails akan menolak penghapusan induk dan memberi error yang ramah pengguna.</div>

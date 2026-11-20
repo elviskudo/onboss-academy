@@ -115,6 +115,10 @@ Setiap index memakai disk dan harus diperbarui saat INSERT/UPDATE/DELETE. Hindar
 
 <div class="note">💡 Demo editor memakai SQLite, jadi contoh SELECT berjalan tetapi DDL/index khusus MySQL harus diuji di MySQL asli. Index terbaik mengikuti query nyata, bukan sekadar kolom yang “terlihat penting”.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT dept,
        COUNT(*) AS jumlah,
        MAX(gaji) AS termahal

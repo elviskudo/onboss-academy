@@ -1,0 +1,158 @@
+---
+"title": "Proyek Mini: Aplikasi Cuaca Sederhana"
+"description": "Menggabungkan struct, networking async, Codable, error handling, dan SwiftUI"
+"order": 26
+"quiz":
+- "q": "Model cuaca sebaiknya bertipe…"
+  "options":
+  - "class NSMutableDictionary"
+  - "struct Codable"
+  - "String"
+  - "Int"
+  "answer": 1
+  "explain": "Struct Codable memetakan langsung dari JSON."
+- "q": "Fungsi pengambilan data ditandai…"
+  "options":
+  - "static final"
+  - "mutating"
+  - "async throws"
+  - "override"
+  "answer": 2
+  "explain": "Bisa menunggu jaringan dan melempar error."
+- "q": "Tempat ideal memanggil API adalah…"
+  "options":
+  - "View body"
+  - "Modifier"
+  - "App delegate"
+  - "ViewModel / model layer"
+  "answer": 3
+  "explain": "View tetap fokus pada tampilan."
+- "q": "State yang menampung hasil bisa memakai…"
+  "options":
+  - "@Published var cuaca: Cuaca?"
+  - "let cuaca"
+  - "class var"
+  - "static let"
+  "answer": 0
+  "explain": "Perubahan @Published memicu pembaruan tampilan."
+- "q": "Pesan error sebaiknya ditampilkan…"
+  "options":
+  - "Sebagai stack trace penuh"
+  - "Sebagai teks ramah di UI"
+  - "Di console saja"
+  - "Dengan force unwrap"
+  "answer": 1
+  "explain": "Pengguna perlu tahu apa yang salah dan apa yang bisa dilakukan."
+"example":
+  "code": "struct Cuaca: Decodable {\n    let nama: String\n    let suhu: Double\n\n    enum CodingKeys: String, CodingKey {\n        case nama = \"name\"\n        case suhu = \"temp\"\n    }\n}\n\n@MainActor\nclass CuacaViewModel: ObservableObject {\n    @Published var cuaca: Cuaca?\n    @Published var pesan = \"\"\n\n    func muat() async {\n        // contoh data; ganti dengan URLSession nyata\n        cuaca = Cuaca(nama: \"Bandung\", suhu: 27.5)\n        pesan = \"Data berhasil dimuat\"\n    }\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Spesifikasi
+
+```swift
+struct Cuaca: Decodable {
+    let nama: String
+    let suhu: Double
+
+    enum CodingKeys: String, CodingKey {
+        case nama = "name"
+        case suhu = "temp"
+    }
+}
+
+@MainActor
+class CuacaViewModel: ObservableObject {
+    @Published var cuaca: Cuaca?
+    @Published var pesan = ""
+
+    func muat() async {
+        // contoh data; ganti dengan URLSession nyata
+        cuaca = Cuaca(nama: "Bandung", suhu: 27.5)
+        pesan = "Data berhasil dimuat"
+    }
+}
+```
+
+| Bagian | Konsep |
+|---|---|
+| Model `Cuaca` | `struct`, `Decodable`, `CodingKeys` |
+| ViewModel | `ObservableObject`, `@Published`, `@MainActor` |
+| Service | `async throws`, `URLSession`, `JSONDecoder` |
+| View | `@StateObject`, `task {}`, conditional rendering |
+
+## Model
+
+```swift
+struct Cuaca: Decodable {
+    let nama: String
+    let suhu: Double
+
+    enum CodingKeys: String, CodingKey {
+        case nama = "name"
+        case suhu = "main"
+    }
+}
+```
+
+Nilai `main` pada API tertentu berupa objek bersarang — sesuaikan dengan struktur JSON sebenarnya.
+
+## View
+
+```swift
+struct CuacaView: View {
+    @StateObject private var vm = CuacaViewModel()
+
+    var body: some View {
+        VStack {
+            if let cuaca = vm.cuaca {
+                Text("\(cuaca.nama): \(cuaca.suhu)°C")
+            } else {
+                ProgressView()
+            }
+
+            if !vm.pesan.isEmpty {
+                Text(vm.pesan).foregroundStyle(.secondary)
+            }
+        }
+        .task { await vm.muat() }
+    }
+}
+```
+
+## Pengembangan Lanjutan
+
+1. Tambahkan pull-to-refresh dengan `.refreshable`.
+2. Simpan kota terakhir memakai `@AppStorage`.
+3. Pisahkan `CuacaService` agar ViewModel lebih mudah diuji.
+4. Tampilkan ikon berdasarkan rentang suhu.
+
+<div class="note">💡 Proyek ini merangkum alur kerja Swift modern: data masuk lewat Codable, state dikelola ViewModel, tampilan tetap deklaratif, dan error diberi pesan yang membantu pengguna.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`struct Cuaca: Decodable {
+    let nama: String
+    let suhu: Double
+
+    enum CodingKeys: String, CodingKey {
+        case nama = "name"
+        case suhu = "temp"
+    }
+}
+
+@MainActor
+class CuacaViewModel: ObservableObject {
+    @Published var cuaca: Cuaca?
+    @Published var pesan = ""
+
+    func muat() async {
+        // contoh data; ganti dengan URLSession nyata
+        cuaca = Cuaca(nama: "Bandung", suhu: 27.5)
+        pesan = "Data berhasil dimuat"
+    }
+}`} />

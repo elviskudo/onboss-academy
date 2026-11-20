@@ -55,11 +55,11 @@ Percabangan Go terlihat ringkas: **tanpa kurung, tanpa break**, dan kondisi sela
 
 ## 6 Operator Perbandingan
 
-Go punya tepat **6 operator perbandingan**: `==`, `!=`, `<`, `<=`, `>`, `>=` — semuanya menghasilkan `bool`.
+Go punya tepat **6 operator perbandingan**: `==`, `!=`, `<`, `&lt;=`, `>`, `>=` — semuanya menghasilkan `bool`.
 
 | Kategori | Jumlah | Anggota | Fungsi |
 | --- | --- | --- | --- |
-| Perbandingan | 6 | `==` `!=` `<` `<=` `>` `>=` | Bandingkan dua nilai → bool |
+| Perbandingan | 6 | `==` `!=` `<` `&lt;=` `>` `>=` | Bandingkan dua nilai → bool |
 | Logika | 3 | `&&` `\|\|` `!` | Gabungkan kondisi (short-circuit) |
 | Aritmatika | 5 | `+` `-` `*` `/` `%` | Hitung nilai untuk dibandingkan |
 | Ternary | 0 | — | Tidak ada; pakai if-else |
@@ -162,6 +162,10 @@ Keputusan model juga tegas: **if** untuk 2–3 cabang, **switch** untuk mencocok
 
 <div class="note">💡 Go memakai blok kurawal, bukan indentasi, sebagai penanda blok. Tapi tetap gunakan tab sesuai gofmt — format standar Go ini dihormati seluruh ekosistem.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="go" runtime="piston" pistonName="go" code={`package main
 
 import "fmt"
@@ -197,7 +201,7 @@ func main() {
     }
 
     status := "Lulus"
-    if nilai < 75 {
+    if nilai &lt; 75 {
         status = "Remedial"
     }
     fmt.Println("Status:", status)

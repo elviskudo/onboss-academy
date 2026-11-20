@@ -1,0 +1,78 @@
+---
+title: "Favicon"
+description: "Menambahkan ikon kecil pada tab browser menggunakan link rel icon"
+order: 24
+quiz:
+  - q: "Atribut rel yang benar untuk favicon adalah…"
+    options: ["stylesheet", "icon", "image", "favicon"]
+    answer: 1
+    explain: "Gunakan <link rel='icon' href='favicon.ico'>."
+  - q: "Format gambar yang umum dipakai favicon modern adalah…"
+    options: [".jpg", ".png atau .svg", ".gif", ".bmp"]
+    answer: 1
+    explain: "PNG dan SVG mendukung transparansi dan tajam di ukuran kecil."
+  - q: "Tag favicon ditaruh di bagian…"
+    options: ["<body>", "<head>", "<footer>", "<main>"]
+    answer: 1
+    explain: "Semua tautan metadata termasuk favicon ditaruh di <head>."
+  - q: "Ukuran favicon yang paling sering dipakai adalah…"
+    options: ["16x16 atau 32x32", "100x100", "500x500", "Tidak terbatas"]
+    answer: 0
+    explain: "Browser menampilkan favicon sangat kecil, biasanya 16×16 atau 32×32 piksel."
+  - q: "Favicon berfungsi untuk…"
+    options: ["Mengubah judul tab", "Menambah identitas visual di tab browser", "Mengganti background", "Membuat menu"]
+    answer: 1
+    explain: "Favicon membantu pengguna mengenali situsmu di antara banyak tab."
+example:
+  code: |
+    <head>
+      <link rel="icon" type="image/png" href="favicon.png">
+      <link rel="apple-touch-icon" href="icon-180.png">
+    </head>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Favicon** adalah ikon kecil yang muncul di tab browser dan daftar bookmark. Detail kecil, tapi memberi kesan profesional.
+
+## Cara Memasang
+
+```html
+<head>
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+```
+
+Kalau memakai file `.ico` klasik:
+
+```html
+<link rel="icon" href="favicon.ico">
+```
+
+## Format yang Didukung
+
+- `.ico` — format lama, kompatibel luas
+- `.png` — transparan, mudah dibuat
+- `.svg` — tajam di semua ukuran
+- `.gif` — bisa animasi (jarang disarankan)
+
+## Tips Membuat
+
+Gambar favicon sebaiknya sederhana: satu warna dominan dan bentuk yang masih dikenali walau hanya 16 piksel. Hindari detail kecil karena akan hilang.
+
+<div class="note">💡 Simpan favicon di root situs (/favicon.ico). Banyak browser otomatis mencari lokasi itu meski belum ada tag <code>&lt;link&gt;</code>.</div>
+
+## Try it Yourself
+
+Favicon tidak terlihat di panel pratinjau, tapi kamu bisa melihat struktur tag-nya di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+  <title>Tabku punya favicon</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+  <h1>Lihat tab browser kamu!</h1>
+</body>
+</html>`} />

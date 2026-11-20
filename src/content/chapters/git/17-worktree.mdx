@@ -1,0 +1,99 @@
+---
+title: Git Worktree
+description: Meng_checkout beberapa branch secara bersamaan dalam direktori berbeda.
+order: 17
+quiz:
+- q: Git worktree memungkinkan…
+  options:
+  - Mengganti hash
+  - Beberapa branch aktif di direktori berbeda
+  - Beberapa remote sekaligus
+  - Menghapus commit
+  answer: 1
+  explain: Setiap worktree punya working directory sendiri tapi berbagi database .git.
+- q: Perintah menambah worktree adalah…
+  options:
+  - git branch --add
+  - git clone --local
+  - git worktree add ../hotfix hotfix/urgent
+  - git checkout --worktree
+  answer: 2
+  explain: Argumen pertama adalah path, kedua adalah branch yang akan di-checkout.
+- q: Keunggulan worktree dibanding clone ulang adalah…
+  options:
+  - Lebih lambat
+  - Tidak bisa edit
+  - Harus online
+  - Objek Git dibagi sehingga lebih hemat
+  answer: 3
+  explain: Semua worktree berbagi .git/objects, jadi fetch dan penyimpanan efisien.
+- q: Cara melihat daftar worktree adalah…
+  options:
+  - git worktree list
+  - git branch -a
+  - git status --worktree
+  - git log --all
+  answer: 0
+  explain: Perintah ini menampilkan path, commit, dan branch tiap worktree.
+- q: Cara menghapus worktree dengan benar adalah…
+  options:
+  - git clean -fd
+  - git worktree remove ../hotfix
+  - rm -rf ../hotfix
+  - git branch -D hotfix
+  answer: 1
+  explain: Gunakan perintah Git agar metadata worktree ikut dibersihkan.
+example:
+  code: 'git worktree add ../proyek-hotfix hotfix/urgent
+
+    git worktree list
+
+    git worktree remove ../proyek-hotfix
+
+    '
+---
+
+
+Bayangkan sedang mengerjakan fitur besar, lalu ada bug produksi mendesak. **Worktree** memungkinkan Anda membuka branch lain di folder berbeda tanpa menyimpan atau membuang pekerjaan saat ini.
+
+## Menambah Worktree
+
+```bash
+git worktree add ../proyek-hotfix hotfix/urgent
+```
+
+Bila branch belum ada:
+
+```bash
+git worktree add -b hotfix/urgent ../proyek-hotfix main
+```
+
+## Mengelola
+
+```bash
+git worktree list
+git worktree move ../proyek-hotfix ../hotfix
+git worktree remove ../hotfix
+git worktree prune
+```
+
+`prune` membersihkan metadata worktree yang direkamanual dihapus.
+
+## Kenapa Tidak Sekadar Clone?
+
+| Aspek | Clone baru | Worktree |
+|---|---|---|
+| Objek Git | duplikat | dibagi |
+| Riwayat | perlu fetch ulang | langsung tersedia |
+| Ruang disk | lebih besar | lebih efisien |
+| Branch yang sama | bisa, tapi membingungkan | tidak bisa dibuka dua kali |
+
+Git melarang branch yang sama aktif di dua worktree untuk mencegah perubahan saling menimpa.
+
+<div class="note">💡 Worktree sangat cocok untuk review PR sambil tetap lanjut mengerjakan branch sendiri — buka worktree sementara, jalankan tes, lalu hapus.</div>
+
+## Batasan
+
+- Submodule tidak otomatis ikut ke worktree baru; jalankan `git submodule update --init`.
+- Beberapa alat IDE menganggap tiap worktree sebagai proyek terpisah.
+- Jangan menghapus folder worktree langsung dengan `rm -rf` bila ingin metadata tetap rapi.

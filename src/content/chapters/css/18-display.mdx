@@ -1,0 +1,113 @@
+---
+title: "Properti Display"
+description: "Mengubah cara elemen tampil: block, inline, inline-block, none, dan others"
+order: 18
+quiz:
+  - q: "Elemen <div> secara default memiliki display…"
+    options: ["inline", "block", "flex", "grid"]
+    answer: 1
+    explain: "Div adalah elemen block: mengambil penuh lebar dan pindah baris."
+  - q: "Elemen <span> secara default adalah…"
+    options: ["block", "inline", "flex", "none"]
+    answer: 1
+    explain: "Span mengikuti alur teks dan tidak memaksa baris baru."
+  - q: "`display: none` akan…"
+    options: ["Menyembunyikan tapi tetap ambil ruang", "Menghapus dari layout", "Membuat transparan", "Mengubah jadi inline"]
+    answer: 1
+    explain: "Elemen benar-benar tidak dirender dan tidak memakan ruang."
+  - q: "`visibility: hidden` berbeda karena…"
+    options: ["Elemen tetap mengambil ruang", "Elemen jadi merah", "Elemen pindah ke atas", "Sama saja"]
+    answer: 0
+    explain: "Visibility hidden hanya menyembunyikan visual, ruangnya tetap ada."
+  - q: "`inline-block` menggabungkan sifat…"
+    options: ["Block + flex", "Inline + bisa atur width/height", "Grid + inline", "None + block"]
+    answer: 1
+    explain: "Elemen mengalir seperti inline tetapi menerima lebar, tinggi, margin vertikal."
+example:
+  code: |
+    .blok { display: block; }
+    .se.baris { display: inline; }
+    .kotak { display: inline-block; width: 120px; height: 60px; }
+    .tersembunyi { display: none; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Properti `display` menentukan **bagaimana sebuah elemen berpartisipasi dalam layout**. Mengubahnya bisa mengubah seluruh perilaku elemen tanpa mengubah HTML-nya.
+
+## Nilai yang Paling Sering Dipakai
+
+| Nilai | Perilaku | Contoh elemen default |
+|-------|----------|-----------------------|
+| `block` | Baris baru, penuh lebar | `div`, `p`, `h1`, `section` |
+| `inline` | Mengikuti alur teks | `span`, `a`, `strong`, `em` |
+| `inline-block` | Ikut alur teks, tapi bisa diatur lebar/tinggi | — |
+| `flex` | Kontainer flex (satu dimensi) | — |
+| `grid` | Kontainer grid (dua dimensi) | — |
+| `none` | Tidak dirender sama sekali | — |
+| `contents` | Elemen sendiri hilang, anak tetap tampil | — |
+
+## Block vs Inline
+
+```css
+.blok   { display: block; background: #DBEAFE; }
+.inline { display: inline; background: #FEF3C7; }
+```
+
+Elemen **block** selalu mulai di baris baru dan lebarnya mengikuti induk. Elemen **inline** hanya selebar isinya dan **tidak mematuhi** `width`/`height`.
+
+```css
+span { width: 300px; } /* ❌ diabaikan selama display masih inline */
+```
+
+## inline-block
+
+```css
+.chip {
+  display: inline-block;
+  width: 120px;
+  padding: 8px;
+  margin: 4px;
+  text-align: center;
+}
+```
+
+Catatan: spasi antar tag inline-block di HTML muncul sebagai jarak kecil. Supaya hilang, induknya bisa memakai `font-size: 0` lalu mengembalikan font pada anaknya — atau lebih baik, pakai flex + `gap`.
+
+## Menyembunyikan Elemen
+
+| Cara | Ruang tetap? | Bisa dianimasikan? |
+|------|--------------|--------------------|
+| `display: none` | Tidak | Sulit |
+| `visibility: hidden` | Ya | Terbatas |
+| `opacity: 0` | Ya | Ya |
+| `position: absolute; left: -9999px` | Tidak (keluar alur) | — |
+
+Untuk konten yang hanya boleh dibaca pembaca layar (tidak terlihat), pakai kelas `.sr-only` dengan clip, bukan `display: none`.
+
+## display: contents
+
+```css
+.wrapper { display: contents; }
+```
+
+Elemen wrapper "lenyap" dari layout, anak-anaknya seolah menjadi anak langsung induknya. Berguna untuk grid yang ingin mengabaikan pembungkus tambahan, tapi punya catatan aksesibilitas pada beberapa browser lama.
+
+<div class="note">💡 Sejak CSS Display Module Level 3, `display` bisa menerima dua nilai: `display: inline flex` atau `display: block grid`. Nilai pertama mengatur perilaku elemen terhadap luar, nilai kedua mengatur layout anaknya.</div>
+
+## Di Dunia Nyata
+
+- Navigasi horizontal: `li { display: inline-block; }` atau `ul { display: flex; }`.
+- Tooltip muncul saat hover: awalnya `display: none`, lalu `display: block`.
+- Ikon inline di dalam teks memakai `display: inline-block` agar bisa dirotasi.
+- Modal ditutup dengan `display: none` pada overlay.
+
+## Try it Yourself
+
+Ubah `inline` menjadi `block` atau hapus aturan `.tersembunyi` untuk melihat efeknya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 12px; }
+.blok { display: block; background: #DBEAFE; padding: 8px; margin-bottom: 6px; }
+.inline { display: inline; background: #FEF3C7; }
+.chip { display: inline-block; width: 110px; padding: 8px; margin: 4px; background: #EDE9FE; border-radius: 6px; text-align: center; }
+.tersembunyi { display: none; }`} />

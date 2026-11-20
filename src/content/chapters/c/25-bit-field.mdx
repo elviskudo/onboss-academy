@@ -1,0 +1,109 @@
+---
+title: "Bit Field"
+description: "field bit pada struct, ukuran, portabilitas, dan use case flag"
+order: 25
+quiz:
+  - q: "Bit field dideklarasikan dengan…"
+    options: ["int x:3;", "int x[3];", "bit x;", "char x=3;"]
+    answer: 0
+    explain: "Angka setelah titik dua menyatakan jumlah bit."
+  - q: "`unsigned flag : 1;` bisa menyimpan…"
+    options: ["0 atau 1", "0 sampai 255", "Negatif saja", "String"]
+    answer: 0
+    explain: "Satu bit hanya dua nilai."
+  - q: "Bit field tidak portable karena…"
+    options: ["Layout & urutan bit tergantung compiler", "Selalu lebih lambat", "Tidak bisa diakses", "Hanya untuk char"]
+    answer: 0
+    explain: "Alignment dan endianness berbeda antar platform."
+  - q: "Alamat bit field tidak bisa diambil dengan & karena…"
+    options: ["Bukan objek beralamat tersendiri", "Terlalu kecil", "Selalu const", "Tidak ada alasan"]
+    answer: 0
+    explain: "Bit field tidak punya alamat byte sendiri."
+  - q: "Bit field sering dipakai untuk…"
+    options: ["Flag protokol & register hardware", "Menyimpan string", "File I/O", "Sorting"]
+    answer: 0
+    explain: "Efisien saat banyak flag boolean harus dikemas rapat."
+example:
+  code: |
+    #include <stdio.h>
+    
+    typedef struct {
+        unsigned mode  : 3;
+        unsigned aktif : 1;
+        unsigned error : 1;
+        unsigned cadangan : 3;
+    } Konfigurasi;
+    
+    int main(void) {
+        Konfigurasi k = {0};
+        k.mode = 5;
+        k.aktif = 1;
+        printf("mode=%u aktif=%u sizeof=%zu byte\n",
+               k.mode, k.aktif, sizeof k);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Bit field memungkinkan struct menyimpan integer dengan jumlah bit tertentu. Ini menghemat memori saat banyak field kecil dibutuhkan.
+
+## Sintaks
+
+```c
+struct Header {
+    unsigned versi  : 4;   /* 0..15 */
+    unsigned tipe   : 3;   /* 0..7  */
+    unsigned flag   : 1;   /* 0/1   */
+};
+```
+
+Compiler mengemas field-field itu ke dalam unit penyimpanan (biasanya `unsigned int`).
+
+## Aturan
+
+- Tipe yang diizinkan: `int`, `unsigned int`, `_Bool` (implementasi-defined untuk tipe lain).
+- Lebar bit tidak boleh melebihi ukuran tipe dasar.
+- Field tanpa nama bisa dipakai sebagai padding: `unsigned : 2;`.
+- Tidak bisa mengambil alamat dengan `&`.
+
+## Portabilitas
+
+Urutan pengemasan (dari bit rendah atau tinggi), alignment, dan apakah `int` signed/unsigned semuanya **implementation-defined**. Jangan pakai bit field untuk format data yang dikirim antar platform — gunakan mask bitwise eksplisit.
+
+```c
+/* portable */
+uint8_t mode = (nilai >> 2) & 0x07;
+nilai = (nilai & ~0x1C) | (mode << 2);
+```
+
+## Kapan Dipakai
+
+| Gunakan bit field | Gunakan bitwise manual |
+|---|---|
+| Register hardware lokal | Protokol jaringan |
+| Flag internal | Format file lintas platform |
+| Kode C single-platform | Library publik |
+
+<div class="note">💡 Bit field menghemat memori, tapi bisa membuat kode lebih sulit di-debug. Pakai hanya kalau penghematan memori benar-benar berarti (misal jutaan objek atau embedded system).</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+typedef struct {
+    unsigned mode  : 3;
+    unsigned aktif : 1;
+    unsigned error : 1;
+    unsigned cadangan : 3;
+} Konfigurasi;
+
+int main(void) {
+    Konfigurasi k = {0};
+    k.mode = 5;
+    k.aktif = 1;
+    printf("mode=%u aktif=%u sizeof=%zu byte\n",
+           k.mode, k.aktif, sizeof k);
+    return 0;
+}`} />

@@ -1,0 +1,139 @@
+---
+title: "Mapped & Conditional Types"
+description: "Membangun tipe baru dari tipe lain dengan map dan kondisi"
+order: 15
+quiz:
+  - q: "Mapped type `{ [K in keyof T]: T[K] }` akan…"
+    options: ["Membuat salinan tipe dengan memetakan kunci", "Menghapus semua properti", "Membuat array", "Mengubah ke any"]
+    answer: 0
+    explain: "Ini adalah identitas mapped type."
+  - q: "`Partial<T>` dari utility TypeScript membuat semua properti…"
+    options: ["wajib", "opsional", "readonly", "null"]
+    answer: 1
+    explain: "Partial menambahkan ? pada semua properti."
+  - q: "Conditional type `T extends U ? A : B` berarti…"
+    options: ["Selalu A", "A kalau T dapat ditugaskan ke U", "Selalu B", "Error"]
+    answer: 1
+    explain: "Ia seperti if-else di level tipe."
+  - q: "Modifier `-readonly` pada mapped type berfungsi…"
+    options: ["Menambah readonly", "Menghapus readonly", "Membuat optional", "Menghapus kunci"]
+    answer: 1
+    explain: "Tanda minus melepaskan modifier."
+  - q: "`keyof T` menghasilkan…"
+    options: ["Nilai properti", "Union dari kunci properti", "Jumlah properti", "Tipe any"]
+    answer: 1
+    explain: "Contoh: keyof {a:1,b:2} = 'a' | 'b'."
+example:
+  code: |
+    type Opsional<T> = { [K in keyof T]?: T[K] };
+    type BacaSaja<T> = { readonly [K in keyof T]: T[K] };
+    type Nama<T> = T extends { nama: infer N } ? N : never;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Mapped dan conditional types adalahLevel "pemrograman" di dalam sistem tipe TypeScript. Kamu tidak sering menulisnya sendiri, tapi hampir semua utility type bawaan dibangun dari keduanya.
+
+## Mapped Types
+
+```ts
+type SemuaString<T> = {
+  [K in keyof T]: string;
+};
+
+interface User { id: number; nama: string }
+type UserString = SemuaString<User>;
+// { id: string; nama: string }
+```
+
+Modifier bisa ditambah atau dihapus:
+
+```ts
+type Readonly<T>  = { readonly [K in keyof T]: T[K] };
+type Opsional<T>  = { [K in keyof T]?: T[K] };
+type Bebas<T>     = { -readonly [K in keyof T]-?: T[K] };
+type HanyaString<T> = {
+  [K in keyof T as T[K] extends string ? K : never]: T[K];
+};
+```
+
+Fitur **key remapping** (`as ...`) memungkinkan mengganti nama kunci:
+
+```ts
+type Berprefix<T> = {
+  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];
+};
+// { getId: () => number; getNama: () => string }
+```
+
+## Conditional Types
+
+```ts
+type AdalahString<T> = T extends string ? true : false;
+
+type A = AdalahString<"halo">; // true
+type B = AdalahString<42>;     // false
+```
+
+Conditional types bersifat **distributif** untuk union:
+
+```ts
+type KeString<T> = T extends any ? `${T & string}` : never;
+type Hasil = KeString<"a" | "b">; // "a" | "b"
+```
+
+## infer
+
+```ts
+type ElemenArray<T> = T extends (infer E)[] ? E : T;
+type A = ElemenArray<string[]>; // string
+
+type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;
+type B = ReturnType<() => number>; // number
+```
+
+Kata kunci `infer` mendeklarasikan variabel tipe sementara yang "ditangkap" dari pola.
+
+## Utility Bawaan yang Relevan
+
+| Utility | Efek |
+|---------|------|
+| `Partial<T>` | Semua properti opsional |
+| `Required<T>` | Semua properti wajib |
+| `Readonly<T>` | Semua properti readonly |
+| `Pick<T, K>` | Ambil sebagian kunci |
+| `Omit<T, K>` | Buang sebagian kunci |
+| `Record<K, V>` | Objek dengan kunci K dan nilai V |
+| `Exclude<T, U>` | Buang anggota union T yang ada di U |
+| `Extract<T, U>` | Ambil anggota union T yang ada di U |
+| `NonNullable<T>` | Buang null/undefined |
+| `Awaited<T>` | Ambil tipe hasil Promise |
+
+<div class="note">💡 Assertion `as` pada tipe tidak sama dengan `as const`. Yang pertama memaksa tipe; yang kedua mengunci nilai literal.</div>
+
+## Di Dunia Nyata
+
+- `Partial<User>` dipakai pada form edit yang hanya mengirim field berubah.
+- `Pick<User, 'id' | 'nama'>` dipakai untuk response API ringkas.
+- Library seperti tRPC dan Zod banyak memakai conditional types untuk menyimpulkan tipe dari skema.
+
+## Try it Yourself
+
+Ganti `Pick` menjadi `Omit` atau ubah tipe conditional di bawah.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Produk {
+  id: number;
+  nama: string;
+  harga: number;
+}
+
+type Ringkas<T> = Pick<T, "id" | "nama">;
+type Opsional<T> = { [K in keyof T]?: T[K] };
+type AdalahString<T> = T extends string ? "ya" : "tidak";
+
+const p: Ringkas<Produk> = { id: 1, nama: "Kopi" };
+const draft: Opsional<Produk> = { nama: "Teh" };
+
+console.log(p);
+console.log(draft);
+console.log(AdalahString<"halo"> extends "ya" ? "string terdeteksi" : "bukan");`} />

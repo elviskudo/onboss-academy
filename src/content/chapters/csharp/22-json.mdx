@@ -1,0 +1,167 @@
+---
+"title": "JSON dengan System.Text.Json"
+"description": "Serialisasi dan deserialisasi objek ke JSON di C# modern"
+"order": 22
+"quiz":
+- "q": "Proses mengubah objek menjadi JSON disebut…"
+  "options":
+  - "deserialisasi"
+  - "serialisasi"
+  - "kompilasi"
+  - "dekompresi"
+  "answer": 1
+  "explain": "Serialisasi: objek → JSON. Deserialisasi: JSON → objek."
+- "q": "Kelas yang dipakai adalah…"
+  "options":
+  - "JsonSerializer"
+  - "JsonConvert (bawaan)"
+  - "XMLSerializer"
+  - "DataContract"
+  "answer": 0
+  "explain": "System.Text.Json.JsonSerializer adalah pustaka bawaan .NET modern."
+- "q": "Hasil JsonSerializer.Serialize(objek) bertipe…"
+  "options":
+  - "byte[]"
+  - "string"
+  - "Stream"
+  - "object"
+  "answer": 1
+  "explain": "Serialize mengembalikan string JSON."
+- "q": "Atribut untuk mengabaikan properti saat serialisasi adalah…"
+  "options":
+  - "[JsonIgnore]"
+  - "[Ignore]"
+  - "[Skip]"
+  - "[NoJson]"
+  "answer": 0
+  "explain": "Berikan [JsonIgnore] pada properti yang tidak ingin dimasukkan."
+- "q": "Opsi JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase menyebabkan…"
+  "options":
+  - "nama properti jadi snake_case"
+  - "nama properti jadi camelCase"
+  - "semua huruf kapital"
+  - "nama tidak berubah"
+  "answer": 1
+  "explain": "CamelCase mengubah NamaDepan menjadi namaDepan."
+"example":
+  "code": "using System;\nusing System.Text.Json;\nclass Siswa\n{\n    public string Nama { get; set; } = \"\";\n    public int Umur { get; set; }\n}\nclass Program\n{\n    static void Main()\n    {\n        var s = new Siswa { Nama = \"Rani\", Umur = 22 };\n        string json = JsonSerializer.Serialize(s);\n        Console.WriteLine(json);\n        var kembali = JsonSerializer.Deserialize<Siswa>(json);\n        Console.WriteLine(kembali?.Nama);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JSON adalah format pertukaran data paling umum di web. .NET menyertakan `System.Text.Json` yang cepat dan tidak memerlukan paket tambahan.
+
+## Serialisasi
+
+```csharp
+using System.Text.Json;
+
+class Siswa
+{
+    public string Nama { get; set; } = "";
+    public int Umur { get; set; }
+    public bool Aktif { get; set; }
+}
+
+var siswa = new Siswa { Nama = "Rani", Umur = 22, Aktif = true };
+string json = JsonSerializer.Serialize(siswa);
+// {"Nama":"Rani","Umur":22,"Aktif":true}
+```
+
+## Deserialisasi
+
+```csharp
+Siswa? hasil = JsonSerializer.Deserialize<Siswa>(json);
+Console.WriteLine(hasil?.Nama);
+```
+
+Gunakan `?` karena JSON bisa saja tidak valid atau berisi `null`.
+
+## Opsi
+
+```csharp
+var opsi = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true
+};
+
+string cantik = JsonSerializer.Serialize(siswa, opsi);
+```
+
+## Atribut
+
+| Atribut | Fungsi |
+|---|---|
+| `[JsonIgnore]` | Lewati properti |
+| `[JsonPropertyName("nama_lengkap")]` | Ganti nama kunci JSON |
+| `[JsonConverter]` | Konversi khusus (misal tanggal) |
+
+```csharp
+class Produk
+{
+    [JsonPropertyName("id_produk")]
+    public int Id { get; set; }
+
+    [JsonIgnore]
+    public string? Rahasia { get; set; }
+}
+```
+
+## Koleksi & JsonDocument
+
+```csharp
+var daftar = new[] { siswa, siswa };
+string arrayJson = JsonSerializer.Serialize(daftar);
+
+using var doc = JsonDocument.Parse(arrayJson);
+foreach (var el in doc.RootElement.EnumerateArray())
+    Console.WriteLine(el.GetProperty("nama").GetString());
+```
+
+`JsonDocument` cocok saat struktur JSON belum diketahui atau hanya ingin membaca beberapa field.
+
+<div class="note">💡 Untuk angka desimal seperti harga, tetap pakai <code>decimal</code> di model C#, agar tidak ada pembulatan biner yang merugikan.</div>
+
+## Try it Yourself
+
+Tambah properti baru ke class `Siswa` atau matikan `WriteIndented`.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+using System.Text.Json;
+
+class Siswa
+{
+    public string Nama { get; set; } = "";
+    public int Umur { get; set; }
+    [JsonIgnore]
+    public string? Catatan { get; set; }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var opsi = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
+        };
+
+        var daftar = new List<Siswa>
+        {
+            new Siswa { Nama = "Rani", Umur = 22, Catatan = "rahasia" },
+            new Siswa { Nama = "Dimas", Umur = 20 }
+        };
+
+        string json = JsonSerializer.Serialize(daftar, opsi);
+        Console.WriteLine(json);
+
+        var kembali = JsonSerializer.Deserialize<List<Siswa>>(json, opsi);
+        Console.WriteLine("Jumlah setelah dibaca: " + kembali?.Count);
+        Console.WriteLine("Nama pertama: " + kembali?[0].Nama);
+    }
+}`} />

@@ -122,9 +122,13 @@ Mengurutkan data hanya untuk satu pencarian biasanya rugi: O(n log n) lebih maha
 
 ## Kapan Pakai Mana?
 
-- Data kecil (< ~100) atau sekali pakai: linear search, cukup.
+- Data kecil (&lt; ~100) atau sekali pakai: linear search, cukup.
 - Data besar terurut, pencarian berulang: binary search.
 - Kunci unik, lookup sangat sering: hash table (dict) O(1).
+
+## Try it Yourself
+
+Jalankan contoh di bawah untuk melihat ide algoritma ini berjalan langsung.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`def linear_search(data, target):
     for i, x in enumerate(data):
@@ -135,12 +139,12 @@ Mengurutkan data hanya untuk satu pencarian biasanya rugi: O(n log n) lebih maha
 def binary_search(data, target):
     lo, hi = 0, len(data) - 1
     steps = 0
-    while lo <= hi:
+    while lo &lt;= hi:
         steps += 1
         mid = (lo + hi) // 2
         if data[mid] == target:
             return mid, steps
-        if data[mid] < target:
+        if data[mid] &lt; target:
             lo = mid + 1
         else:
             hi = mid - 1

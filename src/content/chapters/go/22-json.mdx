@@ -1,0 +1,135 @@
+---
+"title": "JSON"
+"description": "Marshal, Unmarshal, tag struct, dan streaming JSON di Go"
+"order": 22
+"quiz":
+- "q": "Fungsi mengubah struct menjadi JSON adalah…"
+  "options":
+  - "json.Marshal"
+  - "json.Parse"
+  - "json.String"
+  - "json.EncodeOnly"
+  "answer": 0
+  "explain": "json.Marshal mengembalikan ([]byte, error)."
+- "q": "Fungsi JSON menjadi struct adalah…"
+  "options":
+  - "json.Unmarshal"
+  - "json.Stringify"
+  - "json.DecodeOnly"
+  - "json.Load"
+  "answer": 0
+  "explain": "Unmarshal mengisi struct yang diberikan pointer-nya."
+- "q": "Tag struct untuk mengubah nama kunci JSON adalah…"
+  "options":
+  - "`json:\"nama\"`"
+  - "`json:nama`"
+  - "`json_name:\"nama\"`"
+  - "`@json nama`"
+  "answer": 0
+  "explain": "Tag ditulis setelah tipe field di dalam backtick."
+- "q": "Tag `json:\"-\"` berarti…"
+  "options":
+  - "field dihapus dari struct"
+  - "field diabaikan saat marshal/unmarshal"
+  - "field wajib"
+  - "field jadi null"
+  "answer": 1
+  "explain": "Tanda minus mengabaikan field sepenuhnya."
+- "q": "Marshal hanya memasukkan field…"
+  "options":
+  - "private"
+  - "publik (huruf kapital)"
+  - "semua"
+  - "yang bertag saja"
+  "answer": 1
+  "explain": "Field harus diekspor (diawali huruf kapital) agar terlihat oleh encoder."
+"example":
+  "code": "package main\nimport (\n    \"encoding/json\"\n    \"fmt\"\n)\ntype Siswa struct {\n    Nama string `json:\"nama\"`\n    Umur int    `json:\"umur\"`\n}\nfunc main() {\n    b, _ := json.Marshal(Siswa{\"Rani\", 22})\n    fmt.Println(string(b))\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Package `encoding/json` adalah standar untuk bertukar data dengan API. Kuncinya adalah tag struct dan aturan ekspor field.
+
+## Marshal
+
+```go
+type Siswa struct {
+    Nama  string `json:"nama"`
+    Umur  int    `json:"umur"`
+    Aktif bool   `json:"aktif,omitempty"`
+}
+
+b, err := json.Marshal(Siswa{Nama: "Rani", Umur: 22})
+// {"nama":"Rani","umur":22}
+```
+
+`omitempty` melewati field bernilai nol (string kosong, 0, false, nil).
+
+## Unmarshal
+
+```go
+var s Siswa
+err := json.Unmarshal([]byte(`{"nama":"Dimas","umur":20}`), &s)
+```
+
+Argumen kedua **harus pointer**, kalau tidak perubahan tidak tersimpan.
+
+## Tag Kustom
+
+| Tag | Efek |
+|---|---|
+| `json:"nama"` | Ganti kunci |
+| `json:"-"` | Abaikan field |
+| `json:",omitempty"` | Lewati nilai nol |
+| `json:"id,string"` | Angka sebagai string |
+
+## Indentasi
+
+```go
+b, _ := json.MarshalIndent(s, "", "  ")
+fmt.Println(string(b))
+```
+
+## Streaming
+
+Untuk file atau response besar, pakai `Decoder`/`Encoder` agar tidak memuat semua ke memori:
+
+```go
+enc := json.NewEncoder(os.Stdout)
+enc.Encode(s)
+
+dec := json.NewDecoder(resp.Body)
+dec.Decode(&s)
+```
+
+## Field Tak Terduga
+
+Secara default field JSON yang tidak dikenal diabaikan. Gunakan `dec.DisallowUnknownFields()` jika ingin ketat.
+
+<div class="note">💡 JSON tidak punya tipe tanggal. Simpan waktu sebagai string RFC3339 dengan <code>time.Time</code> — Marshal/Unmarshal otomatis menangani formatnya.</div>
+
+
+## Try it Yourself
+
+Tambah field `Aktif` atau ubah tag `omitempty`.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "encoding/json"
+    "fmt"
+)
+type Siswa struct {
+    Nama  string
+    Umur  int
+    Aktif bool
+}
+func main() {
+    s := Siswa{Nama: "Rani", Umur: 22}
+    b, _ := json.MarshalIndent(s, "", "  ")
+    fmt.Println(string(b))
+
+    var balik Siswa
+    err := json.Unmarshal([]byte("{"nama":"Dimas","umur":20,"aktif":true}"), &balik)
+    fmt.Println(err, balik)
+}`} />

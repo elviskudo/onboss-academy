@@ -1,0 +1,129 @@
+---
+title: "Constructor & Destructor"
+description: "initializer list, delegating constructor, RAII, rule of three/five/zero"
+order: 12
+quiz:
+  - q: "Initializer list lebih disarankan daripada assignment di constructor karena…"
+    options: ["Lebih efisien & wajib untuk const/reference", "Lebih panjang", "Hanya untuk static", "Tidak ada bedanya"]
+    answer: 0
+    explain: "Field diinisialisasi langsung sebelum body constructor jalan."
+  - q: "Destructor dipanggil saat…"
+    options: ["Object keluar dari scope / di-delete", "Object dibuat", "Program start", "Constructor dipanggil"]
+    answer: 0
+    explain: "Destructor membersihkan resource."
+  - q: "RAII artinya…"
+    options: ["Resource Acquisition Is Initialization", "Random Access Internal Index", "Reference Auto Init", "Runtime Allocation Info"]
+    answer: 0
+    explain: "Resource diikat pada masa hidup object."
+  - q: "Rule of Five menyebutkan lima method khusus, kecuali…"
+    options: ["copy constructor", "move constructor", "destructor", "virtual function"]
+    answer: 3
+    explain: "Lima: destructor, copy ctor, copy assign, move ctor, move assign."
+  - q: "Rule of Zero menyarankan…"
+    options: ["Gunakan std::vector/unique_ptr agar compiler mengurusnya", "Tulis semua lima method", "Hindari class", "Gunakan raw pointer"]
+    answer: 0
+    explain: "Dengan RAII types, destructor default sudah cukup."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    
+    class Buffer {
+        std::vector<int> data;  // RAII: vector mengurus memori
+    public:
+        Buffer() : data{} { std::cout <&lt; "buat\n"; }
+        explicit Buffer(int n) : Buffer() { data.resize(n); }
+        ~Buffer() { std::cout <&lt; "hancur\n"; }
+        void isi(int v) { data.push_back(v); }
+        std::size_t ukuran() const { return data.size(); }
+    };
+    
+    int main() {
+        Buffer b(2);
+        b.isi(7);
+        std::cout <&lt; b.ukuran() <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C++ mengikat masa hidup resource ke masa hidup object (RAII). Memahami constructor/destructor adalah kunci menulis kode yang bebas leak tanpa `free` manual.
+
+## Initializer List
+
+```cpp
+class Titik {
+    int x, y;
+public:
+    Titik(int a, int b) : x(a), y(b) {}   // dipakai
+    // Titik(int a, int b) { x=a; y=b; }  // kurang baik
+};
+```
+
+Wajib pakai initializer list untuk field `const`, reference, dan class tanpa default constructor.
+
+## Delegating Constructor
+
+```cpp
+class User {
+public:
+    User() : User("Anonim", 0) {}
+    User(std::string n, int u) : nama(std::move(n)), umur(u) {}
+private:
+    std::string nama;
+    int umur;
+};
+```
+
+## Destructor
+
+```cpp
+class File {
+    FILE *f;
+public:
+    File(const char *p) : f(std::fopen(p, "r")) {}
+    ~File() { if (f) std::fclose(f); }
+};
+```
+
+Destructor dipanggil otomatis saat object keluar scope — inilah inti RAII.
+
+## Rule of Three / Five / Zero
+
+| Rule | Isi |
+|---|---|
+| Three | destructor, copy ctor, copy assignment |
+| Five | + move ctor, move assignment |
+| Zero | pakai RAII types, jangan definisikan kelimanya |
+
+Kalau class kamu hanya berisi `std::string`, `std::vector`, `unique_ptr`, biarkan compiler yang mengurus copy/move.
+
+## explicit
+
+```cpp
+explicit Buffer(int n);   // cegah konversi implisit
+```
+
+<div class="note">💡 Hindari `new`/`delete` manual di kode aplikasi. Gunakan `std::vector`, `std::string`, dan smart pointer — rule of zero membuat class jauh lebih pendek dan aman.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+
+class Buffer {
+    std::vector<int> data;  // RAII: vector mengurus memori
+public:
+    Buffer() : data{} { std::cout <&lt; "buat\n"; }
+    explicit Buffer(int n) : Buffer() { data.resize(n); }
+    ~Buffer() { std::cout <&lt; "hancur\n"; }
+    void isi(int v) { data.push_back(v); }
+    std::size_t ukuran() const { return data.size(); }
+};
+
+int main() {
+    Buffer b(2);
+    b.isi(7);
+    std::cout <&lt; b.ukuran() <&lt; '\n';
+}`} />

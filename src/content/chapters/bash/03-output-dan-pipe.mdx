@@ -119,12 +119,16 @@ Pola `hitung → urutkan → ambil-n` begitu umum sampai layak dihafal: `sort | 
 
 <div class="note">💡 Pipe hanya meneruskan stdout, bukan stderr. Kalau pesan error "hilang" di pipeline, tambahkan `2>&1` sebelum tanda pipe agar ikut terbawa ke tahap berikutnya.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
 echo "alpha"
 echo "beta"
 echo "gamma" > sementara.txt
 cat sementara.txt
 echo "delta" >> sementara.txt
-wc -l < sementara.txt
+wc -l &lt; sementara.txt
 ls -la | wc -l
 grep -c "" sementara.txt`} />

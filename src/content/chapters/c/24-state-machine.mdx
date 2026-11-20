@@ -1,0 +1,133 @@
+---
+title: "State Machine"
+description: "modeling state, transisi, event, dan implementasi dengan enum + switch"
+order: 24
+quiz:
+  - q: "State machine digunakan untuk…"
+    options: ["Memodelkan perilaku berdasarkan keadaan", "Menggambar UI", "Mengompres file", "Mengatur memori"]
+    answer: 0
+    explain: "Sistem bereaksi terhadap event berdasarkan state saat ini."
+  - q: "Transisi state adalah…"
+    options: ["Perpindahan dari satu state ke state lain", "Variabel lokal", "Loop tak berujung", "Jenis pointer"]
+    answer: 0
+    explain: "Biasanya dipicu oleh event/input."
+  - q: "Implementasi sederhana state machine di C memakai…"
+    options: ["Enum + switch", "Float + array", "String + regex", "Struct kosong"]
+    answer: 0
+    explain: "Enum untuk state, switch untuk logika transisi."
+  - q: "Keuntungan state machine eksplisit adalah…"
+    options: ["Lebih banyak if bersarang", "Perilaku mudah diverifikasi & diuji", "Selalu lebih cepat", "Tidak butuh event"]
+    answer: 1
+    explain: "State dan transisi bisa dipetakan langsung ke test case."
+  - q: "Contoh penggunaan nyata state machine adalah…"
+    options: ["Parser protokol & UI", "Menghitung faktorial", "Menyalin file", "Menampilkan tanggal"]
+    answer: 0
+    explain: "Protokol jaringan, parser, dan game AI banyak memakainya."
+example:
+  code: |
+    #include <stdio.h>
+    
+    typedef enum { IDLE, JALAN, JEDA, SELESAI } State;
+    
+    typedef enum { EV_START, EV_PAUSE, EV_STOP, EV_TICK } Event;
+    
+    State transisi(State s, Event e) {
+        switch (s) {
+            case IDLE:    return e == EV_START ? JALAN : IDLE;
+            case JALAN:   if (e == EV_PAUSE) return JEDA;
+                          if (e == EV_STOP)  return SELESAI;
+                          return JALAN;
+            case JEDA:    return e == EV_START ? JALAN : JEDA;
+            case SELESAI: return SELESAI;
+        }
+        return IDLE;
+    }
+    
+    int main(void) {
+        State s = IDLE;
+        Event urutan[] = {EV_START, EV_TICK, EV_PAUSE, EV_START, EV_STOP};
+        for (int i=0;i&lt;5;i++) {
+            s = transisi(s, urutan[i]);
+            printf("event %d -> state %d\n", urutan[i], s);
+        }
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+State machine (atau finite-state machine/FSM) memodelkan sistem yang berada dalam salah satu dari sekumpulan keadaan yang terbatas. Perubahan keadaan terjadi karena event.
+
+## Komponen
+
+- **State**: kondisi sistem saat ini (`IDLE`, `JALAN`).
+- **Event**: pemicu perubahan (`START`, `STOP`).
+- **Transition**: aturan state + event → state baru.
+- **Action**: efek yang dilakukan saat masuk/keluar state.
+
+## Implementasi Enum + Switch
+
+```c
+typedef enum { IDLE, CONNECTING, CONNECTED, ERROR } State;
+
+State next(State s, Event e) {
+    switch (s) {
+        case IDLE:       return e == EV_CONNECT ? CONNECTING : IDLE;
+        case CONNECTING: return e == EV_OK ? CONNECTED : ERROR;
+        case CONNECTED:  return e == EV_CLOSE ? IDLE : CONNECTED;
+        case ERROR:      return e == EV_RESET ? IDLE : ERROR;
+    }
+    return ERROR;
+}
+```
+
+## Tabel Transisi
+
+Untuk state machine besar, tabel 2D lebih rapi daripada switch panjang:
+
+```c
+static State tabel[4][4] = {
+    /*          START  STOP  OK  RESET */
+    /* IDLE */ {JALAN, IDLE, IDLE, IDLE},
+    /* JALAN*/ {JALAN, SELESAI, JALAN, IDLE},
+    /* ...  */
+};
+s = tabel[s][event];
+```
+
+## State Machine vs Flag Boolean
+
+Banyak `bool sedangJalan, sedangJeda, sudahSelesai` yang saling bertentangan sebaiknya diganti satu enum. Ini menghilangkan kombinasi mustahil seperti "jalan dan jeda bersamaan".
+
+<div class="note">💡 Untuk protokol atau parser, gambarkan diagram state di kertas dulu. Kalau diagramnya bisa digambar dengan jelas, implementasi C-nya biasanya juga lurus.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+typedef enum { IDLE, JALAN, JEDA, SELESAI } State;
+
+typedef enum { EV_START, EV_PAUSE, EV_STOP, EV_TICK } Event;
+
+State transisi(State s, Event e) {
+    switch (s) {
+        case IDLE:    return e == EV_START ? JALAN : IDLE;
+        case JALAN:   if (e == EV_PAUSE) return JEDA;
+                      if (e == EV_STOP)  return SELESAI;
+                      return JALAN;
+        case JEDA:    return e == EV_START ? JALAN : JEDA;
+        case SELESAI: return SELESAI;
+    }
+    return IDLE;
+}
+
+int main(void) {
+    State s = IDLE;
+    Event urutan[] = {EV_START, EV_TICK, EV_PAUSE, EV_START, EV_STOP};
+    for (int i=0;i&lt;5;i++) {
+        s = transisi(s, urutan[i]);
+        printf("event %d -> state %d\n", urutan[i], s);
+    }
+    return 0;
+}`} />

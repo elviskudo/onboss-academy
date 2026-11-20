@@ -177,6 +177,10 @@ Alurnya: **baca JSON → ubah di memori → tulis kembali**. Butuh database? Gan
 
 <div class="note">💡 Pola ini langsung dipindah ke database: ganti array dengan query PDO, lalu `rupiah()`, filter, class `Katalog`, dan tampilan tetap terpakai utuh. Pisahkan **sumber data** dari **logika bisnis** sejak awal — itu perbedaan proyek yang bisa dirawat dan proyek yang harus ditulis ulang.</div>
 
+## Try it Yourself
+
+Tambahkan produk atau ubah struktur data katalog berikut.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 function rupiah(int $n): string {
     return "Rp" . number_format($n, 0, ",", ".");

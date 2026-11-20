@@ -1,0 +1,78 @@
+---
+title: "Privasi dan Kepatuhan"
+description: "Data pribadi, minimalisasi, dan dasar regulasi"
+order: 21
+quiz:
+  - q: "Prinsip minimalisasi data berarti…"
+    options: ["Menghapus semua data", "Mengumpulkan hanya data yang benar-benar dibutuhkan", "Mengumpulkan semua data yang mungkin", "Menyimpan data selamanya"]
+    answer: 1
+    explain: "Semakin sedikit data tersimpan, semakin kecil dampak pelanggaran."
+  - q: "Data pribadi seperti nama dan email harus…"
+    options: ["Dikirim ke pihak ketiga bebas", "Disimpan tanpa batas", "Dilindungi dan diproses sesuai tujuan", "Dipajang di dashboard publik"]
+    answer: 2
+    explain: "Tujuan pengumpulan perlu jelas dan disampaikan ke pengguna."
+  - q: "Anonimisasi berbeda dengan pseudonimisasi karena…"
+    options: ["Keduanya sama", "Pseudonimisasi selalu aman", "Anonimisasi lebih mudah dibatalkan", "Anonimisasi tidak bisa dihubungkan kembali ke identitas"]
+    answer: 3
+    explain: "Pseudonimisasi masih memakai kunci pemetaan yang harus dijaga."
+  - q: "Daftar hak subjek data biasanya mencakup…"
+    options: ["Akses, koreksi, dan penghapusan data", "Hak mendapat internet gratis", "Hak mengubah algoritma", "Hak menghapus semua log server"]
+    answer: 0
+    explain: "Regulasi modern memberi kontrol kepada pemilik data."
+  - q: "Data breach sebaiknya…"
+    options: ["Dihapus dari log", "Dilaporkan sesuai prosedur dan batas waktu", "Disembunyikan", "Diberitahukan hanya ke teman"]
+    answer: 1
+    explain: "Transparansi dan pelaporan merupakan bagian dari kepatuhan."
+example:
+  code: |
+    Kebijakan data:
+      - kumpulkan: email untuk notifikasi
+      - jangan kumpulkan: tanggal lahir, nomor KTP
+      - simpan: 12 bulan setelah akun nonaktif
+      - hapus: saat permintaan penghapusan disetujui
+---
+
+Keamanan dan privasi saling terkait, tetapi tidak sama. Sistem bisa aman dari intrusi dan tetap melanggar privasi bila mengumpulkan data berlebih.
+
+## Prinsip Utama
+
+| Prinsip | Arti |
+|---|---|
+| Minimalisasi | Ambil hanya yang perlu |
+| Tujuan terarah | Gunakan sesuai janji awal |
+| Retensi terbatas | Hapus saat tidak diperlukan |
+| Akurasi | Data harus benar dan bisa dikoreksi |
+| Akuntabilitas | Ada pemilik dan catatan proses |
+
+## Kategori Data
+
+```text
+Publik       -> nama toko, jam buka
+Internal     -> email karyawan
+Rahasia      -> data pelanggan, kontrak
+Sangat sensitif -> kata sandi, token, data kesehatan
+```
+
+## Anonim vs Pseudonim
+
+```text
+Anonim       : "seorang pengguna di Jakarta" (tidak bisa dilacak)
+Pseudonim    : "USER-7391" (masih ada peta ke identitas asli)
+```
+
+Pseudonimisasi membantu analisis, tetapi kunci pemetaan tetap harus dilindungi sekuat data aslinya.
+
+## Menghormati Hak Pengguna
+
+Siapkan alur untuk permintaan akses, koreksi, ekspor, dan penghapusan data. Alur ini harus bisa dibuktikan—siapa yang menyetujui, kapan, dan data apa yang dihapus.
+
+<div class="note">💡 Kebijakan privasi yang panjang tidak banyak membantu bila praktiknya berbeda. Tulis kebijakan sesuai apa yang benar-benar dilakukan sistem.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Latihan:
+  - identifikasi data yang dikumpulkan aplikasimu
+  - tanyakan: apakah setiap field benar-benar dipakai?
+  - tentukan masa simpan
+  - pastikan ada cara menghapusnya`}</code></pre>

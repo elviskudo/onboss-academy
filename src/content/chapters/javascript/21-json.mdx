@@ -1,0 +1,143 @@
+---
+title: "JSON JavaScript"
+description: "Format pertukaran data: stringify, parse, dan manipulasi aman"
+order: 21
+quiz:
+  - q: "Kepanjangan JSON adalah…"
+    options: ["JavaScript Object Notation", "Java Script Object Network", "JSON Object Notation", "JavaScript Oriented Network"]
+    answer: 0
+    explain: "JSON adalah format teks berbasis sintaks objek JavaScript."
+  - q: "Fungsi untuk mengubah objek JS menjadi string JSON adalah…"
+    options: ["JSON.parse()", "JSON.stringify()", "JSON.convert()", "toString()"]
+    answer: 1
+    explain: "Stringify menghasilkan string yang valid untuk dikirim."
+  - q: "JSON tidak mengenal tipe data berikut…"
+    options: ["String", "Number", "Function", "Boolean"]
+    answer: 2
+    explain: "Fungsi dan undefined dihilangkan saat stringify."
+  - q: "Kunci dalam JSON harus…"
+    options: ["Tanpa tanda kutip", "Dikutip ganda", "Dikutip tunggal", "Berupa angka"]
+    answer: 1
+    explain: "JSON mensyaratkan tanda kutip ganda untuk kunci dan string."
+  - q: "`JSON.parse('null')` menghasilkan…"
+    options: ["String 'null'", "null", "undefined", "Error"]
+    answer: 1
+    explain: "Null adalah salah satu nilai literal JSON yang valid."
+example:
+  code: |
+    const objek = { nama: "Sari", aktif: true, skor: [8, 9] };
+    const teks = JSON.stringify(objek);
+    const kembali = JSON.parse(teks);
+    console.log(teks);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JSON (*JavaScript Object Notation*) adalah format teks untuk bertukar data. Meski berasal dari JavaScript, JSON dipakai hampir semua bahasa pemrograman.
+
+## Aturan Sintaks
+
+```json
+{
+  "nama": "Sari",
+  "umur": 20,
+  "aktif": true,
+  "hobi": ["membaca", "berenang"],
+  "alamat": null
+}
+```
+
+- Kunci dan string memakai **tanda kutip ganda**.
+- Tidak ada komentar dan tidak ada koma di akhir.
+- Nilai yang sah: string, number, boolean, null, array, objek.
+- Tanggal direpresentasikan sebagai string ISO.
+
+## Stringify
+
+```js
+const data = { nama: "Sari", jumlah: 3, aside: undefined };
+JSON.stringify(data);
+// '{"nama":"Sari","jumlah":3}' — aside hilang
+
+JSON.stringify(data, null, 2); // pretty print dengan indentasi 2 spasi
+```
+
+Argumen kedua bisa berupa array (whitelist kunci) atau fungsi replacer.
+
+```js
+JSON.stringify(pengguna, (k, v) =>
+  k === "password" ? undefined : v
+);
+```
+
+## Parse
+
+```js
+const teks = '{"nama":"Sari","skor":[8,9]}';
+const obj = JSON.parse(teks);
+obj.skor[0]; // 8
+
+JSON.parse(teks, (k, v) =>
+  typeof v === "string" ? v.toUpperCase() : v
+);
+```
+
+`JSON.parse` melempar `SyntaxError` kalau teks bukan JSON valid — selalu bungkus dengan `try/catch` saat menerima data dari luar.
+
+## reviver untuk Tanggal
+
+```js
+const data = JSON.parse(teks, (k, v) =>
+  /^\d{4}-\d{2}-\d{2}T/.test(v) ? new Date(v) : v
+);
+```
+
+## Menyimpan di localStorage
+
+```js
+const keranjang = [{ id: 1, qty: 2 }];
+localStorage.setItem("keranjang", JSON.stringify(keranjang));
+
+const dibaca = JSON.parse(localStorage.getItem("keranjang") || "[]");
+```
+
+Selalu sediakan fallback `"[]"` supaya `JSON.parse(null)` tidak menghasilkan `null` yang merepotkan.
+
+## JSON vs Objek JS
+
+| Aspek | Objek JS | JSON |
+|-------|----------|------|
+| Bentuk | Struktur data di memori | String teks |
+| Kunci | String/Symbol | String saja |
+| Fungsi | Boleh | Tidak boleh |
+| Komentar | Boleh (di kode) | Tidak boleh |
+| Tanda kutip kunci | Opsional | Wajib ganda |
+
+<div class="note">💡 Jangan pernah memakai `eval()` untuk membaca JSON. Selain berbahaya (bisa mengeksekusi kode), `JSON.parse` juga lebih cepat dan ketat.</div>
+
+## Di Dunia Nyata
+
+- Request/response REST API hampir selalu JSON.
+- Konfigurasi `package.json`, `tsconfig.json`, dan data statis memakai JSON.
+- Menyimpan state sederhana di browser memakai JSON + localStorage.
+
+## Try it Yourself
+
+Ubah struktur objek atau coba parse string JSON yang salah di bawah.
+
+<TryIt lang="javascript" runtime="client-js" code={`const produk = {
+  nama: "Kopi Arabika",
+  harga: 45000,
+  tersedia: true,
+  tag: ["premium", "local"]
+};
+const teks = JSON.stringify(produk, null, 2);
+console.log("JSON string:\n" + teks);
+const hasil = JSON.parse(teks);
+console.log("Nama hasil parse:", hasil.nama);
+console.log("Tag pertama:", hasil.tag[0]);
+try {
+  JSON.parse("{nama: 'Sari'}");
+} catch (err) {
+  console.log("Error tertangkap:", err.name);
+}`} />

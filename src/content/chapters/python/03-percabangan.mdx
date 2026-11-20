@@ -58,7 +58,7 @@ Perhatikan **dua titik** `:` dan indentasi 4 spasi. Urutan dibaca dari atas: cab
 
 ## Operator Perbandingan
 
-**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `<=`
+**6 operator perbandingan**: `==` `!=` `>` `<` `>=` `&lt;=`
 
 ```python
 == != > < >= <=
@@ -127,11 +127,15 @@ def proses(pesanan):
 ## Di Dunia Nyata
 
 - Validasi form login: cek username kosong → password kurang dari 8 karakter → role admin, berurutan sebelum kirim ke server.
-- Penentuan ongkos kirim: `if berat <= 1: harga = 10000 elif berat <= 5: ... else: ...`.
+- Penentuan ongkos kirim: `if berat &lt;= 1: harga = 10000 elif berat &lt;= 5: ... else: ...`.
 - Filter member: `if poin >= 1000 and aktif` → tampilkan badge VIP di dashboard.
 - Routing perintah bot Telegram: `match perintah` membedakan `/start`, `/help`, dan default.
 
 <div class="note">💡 Jangan bandingkan string dengan `is` — pakai `==` untuk nilai, `is` hanya untuk `is None`. `nama is "admin"` bisa False walau isinya "admin", karena dua objek string bisa berbeda di memori.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`def klasifikasi_nilai(n):
     if n >= 90:

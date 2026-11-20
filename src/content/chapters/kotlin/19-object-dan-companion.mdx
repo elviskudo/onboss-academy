@@ -1,0 +1,133 @@
+---
+"title": "Object dan Companion Object"
+"description": "Object declaration, companion, factory, dan object expression"
+"order": 19
+"quiz":
+- "q": "Object declaration dibuat dengan kata kunci…"
+  "options":
+  - "class"
+  - "object"
+  - "companion"
+  - "static"
+  "answer": 1
+  "explain": "object Nama { ... } membuat satu instance secara otomatis."
+- "q": "Anggota companion object diakses lewat…"
+  "options":
+  - "instance.anggota"
+  - "this.anggota"
+  - "NamaKelas.anggota"
+  - "super.anggota"
+  "answer": 2
+  "explain": "Companion milik kelas, bukan instance."
+- "q": "Companion object berganti nama dengan…"
+  "options":
+  - "object companion Nama"
+  - "static object Nama"
+  - "class companion Nama"
+  - "companion object Nama"
+  "answer": 3
+  "explain": "Nama tersebut bisa dipakai: NamaKelas.Nama.anggota."
+- "q": "Object expression berguna untuk…"
+  "options":
+  - "Membuat objek anonim sekali pakai"
+  - "Mendefinisikan tipe baru"
+  - "Mengganti inheritance"
+  - "Membuat enum"
+  "answer": 0
+  "explain": "object : Interface { ... } mirip anonymous class di Java."
+- "q": "Jumlah instance dari object declaration adalah…"
+  "options":
+  - "Satu per pemanggilan"
+  - "Tepat satu"
+  - "Tidak ada"
+  - "Tergantung compiler"
+  "answer": 1
+  "explain": "Object adalah singleton yang dibuat lazy dan thread-safe."
+"example":
+  "code": "object Konfigurasi {\n    const val APP_NAME = \"OnBoss\"\n    var mode = \"development\"\n}\n\nclass Pengguna private constructor(val nama: String) {\n    companion object {\n        fun dari(nama: String): Pengguna = Pengguna(nama.trim())\n    }\n}\n\nfun main() {\n    println(Konfigurasi.APP_NAME)\n    println(Pengguna.dari(\"  Budi  \").nama)\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Object Declaration
+
+```kotlin
+object Konfigurasi {
+    const val APP_NAME = "OnBoss"
+    var mode = "development"
+}
+
+class Pengguna private constructor(val nama: String) {
+    companion object {
+        fun dari(nama: String): Pengguna = Pengguna(nama.trim())
+    }
+}
+
+fun main() {
+    println(Konfigurasi.APP_NAME)
+    println(Pengguna.dari("  Budi  ").nama)
+}
+```
+
+```kotlin
+object Database {
+    val url = "jdbc:sqlite:app.db"
+    fun konek() = println("Terhubung ke $url")
+}
+```
+
+Tidak ada kata `class`. Instance dibuat otomatis sekali dan diakses lewat nama object.
+
+## Companion Object
+
+```kotlin
+class MataUang private constructor(val kode: String) {
+    companion object {
+        val IDR = MataUang("IDR")
+        val USD = MataUang("USD")
+
+        fun dari(kode: String) = MataUang(kode.uppercase())
+    }
+}
+```
+
+Companion cocok untuk konstanta dan factory method. `const val` hanya bisa dipakai untuk tipe primitif dan String.
+
+## Object Expression
+
+```kotlin
+val pendengar = object : OnClickListener {
+    override fun onClick() = println("Klik!")
+}
+```
+
+Bentuk ini membuat objek anonim yang langsung mengimplementasi antarmuka.
+
+| Fitur | Jumlah instance | Dipakai untuk |
+|---|---|---|
+| `object` | satu | singleton, utilitas |
+| `companion object` | satu per kelas | factory, konstanta kelas |
+| `object : Tipe` | satu, anonim | callback sekali pakai |
+
+<div class="note">💡 Sejak Kotlin 1.3, anggota companion bisa dipanggil langsung dari kelas bila diberi anotasi <code>@JvmStatic</code> — berguna untuk interop dengan Java.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`object Konfigurasi {
+    const val APP_NAME = "OnBoss"
+    var mode = "development"
+}
+
+class Pengguna private constructor(val nama: String) {
+    companion object {
+        fun dari(nama: String): Pengguna = Pengguna(nama.trim())
+    }
+}
+
+fun main() {
+    println(Konfigurasi.APP_NAME)
+    println(Pengguna.dari("  Budi  ").nama)
+}`} />

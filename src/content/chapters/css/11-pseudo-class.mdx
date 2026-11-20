@@ -1,0 +1,102 @@
+---
+title: "Pseudo-Class CSS"
+description: "Menata elemen berdasarkan state seperti hover, focus, dan urutan"
+order: 11
+quiz:
+  - q: "Pseudo-class untuk saat kursor berada di atas elemen adalah…"
+    options: [":focus", ":hover", ":active", ":visited"]
+    answer: 1
+    explain: ":hover aktif saat pointer menyentuh elemen."
+  - q: "`:first-child` memilih…"
+    options: ["Anak pertama dari induknya", "Elemen pertama di halaman", "Class pertama", "Turunan pertama"]
+    answer: 0
+    explain: "Pseudo-class ini mengecek posisi elemen di dalam induknya."
+  - q: "`:nth-child(2n)` memilih…"
+    options: ["Anak kedua", "Anak bernomor genap", "Anak ganjil", "Dua anak pertama"]
+    answer: 1
+    explain: "Rumus 2n menghasilkan 2, 4, 6, …"
+  - q: "`:focus` paling sering dipakai untuk…"
+    options: ["Gambar latar", "Aksesibilitas keyboard pada input", "Mengubah URL", "Menyembunyikan elemen"]
+    answer: 1
+    explain: "Outline saat fokus memberi petunjuk kepada pengguna keyboard."
+  - q: "`a:visited` menata tautan…"
+    options: ["Sebelum diklik", "Saat diklik", "Setelah pernah dikunjungi", "Saat di-hover"]
+    answer: 2
+    explain: "Browser menyimpan riwayat kunjungan untuk memilih pseudo-class ini."
+example:
+  code: |
+    a:hover { color: #DC2626; }
+    a:visited { color: #7C3AED; }
+    input:focus { outline: 2px solid #4F46E5; }
+    li:nth-child(odd) { background: #F3F4F6; }
+    li:last-child { border-bottom: none; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Pseudo-class** adalah selector yang memilih elemen berdasarkan *keadaan* atau posisinya — bukan dari nama class atau id. Penulisannya memakai satu titik dua (`:`).
+
+## State Interaktif yang Paling Umum
+
+| Pseudo-class | Aktif saat |
+|--------------|------------|
+| `:hover` | Kursor berada di atas elemen |
+| `:focus` | Elemen sedang menerima fokus keyboard/klik |
+| `:active` | Tombol mouse sedang ditekan |
+| `:visited` | Tautan sudah pernah dikunjungi |
+| `:disabled` | Form field dinonaktifkan |
+| `:checked` | Checkbox/radio dicentang |
+
+```css
+button:hover  { background: #4338CA; transform: translateY(-1px); }
+button:active { transform: translateY(1px); }
+input:focus   { outline: 3px solid #C7D2FE; border-color: #4F46E5; }
+input:disabled{ opacity: 0.55; cursor: not-allowed; }
+```
+
+## Pseudo-class Berbasis Posisi
+
+```css
+li:first-child  { font-weight: 700; }
+li:last-child   { border-bottom: 0; }
+li:nth-child(3) { color: #DC2626; }
+li:nth-child(2n)   { background: #F9FAFB; } /* genap */
+li:nth-child(2n+1) { background: white;    } /* ganjil */
+li:nth-last-child(2) { opacity: 0.7; }
+```
+
+Rumus `an+b` di `nth-child` membaca: `a` adalah langkah, `n` mulai dari 0, lalu ditambah `b`. Jadi `3n+1` berarti posisi 1, 4, 7, 10, dan seterusnya.
+
+## Pseudo-class Struktural Lain
+
+- `:only-child` — satu-satunya anak di induknya.
+- `:empty` — elemen tanpa anak dan tanpa teks.
+- `:not(.kelas)` — semua elemen **kecuali** yang cocok.
+- `:is(h1, h2, h3)` — ringkasan selector list dengan spesifisitas mengikuti argumen paling spesifik.
+
+```css
+.card:not(.featured) { opacity: 0.85; }
+:is(h1, h2, h3) { font-family: Georgia, serif; }
+```
+
+<div class="note">💡 Urutan matters pada tautan: tulis `:link`, lalu `:visited`, lalu `:hover`, lalu `:active` (LVHA). Kalau `:hover` ditulis sebelum `:visited`, aturan visited akan menimpanya.</div>
+
+## Di Dunia Nyata
+
+- Baris tabel bergaris (zebra striping) memakai `:nth-child(even)`.
+- Indikator bintang pada field wajib memakai `:required`.
+- Menu dropdown terbuka memakai `:hover` pada induk + `> ul`.
+- Tombol "Lanjut" berubah warna saat `input:valid` bersebelahan dengannya.
+
+## Try it Yourself
+
+Arahkan kursor ke tautan atau ubah rumus `nth-child` pada contoh berikut.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 12px; }
+a { color: #2563EB; }
+a:hover { color: #DC2626; }
+a:visited { color: #7C3AED; }
+li { padding: 6px; }
+li:nth-child(2n) { background: #EEF2FF; }
+li:first-child { font-weight: bold; }
+button:focus { outline: 3px solid #FBBF24; }`} />

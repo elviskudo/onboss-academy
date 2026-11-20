@@ -5,9 +5,9 @@ Platform belajar pemrograman berbahasa Indonesia dengan materi terstruktur, cont
 ## Fitur
 
 - 38 bahasa dan topik teknologi.
-- 338 chapter MDX dengan urutan belajar yang jelas.
-- Materi Python mengikuti alur tutorial inti W3Schools, termasuk Project Mini.
-- Materi HTML5 praktis untuk form modern, validasi, dan aksesibilitas.
+- **1005 chapter MDX** dengan cakupan topik setara tutorial inti W3Schools untuk setiap bahasa.
+- Materi ditulis orisinal berbahasa Indonesia dengan pola konsisten: penjelasan, contoh, `Try it Yourself`, dan kuis.
+- Masuk dengan email/password **atau Sign in with Google** (OAuth 2.0).
 - Editor kode interaktif untuk runtime yang didukung.
 - Preview HTML dipisahkan dari console log agar hasil halaman lebih mudah dibaca.
 - Kuis per chapter dengan nilai kelulusan minimal 70%.
@@ -65,6 +65,34 @@ PISTON_URL=""
 ```
 
 Jangan commit `.env`, database lokal, atau secret.
+
+Untuk Sign in with Google, isi juga:
+
+```env
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+PUBLIC_SITE_URL="https://onboss-academy.elviskudo.workers.dev"
+```
+
+Di Google Cloud Console, tambahkan **Authorized redirect URI** berikut pada OAuth client bertipe *Web application*:
+
+```text
+https://onboss-academy.elviskudo.workers.dev/api/auth/google/callback
+```
+
+Untuk lokal, tambahkan juga:
+
+```text
+http://localhost:4321/api/auth/google/callback
+```
+
+Kedua nilai `PUBLIC_SITE_URL`, `GOOGLE_CLIENT_ID`, dan `GOOGLE_CLIENT_SECRET` harus dipasang sebagai secret Cloudflare:
+
+```sh
+npx wrangler secret put PUBLIC_SITE_URL
+npx wrangler secret put GOOGLE_CLIENT_ID
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+```
 
 Runtime Cloudflare membaca `JUDGE0_URL` dan `PISTON_URL` dari `vars` di `wrangler.jsonc`. Secret production dipasang dengan `npx wrangler secret put <KEY>`.
 
@@ -126,7 +154,7 @@ npm run dev
 ## Validasi dan Build
 
 ```sh
-python3 scripts/check_content.py
+/usr/bin/python3 scripts/check_content.py
 npx astro check
 npm run build
 ```

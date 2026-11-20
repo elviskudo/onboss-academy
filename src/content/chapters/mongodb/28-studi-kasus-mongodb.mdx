@@ -1,0 +1,117 @@
+---
+title: "Studi Kasus: Toko Online dengan MongoDB"
+description: "merancang model data katalog, keranjang, pesanan, index, dan agregasi laporan"
+order: 28
+quiz:
+  - q: "Untuk atribut produk yang berbeda-beda, desain MongoDB yang tepat adalah…"
+    options: ["Teks biasa", "Satu tabel dengan 100 kolom", "Dokumen dengan field tambahan per kategori", "File CSV terpisah"]
+    answer: 2
+    explain: "Dokumen boleh punya field berbeda, cocok untuk katalog heterogen."
+  - q: "Keranjang belanja sebaiknya…"
+    options: ["Disimpan di cookie saja", "Dihapus tiap jam", "Di-embed dalam dokumen user", "Dibuat tabel terpisah per item"]
+    answer: 2
+    explain: "Satu baca mengambil seluruh keranjang; update kuantitas atomik dalam satu dokumen."
+  - q: "Riwayat pesanan biasanya disimpan sebagai…"
+    options: ["Field di dalam produk", "Indeks teks", "Log server", "Dokumen terpisah dengan referensi user"]
+    answer: 3
+    explain: "Pesanan punya siklus hidup sendiri dan jumlahnya banyak, jadi koleksi tersendiri."
+  - q: "Index untuk query \"pesanan per user terbaru\" adalah…"
+    options: ["{_id: -1}", "{user_id: 1, tanggal: -1}", "{tanggal: 1}", "{total: -1}"]
+    answer: 1
+    explain: "Urutan dimulai dari field filter lalu field sort."
+  - q: "Agregasi omzet per bulan memakai…"
+    options: ["$unwind saja", "$count saja", "$group dengan _id pada bulan", "$limit saja"]
+    answer: 2
+    explain: "$group mengelompokkan transaksi lalu $sum menjumlahkan total."
+example:
+  code: |
+    db.produk.insertOne({nama: "Keyboard", kategori: "Elektronik", harga: 350000, spesifikasi: {layout: "65%", switch: "red"}})
+    db.keranjang.updateOne({user_id: 1}, {$inc: {"item.0.qty": 1}})
+    db.pesanan.createIndex({user_id: 1, tanggal: -1})
+    db.pesanan.aggregate([{$group: {_id: "$bulan", omzet: {$sum: "$total"}}}])
+---
+
+## 1. Katalog Produk
+
+Produk elektronik punya `switch` dan `layout`; pakaian punya `ukuran` dan `bahan`. Alih-alih ratusan kolom kosong, tiap dokumen menyimpan field yang relevan.
+
+```javascript
+db.produk.insertOne({
+  nama: "Keyboard Mech",
+  kategori: "Elektronik",
+  harga: 350000,
+  stok: 12,
+  spesifikasi: { layout: "65%", switch: "red" },
+  tag: ["mechanical", "gaming"]
+})
+```
+
+Indeks yang sering dipakai:
+
+```javascript
+db.produk.createIndex({ kategori: 1, harga: 1 })
+db.produk.createIndex({ tag: 1 })
+db.produk.createIndex({ nama: "text" })
+```
+
+## 2. Keranjang
+
+Keranjang dibaca tiap kali user membuka halaman, jadi **embed** dalam satu dokumen lebih efisien daripada join.
+
+```javascript
+db.keranjang.updateOne(
+  { user_id: 1 },
+  { $set: { "item.0": { kode: "KB-01", qty: 2 } }, $setOnInsert: { dibuat: new Date() } },
+  { upsert: true }
+)
+```
+
+Perhatikan dua `$set` tidak boleh muncul dalam satu update; di dunia nyata gunakan satu `$set` berisi beberapa field.
+
+## 3. Pesanan
+
+Pesanan berbeda dari keranjang: jumlahnya banyak, perlu riwayat, dan tidak berubah setelah selesai. Jadikan koleksi tersendiri dengan referensi ke user dan produk.
+
+```javascript
+db.pesanan.insertOne({
+  user_id: 1,
+  tanggal: new Date(),
+  item: [{ kode: "KB-01", qty: 1, harga: 350000 }],
+  total: 350000,
+  status: "dibayar"
+})
+db.pesanan.createIndex({ user_id: 1, tanggal: -1 })
+```
+
+Indeks komposit di atas melayani query "tampilkan pesanan user ini, terbaru dulu".
+
+## 4. Laporan Omzet
+
+```javascript
+db.pesanan.aggregate([
+  { $match: { status: "dibayar" } },
+  { $group: { _id: { tahun: { $year: "$tanggal" }, bulan: { $month: "$tanggal" } },
+              omzet: { $sum: "$total" }, jumlah: { $sum: 1 } } },
+  { $sort: { "_id.tahun": 1, "_id.bulan": 1 } }
+])
+```
+
+## 5. Checklist Produksi
+
+- Schema validation untuk field wajib.
+- Indeks sesuai pola query nyata, bukan perkiraan.
+- `explain()` pada query yang lambat.
+- Backup `mongodump` sebelum migrasi besar.
+- TTL index untuk keranjang yang sudah ditinggalkan.
+- Transaksi hanya untuk proses yang benar-benar lintas dokumen.
+
+<div class="note">💡 Aturan praktisnya: data yang **dibaca bersamaan** di-embed; data yang **tumbuh tanpa batas** atau dipakai banyak entitas dipisah lalu direferensikan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use toko_online
+db.produk.insertOne({nama: "Keyboard", kategori: "Elektronik", harga: 350000, spesifikasi: {layout: "65%"}})
+db.produk.createIndex({kategori: 1, harga: 1})
+db.produk.find({kategori: "Elektronik"}, {nama: 1, harga: 1, _id: 0})`}</code></pre>

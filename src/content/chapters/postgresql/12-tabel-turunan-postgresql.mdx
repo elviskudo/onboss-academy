@@ -1,0 +1,113 @@
+---
+title: "Query Turunan: Subquery, LATERAL, dan CTE"
+description: "Subquery bersarang, LATERAL, CTE, dan MATERIALIZED"
+order: 12
+quiz:
+  - q: "Subquery di FROM disebut…"
+    options: ["Derived table", "View permanen", "Trigger", "Index"]
+    answer: 1
+    explain: "Subquery di FROM menghasilkan tabel turunan."
+  - q: "LATERAL memungkinkan subquery merujuk…"
+    options: ["Kolom tabel sebelumnya", "Hanya tabel lain", "Tidak ada", "Index saja"]
+    answer: 2
+    explain: "LATERAL mengizinkan referensi ke kolom dari item FROM sebelumnya."
+  - q: "CTE ditulis dengan…"
+    options: ["WITH", "USING", "LET", "DECLARE"]
+    answer: 3
+    explain: "WITH nama AS (SELECT ...) SELECT ..."
+  - q: "MATERIALIZED pada CTE berarti…"
+    options: ["Hasil dihitung sekali dan disimpan sementara", "Hasil selalu di-inline", "Data permanently disimpan", "Query gagal"]
+    answer: 0
+    explain: "WITH x AS MATERIALIZED (...) memaksa materialisasi."
+  - q: "CTE rekursif memakai…"
+    options: ["UNION ALL", "JOIN biasa", "GROUP BY", "DISTINCT"]
+    answer: 1
+    explain: "Bagian anchor dan recursive digabung dengan UNION ALL."
+example:
+  code: |
+    WITH rata AS (SELECT AVG(gaji) AS r FROM karyawan) SELECT nama FROM karyawan, rata WHERE gaji > rata.r;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL memberi banyak cara menyusun query bertingkat. Memilih bentuk yang tepat membuat logika mudah dibaca dan memberi kontrol pada optimizer.
+
+## Subquery Skalar
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+WHERE gaji > (SELECT AVG(gaji) FROM karyawan);
+```
+
+Subquery skalar harus menghasilkan satu baris satu kolom.
+
+## Derived Table
+
+```sql
+SELECT r.dept, r.jumlah
+FROM (
+  SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept
+) AS r
+WHERE r.jumlah >= 2;
+```
+
+Alias wajib. Ini setara dengan CTE non-rekursif, tetapi CTE biasanya lebih enak dibaca.
+
+## LATERAL
+
+```sql
+SELECT d.nama AS dept, p.nama AS karyawan_teratas
+FROM departemen d
+CROSS JOIN LATERAL (
+  SELECT nama FROM karyawan k
+  WHERE k.dept = d.id
+  ORDER BY k.gaji DESC
+  LIMIT 1
+) p;
+```
+
+Tanpa `LATERAL`, subquery di FROM tidak bisa melihat `d.id`. Pola ini sangat berguna untuk "top N per grup".
+
+## CTE
+
+```sql
+WITH rata_dept AS (
+  SELECT dept, AVG(gaji) AS rata FROM karyawan GROUP BY dept
+)
+SELECT k.nama, k.gaji, rata_dept.rata
+FROM karyawan k JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata;
+```
+
+Beberapa CTE dipisah koma dan CTE berikutnya boleh merujuk yang sebelumnya.
+
+## MATERIALIZED vs NOT MATERIALIZED
+
+```sql
+WITH cepat AS MATERIALIZED (
+  SELECT * FROM tabel_besar WHERE ...
+)
+SELECT * FROM cepat WHERE ... UNION ALL SELECT * FROM cepat WHERE ...;
+```
+
+`MATERIALIZED` memo hasil CTE bila dipakai berkali-kali. `NOT MATERIALIZED` mengizinkan optimizer meng-inline agar filter bisa didorong ke dalam.
+
+<div class="note">💡 Sejak PostgreSQL 12, CTE yang hanya dipakai sekali otomatis di-inline bila aman. Tidak perlu menambahkan MATERIALIZED kecuali ada ukuran atau多次 pemakaian.</div>
+
+## Di Dunia Nyata
+
+- **Top per kategori**: LATERAL + LIMIT 1.
+- **Laporan bertahap**: CTE memberi nama setiap langkah.
+- **Rekursi**: hierarki dan deret angka.
+- **Query besar**: MATERIALIZED menghindari perhitungan ulang.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`WITH urut AS (
+  SELECT dept, nama, gaji,
+         ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS pos
+  FROM karyawan
+)
+SELECT dept, nama, gaji FROM urut WHERE pos = 1 ORDER BY dept;`} />

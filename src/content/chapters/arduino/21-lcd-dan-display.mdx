@@ -1,0 +1,98 @@
+---
+title: "LCD Karakter dan OLED"
+description: "Menampilkan teks dan data sensor"
+order: 21
+quiz:
+  - q: "LCD 16x2 dengan adapter I2C umum memakai alamat…"
+    options: ["0x10", "0x27", "0x01", "0xFF"]
+    answer: 1
+    explain: "Beberapa modul memakai 0x3F."
+  - q: "Library populer untuk LCD I2C adalah…"
+    options: ["I2CLCD", "SerialLCD", "LiquidCrystal_I2C", "WireLCD"]
+    answer: 2
+    explain: "Library ini membungkus perintah HD44780 lewat I2C."
+  - q: "Pada OLED SSD1306, perintah show() berfungsi…"
+    options: ["Menghapus variabel", "Menyalakan LED", "Mengirim I2C", "Menampilkan isi buffer ke layar"]
+    answer: 3
+    explain: "Perubahan buffer belum terlihat sebelum show()."
+  - q: "Untuk menulis di baris kedua LCD, gunakan…"
+    options: ["setCursor(0, 1)", "setCursor(1, 0)", "baris(2)", "goto 2"]
+    answer: 0
+    explain: "Kolom dan baris dimulai dari 0."
+  - q: "Kontras LCD diatur dengan…"
+    options: ["Wire.begin", "Potensiometer pada modul", "Baudrate", "analogWrite"]
+    answer: 1
+    explain: "Putar perlahan sampai karakter tampak jelas."
+example:
+  code: |
+    #include <Wire.h>
+    #include <LiquidCrystal_I2C.h>
+    LiquidCrystal_I2C lcd(0x27, 16, 2);
+    
+    void setup() {
+      lcd.init();
+      lcd.backlight();
+      lcd.setCursor(0, 0);
+      lcd.print('Suhu: 27.3 C');
+    }
+---
+
+Layar kecil memberi umpan balik langsung tanpa komputer. LCD karakter murah dan tahan lama; OLED memberi grafis yang lebih fleksibel.
+
+## LCD I2C
+
+```cpp
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+lcd.init();
+lcd.backlight();
+lcd.print('Halo Dunia');
+lcd.setCursor(0, 1);
+lcd.print('Baris dua');
+```
+
+Jika alamat tidak diketahui, jalankan I2C scanner dari chapter sebelumnya.
+
+## OLED
+
+```cpp
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+display.clearDisplay();
+display.setTextSize(1);
+display.setCursor(0, 0);
+display.println('Suhu: 27.3 C');
+display.display();
+```
+
+## Perbandingan
+
+| Aspek | LCD 16x2 | OLED 128x64 |
+|---|---|---|
+| Antarmuka | I2C (dengan adapter) | I2C/SPI |
+| Konsumsi | Backlight konstan | Per piksel |
+| Grafik | Tidak | Ya |
+| Harga | Murah | Sedang |
+
+## Menampilkan Nilai Sensor
+
+```cpp
+lcd.clear();
+lcd.setCursor(0, 0);
+lcd.print('Suhu: ');
+lcd.print(suhu, 1);
+lcd.print(' C');
+```
+
+<div class="note">💡 Pembaruan layar terlalu sering bisa membuat tampilan berkedip. Batasi ke 1–2 kali per detik.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;Wire.h&gt;
+#include &lt;LiquidCrystal_I2C.h&gt;
+LiquidCrystal_I2C lcd(0x27,16,2);
+void setup(){ lcd.init(); lcd.backlight(); lcd.print('Halo'); }
+void loop(){ lcd.setCursor(0,1); lcd.print(millis()/1000); delay(500); }`}</code></pre>

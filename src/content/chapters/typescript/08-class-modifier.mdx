@@ -161,6 +161,10 @@ Kapan OOP vs prosedural? Pakai class saat ada **state yang diubah lewat method**
 
 <div class="note">💡 TypeScript menghapus class saat kompilasi menjadi fungsi JavaScript biasa. Modifier seperti private dan protected **hanya berlaku saat kompilasi** — di runtime JS lama, tetap bisa diakses lewat bracket notation. Jangan mengandalkannya untuk keamanan.</div>
 
+## Try it Yourself
+
+Ubah modifier akses atau tambahkan method pada class di bawah.
+
 <TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`class Produk {
   static jumlah = 0;
 
@@ -169,7 +173,7 @@ Kapan OOP vs prosedural? Pakai class saat ada **state yang diubah lewat method**
   }
 
   jual(): boolean {
-    if (this.stok <= 0) return false;
+    if (this.stok &lt;= 0) return false;
     this.stok--;
     return true;
   }

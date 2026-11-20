@@ -1,0 +1,124 @@
+---
+title: "Trigger dan Aturan Integritas"
+description: "BEFORE/AFTER trigger, row vs statement, transition table, dan constraint trigger"
+order: 22
+quiz:
+  - q: "Trigger BEFORE dijalankan…"
+    options: ["Sebelum baris diubah", "Setelah baris diubah", "Saat SELECT", "Saat COMMIT"]
+    answer: 1
+    explain: "BEFORE trigger bisa mengubah NEW sebelum disimpan."
+  - q: "Baris baru pada trigger INSERT tersedia sebagai…"
+    options: ["NEW", "OLD", "CURRENT", "UPDATED"]
+    answer: 2
+    explain: "NEW berisi baris yang akan disisipkan."
+  - q: "Trigger level statement memakai…"
+    options: ["FOR EACH STATEMENT", "FOR EACH ROW", "PER STATEMENT", "EACH TABLE"]
+    answer: 3
+    explain: "FOR EACH STATEMENT dipanggil sekali per pernyataan."
+  - q: "Tabel hasil REFERENCING disebut…"
+    options: ["Transition table", "Temp table", "View", "Sequence"]
+    answer: 0
+    explain: "REFERENCING NEW TABLE AS ... menyediakan kumpulan baris baru."
+  - q: "Constraint trigger berguna untuk…"
+    options: ["Validasi yang ditunda sampai akhir transaksi", "Menghapus tabel", "Membuat index", "Mengubah user"]
+    answer: 1
+    explain: "Constraint trigger bisa DEFERRABLE dan diperiksa saat commit."
+example:
+  code: |
+    CREATE TRIGGER trg BEFORE INSERT ON produk FOR EACH ROW SET NEW.nama = lower(NEW.nama);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Trigger secara otomatis memanggil fungsi saat peristiwa INSERT, UPDATE, DELETE, atau TRUNCATE terjadi. Gunakan untuk aturan yang harus berlaku dari mana pun data diubah.
+
+## Membuat Trigger
+
+```sql
+CREATE OR REPLACE FUNCTION normalisasi_nama()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.nama := lower(trim(NEW.nama));
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_normalisasi
+BEFORE INSERT OR UPDATE ON produk
+FOR EACH ROW EXECUTE FUNCTION normalisasi_nama();
+```
+
+Trigger BEFORE harus mengembalikan `NEW`; mengembalikan NULL membatalkan operasi.
+
+## AFTER Trigger dan Audit
+
+```sql
+CREATE TABLE audit_produk (
+ id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ produk_id integer, aksi text, waktu timestamptz DEFAULT now()
+);
+
+CREATE OR REPLACE FUNCTION catat_audit()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  INSERT INTO audit_produk(produk_id, aksi)
+  VALUES (NEW.id, TG_OP);
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER trg_audit AFTER INSERT ON produk
+FOR EACH ROW EXECUTE FUNCTION catat_audit();
+```
+
+## Row vs Statement
+
+| Level | Dipanggil | Cocok untuk |
+| --- | --- | --- |
+| `FOR EACH ROW` | per baris | validasi per record |
+| `FOR EACH STATEMENT` | sekali per query | ringkasan, notifikasi
+
+## Transition Table
+
+```sql
+CREATE TRIGGER trg_ringkas
+AFTER UPDATE ON produk
+REFERENCING OLD TABLE AS lama NEW TABLE AS baru
+FOR EACH STATEMENT EXECUTE FUNCTION bandingkan_stok();
+```
+
+Transition table memberi akses ke kumpulan baris lama/baru, cocok untuk batch update.
+
+## Constraint Trigger
+
+```sql
+CREATE CONSTRAINT TRIGGER cek_stok
+AFTER INSERT ON pesanan
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validasi_stok();
+```
+
+Dengan `INITIALLY DEFERRED`, pengecekan terjadi saat COMMIT, setelah semua baris selesai diubah.
+
+<div class="note">💡 Trigger yang melakukan query ke tabel yang sama bisa memicu rekursi. Gunakan `pg_trigger_depth()` atau nonaktifkan trigger sementara bila memang diperlukan.</div>
+
+## Di Dunia Nyata
+
+- **Normalisasi**: nama dan email dibersihkan sebelum disimpan.
+- **Audit**: setiap perubahan data sensitif tercatat.
+- **Denormalisasi**: stok di tabel ringkas diperbarui otomatis.
+- **Validasi**: aturan yang harus berlaku untuk semua client.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE OR REPLACE FUNCTION upper_nama()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.nama := upper(NEW.nama);
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER trg_upper BEFORE INSERT ON karyawan
+FOR EACH ROW EXECUTE FUNCTION upper_nama();
+INSERT INTO karyawan(nama, gaji) VALUES ('ana', 8000000) RETURNING nama;`} />

@@ -1,0 +1,118 @@
+---
+title: "Server-Sent Events"
+description: "Menerima aliran data real-time dari server lewat EventSource"
+order: 37
+quiz:
+  - q: "Antarmuka JavaScript untuk SSE adalah…"
+    options: ["EventSource", "WebSocket", "Fetch", "XMLHttpRequest"]
+    answer: 0
+    explain: "const src = new EventSource('/events');"
+  - q: "SSE mengalirkan data…"
+    options: ["Dari server ke klien saja", "Dua arah", "Hanya gambar", "Hanya JSON"]
+    answer: 0
+    explain: "SSE unidirectional; untuk dua arah pakai WebSocket."
+  - q: "Event default yang diterima EventSource adalah…"
+    options: ["message", "data", "update", "stream"]
+    answer: 0
+    explain: "src.onmessage dipicu untuk pesan tanpa nama event."
+  - q: "Content-Type yang benar untuk SSE adalah…"
+    options: ["text/event-stream", "application/json", "text/html", "multipart/form-data"]
+    answer: 0
+    explain: "Server harus mengirim header text/event-stream."
+  - q: "EventSource otomatis…"
+    options: ["Menghubungkan ulang saat putus", "Menghapus data", "Mengubah URL", "Menutup browser"]
+    answer: 0
+    explain: "SSE punya mekanisme reconnect bawaan."
+example:
+  code: |
+    <p id="status">Menunggu update…</p>
+    
+    <script>
+    const src = new EventSource('/events');
+    
+    src.onmessage = function(e) {
+      document.getElementById('status').textContent = e.data;
+    };
+    
+    src.addEventListener('harga', e => {
+      console.log('Update harga:', e.data);
+    });
+    
+    // src.close(); // untuk berhenti
+    </script>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Server-Sent Events (SSE)** memungkinkan server 'mendorong' data ke browser secara real-time melalui satu koneksi HTTP yang tetap terbuka.
+
+## Kapan Memakai SSE?
+
+- Feed notifikasi
+- Harga saham / crypto
+- Status progres pekerjaan
+- Log server langsung
+
+Kalau butuh komunikasi dua arah (chat), gunakan **WebSocket**.
+
+## Klien
+
+```js
+const source = new EventSource('/events');
+
+source.onmessage = e => {
+  console.log(e.data);
+};
+
+source.addEventListener('update', e => {
+  console.log('Event bernama update:', e.data);
+});
+```
+
+## Format Pesan dari Server
+
+Server mengirim teks dengan format sederhana:
+
+```
+data: Halo dunia
+
+event: update
+data: 42
+```
+
+Tiap pesan dipisah baris kosong.
+
+## Perbandingan Singkat
+
+| | SSE | WebSocket |
+|---|-----|-----------|
+| Arah | Server → klien | Dua arah |
+| Protokol | HTTP biasa | ws:// |
+| Reconnect | Otomatis | Manual |
+| Kompleksitas | Sederhana | Lebih kompleks |
+
+<div class="note">💡 SSE tidak didukung Internet Explorer. Untuk browser modern, ini pilihan yang sangat ringan dibanding WebSocket kalau hanya butuh aliran satu arah.</div>
+
+## Try it Yourself
+
+Contoh ini memakai sumber SSE publik untuk demonstrasi.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Server-Sent Events</h1>
+  <p id="status">Mencoba terhubung…</p>
+  <script>
+    // Contoh memakai endpoint SSE publik (mungkin tidak selalu aktif)
+    const src = new EventSource('https://sse.dev/test');
+    src.onmessage = e => {
+      document.getElementById('status').textContent = 'Data: ' + e.data;
+    };
+    src.onerror = () => {
+      document.getElementById('status').textContent =
+        'Koneksi gagal (mungkin diblokir CORS/jaringan).';
+      src.close();
+    };
+  </script>
+</body>
+</html>`} />

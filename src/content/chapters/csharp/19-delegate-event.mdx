@@ -1,0 +1,141 @@
+---
+"title": "Delegate dan Event"
+"description": "Pointer method bertipe aman, lambda, dan pola publisher-subscriber di C#"
+"order": 19
+"quiz":
+- "q": "Delegate adalah…"
+  "options":
+  - "penunjuk ke method bertipe aman"
+  - "jenis array"
+  - "modifier akses"
+  - "exception"
+  "answer": 0
+  "explain": "Delegate menyimpan referensi ke method dengan signature yang cocok."
+- "q": "Lambda `x => x * 2` setara dengan…"
+  "options":
+  - "method yang menerima x dan mengembalikan x*2"
+  - "variabel int"
+  - "perulangan"
+  - "class"
+  "answer": 0
+  "explain": "Lambda adalah sintaks ringkas untuk method anonim."
+- "q": "Kata kunci untuk mendeklarasikan event adalah…"
+  "options":
+  - "event"
+  - "signal"
+  - "notify"
+  - "handler"
+  "answer": 0
+  "explain": "Event dibangun di atas delegate dan membatasi siapa yang boleh memicunya."
+- "q": "Operator untuk menambah subscriber event adalah…"
+  "options":
+  - "="
+  - "+="
+  - "-="
+  - "*="
+  "answer": 1
+  "explain": "Gunakan += untuk berlangganan dan -= untuk berhenti."
+- "q": "Func<int,bool> adalah delegate yang…"
+  "options":
+  - "menerima int dan mengembalikan bool"
+  - "menerima bool mengembalikan int"
+  - "tidak menerima argumen"
+  - "selalu void"
+  "answer": 0
+  "explain": "Parameter terakhir pada Func<T, TResult> adalah tipe kembalian."
+"example":
+  "code": "using System;\nclass Program\n{\n    static void Main()\n    {\n        Func<int, int> kaliDua = x => x * 2;\n        Console.WriteLine(kaliDua(5));\n        Action<string> sapa = n => Console.WriteLine(\"Halo \" + n);\n        sapa(\"Rani\");\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Delegate membuat method bisa diperlakukan sebagai nilai: disimpan, dikirim, dan dipanggil nanti. Event memakai delegate untuk pola *publisher–subscriber*.
+
+## Delegate
+
+```csharp
+delegate int Operasi(int a, int b);
+
+static int Tambah(int a, int b) => a + b;
+
+Operasi op = Tambah;
+Console.WriteLine(op(3, 4)); // 7
+```
+
+Signature method harus sama persis dengan deklarasi delegate.
+
+## Func, Action, Predicate
+
+| Delegate | Signature |
+|---|---|
+| `Func<T, TResult>` | Ada argumen, ada hasil |
+| `Action<T>` | Ada argumen, tanpa hasil |
+| `Predicate<T>` | Satu argumen, hasil `bool` |
+
+```csharp
+Func<int, int> kuadrat = x => x * x;
+Action<string> cetak = s => Console.WriteLine(s);
+Predicate<int> genap = x => x % 2 == 0;
+```
+
+## Multicast Delegate
+
+Satu delegate bisa menampung beberapa method; pemanggilannya berurutan:
+
+```csharp
+Action rantai = () => Console.WriteLine("A");
+rantai += () => Console.WriteLine("B");
+rantai(); // A lalu B
+```
+
+## Event
+
+```csharp
+class Tombol
+{
+    public event EventHandler? Diklik;
+
+    public void Klik()
+    {
+        Diklik?.Invoke(this, EventArgs.Empty);
+    }
+}
+
+var tombol = new Tombol();
+tombol.Diklik += (sender, e) => Console.WriteLine("Tombol diklik!");
+tombol.Klik();
+```
+
+`?.Invoke` menghindari exception saat belum ada subscriber. Event hanya bisa dipicu dari dalam kelas pemiliknya.
+
+<div class="note">💡 Selalu berhenti berlangganan (<code>-=</code>) saat objek tidak dipakai lagi, terutama pada aplikasi UI — subscriber yang tersisa membuat objek tidak bisa dibersihkan garbage collector.</div>
+
+## Try it Yourself
+
+Tambahkan subscriber ketiga atau hapus salah satu dengan `-=`.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Tombol
+{
+    public event EventHandler? Diklik;
+
+    public void Klik() => Diklik?.Invoke(this, EventArgs.Empty);
+}
+
+class Program
+{
+    static void Main()
+    {
+        Func<int, int> kaliDua = x => x * 2;
+        Console.WriteLine("5 * 2 = " + kaliDua(5));
+
+        Predicate<int> genap = x => x % 2 == 0;
+        Console.WriteLine("8 genap? " + genap(8));
+
+        var tombol = new Tombol();
+        tombol.Diklik += (s, e) => Console.WriteLine("Subscriber pertama jalan");
+        tombol.Diklik += (s, e) => Console.WriteLine("Subscriber kedua jalan");
+        tombol.Klik();
+    }
+}`} />

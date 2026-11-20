@@ -1,0 +1,122 @@
+---
+title: "Routing Lanjutan"
+description: "lazy loading, parameter, query params, dan child route"
+order: 17
+quiz:
+  - q: "Lazy loading berguna untuk…"
+    options: ["Mengubah warna", "Menambah form", "Memuat fitur hanya saat dibuka", "Menghapus rute"]
+    answer: 2
+    explain: "Bundle awal jadi lebih kecil."
+  - q: "Parameter rute dibaca dengan…"
+    options: ["ViewChild", "ActivatedRoute", "HttpClient", "FormGroup"]
+    answer: 1
+    explain: "paramMap berisi nilai seperti /produk/42."
+  - q: "Query parameter cocok untuk…"
+    options: ["Data login", "CSS", "Animasi", "Filter dan halaman yang bisa dibagikan lewat URL"]
+    answer: 3
+    explain: "Contoh: /produk?halaman=2&cari=kopi."
+  - q: "Child route ditandai dengan…"
+    options: ["pipe", "router-outlet di dalam komponen induk", "ngModel", "@Input"]
+    answer: 1
+    explain: "Outlet bertingkat memungkinkan layout bertahap."
+  - q: "loadComponent dipakai untuk…"
+    options: ["Lazy memuat komponen tertentu", "Mengirim POST", "Mengubah judul", "Menutup rute"]
+    answer: 0
+    explain: "Angular mengunduh chunk saat rute dikunjungi."
+example:
+  code: |
+    {
+      path: "laporan",
+      loadComponent: () => import("./laporan.component")
+        .then((m) => m.LaporanComponent),
+    }
+---
+
+Routing Angular lebih dari sekadar pindah halaman. Dengan lazy loading dan parameter, rute menjadi fondasi arsitektur aplikasi.
+
+## Rute dengan Parameter
+
+```typescript
+export const routes: Routes = [
+  { path: "produk/:id", component: DetailComponent },
+];
+```
+
+```typescript
+const route = inject(ActivatedRoute);
+
+route.paramMap.subscribe((params) => {
+  const id = Number(params.get("id"));
+  this.api.detail(id).subscribe((p) => this.produk = p);
+});
+```
+
+## Query Params
+
+```typescript
+// /produk?cari=kopi&halaman=2
+route.queryParamMap.subscribe((q) => {
+  this.kata = q.get("cari") ?? "";
+  this.halaman = Number(q.get("halaman") ?? 1);
+});
+
+// memperbarui URL dari kode
+router.navigate([], { queryParams: { cari: "kopi" } });
+```
+
+Query params bagus untuk filter karena bisa disalin dan dibuka ulang.
+
+## Lazy Loading
+
+```typescript
+{
+  path: "admin",
+  loadChildren: () => import("./admin/admin.routes")
+    .then((m) => m.ADMIN_ROUTES),
+}
+```
+
+Atau untuk satu komponen:
+
+```typescript
+{
+  path: "laporan",
+  loadComponent: () => import("./laporan/laporan.component")
+    .then((m) => m.LaporanComponent),
+}
+```
+
+## Child Route
+
+```typescript
+{
+  path: "akun",
+  component: AkunLayoutComponent,
+  children: [
+    { path: "profil", component: ProfilComponent },
+    { path: "pesanan", component: PesananComponent },
+  ],
+}
+```
+
+Di `AkunLayoutComponent` tetap perlu `<router-outlet />` untuk menampilkan anak.
+
+## Wildcard
+
+```typescript
+{ path: "**", component: TidakDitemukanComponent }
+```
+
+Taruh paling bawah — rute dibaca berurutan.
+
+<div class="note">💡 Anggap URL sebagai bagian dari UI. Kalau filter dan status halaman tercermin di URL, user bisa refresh atau membagikan tautan tanpa kehilangan konteks.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`{
+  path: "laporan",
+  loadComponent: () => import("./laporan.component")
+    .then((m) => m.LaporanComponent),
+}`}</code></pre>

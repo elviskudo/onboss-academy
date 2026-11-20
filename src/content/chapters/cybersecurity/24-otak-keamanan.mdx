@@ -1,0 +1,87 @@
+---
+title: "Studi Kasus: Menganalisis Insiden"
+description: "Menggabungkan log, IoC, dan keputusan respons dalam satu latihan"
+order: 24
+quiz:
+  - q: "Dari log berikut, pola apa yang paling mencurigakan?"
+    options: ["Login gagal berulang lalu berhasil dari IP sama", "Satu login berhasil", "Halaman utama dibuka", "Favicon dimuat"]
+    answer: 0
+    explain: "Pola tersebut konsisten dengan brute force yang akhirnya menemukan kata sandi."
+  - q: "Langkah setelah mendeteksi brute force berhasil adalah…"
+    options: ["Tambah fitur baru", "Cabut sesi, ganti password, periksa aktivitas akun", "Tunggu besok", "Hapus log login"]
+    answer: 1
+    explain: "Hentikan akses lebih dulu, lalu telusuri apa yang dilakukan penyerang."
+  - q: "IoC yang paling spesifik di sini adalah…"
+    options: ["Waktu server", "Versi browser", "Alamat IP dan user-agent penyerang", "Nama situs"]
+    answer: 2
+    explain: "IoC membantu mencari aktivitas serupa di sistem lain."
+  - q: "Pencegahan jangka panjang yang tepat adalah…"
+    options: ["Mengganti warna tombol login", "Menghapus halaman login", "Menambah iklan", "MFA, rate limit, dan penguncian akun adaptif"]
+    answer: 3
+    explain: "Beberapa kontrol lapisan akan saling memperkuat."
+  - q: "Laporan akhir sebaiknya memuat…"
+    options: ["Linimasa, dampak, akar masalah, dan tindak lanjut", "Hanya daftar IP", "Spesulasi tanpa bukti", "Kata sandi korban"]
+    answer: 0
+    explain: "Laporan berguna bila orang lain bisa memahami dan mencegah kejadian serupa."
+example:
+  code: |
+    09:21:03 login_failed user=ani ip=203.0.113.8
+    09:21:04 login_failed user=ani ip=203.0.113.8
+    09:21:06 login_failed user=ani ip=203.0.113.8
+    09:21:11 login_ok     user=ani ip=203.0.113.8
+    09:21:12 profile_view  user=ani ip=203.0.113.8
+    09:21:14 export_click  user=ani ip=203.0.113.8
+---
+
+Mari rangkum semua konsep dalam satu insiden kecil. Tujuannya bukan menghafal alat, melainkan melatih urutan berpikir.
+
+## Data yang Diterima
+
+```text
+09:21:03 login_failed user=ani ip=203.0.113.8
+09:21:04 login_failed user=ani ip=203.0.113.8
+09:21:06 login_failed user=ani ip=203.0.113.8
+09:21:11 login_ok     user=ani ip=203.0.113.8
+09:21:14 export_click  user=ani ip=203.0.113.8
+```
+
+## Triage
+
+- Tiga kegagalan dalam 3 detik ⇒ bukan salah ketik manusia biasa.
+- Login berhasil 5 detik kemudian ⇒ kata sandi kemungkinan ditemukan.
+- Klik ekspor segera setelah masuk ⇒ penyerang mencari data.
+
+## Tindakan Langsung
+
+```text
+1. Cabut semua sesi akun "ani"
+2. Paksa ganti kata sandi + MFA
+3. Tinjau hasil ekspor: data apa, kapan, dikirim ke mana
+4. Blokir IP di edge, cari IP yang sama di log lain
+5. Simpan log dan request_id sebagai bukti
+```
+
+## Akar Masalah
+
+Ternyata tidak ada rate limit pada endpoint login, dan akun memakai kata sandi yang pernah bocor di situs lain (credential stuffing). MFA belum diaktifkan.
+
+## Perbaikan
+
+| Temuan | Tindakan |
+|---|---|
+| Tanpa rate limit | Batasi 5 percobaan / menit / IP + akun |
+| Tidak ada MFA | Wajibkan untuk semua pengguna |
+| Password reused | Cek against breach corpus saat ganti password |
+| Deteksi terlambat | Alert pada pola gagal-berhasil dari IP sama |
+
+<div class="note">💡 Latihan seperti ini bisa dijalankan tiap bulan dengan data simulasi. Tim yang terbiasa membaca linimasa akan jauh lebih tenang saat insiden nyata.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Kerangka laporan singkat:
+  Ringkasan   : akun ani diakses dari IP asing setelah 3 gagal login
+  Dampak      : satu ekspor data pelanggan
+  Akar masalah: tidak ada rate limit &amp; MFA
+  Tindakan    : cabut sesi, reset, blokir IP, aktifkan MFA
+  Follow-up   : deteksi otomatis + audit password`}</code></pre>

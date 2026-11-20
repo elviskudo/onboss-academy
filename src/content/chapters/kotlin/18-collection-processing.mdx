@@ -1,0 +1,128 @@
+---
+"title": "Pemrosesan Koleksi Lanjutan"
+"description": "Grouping, sorting, chunking, dan Sequence untuk data besar"
+"order": 18
+"quiz":
+- "q": "Fungsi untuk mengelompokkan data berdasarkan kunci adalah…"
+  "options":
+  - "sortBy"
+  - "groupBy"
+  - "chunk"
+  - "split"
+  "answer": 1
+  "explain": "groupBy menghasilkan Map<Key, List<Value>>."
+- "q": "Fungsi untuk memotong list menjadi bagian-bagian kecil adalah…"
+  "options":
+  - "sliced"
+  - "partition"
+  - "chunked"
+  - "split"
+  "answer": 2
+  "explain": "chunked(2) menghasilkan list berisi list berukuran dua."
+- "q": "Fungsi sortedBy berguna untuk…"
+  "options":
+  - "Menghapus duplikat"
+  - "Menggabungkan string"
+  - "Mengubah tipe"
+  - "Mengurutkan berdasarkan kunci tertentu"
+  "answer": 3
+  "explain": "sortedBy { it.usia } mengurutkan objek menurut field usia."
+- "q": "Sequence berbeda dari List karena…"
+  "options":
+  - "Bersifat lazy"
+  - "Tidak bisa di-iterasi"
+  - "Hanya untuk angka"
+  - "Selalu lebih cepat"
+  "answer": 0
+  "explain": "Sequence menunda perhitungan sampai hasil dikonsumsi."
+- "q": "Hasil dari listOf(1,2,3,4).chunked(2) adalah…"
+  "options":
+  - "[1,2,3,4]"
+  - "[[1,2],[3,4]]"
+  - "[[1,2,3],4]"
+  - "[2,4]"
+  "answer": 1
+  "explain": "chunked membagi menjadi grup berukuran dua."
+"example":
+  "code": "data class Siswa(val nama: String, val kelas: String, val nilai: Int)\n\nfun main() {\n    val siswa = listOf(\n        Siswa(\"Budi\", \"A\", 85),\n        Siswa(\"Sari\", \"B\", 92),\n        Siswa(\"Andi\", \"A\", 78)\n    )\n\n    println(siswa.groupBy { it.kelas })\n    println(siswa.sortedByDescending { it.nilai }.map { it.nama })\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Grouping dan Agregasi
+
+```kotlin
+data class Siswa(val nama: String, val kelas: String, val nilai: Int)
+
+fun main() {
+    val siswa = listOf(
+        Siswa("Budi", "A", 85),
+        Siswa("Sari", "B", 92),
+        Siswa("Andi", "A", 78)
+    )
+
+    println(siswa.groupBy { it.kelas })
+    println(siswa.sortedByDescending { it.nilai }.map { it.nama })
+}
+```
+
+```kotlin
+val nilaiPerKelas = siswa.groupBy { it.kelas }
+// {A=[Budi, Andi], B=[Sari]}
+
+val rataPerKelas = siswa.groupBy { it.kelas }
+    .mapValues { (_, daftar) -> daftar.map { it.nilai }.average() }
+```
+
+## Sorting
+
+| Fungsi | Kegunaan |
+|---|---|
+| `sorted()` | urutan natural |
+| `sortedBy { }` | berdasarkan kunci |
+| `sortedDescending()` | urutan natural terbalik |
+| `sortedByDescending { }` | kunci terbalik |
+
+Pengurutan menghasilkan list baru — list asli tidak berubah.
+
+## Partition dan Chunked
+
+```kotlin
+val (lulus, gagal) = siswa.partition { it.nilai >= 75 }
+val kelompok = (1..7).chunked(3) // [[1,2,3],[4,5,6],[7]]
+```
+
+`partition` memisahkan jadi dua list; `chunked` memotong menjadi grup berukuran tetap.
+
+## Sequence untuk Data Besar
+
+```kotlin
+val hasil = (1..1_000_000)
+    .asSequence()
+    .filter { it % 2 == 0 }
+    .map { it * it }
+    .take(5)
+    .toList()
+```
+
+Tanpa `asSequence`, semua satu juta angka akan diproses di setiap tahap. Dengan Sequence, proses berhenti setelah lima hasil ditemukan.
+
+<div class="note">💡 Sequence hemat memori tetapi tidak bisa diakses dengan indeks dan hanya bisa dikonsumsi sekali. Konversi ke List dengan <code>toList()</code> bila perlu dipakai berulang.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`data class Siswa(val nama: String, val kelas: String, val nilai: Int)
+
+fun main() {
+    val siswa = listOf(
+        Siswa("Budi", "A", 85),
+        Siswa("Sari", "B", 92),
+        Siswa("Andi", "A", 78)
+    )
+
+    println(siswa.groupBy { it.kelas })
+    println(siswa.sortedByDescending { it.nilai }.map { it.nama })
+}`} />

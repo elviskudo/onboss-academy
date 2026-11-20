@@ -1,0 +1,95 @@
+---
+title: "SELECT dan Filter di MySQL"
+description: "Kolom, alias, WHERE, LIKE, IN, BETWEEN, dan LIMIT"
+order: 12
+quiz:
+  - q: "Untuk melihat 5 baris pertama dipakai…"
+    options: ["LIMIT 5", "TOP 5", "FIRST 5", "HEAD 5"]
+    answer: 0
+    explain: "MySQL memakai LIMIT."
+  - q: "LIMIT 10, 5 berarti…"
+    options: ["10 baris pertama", "Lewati 10, ambil 5", "Ambil 10 dari 5", "Baris ke-5 sampai 10"]
+    answer: 1
+    explain: "Bentuk OFFSET, COUNT: LIMIT offset, count."
+  - q: "Operator pencarian pola di MySQL adalah…"
+    options: ["LIKE", "MATCH saja", "FIND", "SEARCH"]
+    answer: 0
+    explain: "LIKE dengan % dan _ untuk wildcard."
+  - q: "REGEXP di MySQL berguna untuk…"
+    options: ["Pencarian pola regex", "Menggabungkan tabel", "Membuat index", "Menyimpan tanggal"]
+    answer: 0
+    explain: "REGEXP/RLIKE mencocokkan ekspresi reguler."
+  - q: "Alias kolom ditulis dengan…"
+    options: ["AS", "IS", "BE", "TO"]
+    answer: 0
+    explain: "SELECT harga AS 'Harga Satuan'."
+example:
+  code: |
+    SELECT nama, gaji FROM karyawan WHERE gaji BETWEEN 7000000 AND 11000000 ORDER BY gaji DESC LIMIT 5;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SELECT di MySQL mengikuti pola standar SQL, tetapi punya beberapa khas seperti `LIMIT offset, count` dan `REGEXP`. Menguasai filter dasar adalah fondasi semua query lanjutan.
+
+## Bentuk Umum
+
+```sql
+SELECT nama, jabatan, gaji * 12 AS gaji_tahunan
+FROM karyawan
+WHERE dept = 'Engineering'
+ORDER BY gaji DESC
+LIMIT 5;
+```
+
+## Operator Filter
+
+| Operator | Contoh |
+| --- | --- |
+| `=` / `<>` | `dept = 'Data'` |
+| `IN` | `dept IN ('Data','Product')` |
+| `BETWEEN` | `gaji BETWEEN 7e6 AND 11e6` |
+| `LIKE` | `nama LIKE 'A%'` |
+| `IS NULL` | `dept IS NULL` |
+| `REGEXP` | `nama REGEXP '^[AB]'`
+
+## LIMIT dan OFFSET
+
+```sql
+SELECT * FROM produk LIMIT 10;         -- 10 pertama
+SELECT * FROM produk LIMIT 10, 10;     -- lewati 10, ambil 10
+SELECT * FROM produk LIMIT 10 OFFSET 10; -- bentuk alternatif
+```
+
+Paging dengan OFFSET menjadi lambat pada halaman dalam karena database tetap memindai baris yang dilewati. Untuk data besar, pakai *keyset pagination*: `WHERE id > last_id ORDER BY id LIMIT n`.
+
+## Urutan Logis
+
+```text
+FROM → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
+```
+
+Alias dari SELECT belum bisa dipakai di WHERE, tetapi bisa di ORDER BY dan HAVING (di MySQL).
+
+## Case Sensitivity
+
+Secara default, perbandingan string di MySQL bergantung pada collation. `utf8mb4_unicode_ci` tidak membedakan huruf besar/kecil; `utf8mb4_bin` membedakan. Gunakan `BINARY nama = 'Ana'` bila perlu perbandingan ketat.
+
+<div class="note">💡 `SELECT *` nyaman saat eksplorasi, tetapi di produksi sebutkan kolom yang dipakai. Ini mengurangi transfer data dan mencegah kolom sensitif ikut terkirim.</div>
+
+## Di Dunia Nyata
+
+- **Daftar produk**: `LIMIT 20` untuk halaman katalog.
+- **Pencarian**: `LIKE '%kopi%'` untuk filter nama.
+- **Filter rentang**: `BETWEEN` untuk tanggal dan harga.
+- **Autocomplete**: `LIMIT 10` pada hasil pencarian awal.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SELECT nama, dept, gaji,
+       CASE WHEN gaji >= 10000000 THEN 'Tinggi' ELSE 'Standar' END AS level
+FROM karyawan
+WHERE dept IN ('Engineering', 'Data') AND gaji >= 8000000
+ORDER BY gaji DESC
+LIMIT 5;`} />

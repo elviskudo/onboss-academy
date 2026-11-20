@@ -1,0 +1,81 @@
+---
+title: "Visualisasi Data dengan Teks"
+description: "bar chart ASCII, scatter plot sederhana, memilih grafik, dan label"
+order: 13
+quiz:
+  - q: "Bar chart cocok untuk…"
+    options: ["Menyimpan data", "Membandingkan kategori", "Menampilkan hubungan dua angka", "Menunjukkan komposisi waktu"]
+    answer: 1
+    explain: "Bar membandingkan nilai antar kelompok."
+  - q: "Scatter plot berguna untuk…"
+    options: ["Membuat tabel", "Menyortir data", "Melihat hubungan dua variabel", "Menghitung median"]
+    answer: 2
+    explain: "Titik menunjukkan pasangan nilai."
+  - q: "Pie chart sebaiknya dipakai untuk…"
+    options: ["Banyak kategori mirip", "Data waktu continous", "Regresi", "Beberapa bagian dari satu keseluruhan"]
+    answer: 3
+    explain: "Pie sulit dibaca bila potongannya banyak."
+  - q: "Sumbu x biasanya menunjukkan…"
+    options: ["Nilai y", "Variabel independen", "Frekuensi", "Label kategori"]
+    answer: 1
+    explain: "Dalam scatter, x adalah variabel penjelas."
+  - q: "Grafik yang baik sebaiknya…"
+    options: ["Banyak warna tanpa arti", "Tanpa skala", "Memiliki label jelas", "Tanpa judul"]
+    answer: 2
+    explain: "Judul dan label membuat grafik dapat dipahami mandiri."
+example:
+  code: |
+    data={"Senin":30,"Selasa":45,"Rabu":25}
+    for k,v in data.items():
+        print(f"{k:8} {'█'*(v//5)} {v}")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Memilih Grafik
+
+| Pertanyaan | Grafik |
+| --- | --- |
+| Kategori mana tertinggi? | bar |
+| Apakah x berhubungan dengan y? | scatter |
+| Bagaimana nilai berubah tiap bulan? | line |
+| Berapa porsi tiap bagian? | pie (hati-hati) |
+
+## Bar Chart ASCII
+
+```python
+data = {"Senin": 30, "Selasa": 45, "Rabu": 25}
+maks = max(data.values())
+for kategori, nilai in data.items():
+    panjang = round(nilai / maks * 30)
+    print(f"{kategori:>8} | {'█' * panjang} {nilai}")
+```
+
+Skala relatif terhadap nilai maksimum membuat grafik tetap muat di layar.
+
+## Scatter Sederhana
+
+```python
+titik = [(1, 2), (2, 4), (3, 5), (4, 8)]
+for x, y in titik:
+    print(" " * (x * 3) + f"({x},{y})")
+```
+
+Versi produksi memakai matplotlib, tetapi prinsipnya sama: satu titik untuk satu pasangan nilai.
+
+## Label dan Konteks
+
+Sertakan judul, satuan, dan sumber data. Grafik tanpa judul bisa ditafsirkan berbeda oleh pembaca.
+
+<div class="note">💡 Hindari pie chart dengan lebih dari lima potongan. Manusia sangat buruk membedakan sudut yang hampir sama — bar chart lebih jujur.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = {"Senin": 30, "Selasa": 45, "Rabu": 25, "Kamis": 40}
+maks = max(data.values())
+print("PENJUALAN HARIAN (per 5 unit)")
+for hari, nilai in data.items():
+    panjang = round(nilai / maks * 24)
+    print(f"{hari:>7} | {'█'*panjang} {nilai}")`} />

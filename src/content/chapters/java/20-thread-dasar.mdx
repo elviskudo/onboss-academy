@@ -1,0 +1,130 @@
+---
+title: "Thread & Concurrency"
+description: "Thread, Runnable, synchronized, ExecutorService, dan atomic variable"
+order: 20
+quiz:
+  - q: "Cara membuat thread dalam Java adalah…"
+    options: ["extends Thread atau implements Runnable", "implements Serializable", "new Object()", "static void run()"]
+    answer: 0
+    explain: "Keduanya bisa; implements Runnable lebih fleksibel."
+  - q: "`thread.join()` berarti…"
+    options: ["Memulai thread", "Menunggu thread selesai", "Menghentikan thread", "Mengunci thread"]
+    answer: 1
+    explain: "join memblokir thread pemanggil sampai target selesai."
+  - q: "Kata kunci `synchronized` mencegah…"
+    options: ["Error compile", "Race condition", "Garbage collection", "Import error"]
+    answer: 1
+    explain: "synchronized memberi mutual exclusion pada blok/method."
+  - q: "ExecutorService lebih baik daripada new Thread karena…"
+    options: ["Lebih cepat always", "Mengelola pool & daur ulang thread", "Tidak bisa error", "Hanya untuk GUI"]
+    answer: 1
+    explain: "Pool menghindari overhead membuat thread berulang kali."
+  - q: "`AtomicInteger` berguna untuk…"
+    options: ["Operasi inkrement atomik tanpa lock eksplisit", "Membuat thread", "Menghapus variabel", "Format tanggal"]
+    answer: 0
+    explain: "Menggunakan CAS; lebih ringan daripada synchronized untuk hitungan sederhana."
+example:
+  code: |
+    import java.util.concurrent.*;
+    import java.util.concurrent.atomic.AtomicInteger;
+    
+    public class Main {
+      public static void main(String[] args) throws Exception {
+        AtomicInteger total = new AtomicInteger(0);
+        ExecutorService pool = Executors.newFixedThreadPool(4);
+        for (int i = 0; i &lt; 8; i++) {
+          pool.submit(() -> {
+            for (int j = 0; j &lt; 1000; j++) total.incrementAndGet();
+          });
+        }
+        pool.shutdown();
+        pool.awaitTermination(5, TimeUnit.SECONDS);
+        System.out.println("Total: " + total.get());
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Java sejak awal mendukung multithreading. Kotlin/Go mungkin punya model lebih baru, tapi API ini tetap fondasi banyak aplikasi enterprise.
+
+## Membuat Thread
+
+```java
+Thread t = new Thread(() -> System.out.println("Jalan di thread lain"));
+t.start();   // jangan panggil run() langsung!
+```
+
+Atau:
+
+```java
+class Kerja implements Runnable {
+    public void run() { ... }
+}
+new Thread(new Kerja()).start();
+```
+
+## Sinkronisasi
+
+```java
+class Counter {
+    private int nilai = 0;
+
+    public synchronized void tambah() { nilai++; }
+    public synchronized int get() { return nilai; }
+}
+```
+
+Alternatif lebih modern:
+
+```java
+private final AtomicInteger nilai = new AtomicInteger();
+nilai.incrementAndGet();
+```
+
+## ExecutorService
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(4);
+Future<Integer> f = pool.submit(() -> hitungBerat());
+Integer hasil = f.get();     // blok sampai selesai
+pool.shutdown();             // WAJIB, kalau tidak program tidak keluar
+```
+
+| Factory | Cocok untuk |
+|---|---|
+| `newFixedThreadPool(n)` | beban stabil |
+| `newCachedThreadPool()` | tugas pendek berfluktuasi |
+| `newSingleThreadExecutor()` | urutan harus terjaga |
+| `newScheduledThreadPool(n)` | tugas berulang / delay |
+
+## volatile
+
+```java
+private volatile boolean jalan = true;
+```
+
+`volatile` menjamin visibilitas perubahan antar thread, tapi **tidak** menjamin atomisitas untuk operasi majemuk seperti `i++`.
+
+<div class="note">💡 Gunakan <code>ExecutorService</code>, bukan <code>new Thread()</code> di dalam loop. Pool mengontrol jumlah thread sehingga aplikasi tidak kehabisan resource saat traffic naik.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class Main {
+  public static void main(String[] args) throws Exception {
+    AtomicInteger total = new AtomicInteger(0);
+    ExecutorService pool = Executors.newFixedThreadPool(4);
+    for (int i = 0; i &lt; 8; i++) {
+      pool.submit(() -> {
+        for (int j = 0; j &lt; 1000; j++) total.incrementAndGet();
+      });
+    }
+    pool.shutdown();
+    pool.awaitTermination(5, TimeUnit.SECONDS);
+    System.out.println("Total: " + total.get());
+  }
+}`} />

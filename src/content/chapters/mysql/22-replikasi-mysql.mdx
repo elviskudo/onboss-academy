@@ -1,0 +1,100 @@
+---
+title: "Replikasi dan High Availability"
+description: "Master-replika, binary log, lag, dan konsep failover"
+order: 22
+quiz:
+  - q: "Replikasi MySQL memakai…"
+    options: ["Binary log", "Error log", "Slow log", "General log"]
+    answer: 0
+    explain: "Replika membaca event dari binary log master."
+  - q: "Perintah melihat status master adalah…"
+    options: ["SHOW MASTER STATUS", "SHOW REPLICA STATUS", "SHOW LOGS", "SHOW STATUS MASTER"]
+    answer: 0
+    explain: "SHOW MASTER STATUS menunjukkan file dan posisi binlog."
+  - q: "Replica lag berarti…"
+    options: ["Replika tertinggal dari master", "Master mati", "Index rusak", "Query terlalu pendek"]
+    answer: 0
+    explain: "Lag diukur dari waktu event di master sampai diterapkan replika."
+  - q: "Mode replika modern di MySQL 8 memakai istilah…"
+    options: ["SOURCE/REPLICA", "MASTER/SLAVE", "PRIMARY/SECONDARY", "LEADER/FOLLOWER"]
+    answer: 0
+    explain: "MySQL 8 mengganti istilah lama dengan SOURCE dan REPLICA."
+  - q: "Read scale-out berarti…"
+    options: ["Query tulis dibagi ke banyak replika", "Query baca dibagi ke replika", "Semua query ke satu server", "Data tidak direplikasi"]
+    answer: 1
+    explain: "Replika bisa melayani SELECT sehingga beban master berkurang."
+example:
+  code: |
+    -- Konsep: master menulis binlog, replika membaca dan menerapkannya.
+    SHOW MASTER STATUS;
+    SHOW REPLICA STATUS\G
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Replikasi membuat salinan data di server lain. Tujuannya bisa backup panas, distribusi beban baca, atau persiapan failover.
+
+## Proses Singkat
+
+```text
+ aplikasi → SOURCE (tulis) → binary log → REPLICA (baca + terapkan)
+```
+
+Source mencatat setiap perubahan ke binary log. Replika mengambil event itu dan menerapkannya secara berurutan.
+
+## Konfigurasi Dasar
+
+```sql
+-- Di source
+CREATE USER 'replika'@'%' IDENTIFIED BY 'sandi';
+GRANT REPLICATION SLAVE ON *.* TO 'replika'@'%';
+SHOW MASTER STATUS;
+
+-- Di replica (MySQL 8)
+CHANGE REPLICATION SOURCE TO
+  SOURCE_HOST='10.0.0.1', SOURCE_USER='replika',
+  SOURCE_PASSWORD='sandi', SOURCE_LOG_FILE='mysql-bin.000003',
+  SOURCE_LOG_POS=154;
+START REPLICA;
+SHOW REPLICA STATUS\G
+```
+
+## Memantau Kesehatan
+
+```sql
+SHOW REPLICA STATUS\G
+```
+
+Perhatikan `Replica_IO_Running`, `Replica_SQL_Running`, `Seconds_Behind_Source`, dan `Last_Error`. Salah satu nilainya `No` berarti replikasi berhenti.
+
+## Replica Lag
+
+Penyebab umum:
+
+- Query besar di replika (single-threaded pada versi lama)
+- Jaringan lambat
+- Replika lebih lemah dari source
+- Lock panjang
+
+Solusi: parallel replication, perbaiki index, dan samakan spesifikasi hardware.
+
+## Failover
+
+Failover memindahkan peran tulis ke server lain. Ini tidak otomatis tanpa alat seperti Orchestrator, MHA, atau MySQL InnoDB Cluster. Pastikan aplikasi bisa mengganti endpoint dengan aman dan tidak menulis ke dua server sekaligus (*split-brain*).
+
+<div class="note">💡 Replika bukan backup. `DROP TABLE` di source akan langsung direplikasi ke semua replika. Tetap simpan backup terpisah yang bisa di-restore ke titik sebelum insiden.</div>
+
+## Di Dunia Nyata
+
+- **E-commerce**: laporan dan katalog dibaca dari replika.
+- **Dr site**: replika di lokasi lain sebagai cadangan.
+- **Maintenance**: promosi replika saat source perlu restart.
+- **Analitik**: query berat diarahkan ke replika khusus.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SHOW MASTER STATUS;
+SHOW REPLICA STATUS;
+SHOW PROCESSLIST;
+SELECT @@server_id AS id_server, @@log_bin AS binlog_aktif;`} />

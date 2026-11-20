@@ -1,0 +1,105 @@
+---
+title: "Window Function PostgreSQL"
+description: "ROW_NUMBER, RANK, LAG, LEAD, dan aggregate window"
+order: 13
+quiz:
+  - q: "Klausa yang menentukan partisi window function adalah…"
+    options: ["PARTITION BY", "GROUP BY", "ORDER BY GROUP", "SPLIT BY"]
+    answer: 1
+    explain: "PARTITION BY membagi baris menjadi grup logis."
+  - q: "Fungsi untuk nilai baris sebelumnya adalah…"
+    options: ["LAG()", "PREV()", "LEAD()", "SHIFT()"]
+    answer: 2
+    explain: "LAG(x, 1) mengambil nilai x satu baris sebelumnya."
+  - q: "RANK() berbeda dari DENSE_RANK() saat…"
+    options: ["Ada tie/duplikat nilai", "Data kosong", "Tanpa ORDER BY", "Semua NULL"]
+    answer: 3
+    explain: "RANK melompati nomor setelah tie; DENSE_RANK tidak."
+  - q: "Frame ROWS BETWEEN 2 PRECEDING AND CURRENT ROW berarti…"
+    options: ["Rata-rata 3 baris terakhir termasuk yang sekarang", "Semua baris", "2 baris setelahnya", "Hanya baris sekarang"]
+    answer: 0
+    explain: "Frame mencakup dua baris sebelumnya dan baris saat ini."
+  - q: "SUM(x) OVER () menghasilkan…"
+    options: ["Total seluruh baris di setiap baris", "Satu baris total", "Nomor urut", "Error"]
+    answer: 1
+    explain: "Tanpa PARTITION BY, window mencakup seluruh hasil."
+example:
+  code: |
+    SELECT nama, gaji, RANK() OVER (ORDER BY gaji DESC) AS peringkat FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Window function menghitung nilai lintas baris **tanpa** menggabungkan baris seperti GROUP BY. Setiap baris tetap ada, dengan kolom tambahan hasil kalkulasi.
+
+## Sintaks Umum
+
+```sql
+fungsi() OVER (
+  [PARTITION BY kolom]
+  [ORDER BY kolom]
+  [ROWS frame]
+)
+```
+
+`PARTITION BY` mirip GROUP BY tetapi tidak menyatukan baris. `ORDER BY` menentukan urutan dalam partisi.
+
+## Peringkat
+
+```sql
+SELECT nama, dept, gaji,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS urut,
+       RANK()       OVER (PARTITION BY dept ORDER BY gaji DESC) AS rank,
+       DENSE_RANK() OVER (PARTITION BY dept ORDER BY gaji DESC) AS dense
+FROM karyawan;
+```
+
+Dengan dua orang bergaji sama, RANK bisa menghasilkan 1, 1, 3; DENSE_RANK menghasilkan 1, 1, 2.
+
+## LAG dan LEAD
+
+```sql
+SELECT tanggal, omzet,
+       LAG(omzet, 1) OVER (ORDER BY tanggal) AS sebelumnya,
+       omzet - LAG(omzet, 1) OVER (ORDER BY tanggal) AS selisih
+FROM penjualan;
+```
+
+Argumen kedua LAG adalah offset; argumen ketiga nilai pengganti bila tidak ada baris sebelumnya.
+
+## Aggregate sebagai Window
+
+```sql
+SELECT nama, gaji,
+       AVG(gaji) OVER (PARTITION BY dept) AS rata_dept,
+       SUM(gaji) OVER (ORDER BY id ROWS UNBOUNDED PRECEDING) AS berjalan
+FROM karyawan;
+```
+
+`ROWS UNBOUNDED PRECEDING` berarti frame dimulai dari baris pertama sampai baris saat ini — cocok untuk running total.
+
+## Frame
+
+| Frame | Arti |
+| --- | --- |
+| `ROWS BETWEEN 2 PRECEDING AND CURRENT ROW` | 3 baris terakhir |
+| `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` | dari awal sampai sekarang |
+| `ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING` | sekarang sampai akhir
+
+<div class="note">💡 Jika ORDER BY tidak diberikan pada frame, PostgreSQL memakai seluruh partisi untuk setiap baris. Selalu tentukan ORDER BY bila结果 bergantung pada urutan.</div>
+
+## Di Dunia Nyata
+
+- **Leaderboard**: RANK untuk peringkat yang adil.
+- **Pertumbuhan**: LAG untuk membandingkan periode sebelumnya.
+- **Running total**: SUM window untuk saldo berjalan.
+- **Top N per grup**: ROW_NUMBER lalu filter di CTE.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT nama, dept, gaji,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS urut,
+       LAG(gaji, 1, 0) OVER (ORDER BY gaji) AS gaji_sebelumnya
+FROM karyawan
+ORDER BY dept, urut;`} />

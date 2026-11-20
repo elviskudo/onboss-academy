@@ -1,0 +1,65 @@
+---
+title: "Regresi Polinomial"
+description: "hubungan lengkung, fitur pangkat, kompleksitas model, dan overfitting"
+order: 14
+quiz:
+  - q: "Regresi polinomial menambah…"
+    options: ["Indeks", "Fitur pangkat Variabel", "Baris baru", "Label acak"]
+    answer: 1
+    explain: "Misalnya x², x³ sebagai fitur baru."
+  - q: "Polinomial derajat terlalu tinggi berisiko…"
+    options: ["Data hilang", "Label berubah", "Overfitting", "Underfitting"]
+    answer: 2
+    explain: "Garis mengikuti noise."
+  - q: "Derajat 1 sama dengan…"
+    options: ["Regresi logistik", "KNN", "Decision tree", "Regresi linear"]
+    answer: 3
+    explain: "Garis lurus."
+  - q: "Pola parabola memerlukan…"
+    options: ["Tidak bisa", "Derajat 2", "Derajat 0", "Derajat 1"]
+    answer: 1
+    explain: "Fitur x² menangkap lengkung."
+  - q: "Cara memilih derajat yang baik adalah…"
+    options: ["Menghapus data uji", "Memilih angka terbesar", "Validasi pada data uji", "Menambah derajat terus"]
+    answer: 2
+    explain: "Generalization menentukan kualitas."
+example:
+  code: |
+    x=[1,2,3,4]; y=[3,6,11,18]
+    # pola y = x^2 + 2
+    print([xi**2 + 2 for xi in x])
+---
+
+## Kapan Dipakai
+
+Kalau scatter plot membentuk lengkung, garis lurus akan underfitting. Regresi polinomial menambah fitur pangkat sehingga model bisa membengkok.
+
+```python
+def fitur_polinomial(x, derajat=2):
+    return [x ** i for i in range(1, derajat + 1)]
+
+print(fitur_polinomial(3, 3))  # [3, 9, 27]
+```
+
+## Derajat dan Fleksibilitas
+
+| Derajat | Bentuk | Risiko |
+| --- | --- | --- |
+| 1 | garis | underfitting pada data lengkung |
+| 2–3 | lengkung sedang | sering pas |
+| ≥ 5 | sangat berliku | overfitting |
+
+## Evaluasi
+
+Bandingkan error pada data latih **dan** data uji. Kalau error latih turun tetapi error uji naik, derajat sudah terlalu tinggi.
+
+<div class="note">💡 Derajat tinggi ditambah sedikit data adalah resep klasik overfitting. Model tampak sempurna di latih, tapi gagal di dunia nyata.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`data = [(1,3), (2,6), (3,11), (4,18)]
+print("x  y  prediksi x^2+2")
+for x, y in data:
+    print(f"{x}  {y:&gt;2}  {x**2+2:&gt;4}")`}</code></pre>

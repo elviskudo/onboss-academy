@@ -29,7 +29,7 @@ example:
     # rails db:migrate
     # bin/rails server
 
-    class ProductsController < ApplicationController
+    class ProductsController &lt; ApplicationController
       def create
         @product = Product.new(product_params)
         if @product.save

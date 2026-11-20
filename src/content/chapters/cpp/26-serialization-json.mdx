@@ -1,0 +1,115 @@
+---
+title: "Serialisasi & JSON"
+description: "format data lintas bahasa, parser JSON, dan versi format"
+order: 26
+quiz:
+  - q: "JSON adalah format…"
+    options: ["Teks lintas bahasa untuk pertukaran data", "Biner C++Native", "Khusus database", "Gambar"]
+    answer: 0
+    explain: "Mudah dibaca manusia & didukung hampir semua bahasa."
+  - q: "Tipe data JSON meliputi…"
+    options: ["string, number, boolean, null, array, object", "int, float, char, pointer", "class, struct, enum", "hanya string"]
+    answer: 0
+    explain: "Enam tipe dasar sesuai spesifikasi."
+  - q: "Library JSON populer C++ adalah…"
+    options: ["nlohmann/json", "jsoncpp lama", "boost.json", "Semua benar"]
+    answer: 3
+    explain: "nlohmann paling populer; Boost.JSON juga kuat."
+  - q: "Versioning format data berguna untuk…"
+    options: ["Kompatibilitas saat struktur berubah", "Memperkecil file", "Menghapus field", "Mengubah tipe"]
+    answer: 0
+    explain: "Tambahkan field versi: 2 dan dukungi versi lama."
+  - q: "Jangan menyimpan data sensitif seperti…"
+    options: ["Password plaintext di JSON", "Nama produk", "Versi aplikasi", "Tanggal"]
+    answer: 0
+    explain: "Gunakan hash + salt untuk password."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    /* Contoh struktur JSON yang dihasilkan:
+       {"nama":"Sari","nilai":90,"aktif":true}
+    */
+    
+    int main() {
+        // Tanpa library eksternal, bangun teks JSON sederhana dengan hati-hati
+        std::string nama = "Sari";
+        int nilai = 90;
+        std::cout <&lt; "{\"nama\":\"" <&lt; nama <&lt; "\",\"nilai\":" <&lt; nilai
+                  <&lt; ",\"aktif\":true}\n";
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Data yang keluar dari program C++ sering dikonsumsi bahasa lain. Format tekstual seperti JSON menghindari masalah endianness dan padding yang melekat pada dump struct biner.
+
+## Kenapa JSON?
+
+| Aspek | Dump struct biner | JSON |
+|---|---|---|
+| Portabilitas | rendah | tinggi |
+| Ukuran | kecil | lebih besar |
+| Kecepatan | cepat | lebih lambat |
+| Debugging | sulit | mudah dibaca |
+
+## Struktur JSON
+
+```json
+{
+  "nama": "Sari",
+  "nilai": 90,
+  "aktif": true,
+  "hobi": ["membaca", "lari"],
+  "alamat": null
+}
+```
+
+## Menggunakan nlohmann/json
+
+```cpp
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+json j;
+j["nama"] = "Sari";
+j["nilai"] = 90;
+
+std::string teks = j.dump(2);     // pretty print
+json balik = json::parse(teks);
+std::cout << balik["nama"] << '
+';
+```
+
+Mapping otomatis ke struct bisa dengan macro `NLOHMANN_DEFINE_TYPE_INTRUSIVE`.
+
+## Versi & Kompatibilitas
+
+```json
+{ "versi": 2, "nama": "Sari", "nilai": 90 }
+```
+
+Saat format berubah:
+
+- Tambah field baru (jangan hapus yang lama mendadak).
+- Baca dengan nilai default bila field tidak ada.
+- Tolong catat schema (JSON Schema) bila bekerja tim.
+
+<div class="note">💡 Escape string dengan benar — tanda kutip, backslash, dan newline harus dilewatkan parser. Lebih baik pakai library JSON daripada menggabungkan string manual.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+/* Contoh struktur JSON yang dihasilkan:
+   {"nama":"Sari","nilai":90,"aktif":true}
+*/
+
+int main() {
+    // Tanpa library eksternal, bangun teks JSON sederhana dengan hati-hati
+    std::string nama = "Sari";
+    int nilai = 90;
+    std::cout <&lt; "{\"nama\":\"" <&lt; nama <&lt; "\",\"nilai\":" <&lt; nilai
+              <&lt; ",\"aktif\":true}\n";
+}`} />

@@ -165,9 +165,13 @@ Kapan memecah kode jadi fungsi? Saat sebuah blok **dipakai lebih dari sekali**, 
 
 <div class="note">💡 Fungsi yang menerima dan mengembalikan fungsi adalah tempat lahirnya library populer — `map`, `filter`, `reduce`, `fetch().then()` semuanya higher-order. Kalau kamu paham itu, React dan Redux terasa biasa saja.</div>
 
+## Try it Yourself
+
+Ganti argumen pemanggilan fungsi di bawah.
+
 <TryIt lang="javascript" runtime="client-js" code={`function deret(n) {
   let total = 0;
-  for (let i = 1; i <= n; i++) total += i;
+  for (let i = 1; i &lt;= n; i++) total += i;
   return total;
 }
 const rata2 = (...angka) => angka.reduce((a, b) => a + b, 0) / angka.length;
@@ -175,7 +179,7 @@ const rata2 = (...angka) => angka.reduce((a, b) => a + b, 0) / angka.length;
 console.log("Jumlah 1..100 =", deret(100));
 console.log("Rata-rata:", rata2(80, 90, 100, 70));
 console.log("Apakah 17 prima?", (function prima(n){
-  if (n < 2) return false;
-  for (let i = 2; i * i <= n; i++) if (n % i === 0) return false;
+  if (n &lt; 2) return false;
+  for (let i = 2; i * i &lt;= n; i++) if (n % i === 0) return false;
   return true;
 })(17));`} />

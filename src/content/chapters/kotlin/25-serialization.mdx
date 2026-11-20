@@ -1,0 +1,146 @@
+---
+"title": "Serialization JSON"
+"description": "Mengubah objek ke JSON dan sebaliknya dengan kotlinx.serialization"
+"order": 25
+"quiz":
+- "q": "Plugin Gradle untuk kotlinx.serialization adalah…"
+  "options":
+  - "kotlin(\"plugin.json\")"
+  - "kotlin(\"plugin.serialization\")"
+  - "id(\"json\")"
+  - "apply plugin: gson"
+  "answer": 1
+  "explain": "Plugin menghasilkan serializer pada saat kompilasi."
+- "q": "Anotasi untuk menandai kelas yang bisa diserialisasi adalah…"
+  "options":
+  - "@Json"
+  - "@Data"
+  - "@Serializable"
+  - "@Serialize"
+  "answer": 2
+  "explain": "@Serializable memicu generator serializer."
+- "q": "Fungsi untuk mengubah objek menjadi string JSON adalah…"
+  "options":
+  - "Json.toJson"
+  - "Json.serialize"
+  - "encode()"
+  - "Json.encodeToString"
+  "answer": 3
+  "explain": "encodeToString menghasilkan String JSON."
+- "q": "Fungsi untuk membaca JSON menjadi objek adalah…"
+  "options":
+  - "Json.decodeFromString"
+  - "Json.parse"
+  - "Json.fromJson"
+  - "decode()"
+  "answer": 0
+  "explain": "decodeFromString mengembalikan objek bertipe tertentu."
+- "q": "Anotasi untuk mengganti nama field JSON adalah…"
+  "options":
+  - "@JsonProperty"
+  - "@SerialName"
+  - "@JsonName"
+  - "@Rename"
+  "answer": 1
+  "explain": "@SerialName(\"nama_baru\") mengubah kunci di JSON."
+"example":
+  "code": "import kotlinx.serialization.*\nimport kotlinx.serialization.json.*\n\n@Serializable\ndata class Siswa(val nama: String, val nilai: Int, val aktif: Boolean = true)\n\nfun main() {\n    val s = Siswa(\"Budi\", 88)\n    val json = Json.encodeToString(s)\n    println(json)\n\n    val balik = Json.decodeFromString<Siswa>(json)\n    println(balik)\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+| Anotasi / Fungsi | Fungsi |
+|---|---|
+| `@Serializable` | menandai kelas untuk diserialisasi |
+| `@SerialName` | mengganti nama kunci JSON |
+| `Json.encodeToString` | objek → string JSON |
+| `Json.decodeFromString` | string JSON → objek |
+
+## Menyiapkan Proyek
+
+```kotlin
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+
+@Serializable
+data class Siswa(val nama: String, val nilai: Int, val aktif: Boolean = true)
+
+fun main() {
+    val s = Siswa("Budi", 88)
+    val json = Json.encodeToString(s)
+    println(json)
+
+    val balik = Json.decodeFromString<Siswa>(json)
+    println(balik)
+}
+```
+
+```kotlin
+plugins {
+    kotlin("jvm") version "1.9.24"
+    kotlin("plugin.serialization") version "1.9.24"
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+}
+```
+
+## Data Class + @Serializable
+
+```kotlin
+@Serializable
+data class Produk(
+    val id: Int,
+    @SerialName("nama_produk") val nama: String,
+    val harga: Double,
+    val tags: List<String> = emptyList()
+)
+```
+
+Nilai default membuat field opsional saat proses decode.
+
+## Encode dan Decode
+
+```kotlin
+val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
+
+val teks = json.encodeToString(Produk(1, "Kopi", 18000.0))
+val objek = json.decodeFromString<Produk>(teks)
+```
+
+`ignoreUnknownKeys = true` membuat field baru dari server tidak menyebabkan error.
+
+## Sealed Class dan Polymorphism
+
+```kotlin
+@Serializable
+sealed class Hasil {
+    @Serializable data class Sukses(val data: String) : Hasil()
+    @Serializable data class Gagal(val pesan: String) : Hasil()
+}
+```
+
+Serializer untuk sealed class otomatis menyertakan informasi tipe.
+
+<div class="note">💡 kotlinx.serialization bekerja tanpa reflection, sehingga ukuran aplikasi lebih kecil dan aman saat R8/ProGuard menghapus nama kelas.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+
+@Serializable
+data class Siswa(val nama: String, val nilai: Int, val aktif: Boolean = true)
+
+fun main() {
+    val s = Siswa("Budi", 88)
+    val json = Json.encodeToString(s)
+    println(json)
+
+    val balik = Json.decodeFromString<Siswa>(json)
+    println(balik)
+}`} />

@@ -1,0 +1,110 @@
+---
+title: "Python untuk GPIO"
+description: "Struktur program sensor, penanganan error, dan perjalanan data"
+order: 21
+quiz:
+  - q: "Pustaka gpiozero menyediakan kelas…"
+    options: ["Image, Canvas", "LED, Button, PWMLED, Servo", "Http, Server, Client", "Table, Row, Cell"]
+    answer: 1
+    explain: "Kelas-kelas itu mewakili komponen fisik secara intuitif."
+  - q: "Fungsi pause() pada gpiozero berguna untuk…"
+    options: ["Membersihkan file", "Mengirim data", "Menjaga program tetap hidup menunggu event", "Menghentikan GPIO"]
+    answer: 2
+    explain: "Tanpa pause, skrip bisa langsung selesai sebelum tombol ditekan."
+  - q: "Try/except dalam program sensor berguna untuk…"
+    options: ["Menghapus sensor", "Menambah tegangan", "Mengubah alamat", "Menangani gagal baca tanpa menghentikan program"]
+    answer: 3
+    explain: "Pembacaan sensor seperti DHT memang kadang gagal."
+  - q: "Menulis data ke CSV cocok untuk…"
+    options: ["Menyimpan deretan pembacaan waktu dan nilai", "Mengontrol motor", "Mengganti hostname", "Menyimpan gambar"]
+    answer: 0
+    explain: "CSV mudah dibuka spreadsheet dan diproses dengan pandas."
+  - q: "Struktur loop dengan sleep 1 detik berguna untuk…"
+    options: ["Mengubah pin jadi input", "Membatasi frekuensi pembacaan", "Menghapus data", "Meningkatkan tegangan"]
+    answer: 1
+    explain: "Hampir semua sensor punya jeda minimal antar pembacaan."
+example:
+  code: |
+    from gpiozero import LED, Button
+    from signal import pause
+    import csv
+    from datetime import datetime
+    
+    led = LED(17)
+    tombol = Button(2)
+    tombol.when_pressed = led.on
+    tombol.when_released = led.off
+    
+    with open('data.csv', 'a') as f:
+        f.write(f'{datetime.now()},{led.value}\n')
+    pause()
+---
+
+Python adalah bahasa paling populer untuk proyek Raspberry Pi. Kombinasi gpiozero untuk perangkat dan pustaka standar untuk data sudah cukup untuk banyak kasus.
+
+## Program Event-Driven
+
+```python
+from gpiozero import LED, Button
+from signal import pause
+
+led = LED(17)
+tombol = Button(2)
+
+tombol.when_pressed = led.toggle
+pause()
+```
+
+Callback dipanggil otomatis saat kondisi berubah—tidak perlu loop terus-menerus mengecek status.
+
+## Program Berbasis Loop
+
+```python
+from time import sleep
+from datetime import datetime
+
+while True:
+    nilai = baca_sensor()
+    with open("data.csv", "a") as f:
+        f.write(f"{datetime.now().isoformat()},{nilai}\n")
+    sleep(2)
+```
+
+## Penanganan Error
+
+```python
+try:
+    suhu = sensor.temperature
+except RuntimeError as e:
+    print("Gagal baca:", e)
+    suhu = None
+```
+
+Jangan biarkan satu pembacaan gagal menghentikan seluruh layanan.
+
+## Merapikan Kode
+
+```text
+proyek/
+├── sensor.py       # pembacaan hardware
+├── penyimpan.py    # CSV / database
+├── config.py       # pin & konstanta
+└── main.py         # orchestrasi
+```
+
+<div class="note">💡gpiozero membersihkan resource saat program keluar normal. Pastikan tidak ada proses lama yang masih memegang pin saat menjalankan skrip baru.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Kerangka minimal:
+from gpiozero import LED
+from time import sleep
+
+led = LED(17)
+try:
+    while True:
+        led.on(); sleep(0.5)
+        led.off(); sleep(0.5)
+except KeyboardInterrupt:
+    print('Selesai')`}</code></pre>

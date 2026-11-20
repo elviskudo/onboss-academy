@@ -73,8 +73,8 @@ aktif <- TRUE
 | --- | --- | --- |
 | `<-` | penugasan | `x <- 10` |
 | `+ - * / ^` | aritmetika | `x ^ 2` |
-| `== != < <= > >=` | perbandingan | `umur >= 18` |
-| `& \| !` | logika vektor | `x > 1 & x < 5` |
+| `== != &lt; &lt;= > >=` | perbandingan | `umur >= 18` |
+| `& \| !` | logika vektor | `x > 1 & x &lt; 5` |
 | `%in%` | keanggotaan | `kota %in% c("Jkt", "BDG")` |
 
 Gunakan `<-` untuk assignment dan `=` untuk argumen bernama, misalnya `mean(x, na.rm = TRUE)`. Keduanya sering valid, tetapi pembagian ini membuat maksud kode langsung terlihat.
@@ -124,6 +124,10 @@ Package dipasang sekali dengan `install.packages("nama")`, lalu dimuat per sesi 
 5. **Laporan rutin** — satu skrip membaca CSV terbaru, menghitung KPI, lalu menghasilkan tabel yang konsisten setiap minggu.
 
 <div class="note">💡 Mulailah dari vektor: jika `x` berisi satu kolom data, coba `x * 2`, `mean(x)`, atau `x[x > batas]` sebelum menulis loop. Fungsi R dirancang menerima seluruh kumpulan observasi sekaligus.</div>
+
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
 
 <TryIt lang="r" runtime="piston" pistonName="r" code={`umur <- c(21, 25, 30, 35)
 print(umur)

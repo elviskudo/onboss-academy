@@ -1,0 +1,79 @@
+---
+title: "Peristiwa Lanjutan"
+description: "Pesan antar sprite, broadcast, dan several pemicu"
+order: 12
+quiz:
+  - q: "Blok \"kirim pesan ke semua\" berguna untuk…"
+    options: ["Memicu skrip di sprite lain", "Menghapus sprite", "Menyimpan skor", "Mengubah warna"]
+    answer: 0
+    explain: "Semua sprite yang mendengarkan pesan itu akan menjalankan skripnya."
+  - q: "Penerima pesan ditulis dengan blok…"
+    options: ["terima [pesan]", "ketika saya menerima [pesan]", "ketika pesan dikirim", "saat ada pesan"]
+    answer: 1
+    explain: "Blok ini ada di kategori Peristiwa."
+  - q: "Peristiwa \"ketika bendera diklik\" terjadi saat…"
+    options: ["Skor berubah", "Kostum diganti", "Tombol bendera hijau ditekan", "Sprite disentuh"]
+    answer: 2
+    explain: "Ini adalah titik awal paling umum sebuah proyek."
+  - q: "Peristiwa \"ketika saya diklik\" hanya berjalan bila…"
+    options: ["Panggung diklik", "Tombol ditekan", "Waktu berjalan", "Sprite diklik pengguna"]
+    answer: 3
+    explain: "Klik panggung memicu skrip panggung, bukan sprite."
+  - q: "Blok \"kirim pesan dan tunggu\" berbeda dengan \"kirim pesan\" karena…"
+    options: ["Menunggu semua penerima selesai", "Lebih cepat", "Tanpa penerima", "Hanya untuk panggung"]
+    answer: 0
+    explain: "Versi tunggu berguna saat urutan harus dijamin."
+example:
+  code: |
+    [ketika saya diklik]
+    [kirim pesan ke semua [mulai-lomba]]
+    
+    [ketika saya menerima [mulai-lomba]]
+    [atur x ke [0]]
+    [tampilkan]
+    [ulangi 10 [geser 10 langkah]]
+---
+
+Peristiwa adalah "kapan skrip berjalan". Selain bendera hijau, Scratch menyediakan klik, tombol keyboard, pesan, dan perubahan backdrop.
+
+## Pemicu yang Tersedia
+
+```text
+[ketika bendera diklik]
+[ketika saya diklik]
+[ketika tombol [spasi] ditekan]
+[ketika saya menerima [pesan]]
+[ketika backdrop berubah ke [..]]
+```
+
+## Pola Broadcast
+
+```text
+Sprite A: [kirim pesan ke semua [kalah]]
+Sprite B: [ketika saya menerima [kalah]] -> sembunyikan
+Panggung: [ketika saya menerima [kalah]] -> ganti backdrop
+```
+
+Satu pesan bisa memicu banyak respons tanpa sprite saling mengenali secara langsung.
+
+## Kirim vs Kirim dan Tunggu
+
+```text
+[kirim pesan ke semua [siap]]        -> lanjut langsung
+[kirim pesan ke semua [siap] dan tunggu] -> tunggu selesai
+```
+
+Gunakan versi tunggu bila langkah berikutnya bergantung pada hasil penerima.
+
+## Menghindari Pesan Berulang
+
+Berikan penanda seperti variabel `sedang-berjalan` agar broadcast tidak memicu skrip yang sama berulang kali saat tombol ditekan cepat.
+
+<div class="note">💡 Beri nama pesan dengan kata kerja jelas, misalnya `mulai-putaran` atau `sembunyikan-musuh`, agar alur proyek mudah dibaca.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika tombol [spasi] ditekan]
+[kirim pesan ke semua [mulai-lomba] dan tunggu]
+[ucap [Semua siap!] selama 1]`}</code></pre>

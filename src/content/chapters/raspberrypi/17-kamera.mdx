@@ -1,0 +1,77 @@
+---
+title: "Kamera dan Pengambilan Gambar"
+description: "Mengaktifkan kamera, mengambil foto, dan streaming video"
+order: 17
+quiz:
+  - q: "Perintah untuk menguji kamera di Raspberry Pi OS lama adalah…"
+    options: ["camera-test", "raspi-still", "raspistill", "pi-cam"]
+    answer: 1
+    explain: "Pada sistem terbaru, gunakan libcamera-still."
+  - q: "Perintah libcamera untuk mengambil foto adalah…"
+    options: ["cam capture foto.jpg", "rpi-still foto.jpg", "libcamera-still -o foto.jpg", "libcamera photo -o"]
+    answer: 2
+    explain: "Opsi -o menentukan nama file keluaran."
+  - q: " libcamera-vid digunakan untuk…"
+    options: ["Membaca suhu", "Mengontrol servo", "Mengirim email", "Merekam video"]
+    answer: 3
+    explain: "Output bisa berupa file MP4 atau stream H.264."
+  - q: "Jika kamera tidak terdeteksi, hal pertama yang dicek adalah…"
+    options: ["Aktifkan kamera di raspi-config dan cek kabel", "Ganti kartu microSD", "Tambah resistor", "Ubah hostname"]
+    answer: 0
+    explain: "Modul kamera wajib diaktifkan di perangkat lunak dan terpasang benar."
+  - q: "Resolusi tinggi pada Pi menyebabkan…"
+    options: ["GPIO berubah", "Penggunaan CPU dan memori lebih besar", "Kamera rusak", "Wi-Fi otomatis mati"]
+    answer: 1
+    explain: "Sesuaikan resolusi dengan kebutuhan dan kapasitas board."
+example:
+  code: |
+    sudo raspi-config  # Interface Options -> Camera
+    libcamera-still -o foto.jpg
+    libcamera-vid -t 10000 -o video.h264
+---
+
+Modul kamera resmi bisa dipasang langsung ke port CSI. Untuk Pi 4/5, kabelnya masih Standar 15-pin; untuk Pi 5 diperlukan kabel berbeda. Pastikan model kabel sesuai board.
+
+## Aktivasi
+
+```bash
+sudo raspi-config
+# Interface Options -> Camera -> Enable -> reboot
+
+libcamera-still --list-cameras
+```
+
+## Mengambil Foto
+
+```bash
+libcamera-still -o gambar.jpg
+libcamera-still -o gambar.jpg -w 1280 -h 720 -t 2000
+```
+
+`-t` adalah waktu penundaan sebelum mengambil gambar (ms).
+
+## Rekam Video
+
+```bash
+libcamera-vid -t 10000 -o klip.h264
+libcamera-vid -t 10000 --width 640 --height 480 -o klip.h264
+```
+
+## Streaming Sederhana
+
+```bash
+libcamera-vid -t 0 --inline -o - | \
+  cvlc - --sout '#standard{access=http,mux=ts,dst=:8080}' --sout-keep
+```
+
+Untuk proyek pengawasan, pertimbangkan MotionEye atau FTX yang menyediakan deteksi gerakan dan penyimpanan terjadwal.
+
+<div class="note">💡 Kabel kamera sangat sensitif. Sebelum memasang, matikan daya dan pastikan sisi biru kabel menghadap connector dengan benar.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Uji kamera:
+libcamera-still --list-cameras
+libcamera-still -t 1000 -o uji.jpg
+ls -lh uji.jpg`}</code></pre>

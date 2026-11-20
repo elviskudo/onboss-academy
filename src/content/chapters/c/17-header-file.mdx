@@ -1,0 +1,121 @@
+---
+title: "Header File & Multiple Translation Unit"
+description: "memisahkan deklarasi dan implementasi, static, extern, dan link antar file"
+order: 17
+quiz:
+  - q: "File header sebaiknya berisi…"
+    options: ["Implementasi penuh", "Deklarasi/prototipe", "Variabel global tanpa extern", "main()"]
+    answer: 1
+    explain: "Header mendeklarasikan API; implementasi ada di .c."
+  - q: "Kata kunci `extern` menyatakan…"
+    options: ["Definisi baru", "Variabel/ fungsi didefinisikan di tempat lain", "Variabel lokal", "Tipe statis"]
+    answer: 1
+    explain: "extern membuat deklarasi tanpa alokasi penyimpanan."
+  - q: "Fungsi `static` di file .c memiliki…"
+    options: ["Linkage eksternal", "Internal linkage (hanya file itu)", "Tidak bisa dipanggil", "Selalu inline"]
+    answer: 1
+    explain: "static menyembunyikan fungsi dari file lain."
+  - q: "Masalah yang dicegah header guard adalah…"
+    options: ["Memory leak", "Definisi duplikat saat include berulang", "Race condition", "Stack overflow"]
+    answer: 1
+    explain: "Guard memastikan isi header diproses sekali per unit kompilasi."
+  - q: "Perintah kompilasi dua file yang benar adalah…"
+    options: ["gcc a.c b.c -o app", "gcc a.c -o a; gcc b.c", "gcc a.h b.h", "gcc -only a.c b.c"]
+    answer: 0
+    explain: "Semua file .c dikompilasi lalu di-link jadi satu executable."
+example:
+  code: |
+    /* mathutil.h */
+    #ifndef MATHUTIL_H
+    #define MATHUTIL_H
+    int kuadrat(int x);
+    #endif
+    
+    /* mathutil.c */
+    int kuadrat(int x) { return x * x; }
+    
+    /* main.c */
+    #include <stdio.h>
+    #include "mathutil.h"
+    int main(void) {
+        printf("%d\n", kuadrat(7));
+        return 0;
+    }
+    
+    /* compile: gcc main.c mathutil.c -o app */
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek C nyata terdiri dari banyak file. Memahami pemisahan deklarasi (`*.h`) dan implementasi (`*.c`) adalah kunci konkurensi tim dan build yang rapi.
+
+## Translation Unit
+
+Setiap file `.c` dikompilasi menjadi object file sendiri. Compiler hanya melihat file itu plus header yang di-include. Linker kemudian menggabungkan semua object dan menyambung referensi antarfile.
+
+## Header
+
+```c
+#ifndef MATEMATIKA_H
+#define MATEMATIKA_H
+
+int tambah(int, int);
+extern int counter_global;   /* deklarasi, bukan definisi */
+
+#endif
+```
+
+Jangan taruh definisi fungsi di header tanpa `static inline` — akan menyebabkan "multiple definition" saat di-link.
+
+## extern & static
+
+```c
+/* di config.c */
+int counter_global = 0;       /* definisi */
+static int rahasia = 7;       /* hanya terlihat di config.c */
+
+/* di file lain */
+extern int counter_global;    /* boleh dipakai */
+```
+
+## Contoh Build
+
+```bash
+gcc -c mathutil.c -o mathutil.o
+gcc -c main.c     -o main.o
+gcc main.o mathutil.o -o app
+```
+
+Atau sekali jalan: `gcc main.c mathutil.c -o app`.
+
+## Praktik Baik
+
+1. Setiap `.c` punya `.h` dengan nama sama.
+2. Header hanya deklarasi + typedef + makro.
+3. Pakai header guard di semua header.
+4. Simpan state global seminimal mungkin.
+5. Prefix nama fungsi publik dengan nama modul (`util_hitung`).
+
+<div class="note">💡 Kalau kamu butuh "private" di C, tandai fungsi dengan `static` di file .c. Ini lebih sederhana dan lebih aman daripada berharap orang tidak memanggil fungsi yang tidak ada di header.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`/* mathutil.h */
+#ifndef MATHUTIL_H
+#define MATHUTIL_H
+int kuadrat(int x);
+#endif
+
+/* mathutil.c */
+int kuadrat(int x) { return x * x; }
+
+/* main.c */
+#include <stdio.h>
+#include "mathutil.h"
+int main(void) {
+    printf("%d\n", kuadrat(7));
+    return 0;
+}
+
+/* compile: gcc main.c mathutil.c -o app */`} />

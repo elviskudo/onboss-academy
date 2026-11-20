@@ -1,0 +1,100 @@
+---
+title: "User dan Hak Akses MySQL"
+description: "CREATE USER, GRANT, REVOKE, dan prinsip least privilege"
+order: 11
+quiz:
+  - q: "Perintah membuat user MySQL adalah…"
+    options: ["CREATE USER", "ADD USER", "NEW USER", "INSERT USER"]
+    answer: 0
+    explain: "CREATE USER 'nama'@'host' IDENTIFIED BY 'sandi';"
+  - q: "Perintah memberi hak adalah…"
+    options: ["GIVE", "GRANT", "ALLOW", "PERMIT"]
+    answer: 1
+    explain: "GRANT SELECT ON db.* TO 'user'@'host';"
+  - q: "Wildcard host '%' berarti…"
+    options: ["Hanya localhost", "Semua host", "Host tertentu saja", "Tidak ada host"]
+    answer: 1
+    explain: "'%' mengizinkan koneksi dari host mana pun — gunakan dengan hati-hati."
+  - q: "Perintah mencabut hak adalah…"
+    options: ["REMOVE", "REVOKE", "DELETE GRANT", "UNGRANT"]
+    answer: 1
+    explain: "REVOKE ... FROM ... mencabut hak yang diberikan."
+  - q: "Prinsip least privilege berarti…"
+    options: ["Semua user jadi admin", "Hak seminimal yang diperlukan", "Tidak ada user", "Hak selalu temporary"]
+    answer: 1
+    explain: "Berikan hanya SELECT/INSERT/UPDATE yang benar-benar dibutuhkan aplikasi."
+example:
+  code: |
+    CREATE USER 'app'@'localhost' IDENTIFIED BY 'rahasia';
+    GRANT SELECT, INSERT ON academy.* TO 'app'@'localhost';
+    SHOW GRANTS FOR 'app'@'localhost';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Akun database adalah bagian dari keamanan aplikasi. Akun yang terlalu kuat membuat satu celah SQL injection berubah menjadi bencana seluruh server.
+
+## Membuat User
+
+```sql
+CREATE USER 'app'@'localhost' IDENTIFIED BY 'sandi-kuat';
+CREATE USER 'analitik'@'192.168.1.%' IDENTIFIED BY 'sandi-lain';
+```
+
+Bagian setelah `@` menentukan dari mana user boleh terhubung. `localhost`, `127.0.0.1`, dan `%` berbeda maknanya.
+
+## Memberi Hak
+
+```sql
+GRANT SELECT ON academy.* TO 'app'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON academy.produk TO 'app'@'localhost';
+GRANT ALL PRIVILEGES ON academy.* TO 'owner'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+`FLUSH PRIVILEGES` diminta setelah perubahan hak langsung pada tabel mysql, meski GRANT modern biasanya langsung berlaku.
+
+## Melihat dan Mencabut
+
+```sql
+SHOW GRANTS FOR 'app'@'localhost';
+REVOKE INSERT ON academy.produk FROM 'app'@'localhost';
+DROP USER 'app'@'localhost';
+```
+
+## Role (MySQL 8+)
+
+```sql
+CREATE ROLE 'reader';
+GRANT SELECT ON academy.* TO 'reader';
+GRANT 'reader' TO 'app'@'localhost';
+SET DEFAULT ROLE 'reader' TO 'app'@'localhost';
+```
+
+Role memudahkan pengelolaan banyak user dengan pola hak yang sama.
+
+## Akun Terbaik untuk Aplikasi
+
+| Kebutuhan | Hak |
+| --- | --- |
+| Endpoint baca | SELECT |
+| Form input | SELECT, INSERT |
+| Dashboard admin | SELECT, UPDATE |
+| Migration | CREATE, ALTER, DROP — akun terpisah
+
+<div class="note">💡 Jangan pakai akun `root` untuk koneksi aplikasi. Root bisa menghapus seluruh server hanya karena satu query salah.</div>
+
+## Di Dunia Nyata
+
+- **Aplikasi web**: akun hanya SELECT/INSERT/UPDATE pada skema aplikasi.
+- **Analis**: akun read-only untuk query laporan.
+- **CI/CD**: akun migrasi dipakai hanya saat deploy.
+- **Multi-tenant**: hak dibatasi per skema pelanggan.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE USER 'report'@'localhost' IDENTIFIED BY 'sandi-kuat';
+GRANT SELECT ON academy.* TO 'report'@'localhost';
+SHOW GRANTS FOR 'report'@'localhost';
+REVOKE SELECT ON academy.* FROM 'report'@'localhost';`} />

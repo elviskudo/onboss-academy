@@ -1,0 +1,113 @@
+---
+title: "useMemo & useCallback"
+description: "memoisasi perhitungan mahal dan fungsi, serta kapan optimasi itu perlu"
+order: 14
+quiz:
+  - q: "useMemo dipakai untuk…"
+    options: ["Membuat state baru", "Menghapus efek", "Menyimpan hasil perhitungan mahal antar render", "Mengirim data ke server"]
+    answer: 2
+    explain: "Nilai dihitung ulang hanya bila dependency berubah."
+  - q: "useCallback mengembalikan…"
+    options: ["Promise", "Fungsi yang identik antar render bila dependency sama", "Object hasil fetch", "DOM node"]
+    answer: 1
+    explain: "Ini membantu bila fungsi diteruskan ke komponen yang di-memo."
+  - q: "React.memo berguna untuk…"
+    options: ["Menyimpan data di localStorage", "Mengganti useEffect", "Membuat rute", "Melewati render ulang bila props tidak berubah"]
+    answer: 3
+    explain: "memo membandingkan props secara shallow."
+  - q: "Optimasi berikut yang biasanya perlu adalah…"
+    options: ["Semua string", "Perhitungan sungguhan berat pada daftar besar", "Setiap variations kecil", "Semua komponen tanpa pengecualian"]
+    answer: 1
+    explain: "Lakukan pengukuran dulu; optimasi dini sering menambah kompleksitas."
+  - q: "Dependency useMemo yang salah bisa menyebabkan…"
+    options: ["Nilai lama dipakai (stale)", "Render otomatis berhenti", "State hilang", "Error CSS"]
+    answer: 0
+    explain: "Seperti useEffect, useMemo mengikuti daftar dependency."
+example:
+  code: |
+    const total = React.useMemo(() =>
+      items.reduce((s, i) => s + i.harga * i.qty, 0), [items]);
+
+    const tambah = React.useCallback((id) =>
+      setItems((lama) => lama.map((i) => i.id === id
+        ? { ...i, qty: i.qty + 1 } : i)), []);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+React merender ulang komponen saat state berubah. Kebanyakan kasus sudah cukup cepat; dua hook ini dipakai saat ada pekerjaan yang benar-benar mahal.
+
+## useMemo
+
+```jsx
+function Ringkasan({ items }) {
+  const total = React.useMemo(() => {
+    console.log("hitung ulang total");
+    return items.reduce((sum, i) => sum + i.harga * i.qty, 0);
+  }, [items]);
+
+  return <p>Total: Rp{total.toLocaleString("id-ID")}</p>;
+}
+```
+
+Kalau `items` tidak berubah, fungsi di dalamnya tidak dijalankan lagi.
+
+## useCallback
+
+```jsx
+const tambah = React.useCallback((id) => {
+  setItems((lama) => lama.map((i) =>
+    i.id === id ? { ...i, qty: i.qty + 1 } : i
+  ));
+}, []);
+
+const Baris = React.memo(function Baris({ item, onTambah }) {
+  return <button onClick={() => onTambah(item.id)}>+</button>;
+});
+```
+
+`useCallback` menjaga identitas fungsi tetap, sehingga `React.memo` pada anak benar-benar bisa melewati render.
+
+## Kapan Dipakai
+
+| Situasi | Pilihan |
+|---------|---------|
+| Hitung sederhana | biarkan saja |
+| Sort/filter ribuan baris | `useMemo` |
+| Fungsi dikirim ke komponen memo | `useCallback` |
+| Efek samping / fetch | `useEffect` |
+
+## Kebiasaan Baik
+
+1. Ukur dulu dengan React DevTools Profiler.
+2. Cantumkan semua nilai yang dipakai di dalam callback di dependency array.
+3. Jangan menyimpan objek state di `useMemo` — itu bukan pengganti `useState`.
+
+<div class="note">💡 `useMemo` bukan cache ajaib. React boleh membuang cache kapan saja; jadi jangan dipakai untuk menyimpan data yang harus selalu ada.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Perbandingan perhitungan biasa vs memo (disimulasikan)
+let hitunganBiasa = 0;
+function totalBiasa(items) {
+  hitunganBiasa++;
+  return items.reduce((s, i) => s + i, 0);
+}
+
+function buatMemo() {
+  let cache = null;
+  let terakhir = null;
+  return (items) => {
+    if (terakhir === items) return cache;
+    terakhir = items;
+    cache = items.reduce((s, i) => s + i, 0);
+    return cache;
+  };
+}
+
+const data = [1, 2, 3];
+const totalMemo = buatMemo();
+console.log(totalMemo(data), totalMemo(data));
+console.log("hitung biasa:", totalBiasa(data), totalBiasa(data));`} />

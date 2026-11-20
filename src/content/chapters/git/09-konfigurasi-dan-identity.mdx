@@ -1,0 +1,103 @@
+---
+title: Konfigurasi Git dan Identitas
+description: Mengatur nama, email, editor, dan preferensi Git di level sistem, global, maupun lokal.
+order: 9
+quiz:
+- q: Perintah untuk melihat semua konfigurasi beserta sumber filenya adalah…
+  options:
+  - git diff --stat
+  - git config --list --show-origin
+  - git status --all
+  - git log -p
+  answer: 1
+  explain: Opsi --show-origin menampilkan file konfigurasi yang memberikan nilai tersebut.
+- q: Level konfigurasi yang paling spesifik adalah…
+  options:
+  - system
+  - global
+  - local
+  - user
+  answer: 2
+  explain: Konfigurasi local hanya berlaku untuk satu repositori dan meng-override global.
+- q: Konfigurasi untuk mengganti editor commit adalah…
+  options:
+  - git config user.name
+  - git config commit.template
+  - git config color.ui
+  - git config core.editor
+  answer: 3
+  explain: core.editor menentukan program yang dipakai saat menulis pesan commit panjang.
+- q: Perintah untuk menghapus entri konfigurasi adalah…
+  options:
+  - git config --unset
+  - git config --delete
+  - git config --remove
+  - git config --clear
+  answer: 0
+  explain: Gunakan git config --unset <kunci> pada level yang sesuai.
+- q: Mengapa email commit penting?
+  options:
+  - Mengganti nama branch
+  - Menandai penulis perubahan
+  - Menentukan ukuran repo
+  - Mengatur warna terminal
+  answer: 1
+  explain: Email dan nama menjadi identitas penulis yang tercatat permanen di riwayat.
+example:
+  code: 'git config --global user.name "Nama Kamu"
+
+    git config --global user.email "nama@email.com"
+
+    git config --global core.editor "vim"
+
+    git config --list --show-origin
+
+    '
+---
+
+
+Git menyimpan preferensi dalam tiga level: **system**, **global**, dan **local**. Urutan prioritasnya dari yang paling umum ke paling spesifik.
+
+## Tiga Level Konfigurasi
+
+```bash
+git config --system core.longpaths true   # semua user di mesin
+git config --global user.name "Nama"      # satu user, semua repo
+git config --local user.email "x@y.com"   # satu repo saja
+```
+
+| Level | Cakupan | File |
+|---|---|---|
+| system | seluruh mesin | `/etc/gitconfig` |
+| global | satu akun pengguna | `~/.gitconfig` |
+| local | satu repositori | `.git/config` |
+
+## Identitas Penulis
+
+```bash
+git config --global user.name "Sinta Rahma"
+git config --global user.email "sinta@perusahaan.id"
+```
+
+Nilai ini melekat pada setiap commit. Untuk repo dengan identitas berbeda (misalnya kontribusi open-source), gunakan konfigurasi local.
+
+## Konfigurasi Berguna Lainnya
+
+```bash
+git config --global core.editor "code --wait"
+git config --global init.defaultBranch main
+git config --global pull.rebase false
+git config --global core.autocrlf input
+```
+
+<div class="note">💡 `core.autocrlf` penting saat tim campur Windows dan Linux/macOS. Tanpa pengaturan ini, perubahan akhir baris bisa membuat seluruh file terlihat berubah.</div>
+
+## Melihat dan Menghapus
+
+```bash
+git config --list --show-origin
+git config --get user.name
+git config --unset user.email
+```
+
+Selalu periksa dengan `--show-origin` ketika nilai yang muncul tidak sesuai harapan — bisa jadi ada pengaturan local yang menimpa global.

@@ -1,0 +1,123 @@
+---
+title: "Arrow Function & Callback"
+description: "Sintaks fungsi panah, parameter, dan pola callback asynchronous"
+order: 20
+quiz:
+  - q: "Arrow function dengan satu parameter bisa ditulis…"
+    options: ["x => x * 2", "function x => x*2", "(x) => { x*2 }", "x -> x*2"]
+    answer: 0
+    explain: "Tanda kurung opsional untuk satu parameter."
+  - q: "`() => ({ a: 1 })` mengembalikan…"
+    options: ["undefined", "Objek {a:1}", "String", "Error"]
+    answer: 1
+    explain: "Kurawal dibutuhkan agar tidak dianggap blok statement."
+  - q: "Callback adalah…"
+    options: ["Fungsi yang dipanggil saat error", "Fungsi yang dikirim sebagai argumen", "Fungsi arrow saja", "Fungsi tanpa nama"]
+    answer: 1
+    explain: "Callback bisa berupa fungsi named maupun anonymous."
+  - q: "`setTimeout(fn, 0)` akan menjalankan fn…"
+    options: ["Langsung sinkron", "Setelah antrian sinkron selesai", "Pukul 0", "Tidak pernah"]
+    answer: 1
+    explain: "Masuk ke event loop dan dijalankan setelah call stack kosong."
+  - q: "Arrow function tidak bisa dipakai sebagai…"
+    options: ["Callback", "Constructor dengan new", "Argumen map", "IIFE"]
+    answer: 1
+    explain: "Arrow tidak punya prototype dan tidak bisa dipanggil dengan new."
+example:
+  code: |
+    const ganda = x => x * 2;
+    const keObjek = (nama, skor) => ({ nama, skor });
+    [1,2,3].forEach(n => console.log(n * 2));
+    setTimeout(() => console.log("nanti"), 1000);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Arrow function adalah sintaks ringkas untuk fungsi. Selain lebih pendek, ia membawa **perilaku `this` leksikal** yang sangat berguna untuk callback.
+
+## Bentuk-Bentuk Arrow
+
+```js
+const tanpaArgumen = () => 42;
+const satuArgumen  = x => x * 2;
+const duaArgumen   = (a, b) => a + b;
+const denganBlok   = (x) => {
+  const y = x * 2;
+  return y;
+};
+const objek        = id => ({ id, aktif: true });
+```
+
+Kalau langsung mengembalikan objek literal, bungkus dengan kurawal tambahan.
+
+## Kapan Tetap Pakai Function Biasa
+
+- Method objek yang butuh `this` dinamis.
+- Constructor / class method.
+- Ketika perlu `arguments` (arrow tidak memilikinya).
+- Event handler yang ingin `this` = elemen DOM.
+
+## Callback
+
+```js
+const angka = [1, 2, 3];
+angka.forEach(n => console.log(n));
+angka.map(n => n * 2);
+angka.filter(n => n > 1);
+
+function proses(data, callback) {
+  const hasil = data.map(x => x * 2);
+  callback(hasil);
+}
+proses([1, 2], hasil => console.log(hasil));
+```
+
+## Callback vs Promise
+
+Callback bersarang mudah berubah menjadi *callback hell*:
+
+```js
+ambilUser(id, user => {
+  ambilPesanan(user.id, pesanan => {
+    ambilDetail(pesanan.id, detail => {
+      console.log(detail);
+    });
+  });
+});
+```
+
+Promise dan `async/await` (sudah kamu lihat di chapter 09) menggantikan pola ini dengan rantai yang lebih rapi. Callback tetap muncul di method seperti `forEach`, `map`, dan event listener.
+
+## Event Loop Secara Singkat
+
+```js
+console.log("1");
+setTimeout(() => console.log("3"), 0);
+console.log("2");
+// 1, 2, 3
+```
+
+`console.log` sinkron jalan dulu. Callback `setTimeout` masuk antrean task dan dijalankan setelah stack kosong meski delay-nya 0.
+
+<div class="note">💡 Hindari arrow function untuk method pada objek literal: `nama: () => this.nama` akan mengambil `this` dari scope luar, bukan dari objeknya.</div>
+
+## Di Dunia Nyata
+
+- `array.map(x => ...)` adalah pemandangan sehari-hari di React.
+- `useEffect(() => {...}, [])` memakai arrow sebagai callback.
+- `setTimeout(() => ..., 300)` dipakai untuk debounce sederhana.
+
+## Try it Yourself
+
+Tambahkan method `reduce` atau ubah arrow menjadi fungsi biasa di contoh ini.
+
+<TryIt lang="javascript" runtime="client-js" code={`const angka = [1, 2, 3, 4, 5];
+const ganda = angka.map(n => n * 2);
+const genap = angka.filter(n => n % 2 === 0);
+console.log("Ganda:", ganda);
+console.log("Genap:", genap);
+const objek = id => ({ id, aktif: true });
+console.log(objek(7));
+console.log("awal");
+setTimeout(() => console.log("callback setelah 300ms"), 300);
+console.log("akhir");`} />

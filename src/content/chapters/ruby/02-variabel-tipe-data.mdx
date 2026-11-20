@@ -29,7 +29,7 @@ example:
     puts usia.to_i + 1          # 26
 
     daftar = ["apel", "mangga"]
-    daftar << "jeruk"
+    daftar <&lt; "jeruk"
     puts daftar.length          # 3
 
     data = { kota: "Bandung", umur: 20 }
@@ -112,6 +112,10 @@ Versi "pemaksaan" yang lebih ketat: `Integer("12abc")` langsung `ArgumentError`,
 - **Validasi harga**: `harga = harga_kirim.to_f` lalu `harga.positive?` — menangkap string kosong sebelum jadi harga nol.
 
 <div class="note">💡 Di Ruby, tipe mengikuti objeknya, bukan variabelnya — sebuah variabel bisa berisi Integer di baris pertama dan String di baris berikutnya. Konsekuensinya: selalu konversi tepat di batas data tak terpercaya (input user), bukan di dalam logika bisnis yang sudah mengasumsikan tipe benar.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`umur = "20"
 puts umur.to_i + 1

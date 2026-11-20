@@ -1,0 +1,79 @@
+---
+title: "Membuat Blok Sendiri"
+description: "Fungsi kustom dengan input dan penggunaannya"
+order: 14
+quiz:
+  - q: "Blok buatan sendiri dibuat di kategori…"
+    options: ["Data", "Penampilan", "My Blocks / Blok Saya", "Kontrol"]
+    answer: 2
+    explain: "Di beberapa versi tampil sebagai \"My Blocks\"."
+  - q: "Manfaat membuat blok sendiri adalah…"
+    options: ["Menghapus variabel", "Menambah kostum", "Mengubah panggung", "Mengelompokkan kode yang sering dipakai"]
+    answer: 3
+    explain: "Blok kustom membuat skrip lebih rapi dan mudah diubah."
+  - q: "Input pada blok kustom berfungsi sebagai…"
+    options: ["Parameter yang nilainya diberikan saat dipanggil", "Variabel global", "Kostum baru", "Backdrop"]
+    answer: 0
+    explain: "Nilai input bisa berupa angka atau teks."
+  - q: "Agar blok kustom tidak memakan waktu saat dipanggil, aktifkan…"
+    options: ["Sembunyikan sprite", "Run without screen refresh", "Turbo mode", "Tanpa suara"]
+    answer: 1
+    explain: "Opsi ini cocok untuk perhitungan cepat, bukan animasi."
+  - q: "Blok kustom dipanggil dari…"
+    options: ["Kategori Suara", "Menu File", "Kategori Blok Saya di area blok", "Kategori Gerak"]
+    answer: 2
+    explain: "Setelah dibuat, blok tersebut tersedia bersama blok bawaan."
+example:
+  code: |
+    [ketika bendera diklik]
+    [batasi GerakkanKe(x:100, y:50)]
+    
+    // definisi blok:
+    [definisi GerakkanKe(x, y)]
+    [atur x ke (x)]
+    [atur y ke (y)]
+    [tunggu 0.2 detik]
+---
+
+Blok buatan sendiri adalah cara Scratch mendukung fungsi. Kamu memberi nama, menambahkan parameter, lalu mengisi tubuh blok itu sekali saja.
+
+## Membuat Blok
+
+1. Buka kategori **Blok Saya** lalu klik **Buat blok**.
+2. Beri nama, misalnya `Kedip`.
+3. Tambahkan input bila perlu, misalnya `jumlah` dan `waktu`.
+4. Tulis skrip di bawah header definisi.
+5. Panggil blok dari tempat mana pun.
+
+## Contoh: Kedip
+
+```text
+[definisi Kedip(jumlah, jeda)]
+[ulangi (jumlah) [
+   [ubah efek [kecerahan] sebesar 25]
+   [tunggu (jeda) detik]
+   [ubah efek [kecerahan] sebesar -25]
+   [tunggu (jeda) detik]
+]]
+```
+
+## Input Teks dan Angka
+
+Klik tombol `+` saat menambah input untuk memberi nama. Saat blok dipanggil, isi nilainya. Di dalam definisi, nama input tampil sebagai pelapor oval.
+
+## Kapan Memakai Run without Screen Refresh
+
+Aktifkan untuk blok yang hanya menghitung atau mengatur variabel. Jangan aktifkan bila blok berisi animasi yang perlu terlihat—layar tidak akan diperbarui sampai blok selesai.
+
+<div class="note">💡 Beri nama blok dengan kata kerja: `GambarKotak`, `HitungSkor`, `ResetPosisi`. Nama yang jelas menggantikan banyak komentar.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`// Blok kustom: Sapa(nama)
+[definisi Sapa(nama)]
+[ucap (gabung [Halo, ] (nama)) selama 2]
+
+// Pemanggil:
+[ketika bendera diklik]
+[Sapa(nama:[Duni])]`}</code></pre>

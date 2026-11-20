@@ -1,0 +1,77 @@
+---
+title: "Standar Deviasi dan Varians"
+description: "penyebaran data, populasi versus sampel, dan hubungannya dengan scaling"
+order: 10
+quiz:
+  - q: "Standar deviasi mengukur…"
+    options: ["Frekuensi modus", "Penyebaran sekitar mean", "Jumlah data", "Nilai tengah"]
+    answer: 1
+    explain: "Std = akar dari varians."
+  - q: "Varians sampel memakai pembagi…"
+    options: ["n + 1", "2n", "n - 1", "n"]
+    answer: 2
+    explain: "Koreksi Bessel membuat estimasi tidak bias."
+  - q: "Std nol berarti…"
+    options: ["Data kosong", "Ada outlier", "Mean nol", "Semua nilai sama"]
+    answer: 3
+    explain: "Tidak ada penyebaran."
+  - q: "Fitur dengan std jauh lebih besar sering…"
+    options: ["Menjadi label", "Didominasi dalam model jarak", "Diabaikan model", "Dihapus otomatis"]
+    answer: 1
+    explain: "Karena itu perlu scaling."
+  - q: "Unit standar deviasi sama dengan…"
+    options: ["Tanpa unit", "Desimal", "Unit data asli", "Persen selalu"]
+    answer: 2
+    explain: "Akar varians mengembalikan satuan awal."
+example:
+  code: |
+    data=[10,12,14]
+    m=sum(data)/len(data)
+    var=sum((x-m)**2 for x in data)/(len(data)-1)
+    print(var**0.5)
+---
+
+## Varians
+
+Varians adalah rata-rata kuadrat selisih terhadap mean.
+
+```python
+data = [10, 12, 14]
+mean = sum(data) / len(data)
+var = sum((x - mean) ** 2 for x in data) / (len(data) - 1)
+print(var)
+```
+
+Kuadrat dipakai agar selisih negatif tidak saling menghilangkan.
+
+## Standar Deviasi
+
+```python
+std = var ** 0.5
+print(std)
+```
+
+Karena di-akar, std kembali ke satuan asli — lebih mudah dijelaskan daripada varians.
+
+## Populasi versus Sampel
+
+| Fungsi Python | Pembagi | Dipakai untuk |
+| --- | --- | --- |
+| `statistics.pvariance` | n | seluruh populasi |
+| `statistics.variance` | n − 1 | sampel |
+
+## Kaitan dengan Model
+
+Algoritma berbasis jarak seperti KNN sensitif terhadap skala. Fitur `gaji` (jutaan) akan mendominasi `umur` (puluhan) bila tidak dinormalisasi.
+
+<div class="note">💡 Cek standar deviasi tiap fitur sebelum melatih model. Fitur dengan std nol tidak memberi informasi dan bisa dibuang.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`data = [10, 12, 14, 16]
+m = sum(data)/len(data)
+var = sum((x-m)**2 for x in data)/(len(data)-1)
+print("Varians sampel:", round(var, 2))
+print("Std:", round(var**0.5, 2))`}</code></pre>

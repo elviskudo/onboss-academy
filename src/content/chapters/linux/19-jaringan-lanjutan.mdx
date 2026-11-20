@@ -1,0 +1,135 @@
+---
+title: 'Jaringan Lanjutan: DNS, Port, dan Transfer File'
+description: Mendiagnosis koneksi, memeriksa port, dan memindahkan file antar mesin.
+order: 19
+quiz:
+- q: Perintah untuk menguji konektivitas dasar adalah…
+  options:
+  - ls
+  - df
+  - top
+  - ping
+  answer: 3
+  explain: ping mengirim ICMP echo request.
+- q: Perintah untuk melihat pencarian DNS adalah…
+  options:
+  - dig example.com
+  - ping -dns example.com
+  - netstat -dns
+  - host -v -4
+  answer: 0
+  explain: dig menampilkan jawaban DNS secara rinci.
+- q: Perintah memeriksa port yang mendengar adalah…
+  options:
+  - traceroute
+  - ss -tuln
+  - ip addr
+  - ping
+  answer: 1
+  explain: ss menggantikan netstat pada sistem modern.
+- q: Protokol untuk menyalin file dengan aman adalah…
+  options:
+  - telnet
+  - http biasa
+  - scp atau rsync over SSH
+  - ftp biasa
+  answer: 2
+  explain: scp dan rsync mengenkripsi data lewat SSH.
+- q: Perintah curl digunakan untuk…
+  options:
+  - Mengatur IP
+  - Melihat proses
+  - Memformat disk
+  - Melakukan permintaan HTTP dari terminal
+  answer: 3
+  explain: curl sangat berguna untuk menguji API.
+example:
+  code: 'ping -c 3 google.com
+
+    dig onboss.id +short
+
+    ss -tuln
+
+    curl -I https://example.com
+
+    scp file.txt user@server:/tmp/
+
+    rsync -avz ./app/ user@server:/srv/app/
+
+    '
+---
+
+
+Jaringan adalah bagian besar dari pekerjaan server. Beberapa perintah cukup untuk menjawab sebagian besar pertanyaan diagnostik.
+
+## Konektivitas
+
+```bash
+ping -c 3 8.8.8.8
+ping -c 3 example.com
+traceroute example.com
+mtr example.com
+```
+
+Jika IP langsung berhasil tetapi domain gagal, masalahnya ada di DNS.
+
+## DNS
+
+```bash
+dig example.com
+dig example.com +short
+dig @8.8.8.8 example.com
+nslookup example.com
+cat /etc/resolv.conf
+```
+
+| Record | Fungsi |
+|---|---|
+| A | domain -> IPv4 |
+| AAAA | domain -> IPv6 |
+| CNAME | alias domain |
+| MX | server email |
+| TXT | teks verifikasi |
+
+## Port
+
+```bash
+ss -tuln
+ss -tulnp | grep 80
+lsof -i :5432
+nc -zv host 443
+```
+
+```text
+State   Recv-Q Send-Q Local Address:Port
+LISTEN  0      128    0.0.0.0:80
+```
+
+## HTTP dari Terminal
+
+```bash
+curl -I https://example.com
+curl -s https://api.example.com/data | jq .
+curl -X POST -d '{"a":1}' -H 'Content-Type: application/json' url
+```
+
+## Transfer File
+
+```bash
+scp file.txt user@server:/tmp/
+scp user@server:/var/log/app.log .
+rsync -avz ./app/ user@server:/srv/app/
+rsync -avz --delete ./build/ user@server:/var/www/
+```
+
+<div class="note">💡 Perhatikan slash di akhir `rsync`: `app/` menyalin **isi** folder, `app` menyalin **foldernya** ke dalam tujuan.</div>
+
+## Konfigurasi IP
+
+```bash
+ip addr show
+ip route show
+ip link set eth0 up
+```
+
+Pada distro modern, `ip` menggantikan `ifconfig`.

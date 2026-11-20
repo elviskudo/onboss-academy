@@ -1,0 +1,126 @@
+---
+"title": "Reflection dan Annotation"
+"description": "Membaca metadata kelas saat runtime dan membuat anotasi sederhana"
+"order": 21
+"quiz":
+- "q": "Fungsi untuk mendapatkan referensi kelas Kotlin adalah…"
+  "options":
+  - "T.class"
+  - "T::class"
+  - "classOf<T>()"
+  - "reflect<T>()"
+  "answer": 1
+  "explain": "MyClass::class menghasilkan KClass."
+- "q": "Untuk memakai reflection Kotlin di JVM dibutuhkan gem/artefak…"
+  "options":
+  - "kotlin-stdlib saja"
+  - "kotlin-coroutines"
+  - "kotlin-reflect"
+  - "kotlin-serialization"
+  "answer": 2
+  "explain": "Fitur reflection penuh berada di artefak kotlin-reflect."
+- "q": "Anotasi dibuat dengan kata kunci…"
+  "options":
+  - "@interface"
+  - "annotate"
+  - "@interface class"
+  - "annotation class"
+  "answer": 3
+  "explain": "annotation class Berguna : ... didefinisikan seperti kelas."
+- "q": "Target anotasi ditentukan dengan…"
+  "options":
+  - "@Target"
+  - "@Where"
+  - "@Scope"
+  - "@Apply"
+  "answer": 0
+  "explain": "@Target(AnnotationTarget.CLASS) membatasi lokasi pemakaian."
+- "q": "KClass milik properti bisa diperoleh lewat…"
+  "options":
+  - "property::class"
+  - "::property"
+  - "getClass(property)"
+  - "reflect(property)"
+  "answer": 1
+  "explain": "Penggunaan ::namaProperti menghasilkan KProperty1."
+"example":
+  "code": "import kotlin.reflect.full.memberProperties\n\ndata class Produk(val nama: String, val harga: Int)\n\nannotation class Endpoint(val path: String)\n\n@Endpoint(\"/produk\")\nclass ProdukController\n\nfun main() {\n    val props = Produk::class.memberProperties.map { it.name }\n    println(props) // [nama, harga]\n\n    val ann = ProdukController::class.annotations\n        .filterIsInstance<Endpoint>().firstOrNull()\n    println(ann?.path)\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## KClass dan KProperty
+
+```kotlin
+import kotlin.reflect.full.memberProperties
+
+data class Produk(val nama: String, val harga: Int)
+
+annotation class Endpoint(val path: String)
+
+@Endpoint("/produk")
+class ProdukController
+
+fun main() {
+    val props = Produk::class.memberProperties.map { it.name }
+    println(props) // [nama, harga]
+
+    val ann = ProdukController::class.annotations
+        .filterIsInstance<Endpoint>().firstOrNull()
+    println(ann?.path)
+}
+```
+
+```kotlin
+val kelas = Produk::class
+println(kelas.simpleName)        // Produk
+println(kelas.memberProperties.map { it.name })
+```
+
+`::class` menghasilkan `KClass<*>`, pintu masuk ke reflection Kotlin.
+
+## Membaca Anotasi
+
+```kotlin
+annotation class Route(val path: String, val method: String = "GET")
+
+@Route("/users", method = "POST")
+class BuatUser
+```
+
+Nilai anotasi bisa berupa konstanta, kelas, atauenum — bukan objek sembarangan.
+
+## Batasan Reflection
+
+| Aspek | Keterangan |
+|---|---|
+| Ukuran | `kotlin-reflect` menambah artefak ke aplikasi |
+| Kinerja | lebih lambat daripada akses langsung |
+| R8/ProGuard | nama bisa dihapus bila tidak di-keep |
+
+Di Android, reflection sering dihindari dalam jalur kritis. Library seperti Room dan Moshi memakai kode yang di-generate saat kompilasi sebagai gantinya.
+
+<div class="note">💡 Reflection sangat berguna untuk framework dan alat, tapi untuk kode aplikasi sehari-hari, function dan sealed class biasanya lebih jelas serta lebih aman terhadap obfuskasi.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`import kotlin.reflect.full.memberProperties
+
+data class Produk(val nama: String, val harga: Int)
+
+annotation class Endpoint(val path: String)
+
+@Endpoint("/produk")
+class ProdukController
+
+fun main() {
+    val props = Produk::class.memberProperties.map { it.name }
+    println(props) // [nama, harga]
+
+    val ann = ProdukController::class.annotations
+        .filterIsInstance<Endpoint>().firstOrNull()
+    println(ann?.path)
+}`} />

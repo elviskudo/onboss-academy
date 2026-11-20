@@ -1,0 +1,117 @@
+---
+title: "Custom Pipe"
+description: "membuat pipe sendiri, async pipe, pure vs impure, dan parameter"
+order: 20
+quiz:
+  - q: "Pipe dibuat dengan decorator…"
+    options: ["@Injectable", "@Directive", "@Pipe", "@Component"]
+    answer: 2
+    explain: "@Pipe berisi name dan transform."
+  - q: "Metode wajib dalam pipe adalah…"
+    options: ["render()", "transform()", "handle()", "map()"]
+    answer: 1
+    explain: "Di sinilah nilai diubah sebelum ditampilkan."
+  - q: "Async pipe berguna untuk…"
+    options: ["Mengubah warna", "Membuat rute", "Menyimpan file", "Berlangganan Observable/Promise di template"]
+    answer: 3
+    explain: "Angular mengelola subscribe dan unsubscribe otomatis."
+  - q: "Pipe pure (default) dijalankan ulang saat…"
+    options: ["Selamanya", "Input benar-benar berubah", "Setiap klik", "Setiap render CSS"]
+    answer: 1
+    explain: "Lebih efisien daripada pipe impure."
+  - q: "Parameter pipe ditulis dengan…"
+    options: ["{{ nilai | pangkas:20 }}", "{{ nilai(pangkas,20) }}", "{{ @pangkas nilai }}", "{{ nilai -> pangkas }}"]
+    answer: 0
+    explain: "Argumen dipisah titik dua setelah nama pipe."
+example:
+  code: |
+    @Pipe({ name: "pangkas" })
+    export class PangkasPipe implements PipeTransform {
+      transform(nilai: string, panjang = 20): string {
+        return nilai.length > panjang ? nilai.slice(0, panjang) + "…" : nilai;
+      }
+    }
+---
+
+Pipe mengubah data tepat sebelum ditampilkan. Angular sudah punya `date`, `currency`, `uppercase`, dan lain-lain — kamu juga bisa membuat sendiri.
+
+## Membuat Pipe
+
+```typescript
+import { Pipe, PipeTransform } from "@angular/core";
+
+@Pipe({ name: "pangkas" })
+export class PangkasPipe implements PipeTransform {
+  transform(nilai: string, panjang = 20): string {
+    if (!nilai) return "";
+    return nilai.length > panjang
+      ? nilai.slice(0, panjang).trimEnd() + "…"
+      : nilai;
+  }
+}
+```
+
+Daftarkan di `imports` komponen standalone:
+
+```typescript
+@Component({
+  standalone: true,
+  imports: [PangkasPipe],
+  template: `<p>{{ deskripsi | pangkas:40 }}</p>`,
+})
+export class KartuComponent {
+  deskripsi = "Belajar Angular itu menyenangkan dan terstruktur.";
+}
+```
+
+## Pipe Bawaan
+
+```html
+{{ harga | currency:'IDR':'symbol':'1.0-0' }}
+{{ tanggal | date:'dd MMM yyyy':'':'id-ID' }}
+{{ daftar | slice:0:5 }}
+{{ teks | uppercase }}
+{{ 0.37 | percent:'1.0-1' }}
+```
+
+## Async Pipe
+
+```typescript
+export class BeritaComponent {
+  private api = inject(ApiService);
+  berita$ = this.api.daftarBerita();
+}
+```
+
+```html
+@if (berita$ | async; as daftar) {
+  <ul>
+    @for (b of daftar; track b.id) { <li>{{ b.judul }}</li> }
+  </ul>
+} @else {
+  <p>Memuat…</p>
+}
+```
+
+Angular berlangganan saat komponen tampil dan berhenti saat dihancurkan.
+
+## Pure vs Impure
+
+```typescript
+@Pipe({ name: "cepat", pure: true })  // default
+```
+
+Pipe pure hanya dijalankan bila referensi input berubah. Hindari pipe impure kecuali memang perlu memantau perubahan dalam objek yang dimutasi.
+
+<div class="note">💡 Pisahkan perhitungan dan tampilan: pipe cocok untuk format, tetapi logika bisnis sebaiknya tetap di service atau method komponen.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`@Pipe({ name: "pangkas" })
+export class PangkasPipe implements PipeTransform {
+  transform(nilai: string, panjang = 20): string {
+    return nilai.length > panjang ? nilai.slice(0, panjang) + "…" : nilai;
+  }
+}`}</code></pre>

@@ -1,0 +1,100 @@
+---
+title: Kompleksitas Ruang dan trade-off Memori
+description: Menghitung penggunaan memori algoritma dan memilih trade-off yang tepat.
+order: 23
+quiz:
+- q: Kompleksitas ruang mengukur…
+  options:
+  - Ukuran file input
+  - Jumlah baris kode
+  - Kecepatan CPU
+  - Memori tambahan yang dipakai algoritma
+  answer: 3
+  explain: Space complexity menghitung memori ekstra relatif terhadap ukuran input.
+- q: Merge sort memiliki space complexity…
+  options:
+  - O(n)
+  - O(1)
+  - O(log n)
+  - O(n^2)
+  answer: 0
+  explain: Array bantuan diperlukan saat menggabungkan.
+- q: Binary search rekursif memiliki space…
+  options:
+  - O(n log n)
+  - O(log n) untuk call stack
+  - O(1)
+  - O(n)
+  answer: 1
+  explain: Setiap level rekursi menyimpan satu frame.
+- q: Trade-off umum antara waktu dan memori adalah…
+  options:
+  - Menghapus semua variabel
+  - Mengabaikan input
+  - Menyimpan hasil perhitungan agar lebih cepat
+  - Selalu memilih memori minimum
+  answer: 2
+  explain: Cache dan tabel DP menukar memori dengan kecepatan.
+- q: In-place algorithm berarti…
+  options:
+  - Tidak bisa dijalankan
+  - Hanya untuk array
+  - Selalu lebih cepat
+  - Memakai memori tambahan konstan atau sangat sedikit
+  answer: 3
+  explain: Bubble sort dan heap sort contohnya.
+example:
+  code: "def rangkum(a):\n    return sum(x*x for x in a)   # O(1) ruang ekstra\n\ndef salinan(a):\n    b = [x*x for x in a]         # O(n) ruang ekstra\n    return b\n"
+---
+
+
+Diskusi efisiensi sering berhenti di waktu. Padahal **memori** juga sumber daya yang bisa menjadi bottleneck.
+
+## Apa yang Dihitung?
+
+- Variabel lokal dan frame call stack.
+- Struktur data bantuan (array, hash, heap).
+- Salinan input yang dibuat algoritma.
+
+```python
+def total(a):
+    return sum(a)                 # O(1) ekstra
+
+def duplikat(a):
+    return [x for x in a]         # O(n) ekstra
+```
+
+## Contoh Perbandingan
+
+| Algoritma | Waktu | Ruang ekstra |
+|---|---|---|
+| Bubble sort | O(n²) | O(1) |
+| Merge sort | O(n log n) | O(n) |
+| Quick sort (rata-rata) | O(n log n) | O(log n) |
+| Heap sort | O(n log n) | O(1) |
+| DP knapsack | O(n·k) | O(n·k) atau O(k) |
+
+## Mengurangi Ruang
+
+```python
+# DP 2D -> 1D dengan menyimpan hanya baris sebelumnya
+def fib_tabel(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a
+```
+
+Banyak tabel DP bisa direduksi bila transisi hanya melihat baris atau kolom sebelumnya.
+
+## Trade-off Nyata
+
+- **Memoization** mempercepat tapi menambah memori.
+- **Compression** menghemat penyimpanan tapi menambah waktu CPU.
+- **Streaming** memproses data sedikit demi sedikit agar tidak memuat seluruh file.
+
+<div class="note">💡 Di perangkat dengan RAM terbatas (embedded, mobile lawas), algoritma O(1) ruang bisa lebih berguna daripada algoritma paling cepat di kertas.</div>
+
+## Kebiasaan Analisis
+
+Setiap kali selesai menulis algoritma, tanyakan dua hal: berapa kali tiap elemen diproses, dan berapa banyak data baru yang saya buat? Jawaban keduanya biasanya sudah cukup untuk perkiraan awal.

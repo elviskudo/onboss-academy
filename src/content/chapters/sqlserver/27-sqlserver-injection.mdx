@@ -1,0 +1,84 @@
+---
+title: "SQL Injection dan Parameterisasi"
+description: "bahaya string concatenation, parameterized query, sp_executesql, dan input validation"
+order: 27
+quiz:
+  - q: "SQL injection terjadi ketika…"
+    options: ["User lupa password", "Input user digabung langsung ke query", "Query memakai indeks", "Database menjalankan backup"]
+    answer: 1
+    explain: "Input yang mengandung tanda kutip bisa mengubah struktur query."
+  - q: "Cara paling efektif mencegah injection adalah…"
+    options: ["Mengganti nama tabel", "Menonaktifkan indeks", "Parameterisasi query", "Menghapus spasi"]
+    answer: 2
+    explain: "Parameter diperlakukan sebagai nilai, bukan kode SQL."
+  - q: "Prosedur tersimpan yang menggabungkan string dengan EXEC (@sql)…"
+    options: ["Masih bisa rentan", "Lebih cepat", "Tidak bisa dijalankan", "Aman selalu"]
+    answer: 0
+    explain: "EXEC dengan string hasil concatenation tetap berisiko; gunakan sp_executesql."
+  - q: "sp_executesql mendukung…"
+    options: ["Hanya di tempdb", "Parameter bertipe", "Hanya SELECT", "Tanpa parameter"]
+    answer: 1
+    explain: "sp_executesql menerima definisi parameter dan nilainya."
+  - q: "Input validation berfungsi untuk…"
+    options: ["Mempercepat indeks", "Menghapus log", "Membatasi bentuk data yang diterima", "Mengganti enkripsi"]
+    answer: 2
+    explain: "Validasi panjang, tipe, dan pola sebelum data masuk query."
+example:
+  code: |
+    EXEC sp_executesql
+      N'SELECT nama FROM dbo.siswa WHERE nama = @nama',
+      N'@nama NVARCHAR(100)',
+      @nama = N'Ana';
+---
+
+## Contoh Rentan
+
+```sql
+-- JANGAN seperti ini
+DECLARE @sql NVARCHAR(MAX) =
+  N'SELECT * FROM dbo.siswa WHERE nama = ' + @input + N'';
+EXEC(@sql);
+```
+
+Jika `@input` berisi `Ana' OR 1=1 --`, query berubah menjadi pengambilan seluruh tabel. Varian yang lebih berbahaya bisa menambah `DROP TABLE`.
+
+## Parameterisasi
+
+```sql
+EXEC sp_executesql
+  N'SELECT nama, nilai FROM dbo.siswa WHERE nama = @nama',
+  N'@nama NVARCHAR(100)',
+  @nama = @input;
+```
+
+Nilai `@input` tidak pernah dianggap sebagai perintah. Ironisnya, query berparameter juga sering lebih cepat karena rencana eksekusinya bisa dipakai ulang.
+
+## Di Stored Procedure
+
+```sql
+CREATE PROCEDURE dbo.cari_siswa @nama NVARCHAR(100) AS
+BEGIN
+  SET NOCOUNT ON;
+  SELECT nama, nilai FROM dbo.siswa WHERE nama = @nama;
+END;
+```
+
+Aman selama prosedur tidak membangun string SQL sendiri. Kalau nama tabel harus dinamis, validasi terhadap daftar putih (whitelist) nilai yang diizinkan.
+
+## Pertahanan Berlapis
+
+| Lapisan | Tindakan |
+| --- | --- |
+| Aplikasi | prepared statement / parameterized query |
+| Database | hak minimal, hindari `db_owner` |
+| Input | validasi tipe, panjang, pola |
+| Monitoring | audit query anomali |
+
+<div class="note">💡 Mengganti tanda kutip dengan dua tanda kutip ("escaping") bukan strategi yang bisa diandalkan. Parameterisasi menangani semua tipe data dan karakter khusus dengan benar.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`DECLARE @nama NVARCHAR(50) = N'Ana';
+EXEC sp_executesql N'SELECT @nama AS hasil', N'@nama NVARCHAR(50)', @nama = @nama;`}</code></pre>

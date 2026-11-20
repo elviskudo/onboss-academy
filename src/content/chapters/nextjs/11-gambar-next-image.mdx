@@ -1,0 +1,100 @@
+---
+title: "Optimasi Gambar"
+description: "komponen next/image, remotePatterns, fill, priority, dan placeholder"
+order: 11
+quiz:
+  - q: "Komponen untuk gambar optimal adalah…"
+    options: ["next/picture", "next/static", "next/image", "<img> biasa"]
+    answer: 2
+    explain: "Image melakukan resize, lazy load, dan format modern otomatis."
+  - q: "Gambar dari domain luar perlu…"
+    options: ["tidak bisa", "remotePatterns di next.config", "diubah ke .svg", "ditaruh di app/"]
+    answer: 1
+    explain: "Daftar hostname yang diizinkan."
+  - q: "Prop fill berguna saat…"
+    options: ["Gambar kecil", "Gambar statis", "Gambar error", "Gambar harus mengisi container induk"]
+    answer: 3
+    explain: "Induk harus berposisi relative."
+  - q: "priority digunakan untuk…"
+    options: ["Gambar tersembunyi", "Gambar di atas lipatan yang perlu cepat muncul", "Gambar di footer", "Semua gambar"]
+    answer: 1
+    explain: "Menonaktifkan lazy loading untuk gambar penting."
+  - q: "Atribut alt tetap wajib karena…"
+    options: ["Aksesibilitas dan SEO", "Agar file lebih kecil", "Aturan CSS", "Tidak wajib"]
+    answer: 0
+    explain: "Pembaca layar bergantung pada teks alternatif."
+example:
+  code: |
+    <Image src="/logo.png" alt="Logo" width={160} height={40} priority />
+
+    <Image src={url} alt="Foto" fill sizes="(max-width: 600px) 100vw, 50vw" />
+---
+
+Gambar sering menjadi penyebab halaman berat. `next/image` mengoptimalkannya tanpa kamu menulis skrip resize sendiri.
+
+## Gambar Lokal
+
+```tsx
+import Image from "next/image";
+import logo from "@/public/logo.png";
+
+<Image src={logo} alt="Logo OnBoss" priority />;
+```
+
+## Gambar dari URL
+
+```js
+// next.config.mjs
+images: {
+  remotePatterns: [{ hostname: "images.example.com" }];
+}
+```
+
+```tsx
+<Image
+  src="https://images.example.com/produk/kopi.jpg"
+  alt="Kopi susu"
+  width={600}
+  height={400}
+  sizes="(max-width: 600px) 100vw, 50vw"
+/>
+```
+
+## Fill
+
+```tsx
+<div style={{ position: "relative", width: 300, height: 200 }}>
+  <Image src="/banner.jpg" alt="Banner" fill style={{ objectFit: "cover" }} />
+</div>
+```
+
+## Placeholder
+
+```tsx
+<Image
+  src="/foto.jpg"
+  alt="Foto"
+  width={400}
+  height={300}
+  placeholder="blur"
+  blurDataURL="data:image/..."
+/>
+```
+
+## Kapan Memakai priority
+
+- Logo navigasi.
+- Gambar hero di atas lipatan.
+- Gambar yang langsung terlihat saat halaman dibuka.
+
+Selain itu biarkan lazy loading default.
+
+<div class="note">💡 Jangan menaruh `priority` pada semua gambar — malah menghilangkan manfaat lazy load. Berikan hanya untuk beberapa gambar pertama yang benar-benar penting.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`<Image src="/logo.png" alt="Logo" width={160} height={40} priority />
+
+<Image src={url} alt="Foto" fill sizes="(max-width: 600px) 100vw, 50vw" />`}</code></pre>

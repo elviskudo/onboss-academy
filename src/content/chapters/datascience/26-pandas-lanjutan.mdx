@@ -1,0 +1,84 @@
+---
+title: "Analisis Data Pandas Lanjutan"
+description: "groupby multiple, pivot table, window, rolling, dan categorical"
+order: 26
+quiz:
+  - q: "groupby digunakan untuk…"
+    options: ["Menyimpan CSV", "Mengelompokkan lalu mengagregasi", "Menghapus baris", "Membuat grafik"]
+    answer: 1
+    explain: "df.groupby(\"kolom\").agg(...)."
+  - q: "pivot_table mirip dengan…"
+    options: ["Regresi", "Scatter", "Pivot table spreadsheet", "Histogram"]
+    answer: 2
+    explain: "Meringkas dua dimensi."
+  - q: "rolling(3).mean() menghitung…"
+    options: ["Rata-rata seluruh data", "Median 3 nilai", "Jumlah 3 kolom", "Rata-rata bergeser 3 periode"]
+    answer: 3
+    explain: "Berguna untuk time series."
+  - q: "Kategorikal cocok untuk…"
+    options: ["Teks bebas", "Data dengan pilihan tetap", "Angka desimal", "Tanggal terus menerus"]
+    answer: 1
+    explain: "Hemat memori dan urutan jelas."
+  - q: "agg([\"min\",\"max\"]) menghasilkan…"
+    options: ["Satu nilai", "Grafik", "Beberapa agregat sekaligus", "Error"]
+    answer: 2
+    explain: "Hasil berupa MultiIndex kolom."
+example:
+  code: |
+    data=[("A","X",10),("A","Y",20),("B","X",15)]
+    g={}
+    for k,m,v in data:
+        g.setdefault(k,[]).append(v)
+    print({k:sum(v) for k,v in g.items()})
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## groupbyBeberapa Kolom
+
+```python
+ringkas = df.groupby(["kelas", "mapel"])["nilai"].agg(["mean", "count"])
+print(ringkas)
+```
+
+Hasilnya bertingkat: kombinasi `kelas` + `mapel` menjadi index.
+
+## pivot_table
+
+```python
+tabel = df.pivot_table(
+    values="nilai", index="kelas", columns="mapel", aggfunc="mean"
+)
+```
+
+Sel kosong otomatis diisi `NaN`. Gunakan `fill_value=0` bila更适合.
+
+## Rolling
+
+```python
+df["rata3"] = df["omzet"].rolling(window=3).mean()
+```
+
+Baris pertama yang belum punya tiga data menghasilkan `NaN` — ini wajar.
+
+## Kategorikal
+
+```python
+df["kelas"] = df["kelas"].astype("category")
+print(df["kelas"].cat.categories)
+```
+
+Urutan kategori bisa diatur agar `A &lt; B &lt; C` bukan berdasarkan abjad semata.
+
+<div class="note">💡 `groupby` tidak mengubah DataFrame asli; ia menghasilkan objek baru. Simpan hasilnya ke variabel bila ingin dipakai lanjut.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [("A","Matematika",80),("A","IPA",70),("B","Matematika",90)]
+g = {}
+for kelas, mapel, nilai in data:
+    g.setdefault(kelas, []).append(nilai)
+print("Total per kelas:", {k: sum(v) for k, v in g.items()})
+print("Rata per kelas:", {k: round(sum(v)/len(v), 1) for k, v in g.items()})`} />

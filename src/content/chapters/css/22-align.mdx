@@ -1,0 +1,127 @@
+---
+title: "Alignment CSS"
+description: "Memusatkan dan menyelaraskan elemen secara horizontal maupun vertikal"
+order: 22
+quiz:
+  - q: "`text-align: center` memusatkan…"
+    options: ["Seluruh elemen", "Isi teks di dalam elemen", "Elemen terhadap induk", "Border"]
+    answer: 1
+    explain: "Ia hanya bekerja pada konten inline di dalam blok."
+  - q: "Untuk memusatkan blok dengan lebar tetap, gunakan…"
+    options: ["text-align", "margin: 0 auto", "vertical-align", "float"]
+    answer: 1
+    explain: "Margin auto kiri-kanan membagi ruang secara merata."
+  - q: "Pada flexbox, sumbu utama diatur dengan…"
+    options: ["align-items", "justify-content", "text-align", "place-self"]
+    answer: 1
+    explain: "justify-content mengatur sepanjang main axis."
+  - q: "`align-items: center` pada flex mengatur…"
+    options: ["Sumbu utama", "Sumbu silang", "Posisi absolut", " Urutan"]
+    answer: 1
+    explain: "Align items bekerja di cross axis (tegak lurus main axis)."
+  - q: "Cara paling ringkas memusatkan elemen di flex adalah…"
+    options: ["margin auto", "place-items: center dengan display: grid", "float center", "text-align center"]
+    answer: 1
+    explain: "Grid + place-items: center memusatkan di dua sumbu dengan satu deklarasi."
+example:
+  code: |
+    .induk { display: flex; justify-content: center; align-items: center; }
+    .blok { width: 240px; margin: 0 auto; }
+    .grid { display: grid; place-items: center; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+"Memusatkan" bisa berarti tiga hal berbeda: memusatkan **teks**, memusatkan **kotak**, atau memusatkan **anak di dalam kontainer**. Memilih alat yang salah adalah sumber frustrasi umum.
+
+## 1. Memusatkan Teks
+
+```css
+p { text-align: center; }
+```
+
+Bekerja untuk teks, gambar inline, dan elemen inline lain di dalam blok. Tidak memindahkan elemen blok itu sendiri.
+
+## 2. Memusatkan Kotak Blok
+
+```css
+.kartu {
+  width: 320px;
+  margin-inline: auto;
+}
+```
+
+Syaratnya: lebar harus ditentukan (atau `max-width` dengan `width: 100%`). `margin-inline` adalah versi logika modern dari `margin-left/right`.
+
+## 3. Memusatkan dengan Flexbox
+
+```css
+.induk {
+  display: flex;
+  justify-content: center;  /* sumbu utama → horizontal (row) */
+  align-items: center;      /* sumbu silang → vertikal */
+  min-height: 240px;
+}
+```
+
+Ingat arah default flex adalah `row`. Kalau diganti `flex-direction: column`, peran `justify-content` dan `align-items` bertukar secara visual.
+
+## 4. Memusatkan dengan Grid
+
+```css
+.induk {
+  display: grid;
+  place-items: center;
+}
+```
+
+Ini ringkas dan bekerja di dua sumbu sekaligus. `place-items` adalah shorthand `align-items` + `justify-items`.
+
+## 5. Vertical Align untuk Inline
+
+```css
+.ikon { vertical-align: middle; }
+```
+
+`vertical-align` hanya berlaku pada elemen inline dan table-cell — bukan pada blok. Nilai yang sering dipakai: `top`, `middle`, `bottom`, `baseline`.
+
+## Position + Transform (cara lama)
+
+```css
+.tengah {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+Masih berguna untuk overlay, tapi Flex/Grid lebih bersih untuk kebutuhan sehari-hari.
+
+## Ringkasan Pemilihan
+
+| Keadaan | Solusi |
+|---------|--------|
+| Teks dalam paragraf | `text-align: center` |
+| Div selbar 400px | `margin: 0 auto` |
+| Satu anak di tengah wadah | Flex `justify + align` atau Grid `place-items` |
+| Ikon sejajar teks | `vertical-align: middle` |
+| Modal di tengah layar | `position: fixed; inset: 0` + grid/flex |
+
+<div class="note">💡 Kalau `margin: auto` tidak memusatkan secara vertikal pada flex, coba `margin: auto` pada anaknya — dalam flex, auto margin menyerap ruang kosong di sumbu terkait.</div>
+
+## Di Dunia Nyata
+
+- Kartu login berada tepat di tengah viewport dengan Grid.
+- Label tombol dan ikon sejajar memakai `vertical-align` atau flex `gap`.
+- Judul halaman memakai `text-align: center` pada hero section.
+
+## Try it Yourself
+
+Ganti `align-items` menjadi `flex-start` atau ubah `flex-direction` untuk melihat efeknya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; margin: 0; }
+.flex { display: flex; justify-content: center; align-items: center; min-height: 140px; background: #EEF2FF; }
+.kotak { background: #4F46E5; color: white; padding: 20px 28px; border-radius: 8px; }
+.teks { text-align: center; background: #FEF3C7; padding: 12px; }
+.blok { width: 200px; margin: 16px auto; background: #DCFCE7; padding: 12px; text-align: center; }`} />

@@ -1,0 +1,150 @@
+---
+"title": "Exception Lanjutan"
+"description": "raise, rescue, ensure, retry, dan exception kustom"
+"order": 16
+"quiz":
+- "q": "Blok ensure dijalankan…"
+  "options":
+  - "hanya saat error"
+  - "hanya saat sukses"
+  - "selalu"
+  - "tidak pernah"
+  "answer": 2
+  "explain": "ensure mirip finally — jalan baik sukses maupun gagal."
+- "q": "Kata kunci untuk melempar exception adalah…"
+  "options":
+  - "throw"
+  - "raise"
+  - "catch"
+  - "panic"
+  "answer": 1
+  "explain": "raise ExceptionClass, \"pesan\"."
+- "q": "rescue tanpa argumen menangkap…"
+  "options":
+  - "hanya StandardError"
+  - "semua exception"
+  - "hanya TypeError"
+  - "tidak ada"
+  "answer": 0
+  "explain": "Default rescue adalah StandardError dan turunannya."
+- "q": "retry berguna untuk…"
+  "options":
+  - "mengulang blok begin setelah gagal"
+  - "membuat loop tak hingga"
+  - "menghapus exception"
+  - "keluar program"
+  "answer": 0
+  "explain": "retry mengulang blok begin setelah exception."
+- "q": "Exception kustom sebaiknya mewarisi…"
+  "options":
+  - "String"
+  - "StandardError"
+  - "Array"
+  - "Numeric"
+  "answer": 1
+  "explain": "Turunan StandardError tertangkap oleh rescue biasa."
+"example":
+  "code": "begin\n  10 / 0\nrescue ZeroDivisionError => e\n  puts e.message\nensure\n  puts \"selesai\"\nend\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby memakai exception untuk kondisi tak terduga, tapi bisa juga memakainya sebagai alur kontrol dengan hati-hati.
+
+## Bentuk Dasar
+
+```ruby
+begin
+  hasil = eval(input)
+rescue SyntaxError => e
+  warn "Sintaks salah: #{e.message}"
+rescue => e
+  warn "Error umum: #{e.class}"
+ensure
+  puts "Pembersihan di sini"
+end
+```
+
+`rescue` dievaluasi dari atas ke bawah — taruh yang paling spesifik dulu.
+
+## rescue di Method
+
+```ruby
+def baca(path)
+  File.read(path)
+rescue Errno::ENOENT
+  ""
+end
+```
+
+*Bentuk modifier* juga umum:
+
+```ruby
+nilai = Integer(input) rescue 0
+```
+
+## raise
+
+```ruby
+raise "pesan sederhana"          # RuntimeError
+raise ArgumentError, "bukan angka"
+raise ArgumentError, "pesan", caller
+```
+
+## retry
+
+```ruby
+percobaan = 0
+begin
+  percobaan += 1
+  koneksi = buka_koneksi
+rescue Timeout::Error
+  retry if percobaan < 3
+  raise
+end
+```
+
+Batas percobaan wajib agar tidak melingkar selamanya.
+
+## Exception Kustom
+
+```ruby
+class SaldoKurang < StandardError; end
+
+def tarik(jumlah)
+  raise SaldoKurang, "saldo tidak cukup" if jumlah > @saldo
+end
+```
+
+## Praktik Baik
+
+- Jangan pakai exception untuk alur bisnis normal
+- Tangkaplah jenis yang spesifik, bukan `Exception` secara luas
+- `ensure` untuk menutup file/koneksi
+
+<div class="note">💡 <code>Exception</code> adalah induk semua error, termasuk <code>SystemExit</code> dan <code>Interrupt</code>. Menangkapnya bisa mencegah program keluar dengan benar — gunakan <code>StandardError</code> sebagai ganti.</div>
+
+
+## Try it Yourself
+
+Coba hapus `rescue` atau ubah menjadi `ensure` saja.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`def bagi(a, b)
+  a / b
+rescue ZeroDivisionError
+  Float::INFINITY
+ensure
+  puts "  bagi(#{a}, #{b}) selesai"
+end
+
+puts bagi(10, 2)
+puts bagi(10, 0)
+
+percobaan = 0
+begin
+  percobaan += 1
+  raise Timeout::Error if percobaan &lt; 3
+  puts "berhasil pada percobaan #{percobaan}"
+rescue Timeout::Error
+  retry if percobaan &lt; 3
+end`} />

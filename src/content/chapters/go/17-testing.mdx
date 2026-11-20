@@ -1,0 +1,151 @@
+---
+"title": "Unit Testing"
+"description": "Testing dengan package testing, t.Run, table-driven test, dan benchmark"
+"order": 17
+"quiz":
+- "q": "File test di Go diakhiri…"
+  "options":
+  - "_test.go"
+  - ".test.go"
+  - "test.go"
+  - "_spec.go"
+  "answer": 0
+  "explain": "go test otomatis menjalankan file berakhiran _test.go."
+- "q": "Signature fungsi test yang benar adalah…"
+  "options":
+  - "func TestX(t *testing.T)"
+  - "func testX()"
+  - "func TestX()"
+  - "func TestX(t testing.T)"
+  "answer": 0
+  "explain": "Fungsi test menerima pointer *testing.T."
+- "q": "Untuk menandai gagal tanpa menghentikan test, gunakan…"
+  "options":
+  - "t.Fatal"
+  - "t.Error"
+  - "t.Skip"
+  - "t.Log"
+  "answer": 1
+  "explain": "Error mencatat gagal tapi test tetap lanjut; Fatal langsung berhenti."
+- "q": "Sub-test dibuat dengan…"
+  "options":
+  - "t.Run"
+  - "t.Sub"
+  - "t.Group"
+  - "t.ParallelOnly"
+  "answer": 0
+  "explain": "t.Run membuat test bertingkat dengan nama sendiri."
+- "q": "Benchmark ditulis dengan fungsi berawalan…"
+  "options":
+  - "Test"
+  - "Bench"
+  - "Benchmark"
+  - "Perf"
+  "answer": 2
+  "explain": "func BenchmarkX(b *testing.B) dijalankan dengan go test -bench."
+"example":
+  "code": "package main\nimport \"testing\"\nfunc Tambah(a, b int) int { return a + b }\nfunc TestTambah(t *testing.T) {\n    if Tambah(2, 3) != 5 {\n        t.Error(\"hasil salah\")\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go menjadikan testing bagian dari standar library — tidak perlu paket pihak ketiga untuk memulai.
+
+## Test Pertama
+
+```go
+// kalkulator_test.go
+package kalkulator
+
+import "testing"
+
+func TestTambah(t *testing.T) {
+    if hasil := Tambah(2, 3); hasil != 5 {
+        t.Errorf("Tambah(2,3) = %d, ingin 5", hasil)
+    }
+}
+```
+
+Jalankan dengan:
+
+```bash
+go test ./...
+```
+
+## Table-Driven Test
+
+Pola paling populer di komunitas Go:
+
+```go
+func TestBagi(t *testing.T) {
+    cases := []struct {
+        a, b, want int
+    }{
+        {10, 2, 5},
+        {9, 3, 3},
+        {7, 0, 0},
+    }
+    for _, c := range cases {
+        t.Run(fmt.Sprintf("%d/%d", c.a, c.b), func(t *testing.T) {
+            if got := Bagi(c.a, c.b); got != c.want {
+                t.Errorf("dapat %d, ingin %d", got, c.want)
+            }
+        })
+    }
+}
+```
+
+## Assertion & Fatal
+
+| Method | Efek |
+|---|---|
+| `t.Error` | Tandai gagal, lanjut |
+| `t.Fatal` | Tandai gagal, hentikan test ini |
+| `t.Log` | Info tambahan (muncul dengan `-v`) |
+| `t.Skip` | Lewati test |
+| `t.Helper` | Tandai fungsi pembantu agar lokasi error tepat |
+
+## Coverage
+
+```bash
+go test -cover ./...
+go test -coverprofile=cover.out ./...
+go tool cover -html=cover.out
+```
+
+## Benchmark
+
+```go
+func BenchmarkTambah(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Tambah(i, 1)
+    }
+}
+```
+
+Jalankan dengan `go test -bench=.`.
+
+<div class="note">💡 Fungsi test harus diawali huruf kapital <code>Test</code> dan berada di package yang sama (atau `_test`) agar terlihat oleh <code>go test</code>.</div>
+
+
+## Try it Yourself
+
+Tambahkan satu kasus lagi ke tabel pengujian.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "testing"
+
+func Tambah(a, b int) int { return a + b }
+
+func TestTambah(t *testing.T) {
+    cases := []struct{ a, b, want int }{
+        {2, 3, 5},
+        {0, 0, 0},
+        {-4, 1, -3},
+    }
+    for _, c := range cases {
+        if got := Tambah(c.a, c.b); got != c.want {
+            t.Errorf("Tambah(%d,%d) = %d, ingin %d", c.a, c.b, got, c.want)
+        }
+    }
+}`} />

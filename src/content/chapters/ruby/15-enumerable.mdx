@@ -1,0 +1,125 @@
+---
+"title": "Enumerable"
+"description": "map, select, reduce, group_by, each_with_index, dan lazy evaluation"
+"order": 15
+"quiz":
+- "q": "Modul Enumerable diperoleh kelas jika ia memiliki method…"
+  "options":
+  - "each"
+  - "map"
+  - "size"
+  - "sort"
+  "answer": 0
+  "explain": "Enumerable bergantung pada each."
+- "q": "Method untuk menyaring elemen adalah…"
+  "options":
+  - "map"
+  - "select"
+  - "each"
+  - "inject"
+  "answer": 1
+  "explain": "select mengembalikan elemen yang memenuhi blok."
+- "q": "reduce(0) berguna untuk…"
+  "options":
+  - "mengubah tiap elemen"
+  - "menggabungkan jadi satu nilai"
+  - "menghapus elemen"
+  - "mengurutkan"
+  "answer": 1
+  "explain": "reduce/inject mengakumulasi nilai dengan blok."
+- "q": "lazy pada enumerator berfungsi untuk…"
+  "options":
+  - "menghapus data"
+  - "menunda perhitungan"
+  - "mengurutkan"
+  - "menggandakan"
+  "answer": 1
+  "explain": "lazy menunda evaluasi sampai value diambil."
+- "q": "group_by menghasilkan…"
+  "options":
+  - "array"
+  - "hash"
+  - "set"
+  - "string"
+  "answer": 1
+  "explain": "Hasilnya hash dengan kunci hasil blok dan nilai array anggota."
+"example":
+  "code": "nums = [1, 2, 3, 4]\nputs nums.select { |n| n.even? }.inspect\nputs nums.map { |n| n * 2 }.inspect\nputs nums.reduce(0) { |a, b| a + b }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Modul `Enumerable` adalah salah satu alasan Ruby terasa menyenangkan. Cukup dengan `each`, sebuah kelas mendapat puluhan method pemrosesan data.
+
+## Method Inti
+
+| Method | Fungsi |
+|---|---|
+| `map` / `collect` | Ubah tiap elemen |
+| `select` / `filter` | Saring elemen |
+| `reject` | Kebalikan select |
+| `find` | Elemen pertama yang cocok |
+| `reduce` / `inject` | Akumulasi |
+| `sort_by` | Urutkan berdasarkan kunci |
+| `group_by` | Kelompokkan |
+| `each_with_index` | Sertakan indeks |
+| `partition` | Pisahkan jadi dua array |
+
+```ruby
+kata = %w[apel jeruk mangga anggur]
+puts kata.group_by { |k| k.length }
+puts kata.sort_by { |k| k.length }
+```
+
+## Symbol to Proc
+
+```ruby
+puts %w[1 2 3].map(&:to_i)  # [1, 2, 3]
+```
+
+`&:to_i` adalah versi pendek dari `{ |x| x.to_i }`.
+
+## Lazy Enumerator
+
+```ruby
+hasil = (1..1_000_000)
+  .lazy
+  .select { |n| n.prime? }
+  .map { |n| n * n }
+  .first(5)
+```
+
+Tanpa `lazy`, Ruby akan memproses semua jutaan elemen. Dengan lazy, hanya yang dibutuhkan yang dihitung.
+
+## Enumerable Kustom
+
+```ruby
+class Kumpulan
+  include Enumerable
+  def initialize(data) = @data = data
+  def each(&blok) = @data.each(&blok)
+end
+
+puts Kumpulan.new([3, 1, 2]).sort # [1, 2, 3]
+```
+
+Cukup implementasikan `each`; method lain otomatis tersedia.
+
+<div class="note">💡 `map!` dan `select!` mengubah array aslinya. Tanpa tanda seru, method mengembalikan array baru dan yang lama tetap utuh.</div>
+
+
+## Try it Yourself
+
+Tambahkan `group_by` atau ubah kondisi `select`.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`angka = (1..10).to_a
+puts "genap: #{angka.select(&:even?).inspect}"
+puts "kuadrat: #{angka.map { |n| n * n }.inspect}"
+puts "jumlah: #{angka.reduce(0) { |a, b| a + b }}"
+
+kata = %w[apel jeruk mangga anggur pisang]
+p kata.group_by { |k| k.length }
+p kata.sort_by { |k| -k.length }
+
+p %w[3 1 2].map(&:to_i).sort
+p angka.each_with_index.select { |n, i| i.even? }.map(&:first)`} />

@@ -1,0 +1,111 @@
+---
+title: Pembersihan dan Kebiasaan Git Sehat
+description: Rutinitas menjaga repositori tetap rapi dan kolaborasi tetap nyaman.
+order: 21
+quiz:
+- q: git clean digunakan untuk…
+  options:
+  - Membuat tag
+  - Menghapus file untracked
+  - Menghapus commit
+  - Mengubah remote
+  answer: 1
+  explain: 'Hati-hati: gunakan -n dulu untuk preview sebelum benar-benar menghapus.'
+- q: Perintah preview penghapusan file untracked adalah…
+  options:
+  - git clean -d
+  - git clean --all
+  - git clean -n
+  - git clean -f
+  answer: 2
+  explain: -n atau --dry-run hanya menampilkan apa yang akan dihapus.
+- q: Pesan commit yang baik sebaiknya…
+  options:
+  - Hanya berisi "update"
+  - Menggunakan huruf kapital semua
+  - Menuliskan seluruh diff
+  - Menjelaskan mengapa perubahan dilakukan
+  answer: 3
+  explain: Baris pertama ringkas, badan pesan menjelaskan alasan dan dampak.
+- q: Ukuran commit yang ideal adalah…
+  options:
+  - Satu unit perubahan yang bisa dijelaskan
+  - Seluruh pekerjaan seminggu
+  - Satu karakter
+  - Tergantung mood
+  answer: 0
+  explain: Commit kecil memudahkan review, bisect, dan revert.
+- q: Kebiasaan yang baik sebelum push adalah…
+  options:
+  - Mengganti semua hash
+  - git status, git diff, lalu jalankan tes
+  - Langkah push tanpa cek
+  - Menghapus .git
+  answer: 1
+  explain: Pemeriksaan singkat mencegah file rahasia atau perubahan tak sengaja ikut terkirim.
+example:
+  code: 'git status --short
+
+    git clean -nd
+
+    git diff --check
+
+    git diff --stat
+
+    '
+---
+
+
+Repositori yang sehat bukan hanya soal perintah yang benar, tetapi **kebiasaan yang konsisten**. Bab ini merangkum rutinitas yang biasa dipakai tim profesional.
+
+## Checklist Sebelum Commit
+
+```bash
+git status --short
+git diff
+git diff --check
+git diff --stat
+npm test
+git add -p
+git commit -m "fix: perbaiki perhitungan pajak"
+```
+
+`git add -p` memungkinkan memilih potongan perubahan secara interaktif — berguna saat satu file berisi beberapa urusan.
+
+## Pesan Commit
+
+```text
+fix: perbaiki perhitungan pajak untuk nol pajak
+
+Sebelumnya diskon diterapkan sebelum pajak sehingga total
+menjadi lebih rendah dari seharusnya. Urutan diubah dan
+ditambahkan regression test.
+```
+
+| Praktik | Dianjurkan |
+|---|---|
+| Baris pertama | pendek, imperatif, &lt;= 50 karakter |
+| Badan | jelaskan mengapa, bukan apa |
+| Awalan | feat, fix, docs, chore, refactor |
+| Bahasa | konsisten dengan tim |
+
+## Membersihkan File Sementara
+
+```bash
+git clean -nd     # preview file dan folder
+git clean -fd     # hapus file dan folder untracked
+git clean -fdX    # hapus hanya yang terabaikan .gitignore
+```
+
+<div class="note">💡 Perintah `git clean -fd` bersifat permanen. Selalu lihat hasil `-n` sebelum menghapus.</div>
+
+## Kebiasaan Tim
+
+- Tarik perubahan terbaru (`git fetch`) sebelum mulai work.
+- Baca diff rekan kerja dengan pertanyaan, bukan vonis.
+- Simpan catatan keputusan arsitektur di dokumentasi, bukan hanya di pesan commit.
+- Rayakan commit yang mempermudah orang lain, bukan yang paling banyak mengubah baris.
+
+## Penutup
+
+Git paling kuat saat dipakai sebagai **alat komunikasi**. Riwayat yang rapi memberi tahu rekan tim—dan Anda sendiri enam bulan kemudian—apa yang berubah, mengapa, dan bagaimana kembali ke titik aman.

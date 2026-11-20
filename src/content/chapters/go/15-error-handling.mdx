@@ -1,0 +1,143 @@
+---
+"title": "Penanganan Error"
+"description": "error, errors.New, fmt.Errorf, wrapping, dan pola sentinel error"
+"order": 15
+"quiz":
+- "q": "Tipe error di Go adalah…"
+  "options":
+  - "struct"
+  - "interface"
+  - "function"
+  - "string"
+  "answer": 1
+  "explain": "error adalah interface dengan method Error() string."
+- "q": "Untuk membuat error sederhana, gunakan…"
+  "options":
+  - "errors.New"
+  - "new(error)"
+  - "error{}"
+  - "panic"
+  "answer": 0
+  "explain": "errors.New(\"pesan\") mengembalikan nilai error."
+- "q": "Menambah konteks pada error dilakukan dengan…"
+  "options":
+  - "fmt.Errorf(\"...: %w\", err)"
+  - "errors.Wrap"
+  - "error + err"
+  - "fmt.Print"
+  "answer": 0
+  "explain": "Verb %w menyimpan error asli agar bisa di-unwrap."
+- "q": "Fungsi errors.Is berguna untuk…"
+  "options":
+  - "membandingkan pesan error"
+  - "mengecek apakah error mengandung sentinel tertentu"
+  - "membuat error baru"
+  - "menghapus error"
+  "answer": 1
+  "explain": "Is mengikuti rantai Unwrap sampai menemukan target."
+- "q": "Konvensi Go untuk penugasan error adalah…"
+  "options":
+  - "val, err := f()"
+  - "try { val = f() }"
+  - "val = f() or nil"
+  - "result = f().unwrap()"
+  "answer": 0
+  "explain": "Fungsi mengembalikan (nilai, error); error dicek segera."
+"example":
+  "code": "package main\nimport (\n    \"errors\"\n    \"fmt\"\n)\nvar ErrKosong = errors.New(\"data kosong\")\nfunc proses(s string) error {\n    if s == \"\" { return ErrKosong }\n    return nil\n}\nfunc main() { fmt.Println(proses(\"\")) }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go memperlakukan error sebagai **nilai biasa**. Tidak ada exception untuk alur normal, dan kompiler membantu memastikan kamu tidak mengabaikan hasil yang dikembalikan.
+
+## Pola Dasar
+
+```go
+f, err := os.Open("data.txt")
+if err != nil {
+    return err
+}
+defer f.Close()
+```
+
+Pemeriksaan `if err != nil` langsung setelah panggilan adalah ritme khas Go.
+
+## Membuat Error
+
+```go
+import "errors"
+
+var ErrTidakAda = errors.New("data tidak ditemukan")
+
+func cari(id int) error {
+    if id < 1 { return ErrTidakAda }
+    return nil
+}
+```
+
+Sentinel error (variabel package-level) memungkinkan perbandingan dengan `errors.Is`.
+
+## Menambah Konteks
+
+```go
+return fmt.Errorf("gagal memuat pengguna %d: %w", id, err)
+```
+
+`%w` membungkus error asli. `%v` hanya mengubahnya jadi teks — rantai hilang.
+
+## errors.Is & errors.As
+
+```go
+if errors.Is(err, ErrTidakAda) { ... }
+
+var pathErr *os.PathError
+if errors.As(err, &pathErr) {
+    fmt.Println(pathErr.Path)
+}
+```
+
+`Is` mencocokkan sentinel; `As` mengambil error bertipe tertentu dari rantai.
+
+## Error Kustom
+
+```go
+type ValidasiError struct { Field string }
+func (e *ValidasiError) Error() string {
+    return "field tidak valid: " + e.Field
+}
+```
+
+## Kapan panic?
+
+Error untuk kegagalan yang diharapkan (input, jaringan, file). Panic hanya untuk bug yang membuat program tidak bisa berlanjut.
+
+<div class="note">💡 Jangan menulis <code>if err != nil { panic(err) }</code> di library. Kembalikan error dan biarkan pemanggil memutuskan.</div>
+
+
+## Try it Yourself
+
+Ubah input menjadi string kosong atau non-kosong untuk melihat cabang error.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "errors"
+    "fmt"
+)
+var ErrKosong = errors.New("input kosong")
+
+func hitung(s string) (int, error) {
+    if s == "" { return 0, ErrKosong }
+    return len(s) * 2, nil
+}
+
+func main() {
+    for _, s := range []string{"Go", ""} {
+        n, err := hitung(s)
+        if errors.Is(err, ErrKosong) {
+            fmt.Println(" dilewati:", err)
+            continue
+        }
+        fmt.Printf(" %q -> %d\n", s, n)
+    }
+}`} />

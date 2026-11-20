@@ -1,0 +1,94 @@
+---
+title: "Agregasi: $unwind dan $lookup"
+description: "meratakan array, menggabungkan koleksi, foreignField/localField, dan $unwind preserveNull"
+order: 22
+quiz:
+  - q: "$unwind berfungsi untuk…"
+    options: ["Menyortir hasil", "Menghapus array", "Membuat satu dokumen per elemen array", "Menggabungkan dua koleksi"]
+    answer: 2
+    explain: "$unwind meratakan array menjadi beberapa dokumen."
+  - q: "Opsi preserveNullAndEmptyArrays berguna agar…"
+    options: ["Hasil diurutkan", "Indeks terpakai", "Dokumen tanpa array tetap muncul", "Array dihapus"]
+    answer: 2
+    explain: "Tanpa opsi ini, dokumen dengan array kosong gugur dari pipeline."
+  - q: "Dalam $lookup, localField adalah…"
+    options: ["Field di koleksi sumber", "Nama indeks", "Nama database", "Field di koleksi tujuan"]
+    answer: 0
+    explain: "localField dari dokumen sumber dicocokkan dengan foreignField di koleksi lain."
+  - q: "Hasil $lookup disimpan dalam…"
+    options: ["Indeks", "Field baru berupa array", "Variabel global", "Koleksi sementara"]
+    answer: 1
+    explain: "Secara bawaan hasil join masuk field as berupa array."
+  - q: "$lookup paling mirip dengan SQL…"
+    options: ["UNION", "DISTINCT", "GROUP BY", "LEFT OUTER JOIN"]
+    answer: 3
+    explain: "Dokumen tanpa pasangan tetap muncul dengan array kosong."
+example:
+  code: |
+    db.pesanan.aggregate([
+      {$unwind: "$item"},
+      {$lookup: {from: "produk", localField: "item.kode", foreignField: "kode", as: "detail"}},
+      {$unwind: {path: "$detail", preserveNullAndEmptyArrays: true}}
+    ])
+---
+
+## $unwind
+
+```javascript
+db.siswa.insertOne({ nama: "Ana", hobi: ["membaca", "lari"] })
+
+db.siswa.aggregate([{ $unwind: "$hobi" }])
+// -> {nama: "Ana", hobi: "membaca"}
+// -> {nama: "Ana", hobi: "lari"}
+```
+
+Satu dokumen dengan array dua elemen berubah menjadi dua dokumen. Field lain ikut tersalin.
+
+```javascript
+{ $unwind: { path: "$hobi", preserveNullAndEmptyArrays: true } }
+```
+
+Opsi ini menyimpan dokumen yang array-nya kosong atau tidak ada.
+
+## $lookup
+
+```javascript
+db.pesanan.aggregate([
+  {
+    $lookup: {
+      from: "produk",
+      localField: "kode_produk",
+      foreignField: "kode",
+      as: "produk"
+    }
+  }
+])
+```
+
+Artinya: untuk setiap pesanan, ambil dokumen dari koleksi `produk` yang `kode`-nya sama dengan `kode_produk` pesanan. Hasilnya menjadi array `produk`.
+
+## Merapikan Hasil Join
+
+```javascript
+{ $unwind: { path: "$produk", preserveNullAndEmptyArrays: true } }
+{ $project: { kode: 1, nama: "$produk.nama", _id: 0 } }
+```
+
+Tanpa `$unwind`, field hasil join tetap berupa array sehingga sulit diolah lebih lanjut.
+
+## Pertimbangan Performa
+
+- Beri indeks pada `foreignField` di koleksi tujuan.
+- `$match` sebelum `$lookup` agar hanya sebagian dokumen yang di-join.
+- `$lookup` dari koleksi besar ke koleksi besar bisa mahal; denormalisasi sering lebih cepat di MongoDB.
+
+<div class="note">💡 `$lookup` versi terbaru juga mendukung `let` dan Pipeline Lookup dengan `pipeline` untuk join bersyarat, misalnya hanya mengambil produk yang harganya di atas batas tertentu.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_lookup
+db.produk.insertOne({kode: "A1", nama: "Keyboard"})
+db.pesanan.insertOne({kode_produk: "A1", qty: 2})
+db.pesanan.aggregate([{$lookup: {from: "produk", localField: "kode_produk", foreignField: "kode", as: "detail"}}, {$project: {_id: 0, qty: 1, nama: "$detail.nama"}}])`}</code></pre>

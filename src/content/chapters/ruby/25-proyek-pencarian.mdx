@@ -1,0 +1,152 @@
+---
+"title": "Proyek: Pencarian & Analisis Data"
+"description": "Menggabungkan modul, Enumerable, hash, regex, exception, dan test dalam satu program"
+"order": 25
+"quiz":
+- "q": "Memisahkan logika ke modul membantu…"
+  "options":
+  - "menghapus test"
+  - "mengurangi ketergantungan antar bagian"
+  - "membuat program lebih lambat"
+  - "menghindari gem"
+  "answer": 1
+  "explain": "Modul membuat bagian program bisa diuji dan dipakai ulang."
+- "q": "Untuk membaca CSV, gunakan pustaka…"
+  "options":
+  - "csv"
+  - "json"
+  - "yaml"
+  - "date"
+  "answer": 0
+  "explain": "require 'csv' adalah standar Ruby."
+- "q": "Enumerable reduce berguna untuk…"
+  "options":
+  - "mengubah format"
+  - "menggabungkan data jadi satu ringkasan"
+  - "membuat modul"
+  - "menghapus file"
+  "answer": 1
+  "explain": "reduce mengakumulasi nilai dari koleksi."
+- "q": "Regex dengan named capture memungkinkan…"
+  "options":
+  - "mengambil bagian dengan nama"
+  - "menghapus string"
+  - "membuat kelas"
+  - "mengganti operator"
+  "answer": 0
+  "explain": "MatchData[:nama] mengambil group bernama."
+- "q": "Test yang baik sebaiknya…"
+  "options":
+  - "bergantung pada test lain"
+  - "berdiri sendiri dan berulang"
+  - "memakai data acak"
+  - "tanpa assertion"
+  "answer": 1
+  "explain": "Isolasi membuat test bisa dijalankan kapan saja."
+"example":
+  "code": "data = [{ nama: \"Rani\", kota: \"Bandung\" }, { nama: \"Dimas\", kota: \"Jakarta\" }]\np data.group_by { |x| x[:kota] }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek terakhir menggabungkan hampir semua materi Ruby: modul, hash, Enumerable, regex, exception, file, dan testing.
+
+## Struktur
+
+```
+lib/analyzer.rb
+app.rb
+test_analyzer.rb
+```
+
+## Modul Analisis
+
+```ruby
+# lib/analyzer.rb
+module Analyzer
+  def self.muat(path)
+    CSV.read(path, headers: true)
+  rescue Errno::ENOENT
+    []
+  end
+
+  def self.ringkas(baris)
+    baris.group_by { |r| r["kota"] }
+         .transform_values(&:size)
+  end
+
+  def self.cari(baris, kata)
+    pola = Regexp.new(Regexp.escape(kata), Regexp::IGNORECASE)
+    baris.select { |r| r["nama"]&.match?(pola) }
+  end
+end
+```
+
+## Memakai Modul
+
+```ruby
+require_relative "lib/analyzer"
+
+data = [
+  { "nama" => "Rani", "kota" => "Bandung" },
+  { "nama" => "Dimas", "kota" => "Jakarta" }
+]
+
+p Analyzer.ringkas(data)
+p Analyzer.cari(data, "ran")
+```
+
+## Ringkasan dengan reduce
+
+```ruby
+total = data.reduce(Hash.new(0)) do |acc, row|
+  acc[row["kota"]] += 1
+  acc
+end
+```
+
+## Test
+
+```ruby
+require "minitest/autorun"
+require_relative "lib/analyzer"
+
+class TesAnalyzer < Minitest::Test
+  def test_ringkas
+    data = [{ "kota" => "Bandung" }, { "kota" => "Bandung" }]
+    assert_equal({ "Bandung" => 2 }, Analyzer.ringkas(data))
+  end
+end
+```
+
+<div class="note">💡 Mulai dari fungsi terkecil yang bisa diuji. Setelah itu rakit satu per satu — proyek kecil yang selesai lebih baik daripada proyek besar yang setengah jadi.</div>
+
+
+## Try it Yourself
+
+Versi mandiri memakai array agar bisa langsung dijalankan.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`module Analyzer
+  def self.ringkas(data)
+    data.group_by { |r| r[:kota] }.transform_values(&:size)
+  end
+
+  def self.cari(data, kata)
+    pola = Regexp.new(Regexp.escape(kata), Regexp::IGNORECASE)
+    data.select { |r| r[:nama]&.match?(pola) }
+  end
+
+  def self.total_per_kota(data)
+    data.reduce(Hash.new(0)) { |acc, r| acc[r[:kota]] += 1; acc }
+  end
+end
+
+data = [
+  { nama: "Rani", kota: "Bandung" },
+  { nama: "Dimas", kota: "Jakarta" },
+  { nama: "Raka", kota: "Bandung" }
+]
+
+p Analyzer.ringkas(data)
+p Analyzer.total_per_kota(data)
+p Analyzer.cari(data, "ra").map { |r| r[:nama] }`} />

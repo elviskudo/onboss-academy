@@ -1,0 +1,130 @@
+---
+title: "Enum"
+description: "tipe enumerated, constructor, method, switch, dan perbandingan enum"
+order: 14
+quiz:
+  - q: "Enum didefinisikan dengan kata kunci…"
+    options: ["enum", "enumeration", "const", "final class"]
+    answer: 0
+    explain: "`enum Warna { MERAH, HIJAU }`."
+  - q: "Nilai enum sebaiknya dibandingkan dengan…"
+    options: ["equals()", "==", "compareTo()", "toString()"]
+    answer: 1
+    explain: "Enum adalah singleton per konstanta, sehingga `==` aman dan lebih cepat."
+  - q: "Enum bisa punya…"
+    options: ["Hanya nama", "Field, constructor, dan method", "Hanya method statis", "Tidak bisa apa-apa"]
+    answer: 1
+    explain: "Tiap konstanta bisa membawa data lewat constructor private."
+  - q: "Method yang mengembalikan semua konstanta enum adalah…"
+    options: ["values()", "all()", "list()", "entries()"]
+    answer: 0
+    explain: "Compiler menyisipkan `values()` secara otomatis."
+  - q: "`valueOf(\"MERAH\")` akan…"
+    options: ["Membuat enum baru", "Mengembalikan konstanta yang cocok (case-sensitive)", "Selalu null", "Error compile"]
+    answer: 1
+    explain: "raise IllegalArgumentException bila nama tidak cocok."
+example:
+  code: |
+    enum Status {
+      BARU("Menunggu"), AKTIF("Berjalan"), SELESAI("Selesai");
+    
+      private final String label;
+      Status(String label) { this.label = label; }
+      String label() { return label; }
+    }
+    
+    public class Main {
+      public static void main(String[] args) {
+        for (Status s : Status.values())
+          System.out.println(s + " = " + s.label());
+        Status x = Status.valueOf("AKTIF");
+        System.out.println(x == Status.AKTIF);
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Enum adalah tipe khusus untuk sekumpulan nilai konstan yang sudah diketahui: hari dalam minggu, status pesanan, level akses.
+
+## Enum Dasar
+
+```java
+enum Hari { SENIN, SELASA, RABU, KAMIS, JUMAT, SABTU, MINGGU }
+
+Hari h = Hari.RABU;
+if (h == Hari.RABU) { ... }
+```
+
+## Enum dengan Data
+
+```java
+enum Level {
+    RENDAH(1, "Dasar"),
+    SEDANG(2, "Menengah"),
+    TINGGI(3, "Mahir");
+
+    private final int kode;
+    private final String nama;
+
+    Level(int kode, String nama) {
+        this.kode = kode;
+        this.nama = nama;
+    }
+
+    int kode() { return kode; }
+    String nama() { return nama; }
+}
+```
+
+Constructor enum selalu `private` — tidak bisa dipanggil dari luar.
+
+## Enum dalam switch
+
+```java
+switch (status) {
+    case BARU   -> System.out.println("Antrian");
+    case AKTIF  -> System.out.println("Diproses");
+    case SELESAI -> System.out.println("Arsip");
+}
+```
+
+Sejak Java 14, switch expression bisa mengembalikan nilai:
+
+```java
+String pesan = switch (status) {
+    case BARU -> "Menunggu";
+    default -> "Unknown";
+};
+```
+
+## Enum vs Konstanta String
+
+| Aspek | Enum | `static final String` |
+|---|---|---|
+| Type-safe | Ya | Tidak (salah ketik tetap compile) |
+| Jumlah nilai | Terbatas & diketahui | Bebas |
+| Bisa punya method | Ya | Tidak |
+| Cocok untuk | Status, mode, kategori | Kunci konfigurasi, URL |
+
+<div class="note">💡 Enum secara internal adalah class, jadi bisa mengimplementasikan interface. Ini berguna untuk pola strategi: tiap konstanta mengoverride method yang sama dengan perilaku berbeda.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`enum Status {
+  BARU("Menunggu"), AKTIF("Berjalan"), SELESAI("Selesai");
+
+  private final String label;
+  Status(String label) { this.label = label; }
+  String label() { return label; }
+}
+
+public class Main {
+  public static void main(String[] args) {
+    for (Status s : Status.values())
+      System.out.println(s + " = " + s.label());
+    Status x = Status.valueOf("AKTIF");
+    System.out.println(x == Status.AKTIF);
+  }
+}`} />

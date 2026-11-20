@@ -1,0 +1,136 @@
+---
+title: "Regular Expression JS"
+description: "Pola teks, flag, method, dan contoh validasi dengan regex"
+order: 22
+quiz:
+  - q: "Cara membuat regex literal adalah…"
+    options: ["/pola/", "new RegEx()", "'pola'", "#pola#"]
+    answer: 0
+    explain: "Regex literal ditulis di antara dua garis miring."
+  - q: "Flag `g` pada regex berarti…"
+    options: ["Global (semua kecocokan)", "Global variable", "Case sensitive", "Group"]
+    answer: 0
+    explain: "Tanpa g, method seperti replace hanya mencocokkan yang pertama."
+  - q: "Flag `i` berarti…"
+    options: ["IgnoreCase", "Infinite", "Index", "Italic"]
+    answer: 0
+    explain: "Cocokkan huruf besar dan kecil secara sama."
+  - q: "`\\d` dalam regex cocok dengan…"
+    options: ["Digit 0-9", "Spasi", "Huruf", "Titik"]
+    answer: 0
+    explain: "Character class untuk angka."
+  - q: "`^` dan `$` berturut-turut menandakan…"
+    options: ["Awal dan akhir string", "Awal dan akhir baris saja", "Group", "Alternasi"]
+    answer: 0
+    explain: "Keduanya adalah anchor untuk membatasi seluruh string."
+example:
+  code: |
+    const pola = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    console.log(pola.test("sari@example.com"));
+    console.log("a1 b2 c3".match(/\d/g));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+*Regular expression* (regex) adalah pola untuk mencocokkan teks. Kuat, padat, dan terkenal sulit dibaca — tapi sangat berguna untuk validasi dan pencarian.
+
+## Membuat Regex
+
+```js
+const pola1 = /halo/i;              // literal
+const pola2 = new RegExp("halo", "i"); // konstruktor
+```
+
+Konstruktor berguna kalau polanya berasal dari variabel atau input pengguna.
+
+## Flag
+
+| Flag | Arti |
+|------|------|
+| `g` | global — semua kecocokan |
+| `i` | case-insensitive |
+| `m` | multiline — `^`/`$` per baris |
+| `s` | dotAll — `.` juga cocok newline |
+| `u` | unicode |
+| `y` | sticky — mulai dari lastIndex |
+
+## Character Class
+
+| Pola | Arti |
+|------|------|
+| `\d` | Angka 0–9 |
+| `\D` | Bukan angka |
+| `\w` | Huruf, angka, underscore |
+| `\W` | Bukan `\w` |
+| `\s` | Spasi, tab, newline |
+| `[abc]` | a, b, atau c |
+| `[^abc]` | Selain a, b, c |
+| `[a-z]` | Rentang huruf kecil |
+
+## Quantifier
+
+```js
+/a/    // satu a
+/a*/   // nol atau lebih
+/a+/   // satu atau lebih
+/a?/   // nol atau satu
+/a{3}/ // tepat tiga
+/a{2,4}/ // dua sampai empat
+/a{2,}/  // minimal dua
+```
+
+Secara default quantifier bersifat **greedy** (mengambil sebanyak mungkin). Tambahkan `?` untuk lazy: `.*?`.
+
+## Anchor & Group
+
+```js
+/^Halo/        // diawali "Halo"
+/dunia$/       // diakhiri "dunia"
+/(ab)+/        // grup berulang
+/foo|bar/      // foo ATAU bar
+/(?:\d{4})/    // grup non-capturing
+```
+
+## Method RegExp & String
+
+```js
+const pola = /\d+/g;
+pola.test("abc123");       // true
+"abc123".match(pola);      // ["123"]
+"a1 b2".replace(/\d/g, "X"); // "aX bX"
+"a,b,c".split(",");        // ["a","b","c"]
+pola.exec("abc123");       // detail kecocokan pertama
+```
+
+Hati-hati: regex dengan flag `g` menyimpan `lastIndex`, jadi `test()` berulang bisa memberi hasil berbeda. Buat regex baru atau reset `lastIndex = 0`.
+
+## Contoh Validasi
+
+```js
+const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const kuat = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+const telepon = /^(\+62|0)8\d{8,11}$/;
+
+email.test("sari@example.com"); // true
+```
+
+<div class="note">💡 Regex cocok untuk pola sederhana, tapi jangan dipakai untuk mem-parse HTML atau URL kompleks. Untuk itu, gunakan parser yang tepat.</div>
+
+## Di Dunia Nyata
+
+- Validasi format input sebelum dikirim ke server.
+- Mengganti semua occurrence dengan `replaceAll(/regex/g, ...)`.
+- Log parser mengekstrak tanggal, IP, dan kode status dari baris teks.
+
+## Try it Yourself
+
+Ubah pola regex di atas atau coba string lain untuk menguji kecocokannya.
+
+<TryIt lang="javascript" runtime="client-js" code={`const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const kuat = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+console.log("email valid?", email.test("sari@example.com"));
+console.log("email salah?", email.test("sari@example"));
+console.log("password kuat?", kuat.test("Rahasia123"));
+const teks = "pesanan 12, total 45 ribu";
+console.log("angka:", teks.match(/\d+/g));
+console.log("disensor:", teks.replace(/\d+/g, "XX"));`} />

@@ -1,0 +1,97 @@
+---
+title: "Transformasi Data dengan Pandas"
+description: "apply, map, rename, astype, sorting, merge, concat, dan melt"
+order: 24
+quiz:
+  - q: "Untuk mengubah tiap nilai dalam Series dipakai…"
+    options: ["head", "map atau apply", "sort", "groupby"]
+    answer: 1
+    explain: "s.map(f) atau s.apply(f)."
+  - q: "Mengubah tipe kolom memakai…"
+    options: ["convert()", "type()", "astype()", "atype()"]
+    answer: 2
+    explain: "df[\"kolom\"].astype(int)."
+  - q: "Menggabungkan dua DataFrame secara vertikal memakai…"
+    options: ["merge", "join", "pivot", "concat"]
+    answer: 3
+    explain: "pd.concat([df1, df2])."
+  - q: "merge digunakan untuk…"
+    options: ["Menghapus duplikat", "Menggabungkan berdasarkan kunci", "Menambah baris kosong", "Mengurutkan"]
+    answer: 1
+    explain: "Mirip SQL JOIN."
+  - q: "melt berguna untuk…"
+    options: ["Menghapus kolom", "Menyimpan file", "Mengubah wide menjadi long", "Mengubah long menjadi wide"]
+    answer: 2
+    explain: "Format long sering dipakai plotting."
+example:
+  code: |
+    data=[{"nama":"ana","nilai":"88"},{"nama":"budi","nilai":"92"}]
+    for r in data:
+        r["nama"]=r["nama"].title(); r["nilai"]=int(r["nilai"])
+    print(data)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Membersihkan Kolom
+
+```python
+df = df.rename(columns={"nilai": "skor"})
+df["nama"] = df["nama"].str.strip().str.title()
+df["skor"] = df["skor"].astype(float)
+```
+
+Akses `.str` hanya berlaku untuk Series berisi string.
+
+## apply dan map
+
+```python
+df["predikat"] = df["skor"].apply(
+    lambda x: "A" if x >= 90 else "B" if x >= 75 else "C"
+)
+
+kode_kelas = {"A": "Teknik", "B": "Ekonomi"}
+df["fakultas"] = df["kelas"].map(kode_kelas)
+```
+
+`map` cocok untuk pemetaan nilai; `apply` untuk fungsi yang lebih kompleks.
+
+## Urutan
+
+```python
+df = df.sort_values(["kelas", "skor"], ascending=[True, False])
+```
+
+## Gabung Data
+
+```python
+hasil = df.merge(kelas_df, on="kelas", how="left")
+```
+
+`how="left"` mempertahankan semua baris di kiri meski pasangan kanan tidak ada.
+
+## Wide ke Long
+
+```python
+panjang = df.melt(
+    id_vars=["nama"],
+    value_vars=["matematika", "ipa"],
+    var_name="mapel", value_name="skor"
+)
+```
+
+<div class="note">💡 Rantai operasi yang panjang sebaiknya dipecah menjadi beberapa baris dengan nama variabel antara. Lebih mudah di-debug daripada satu baris raksasa.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [
+    {"nama": " ana ", "nilai": "88"},
+    {"nama": "budi", "nilai": "92"},
+]
+for r in data:
+    r["nama"] = r["nama"].strip().title()
+    r["nilai"] = int(r["nilai"])
+    r["predikat"] = "A" if r["nilai"] >= 90 else "B"
+print(data)`} />

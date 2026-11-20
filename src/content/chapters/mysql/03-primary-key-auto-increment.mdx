@@ -124,6 +124,10 @@ Foreign key mencegah `lead_id` menunjuk baris yang tidak ada. Kolom referensi ha
 
 <div class="note">💡 Demo memakai SQLite: `INTEGER PRIMARY KEY` juga mengalokasikan id otomatis, tetapi sintaks `AUTO_INCREMENT` adalah khusus MySQL. Jangan menilai urutan waktu dari id; simpan `created_at` terpisah.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT id, nama, jabatan, gaji, dept
 FROM karyawan
 ORDER BY id;`} />

@@ -1,0 +1,112 @@
+---
+title: "Bekerja dengan JSONB"
+description: "Operator ->, ->>, contain, index GIN, dan agregasi JSON"
+order: 16
+quiz:
+  - q: "Operator -> pada jsonb menghasilkan…"
+    options: ["jsonb", "text", "integer", "boolean"]
+    answer: 1
+    explain: "data->'kunci' mengembalikan jsonb."
+  - q: "Operator ->> menghasilkan…"
+    options: ["text", "jsonb", "array", "NULL"]
+    answer: 2
+    explain: "data->>'kunci' mengembalikan nilai sebagai teks."
+  - q: "Operator @> berarti…"
+    options: ["contains", "di dalam", "sama persis", "subset terbalik"]
+    answer: 3
+    explain: "data @> '{\"a\":1}' benar bila data memuat pasangan itu."
+  - q: "Index yang umum untuk jsonb adalah…"
+    options: ["GIN", "B-Tree biasa", "Hash", "BRIN"]
+    answer: 0
+    explain: "GIN dengan jsonb_path_ops mempercepat operator @>."
+  - q: "Fungsi jsonb_agg berguna untuk…"
+    options: ["Menggabungkan baris menjadi array JSON", "Menghapus kunci", "Membuat tabel", "Mengubah tipe jadi text"]
+    answer: 1
+    explain: "jsonb_agg mengagregasi nilai menjadi array jsonb."
+example:
+  code: |
+    SELECT data->>'user' AS user, data->'aksi' AS aksi FROM event_log WHERE data @> '{"aksi":"login"}';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JSONB menyimpan JSON dalam format biner yang bisa di-index dan di-query. Ia cocok untuk payload fleksibel, tapi bukan pengganti skema relasional untuk data yang stabil.
+
+## Operator Utama
+
+| Operator | Fungsi |
+| --- | --- |
+| `->` | ambil nilai sebagai jsonb |
+| `->>` | ambil nilai sebagai text |
+| `#>` | ambil jalur sebagai jsonb |
+| `#>>` | ambil jalur sebagai text |
+| `@>` | mengandung |
+| `<@` | terkandung dalam |
+
+```sql
+SELECT data->'user' AS objek,
+       data->>'user' AS teks,
+       data#>>'{detail,kota}' AS kota
+FROM event_log;
+```
+
+## Filter
+
+```sql
+SELECT * FROM event_log
+WHERE data @> '{"aksi": "login"}';
+
+SELECT * FROM event_log
+WHERE data->>'user' = '42';
+```
+
+Bentuk pertama bisa memakai index GIN; bentuk kedua lebih cocok dengan index expression pada `(data->>'user')`.
+
+## Index
+
+```sql
+CREATE INDEX idx_event_data ON event_log USING GIN (data jsonb_path_ops);
+CREATE INDEX idx_event_user ON event_log ((data->>'user'));
+```
+
+`jsonb_path_ops` lebih kecil dan cepat untuk `@>`, tetapi tidak mendukung semua operator seperti `?` (cek kunci).
+
+## Modifikasi
+
+```sql
+UPDATE event_log
+SET data = data || '{"status": "diproses"}'::jsonb
+WHERE id = 1;
+
+SELECT jsonb_set(data, '{status}', '"selesai"') FROM event_log;
+```
+
+Operator `||` menggabungkan objek; `jsonb_set` mengubah nilai pada jalur tertentu.
+
+## Agregasi
+
+```sql
+SELECT user_id, jsonb_agg(jsonb_build_object('id', id, 'aksi', aksi)) AS aktivitas
+FROM event_log
+GROUP BY user_id;
+```
+
+<div class="note">💡 JSONB mempertahankan struktur tapi **tidak** mempertahankan urutan kunci atau spasi. Kalau kamu perlu bentuk teks asli, gunakan tipe `json`.</div>
+
+## Di Dunia Nyata
+
+- **Event tracking**: payload berbeda-beda per jenis event.
+- **Konfigurasi**: pengaturan aplikasi fleksibel per tenant.
+- **API log**: response mentah disimpan untuk audit.
+- **Produk**: atribut tambahan tanpa ALTER TABLE tiap kali.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE TABLE event_log (id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY, data jsonb);
+INSERT INTO event_log(data) VALUES
+ ('{"user":"1","aksi":"login","kota":"Bandung"}'),
+ ('{"user":"2","aksi":"beli","kota":"Surabaya"}');
+SELECT data->>'user' AS pengguna, data->>'kota' AS kota
+FROM event_log WHERE data @> '{"aksi":"login"}';
+CREATE INDEX idx_event_data ON event_log USING GIN (data jsonb_path_ops);`} />

@@ -1,0 +1,90 @@
+---
+title: "Tombol"
+description: "Elemen button, atribut type, dan perbedaan tombol form"
+order: 25
+quiz:
+  - q: "Elemen yang paling tepat untuk tombol adalah…"
+    options: ["<div>", "<button>", "<span>", "<p>"]
+    answer: 1
+    explain: "<button> bisa diklik mouse dan keyboard serta dikenali pembaca layar."
+  - q: "Nilai default atribut type pada button di dalam form adalah…"
+    options: ["button", "submit", "reset", "text"]
+    answer: 1
+    explain: "Di dalam form, <button> tanpa type berfungsi sebagai submit."
+  - q: "Untuk tombol yang tidak mengirim form, gunakan…"
+    options: ["type='text'", "type='button'", "type='send'", "type='form'"]
+    answer: 1
+    explain: "type='button' tidak memicu submit."
+  - q: "Atribut untuk menonaktifkan tombol adalah…"
+    options: ["disabled", "readonly", "hidden", "inactive"]
+    answer: 0
+    explain: "disabled membuat tombol tidak bisa diklik dan biasanya tampak abu."
+  - q: "Tombol <input type='submit'> berbeda dengan <button> karena…"
+    options: ["Lebih lambat", "Tidak bisa berisi elemen lain seperti ikon", "Tidak bisa dikirim", "Hanya untuk reset"]
+    answer: 1
+    explain: "<button> bisa berisi teks, ikon, atau elemen lain di dalamnya."
+example:
+  code: |
+    <button type="button" onclick="alert('Halo!')">Klik Aku</button>
+    <button type="submit">Kirim Form</button>
+    <button type="reset">Reset</button>
+    <button disabled>Tidak Aktif</button>
+    
+    <form action="/proses">
+      <input type="text" name="nama" placeholder="Nama">
+      <button type="submit">Simpan</button>
+    </form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tombol adalah cara pengguna berinteraksi. HTML menyediakan dua cara membuatnya: `<button>` dan `<input type="button">`. Yang pertama lebih fleksibel.
+
+## Elemen button
+
+```html
+<button type="button">Klik Aku</button>
+```
+
+Di dalam `<button>` kamu boleh menaruh teks, emoji, bahkan ikon SVG:
+
+```html
+<button type="button">
+  <span>💾</span> Simpan
+</button>
+```
+
+## Tiga Jenis type
+
+| type | Fungsi |
+|------|--------|
+| `submit` | Mengirim form (default di dalam form) |
+| `reset` | Mengembalikan nilai form ke awal |
+| `button` | Tidak melakukan apa-apa kecuali ada JavaScript |
+
+## Atribut Berguna
+
+- `disabled` — tombol tidak aktif
+- `name` / `value` — dikirim bersama form
+- `form` — menghubungkan tombol ke form berdasarkan id
+
+## Aksesibilitas
+
+`<button>` sudah fokus-otomatis saat ditekan Tab dan bisa diaktifkan dengan Enter/Spasi. Itu sebabnya jangan menggantinya dengan `<div onclick>`.
+
+<div class="note">💡 Kalau tombol ada di dalam form dan tidak boleh mengirim, selalu tulis <code>type="button"</code> secara eksplisit.</div>
+
+## Try it Yourself
+
+Klik tombol di bawah untuk melihat pesan.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Tombol Interaktif</h1>
+  <button type="button" onclick="alert('Kamu mengklik tombol!')">
+    Klik Aku 🎉
+  </button>
+  <button type="button" disabled>Tombol Nonaktif</button>
+</body>
+</html>`} />

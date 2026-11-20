@@ -1,0 +1,100 @@
+---
+title: 'Objektif Pretraining: MLM, CLM, dan Denoising'
+description: Cara model bahasa dilatih pada korpus besar sebelum disesuaikan ke tugas tertentu.
+order: 16
+quiz:
+- q: BERT dilatih dengan objective…
+  options:
+  - Masked Language Modeling
+  - Causal Language Modeling
+  - Terjemahan
+  - Klasifikasi
+  answer: 0
+  explain: MLM menyembunyikan sebagian token dan meminta model menebaknya dari kedua arah.
+- q: GPT dilatih dengan objective…
+  options:
+  - Masked Language Modeling
+  - Causal Language Modeling
+  - Denoising
+  - Kontras
+  answer: 1
+  explain: CLM memprediksi token berikutnya berdasarkan semua token sebelumnya.
+- q: Keunggulan MLM adalah…
+  options:
+  - Tanpa mask
+  - Hanya untuk generasi
+  - Konteks kiri dan kanan tersedia
+  - Lebih cepat dari CLM
+  answer: 2
+  explain: Bidirectional context membuat representasi kuat untuk pemahaman teks.
+- q: Denoising autoencoding digunakan oleh…
+  options:
+  - GPT-4
+  - Llama
+  - Gemini
+  - T5 dan BART
+  answer: 3
+  explain: Teks dirusak lalu model diminta merekonstruksi versi aslinya.
+- q: Pretraining bertujuan…
+  options:
+  - Mempelajari pola bahasa umum
+  - Menghafal semua jawaban
+  - Mengganti fine-tuning selamanya
+  - Mengurangi ukuran data
+  answer: 0
+  explain: Model mendapat representasi umum yang bisa disesuaikan ke banyak tugas.
+example:
+  code: '# MLM: "kucing [MASK] atap" -> prediksi "di"
+
+    # CLM: "kucing di atap" -> prediksi token berikutnya
+
+    '
+---
+
+
+Sebelum berguna untuk tugas spesifik, model menjalani **pretraining** pada korpus masif. Objektif yang dipilih membentuk kemampuan dasarnya.
+
+## Causal Language Modeling (CLM)
+
+```text
+Input:  "Hari ini cerah"
+Target: "ini cerah <eos>"   (geser satu posisi)
+```
+
+Model melihat token sebelum posisi lalu memprediksi token berikutnya. Ini alami untuk generasi dan dipakai GPT, Llama, dan sejenisnya.
+
+```python
+tokens = ["Hari", "ini", "cerah"]
+for i in range(len(tokens) - 1):
+    print("lihat:", tokens[:i+1], "-> tebak:", tokens[i+1])
+```
+
+## Masked Language Modeling (MLM)
+
+```text
+Input:  "Kucing [MASK] atap tidur"
+Target: "di"
+```
+
+Sebagian token disamarkan. Model memakai konteks kiri **dan** kanan — itulah sebabnya BERT unggul pada klasifikasi dan pemahaman.
+
+## Denoising
+
+T5 dan BART merusak teks (menghapus span, mengacak urutan, mengganti token), lalu meminta rekonstruksi.
+
+```text
+Rusak:  "kucing <extra> tidur atap"
+Asli:   "kucing tidur di atap"
+```
+
+| Objektif | Arah konteks | Kekuatan | Contoh |
+|---|---|---|---|
+| CLM | kiri -> kanan | generasi lancar | GPT |
+| MLM | dua arah | pemahaman mendalam | BERT |
+| Denoising | dua arah | fleksibel untuk many tugas | T5, BART |
+
+<div class="note">💡 Model MLM tidak langsung bisa menulis paragraf panjang seperti GPT. Arsitektur dan objective membentuk “kebiasaan” model sejak pretraining.</div>
+
+## Skala dan Data
+
+Kualitas pretraining ditentukan oleh **3 hal**: ukuran dan kebersihan korpus, objective yang sesuai, serta kapasitas model. Data duplikat, teks kerangka situs, dan konten berbahaya sering menjadi penyebab model masih menghasilkan keluaran buruk meski parameternya besar.

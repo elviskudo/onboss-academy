@@ -1,0 +1,126 @@
+---
+"title": "Cron dan Penjadwalan"
+"description": "Menjadwalkan tugas berulang dengan crontab dan memahami formatnya"
+"order": 21
+"quiz":
+- "q": "Perintah mengedit crontab pengguna adalah…"
+  "options":
+  - "cron edit"
+  - "crontab -e"
+  - "crontab --edit"
+  - "editcrontab"
+  "answer": 1
+  "explain": "crontab -e membuka tabel jadwal pengguna saat ini."
+- "q": "Jumlah field waktu pada baris crontab adalah…"
+  "options":
+  - "4"
+  - "6"
+  - "5"
+  - "7"
+  "answer": 2
+  "explain": "menit, jam, hari, bulan, hari dalam minggu."
+- "q": "Ekspresi \"*\" pada crontab berarti…"
+  "options":
+  - "Hanya sekali"
+  - "Tidak pernah"
+  - "Nilai nol"
+  - "Aturiap nilai"
+  "answer": 3
+  "explain": "Asterisk adalah wildcard untuk field tersebut."
+- "q": "Jadwal \"0 3 * * *\" berarti…"
+  "options":
+  - "Jam 03:00 setiap hari"
+  - "Aturiap 3 jam"
+  - "Jam 03:00 hanya Senin"
+  - "Aturiap menit ke-3"
+  "answer": 0
+  "explain": "Menit 0, jam 3, dan wildcard untuk sisanya."
+- "q": "Perintah melihat daftar crontab adalah…"
+  "options":
+  - "crontab -v"
+  - "crontab -l"
+  - "cron list"
+  - "crontab --show"
+  "answer": 1
+  "explain": "-l menampilkan jadwal aktif pengguna."
+"example":
+  "code": "# contoh isi crontab (jalankan: crontab -e)\nSHELL=/bin/bash\nPATH=/usr/local/bin:/usr/bin:/bin\n\n# setiap hari jam 03.00\n0 3 * * * /opt/app/backup.sh >> /var/log/backup.log 2>&1\n\n# setiap 15 menit\n*/15 * * * * /opt/app/cek-status.sh\n\n# setiap Senin jam 08.30\n30 8 * * 1 /opt/app/laporan.sh\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Formulirat Crontab
+
+```bash
+# contoh isi crontab (jalankan: crontab -e)
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# setiap hari jam 03.00
+0 3 * * * /opt/app/backup.sh >> /var/log/backup.log 2>&1
+
+# setiap 15 menit
+*/15 * * * * /opt/app/cek-status.sh
+
+# setiap Senin jam 08.30
+30 8 * * 1 /opt/app/laporan.sh
+```
+
+```
+menit jam hari bulan hari_minggu perintah
+```
+
+| Field | Rentang | Contoh |
+|---|---|---|
+| menit | 0-59 | `*/15` |
+| jam | 0-23 | `3` |
+| hari | 1-31 | `1,15` |
+| bulan | 1-12 | `1-6` |
+| hari minggu | 0-7 | `1` = Senin |
+
+## Operator
+
+| Simbol | Arti |
+|---|---|
+| `*` | semua nilai |
+| `,` | daftar nilai |
+| `-` | rentang |
+| `*/n` | setiap n unit |
+
+## Lingkungan Cron
+
+Cron berjalan dengan lingkungan minimal. Selalu gunakan path absolut dan tetapkan `PATH` di bagian atas crontab.
+
+```bash
+PATH=/usr/local/bin:/usr/bin:/bin
+```
+
+Jangan mengandalkan variabel dari `.bashrc` karena cron tidak memuatnya.
+
+## Catatanging dan Kesalahan
+
+```bash
+0 3 * * * /opt/app/backup.sh >> /var/log/backup.log 2>&1
+```
+
+Tanpa redireksi, output cron bisa hilang atau dikirim lewat email sistem. Selalu arahkan log ke file yang bisa kamu periksa.
+
+<div class="note">💡 Gunakan `crontab -l` sebelum mengubah jadwal, lalu simpan salinannya. Kesalahan satu karakter bisa membuat job berjalan setiap menit instead of setiap jam.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`# contoh isi crontab (jalankan: crontab -e)
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# setiap hari jam 03.00
+0 3 * * * /opt/app/backup.sh >> /var/log/backup.log 2>&1
+
+# setiap 15 menit
+*/15 * * * * /opt/app/cek-status.sh
+
+# setiap Senin jam 08.30
+30 8 * * 1 /opt/app/laporan.sh`} />

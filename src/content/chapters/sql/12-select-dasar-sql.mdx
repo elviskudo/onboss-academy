@@ -1,0 +1,102 @@
+---
+title: "SELECT: Fondasi Query"
+description: "Memilih kolom, alias, DISTINCT, dan urutan klausa yang benar"
+order: 12
+quiz:
+  - q: "Urutan klausa yang benar dalam SELECT adalah…"
+    options: ["SELECT FROM WHERE ORDER BY", "FROM SELECT WHERE ORDER BY", "SELECT WHERE FROM ORDER BY", "ORDER BY SELECT FROM"]
+    answer: 0
+    explain: "SELECT diproses setelah FROM secara logis, tetapi ditulis lebih dulu."
+  - q: "Untuk memilih semua kolom dipakai…"
+    options: ["*", "%", "ALL", "?"]
+    answer: 0
+    explain: "SELECT * mengambil semua kolom."
+  - q: "Alias kolom ditulis dengan…"
+    options: ["AS", "IS", "LIKE", "SET"]
+    answer: 0
+    explain: "SELECT nama AS nama_lengkap."
+  - q: "DISTINCT berfungsi untuk…"
+    options: ["Mengurutkan hasil", "Menghapus baris duplikat", "Menggabungkan tabel", "Mengubah tipe data"]
+    answer: 1
+    explain: "DISTINCT hanya menyimpan satu baris untuk setiap kombinasi nilai yang sama."
+  - q: "Klausa yang membatasi jumlah baris di SQLite/PostgreSQL adalah…"
+    options: ["TOP", "LIMIT", "FETCH FIRST saja", "MAX"]
+    answer: 1
+    explain: "LIMIT n membatasi jumlah baris hasil."
+example:
+  code: |
+    SELECT nama, gaji AS pendapatan FROM karyawan ORDER BY gaji DESC LIMIT 3;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SELECT adalah perintah SQL yang paling sering dipakai.Ia menjawab pertanyaan sederhana sampai analitik kompleks dengan satu bahasa deklaratif.
+
+## Bentuk Paling Sederhana
+
+```sql
+SELECT nama, jabatan FROM karyawan;
+SELECT * FROM karyawan;
+```
+
+`SELECT *` nyaman untuk eksplorasi, tetapi di aplikasi production sebaiknya sebutkan kolom yang benar-benar dipakai: lebih ringan dan tidak rusak saat tabel mendapat kolom baru.
+
+## Alias
+
+```sql
+SELECT nama AS nama_karyawan,
+       gaji * 12 AS gaji_tahunan
+FROM karyawan;
+```
+
+Alias membuat hasil lebih mudah dibaca dan memberi nama kolom pada tabel turunan. `AS` boleh dihilangkan di banyak database, tapi menuliskannya lebih jelas.
+
+## DISTINCT
+
+```sql
+SELECT DISTINCT dept FROM karyawan;
+SELECT DISTINCT dept, jabatan FROM karyawan;
+```
+
+`DISTINCT` bekerja pada **seluruh kombinasi kolom** yang disebutkan, bukan hanya kolom pertama. Dua karyawan dengan dept sama tapi jabatan beda tetap menghasilkan dua baris.
+
+## Urutan Logis Eksekusi
+
+Meskipun ditulis lebih dulu, `SELECT` secara logis berjalan setelah `FROM` dan `WHERE`:
+
+```text
+FROM → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
+```
+
+Itulah sebabnya alias yang dibuat di `SELECT` belum bisa dipakai di `WHERE`, tetapi boleh dipakai di `ORDER BY`.
+
+## MemBatasi Hasil
+
+```sql
+SELECT nama, gaji
+FROM karyawan
+ORDER BY gaji DESC
+LIMIT 3;
+```
+
+Selalu pasangkan `LIMIT` dengan `ORDER BY` bila ingin hasil yang deterministik. Tanpa urutan, database bebas mengembalikan baris mana pun.
+
+<div class="note">💡 Gunakan `SELECT COUNT(*)` untuk memastikan berapa baris yang akan terpengaruh sebelum menjalankan UPDATE atau DELETE.</div>
+
+## Di Dunia Nyata
+
+- **Endpoint API**: `SELECT id, nama, email` lebih aman daripada `*` karena field sensitif tidak ikut terkirim.
+- **Dropdown UI**: `SELECT DISTINCT kota` mengisi pilihan filter.
+- **Leaderboard**: `ORDER BY skor DESC LIMIT 10` menampilkan 10 teratas.
+- **Export**: alias memberi nama header yang rapi di file CSV.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`-- nama kolom hasil diberi alias agar mudah dibaca
+SELECT nama AS karyawan, gaji * 12 AS gaji_tahunan
+FROM karyawan
+ORDER BY gaji DESC
+LIMIT 3;
+
+SELECT DISTINCT dept FROM karyawan;`} />

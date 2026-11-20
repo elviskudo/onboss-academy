@@ -1,0 +1,127 @@
+---
+title: Variabel Shell dan Skrip Pertama
+description: Menulis skrip Bash sederhana dengan variabel, argumen, dan percabangan.
+order: 14
+quiz:
+- q: Cara mendeklarasikan variabel di Bash adalah…
+  options:
+  - set nama=nilai
+  - var nama nilai
+  - nama="nilai"
+  - nama = "nilai"
+  answer: 2
+  explain: Tidak boleh ada spasi di sekitar tanda sama dengan.
+- q: Cara membaca variabel adalah…
+  options:
+  - nama
+  - '&nama'
+  - '{nama}'
+  - $nama
+  answer: 3
+  explain: '`${nama}` juga dipakai untuk menghindari ambiguitas.'
+- q: Argumen pertama skrip disimpan di…
+  options:
+  - $1
+  - $0
+  - $@
+  - $#
+  answer: 0
+  explain: $0 adalah nama skrip, $# jumlah argumen.
+- q: Baris shebang untuk Bash adalah…
+  options:
+  - <?bash
+  - '#!/bin/bash'
+  - '#!bash'
+  - //bin/bash
+  answer: 1
+  explain: Baris pertama ini memberitahu sistem interpreter yang dipakai.
+- q: Agar skrip bisa dijalankan, lakukan…
+  options:
+  - mv skrip.sh /bin
+  - rename skrip.sh
+  - chmod +x skrip.sh
+  - chmod 644 skrip.sh
+  answer: 2
+  explain: Izin eksekusi diperlukan sebelum `./skrip.sh` bisa jalan.
+example:
+  code: "#!/bin/bash\nnama=${1:-Dunia}\necho \"Halo, $nama!\"\nif [ \"$#\" -gt 1 ]; then\n  echo \"Ada $# argumen.\"\nfi\n"
+---
+
+
+Skrip shell mengubah rangkaian perintah menjadi **alat yang bisa dipakai ulang**. Mulai dari variabel dan argumen.
+
+## Skrip Pertama
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+nama=${1:-Dunia}
+echo "Halo, $nama!"
+```
+
+```bash
+chmod +x halo.sh
+./halo.sh Sinta
+```
+
+`${1:-Dunia}` memakai nilai default bila argumen tidak diberikan.
+
+## Variabel
+
+```bash
+APP_DIR=/opt/aplikasi
+echo "$APP_DIR"
+echo "${APP_DIR}/logs"
+```
+
+| Variabel | Arti |
+|---|---|
+| `$0` | nama skrip |
+| `$1`, `$2` | argumen |
+| `$#` | jumlah argumen |
+| `$@` | semua argumen |
+| `$?` | kode keluar perintah terakhir |
+| `$$` | PID skrip |
+
+## Percabangan
+
+```bash
+if [ -f "$1" ]; then
+  echo "File ada"
+elif [ -d "$1" ]; then
+  echo "Itu direktori"
+else
+  echo "Tidak ditemukan"
+fi
+```
+
+```bash
+case "$perintah" in
+  start) systemctl start app ;;
+  stop)  systemctl stop app ;;
+  *) echo "Gunakan: start|stop" ;;
+esac
+```
+
+## Loop
+
+```bash
+for item in "$@"; do
+  echo "Memproses $item"
+done
+
+while read -r baris; do
+  echo "$baris"
+done < data.txt
+```
+
+<div class="note">💡 Selalu kutip variabel (`"$nama"`) agar spasi di dalam nilai tidak memecah argumen. Ini salah satu sumber bug paling umum di shell script.</div>
+
+## Set -euo pipefail
+
+- `-e` berhenti saat perintah gagal.
+- `-u` error saat variabel belum didefinisikan.
+- `-o pipefail` pipa dianggap gagal bila salah satu bagian gagal.
+
+Tiga opsi ini membuat skrip lebih aman dan lebih mudah di-debug.

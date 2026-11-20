@@ -1,0 +1,109 @@
+---
+title: Rangkuman dan Peta Jalan Linux
+description: Menyusun semua topik menjadi peta belajar dan referensi cepat sehari-hari.
+order: 25
+quiz:
+- q: Perintah paling tepat untuk melihat status umum sistem adalah…
+  options:
+  - echo
+  - uptime
+  - ls
+  - cat
+  answer: 1
+  explain: uptime menampilkan waktu aktif, jumlah user, dan load average.
+- q: Untuk mencari proses yang memakai CPU tertinggi gunakan…
+  options:
+  - du
+  - ping
+  - top atau htop
+  - df
+  answer: 2
+  explain: top/htop menampilkan penggunaan sumber daya secara langsung.
+- q: Urutan penalaran saat server bermasalah adalah…
+  options:
+  - Langsung restart
+  - Hapus log
+  - Tunggu
+  - Cek gejala, log, metrik, lalu perubahan terakhir
+  answer: 3
+  explain: Pendekatan sistematis lebih cepat daripada menebak.
+- q: Dokumentasi lokal yang bisa dipakai tanpa internet adalah…
+  options:
+  - man dan /usr/share/doc
+  - Google
+  - Forum
+  - Chat
+  answer: 0
+  explain: man page tersedia di hampir semua sistem Linux.
+- q: Kebiasaan terpenting saat menjalankan perintah destruktif adalah…
+  options:
+  - Menghapus log
+  - Memeriksa target sebelum menekan Enter
+  - Menjalankan sebagai root
+  - Menutup terminal
+  answer: 1
+  explain: Pencegahan jauh lebih murah daripada pemulihan.
+example:
+  code: 'uptime
+
+    free -h
+
+    df -h
+
+    systemctl --failed
+
+    journalctl -p err --since "1 hour ago"
+
+    '
+---
+
+
+Linux bukan sekadar kumpulan perintah. Ia adalah **cara berpikir tentang sistem**: proses, file, izin, dan aliran data.
+
+## Peta Topik
+
+| Area | Perintah kunci |
+|---|---|
+| Navigasi | pwd, cd, ls, find |
+| Teks | cat, grep, sed, awk |
+| Proses | ps, top, kill, jobs |
+| Pengguna | whoami, id, sudo, chmod |
+| Jaringan | ip, ss, dig, curl, rsync |
+| Penyimpanan | df, du, lsblk, mount |
+| Service | systemctl, journalctl |
+| Otomatisasi | crontab, systemd timer |
+| Backup | tar, rsync, gzip |
+
+## Rutinitas Diagnosa 60 Detik
+
+```bash
+uptime
+free -h
+df -h
+systemctl --failed
+journalctl -p err --since "1 hour ago"
+ps aux --sort=-%cpu | head
+```
+
+Enam perintah ini sering langsung memberi arah saat server terasa lambat.
+
+## Prinsip yang Menyatukan
+
+1. **Segala sesuatu adalah file** — konfigurasi, perangkat, dan proses bisa dibaca dari `/proc` dan `/sys`.
+2. **Program kecil dirangkai** — pipe lebih fleksibel daripada satu program raksasa.
+3. **Izin adalah batas** — jalankan dengan hak paling rendah yang cukup.
+4. **Log adalah ingatan** — tanpa log, Anda hanya punya ingatan manusia yang mudah salah.
+5. **Uji pemulihan** — backup, snapshot, dan konfigurasi hanya berguna kalau terbukti bisa dipakai.
+
+<div class="note">💡 Jangan hafal semua opsi. Hafalalah **kapan** perintah dibutuhkan; detailnya selalu ada di `man`.</div>
+
+## Langkah Berikutnya
+
+- Dalami satu area sesuai peran: sysadmin, DevOps, keamanan, atau pengembangan.
+- Latih menulis skrip Bash untuk tugas berulang.
+- Pelajari container dan orkestrasi setelah dasar process, jaringan, dan filesystem mantap.
+- Bangun laboratorium kecil berupa VM agar bisa bereksperimen tanpa takut merusak mesin utama.
+
+## Penutup
+
+Linux memberi Anda kendali penuh. Kendali itu datang bersama tanggung jawab: setiap perintah yang Anda jalankan punya konsekuensi._Jadil_ gunakan kekuatan itu dengan perlahan, terukur, dan selalu punya jalan kembali.

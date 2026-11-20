@@ -1,0 +1,96 @@
+---
+title: "Digital I/O Lanjut"
+description: "INPUT_PULLUP, debouncing, dan transisi sinyal"
+order: 15
+quiz:
+  - q: "Mode INPUT_PULLUP mengaktifkan…"
+    options: ["Resistor eksternal ke GND", "PWM", "ADC", "Resistor internal ke 5 V"]
+    answer: 3
+    explain: "Pin tetap HIGH sampai tombol menghubungkannya ke GND."
+  - q: "Debouncing diperlukan karena…"
+    options: ["Kontak mekanis bergetar saat ditekan", "Arduino terlalu lambat", "Tegangan naik", "Serial error"]
+    answer: 0
+    explain: "Satu tekan bisa terbaca beberapa kali dalam beberapa milidetik."
+  - q: "Cara sederhana debouncing adalah…"
+    options: ["Menonaktifkan pull-up", "Tunggu 30–50 ms setelah perubahan state", "Menambah delay 1 detik", "Mengubah pin jadi output"]
+    answer: 1
+    explain: "Waktu tunggu harus lebih lama daripada getaran kontak."
+  - q: "Fungsi digitalRead mengembalikan…"
+    options: ["true/float", "Karakter", "HIGH atau LOW", "0–1023"]
+    answer: 2
+    explain: "HIGH umumnya 5 V, LOW 0 V pada Uno."
+  - q: "Tombol dengan INPUT_PULLUP dibaca sebagai…"
+    options: ["HIGH saat ditekan", "Selalu LOW", "Analog", "LOW saat ditekan"]
+    answer: 3
+    explain: "Karena tombol menghubungkan pin ke GND saat ditekan."
+example:
+  code: |
+    const int TOMBOL = 2;
+    bool terakhir = HIGH;
+    unsigned long t = 0;
+    
+    void loop() {
+      bool sekarang = digitalRead(TOMBOL);
+      if (sekarang != terakhir && millis() - t > 50) {
+        t = millis();
+        if (sekarang == LOW) Serial.println('Ditekan');
+        terakhir = sekarang;
+      }
+    }
+---
+
+Membaca tombol terlihat mudah, tetapi getaran kontak sering membuat satu tekan terbaca berkali-kali. INPUT_PULLUP dan debouncing menyelesaikannya tanpa komponen tambahan.
+
+## Rangkaian Tombol
+
+```text
+INPUT_PULLUP:
+  pin 2 ---- tombol ---- GND
+  (tidak perlu resistor eksternal)
+
+Tanpa pull-up:
+  5V -- resistor 10k -- pin 2 -- tombol -- GND
+```
+
+## Membaca Keadaan
+
+```cpp
+pinMode(2, INPUT_PULLUP);
+if (digitalRead(2) == LOW) {
+  // tombol ditekan
+}
+```
+
+## Debouncing dengan millis
+
+```cpp
+if (berubah && millis() - waktuTerakhir > 50) {
+  waktuTerakhir = millis();
+  state = sekarang;
+  prosesTombol();
+}
+```
+
+50 ms biasanya cukup. Terlalu lama membuat tombol terasa lambat.
+
+## Deteksi Tepi
+
+```cpp
+if (sekarang == LOW && sebelumnya == HIGH) {
+  // tepi turun: tombol baru saja ditekan
+}
+```
+
+Deteksi tepi memberi satu aksi per tekan, berbeda dengan pembacaan level yang terus mengirim aksi selama tombol dipegang.
+
+<div class="note">💡 Gunakan interrupt untuk tombol yang benar-benar harus merespons seketika, tapi tetap terapkan debouncing agar tidak memicu berkali-kali.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`pinMode(2, INPUT_PULLUP);
+// rangkaian: pin 2 -- tombol -- GND
+void loop() {
+  if (digitalRead(2) == LOW) Serial.println('ditekan');
+  delay(100);
+}`}</code></pre>

@@ -1,0 +1,127 @@
+---
+title: "Composable"
+description: "membungkus logika reaktif agar bisa dipakai ulang"
+order: 15
+quiz:
+  - q: "Composable adalah…"
+    options: ["Plugin Vue Router", "File CSS", "Fungsi yang memakai API reaktivitas Vue", "Komponen tanpa template"]
+    answer: 2
+    explain: "Biasanya diawali `use`, misal useFetch."
+  - q: "Composable dipanggil di…"
+    options: ["index.html", "setup / script setup", "Template", "CSS"]
+    answer: 1
+    explain: "Agar hook lifecycle dan reaktivitas terhubung ke komponen."
+  - q: "Dua komponen memakai composable yang sama akan…"
+    options: ["Berbagi state identik", "Error", "Saling menimpa", "Mendapat state terpisah"]
+    answer: 3
+    explain: "Kecuali state memang didefinisikan di luar fungsi."
+  - q: "Composable sebaiknya mengembalikan…"
+    options: ["String CSS", "Ref/computed dan method", "JSX", "Elemen DOM"]
+    answer: 1
+    explain: "Konsumen tinggal mendestrukturi hasilnya."
+  - q: "Nama yang lazim adalah…"
+    options: ["useLocalStorage", "makeStorage", "storageUtil", "StorageClass"]
+    answer: 0
+    explain: "Awalan `use` jadi konvensi komunitas."
+example:
+  code: |
+    export function useLocalStorage(kunci, awal) {
+      const data = ref(JSON.parse(localStorage.getItem(kunci)) ?? awal);
+      watch(data, (v) => localStorage.setItem(kunci, JSON.stringify(v)), { deep: true });
+      return { data };
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Composable adalah cara Vue memakai ulang logika berstate. Mirip custom hook di React.
+
+## Contoh: useLocalStorage
+
+```js
+// composables/useLocalStorage.js
+import { ref, watch } from 'vue'
+
+export function useLocalStorage(kunci, awal) {
+  const data = ref(
+    JSON.parse(localStorage.getItem(kunci) ?? 'null') ?? awal
+  )
+
+  watch(data, (nilai) => {
+    localStorage.setItem(kunci, JSON.stringify(nilai))
+  }, { deep: true })
+
+  return { data }
+}
+```
+
+Pemakaian:
+
+```vue
+<script setup>
+import { useLocalStorage } from '@/composables/useLocalStorage'
+
+const { data: tema } = useLocalStorage('tema', 'terang')
+</script>
+
+<template>
+  <button @click="tema = tema === 'terang' ? 'gelap' : 'terang'">
+    Tema: {{ tema }}
+  </button>
+</template>
+```
+
+## Contoh: useFetch
+
+```js
+export function useFetch(url) {
+  const data = ref(null)
+  const error = ref('')
+  const loading = ref(true)
+
+  watchEffect(async (onCleanup) => {
+    const controller = new AbortController()
+    onCleanup(() => controller.abort())
+    loading.value = true
+
+    try {
+      const res = await fetch(url.value, { signal: controller.signal })
+      data.value = await res.json()
+    } catch (e) {
+      if (e.name !== 'AbortError') error.value = e.message
+    } finally {
+      loading.value = false
+    }
+  })
+
+  return { data, error, loading }
+}
+```
+
+## Aturan
+
+- Panggil di dalam `setup`.
+- Gunakan awalan `use`.
+- Kembalikan nilai reaktif, bukan hasil hitung sekali jalan.
+
+<div class="note">💡 Composable membuat komponen tetap fokus pada tampilan. Kalau ada blok `ref` + `watch` yang sama di tiga komponen, itu calon composable.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi composable dengan storage buatan
+const storage = new Map();
+function useLocalStorage(kunci, awal) {
+  const tersimpan = storage.get(kunci);
+  const data = { value: tersimpan === undefined ? awal : JSON.parse(tersimpan) };
+  return {
+    data,
+    simpan() { storage.set(kunci, JSON.stringify(data.value)); },
+  };
+}
+
+const a = useLocalStorage("tema", "terang");
+a.data.value = "gelap"; a.simpan();
+const b = useLocalStorage("tema", "terang");
+console.log(b.data.value);`} />

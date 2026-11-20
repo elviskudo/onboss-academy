@@ -1,0 +1,136 @@
+---
+title: "Studi Kasus: Sistem Akademik SQL Server"
+description: "merancang skema, query laporan, transaksi, indeks, dan keamanan seperti kasus nyata"
+order: 28
+quiz:
+  - q: "Untuk menyimpan nilai ujian dengan presisi dua desimal, tipe terbaik adalah…"
+    options: ["VARCHAR", "FLOAT", "DECIMAL(5,2)", "INT"]
+    answer: 2
+    explain: "DECIMAL eksak untuk nilai uang dan nilai skala tetap."
+  - q: "Relasi siswa–kelas sebaiknya dibuat dengan…"
+    options: ["Trigger saja", "View", "Foreign key ke tabel kelas", "Teks kelas di setiap baris nilai"]
+    answer: 2
+    explain: "Foreign key menjaga integritas referensial."
+  - q: "Laporan rata-rata nilai per kelas memakai…"
+    options: ["ORDER BY kelas", "DISTINCT kelas", "TOP kelas", "GROUP BY kelas"]
+    answer: 3
+    explain: "GROUP BY mengelompokkan baris sebelum AVG dihitung."
+  - q: "Indeks untuk filter \"nilai per siswa terbaru\" adalah…"
+    options: ["(kelas)", "(siswa_id, tanggal DESC)", "(tanggal)", "(nilai)"]
+    answer: 1
+    explain: "Urutan dimulai dari kolom filter lalu kolom sort."
+  - q: "Transaksi pendaftaran yang menyentuh dua tabel sebaiknya…"
+    options: ["Memakai TRUNCATE", "Menghapus foreign key", "Dibungkus BEGIN TRAN / COMMIT dengan TRY CATCH", "Dibiarkan apa adanya"]
+    answer: 2
+    explain: "TRY CATCH + transaksi memastikan dua perubahan berhasil atau gagal bersama."
+example:
+  code: |
+    CREATE TABLE dbo.kelas (id INT IDENTITY PRIMARY KEY, nama NVARCHAR(50));
+    CREATE TABLE dbo.siswa (id INT IDENTITY PRIMARY KEY, nama NVARCHAR(100), kelas_id INT REFERENCES dbo.kelas(id));
+    CREATE TABLE dbo.nilai (siswa_id INT, mapel NVARCHAR(50), skor DECIMAL(5,2), tanggal DATE);
+    SELECT k.nama AS kelas, AVG(n.skor) AS rata FROM dbo.nilai n JOIN dbo.siswa s ON n.siswa_id = s.id JOIN dbo.kelas k ON s.kelas_id = k.id GROUP BY k.nama;
+---
+
+## 1. Skema
+
+```sql
+CREATE TABLE dbo.kelas (
+  id INT IDENTITY PRIMARY KEY,
+  nama NVARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE dbo.siswa (
+  id INT IDENTITY PRIMARY KEY,
+  nama NVARCHAR(100) NOT NULL,
+  kelas_id INT NOT NULL REFERENCES dbo.kelas(id),
+  aktif BIT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE dbo.nilai (
+  siswa_id INT NOT NULL REFERENCES dbo.siswa(id),
+  mapel NVARCHAR(50) NOT NULL,
+  skor DECIMAL(5,2) CHECK (skor >= 0 AND skor <= 100),
+  tanggal DATE NOT NULL DEFAULT SYSDATETIME()
+);
+```
+
+Constraint `CHECK` mencegah skor 150 masuk karena salah ketik. Foreign key memastikan nilai tidak merujuk ke siswa yang tidak ada.
+
+## 2. Indeks
+
+```sql
+CREATE INDEX ix_siswa_kelas ON dbo.siswa(kelas_id) INCLUDE (nama);
+CREATE INDEX ix_nilai_siswa_tanggal ON dbo.nilai(siswa_id, tanggal DESC) INCLUDE (skor);
+```
+
+Indeks pertama melayani daftar siswa per kelas; indeks kedua melayani riwayat nilai terbaru tanpa menyentuh seluruh tabel.
+
+## 3. Laporan Rata-rata
+
+```sql
+SELECT k.nama AS kelas,
+       n.mapel,
+       COUNT(*) AS jumlah_siswa,
+       AVG(n.skor) AS rata,
+       MIN(n.skor) AS terendah,
+       MAX(n.skor) AS tertinggi
+FROM dbo.nilai n
+JOIN dbo.siswa s ON n.siswa_id = s.id
+JOIN dbo.kelas k ON s.kelas_id = k.id
+WHERE n.tanggal >= DATEADD(month, -3, SYSDATETIME())
+GROUP BY k.nama, n.mapel
+HAVING COUNT(*) >= 3
+ORDER BY k.nama, n.mapel;
+```
+
+`WHERE` membatasi periode, `HAVING` membuang grup yang terlalu kecil.
+
+## 4. Ranking per Kelas
+
+```sql
+WITH Peringkat AS (
+  SELECT s.nama, k.nama AS kelas, n.skor,
+         ROW_NUMBER() OVER (PARTITION BY k.id ORDER BY n.skor DESC) AS rn
+  FROM dbo.nilai n
+  JOIN dbo.siswa s ON n.siswa_id = s.id
+  JOIN dbo.kelas k ON s.kelas_id = k.id
+)
+SELECT * FROM Peringkat WHERE rn <= 3;
+```
+
+## 5. Transaksi Pendaftaran
+
+```sql
+BEGIN TRY
+  BEGIN TRAN;
+  INSERT INTO dbo.siswa (nama, kelas_id) VALUES (N'Ana', 1);
+  INSERT INTO dbo.nilai (siswa_id, mapel, skor)
+    VALUES (SCOPE_IDENTITY(), N'Matematika', 88);
+  COMMIT TRAN;
+END TRY
+BEGIN CATCH
+  IF XACT_STATE() <> 0 ROLLBACK TRAN;
+  THROW;
+END CATCH;
+```
+
+## 6. Checklist Produksi
+
+- Akun aplikasi bukan `db_owner`.
+- Backup FULL + DIFFERENTIAL + LOG dijadwalkan dan diuji restore.
+- Statistik dan indeks ditinjau tiap bulan.
+- Query laporan diuji dengan actual execution plan.
+- Semua akses database memakai parameter, bukan string concatenation.
+
+<div class="note">💡 Desain skema yang baik menghemat ratusan baris query. Luangkan waktu memodelkan entitas dan constraint sebelum menulis laporan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #k (n NVARCHAR(20));
+CREATE TABLE #s (n NVARCHAR(20), kid INT);
+INSERT INTO #k VALUES (N'IPA');
+INSERT INTO #s VALUES (N'Ana', 1), (N'Budi', 1);
+SELECT k.n, COUNT(*) AS n_siswa FROM #k k JOIN #s s ON s.kid = 1 GROUP BY k.n;
+DROP TABLE #k; DROP TABLE #s;`}</code></pre>

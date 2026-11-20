@@ -1,0 +1,117 @@
+---
+title: "Sintaks Template Lanjutan"
+description: "binding kelas dan style, modifier, dan ekspresi di template Vue"
+order: 9
+quiz:
+  - q: "Binding objek kelas ditulis dengan…"
+    options: ["v-class=\"aktif\"", "@class=\"aktif\"", ":class=\"{ aktif: sudah }\"", "class={aktif: sudah}"]
+    answer: 2
+    explain: "Objek kelas memetakan nama kelas ke kondisi boolean."
+  - q: "Binding array kelas berguna untuk…"
+    options: ["Membuat rute", "Menggabungkan beberapa sumber kelas", "Menghapus semua kelas", "Mengirim data ke API"]
+    answer: 1
+    explain: "Contoh: :class=\"[kelasDasar, { aktif: sudah }]\"."
+  - q: "Modifier .prevent pada v-on berfungsi…"
+    options: ["Menghentikan bubbling", "Menunggu satu detik", "Mengubah nilai", "Memanggil event.preventDefault()"]
+    answer: 3
+    explain: "Biasa dipakai pada @submit.prevent."
+  - q: "Modifier .stop berguna untuk…"
+    options: ["Menambah kelas", "Menghentikan event bubbling", "Mencegah submit", "Mengubah casing"]
+    answer: 1
+    explain: "Mirip event.stopPropagation()."
+  - q: "Di template Vue, ekspresi boleh memakai…"
+    options: ["Operator JavaScript dan filter/pipe yang didefinisikan", "Statement if/else penuh", "Import modul", "Deklarasi var"]
+    answer: 0
+    explain: "Template berisi expression, bukan pernyataan lengkap."
+example:
+  code: |
+    <div :class="[{ aktif: sudah }, kelasTambahan]"
+         :style="{ color: warna, fontSize: ukuran + 'px' }">
+      Halo
+    </div>
+
+    <form @submit.prevent="kirim">...</form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Template Vue menangani banyak kebutuhan binding tanpa harus menulis logika DOM manual.
+
+## Binding Kelas
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const sudah = ref(true)
+const prioritas = ref('tinggi')
+</script>
+
+<template>
+  <div :class="['kartu', { aktif: sudah, prioritas: prioritas === 'tinggi' }]">
+    Isi kartu
+  </div>
+</template>
+```
+
+Objek `{ namaKelas: kondisi }` menambahkan kelas hanya bila kondisinya true.
+
+## Binding Style
+
+```vue
+<div :style="{ color: warna, fontSize: ukuran + 'px' }">
+  Teks dinamis
+</div>
+```
+
+Array juga bisa dipakai bila ada beberapa object gaya.
+
+## Modifier Event
+
+| Modifier | Efek |
+|----------|------|
+| `.prevent` | `event.preventDefault()` |
+| `.stop` | `event.stopPropagation()` |
+| `.once` | handler hanya sekali |
+| `.self` | hanya bila target tepat elemen itu |
+| `.capture` | mode capture |
+
+```vue
+<form @submit.prevent="kirim">
+  <button @click.stop.once="pilih">Pilih</button>
+</form>
+```
+
+## Key Modifier
+
+```vue
+<input @keyup.enter="kirim" @keyup.esc="batal">
+```
+
+## Ekspresi di Template
+
+```vue
+<p>{{ jumlah > 0 ? `${jumlah} item` : 'Kosong' }}</p>
+<p>{{ teks.split('').reverse().join('') }}</p>
+```
+
+Tetapi hindari perhitungan berat — pindahkan ke `computed`.
+
+<div class="note">💡 Binding yang rapi membuat template tetap deklaratif: kamu mengatakan "kelas ini aktif bila..." bukan "tambahkan kelas lalu hapus lagi".</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan binding objek kelas Vue
+function kelasObjek(klas) {
+  return Object.entries(klas).filter(([, aktif]) => aktif).map(([n]) => n);
+}
+
+const sudah = true;
+const prioritas = "tinggi";
+console.log(kelasObjek({
+  kartu: true,
+  aktif: sudah,
+  prioritas: prioritas === "tinggi",
+}).join(" "));`} />

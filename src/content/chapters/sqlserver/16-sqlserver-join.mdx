@@ -1,0 +1,95 @@
+---
+title: "JOIN: INNER, LEFT, RIGHT, FULL, dan CROSS"
+description: "gabung tabel, multiple join, self join, dan perbedaan ON versus WHERE"
+order: 16
+quiz:
+  - q: "INNER JOIN menghasilkan…"
+    options: ["Produk kartesius", "Semua baris tabel kiri", "Hanya baris yang cocok di kedua tabel", "Semua baris kanan"]
+    answer: 2
+    explain: "INNER JOIN hanya baris dengan pasangan."
+  - q: "LEFT JOIN tetap menampilkan…"
+    options: ["Hanya yang cocok", "Tidak ada", "Baris kiri tanpa pasangan", "Baris kanan tanpa pasangan"]
+    answer: 2
+    explain: "Baris kanan yang tidak ada menjadi NULL."
+  - q: "FULL OUTER JOIN menampilkan…"
+    options: ["Hanya baris kanan", "Kedua sisi termasuk yang tanpa pasangan", "Hanya yang cocok", "Hanya baris kiri"]
+    answer: 1
+    explain: "FULL menggabungkan LEFT dan RIGHT."
+  - q: "CROSS JOIN menghasilkan…"
+    options: ["Error", "Produk kartesius", "Hanya satu baris", "Join dengan kondisi"]
+    answer: 1
+    explain: "CROSS JOIN mengalikan jumlah baris kedua tabel."
+  - q: "Pada LEFT JOIN, syarat pada tabel kanan sebaiknya ditaruh di…"
+    options: ["ORDER BY", "GROUP BY", "ON", "WHERE"]
+    answer: 2
+    explain: "Meletakkannya di WHERE dapat mengubah LEFT menjadi INNER secara tidak sengaja."
+example:
+  code: |
+    SELECT k.nama, d.nama AS divisi
+    FROM dbo.karyawan AS k
+    LEFT JOIN dbo.divisi AS d ON k.divisi_id = d.id
+    WHERE k.aktif = 1;
+---
+
+## Jenis JOIN
+
+| Join | Hasil |
+| --- | --- |
+| `INNER JOIN` | hanya yang cocok |
+| `LEFT JOIN` | semua kiri + yang cocok kanan |
+| `RIGHT JOIN` | semua kanan + yang cocok kiri |
+| `FULL OUTER JOIN` | semua dari kedua sisi |
+| `CROSS JOIN` | setiap kiri × setiap kanan |
+
+```sql
+SELECT k.nama, d.nama AS divisi
+FROM dbo.karyawan AS k
+INNER JOIN dbo.divisi AS d ON k.divisi_id = d.id;
+```
+
+## ON versus WHERE
+
+```sql
+-- aman: filter tambahan di ON tetap mempertahankan baris kiri
+SELECT k.nama, p.tanggal
+FROM dbo.karyawan k
+LEFT JOIN dbo.pesanan p ON k.id = p.id_karyawan AND p.status = N'Lunas';
+
+-- hati-hati: WHERE p.status = 'Lunas' mengubah hasil jadi mirip INNER JOIN
+```
+
+Aturan praktis: syarat yang menentukan **bagaimana tabel digabung** ditaruh di `ON`; syarat yang menyaring **hasil akhir** ditaruh di `WHERE`.
+
+## Beberapa JOIN
+
+```sql
+SELECT k.nama, d.nama AS divisi, j.nama AS jabatan
+FROM dbo.karyawan k
+JOIN dbo.divisi d ON k.divisi_id = d.id
+JOIN dbo.jabatan j ON k.jabatan_id = j.id;
+```
+
+Urutan join dapat memengaruhi rencana eksekusi. SQL Server biasanya menyusun ulang secara otomatis, tetapi statistik yang usang bisa membuat pilihannya buruk.
+
+## Self Join
+
+```sql
+SELECT atasan.nama AS atasan, bawahan.nama AS bawahan
+FROM dbo.karyawan AS bawahan
+JOIN dbo.karyawan AS atasan ON bawahan.atasan_id = atasan.id;
+```
+
+Satu tabel dipakai dua kali dengan alias berbeda.
+
+<div class="note">💡 `CROSS JOIN` sangat mudah membuat hasil meledak: 1.000 × 1.000 = 1.000.000 baris. Gunakan hanya untuk tabel kecil seperti tanggal atau daftar kombinasi.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #a (id INT, nama NVARCHAR(20));
+CREATE TABLE #b (id INT, nilai INT);
+INSERT INTO #a VALUES (1, N'Ana'), (2, N'Budi');
+INSERT INTO #b VALUES (1, 80);
+SELECT a.nama, b.nilai FROM #a a LEFT JOIN #b b ON a.id = b.id;
+DROP TABLE #a; DROP TABLE #b;`}</code></pre>

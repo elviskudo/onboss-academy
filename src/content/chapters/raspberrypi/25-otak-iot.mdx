@@ -1,0 +1,97 @@
+---
+title: "Studi Kasus: Stasiun Cuaca"
+description: "Merangkai sensor, penyimpanan, tampilan, dan notifikasi"
+order: 25
+quiz:
+  - q: "Arsitektur yang tepat untuk stasiun cuaca adalah…"
+    options: ["Sensor -> kartu SD tanpa olahan", "Sensor -> skrip pembaca -> database -> tampilan", "Sensor -> langsung email", "Sensor -> GPIO saja"]
+    answer: 1
+    explain: "Pemisahan lapisan memudahkan perawatan dan penggantian komponen."
+  - q: "Jika pembacaan DHT sesekali gagal, langkah terbaik adalah…"
+    options: ["Matikan Pi", "Ganti alamat I2C", "Coba ulang dengan jeda dan catat kegagalan", "Hapus sensor dari kode"]
+    answer: 2
+    explain: "Sensor murah memang kadang menghasilkan error sesaat."
+  - q: "Data disimpan tiap 2 menit. Agar tidak membengkak, gunakan…"
+    options: ["Lebih banyak kolom", "Tanpa indexed", "Teks mentah tanpa batas", "Retensi dan agregasi"]
+    answer: 3
+    explain: "Rata-rata per jam cukup untuk grafik jangka panjang."
+  - q: "Notifikasi suhu tinggi sebaiknya dikirim…"
+    options: ["Hanya setelah ambang terlampaui beberapa kali berturut", "Setiap pembacaan", "Tanpa batas", "Hanya saat Pi mati"]
+    answer: 0
+    explain: "Ini mengurangi alarm palsu akibat noise."
+  - q: "Pembersihan resource GPIO penting karena…"
+    options: ["Mengubah kata sandi", "Pin bisa tetap terpakai oleh proses lama", "Membuat WiFi lebih cepat", "Menghapus database"]
+    answer: 1
+    explain: "gpiozero membersihkan otomatis pada exit normal, tapi exception perlu ditangani."
+example:
+  code: |
+    # Alur stasiun cuaca
+    baca DHT22 -> simpan SQLite -> tampil OLED
+              -> kirim MQTT -> notifikasi jika suhu > 30 C
+---
+
+Proyek stasiun cuaca menggabungkan hampir semua topik yang sudah dibahas: GPIO, sensor, penyimpanan, tampilan, jaringan, dan otomatisasi.
+
+## Struktur Proyek
+
+```text
+cuaca/
+├── config.py       # pin, interval, ambang
+├── sensor.py       # baca DHT22
+├── simpan.py       # SQLite
+├── tampilan.py     # OLED
+├── kirim.py        # MQTT
+└── main.py         # loop utama
+```
+
+## Loop Utama
+
+```python
+while True:
+    try:
+        suhu, lembap = baca_dht()
+        simpan(suhu, lembap)
+        tampilkan(suhu, lembap)
+        kirim_mqtt(suhu, lembap)
+        if suhu > BATAS and bukan_notifikasi_terakhir:
+            kirim_notifikasi()
+    except Exception as e:
+        log.error("Gagal: %s", e)
+    sleep(INTERVAL)
+```
+
+## Mengurangi Alarm Palsu
+
+```text
+suhu > 30 C selama 3 pembacaan berturut-turut -> kirim alert
+suhu < 29 C -> reset penanda alert
+```
+
+Pola hysteresis ini mencegah notifikasi berulang ketika nilai berada tepat di ambang.
+
+## Menjalankan Otomatis
+
+```bash
+sudo systemctl enable --now cuaca.service
+journalctl -u cuaca.service -f
+```
+
+## Daftar Perawatan
+
+- Kalibrasi sensor tiap beberapa bulan.
+- Cek ruang disk dan retensi database.
+- Perbarui sistem secara berkala saat jaringan tersedia.
+- Simpan konfigurasi di git agar perubahan bisa dilacak.
+
+<div class="note">💡 Mulai dari versi paling sederhana—satu sensor dan satu log. Tambahkan tampilan dan notifikasi setelah pembacaan stabil.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Rencana bertahap:
+1. LED berkedip (verifikasi GPIO)
+2. Baca DHT22 ke terminal
+3. Simpan ke SQLite
+4. Tampilkan di OLED
+5. Kirim ke MQTT
+6. Service systemd + alert`}</code></pre>

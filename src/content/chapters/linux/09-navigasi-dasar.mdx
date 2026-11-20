@@ -1,0 +1,123 @@
+---
+title: Navigasi Terminal dan Perintah Dasar
+description: Berpindah direktori, melihat isi, dan memahami jalur relatif serta absolut.
+order: 9
+quiz:
+- q: Perintah untuk melihat direktori saat ini adalah…
+  options:
+  - whoami
+  - pwd
+  - ls
+  - cd
+  answer: 1
+  explain: pwd = print working directory.
+- q: Perintah untuk masuk ke direktori induk adalah…
+  options:
+  - cd /
+  - cd ~
+  - cd ..
+  - cd .
+  answer: 2
+  explain: '`..` merujuk ke direktori induk, `.` ke direktori saat ini.'
+- q: Simbol ~ berarti…
+  options:
+  - Direktori root
+  - Direktori sementara
+  - Direktori log
+  - Direktori home pengguna
+  answer: 3
+  explain: '`cd ~` membawa ke /home/nama_pengguna.'
+- q: Opsi yang benar untuk menampilkan file tersembunyi adalah…
+  options:
+  - ls -a
+  - ls -l
+  - ls -h
+  - ls -t
+  answer: 0
+  explain: File tersembunyi di Linux diawali titik dan muncul dengan -a.
+- q: Jalur absolut dimulai dengan…
+  options:
+  - ..
+  - /
+  - .
+  - '~'
+  answer: 1
+  explain: Jalur absolut dimulai dari root direktori `/`.
+example:
+  code: 'pwd
+
+    cd /etc
+
+    ls -la
+
+    cd ~
+
+    echo "Sekarang di $PWD"
+
+    '
+---
+
+
+Terminal Linux adalah **pintu masuk** ke sistem. Menguasai beberapa perintah dasar membuat pekerjaan sehari-hari jauh lebih cepat.
+
+## Perintah Inti
+
+| Perintah | Fungsi |
+|---|---|
+| `pwd` | tampilkan direktori saat ini |
+| `ls` | daftar isi direktori |
+| `cd` | pindah direktori |
+| `mkdir` | buat direktori |
+| `touch` | buat file kosong |
+| `cp` | salin |
+| `mv` | pindah/ganti nama |
+| `rm` | hapus |
+
+```bash
+pwd
+cd /var/log
+ls -lah
+cd -
+```
+
+`cd -` kembali ke direktori sebelumnya — trik kecil yang sering menyelamatkan waktu.
+
+## Membaca Daftar
+
+```bash
+ls -l
+```
+
+```text
+-rw-r--r-- 1 user user  4096 Mar 12 09:20 catatan.txt
+|  |  |  |  |    |     |      |        |
+tipe izin   link  owner group size  waktu  nama
+```
+
+```bash
+ls -lh      # ukuran mudah dibaca
+ls -lt      # urut berdasarkan waktu
+ls -a       # termasuk file tersembunyi
+```
+
+## Jalur
+
+```text
+/etc/nginx        absolut, dari root
+./app/config      relatif dari direktori sekarang
+../induk/file     naik satu level
+~/dokumen         relatif dari home
+```
+
+<div class="note">💡 Hati-hati dengan `rm -rf`. Selalu periksa `pwd` dan jalur目标 sebelum menekan Enter — Linux tidak punya tempat sampah untuk perintah ini.</div>
+
+## Man dan Help
+
+```bash
+man ls
+ls --help
+whatis ls
+type cd
+```
+
+`man` adalah dokumentasi bawaan. Membiasakan membacanya lebih baik daripada menghafal semua opsi.

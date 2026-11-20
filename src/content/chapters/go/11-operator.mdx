@@ -1,0 +1,124 @@
+---
+"title": "Operator"
+"description": "Operator aritmetika, perbandingan, logika, dan bitwise di Go"
+"order": 11
+"quiz":
+- "q": "Operator untuk mencari sisa pembagian di Go adalah…"
+  "options":
+  - "%"
+  - "/"
+  - "//"
+  - "mod"
+  "answer": 0
+  "explain": "Operator % menghasilkan sisa, misal 7 % 3 = 1."
+- "q": "Pembagian 7 / 2 dengan kedua operand int menghasilkan…"
+  "options":
+  - "3.5"
+  - "3"
+  - "4"
+  - "error"
+  "answer": 1
+  "explain": "Pembagian bilangan bulat membuang pecahan."
+- "q": "Perbandingan kesamaan ditulis…"
+  "options":
+  - "="
+  - "=="
+  - "==="
+  - "equals"
+  "answer": 1
+  "explain": "== membandingkan nilai, sedangkan = adalah penugasan."
+- "q": "Operator logika AND di Go adalah…"
+  "options":
+  - "&&"
+  - "&"
+  - "and"
+  - "||"
+  "answer": 0
+  "explain": "&& adalah AND logika dengan short-circuit."
+- "q": "Hasil dari 5 <&lt; 1 adalah…"
+  "options":
+  - "10"
+  - "5"
+  - "6"
+  - "2"
+  "answer": 0
+  "explain": "Pergeseran kiri mengalikan dengan 2: 5 biner 101 menjadi 1010."
+"example":
+  "code": "package main\nimport \"fmt\"\nfunc main() {\n    a, b := 7, 2\n    fmt.Println(a+b, a-b, a*b, a/b, a%b)\n    fmt.Println(a > b, a == b)\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operator membuat ekspresi di Go jadi ringkas. Aturannya mirip bahasa C, tapi lebih sedikit dan lebih konsisten.
+
+## Aritmetika
+
+| Operator | Arti | Contoh | Hasil |
+|---|---|---|---|
+| `+` | Tambah | `7 + 2` | `9` |
+| `-` | Kurang | `7 - 2` | `5` |
+| `*` | Kali | `7 * 2` | `14` |
+| `/` | Bagi | `7 / 2` | `3` untuk int |
+| `%` | Sisa | `7 % 2` | `1` |
+
+Untuk hasil desimal, salah satu operand harus `float64`:
+
+```go
+fmt.Println(7 / 2.0) // 3.5
+```
+
+## Perbandingan
+
+`==`, `!=`, `>`, `<`, `>=`, `&lt;=` menghasilkan `bool`. Nilai dengan tipe berbeda tidak bisa dibandingkan langsung — kompiler akan menolak.
+
+```go
+var x int = 5
+// fmt.Println(x == 5.0) // error: tipe berbeda
+```
+
+## Logika
+
+- `&&` — AND, `||` — OR, `!` — NOT
+- Keduanya memakai *short-circuit*
+
+## Bitwise
+
+`&`, `|`, `^`, `<<`, `>>`, dan `&^` (AND NOT) bekerja pada bit. Berguna untuk flag dan optimasi nivel rendah.
+
+```go
+const (
+    Baca  = 1 << iota // 1
+    Tulis             // 2
+    Jalankan          // 4
+)
+fmt.Println(Baca | Tulis) // 3
+```
+
+## Penugasan Gabungan
+
+`+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<&lt;=`, `>>=`.
+
+## Increment
+
+Go hanya punya `x++` dan `x--` sebagai **statement**, bukan ekspresi. `y := x++` tidakvalid.
+
+<div class="note">💡 Prioritas operator bisa diubah dengan kurung. Bila ragu, tambahkan kurung — kode jadi lebih jelas tanpa biaya performa.</div>
+
+
+## Try it Yourself
+
+Ubah nilai `a` dan `b`, lalu coba operator lain seperti `a & b`.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+func main() {
+    a, b := 13, 5
+    fmt.Println("a + b =", a+b)
+    fmt.Println("a - b =", a-b)
+    fmt.Println("a * b =", a*b)
+    fmt.Println("a / b =", a/b)
+    fmt.Println("a % b =", a%b)
+    fmt.Println("a > b  =", a > b)
+    fmt.Println("a & b  =", a&b)
+    fmt.Println("a <&lt; 1 =", a<&lt;1)
+}`} />

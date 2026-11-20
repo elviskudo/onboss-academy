@@ -1,0 +1,103 @@
+---
+title: "Komunikasi I2C"
+description: "Wire library, alamat, dan pembacaan sensor"
+order: 19
+quiz:
+  - q: "I2C memakai dua pin pada Uno, yaitu…"
+    options: ["0 dan 1", "2 dan 3", "9 dan 10", "A4 (SDA) dan A5 (SCL)"]
+    answer: 3
+    explain: "Pada Mega, SDA/SCL ada di pin 20/21."
+  - q: "Fungsi untuk memulai bus I2C sebagai master adalah…"
+    options: ["Wire.begin()", "I2C.start()", "Serial.begin()", "SPI.begin()"]
+    answer: 0
+    explain: "Panggil di setup()."
+  - q: "Untuk memulai transaksi ke perangkat alamat 0x48, gunakan…"
+    options: ["Wire.select(0x48)", "Wire.beginTransmission(0x48)", "Wire.open(0x48)", "Wire.connect(0x48)"]
+    answer: 1
+    explain: "Akhiri dengan Wire.endTransmission()."
+  - q: "Wire.requestFrom(0x48, 2) meminta…"
+    options: ["2 pin", "2 bit", "2 byte dari perangkat 0x48", "2 alamat"]
+    answer: 2
+    explain: "Data lalu dibaca dengan Wire.read()."
+  - q: "Kecepatan I2C standar adalah…"
+    options: ["1 MHz", "9600 Hz", "50 Hz", "100 kHz"]
+    answer: 3
+    explain: "Mode Fast 400 kHz juga didukung banyak modul."
+example:
+  code: |
+    #include <Wire.h>
+    
+    void setup() {
+      Wire.begin();
+      Serial.begin(9600);
+    }
+    
+    void loop() {
+      Wire.requestFrom(0x48, 2);
+      while (Wire.available()) {
+        Serial.println(Wire.read());
+      }
+      delay(500);
+    }
+---
+
+I2C memungkinkan banyak perangkat berbagi dua kabel. Setiap perangkat punya alamat, sehingga master bisa memilih tujuan transaksi.
+
+## Pin
+
+| Board | SDA | SCL |
+|---|---|---|
+| Uno / Nano | A4 | A5 |
+| Mega | 20 | 21 |
+| Leonardo | 2 | 3 |
+
+## Transaksi Tulis
+
+```cpp
+Wire.beginTransmission(0x3C);
+Wire.write(0x00);      // register
+Wire.write(0xAB);      // data
+Wire.endTransmission();
+```
+
+## Transaksi Baca
+
+```cpp
+Wire.beginTransmission(0x48);
+Wire.write(0x00);            // pilih register
+Wire.endTransmission(false); // repeated start
+
+Wire.requestFrom(0x48, 2);
+int hi = Wire.read();
+int lo = Wire.read();
+```
+
+## Resistor Pull-up
+
+Bus I2C membutuhkan resistor pull-up ke 5 V (umumnya 4,7 kΩ). Banyak modul sudah menyediakannya; bila tidak, tambahkan sendiri. Tanpa pull-up, sinyal tidak naik ke level HIGH.
+
+## Memindai Alamat
+
+```cpp
+for (byte a = 1; a < 127; a++) {
+  Wire.beginTransmission(a);
+  if (Wire.endTransmission() == 0) {
+    Serial.println(a, HEX);
+  }
+}
+```
+
+<div class="note">💡 Modul 5 V dan board 3,3 V perlu level shifter I2C dua arah. Jangan langsung menyambungkan SDA/SCL 5 V ke Due.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;Wire.h&gt;
+void setup(){
+  Wire.begin(); Serial.begin(9600);
+  for(byte a=1;a&lt;127;a++){
+    Wire.beginTransmission(a);
+    if(Wire.endTransmission()==0){ Serial.println(a,HEX); }
+  }
+}
+void loop(){}`}</code></pre>

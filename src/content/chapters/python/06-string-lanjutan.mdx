@@ -138,6 +138,10 @@ tahun, bulan, hari = tanggal.split("-")
 
 <div class="note">💡 String immutable: tiap method (`upper`, `strip`, `replace`) membuat string BARU. Tulis `s = s.strip()` — kalau hanya `s.strip()`, hasilnya dibuang dan `s` tetap kotor.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="python" runtime="piston" pistonName="python" code={`data = "sari wijaya; bandung; 90"
 nama, kota, skor = (p.strip().title() for p in data.split(";"))
 print(f"Nama : {nama}")

@@ -1,0 +1,90 @@
+---
+title: "Studi Kasus: Monitoring Akuarium"
+description: "Menggabungkan sensor suhu, relay, dan dashboard sederhana"
+order: 27
+quiz:
+  - q: "Komponen yang berguna untuk mengontrol pemanas akuarium adalah…"
+    options: ["LED biasa", "Resistor pull-down", "Kabel HDMI", "Relay yang digerakkan GPIO"]
+    answer: 3
+    explain: "Relay memisahkan tegangan rendah Pi dari beban 220 V."
+  - q: "Keamanan listrik terpenting saat memakai relay 220 V adalah…"
+    options: ["Putus daya sebelum menyambung dan gunakan enclosure", "Menambah kipas", "Mengubah hostname", "Menghapus log"]
+    answer: 0
+    explain: "Kesalahan pada jaringan listrik bisa fatal; bila ragu, minta teknisi berlisensi."
+  - q: "Sensor suhu yang cocok untuk air adalah…"
+    options: ["MQ-135", "DS18B20 versi waterproof", "DHT22", "BMP280"]
+    answer: 1
+    explain: "DS18B20 memiliki versi dengan coating kedap air."
+  - q: "Logika kontrol sederhana untuk pemanas adalah…"
+    options: ["Matikan terus", "Bergantung warna air", "Jika suhu &lt; 24 C nyalakan, jika > 26 C matikan", "Nyalakan terus menerus"]
+    answer: 2
+    explain: "Rentang (hysteresis) mencegah relay berkedip cepat."
+  - q: "Dashboard minimal bisa menampilkan…"
+    options: ["Hanya jam", "Hanya alamat IP", "Tidak ada data", "Suhu terkini dan status pemanas"]
+    answer: 3
+    explain: "Data yang dibutuhkan pengguna adalah yang paling penting."
+example:
+  code: |
+    # Logika hysteresis
+    if suhu &lt; 24.0: nyalakan_pemanas()
+    elif suhu > 26.0: matikan_pemanas()
+    # di antara 24-26: biarkan status apa adanya
+---
+
+Proyek akuarium adalah contoh IoT yang menyentuh dunia nyata: membaca suhu, mengendalikan perangkat listrik, dan menyajikan status ke pengguna.
+
+## Komponen
+
+| Komponen | Fungsi |
+|---|---|
+| Pi + kartu SD | Otak sistem |
+| DS18B20 waterproof | Sensor suhu air |
+| Modul relay 1-channel | Mengontrol pemanas |
+| Resistor 4,7 kΩ | Pull-up untuk 1-Wire |
+| enclosure | Perlindungan listrik |
+
+## Rangkaian 1-Wire
+
+```text
+DS18B20 DATA -> GPIO4
+3V3 -> sensor
+GND -> sensor
+4.7k antara 3V3 dan DATA
+```
+
+## Logika Kontrol
+
+```python
+if suhu < 24.0 and tidak relay.on:
+    relay.on()
+elif suhu > 26.0 and relay.on:
+    relay.off()
+```
+
+Jangan membalik relay setiap pembacaan—itu memperpendek umur relay dan membuat pemanas berkedip.
+
+## Dashboard
+
+```text
+Suhu air      : 25.1 C
+Status pemanas: MATI
+Update terakhir: 09:42
+```
+
+Bisa disajikan lewat Flask atau dikirim ke MQTT untuk ditampilkan di phone.
+
+## Keamanan
+
+Gunakan relay dengan rating arus di atas beban, kabel yang memadai, dan enclosure. Tambahkan fuse serta pastikan tidak ada kontak terbuka. Untuk beban besar lebih aman memanggil teknisi.
+
+<div class="note">💡 Awali pengujian dengan beban kecil (lampu LED 5 V) sebelum menghubungkan pemanas 220 V.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Checklist proyek:
+[ ] DS18B20 terdeteksi di /sys/bus/w1/devices
+[ ] relay berfungsi dengan beban kecil
+[ ] logika hysteresis teruji
+[ ] dashboard menampilkan data
+[ ] enclosure &amp; kabel aman`}</code></pre>

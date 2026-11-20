@@ -1,0 +1,139 @@
+---
+title: "Design Pattern C++"
+description: "Singleton, Factory, Observer, Strategy, dan PIMPL dengan idiom C++ modern"
+order: 23
+quiz:
+  - q: "Singleton memastikan…"
+    options: ["Hanya satu instance class", "Banyak instance", "Tidak ada instance", "Instance selalu thread"]
+    answer: 0
+    explain: "Akses lewat fungsi statik."
+  - q: "Factory Method memindahkan…"
+    options: ["Pembuatan object ke method khusus", "Perhitungan ke UI", "Data ke file", "Thread ke proses"]
+    answer: 0
+    explain: "Caller tidak perlu tahu class konkret."
+  - q: "PIMPL (Pointer to Implementation) berguna untuk…"
+    options: ["Menyembunyikan detail implementasi & mempercepat compile", "Menghapus header", "Membuat singleton", "Mengubah tipe"]
+    answer: 0
+    explain: "Header hanya berisi unique_ptr ke struct internal."
+  - q: "Strategy pattern biasanya diimplementasikan dengan…"
+    options: ["Interface + polymorphism atau std::function", "Macro typedef", "Global variable", "Goto"]
+    answer: 0
+    explain: "Algoritma bisa dipilih saat runtime."
+  - q: "RAII sering menggantikan pola…"
+    options: ["Dispose/Finalize manual", "Factory", "Observer", "Singleton"]
+    answer: 0
+    explain: "Destructor otomatis membersihkan resource."
+example:
+  code: |
+    #include <memory>
+    #include <functional>
+    #include <iostream>
+    
+    class Diskon {
+        std::function<double(double)> strategi;
+    public:
+        explicit Diskon(std::function<double(double)> s) : strategi(std::move(s)) {}
+        double hitung(double total) const { return strategi(total); }
+    };
+    
+    int main() {
+        Diskon member([](double t){ return t*0.9; });
+        Diskon pajak([](double t){ return t*1.1; });
+        std::cout <&lt; member.hitung(100) <&lt; " " <&lt; pajak.hitung(100) <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Pattern dalam C++ sering terlihat berbeda dari versi Java karena ada RAII, template, dan fungsi sebagai first-class citizen (`std::function`, lambda).
+
+## Strategy dengan std::function
+
+```cpp
+#include <functional>
+
+using Strategi = std::function<double(double)>;
+
+class Checkout {
+    Strategi diskon;
+public:
+    explicit Checkout(Strategi s) : diskon(std::move(s)) {}
+    double total(double harga) const { return diskon(harga); }
+};
+
+Checkout c([](double h){ return h * 0.85; });
+```
+
+Lebih ringkas daripada hierarki class Strategy formal.
+
+## Singleton
+
+```cpp
+class Konfigurasi {
+public:
+    static Konfigurasi& instance() {
+        static Konfigurasi k;   // thread-safe sejak C++11
+        return k;
+    }
+    Konfigurasi(const Konfigurasi&) = delete;
+private:
+    Konfigurasi() = default;
+};
+```
+
+Local static dijamin inisialisasi sekali secara thread-safe.
+
+## Factory
+
+```cpp
+std::unique_ptr<Bentuk> buat(const std::string &jenis) {
+    if (jenis == "lingkaran") return std::make_unique<Lingkaran>();
+    if (jenis == "kotak")     return std::make_unique<Kotak>();
+    return nullptr;
+}
+```
+
+Mengembalikan `unique_ptr` membuat ownership eksplisit.
+
+## PIMPL
+
+```cpp
+// widget.h
+class Widget {
+    struct Impl;
+    std::unique_ptr<Impl> p;
+public:
+    Widget();
+    ~Widget();
+    void gambar();
+};
+
+// widget.cpp
+struct Widget::Impl { /* detail, library mahal */ };
+Widget::Widget() : p(std::make_unique<Impl>()) {}
+Widget::~Widget() = default;
+```
+
+Perubahan di Impl tidak memaksa seluruh proyek rebuild.
+
+<div class="note">💡 Jangan memaksakan pola dari buku GoF apa adanya. C++ modern sering bisa menyelesaikan masalah yang sama dengan lambda, template, atau smart pointer dalam baris yang jauh lebih sedikit.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <memory>
+#include <functional>
+#include <iostream>
+
+class Diskon {
+    std::function<double(double)> strategi;
+public:
+    explicit Diskon(std::function<double(double)> s) : strategi(std::move(s)) {}
+    double hitung(double total) const { return strategi(total); }
+};
+
+int main() {
+    Diskon member([](double t){ return t*0.9; });
+    Diskon pajak([](double t){ return t*1.1; });
+    std::cout <&lt; member.hitung(100) <&lt; " " <&lt; pajak.hitung(100) <&lt; '\n';
+}`} />

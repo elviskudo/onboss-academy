@@ -1,0 +1,143 @@
+---
+"title": "LINQ: Query Data dengan Elegan"
+"description": "Filter, urutkan, dan agregasi data memakai LINQ method syntax dan query syntax"
+"order": 15
+"quiz":
+- "q": "LINQ adalah singkatan dari…"
+  "options":
+  - "Language Integrated Query"
+  - "Linear Integrated Query"
+  - "Linked Inquiry"
+  - "Logic in Query"
+  "answer": 0
+  "explain": "LINQ menyatu langsung ke bahasa C#, bukan string query terpisah."
+- "q": "Method untuk mengambil hanya sebagian elemen yang sesuai syarat adalah…"
+  "options":
+  - "Select"
+  - "Where"
+  - "OrderBy"
+  - "GroupBy"
+  "answer": 1
+  "explain": "Where menyaring elemen; Select mengubah bentuk tiap elemen."
+- "q": "Hasil dari new[]{1,2,3}.Sum() adalah…"
+  "options":
+  - "\"3\""
+  - "\"5\""
+  - "\"6\""
+  - "\"error\""
+  "answer": 2
+  "explain": "Sum menjumlahkan seluruh elemen: 1+2+3 = 6."
+- "q": "Metode yang mengubah bentuk setiap elemen disebut…"
+  "options":
+  - "Where"
+  - "Select"
+  - "First"
+  - "Count"
+  "answer": 1
+  "explain": "Select memetakan tiap elemen ke bentuk baru, mirip map."
+- "q": "FirstOrDefault pada koleksi kosong mengembalikan…"
+  "options":
+  - "exception"
+  - "null atau nilai default tipe"
+  - "elemen pertama"
+  - "0 selalu"
+  "answer": 1
+  "explain": "FirstOrDefault tidak melempar exception; First akan melempar bila kosong."
+"example":
+  "code": "using System;\nusing System.Linq;\nclass Program\n{\n    static void Main()\n    {\n        int[] angka = { 1, 2, 3, 4, 5 };\n        var genap = angka.Where(x => x % 2 == 0).ToArray();\n        Console.WriteLine(string.Join(\",\", genap));\n        Console.WriteLine(angka.Sum());\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+LINQ (Language Integrated Query) memungkinkan kamu menulis query langsung di C# untuk koleksi, database, atau XML. Hasilnya lebih mirip kalimat daripada rangkaian perulangan.
+
+## Method Syntax
+
+```csharp
+using System.Linq;
+
+int[] angka = { 5, 2, 9, 1, 7 };
+
+var urut = angka.OrderBy(x => x).ToArray();       // 1,2,5,7,9
+var besar = angka.Where(x => x > 4).ToArray();    // 5,9,7
+var kuadrat = angka.Select(x => x * x).ToArray(); // 25,4,81,1,49
+int jumlah = angka.Sum();                         // 24
+```
+
+## Query Syntax
+
+Bentuk alternatif yang lebih mirip SQL:
+
+```csharp
+var hasil = from n in angka
+            where n % 2 == 0
+            orderby n descending
+            select n * 10;
+```
+
+Keduanya menghasilkan struktur yang sama; pilih yang lebih enak dibaca timmu.
+
+## Operator yang Sering Dipakai
+
+| Operator | Fungsi |
+|---|---|
+| `Where` | Menyaring |
+| `Select` | Memetakan nilai |
+| `OrderBy` / `OrderByDescending` | Mengurutkan |
+| `GroupBy` | Mengelompokkan |
+| `Count`, `Sum`, `Average`, `Min`, `Max` | Agregasi |
+| `First`, `FirstOrDefault` | Elemen pertama |
+| `Any`, `All` | Cek keberadaan |
+| `Distinct` | Menghapus duplikat |
+| `Take`, `Skip` | Paginasi |
+
+## Eksekusi Tertunda (Deferred)
+
+Kebanyakan operator LINQ tidak langsung jalan saat dipanggil — mereka baru dieksekusi saat hasilnya diiterasi (`ToList()`, `foreach`, `Sum()`). Ini menghemat kerja, tapi artinya koleksi sumber yang berubah sebelum iterasi akan ikut terlihat.
+
+```csharp
+var query = angka.Where(x => x > 3); // belum jalan
+angka[0] = 100;                       // masih memengaruhi query
+var hasil = query.ToList();           // baru dieksekusi
+```
+
+## GroupBy
+
+```csharp
+var kata = new[] { "apel", "anggur", "pisang", "apel" };
+var grup = kata.GroupBy(s => s[0]);
+foreach (var g in grup)
+    Console.WriteLine($"{g.Key}: {g.Count()}");
+```
+
+<div class="note">💡 <code>Any()</code> lebih cepat daripada <code>Count() &gt; 0</code> untuk mengecek keberadaan, karena berhenti begitu menemukan satu elemen.</div>
+
+## Try it Yourself
+
+Ganti kondisi `Where` atau nilai array untuk melihat kekuatan LINQ.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Linq;
+
+class Program
+{
+    static void Main()
+    {
+        int[] angka = { 5, 2, 9, 1, 7, 2 };
+
+        Console.WriteLine("Urut      : " + string.Join(", ", angka.OrderBy(x => x)));
+        Console.WriteLine("Genap     : " + string.Join(", ", angka.Where(x => x % 2 == 0)));
+        Console.WriteLine("Kuadrat   : " + string.Join(", ", angka.Select(x => x * x)));
+        Console.WriteLine("Jumlah    : " + angka.Sum());
+        Console.WriteLine("Rata-rata : " + angka.Average());
+        Console.WriteLine("Unik      : " + string.Join(", ", angka.Distinct()));
+        Console.WriteLine("Terbesar  : " + angka.Max());
+        Console.WriteLine("Ada > 8?  : " + angka.Any(x => x > 8));
+
+        var query = from n in angka
+                    where n > 3
+                    orderby n descending
+                    select n;
+        Console.WriteLine("Query     : " + string.Join(", ", query));
+    }
+}`} />

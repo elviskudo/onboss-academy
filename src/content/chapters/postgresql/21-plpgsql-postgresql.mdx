@@ -1,0 +1,132 @@
+---
+title: "Dasar PL/pgSQL"
+description: "Fungsi, DO block, variabel, kontrol alur, dan exception"
+order: 21
+quiz:
+  - q: "Bahasa prosedural bawaan PostgreSQL adalah…"
+    options: ["PL/pgSQL", "T-SQL", "PL/SQL", "SQL/PSM"]
+    answer: 0
+    explain: "PL/pgSQL terpasang secara default."
+  - q: "Blok anonim dieksekusi dengan…"
+    options: ["DO $$ ... $$", "EXECUTE BLOCK", "RUN $$", "ANONYMOUS ..."]
+    answer: 0
+    explain: "DO $$ BEGIN ... END $$;"
+  - q: "Deklarasi variabel ditaruh di bagian…"
+    options: ["DECLARE", "VAR", "LET", "SET"]
+    answer: 0
+    explain: "Blok PL/pgSQL: DECLARE, BEGIN, EXCEPTION, END."
+  - q: "Penugasan variabel memakai…"
+    options: ["=", ":=", "->", "SET"]
+    answer: 1
+    explain: "PL/pgSQL memakai := untuk assignment."
+  - q: "Penanganan error ditulis di bagian…"
+    options: ["EXCEPTION", "CATCH", "ERROR", "FINALLY"]
+    answer: 0
+    explain: "EXCEPTION WHEN ... THEN ... menangkap error."
+example:
+  code: |
+    DO $$ DECLARE r numeric; BEGIN SELECT AVG(gaji) INTO r FROM karyawan; RAISE NOTICE 'rata %', r; END $$;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PL/pgSQL menggabungkan SQL dengan variabel, percabangan, dan perulangan di dalam database. Cocok untuk logika yang perlu dekat dengan data, tetapi harus diuji seperti kode aplikasi.
+
+## Struktur Blok
+
+```sql
+DO $$
+DECLARE
+  rata numeric;
+BEGIN
+  SELECT AVG(gaji) INTO rata FROM karyawan;
+  RAISE NOTICE 'Rata-rata gaji: %', rata;
+END $$;
+```
+
+`%` adalah placeholder untuk argumen `RAISE NOTICE`.
+
+## Fungsi
+
+```sql
+CREATE OR REPLACE FUNCTION level_gaji(g numeric)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF g >= 10000000 THEN
+    RETURN 'Tinggi';
+  ELSIF g >= 7000000 THEN
+    RETURN 'Menengah';
+  ELSE
+    RETURN 'Rendah';
+  END IF;
+END;
+$$;
+
+SELECT nama, level_gaji(gaji) FROM karyawan;
+```
+
+## Perulangan
+
+```sql
+DO $$
+DECLARE i integer;
+BEGIN
+  FOR i IN 1..5 LOOP
+    RAISE NOTICE 'nilai %', i;
+  END LOOP;
+END $$;
+```
+
+Ada juga `WHILE`, `FOREACH`, dan `FOR r IN SELECT ...` untuk mengolah baris hasil query.
+
+## Exception
+
+```sql
+DO $$
+BEGIN
+  INSERT INTO produk(id, nama) VALUES (1, 'Kopi');
+EXCEPTION WHEN unique_violation THEN
+  RAISE NOTICE 'id sudah ada, dilewati';
+END $$;
+```
+
+Blok dengan EXCEPTION membentuk subtransaksi; gunakan hanya bila perlu karena ada biaya tambahan.
+
+## Parameter dan Returning
+
+```sql
+CREATE FUNCTION tambah_stok(p_id integer, p_n integer)
+RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE hasil integer;
+BEGIN
+  UPDATE stok SET jumlah = jumlah + p_n
+  WHERE id = p_id RETURNING jumlah INTO hasil;
+  RETURN hasil;
+END;
+$$;
+```
+
+<div class="note">💡 Simpan source fungsi di repositori sebagai file migrasi. Fungsi yang hanya ada di database sulit di-review dan mudah hilang saat restore.</div>
+
+## Di Dunia Nyata
+
+- **Validasi kompleks**: trigger yang mengecek aturan lintas tabel.
+- **Batch processing**: prosedur yang menjalankan beberapa UPDATE.
+- **Fungsi turunan**: perhitungan yang dipakai banyak query.
+- **Audit**: trigger mencatat perubahan ke tabel histori.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE OR REPLACE FUNCTION level_gaji(g numeric)
+RETURNS text LANGUAGE plpgsql AS $$
+BEGIN
+  IF g >= 10000000 THEN RETURN 'Tinggi';
+  ELSIF g >= 7000000 THEN RETURN 'Menengah';
+  ELSE RETURN 'Rendah';
+  END IF;
+END;
+$$;
+SELECT nama, level_gaji(gaji) AS level FROM karyawan ORDER BY gaji DESC;`} />

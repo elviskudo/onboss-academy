@@ -1,0 +1,158 @@
+---
+"title": "Interface dan Abstract Class"
+"description": "Kontrak perilaku, implementasi, dan perbedaan dengan kelas abstrak"
+"order": 18
+"quiz":
+- "q": "Interface mendefinisikan…"
+  "options":
+  - "implementasi method"
+  - "kontrak method tanpa isi"
+  - "variabel publik saja"
+  - "field private"
+  "answer": 1
+  "explain": "Interface adalah kontrak: kelas yang mengimplementasikannya wajib menyediakan anggotanya."
+- "q": "Kata kunci untuk mengimplementasikan interface adalah…"
+  "options":
+  - "extends"
+  - "implements"
+  - ": (titik dua)"
+  - "with"
+  "answer": 2
+  "explain": "Di C#, interface dan base class sama-sama ditulis setelah titik dua."
+- "q": "Abstract class berbeda dari interface karena…"
+  "options":
+  - "tidak bisa punya method"
+  - "bisa punya implementasi dan field"
+  - "tidak bisa diwariskan"
+  - "selalu sealed"
+  "answer": 1
+  "explain": "Abstract class boleh berisi method konkret dan state."
+- "q": "Sebuah class di C# bisa mewarisi…"
+  "options":
+  - "banyak class"
+  - "satu class dan banyak interface"
+  - "banyak class dan satu interface"
+  - "hanya interface"
+  "answer": 1
+  "explain": "C# hanya mendukung satu base class, tetapi banyak interface."
+- "q": "Nama interface di C# biasanya diawali…"
+  "options":
+  - "I"
+  - "Abstract"
+  - "Interface"
+  - "@"
+  "answer": 0
+  "explain": "Konvensi: IRepository, IEditable, dan sebagainya."
+"example":
+  "code": "using System;\ninterface IBisaBerjalan { void Jalan(); }\nabstract class Hewan\n{\n    public string Nama;\n    public abstract void Suara();\n}\nclass Kucing : Hewan, IBisaBerjalan\n{\n    public override void Suara() => Console.WriteLine(\"Meong\");\n    public void Jalan() => Console.WriteLine(\"Melangkah\");\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Interface dan abstract class keduanya membantu merancang kontrak, tetapi tujuannya berbeda. Paham kapan memakai masing-masing membuat rancangan lebih rapi.
+
+## Interface
+
+```csharp
+interface IBisaTerbang
+{
+    void Terbang();
+    double Kecepatan { get; }
+}
+
+class Burung : IBisaTerbang
+{
+    public double Kecepatan => 40;
+    public void Terbang() => Console.WriteLine("Terbang");
+}
+```
+
+Sejak C# 8, interface boleh punya implementasi default:
+
+```csharp
+interface ILogger
+{
+    void Tulis(string pesan);
+    void Info(string pesan) => Tulis("INFO: " + pesan);
+}
+```
+
+## Abstract Class
+
+```csharp
+abstract class Bentuk
+{
+    public string Warna { get; set; } = "hitam";
+    public abstract double Luas();
+
+    public void Deskripsi()
+        => Console.WriteLine($"Bentuk {Warna}, luas {Luas()}");
+}
+
+class Lingkaran : Bentuk
+{
+    public double R;
+    public override double Luas() => Math.PI * R * R;
+}
+```
+
+Class abstrak tidak bisa dibuat objeknya langsung. Method `abstract` wajib di-override oleh turunan.
+
+## Perbandingan
+
+| Aspek | Interface | Abstract class |
+|---|---|---|
+| Multiple inheritance | Banyak | Satu saja |
+| Field/instance state | Tidak ada | Boleh |
+| Implementasi method | Default (opsional) | Boleh penuh |
+| Akses modifier anggota | Publik (default) | Berbagai |
+| Cocok untuk | Kemampuan (bisa apa) | Identitas (adalah apa) |
+
+## Polimorfisme
+
+```csharp
+IBisaTerbang[] daftar = { new Burung(), new KupuKupu() };
+foreach (var b in daftar) b.Terbang();
+```
+
+Kode pemanggil tidak perlu tahu tipe konkretnya — cukup tahu kontraknya.
+
+<div class="note">💡 Gunakan interface untuk kemampuan yang bisa dimiliki kelas tak terkait, misal <code>IBisaDisimpan</code> dipakai User danProduk sekaligus.</div>
+
+## Try it Yourself
+
+Tambahkan kelas hewan baru yang mengimplementasikan `IBisaBersuara`.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+interface IBisaBersuara { void Bersuara(); }
+
+abstract class Hewan
+{
+    public string Nama;
+    protected Hewan(string nama) { Nama = nama; }
+    public abstract void Suara();
+}
+
+class Anjing : Hewan, IBisaBersuara
+{
+    public Anjing(string nama) : base(nama) { }
+    public override void Suara() => Console.WriteLine(Nama + ": Woof!");
+    public void Bersuara() => Suara();
+}
+
+class Kucing : Hewan, IBisaBersuara
+{
+    public Kucing(string nama) : base(nama) { }
+    public override void Suara() => Console.WriteLine(Nama + ": Meong!");
+    public void Bersuara() => Suara();
+}
+
+class Program
+{
+    static void Main()
+    {
+        IBisaBersuara[] hewan = { new Anjing("Buddy"), new Kucing("Mimi") };
+        foreach (var h in hewan) h.Bersuara();
+    }
+}`} />

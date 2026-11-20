@@ -1,0 +1,101 @@
+---
+title: "Route Groups & Private Folder"
+description: "mengelompokkan rute tanpa mengubah URL dan folder _private"
+order: 18
+quiz:
+  - q: "Route group ditulis dengan folder…"
+    options: ["@nama", "_nama", "(nama)", "[nama]"]
+    answer: 2
+    explain: "Tanda kurung tidak memengaruhi URL."
+  - q: "Tujuan route group adalah…"
+    options: ["Menambah cache", "Mengatur struktur dan layout tanpa menambah segmen URL", "Membuat API", "Mengubah metadata"]
+    answer: 1
+    explain: "Contoh: (marketing)/about → /about."
+  - q: "Beberapa root layout bisa dibuat dengan…"
+    options: ["middleware", "next.config", "public/", "Route group yang masing-masing punya layout.tsx"]
+    answer: 3
+    explain: "Berguna bila bagian situs punya shell berbeda."
+  - q: "Folder diawali underscore (_) berarti…"
+    options: ["Layout otomatis", "Private folder, tidak dibuat rute", "Rute dinamis", "API route"]
+    answer: 1
+    explain: "Aman untuk komponen yang hanya dipakai di segmen itu."
+  - q: "File di dalam folder _components bisa diimpor…"
+    options: ["Secara relatif dari rute terkait", "Melalui URL publik", "Oleh middleware", "Tidak bisa"]
+    answer: 0
+    explain: "Misalnya import '../_components/Kartu'."
+example:
+  code: |
+    app/
+      (marketing)/layout.tsx
+      (marketing)/about/page.tsx   -> /about
+      (app)/dashboard/page.tsx     -> /dashboard
+      _components/Kartu.tsx        -> private
+---
+
+Seiring pertumbuhan proyek, folder `app/` bisa berantakan. Route group dan private folder menjaga kerapian tanpa mengubah URL.
+
+## Route Group
+
+```
+app/
+  (marketing)/
+    layout.tsx
+    page.tsx       -> /
+    about/page.tsx -> /about
+  (dashboard)/
+    layout.tsx
+    laporan/page.tsx -> /laporan
+```
+
+Kedua grup memiliki layout berbeda, tapi URL-nya tetap bersih.
+
+## Root Layout Ganda
+
+```tsx
+// (marketing)/layout.tsx
+<html lang="id"><body>{children}</body></html>
+```
+
+```tsx
+// (dashboard)/layout.tsx
+<html lang="id"><body className="dashboard">{children}</body></html>
+```
+
+Kalau kamu punya beberapa root layout, pastikan setiap grup memilikinya.
+
+## Private Folder
+
+```
+app/produk/
+  _components/
+    KartuProduk.tsx
+    FilterHarga.tsx
+  page.tsx
+```
+
+File di `_components` tidak dianggap rute. Import langsung dari komponen sejalan:
+
+```tsx
+import KartuProduk from "./_components/KartuProduk";
+```
+
+## Konvensi yang Disarankan
+
+| Awalan | Arti |
+|--------|------|
+| `(nama)` | grup, tidak masuk URL |
+| `_nama` | private folder |
+| `[nama]` | parameter dinamis |
+| `@nama` | slot parallel |
+
+<div class="note">💡 Route group sangat membantu saat satu aplikasi punya dua "wajah": situs pemasaran dan area aplikasi yang login. Masing-masing bisa punya layout sendiri.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`app/
+  (marketing)/layout.tsx
+  (marketing)/about/page.tsx   -> /about
+  (app)/dashboard/page.tsx     -> /dashboard
+  _components/Kartu.tsx        -> private`}</code></pre>

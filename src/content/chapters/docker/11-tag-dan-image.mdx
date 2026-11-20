@@ -1,0 +1,89 @@
+---
+title: "Tag dan Manajemen Image"
+description: "Versioning image, semantik tag, dan perilaku latest"
+order: 11
+quiz:
+  - q: "Tag image berfungsi untuk…"
+    options: ["Mengubah ukuran image", "Menentukan port", "Mengunci container", "Menandai versi atau varian dari sebuah image"]
+    answer: 3
+    explain: "Tag adalah label human-readable yang menunjuk ke ID image tertentu."
+  - q: "Tanpa tag saat docker pull, Docker memakai…"
+    options: ["latest", "stable", "1.0", "dev"]
+    answer: 0
+    explain: "Tag default adalah latest, tetapi ini tidak selalu versi terbaru secara chronological."
+  - q: "docker tag app:1.0 app:prod akan…"
+    options: ["Mengganti nama repository", "Membuat alias baru ke image yang sama", "Menyalin layer menjadi image berbeda", "Menghapus tag lama"]
+    answer: 1
+    explain: "Tag hanyalah penunjuk; dua tag bisa mengarah ke image ID yang identik."
+  - q: "Alasan menghindari latest di produksi adalah…"
+    options: ["Tidak bisa di-push", "Tidak mendukung ARM", "Tag bisa berpindah sehingga deploy tidak reproducible", "Ukurannya selalu lebih besar"]
+    answer: 2
+    explain: "Gunakan tag versi tetap atau digest untuk hasil yang deterministik."
+  - q: "Untuk menarik image berdasarkan hash konten, pakai…"
+    options: ["docker pull image:hash", "docker pull --verify", "docker fetch image#sha", "docker pull image@sha256:..."]
+    answer: 3
+    explain: "Digest SHA-256 bersifat immutable dan menjamin byte image identik."
+example:
+  code: |
+    docker tag aplikasi:1.0 aplikasi:produksi
+    docker pull nginx@sha256:abc...
+    docker images --digests
+---
+
+Sebuah image bisa memiliki banyak **tag**. Tag bukan versi di dalam image—ia hanya label yang menunjuk ke ID. Memahami ini penting agar pipeline deploy tidak berubah diam-diam.
+
+## Anatomi Nama Image
+
+```text
+registry.example.com/tim/aplikasi:1.4.2
+└── registry         └── repository  └── tag
+```
+
+| Bagian | Contoh | Catatan |
+|---|---|---|
+| Registry | `docker.io`, `ghcr.io` | Default `docker.io` bila dihilangkan |
+| Repository | `tim/aplikasi` | Boleh bertingkat |
+| Tag | `1.4.2`, `alpine`, `latest` | Bebas, tapi gunakan konvensi yang jelas |
+
+## Membuat dan Memindahkan Tag
+
+```bash
+docker build -t aplikasi:1.4.2 .
+docker tag aplikasi:1.4.2 aplikasi:latest
+docker tag aplikasi:1.4.2 registry.internal/tim/aplikasi:1.4.2
+docker push registry.internal/tim/aplikasi:1.4.2
+```
+
+`docker tag` tidak membuat salinan data—hanya menambah nama lain untuk layer yang sama.
+
+## Masalah `latest`
+
+`latest` adalah tag biasa yang diberikan docker saat tidak ada tag disebut. Maintainers bisa menggesernya kapan saja. Dua server yang menarik image pada hari berbeda bisa menjalankan kode berbeda walaupun perintahnya sama.
+
+Solusinya: pakai nomor versi semantik (`1.4.2`) untuk rilis, atau digest untuk jaminan paling kuat:
+
+```bash
+docker pull nginx@sha256:2f5e...
+```
+
+## Strategi Tag yang Sehat
+
+1. **Versi rilis** — `1.4.2` untuk build yang sudah diuji.
+2. **Tag bendungan** — `1.4` dan `1` mengikuti patch terbaru dalam kanal yang sama.
+3. **Tag komit** — `sha-&lt;7 karakter>` untuk traceability ke git.
+4. **Tag lingkungan** — `staging`, `prod`, dikelola oleh pipeline, bukan manual.
+
+```bash
+docker images aplikasi --format '{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}'
+docker rmi aplikasi:latest   # hapus alias, image asal tetap ada bila tag lain masih ada
+```
+
+<div class="note">💡 Image baru dihapus hanya setelah tag terakhir yang menunjuk kepadanya dihapus dan tidak ada container yang memakainya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`docker pull alpine:3.20
+docker tag alpine:3.20 latihan:versi-1
+printf '%s\\n' '---' 
+docker images latihan --format '{{.Repository}}:{{.Tag}} {{.ID}}'`}</code></pre>

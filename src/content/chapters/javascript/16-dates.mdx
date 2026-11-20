@@ -1,0 +1,132 @@
+---
+title: "Date & Time JavaScript"
+description: "Membuat, memformat, dan menghitung tanggal dengan objek Date"
+order: 16
+quiz:
+  - q: "`new Date()` menghasilkan…"
+    options: ["String tanggal", "Objek Date dengan waktu saat ini", "Angka timestamp saja", "Array"]
+    answer: 1
+    explain: "Tanpa argumen, Date memakai waktu lokal sekarang."
+  - q: "`getMonth()` mengembalikan bulan dengan rentang…"
+    options: ["1–12", "0–11", "0–12", "1–13"]
+    answer: 1
+    explain: "Januari = 0, Desember = 11."
+  - q: "`Date.now()` menghasilkan…"
+    options: ["Objek Date", "Milidetik sejak 1 Januari 1970", "Tahun saja", "String ISO"]
+    answer: 1
+    explain: "Itu epoch timestamp dalam milidetik."
+  - q: "Untuk memformat tanggal sesuai locale, gunakan…"
+    options: ["toLocaleDateString()", "toString()", "getDate()", "parse()"]
+    answer: 0
+    explain: "Intl dan toLocale* memberi format lokal seperti id-ID."
+  - q: "`new Date('2026-01-01')` diinterpretasikan sebagai…"
+    options: ["Waktu lokal", "UTC menurut spesifikasi untuk format ISO tanpa zona", "Selalu kemarin", "Error"]
+    answer: 1
+    explain: "String ISO tanggal-saja diperlakukan UTC; hati-hati beda zona waktu."
+example:
+  code: |
+    const hariIni = new Date();
+    console.log(hariIni.getFullYear());
+    console.log(hariIni.getMonth() + 1);
+    console.log(hariIni.toLocaleDateString('id-ID'));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Objek `Date` menyimpan satu titik waktu dalam milidetik sejak **1 Januari 1970 UTC** (Unix epoch). Cara kamu membuat dan menampilkannya menentukan akurasi zona waktu.
+
+## Membuat Date
+
+```js
+new Date();                       // sekarang
+new Date(2026, 0, 15);            // 15 Jan 2026 (lokal, bulan mulai 0)
+new Date(2026, 0, 15, 14, 30);    // + jam 14:30
+new Date("2026-01-15T14:30:00Z"); // ISO dengan zona UTC
+new Date(1768477800000);          // dari timestamp
+```
+
+## Getter yang Sering Dipakai
+
+| Method | Keterangan |
+|--------|------------|
+| `getFullYear()` | Tahun (2026) |
+| `getMonth()` | Bulan 0–11 |
+| `getDate()` | Tanggal 1–31 |
+| `getDay()` | Hari 0–7 (0 = Minggu) |
+| `getHours()`, `getMinutes()`, `getSeconds()` | Waktu lokal |
+| `getTime()` | Timestamp milidetik |
+| `toISOString()` | String UTC format ISO |
+
+Ada juga versi UTC: `getUTCFullYear()`, `getUTCHours()`, dan sebagainya.
+
+## Memformat Tanggal
+
+```js
+const d = new Date("2026-03-08T10:20:00Z");
+
+d.toLocaleDateString("id-ID", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric"
+});
+// "Minggu, 8 Maret 2026" (tergantung zona)
+
+new Intl.DateTimeFormat("id-ID", {
+  dateStyle: "full", timeStyle: "short", timeZone: "Asia/Jakarta"
+}).format(d);
+```
+
+Selalu tentukan `timeZone` kalau hasilnya harus konsisten di server dan browser.
+
+## Operasi Tanggal
+
+```js
+const besok = new Date();
+besok.setDate(besok.getDate() + 1);
+
+const selisih = new Date("2026-12-31") - new Date("2026-01-01");
+const hari = selisih / (1000 * 60 * 60 * 24);
+```
+
+Mengurangi dua objek Date menghasilkan milidetik selisihnya.
+
+## Perbandingan
+
+```js
+const a = new Date("2026-01-01");
+const b = new Date("2026-06-01");
+console.log(a < b); // true
+console.log(a.getTime() === b.getTime()); // false
+```
+
+Jangan membandingkan objek Date dengan `===` karena itu membandingkan referensi objek.
+
+## Jebakan Zona Waktu
+
+```js
+new Date("2026-01-01")   // UTC midnight
+new Date(2026, 0, 1)     // lokal midnight
+```
+
+Di pengguna dengan UTC+7, dua baris di atas bisa berbeda 7 jam. Untuk tanggal tanpa waktu (tanggal lahir, tanggal merah), sering lebih aman menyimpannya sebagai string `"2026-01-01"` dan memformatnya dengan hati-hati.
+
+<div class="note">💡 Untuk aplikasi serius pertimbangkan library `date-fns`, `dayjs`, atau Temporal API (sedang masuk ke JavaScript) agar manipulasi tanggal lebih prediktabel.</div>
+
+## Di Dunia Nyata
+
+- Menampilkan "diterbitkan 2 jam lalu" dari selisih timestamp.
+- Menjadwalkan reminder dengan `setTimeout` sampai selisih waktu tertentu.
+- Mengurutkan daftar transaksi berdasarkan `getTime()`.
+
+## Try it Yourself
+
+Ganti zona waktu atau tanggal target pada contoh berikut.
+
+<TryIt lang="javascript" runtime="client-js" code={`const sekarang = new Date();
+console.log("ISO:", sekarang.toISOString());
+console.log("Lokal:", sekarang.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }));
+console.log("Tahun:", sekarang.getFullYear());
+console.log("Bulan (0-based):", sekarang.getMonth());
+const besok = new Date(sekarang);
+besok.setDate(besok.getDate() + 1);
+console.log("Besok:", besok.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }));
+const target = new Date("2026-12-31T00:00:00Z");
+console.log("Hari menuju target:", Math.ceil((target - sekarang) / 86400000));`} />

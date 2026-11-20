@@ -1,0 +1,150 @@
+---
+"title": "Testing dengan Minitest"
+"description": "Unit test bawaan Ruby, assertion, setup/teardown, dan test-driven development"
+"order": 23
+"quiz":
+- "q": "Pustaka testing bawaan Ruby adalah…"
+  "options":
+  - "Minitest"
+  - "RSpec"
+  - "Jest"
+  - "Pytest"
+  "answer": 0
+  "explain": "Minitest disertakan dalam pustaka standar Ruby."
+- "q": "Kelas test Minitest mewarisi…"
+  "options":
+  - "Minitest::Test"
+  - "Test::Unit"
+  - "TestCase"
+  - "Object"
+  "answer": 0
+  "explain": "Require 'minitest/autorun' lalu subclass Minitest::Test."
+- "q": "Nama method test harus diawali…"
+  "options":
+  - "test_"
+  - "spec_"
+  - "check_"
+  - "it_"
+  "answer": 0
+  "explain": "Minitest menjalankan method yang diawali test_."
+- "q": "assert_equal berguna untuk…"
+  "options":
+  - "membandingkan dua nilai"
+  - "mengecek nil"
+  - "membuat exception"
+  - "mengukur waktu"
+  "answer": 0
+  "explain": "assert_equal expected, actual."
+- "q": "setup pada Minitest dijalankan…"
+  "options":
+  - "sekali"
+  - "sebelum setiap test"
+  - "setelah test"
+  - "tidak pernah"
+  "answer": 1
+  "explain": "setup menyiapkan kondisi awal untuk tiap kasus."
+"example":
+  "code": "require \"minitest/autorun\"\nclass TesMath &lt; Minitest::Test\n  def test_tambah\n    assert_equal 5, 2 + 3\n  end\nend\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Minitest adalah framework test ringan yang sudah tersedia bersama Ruby. Untuk proyek kecil, ini sering lebih dari cukup.
+
+## Test Pertama
+
+```ruby
+require "minitest/autorun"
+
+class TesKalkulator < Minitest::Test
+  def test_tambah
+    assert_equal 5, 2 + 3
+  end
+
+  def test_hasil_kosong
+    assert_nil [].first
+  end
+end
+```
+
+Jalankan dengan `ruby tes.rb`.
+
+## Assertion Umum
+
+| Assertion | Fungsi |
+|---|---|
+| `assert` | Nilai truthy |
+| `assert_equal` | Sama |
+| `assert_nil` | Bernilai nil |
+| `assert_raises` | Exception tertentu |
+| `refute` | Nilai falsy |
+| `assert_in_delta` | Desimal dalam toleransi |
+
+```ruby
+assert_raises(ZeroDivisionError) { 1 / 0 }
+```
+
+## setup & teardown
+
+```ruby
+def setup
+  @kalkulator = Kalkulator.new
+end
+
+def teardown
+  @kalkulator = nil
+end
+```
+
+Keduanya dijalankan untuk setiap test, menjaga isolasi antar kasus.
+
+## Test-Driven Development
+
+1. Tulis test yang gagal (*red*)
+2. Tulis kode minimum agar lolos (*green*)
+3. Perbaiki struktur tanpa mengubah perilaku (*refactor*)
+
+Siklus ini membuat kode lebih kecil dan lebih percaya diri saat diubah.
+
+## RSpec (Opsional)
+
+```ruby
+RSpec.describe Kalkulator do
+  it "menjumlahkan dua angka" do
+    expect(described_class.new.tambah(2, 3)).to eq(5)
+  end
+end
+```
+
+RSpec lebih ekspresif tapi butuh gem tambahan.
+
+<div class="note">💡 Satu test sebaiknya menguji satu perilaku. Jika nama test perlu kata "dan", pertimbangkan untuk memecahnya.</div>
+
+
+## Try it Yourself
+
+Tambahkan satu assertion lagi atau ubah nilai yang diharapkan.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`require "minitest/autorun"
+
+class TesKata &lt; Minitest::Test
+  def setup
+    @kata = "Ruby itu menyenangkan"
+  end
+
+  def test_panjang
+    assert_operator @kata.length, :>, 10
+  end
+
+  def test_kata_pertama
+    assert_equal "Ruby", @kata.split.first
+  end
+
+  def test_tidak_ada_angka
+    refute_match /\d/, @kata
+  end
+
+  def test_error
+    assert_raises(NoMethodError) { nil.upcase }
+  end
+end`} />

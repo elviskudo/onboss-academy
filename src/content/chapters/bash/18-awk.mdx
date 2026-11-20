@@ -1,0 +1,128 @@
+---
+"title": "Memproses Data dengan awk"
+"description": "Field, pola, aksi, variabel bawaan, dan agregasi sederhana dengan awk"
+"order": 18
+"quiz":
+- "q": "Variabel awk yang berisi seluruh baris adalah…"
+  "options":
+  - "$1"
+  - "$0"
+  - "NR"
+  - "FS"
+  "answer": 1
+  "explain": "$0 adalah record lengkap."
+- "q": "Field kedua pada baris diakses dengan…"
+  "options":
+  - "[2]"
+  - "field(2)"
+  - "$2"
+  - "F2"
+  "answer": 2
+  "explain": "Pemecahan field diatur oleh FS (spasi secara bawaan)."
+- "q": "Variabel NF berisi…"
+  "options":
+  - "Nomor baris"
+  - "Nama file"
+  - "Nilai field terakhir"
+  - "Jumlah field"
+  "answer": 3
+  "explain": "$NF adalah field terakhir."
+- "q": "Pola BEGIN pada awk dijalankan…"
+  "options":
+  - "Sebelum membaca baris"
+  - "Aturiap baris"
+  - "Di akhir"
+  - "Saat error"
+  "answer": 0
+  "explain": "END dijalankan setelah semua baris diproses."
+- "q": "Perintah menjalankan awk dengan pemisah koma adalah…"
+  "options":
+  - "awk -d ',' ..."
+  - "awk -F, '{print $1}'"
+  - "awk /,/ ..."
+  - "awk --sep=,"
+  "answer": 1
+  "explain": "-F menentukan field separator."
+"example":
+  "code": "#!/usr/bin/env bash\n# data.csv: nama,jumlah,harga\nawk -F, 'NR > 1 { total += $2 * $3 }\n         END { print \"Total:\", total }' data.csv\n\n# baris dengan jumlah lebih dari 10\nawk -F, '$2 > 10 { print $1, $2 }' data.csv\n\n# rata-rata nilai dari kolom ketiga\nawk '{ sum += $3; n++ } END { print sum/n }' nilai.txt\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Struktur Program awk
+
+```bash
+#!/usr/bin/env bash
+# data.csv: nama,jumlah,harga
+awk -F, 'NR > 1 { total += $2 * $3 }
+         END { print "Total:", total }' data.csv
+
+# baris dengan jumlah lebih dari 10
+awk -F, '$2 > 10 { print $1, $2 }' data.csv
+
+# rata-rata nilai dari kolom ketiga
+awk '{ sum += $3; n++ } END { print sum/n }' nilai.txt
+```
+
+```
+awk 'pola { aksi }' file
+```
+
+Awk membaca baris demi baris. Bila pola bernilai benar, blok aksi dijalankan. Tanpa pola, aksi berjalan untuk setiap baris.
+
+| Variabel | Arti |
+|---|---|
+| `$0` | seluruh baris |
+| `$1`, `$2` | field pertama, kedua |
+| `NF` | jumlah field |
+| `NR` | nomor baris global |
+| `FNR` | nomor baris per file |
+| `FS` | field separator |
+| `OFS` | output field separator |
+
+## Contoh Praktis
+
+```bash
+# tampilkan nama (field 1) dan ukuran (field 5) dari ls -l
+ls -l | awk '{print $9, $5}'
+
+# baris dengan lebih dari 3 field
+awk 'NF > 3' data.txt
+```
+
+## BEGIN dan END
+
+```bash
+awk 'BEGIN { print "Mulai..." }
+     { jum++ }
+     END { print "Selesai:", jum, "baris" }' file.txt
+```
+
+`BEGIN` cocok untuk inisialisasi dan header; `END` untuk ringkasan akhir.
+
+## Agregasi
+
+```bash
+awk -F, '{ gaji[$1] += $2 }
+         END { for (n in gaji) print n, gaji[n] }' gaji.csv
+```
+
+Awk menyediakan array asosiatif tanpa deklarasi — kuncinya bisa berupa string.
+
+<div class="note">💡 Awk sangat cepat untuk data berformat kolom. Untuk kebutuhan yang lebih kompleks (join antar file, struktur data besar), pertimbangkan Python.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+# data.csv: nama,jumlah,harga
+awk -F, 'NR > 1 { total += $2 * $3 }
+         END { print "Total:", total }' data.csv
+
+# baris dengan jumlah lebih dari 10
+awk -F, '$2 > 10 { print $1, $2 }' data.csv
+
+# rata-rata nilai dari kolom ketiga
+awk '{ sum += $3; n++ } END { print sum/n }' nilai.txt`} />

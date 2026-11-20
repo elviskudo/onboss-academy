@@ -1,0 +1,97 @@
+---
+title: "StringBuilder & StringBuffer"
+description: "kenapa String tidak bisa diubah dan cara menyusun teks secara efisien"
+order: 12
+quiz:
+  - q: "String di Java bersifat…"
+    options: ["Mutable", "Immutable", "Statik", "Primitif"]
+    answer: 1
+    explain: "Setiap operasi `+` pada String membuat object baru."
+  - q: "Kelas untuk penyusunan string yang efisien adalah…"
+    options: ["String", "StringBuilder", "StringTokenizer", "StringBufferOnly"]
+    answer: 1
+    explain: "StringBuilder memakai buffer yang bisa diubah tanpa membuat object baru."
+  - q: "Perbedaan StringBuilder dan StringBuffer adalah…"
+    options: ["StringBuilder lebih lambat", "StringBuffer thread-safe (tersinkronisasi)", "StringBuffer tidak bisa append", "Tidak ada bedanya"]
+    answer: 1
+    explain: "StringBuffer sinkron; StringBuilder lebih cepat untuk single-thread."
+  - q: "Method untuk membalik isi StringBuilder adalah…"
+    options: ["flip()", "reverse()", "turn()", "swap()"]
+    answer: 1
+    explain: "`reverse()` tersedia langsung di StringBuilder."
+  - q: "Loop 10.000 kali dengan `s += x` sebaiknya diganti dengan…"
+    options: ["String.concat", "StringBuilder.append", "String.format", "Array"]
+    answer: 1
+    explain: "StringBuilder menghindari ribuan object String sementara."
+example:
+  code: |
+    public class Main {
+      public static void main(String[] args) {
+        StringBuilder sb = new StringBuilder("Halo");
+        sb.append(" Dunia");
+        sb.insert(4, ",");
+        sb.replace(5, 6, " Saya");
+        System.out.println(sb);
+        System.out.println(sb.reverse());
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+`String` di Java adalah object **immutable**. Setiap kali kamu menulis `s += "x"`, JVM membuat String baru dan membuang yang lama. Dalam loop panjang ini sangat boros.
+
+## StringBuilder
+
+```java
+StringBuilder sb = new StringBuilder();
+for (int i = 0; i < 10000; i++) {
+    sb.append(i).append(",");
+}
+String hasil = sb.toString();
+```
+
+Method umum:
+
+| Method | Fungsi |
+|---|---|
+| `append(...)` | tambah di akhir (bisa dirantai) |
+| `insert(pos, ...)` | sisipkan di posisi |
+| `replace(a, b, s)` | ganti rentang |
+| `delete(a, b)` | hapus rentang |
+| `reverse()` | balik urutan |
+| `capacity()` / `ensureCapacity(n)` | kelola ukuran buffer |
+
+## StringBuilder vs StringBuffer
+
+```java
+StringBuilder cepat = new StringBuilder();   // single-thread → pilih ini
+StringBuffer aman = new StringBuffer();       // multi-thread → sinkron
+```
+
+Kebanyakan kode aplikasi berjalan di satu thread per request, sehingga `StringBuilder` adalah pilihan default.
+
+## String.join & String.format
+
+```java
+String gabung = String.join(", ", "merah", "hijau", "biru");
+String teks = String.format("Nama: %s, Nilai: %d", nama, nilai);
+```
+
+Untuk Template yang lebih kompleks, pertimbangkan `String.formatted()` (Java 15+).
+
+<div class="note">💡 Compiler modern kadang mengoptimalkan `s += x` di dalam ekspresi tunggal menjadi StringBuilder otomatis. Tapi di dalam loop, optimasi itu tidak terjadi — tetap tulis StringBuilder secara eksplisit.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
+  public static void main(String[] args) {
+    StringBuilder sb = new StringBuilder("Halo");
+    sb.append(" Dunia");
+    sb.insert(4, ",");
+    sb.replace(5, 6, " Saya");
+    System.out.println(sb);
+    System.out.println(sb.reverse());
+  }
+}`} />

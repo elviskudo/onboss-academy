@@ -1,0 +1,183 @@
+---
+title: "Proyek Mini: Sistem Perpustakaan"
+description: "menggabungkan class, STL, file I/O, smart pointer, dan arsitektur modular"
+order: 27
+quiz:
+  - q: "Dalam proyek ini, daftar buku sebaiknya disimpan dengan…"
+    options: ["std::vector<Buku> atau unordered_map", "new Buku[100]", "Array C mentah", "String CSV saja"]
+    answer: 0
+    explain: "STL mengurus memori & ukuran dinamis."
+  - q: "Hubungan Buku–Anggota sebaiknya memakai…"
+    options: ["ID/reference, bukan DUplikasi object", "Salinan penuh Buku", "Global variable", "Macro"]
+    answer: 0
+    explain: "Menghindari inkonsistensi data."
+  - q: "Penyimpanan ke file sebaiknya…"
+    options: ["Format terstruktur (JSON/CSV)", "Dump mentah struct", "Random byte", "Tanpa format"]
+    answer: 0
+    explain: "Mudah dibaca & dipindah ke sistem lain."
+  - q: "Pemisahan layer (model–service–UI) bertujuan…"
+    options: ["Memisahkan aturan bisnis dari tampilan", "Menghapus class", "Mempercepat compile", "Mengubah tipe"]
+    answer: 0
+    explain: "Perubahan UI tidak merusak logika pinjam."
+  - q: "Sebelum selesai, proyek sebaiknya memiliki…"
+    options: ["Test otomatis & build yang bersih", "Banyak TODO", "Tanpa header", "Compiler warning"]
+    answer: 0
+    explain: "Ini tanda proyek siap dikembangkan."
+example:
+  code: |
+    #include <iostream>
+    #include <vector>
+    #include <optional>
+    #include <string>
+    
+    struct Buku {
+        std::string judul;
+        std::string penulis;
+        bool dipinjam = false;
+    };
+    
+    class Perpustakaan {
+        std::vector<Buku> rak;
+    public:
+        void tambah(std::string j, std::string p) {
+            rak.push_back({std::move(j), std::move(p), false});
+        }
+        bool pinjam(const std::string &judul) {
+            for (auto &b : rak)
+                if (b.judul == judul && !b.dipinjam) {
+                    b.dipinjam = true; return true;
+                }
+            return false;
+        }
+        void tampil() const {
+            for (const auto &b : rak)
+                std::cout <&lt; b.judul <&lt; " - " <&lt; b.penulis
+                          <&lt; (b.dipinjam ? " [dipinjam]" : "") <&lt; '\n';
+        }
+    };
+    
+    int main() {
+        Perpustakaan p;
+        p.tambah("Laskar Pelangi", "Andrea Hirata");
+        p.tambah("Bumi Manusia", "Pramoedya");
+        p.pinjam("Laskar Pelangi");
+        p.tampil();
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek penutup ini merangkum hampir seluruh materi: class, STL, RAII, referensi, dan pemisahan modul.
+
+## Fitur yang Dibangun
+
+1. Tambah buku (judul, penulis, tahun).
+2. Pinjam & kembalikan buku.
+3. Cari berdasarkan judul/penulis.
+4. Simpan/muat dari file JSON.
+5. Menu CLI interaktif.
+
+## Model
+
+```cpp
+struct Buku {
+    std::string id;
+    std::string judul;
+    std::string penulis;
+    int tahun;
+    bool dipinjam = false;
+};
+
+struct Anggota {
+    std::string id;
+    std::string nama;
+    std::vector<std::string> dipinjam;  // simpan ID, bukan object
+};
+```
+
+## Service Layer
+
+```cpp
+class Perpustakaan {
+    std::unordered_map<std::string, Buku> buku;
+    std::unordered_map<std::string, Anggota> anggota;
+public:
+    bool pinjam(const std::string &idBuku, const std::string &idAnggota);
+    bool kembalikan(const std::string &idBuku);
+};
+```
+
+Semua aturan (maksimal 3 buku, denda terlambat, dll) tinggal di sini — UI hanya memanggil method.
+
+## Struktur Folder
+
+```
+perpustakaan/
+├── CMakeLists.txt
+├── include/  ← header publik
+├── src/      ← implementasi
+├── tests/    ← test dengan Catch2/GoogleTest
+└── data/     ← JSON contoh
+```
+
+## CMake Minimal
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(perpustakaan LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+add_executable(app src/main.cpp src/perpustakaan.cpp)
+target_include_directories(app PRIVATE include)
+```
+
+## Langkah Bertahap
+
+1. Console CRUD tanpa penyimpanan.
+2. Tambah validasi & pencarian.
+3. Simpan/muat JSON.
+4. Tambah test otomatis.
+5. Refactor ke module CMake.
+
+<div class="note">💡 Selesaikan satu fitur sampai benar-benar jalan sebelum lanjut. Proyek kecil yang rapi jauh lebih berharga daripada proyek besar yang setengah jadi.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <vector>
+#include <optional>
+#include <string>
+
+struct Buku {
+    std::string judul;
+    std::string penulis;
+    bool dipinjam = false;
+};
+
+class Perpustakaan {
+    std::vector<Buku> rak;
+public:
+    void tambah(std::string j, std::string p) {
+        rak.push_back({std::move(j), std::move(p), false});
+    }
+    bool pinjam(const std::string &judul) {
+        for (auto &b : rak)
+            if (b.judul == judul && !b.dipinjam) {
+                b.dipinjam = true; return true;
+            }
+        return false;
+    }
+    void tampil() const {
+        for (const auto &b : rak)
+            std::cout <&lt; b.judul <&lt; " - " <&lt; b.penulis
+                      <&lt; (b.dipinjam ? " [dipinjam]" : "") <&lt; '\n';
+    }
+};
+
+int main() {
+    Perpustakaan p;
+    p.tambah("Laskar Pelangi", "Andrea Hirata");
+    p.tambah("Bumi Manusia", "Pramoedya");
+    p.pinjam("Laskar Pelangi");
+    p.tampil();
+}`} />

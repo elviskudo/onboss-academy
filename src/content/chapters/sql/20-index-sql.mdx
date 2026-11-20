@@ -1,0 +1,103 @@
+---
+title: "Index untuk Performa Query"
+description: "Cara index bekerja, kapan membantu, dan biaya yang harus dibayar"
+order: 20
+quiz:
+  - q: "Index pada database mirip…"
+    options: ["Daftar isi buku", "Salinan cadangan", "Log transaksi", "Tampilan lapangan"]
+    answer: 0
+    explain: "Index memetakan nilai ke lokasi baris sehingga pencarian tidak memindai seluruh tabel."
+  - q: "Perintah membuat index adalah…"
+    options: ["CREATE INDEX", "MAKE INDEX", "NEW INDEX", "SET INDEX"]
+    answer: 0
+    explain: "CREATE INDEX idx_nama ON tabel(kolom);"
+  - q: "Index biasanya membantu klausa…"
+    options: ["WHERE dan JOIN", "SELECT * saja", "DROP TABLE", "COMMIT"]
+    answer: 0
+    explain: "Index dipakai untuk pencarian, filter, join, dan pengurutan."
+  - q: "Kelemahan index adalah…"
+    options: ["Query SELECT lebih lambat", "INSERT/UPDATE/DELETE lebih lambat karena index ikut diperbarui", "Data jadi terenkripsi", "Tidak bisa dihapus"]
+    answer: 1
+    explain: "Setiap perubahan data harus memperbarui struktur index."
+  - q: "Index komposit pada (a, b) paling membantu untuk filter…"
+    options: ["b saja", "a, lalu a+b", "a atau b bebas", "semua kolom"]
+    answer: 1
+    explain: "Urutan kiri-ke-kanan penting: prefix kiri yang dipakai dulu."
+example:
+  code: |
+    CREATE INDEX idx_karyawan_dept ON karyawan(dept); SELECT * FROM karyawan WHERE dept='Engineering';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanpa index, database memindai seluruh tabel untuk menemukan baris. Index menyusun nilai kolom dalam struktur yang memungkinkan pencarian cepat — dengan biaya penyimpanan dan pembaruan ekstra.
+
+## Membuat Index
+
+```sql
+CREATE INDEX idx_karyawan_dept ON karyawan(dept);
+CREATE UNIQUE INDEX idx_karyawan_email ON karyawan(email);
+```
+
+Index UNIQUE sekaligus menegakkan constraint keunikan. Nama index biasanya `idx_<tabel>_<kolom>` agar mudah dikenali.
+
+## Kapan Index Membantu
+
+| Skenario | Index membantu? |
+| --- | --- |
+| `WHERE dept = 'Data'` pada tabel besar | Ya |
+| `JOIN ... ON a.id = b.id` | Ya, pada kedua sisi kunci |
+| `ORDER BY tanggal LIMIT 10` | Ya |
+| `LIKE 'A%'` | Ya, prefix masih bisa dipakai |
+| `LIKE '%A'` | Tidak |
+| Tabel 20 baris | Biasanya tidak perlu |
+
+<div class="note">💡 `EXPLAIN QUERY PLAN SELECT ...` (SQLite) atau `EXPLAIN SELECT ...` (PostgreSQL/MySQL) menunjukkan apakah index benar-benar dipakai. Jangan menebak.</div>
+
+## Index Komposit
+
+```sql
+CREATE INDEX idx_pesanan_tanggal_status
+ON pesanan(tanggal, status);
+```
+
+Index ini membantu `WHERE tanggal = ...` dan `WHERE tanggal = ... AND status = ...`, tetapi kurang membantu `WHERE status = ...` saja. Urutan kolom mengikuti pola filter paling umum.
+
+## Biaya Index
+
+- Ruang disk tambahan.
+- Setiap INSERT/UPDATE/DELETE memperbarui semua index terkait.
+- Terlalu banyak index membuat optimizer bingung dan writes melambat.
+
+Tabel dengan 5 index untuk 20 kolom sering kali tanda index dibuat tanpa pengukuran.
+
+## Covering Index
+
+```sql
+CREATE INDEX idx_karyawan_dept_gaji ON karyawan(dept, gaji);
+SELECT dept, AVG(gaji) FROM karyawan GROUP BY dept;
+```
+
+Bila semua kolom yang dibutuhkan ada di index, database tidak perlu membaca baris tabel asli. Ini disebut *covering index*.
+
+## Menghapus Index
+
+```sql
+DROP INDEX idx_karyawan_dept;
+```
+
+Sebelum menghapus, ukur dulu query yang konon melambat. Index yang "mengganggu" writes bisa tetap bernilai bila melayani laporan yang jauh lebih sering.
+
+## Di Dunia Nyata
+
+- **Pencarian pengguna**: index pada `email` untuk login.
+- **Feed**: index komposit `(user_id, created_at)` untuk mengambil posting terbaru.
+- **Join faktur**: index pada foreign key mempercepat penggabungan.
+- **Audit performa**: EXPLAIN sebelum dan sesudah menambah index.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE INDEX idx_karyawan_dept ON karyawan(dept);
+SELECT nama, dept FROM karyawan WHERE dept = 'Engineering';
+SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept;`} />

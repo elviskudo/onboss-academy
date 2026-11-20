@@ -129,6 +129,10 @@ GROUP BY k.dept;
 
 <div class="note">💡 FOREIGN KEY bukan pengganti JOIN: constraint menjaga data saat ditulis, sedangkan JOIN membaca relasinya. Keduanya menyelesaikan masalah berbeda.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT k.nama AS ketua, k.dept, p.nama AS proyek, p.budget
 FROM karyawan k
 LEFT JOIN proyek p ON k.id = p.lead_id

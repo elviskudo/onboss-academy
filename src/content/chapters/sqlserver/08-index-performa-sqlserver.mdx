@@ -27,12 +27,12 @@ example:
   code: |
     CREATE CLUSTERED INDEX ix_karyawan_id
         ON dbo.karyawan (id);
-
+    
     CREATE NONCLUSTERED INDEX ix_karyawan_divisi_gaji
         ON dbo.karyawan (divisi_id, gaji DESC)
         INCLUDE (nama);
     GO
-
+    
     SELECT nama, gaji
     FROM dbo.karyawan
     WHERE divisi_id = 3

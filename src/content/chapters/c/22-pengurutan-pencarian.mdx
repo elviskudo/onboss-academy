@@ -1,0 +1,151 @@
+---
+title: "Pengurutan & Pencarian"
+description: "bubble, selection, insertion sort, binary search, dan qsort dari stdlib"
+order: 22
+quiz:
+  - q: "Kompleksitas bubble sort adalah…"
+    options: ["O(n)", "O(n log n)", "O(n²)", "O(log n)"]
+    answer: 2
+    explain: "Bubble, selection, dan insertion sort semuanya O(n²) rata-rata."
+  - q: "Binary search mensyaratkan data…"
+    options: ["Acak", "Terurut", "Berisi string", "Berukuran genap"]
+    answer: 1
+    explain: "Tanpa urutan, hasilnya tidak valid."
+  - q: "Kompleksitas binary search adalah…"
+    options: ["O(n)", "O(log n)", "O(n²)", "O(1)"]
+    answer: 1
+    explain: "Tiap langkah memotong rentang menjadi setengah."
+  - q: "Fungsi qsort dari stdlib memakai…"
+    options: ["Bubble sort", "Quick/introsort dengan comparator", "Insertion sort", "Merge sort murni"]
+    answer: 1
+    explain: "Kamu menyediakan fungsi perbandingan."
+  - q: "Insertion sort paling efisien untuk…"
+    options: ["Data sangat besar acak", "Data kecil atau hampir terurut", "String saja", "Matrix"]
+    answer: 1
+    explain: "Pada data hampir terurut, kompleksitas mendekati O(n)."
+example:
+  code: |
+    #include <stdio.h>
+    
+    void insertion(int a[], int n) {
+        for (int i = 1; i &lt; n; i++) {
+            int kunci = a[i], j = i - 1;
+            while (j >= 0 && a[j] > kunci) {
+                a[j+1] = a[j]; j--;
+            }
+            a[j+1] = kunci;
+        }
+    }
+    
+    int biner(int a[], int n, int x) {
+        int l = 0, r = n - 1;
+        while (l &lt;= r) {
+            int m = l + (r-l)/2;
+            if (a[m] == x) return m;
+            if (a[m] &lt; x) l = m + 1; else r = m - 1;
+        }
+        return -1;
+    }
+    
+    int main(void) {
+        int a[] = {5,2,9,1,5,6};
+        insertion(a, 6);
+        for (int i=0;i&lt;6;i++) printf("%d ", a[i]);
+        printf("\nindeks 9 = %d\n", biner(a, 6, 9));
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Algoritma dasar sorting dan searching muncul di hampir setiap technical interview. C cocok untuk mempelajarinya karena kamu melihat langsung memori dan indeks.
+
+## Bubble Sort
+
+```c
+for (int i = 0; i < n-1; i++)
+    for (int j = 0; j < n-1-i; j++)
+        if (a[j] > a[j+1]) {
+            int t = a[j]; a[j] = a[j+1]; a[j+1] = t;
+        }
+```
+
+Sederhana tapi lambat. Berguna hanya untuk belajar.
+
+## Selection Sort
+
+```c
+for (int i = 0; i < n-1; i++) {
+    int min = i;
+    for (int j = i+1; j < n; j++)
+        if (a[j] < a[min]) min = j;
+    if (min != i) { int t=a[i]; a[i]=a[min]; a[min]=t; }
+}
+```
+
+Jumlah swap paling sedikit di antara sort O(n²).
+
+## Insertion Sort
+
+Membangun bagian terurut satu elemen demi satu. Stabil dan cepat untuk data kecil/hampir terurut.
+
+## Binary Search
+
+```c
+int l = 0, r = n - 1;
+while (l <= r) {
+    int m = l + (r - l) / 2;
+    if (a[m] == x) { ketemu; break; }
+    if (a[m] < x) l = m + 1;
+    else r = m - 1;
+}
+```
+
+Gunakan `l + (r-l)/2` daripada `(l+r)/2` untuk menghindari overflow pada array besar.
+
+## qsort
+
+```c
+#include <stdlib.h>
+
+int banding(const void *a, const void *b) {
+    int x = *(const int*)a, y = *(const int*)b;
+    return (x > y) - (x < y);   /* aman dari overflow */
+}
+qsort(arr, n, sizeof arr[0], banding);
+```
+
+<div class="note">💡 Dalam kode produksi, pakai `qsort` (atau implementasi library) daripada menulis sort sendiri. Tulis manual hanya untuk belajar atau kalau ada constraint khusus.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+void insertion(int a[], int n) {
+    for (int i = 1; i &lt; n; i++) {
+        int kunci = a[i], j = i - 1;
+        while (j >= 0 && a[j] > kunci) {
+            a[j+1] = a[j]; j--;
+        }
+        a[j+1] = kunci;
+    }
+}
+
+int biner(int a[], int n, int x) {
+    int l = 0, r = n - 1;
+    while (l &lt;= r) {
+        int m = l + (r-l)/2;
+        if (a[m] == x) return m;
+        if (a[m] &lt; x) l = m + 1; else r = m - 1;
+    }
+    return -1;
+}
+
+int main(void) {
+    int a[] = {5,2,9,1,5,6};
+    insertion(a, 6);
+    for (int i=0;i&lt;6;i++) printf("%d ", a[i]);
+    printf("\nindeks 9 = %d\n", biner(a, 6, 9));
+    return 0;
+}`} />

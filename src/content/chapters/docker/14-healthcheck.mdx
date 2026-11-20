@@ -1,0 +1,92 @@
+---
+title: "Healthcheck Container"
+description: "Memantau kesehatan proses dengan HEALTHCHECK dan status container"
+order: 14
+quiz:
+  - q: "Instruksi Dockerfile untuk healthcheck adalah…"
+    options: ["MONITOR", "PING", "HEALTHCHECK", "CHECK"]
+    answer: 2
+    explain: "HEALTHCHECK menentukan perintah berkala untuk menilai kesehatan container."
+  - q: "Status health yang benar adalah…"
+    options: ["up, down, pending", "ok, fail, wait", "active, idle, dead", "healthy, unhealthy, starting"]
+    answer: 3
+    explain: "Docker menampilkan status kesehatan di kolom STATUS pada docker ps."
+  - q: "Opsi --interval pada HEALTHCHECK berfungsi…"
+    options: ["Menentukan jeda antar pemeriksaan", "Mengubah port", "Mengganti user", "Menentukan ukuran image"]
+    answer: 0
+    explain: "Nilai default interval adalah 30 detik."
+  - q: "Jika perintah healthcheck mengembalikan kode 1, container…"
+    options: ["Berubah jadi image", "Ditandai unhealthy", "Langsung dihapus", "Direstart otomatis"]
+    answer: 1
+    explain: "Penentuan tindakan lanjutan (restart atau tidak) ada di orkestrator."
+  - q: "Mode none pada HEALTHCHECK berarti…"
+    options: ["Container tidak bisa diakses", "Healthcheck dijalankan sekali", "Menonaktifkan healthcheck yang diwariskan", "Container selalu sehat"]
+    answer: 2
+    explain: "Berguna bila base image punya healthcheck yang tidak relevan."
+example:
+  code: |
+    HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+      CMD curl -fsS http://localhost:8080/health || exit 1
+---
+
+`docker ps` hanya memberi tahu apakah proses utama masih hidup. Proses bisa hidup tetapi tidak lagi melayani request—di sinilah **healthcheck** dibutuhkan.
+
+## Sintaks Dasar
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -fsS http://localhost:8080/health || exit 1
+```
+
+| Opsi | Fungsi | Default |
+|---|---|---|
+| `--interval` | Jeda antar pemeriksaan | 30s |
+| `--timeout` | Batas waktu satu pemeriksaan | 30s |
+| `--start-period` | Masa tunggu aplikasi starting | 0s |
+| `--retries` | Gagal berturut sebelum unhealthy | 3 |
+
+## Endpoint Khusus
+
+Buat endpoint `/health` yang ringan: tidak boleh mengakses database berat atau memicu pekerjaan mahal. Cukup jawab `200 OK` bila proses siap menerima traffic.
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Status}}'
+# up 2 minutes (healthy)
+docker inspect --format '{{json .State.Health}}' app
+```
+
+## Tanpa curl di Image
+
+Image `scratch` atau `alpine` minimal sering tidak punya `curl`. Gunakan alat yang sudah ada:
+
+```dockerfile
+# Node.js
+HEALTHCHECK CMD node -e "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+# Python
+HEALTHCHECK CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+```
+
+## Healthcheck saat docker run
+
+```bash
+docker run -d --name api \
+  --health-cmd "curl -fsS http://localhost:8080/health || exit 1" \
+  --health-interval 15s \
+  --health-timeout 2s \
+  --health-retries 2 \
+  app:1.0
+```
+
+Perintah CLI menimpa healthcheck bawaan image. Orkestrator seperti Swarm dan Kubernetes bisa memakai hasil ini untuk mengganti container yang tidak sehat.
+
+<div class="note">💡 `start-period` mencegah container baru dinyatakan unhealthy saat aplikasi masih melakukan inisialisasi—misalnya migrasi database yang memakan waktu.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'FROM alpine:3.20' 'RUN apk add --no-cache curl' 'HEALTHCHECK --interval=5s --timeout=2s --retries=2 CMD curl -fsS http://localhost/ || exit 1' 'CMD ["sh", "-c", "sleep 60"]' &gt; Dockerfile
+docker build -t latihan-health . &gt;/dev/null
+docker run -d --name latihan-health latihan-health &gt;/dev/null
+docker ps --filter name=latihan-health --format '{{.Status}}'
+docker rm -f latihan-health &gt;/dev/null`}</code></pre>

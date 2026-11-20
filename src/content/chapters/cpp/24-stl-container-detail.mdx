@@ -1,0 +1,116 @@
+---
+title: "Kontainer STL Detail"
+description: "vector, deque, list, map, unordered_map, set, dan kriteria pemilihannya"
+order: 24
+quiz:
+  - q: "Vector menyimpan elemennya…"
+    options: ["Secara kontigu", "Bersebaran", "Dalam pohon", "Dalam hash table"]
+    answer: 0
+    explain: "Mendukung akses random O(1) & cache-friendly."
+  - q: "`vector::push_back` bisa memindahkan semua elemen saat…"
+    options: ["Kapasitas penuh (reallocasi)", "Selalu", "Tidak pernah", "Elemen string"]
+    answer: 0
+    explain: "Itu sebabnya iterator lama bisa invalid."
+  - q: "`std::map` menjaga…"
+    options: ["Key terurut", "Urutan sisipan", "Key acak", "Duplikat key"]
+    answer: 0
+    explain: "Berdasarkan pohon merah-hitam."
+  - q: "`unordered_map` memiliki lookup rata-rata…"
+    options: ["O(1)", "O(log n)", "O(n)", "O(n²)"]
+    answer: 0
+    explain: "Tapi bisa O(n) pada kasus hash collision terburuk."
+  - q: "`std::list` lebih cocok daripada vector saat…"
+    options: ["Sering insert/delete di tengah dengan iterator", "Butuh akses indeks cepat", "Ingin cache-friendly", "Menyimpan angka"]
+    answer: 0
+    explain: "Biaya O(1) setelah iterator didapat."
+example:
+  code: |
+    #include <vector>
+    #include <map>
+    #include <unordered_map>
+    #include <list>
+    #include <iostream>
+    
+    int main() {
+        std::vector<int> v{1,2,3};
+        v.reserve(100);           // hindari reallocasi berulang
+        v.push_back(4);
+    
+        std::map<std::string,int> terurut{{"b",2},{"a",1}};
+        for (auto &[k,nilai] : terurut) std::cout <&lt; k <&lt; nilai <&lt; " ";  // a1 b2
+    
+        std::unordered_map<std::string,int> cepat{{"sari",90}};
+        cepat["budi"] = 85;
+        std::cout <&lt; cepat["sari"] <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Memilih kontainer yang tepat sering lebih berdampak daripada micro-optimasi. Berikut ringkasan praktisnya.
+
+## Sequence Container
+
+| Kontainer | Akses | Insert tengah | Catatan |
+|---|---|---|---|
+| `array` | O(1) | — | ukuran tetap |
+| `vector` | O(1) | O(n) | default terbaik |
+| `deque` | O(1) | O(n) | push depan & belakang |
+| `list` | O(n) | O(1)* | *dengan iterator |
+| `forward_list` | O(n) | O(1)* | singly, hemat memori |
+
+## Associative Container
+
+| Kontainer | Urutan | Lookup |
+|---|---|---|
+| `set` / `map` | terurut | O(log n) |
+| `unordered_set/map` | tidak | O(1) rata-rata |
+| `multiset/multimap` | terurut, duplikat | O(log n) |
+
+## Tips Vector
+
+```cpp
+std::vector<int> v;
+v.reserve(1000);   // alokasi sekali di awal
+```
+
+Tanpa `reserve`, vector tumbuh dengan faktor ~2 dan menyalin ulang elemen berkali-kali.
+
+## Structured Binding (C++17)
+
+```cpp
+for (const auto &[kunci, nilai] : peta) {
+    std::cout << kunci << ": " << nilai << '
+';
+}
+```
+
+## Invalidasi Iterator
+
+- `vector::push_back` bisa meminvalidasi semua iterator saat reallocasi.
+- `map`/`set` iterator tetap valid selama elemen tidak dihapus.
+- `unordered_map` iterator bisa invalid saat rehash.
+
+<div class="note">💡 Default ke `std::vector`. Baru pindah ke `list`, `deque`, atau container asosiatif kalau ada kebutuhan konkret yang tidak bisa dipenuhi vector.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <vector>
+#include <map>
+#include <unordered_map>
+#include <list>
+#include <iostream>
+
+int main() {
+    std::vector<int> v{1,2,3};
+    v.reserve(100);           // hindari reallocasi berulang
+    v.push_back(4);
+
+    std::map<std::string,int> terurut{{"b",2},{"a",1}};
+    for (auto &[k,nilai] : terurut) std::cout <&lt; k <&lt; nilai <&lt; " ";  // a1 b2
+
+    std::unordered_map<std::string,int> cepat{{"sari",90}};
+    cepat["budi"] = 85;
+    std::cout <&lt; cepat["sari"] <&lt; '\n';
+}`} />

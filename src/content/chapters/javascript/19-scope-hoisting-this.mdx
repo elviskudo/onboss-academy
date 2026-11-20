@@ -1,0 +1,149 @@
+---
+title: "Scope, Hoisting & this"
+description: "Memahami ruang lingkup, hoisting, dan konteks pemanggilan this"
+order: 19
+quiz:
+  - q: "Nilai `this` di dalam arrow function mengikuti…"
+    options: ["Argumen pertama", "Scope leksikal di sekitarnya", "Objek global selalu", "Variabel var"]
+    answer: 1
+    explain: "Arrow function tidak punya `this` sendiri."
+  - q: "Dalam method objek yang dipanggil `obj.method()`, `this` merujuk ke…"
+    options: ["Window", "Objek obj", "Fungsi method", "Undefined"]
+    answer: 1
+    explain: "Nilai this ditentukan oleh cara fungsi dipanggil."
+  - q: "Mode strict membuat `this` pada fungsi biasa bernilai…"
+    options: ["Window", "undefined", "null", "Objek"]
+    answer: 1
+    explain: "Tanpa strict, this jadi global object."
+  - q: "Hoisting pada function declaration berarti…"
+    options: ["Fungsi bisa dipanggil sebelum deklarasi", "Fungsi dipindah ke bawah", "Fungsi jadi variabel", "Tidak ada efek"]
+    answer: 0
+    explain: "Declaration diangkat beserta isinya, berbeda dengan function expression."
+  - q: "`call(obj, 1, 2)` berguna untuk…"
+    options: ["Membuat salinan fungsi", "Menentukan this dan argumen secara eksplisit", "Menghapus this", "Menunda eksekusi"]
+    answer: 1
+    explain: "Ada juga apply (argumen array) dan bind (menghasilkan fungsi baru)."
+example:
+  code: |
+    const obj = {
+      nama: "Sari",
+      biasa() { return this.nama; },
+      panah: () => this
+    };
+    
+    function sapa() { return this.nama; }
+    sapa.call(obj);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tiga konsep ini sering bikin pemula bingung karena perilakunya tidak selalu intuitif. Memahaminya membantu membaca kode library dan menghindari bug "undefined".
+
+## Hoisting
+
+```js
+sapa(); // "Halo" — function declaration diangkat
+function sapa() { console.log("Halo"); }
+
+terbang(); // TypeError — function expression tidak
+var terbang = function () {};
+```
+
+`var` diangkat dengan nilai `undefined`; `let`/`const` berada dalam TDZ sampai deklarasinya dijalankan.
+
+```js
+console.log(x); // undefined
+var x = 1;
+
+console.log(y); // ReferenceError
+let y = 1;
+```
+
+## Nilai this Berdasarkan Cara Panggil
+
+| Cara panggil | Nilai this (non-strict) |
+|--------------|-------------------------|
+| `fungsi()` | `window` / global |
+| `obj.fungsi()` | `obj` |
+| `fungsi.call(obj)` | `obj` |
+| Arrow function | Leksikal (dari scope luar) |
+| Event handler DOM | Elemen yang menerima event |
+
+```js
+const orang = {
+  nama: "Sari",
+  sapa() { return `Halo ${this.nama}`; },
+  sapaPanah: () => `Halo ${this.nama}` // this bukan orang!
+};
+```
+
+## Arrow Function dan this
+
+```js
+const timer = {
+  count: 0,
+  mulai() {
+    setInterval(() => {
+      this.count++; // ✅ menangkap this dari mulai()
+    }, 1000);
+  }
+};
+```
+
+Sebelum arrow function, orang menulis `const self = this` atau `.bind(this)`. Kini arrow function menyelesaikan kasus callback dengan elegan — tapi **jangan** dipakai sebagai method objek yang membutuhkan `this` dinamis.
+
+## call, apply, bind
+
+```js
+function perkenal(salam, tanda) {
+  return `${salam}, ${this.nama}${tanda}`;
+}
+const sari = { nama: "Sari" };
+
+perkenal.call(sari, "Halo", "!");       // argumen satu per satu
+perkenal.apply(sari, ["Hai", "..."]);  // argumen array
+const fn = perkenal.bind(sari);        // fungsi baru dengan this tetap
+fn("Halo", "!");
+```
+
+## Closure
+
+```js
+function buatPenghitung() {
+  let n = 0;
+  return () => ++n;
+}
+const hitung = buatPenghitung();
+hitung(); // 1
+hitung(); // 2
+```
+
+Fungsi dalam tetap mengingat variabel dari scope luarnya meski fungsi luar sudah selesai dijalankan. Ini dasar dari state privat di JavaScript.
+
+<div class="note">💡 Gunakan `"use strict";` di awal file atau modul ES (strict otomatis). Ini mengubah `this` fungsi biasa jadi `undefined` dan membuat bug typos lebih cepat terlihat.</div>
+
+## Di Dunia Nyata
+
+- Class method memakai `this` untuk mengakses instance.
+- Callback `setTimeout`/array method sering memakai arrow function supaya `this` tidak hilang.
+- Library seperti jQuery dulu memakai `.call()` untuk mengikat elemen DOM sebagai `this`.
+
+## Try it Yourself
+
+Ubah arrow function menjadi fungsi biasa untuk melihat perubahan nilai `this`.
+
+<TryIt lang="javascript" runtime="client-js" code={`const orang = {
+  nama: "Sari",
+  biasa() { return \`Halo, \${this.nama}\`; },
+  panah: () => \`Halo, \${this ? "global" : "undefined"}\`
+};
+console.log(orang.biasa());
+console.log(orang.panah());
+function sapa() { return \`Saya \${this.nama}\`; }
+console.log(sapa.call(orang));
+function penghitung() {
+  let n = 0;
+  return () => ++n;
+}
+const hitung = penghitung();
+console.log(hitung(), hitung(), hitung());`} />

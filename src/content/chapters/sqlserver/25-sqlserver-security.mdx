@@ -1,0 +1,99 @@
+---
+title: "Keamanan: Login, User, Role, dan Permission"
+description: "CREATE LOGIN, CREATE USER, GRANT, schema, dan prinsip least privilege"
+order: 25
+quiz:
+  - q: "Login di SQL Server digunakan untuk…"
+    options: ["Backup", "Autentikasi ke server", "Menyimpan data", "Membuat indeks"]
+    answer: 1
+    explain: "Login = identitas level server; User = identitas level database."
+  - q: "Perintah membuat user database adalah…"
+    options: ["ADD USER", "NEW USER", "CREATE USER", "CREATE LOGIN USER"]
+    answer: 2
+    explain: "CREATE USER nama FOR LOGIN nama;"
+  - q: "Role db_datareader memberi hak…"
+    options: ["UPDATE semua tabel", "Membuat database", "Menghapus server", "SELECT pada semua tabel"]
+    answer: 3
+    explain: "db_datareader = SELECT; db_datawriter = INSERT/UPDATE/DELETE."
+  - q: "Prinsip least privilege berarti…"
+    options: ["Hak selalu admin", "Semua user jadi db_owner", "Hak seminimal yang dibutuhkan", "Tidak ada user"]
+    answer: 2
+    explain: "Berikan hanya izin yang diperlukan untuk tugasnya."
+  - q: "Perintah mencabut hak adalah…"
+    options: ["DELETE GRANT", "UNGRANT", "REVOKE", "CANCEL"]
+    answer: 2
+    explain: "REVOKE SELECT ON dbo.tabel FROM user;"
+example:
+  code: |
+    CREATE LOGIN appuser WITH PASSWORD = 'SandiKuat123!';
+    GO
+    CREATE USER appuser FOR LOGIN appuser;
+    ALTER ROLE db_datareader ADD MEMBER appuser;
+    GRANT INSERT ON dbo.pesanan TO appuser;
+---
+
+## Login dan User
+
+```sql
+CREATE LOGIN appuser WITH PASSWORD = 'SandiKuat123!';
+GO
+USE AcademyDB;
+CREATE USER appuser FOR LOGIN appuser;
+```
+
+**Login** memberi akses masuk ke server. **User** adalah pemetaan login itu di dalam database. Satu login bisa menjadi user di beberapa database.
+
+## Role
+
+| Role bawaan | Hak |
+| --- | --- |
+| `db_datareader` | SELECT semua tabel |
+| `db_datawriter` | INSERT/UPDATE/DELETE |
+| `db_ddladmin` | membuat/mengubah objek |
+| `db_owner` | segalanya dalam database |
+
+```sql
+ALTER ROLE db_datareader ADD MEMBER appuser;
+ALTER ROLE db_datareader DROP MEMBER appuser;
+```
+
+Hindari `db_owner` untuk akun aplikasi. Satu bug SQL injection akan langsung berubah menjadi penghapusan seluruh database.
+
+## Grant Terarah
+
+```sql
+GRANT SELECT ON dbo.produk TO appuser;
+GRANT INSERT, UPDATE ON dbo.pesanan TO appuser;
+DENY DELETE ON dbo.pesanan TO appuser;
+```
+
+`DENY` mengalahkan `GRANT`, bahkan bila user termasuk role yang memberi hak. Gunakan dengan hati-hati.
+
+## Skema
+
+```sql
+CREATE SCHEMA laporan;
+GRANT SELECT ON SCHEMA::laporan TO analis;
+```
+
+Skema memudahkan pengelolaan hak untuk banyak objek sekaligus dan memberi namespace agar nama tabel tidak tabrakan.
+
+## Mengaudit Hak
+
+```sql
+EXEC sp_helpuser 'appuser';
+SELECT * FROM sys.database_permissions;
+```
+
+Periksa hak secara berkala, terutama setelah pergantian personel atau migrasi aplikasi.
+
+<div class="note">💡 Jangan pernah memakai akun `sa` untuk koneksi aplikasi. Buat akun khusus dengan kata sandi kuat, simpan kredensial di secret manager, dan rotasi secara berkala.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE LOGIN latihan WITH PASSWORD = 'Sandi123!';
+GO
+SELECT name FROM sys.server_principals WHERE name = 'latihan';
+GO`}</code></pre>

@@ -141,6 +141,10 @@ Factor menyimpan label kategori beserta level yang valid. Cocok untuk variabel n
 
 <div class="note">💡 Vektor harus homogen. Jika `c(1, "2", 3)` tiba-tiba tidak bisa dihitung, bukan R kehilangan angka: seluruh vektor telah di-coerce menjadi character. Cek `typeof()` setelah impor data.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="r" runtime="piston" pistonName="r" code={`nilai <- c(85, 90, 78, 92, NA)
 nama <- c("Adi", "Budi", "Citra", "Dewi", "Eka")
 print(nilai[!is.na(nilai) & nilai >= 85])

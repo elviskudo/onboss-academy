@@ -31,7 +31,7 @@ example:
     {
         static void Main()
         {
-            for (int i = 1; i <= 3; i++)
+            for (int i = 1; i &lt;= 3; i++)
             {
                 Console.WriteLine("Perulangan ke-" + i);
             }
@@ -53,7 +53,7 @@ Alih-alih menyalin kode sepuluh kali, **perulangan menjalankan blok yang sama be
 
 | Bentuk | Sintaks singkat | Pakai saat | Minimal jalan |
 |---|---|---|---|
-| `for` | `for (int i = 0; i < n; i++)` | jumlah iterasi / butuh index | 0 kali |
+| `for` | `for (int i = 0; i &lt; n; i++)` | jumlah iterasi / butuh index | 0 kali |
 | `foreach` | `foreach (string b in buah)` | menelusuri semua elemen | 0 kali |
 | `while` | `while (kondisi)` | berhenti saat syarat berubah | 0 kali |
 | `do-while` | `do { } while (kondisi);` | isi pasti dijalankan sekali | 1 kali |
@@ -165,19 +165,23 @@ Pola frekuensi di atas kini bisa ditulis lebih singkat dengan LINQ: `kata.GroupB
 
 <div class="note">💡 Hati-hati loop tanpa penambahan: <code>for (int i = 0; i &lt; 3;)</code> tanpa <code>i++</code> akan berputar selamanya. Selalu pastikan ada jalur yang membuat kondisi mendekati nilai berhenti.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
 
 class Program
 {
     static void Main()
     {
-        for (int i = 1; i <= 5; i++)
+        for (int i = 1; i &lt;= 5; i++)
         {
             Console.WriteLine("Perulangan ke-" + i);
         }
 
         int total = 0;
-        for (int i = 1; i <= 100; i++)
+        for (int i = 1; i &lt;= 100; i++)
         {
             total += i;
         }
@@ -201,7 +205,7 @@ class Program
         {
             percobaan++;
         }
-        while (percobaan < 3);
+        while (percobaan &lt; 3);
         Console.WriteLine("Percobaan: " + percobaan);
     }
 }

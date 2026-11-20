@@ -1,0 +1,150 @@
+---
+title: "any, unknown & never"
+description: "Memahami tipe escape hatch dan tipe dasar yang sering disalahpahami"
+order: 12
+quiz:
+  - q: "Tipe `any` menyebabkan…"
+    options: ["Pemeriksaan tipe tetap ketat", "Pemeriksaan tipe dinonaktifkan untuk nilai itu", "Error kompilasi", "Nilai jadi null"]
+    answer: 1
+    explain: "Any memberi tahu compiler untuk tidak memeriksa."
+  - q: "`unknown` berbeda dari `any` karena…"
+    options: ["Lebih longgar", "Harus dipersempit dulu sebelum dipakai", "Tidak bisa disimpan", "Hanya untuk fungsi"]
+    answer: 1
+    explain: "Unknown aman: kamu wajib mengecek tipe sebelum menggunakannya."
+  - q: "Tipe `never` dipakai untuk…"
+    options: ["Nilai yang tidak pernah muncul", "Semua nilai", "String kosong", "Array kosong"]
+    answer: 0
+    explain: "Biasa dipakai pada fungsi yang selalu melempar error."
+  - q: "Fungsi yang melempar error tanpa return sebaiknya bertipe…"
+    options: ["void", "any", "never", "undefined"]
+    answer: 2
+    explain: "Karena tidak pernah kembali secara normal, never paling tepat."
+  - q: "Cara aman mempersempit unknown adalah…"
+    options: ["typeof / instanceof / type guard", "Cast ke any", "Diamkan saja", " Pakai !"]
+    answer: 0
+    explain: "Narrowing dengan pemeriksaan runtime adalah kunci unknown."
+example:
+  code: |
+    const data: unknown = JSON.parse(teks);
+    if (typeof data === "string") {
+      console.log(data.toUpperCase());
+    }
+    
+    function gagal(pesan: string): never {
+      throw new Error(pesan);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ketiga tipe ini sering dianggap "aneh", tapi masing-masing punya peran penting dalam sistem tipe TypeScript.
+
+## any — Escape Hatch
+
+```js
+let bebas: any = "teks";
+bebas = 42;
+bebas.apaSaja(); // tidak ada error saat compile
+```
+
+`any` berguna saat bermigrasi dari JavaScript atau berhadapan dengan data yang benar-benar tidak diketahui. Tapi ia menular: sekali nilai `any` masuk ke operasi, hasilnya sering jadi `any` juga.
+
+## unknown — any yang Aman
+
+```ts
+const masukan: unknown = await res.json();
+
+if (typeof masukan === "object" && masukan !== null) {
+  console.log("objek diterima");
+}
+if (Array.isArray(masukan)) {
+  masukan.map(x => console.log(x));
+}
+```
+
+Dengan `unknown`, compiler **memaksa** kamu melakukan pengecekan runtime dulu. Inilah tipe yang sebaiknya dipakai untuk data dari API, `JSON.parse`, atau `catch`.
+
+```ts
+try { ... } catch (err) {
+  // err bertipe unknown (sejak TS 4.4 dengan useUnknownInCatchVariables)
+  if (err instanceof Error) console.log(err.message);
+}
+```
+
+## never — Tidak Pernah Terjadi
+
+```ts
+function gagal(pesan: string): never {
+  throw new Error(pesan);
+}
+
+function selamanya(): never {
+  while (true) {}
+}
+```
+
+`never` juga muncul sebagai hasil penyempitan yang mustahil:
+
+```ts
+function cek(nilai: string | number) {
+  if (typeof nilai === "string") return;
+  if (typeof nilai === "number") return;
+  const mustahil: never = nilai; // kompilasi error kalau ada tipe baru
+}
+```
+
+Pola ini disebut **exhaustiveness check** — membantu saat kamu menambah varian union tapi lupa menanganinya.
+
+## void vs undefined
+
+```ts
+function log(pesan: string): void {
+  console.log(pesan);
+}
+```
+
+`void` berarti "return value tidak dipakai", bukan "mengembalikan undefined" secara harfiah. Fungsi yang secara eksplisit `return undefined` tetap bisa ditandai `void`.
+
+## Type Assertion Bukan Konversi
+
+```ts
+const nilai = masukan as string; // kata kamu ke compiler, bukan pengecekan runtime
+```
+
+Assertion bisa berbohong. Kalau bisa, gunakan type guard:
+
+```ts
+function adalahString(x: unknown): x is string {
+  return typeof x === "string";
+}
+```
+
+<div class="note">💡 Aturan praktis: hindari `any`, pakai `unknown` untuk input eksternal, dan pakai `never` untuk(exhaustiveness) dan fungsi yang tidak kembali.</div>
+
+## Di Dunia Nyata
+
+- Handler `catch` memakai `unknown` agar pesan error dicek dulu.
+- Fungsi `assert(condition): asserts condition` memakai never saat kondisi gagal.
+- Kode migrasi JavaScript bertahap memakai `any` sementara lalu diperketat.
+
+## Try it Yourself
+
+Ubah `unknown` menjadi `any` atau hapus type guard untuk melihat bedanya.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const hasil: unknown = JSON.parse('{"nama":"Sari","umur":20}');
+
+function adalahObjek(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null;
+}
+
+if (adalahObjek(hasil)) {
+  console.log("nama:", hasil.nama);
+  console.log("umur:", hasil.umur);
+} else {
+  console.log("bukan objek");
+}
+
+function gagal(pesan: string): never {
+  throw new Error(pesan);
+}
+console.log("tipe never didefinisikan:", typeof gagal);`} />

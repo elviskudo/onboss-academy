@@ -1,0 +1,108 @@
+---
+title: "Warna CSS"
+description: "Model warna CSS: named color, hex, RGB, HSL, dan transparansi"
+order: 14
+quiz:
+  - q: "Notasi hex untuk warna merah murni adalah…"
+    options: ["#00FF00", "#FF0000", "#0000FF", "#FFFF00"]
+    answer: 1
+    explain: "#FF0000 berarti R=255, G=0, B=0."
+  - q: "Fungsi `rgb()` menerima nilai…"
+    options: ["Derajat, persen, persen", "Merah, hijau, biru", "Hue, saturasi, lightness", "Lebar, tinggi, alpha"]
+    answer: 1
+    explain: "RGB = Red, Green, Blue, masing-masing 0–255 atau persen."
+  - q: "Singkatan HSL adalah…"
+    options: ["Hue, Saturation, Lightness", "Height, Size, Length", "Horizontal, Scale, Line", "Highlight, Shadow, Layer"]
+    answer: 0
+    explain: "HSL memisahkan warna (hue), kejenuhan, dan kecerahan."
+  - q: "Alpha pada `rgba(0,0,0,0.5)` berarti…"
+    options: ["50% transparan", "50% lebih terang", "Warna abu-abu", "Tidak berpengaruh"]
+    answer: 0
+    explain: "Alpha 0 benar-benar transparan, 1 sepenuhnya opaque."
+  - q: "`currentColor` mengacu pada…"
+    options: ["Warna teks elemen", "Warna latar halaman", "Warna pertama di palet", "Warna hitam"]
+    answer: 0
+    explain: "Nilai ini mewarisi nilai properti `color` elemen tersebut."
+example:
+  code: |
+    :root { --biru: #4F46E5; }
+    .teks { color: var(--biru); }
+    .latar { background: rgb(239 246 255); }
+    .transparan { background: rgba(0 0 0 / 0.35); }
+    .hsl { color: hsl(210 90% 45%); }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+CSS menyediakan beberapa cara menulis warna. Semua bisa dipakai di properti `color`, `background-color`, `border-color`, dan sejenisnya.
+
+## Lima Cara Menulis Warna
+
+| Cara | Contoh | Catatan |
+|------|--------|---------|
+| Nama | `tomato`, `rebeccapurple` | Mudah dibaca, terbatas |
+| Hex | `#4F46E5`, `#fff` | Paling umum di desain web |
+| RGB | `rgb(79, 70, 229)` | Nilai 0–255 |
+| RGBA | `rgba(0, 0, 0, 0.5)` | Ada channel alpha |
+| HSL | `hsl(243, 75%, 59%)` | Mudah diatur tone-nya |
+
+Sintaks modern juga memperbolehkan `rgb(79 70 229 / 0.5)` tanpa `a` pada nama fungsinya.
+
+## Memahami HSL
+
+- **Hue** (0–360): posisi di roda warna — 0 merah, 120 hijau, 240 biru.
+- **Saturation** (0–100%): seberapa pekat warnanya.
+- **Lightness** (0–100%): 0 hitam, 50 warna murni, 100 putih.
+
+```css
+.biru-laut   { color: hsl(200 80% 40%); }
+.biru-pucat  { color: hsl(200 80% 85%); }
+ Merah-gelap { color: hsl(0 70% 30%); }
+```
+
+Menggeser lightness jauh lebih mudah daripada menebak hex baru saat membuat variasi warna.
+
+## Transparansi
+
+```css
+.overlay {
+  background: rgb(17 24 39 / 0.65);
+}
+```
+
+`opacity` berbeda dengan alpha: `opacity` membuat **seluruh elemen** (termasuk anaknya) transparan, sedangkan alpha hanya memengaruhi warna itu sendiri.
+
+```css
+.kartu { opacity: 0.6; }          /* teks di dalam ikut transparan */
+.kartu { background: rgb(0 0 0 / 0.6); } /* teks tetap tajam */
+```
+
+## currentColor
+
+```css
+.ikon {
+  border: 2px solid currentColor;
+  fill: currentColor;
+}
+```
+
+Nilai ini mengikuti `color` elemen, berguna supaya ikon SVG dan border selaras dengan warna teks tanpa menulis ulang warna.
+
+<div class="note">💡 Kontras adalah soal aksesibilitas, bukan selera. Teks abu-abu terang di latar putih sering gagal standar WCAG AA (minimal 4.5:1 untuk teks normal).</div>
+
+## Di Dunia Nyata
+
+- Palet warna didefinisikan sekali di `:root` lalu dipakai lewat CSS variable.
+- Status aplikasi memakai hijau (`#16A34A`), kuning (`#F59E0B`), merah (`#DC2626`) secara konsisten.
+- Overlay modal memakai alpha hitam supaya konten di belakang masih terlihat samar.
+
+## Try it Yourself
+
+Ubah nilai HSL atau alpha pada contoh di bawah untuk melihat perubahannya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 12px; }
+.hex { color: #4F46E5; }
+.rgb { color: rgb(220 38 38); }
+.hsl { color: hsl(160 84% 30%); }
+.overlay { background: rgb(17 24 39 / 0.75); color: white; padding: 16px; }
+.ikon { border: 3px solid currentColor; color: #F59E0B; padding: 8px; }`} />

@@ -1,0 +1,116 @@
+---
+title: "Praktik: Laporan Bisnis End-to-End"
+description: "Menggabungkan CTE, join, agregasi, CASE, dan ordering dalam satu laporan"
+order: 27
+quiz:
+  - q: "Langkah pertama menyusun laporan yang baik adalah…"
+    options: ["Menulis SELECT *", "Menentukan pertanyaan bisnis dan metriknya", "Menambah index", "Menghapus tabel lama"]
+    answer: 1
+    explain: "Tanpa pertanyaan yang jelas, query mudah menjadi kumpulan klausa tanpa arah."
+  - q: "CTE dalam laporan berfungsi untuk…"
+    options: ["Menyembunyikan data", "Memecah perhitungan menjadi langkah bernama", "Menghapus duplikat tabel", "Mengganti JOIN"]
+    answer: 1
+    explain: "CTE membuat tiap tahap kalkulasi bisa dibaca dan diuji terpisah."
+  - q: "COALESCE pada laporan sering dipakai untuk…"
+    options: ["Mengganti NULL dengan 0 agar grafik tidak kosong", "Menghapus baris", "Mengurutkan tanggal", "Menambah kolom baru"]
+    answer: 0
+    explain: "COALESCE memberi nilai default pada hasil agregat yang kosong."
+  - q: "CASE pada laporan bisa dipakai untuk…"
+    options: ["Membuat kategori dari rentang nilai", "Menghapus index", "Menutup koneksi", "Mengubah tipe tabel"]
+    answer: 0
+    explain: "CASE mengubah angka atau status menjadi label bisnis."
+  - q: "Sebelum dipakai dashboard, query laporan sebaiknya…"
+    options: ["Dibiarkan apa adanya", "Diuji dengan data kosong dan data ekstrem", "Dihapus filternya", "Diberi LIMIT 1"]
+    answer: 1
+    explain: "Kasus tepi seperti grup tanpa baris sering merusak laporan."
+example:
+  code: |
+    WITH ringkas AS (SELECT dept, COUNT(*) AS n, AVG(gaji) AS rata FROM karyawan GROUP BY dept) SELECT dept, n, ROUND(rata) AS rata FROM ringkas ORDER BY rata DESC;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Laporan bisnis yang baik menjawab satu pertanyaan dengan metrik yang jelas. Kita akan merangkai CTE, agregasi, CASE, dan COALESCE menjadi satu query yang mudah dipelihara.
+
+## 1. Tentukan Pertanyaan
+
+Contoh: *"Unit mana yang punya jumlah karyawan paling banyak, berapa rata-rata gajinya, dan bagaimana kategorinya?"*
+
+Métriknya: jumlah karyawan, rata-rata gaji, kategori besaran tim, dan persentase terhadap total.
+
+## 2. Susun Langkah dengan CTE
+
+```sql
+WITH per_dept AS (
+  SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata
+  FROM karyawan
+  GROUP BY dept
+),
+total AS (
+  SELECT COUNT(*) AS semua FROM karyawan
+)
+SELECT dept, jumlah, ROUND(rata) AS rata,
+       CASE WHEN jumlah >= 3 THEN 'Besar' ELSE 'Kecil' END AS ukuran
+FROM per_dept
+ORDER BY jumlah DESC;
+```
+
+Setiap CTE bisa dijalankan sendiri saat debugging. Ini jauh lebih mudah daripada subquery bersarang lima tingkat.
+
+## 3. Tambahkan Persentase
+
+```sql
+WITH per_dept AS (
+  SELECT dept, COUNT(*) AS jumlah FROM karyawan GROUP BY dept
+),
+total AS (SELECT COUNT(*) AS semua FROM karyawan)
+SELECT dept, jumlah,
+       ROUND(jumlah * 100.0 / total.semua, 1) AS persen
+FROM per_dept, total
+ORDER BY persen DESC;
+```
+
+Perkalian dengan `100.0` memaksa pembagian desimal. Di banyak database, `jumlah / semua` dengan dua integer menghasilkan integer.
+
+## 4. Tangani Data Kosong
+
+```sql
+SELECT dept,
+       COALESCE(ROUND(AVG(gaji)), 0) AS rata
+FROM karyawan
+GROUP BY dept;
+```
+
+Bila grup tidak punya gaji valid, AVG menghasilkan NULL. COALESCE mencegah grafik menampilkan ruang kosong.
+
+## 5. Validasi Hasil
+
+- Cek total baris: apakah jumlah per group sama dengan total keseluruhan?
+- Cek NULL: apakah ada kolom yang seharusnya tidak NULL?
+- Cek kasus ekstrem: tabel kosong, satu grup, atau semua nilai sama.
+- Bandingkan dengan perhitungan manual untuk sampel kecil.
+
+<div class="note">💡 Pisahkan query menjadi CTE juga membantu reviewer memvalidasi logika bisnis tanpa harus memahami seluruh query sekaligus.</div>
+
+## Di Dunia Nyata
+
+- **Dashboard SDM**: ringkasan karyawan per departemen.
+- **Laporan penjualan**: omzet per wilayah dengan kategori performa.
+- **Absensi**: persentase kehadiran per kelas.
+- **Operasional**: jumlah tiket per prioritas dan SLA.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`WITH per_dept AS (
+  SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata,
+         SUM(gaji) AS total_gaji
+  FROM karyawan
+  GROUP BY dept
+),
+keseluruhan AS (SELECT SUM(gaji) AS semua FROM karyawan)
+SELECT dept, jumlah, ROUND(rata) AS rata,
+       CASE WHEN jumlah >= 3 THEN 'Besar' ELSE 'Kecil' END AS ukuran_tim,
+       ROUND(total_gaji * 100.0 / keseluruhan.semua, 1) AS persen_gaji
+FROM per_dept, keseluruhan
+ORDER BY total_gaji DESC;`} />

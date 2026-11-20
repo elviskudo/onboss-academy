@@ -1,0 +1,101 @@
+---
+title: Agent LLM dan Pemanggilan Alat
+description: Cara model menggunakan fungsi eksternal, perencanaan langkah, dan batas keandalan agent.
+order: 24
+quiz:
+- q: Tool calling berarti…
+  options:
+  - Model meminta eksekusi fungsi eksternal
+  - Model mengganti tokenizer
+  - Model menulis ulang arsitektur
+  - Model menambah epoch
+  answer: 0
+  explain: Model menghasilkan argumen terstruktur, aplikasi yang menjalankan fungsinya.
+- q: Pada ReAct, agent bergantian antara…
+  options:
+  - Token dan byte
+  - Berpikir dan bertindak
+  - Training dan inference
+  - Encode dan decode
+  answer: 1
+  explain: Reasoning ringkas diikuti action, lalu observasi dari lingkungan.
+- q: Fungsi yang diberikan ke model sebaiknya…
+  options:
+  - Semuanya menghapus data
+  - Berjumlah ratusan
+  - Jelas nama dan skema parameternya
+  - Tanpa deskripsi
+  answer: 2
+  explain: Deskripsi dan schema yang jelas membantu model memilih alat yang tepat.
+- q: Batas utama agent LLM adalah…
+  options:
+  - Tidak bisa membaca teks
+  - Selalu lebih cepat dari script
+  - Tidak butuh memori
+  - Bisa salah merencanakan dan mengulang tindakan
+  answer: 3
+  explain: Agent tetap probabilistik; beberapa langkah bisa salah dan perlu pengawasan.
+- q: Observability penting pada agent karena…
+  options:
+  - Langkah menengah perlu diaudit saat hasil salah
+  - Model tidak bisa generate
+  - Token tidak dihitung
+  - Tidak ada prompt
+  answer: 0
+  explain: Tanpa log trace, sulit mengetahui di mana agent mulai melenceng.
+example:
+  code: "tools = [\n  {\"name\": \"cari_dokumen\", \"parameters\": {\"query\": \"string\"}},\n  {\"name\": \"hitung\", \"parameters\": {\"ekspresi\": \"string\"}}\n]\n"
+---
+
+
+**Agent** adalah LLM yang tidak hanya menjawab, tetapi juga bisa memanggil alat: mencari data, menghitung, atau menjalankan aksi lewat aplikasi.
+
+## Alur Tool Calling
+
+```text
+Pertanyaan -> model memilih tool + argumen -> aplikasi menjalankan -> hasil dikembalikan -> model merangkum
+```
+
+```python
+tools = [
+    {"name": "cari_dokumen", "parameters": {"query": "string"}},
+    {"name": "hitung", "parameters": {"ekspresi": "string"}},
+]
+
+def jalankan_tool(nama, args):
+    if nama == "hitung":
+        return eval(args["ekspresi"], {"__builtins__": {}}, {})
+    return "tool tidak dikenal"
+```
+
+Penting: **model hanya mengusulkan**, aplikasi yang memutuskan apakah perintah boleh dijalankan.
+
+## Pola ReAct
+
+```text
+Thought: saya perlu mencari aturan cuti.
+Action: cari_dokumen(query="kebijakan cuti 2024")
+Observation: durations 12 hari kerja.
+Thought: saya sudah punya datanya.
+Final: Kebijakan cuti 2024 adalah 12 hari kerja.
+```
+
+## Desain Tool yang Baik
+
+| Prinsip | Penjelasan |
+|---|---|
+| Nama deskriptif | `kirim_email` lebih jelas dari `do_it` |
+| Schema ketat | tipe argumen dan nilai yang diizinkan |
+| Efek samping jelas | bedakan tool baca dan tool tulis |
+| Error informatif | model bisa mencoba strategi lain |
+| Jumlah terbatas | terlalu banyak tool membingungkan |
+
+<div class="note">💡 Agent yang paling berguna sering kali bukan yang paling otonom, melainkan yang langkahnya bisa diawasi dan dibatasi dengan jelas.</div>
+
+## Kapan Tidak Perlu Agent
+
+Kalau alurnya sudah diketahui dan deterministik, tulis saja fungsi biasa. Agent bermanfaat saat jalur penyelesaian belum pasti: riset, diagnosis, atau tugas dengan banyak kemungkinan alat.
+
+## Observability
+
+Simpan untuk tiap langkah: prompt, tool yang dipilih, argumen, hasil, jumlah token, dan waktu. Trace ini menyelamatkan saat agent mengambil jalan yang salah di produksi.

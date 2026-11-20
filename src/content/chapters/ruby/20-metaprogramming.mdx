@@ -1,0 +1,135 @@
+---
+"title": "Metaprogramming"
+"description": "define_method, method_missing, class_eval, dan introspection"
+"order": 20
+"quiz":
+- "q": "define_method berguna untuk…"
+  "options":
+  - "membuat method secara dinamis"
+  - "menghapus kelas"
+  - "membuat variabel konstan"
+  - "mengubah string"
+  "answer": 0
+  "explain": "Method baru dibuat dari blok pada kelas atau modul."
+- "q": "method_missing dipicu saat…"
+  "options":
+  - "method dipanggil tapi tidak ada"
+  - "method dihapus"
+  - "kelas dibuat"
+  - "exception"
+  "answer": 0
+  "explain": "Bisa dipakai untuk delegasi dinamis, tapi harus hati-hati."
+- "q": "respond_to_missing? sebaiknya diimplementasikan bersama…"
+  "options":
+  - "method_missing"
+  - "initialize"
+  - "to_s"
+  - "freeze"
+  "answer": 0
+  "explain": "Agar introspection mengenali method dinamis."
+- "q": "instance_variables mengembalikan…"
+  "options":
+  - "daftar method"
+  - "daftar variabel instance"
+  - "nama kelas"
+  - "konstanta"
+  "answer": 1
+  "explain": "Method ini berguna untuk debugging."
+- "q": "class_eval menjalankan blok dalam konteks…"
+  "options":
+  - "objek"
+  - "kelas"
+  - "method"
+  - "modul utama"
+  "answer": 1
+  "explain": "Blok dievaluasi dengan self = kelas tersebut."
+"example":
+  "code": "class Dinamis\n  define_method(:sapa) { |nama| \"Halo #{nama}\" }\nend\nputs Dinamis.new.sapa(\"Rani\")\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Metaprogramming berarti menulis kode yang memanipulasi kode lain. Ruby sangat kuat di sini — Rails dibangun di atas kemampuan ini.
+
+## define_method
+
+```ruby
+class Kalkulator
+  [:tambah, :kurang].each do |nama|
+    define_method(nama) do |a, b|
+      nama == :tambah ? a + b : a - b
+    end
+  end
+end
+```
+
+Method dibuat saat kelas dimuat, bukan ditulis satu per satu.
+
+## method_missing
+
+```ruby
+class Proxy
+  def initialize(target) = @target = target
+
+  def method_missing(nama, *args, &blok)
+    if @target.respond_to?(nama)
+      @target.public_send(nama, *args, &blok)
+    else
+      super
+    end
+  end
+
+  def respond_to_missing?(nama,privat = false)
+    @target.respond_to?(nama, privat) || super
+  end
+end
+```
+
+Selalu panggil `super` jika tidak bisa ditangani agar error tetap masuk akal.
+
+## Introspection
+
+```ruby
+obj.methods.grep(/nama/)
+obj.instance_variables
+obj.class.ancestors
+obj.respond_to?(:each)
+```
+
+## class_eval
+
+```ruby
+Kelas.class_eval do
+  attr_accessor :nama
+end
+```
+
+## Kapan Dipakai
+
+Metaprogramming hebat untuk framework dan DSL, tapi bisa membuat kode sulit dilacak. Gunakan hanya saat memang ada pengulangan pola yang sulit dihindari.
+
+<div class="note">💡 Setiap method dinamis yang dibuat lewat method_missing sebaiknya juga dikenali oleh respond_to_missing?. Tanpa itu, library lain akan mengira method itu tidak ada.</div>
+
+
+## Try it Yourself
+
+Contoh ini memakai define_method tanpa method_missing agar mudah dicoba.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`class Kalkulator
+  [:tambah, :kurang, :kali].each do |op|
+    define_method(op) do |a, b|
+      case op
+      when :tambah then a + b
+      when :kurang then a - b
+      when :kali then a * b
+      end
+    end
+  end
+end
+
+k = Kalkulator.new
+puts k.tambah(7, 3)
+puts k.kurang(7, 3)
+puts k.kali(7, 3)
+p k.methods.grep(/tambah|kurang|kali/)
+p k.class.ancestors.first(3)`} />

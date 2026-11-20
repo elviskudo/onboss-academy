@@ -1,0 +1,100 @@
+---
+title: Etika, Bias, dan Tata Kelola Model
+description: Bias data, keadilan, privasi, dan tanggung jawab dalam pengembangan sistem LLM.
+order: 25
+quiz:
+- q: Bias pada LLM sering berasal dari…
+  options:
+  - Output terlalu pendek
+  - Data training yang tidak seimbang
+  - Terlalu banyak GPU
+  - Tokenizer cepat
+  answer: 1
+  explain: Model mereproduksi pola dan stereotip yang ada dalam korpusnya.
+- q: Mitigasi bias dimulai dengan…
+  options:
+  - Menambah parameter
+  - Menghapus semua aturan
+  - Audit data dan evaluasi berkelompok
+  - Menaikkan temperatur
+  answer: 2
+  explain: Tanpa melihat distribusi data menurut kelompok, bias sulit dideteksi.
+- q: Privasi dalam konteks LLM berarti…
+  options:
+  - Menghapus semua token
+  - Menggunakan model terbesar
+  - Menambah epoch
+  - Tidak memasukkan data sensitif tanpa perlindungan
+  answer: 3
+  explain: Data pribadi bisa tersimpan dalam log, prompt, atau dibocorkan lewat jawaban.
+- q: Model card berisi…
+  options:
+  - Informasi penggunaan, batasan, dan evaluasi model
+  - Harga GPU
+  - Kode optimizer
+  - Daftar token
+  answer: 0
+  explain: Dokumentasi ini membantu pengguna memahami untuk apa model boleh dan tidak boleh dipakai.
+- q: Akuntabilitas berarti…
+  options:
+  - Semua keputusan otomatis
+  - Ada pihak yang bertanggung jawab atas dampak sistem
+  - Model selalu benar
+  - Tidak perlu evaluasi
+  answer: 1
+  explain: Manusia dan organisasi tetap bertanggung jawab atas keputusan yang dibantu model.
+example:
+  code: 'Audit: apakah jawaban berbeda secara sistematis
+
+    antara kelompok A dan B untuk pertanyaan yang setara?
+
+    '
+---
+
+
+Kemampuan model besar membawa tanggung jawab. **Etika** bukan tambahan di akhir proyek, melainkan bagian dari desain sejak awal.
+
+## Sumber Bias
+
+- Representasi kelompok yang tidak seimbang dalam korpus.
+- Stereotip historis yang tertanam dalam teks.
+- Label annotator yang mencerminkan sudut pandang tertentu.
+- Bahasa dan dialek yang kurang terwakili.
+
+```text
+Profil A: "dia sangat agresif"
+Profil B: "dia sangat tegas"
+-> Makna sama, nada berbeda -> perlu diuji secara adil.
+```
+
+## Audit Keadilan
+
+```python
+kelompok = {"A": 0.91, "B": 0.74}  # akurasi pada test set
+selisih = abs(kelompok["A"] - kelompok["B"])
+print("selisih akurasi:", round(selisih, 2))
+```
+
+Evaluasi tidak cukup hanya dengan satu angka rata-rata. Lihat performa **per kelompok**, terutama pada konteks sensitif seperti perekrutan, kredit, atau layanan kesehatan.
+
+## Privasi
+
+| Risiko | Mitigasi |
+|---|---|
+| Data masuk prompt penyedia | anonimisasi, kontrak, opsi on-premise |
+| Simpanan riwayat | retention policy dan enkripsi |
+| Hafalan data training | deduplikasi dan filtering |
+| Log token berisi PII | redaksi otomatis |
+
+## Tata Kelola
+
+- **Model card** — tujuan, batasan, data, metrik, dan risiko.
+- **Datasheet** — asal dan kondisi pengumpulan dataset.
+- **Human oversight** — jalur eskalasi untuk keputusan berdampak.
+- **Incident response** — prosedur saat model menghasilkan konten berbahaya.
+
+<div class="note">💡 “Netral” bukan berarti tanpa bias. Model yang dilatih dari data manusia selalu membawa jejak pilihan manusia —中秋节 yang bisa kita audit dan kurangi.</div>
+
+## Peran Pengembang
+
+Sebelum rilis, tanyakan: siapa yang mungkin dirugikan, bagaimana model bisa disalahgunakan, dan bagaimana penggunanya tahu bahwa mereka berbicara dengan mesin? Jawaban jujur atas pertanyaan ini lebih berharga daripada klaim “AI yang sepenuhnya aman”.

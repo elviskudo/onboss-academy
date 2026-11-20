@@ -1,0 +1,111 @@
+---
+title: "Memasang dan Menjalankan MySQL"
+description: "Instalasi server, koneksi mysql CLI, dan pengenalan workshop benar"
+order: 9
+quiz:
+  - q: "Perintah klien MySQL untuk masuk sebagai root adalah…"
+    options: ["mysql -u root -p", "sql -login root", "connect mysql root", "mysql --login"]
+    answer: 0
+    explain: "mysql -u root -p meminta kata sandi secara interaktif."
+  - q: "Perintah SQL untuk melihat daftar database adalah…"
+    options: ["SHOW TABLES", "SHOW DATABASES", "LIST DATABASES", "SELECT DATABASES"]
+    answer: 1
+    explain: "SHOW DATABASES menampilkan skema yang tersedia."
+  - q: "Perintah untuk memakai sebuah database adalah…"
+    options: ["USE nama_db", "OPEN nama_db", "SELECT nama_db", "GO nama_db"]
+    answer: 0
+    explain: "USE menetapkan database aktif untuk sesi."
+  - q: "Utilitas untuk memuat file SQL adalah…"
+    options: ["mysql &lt; backup.sql", "mysql load backup.sql", "import backup.sql", "source saja di shell"]
+    answer: 0
+    explain: "Redirect stdin memuat perintah dari file ke klien mysql."
+  - q: "Perintah menyimpan cadangan logical adalah…"
+    options: ["mysqldump", "mysqlbackup selalu", "copy data dir saja", "mysqlsave"]
+    answer: 0
+    explain: "mysqldump menghasilkan file SQL berisi CREATE dan INSERT."
+example:
+  code: |
+    mysql -u root -p
+    SHOW DATABASES;
+    CREATE DATABASE academy;
+    USE academy;
+    SHOW TABLES;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+MySQL adalah sistem manajemen database relasional yang paling banyak dipakai untuk aplikasi web. Sebelum menulis query, pastikan server berjalan dan kamu bisa masuk dengan akun yang tepat.
+
+## Menghubungkan Diri
+
+```bash
+mysql -u root -p
+mysql -h 127.0.0.1 -P 3306 -u app -p academy
+```
+
+Flag `-h` host, `-P` port, `-u` user, `-p` meminta kata sandi. Menaruh kata sandi langsung setelah `-p` tanpa spasi berisiko terekam di riwayat shell.
+
+## Perintah Awal
+
+```sql
+SHOW DATABASES;
+CREATE DATABASE academy CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE academy;
+SHOW TABLES;
+SELECT DATABASE(), VERSION(), USER();
+```
+
+Gunakan `utf8mb4` bukan `utf8` — `utf8` di MySQL hanya mendukung 3 byte dan gagal menyimpan emoji serta beberapa aksara.
+
+## Struktur Lapisan
+
+```text
+Server MySQL
+ └─ Database (schema)
+     └─ Table
+         ├─ Column
+         ├─ Index
+         └─ Row
+```
+
+Satu server bisa menampung banyak database; satu database berisi banyak tabel. Hak akses bisa diberikan per database atau per tabel.
+
+## File Konfigurasi
+
+| File | Fungsi |
+| --- | --- |
+| `my.cnf` / `my.ini` | konfigurasi server |
+| data directory | menyimpan file tabel dan log |
+| error log | diagnosis saat server gagal start |
+| slow query log | query yang melewati `long_query_time` |
+
+```sql
+SET GLOBAL slow_query_log = 'ON';
+SET GLOBAL long_query_time = 1;
+```
+
+## Backup dan Restore
+
+```bash
+mysqldump -u root -p academy > academy.sql
+mysql -u root -p academy < academy.sql
+```
+
+Untuk produksi, tambahkan `--single-transaction` agar backup konsisten tanpa mengunci seluruh tabel InnoDB.
+
+<div class="note">💡 Jangan menjalankan server MySQL dengan akun root sistem operasi. Berikan akun khusus dengan hak minimal pada direktori data.</div>
+
+## Di Dunia Nyata
+
+- **Lokal development**: Docker Compose memudahkan versi MySQL yang konsisten antar developer.
+- **Staging**: salin struktur dari produksi tanpa data sensitif.
+- **Produksi**: backup otomatis dan uji restore rutin.
+- ** debugging**: error log dan slow query log dua sumber pertama saat ada masalah.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SHOW DATABASES;
+CREATE DATABASE academy CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE academy;
+SELECT DATABASE() AS db_aktif, VERSION() AS versi;`} />

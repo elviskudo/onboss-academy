@@ -1,0 +1,133 @@
+---
+"title": "Uji dan Kondisi"
+"description": "Perbandingan angka, string, file, serta perbedaan [ ] dan [[ ]]"
+"order": 12
+"quiz":
+- "q": "Operator perbandingan angka \"lebih besar\" pada test adalah…"
+  "options":
+  - ">"
+  - "-gt"
+  - "greater"
+  - "=="
+  "answer": 1
+  "explain": "-gt digunakan di dalam [ ] maupun [[ ]]."
+- "q": "Operator \"sama dengan\" untuk string adalah…"
+  "options":
+  - "-eq"
+  - "=="
+  - "="
+  - "eq"
+  "answer": 2
+  "explain": "Gunakan = untuk string dan -eq untuk angka."
+- "q": "Cara mengecek file ada adalah…"
+  "options":
+  - "[ -e file ]"
+  - "[ file ]"
+  - "[ -s file ]"
+  - "[ -f \"$file\" ]"
+  "answer": 3
+  "explain": "-f benar bila path adalah file biasa."
+- "q": "Keunggulan [[ ]] dibanding [ ] adalah…"
+  "options":
+  - "Bisa memakai && dan pola glob"
+  - "Lebih lambat"
+  - "Hanya untuk angka"
+  - "Tidak perlu spasi"
+  "answer": 0
+  "explain": "[[ ]] adalah kata kunci Bash dengan parsing yang lebih fleksibel."
+- "q": "Spasi di sekitar kurung [ ] bersifat…"
+  "options":
+  - "Opsional"
+  - "Wajib"
+  - "Dilarang"
+  - "Hanya di akhir"
+  "answer": 1
+  "explain": "[ \"$x\" = \"y\" ] harus punya spasi setelah [ dan sebelum ]."
+"example":
+  "code": "#!/usr/bin/env bash\numur=20\nnama=\"Budi\"\n\nif [ \"$umur\" -ge 18 ]; then\n  echo \"Dewasa\"\nfi\n\nif [[ \"$nama\" == Bu* ]]; then\n  echo \"Nama diawali Bu\"\nfi\n\nfile=\"data.txt\"\n[ -f \"$file\" ] && echo \"Berkas ada\"\n[ -d \"/tmp\" ] && echo \"/tmp adalah folder\"\n[ -z \"$nama\" ] || echo \"Nama tidak kosong\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Perbandingan
+
+```bash
+#!/usr/bin/env bash
+umur=20
+nama="Budi"
+
+if [ "$umur" -ge 18 ]; then
+  echo "Dewasa"
+fi
+
+if [[ "$nama" == Bu* ]]; then
+  echo "Nama diawali Bu"
+fi
+
+file="data.txt"
+[ -f "$file" ] && echo "Berkas ada"
+[ -d "/tmp" ] && echo "/tmp adalah folder"
+[ -z "$nama" ] || echo "Nama tidak kosong"
+```
+
+| Kategori | Operator | Arti |
+|---|---|---|
+| Angka | `-eq`, `-ne` | sama, tidak sama |
+| Angka | `-lt`, `-le` | kurang, kurang atau sama |
+| Angka | `-gt`, `-ge` | lebih, lebih atau sama |
+| String | `=`, `!=` | sama, tidak sama |
+| String | `-z`, `-n` | kosong, tidak kosong |
+
+Kesalahan umum: memakai `>` untuk angka. Operator `>` membandingkan string secara leksikografis.
+
+## Cek Berkas
+
+| Operator | Benar bila |
+|---|---|
+| `-e` | path ada |
+| `-f` | file biasa |
+| `-d` | direktori |
+| `-r`, `-w`, `-x` | bisa dibaca / ditulis / dijalankan |
+| `-s` | file ada dan tidak kosong |
+
+## `[` versus `[[`
+
+```bash
+[ "$a" = "x" ]            # POSIX, lebih portabel
+[[ "$a" == x* ]]          # Bash, mendukung pola
+[[ $a =~ ^[0-9]+$ ]]      # regex, hanya di [[ ]]
+```
+
+Di dalam `[[ ]]`, variabel tidak perlu dikutip untuk menghindari word splitting, tapi mengutip tetap aman.
+
+## Kombinasi Catatanika
+
+```bash
+if [ -f "$file" ] && [ -r "$file" ]; then
+  echo "Bisa dibaca"
+fi
+```
+
+<div class="note">💡 Selalu kutip variabel di dalam <code>[ ]</code>. bila variabel kosong, <code>[ $x = y ]</code> berubah menjadi <code>[ = y ]</code> dan menyebabkan error.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+umur=20
+nama="Budi"
+
+if [ "$umur" -ge 18 ]; then
+  echo "Dewasa"
+fi
+
+if [[ "$nama" == Bu* ]]; then
+  echo "Nama diawali Bu"
+fi
+
+file="data.txt"
+[ -f "$file" ] && echo "Berkas ada"
+[ -d "/tmp" ] && echo "/tmp adalah folder"
+[ -z "$nama" ] || echo "Nama tidak kosong"`} />

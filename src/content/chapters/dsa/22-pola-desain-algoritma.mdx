@@ -1,0 +1,112 @@
+---
+title: 'Pola Desain Algoritma: Greedy, Two Pointers, dan Sliding Window'
+description: Teknik umum yang muncul ulang di banyak soal teknik dan pemrograman kompetitif.
+order: 22
+quiz:
+- q: Greedy memilih…
+  options:
+  - Nilai tengah
+  - Opsi terakhir
+  - Opsi terbaik lokal di setiap langkah
+  - Semua kemungkinan solusi
+  answer: 2
+  explain: Greedy berharap pilihan lokal menghasilkan optimum global — tidak selalu benar.
+- q: Two pointers cocok untuk array…
+  options:
+  - Tidak terurut saja
+  - Hanya string
+  - Hanya graf
+  - Terurut dan mencari pasangan
+  answer: 3
+  explain: Satu pointer di kiri, satu di kanan, lalu disesuaikan.
+- q: Sliding window berguna untuk…
+  options:
+  - Subarray/jendela berukuran tertentu
+  - Mencari akar pohon
+  - Menggabungkan graf
+  - Menghitung faktorial
+  answer: 0
+  explain: Jendela digeser tanpa menghitung ulang seluruh isinya.
+- q: Greedy terbukti optimal untuk…
+  options:
+  - Bubble sort
+  - Kruskal dan Huffman
+  - Semua masalah penjadwalan
+  - Binary search
+  answer: 1
+  explain: Diperlukan bukti exchange argument atau cut property.
+- q: Kompleksitas sliding window dengan penambahan/penghapusan O(1) adalah…
+  options:
+  - O(2^n)
+  - O(log n)
+  - O(n)
+  - O(n^2)
+  answer: 2
+  explain: Tiap elemen masuk dan keluar jendela paling banyak sekali.
+example:
+  code: "data = [1, 3, 1, 2, 4, 2]\ntarget, panjang = 6, 3\njumlah = 0\nfor i in range(panjang):\n    jumlah += data[i]\nfor i in range(panjang, len(data)):\n    jumlah += data[i] - data[i-panjang]\n    print(i-panjang+1, jumlah)\n"
+---
+
+
+Banyak algoritma bukan varian baru, melainkan **pola yang sama** dengan kostum berbeda. Mengenali pola mempercepat penyelesaian soal.
+
+## Greedy
+
+```python
+def koin_terbanyak(nilai, koin):
+    koin = sorted(koin, reverse=True)
+    hasil = []
+    for k in koin:
+        while nilai >= k:
+            hasil.append(k)
+            nilai -= k
+    return hasil
+
+print(koin_terbanyak(27, [10, 5, 1]))
+```
+
+Greedy bekerja bila ada bukti bahwa pilihan terbesar lokal tidak merusak hasil akhir. Untuk sistem koin sembarangan, greedy bisa salah — gunakan DP.
+
+## Two Pointers
+
+```python
+def dua_jumlah(a, target):
+    a = sorted(a)
+    l, r = 0, len(a) - 1
+    while l < r:
+        jumlah = a[l] + a[r]
+        if jumlah == target:
+            return (a[l], a[r])
+        if jumlah < target:
+            l += 1
+        else:
+            r -= 1
+    return None
+```
+
+## Sliding Window
+
+```python
+def jumlah_maks(a, k):
+    if len(a) < k:
+        return None
+    jumlah = sum(a[:k])
+    terbaik = jumlah
+    for i in range(k, len(a)):
+        jumlah += a[i] - a[i - k]
+        terbaik = max(terbaik, jumlah)
+    return terbaik
+```
+
+| Pola | Ciri khas soal |
+|---|---|
+| Greedy | “minimum/maximum jumlah operasi” |
+| Two pointers | array terurut, pasangan, palindrom |
+| Sliding window | subarray terbesar/terkecil berukuran k |
+| Fast-slow pointer | siklus linked list, midpoint |
+
+<div class="note">💡 Sebelum mengoptimasi, tanya: “Apakah saya bisa memproses elemen sekali dan menyimpan sedikit state?” Sering itulah jawabannya.</div>
+
+## Cara Berlatih
+
+Klasifikasikan soal berdasarkan pola, bukan berdasarkan kata kunci. Setelah 20–30 soal, Anda akan mulai melihat bahwa banyak soal “baru” sebenarnya variasi dari pola yang sudah dikenal.

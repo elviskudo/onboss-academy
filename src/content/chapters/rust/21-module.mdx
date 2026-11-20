@@ -1,0 +1,140 @@
+---
+"title": "Module & Visibilitas"
+"description": "mod, use, pub, path, dan organisasi file proyek Rust"
+"order": 21
+"quiz":
+- "q": "Kata kunci untuk mendeklarasikan modul adalah…"
+  "options":
+  - "mod"
+  - "module"
+  - "namespace"
+  - "using"
+  "answer": 0
+  "explain": "mod nama { ... } atau mod nama; untuk file terpisah."
+- "q": "Defaultnya, semua item dalam modul…"
+  "options":
+  - "publik"
+  - "privat"
+  - "crate"
+  - "pub(crate)"
+  "answer": 1
+  "explain": "Tanpa pub, item hanya terlihat di modul itu dan turunannya."
+- "q": "Item di modul induk diakses dengan…"
+  "options":
+  - "super::"
+  - "self::"
+  - "crate::"
+  - "parent::"
+  "answer": 0
+  "explain": "super naik satu level modul."
+- "q": "pub(crate) berarti…"
+  "options":
+  - "publik di semua crate"
+  - "terlihat dalam crate yang sama"
+  - "privat total"
+  - "hanya di modul"
+  "answer": 1
+  "explain": "Visibility dibatasi sampai level crate."
+- "q": "File modul untuk `mod util;` biasanya…"
+  "options":
+  - "util.rs atau util/mod.rs"
+  - "Util.rs"
+  - "util.mod"
+  - "module/util.txt"
+  "answer": 0
+  "explain": "Rust mencari util.rs atau util/mod.rs relatif terhadap file induk."
+"example":
+  "code": "mod util {\n    pub fn sapa() { println!(\"Halo\"); }\n}\nfn main() { util::sapa(); }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Modul membantu mengatur kode agar tetap rapi seiring proyek bertumbuh. Sistem modul Rust juga menentukan **visibilitas** — apa yang boleh diakses dari luar.
+
+## Modul Dasar
+
+```rust
+mod matematika {
+    pub fn tambah(a: i32, b: i32) -> i32 { a + b }
+    fn rahasia() {} // privat
+}
+
+fn main() {
+    println!("{}", matematika::tambah(2, 3));
+}
+```
+
+## Pemisahan File
+
+```
+src/
+  main.rs
+  kalkulator.rs
+  kalkulator/
+    operasi.rs
+```
+
+```rust
+// main.rs
+mod kalkulator;
+
+// kalkulator.rs
+pub mod operasi;
+```
+
+## use
+
+```rust
+use std::collections::HashMap;
+use crate::kalkulator::operasi::tambah;
+use super::util::helper;
+```
+
+`use` membuat path lebih pendek. Untuk menghindari bentrok, gunakan `as`:
+
+```rust
+use std::io::Result as IoResult;
+```
+
+## Visibilitas
+
+| Modifier | Jangkauan |
+|---|---|
+| (tanpa `pub`) | Modul saat ini + turunan |
+| `pub` | Publik |
+| `pub(crate)` | Seluruh crate saat ini |
+| `pub(super)` | Modul induk saja |
+| `pub(in path)` | Path tertentu |
+
+## Re-export
+
+```rust
+pub use self::operasi::tambah;
+```
+
+Ini memindahkan API ke level lebih tinggi agar pemakai tidak perlu tahu struktur internal.
+
+<div class="note">💡 Mulailah dengan satu file. Pecah menjadi modul saat file mulai sulit dibaca — bukan sekadar karena aturan "satu file satu modul".</div>
+
+
+## Try it Yourself
+
+Modul inline di bawah mencerminkan struktur file yang biasa dipakai.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`mod matematika {
+    pub fn tambah(a: i32, b: i32) -> i32 { a + b }
+    pub fn kali(a: i32, b: i32) -> i32 { a * b }
+    fn rahasia() -> i32 { 42 }
+
+    pub mod lanjutan {
+        pub fn pangkat(a: i32, n: u32) -> i32 { a.pow(n) }
+    }
+}
+
+use matematika::{tambah, kali};
+
+fn main() {
+    println!("{}", tambah(7, 5));
+    println!("{}", kali(3, 4));
+    println!("{}", matematika::lanjutan::pangkat(2, 5));
+}`} />

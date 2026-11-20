@@ -32,14 +32,14 @@ example:
     int main() {
         int a = 42;
         int *p = &a;
-        cout << *p << endl;
+        cout <&lt; *p <&lt; endl;
 
         int *data = new int[3]{10, 20, 30};
-        cout << data[1] << endl;
+        cout <&lt; data[1] <&lt; endl;
         delete[] data;
 
         auto aman = make_unique<int>(99);
-        cout << *aman << endl;
+        cout <&lt; *aman <&lt; endl;
         return 0;
     }
 ---
@@ -171,6 +171,10 @@ C++ modern punya **3 smart pointer** (`unique_ptr`, `shared_ptr`, `weak_ptr`); `
 
 <div class="note">💡 Aturan modern C++: hindari <code>new</code>/<code>delete</code> manual. Gunakan <code>vector</code>, <code>string</code>, atau smart pointer yang melepas memori otomatis — kebanyakan memory leak langsung hilang sebelum menjadi bug.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <memory>
 using namespace std;
@@ -180,19 +184,19 @@ void gandakan(int &x) { x *= 2; }
 int main() {
     int a = 42;
     int *p = &a;
-    cout << "Alamat: " << p << endl;
-    cout << "Nilai: " << *p << endl;
+    cout <&lt; "Alamat: " <&lt; p <&lt; endl;
+    cout <&lt; "Nilai: " <&lt; *p <&lt; endl;
 
     gandakan(a);
-    cout << "Setelah digandakan: " << a << endl;
+    cout <&lt; "Setelah digandakan: " <&lt; a <&lt; endl;
 
     int *data = new int[3]{10, 20, 30};
     int total = 0;
-    for (int i = 0; i < 3; i++) total += data[i];
-    cout << "Jumlah array heap: " << total << endl;
+    for (int i = 0; i &lt; 3; i++) total += data[i];
+    cout <&lt; "Jumlah array heap: " <&lt; total <&lt; endl;
     delete[] data;
 
     auto aman = make_unique<int>(99);
-    cout << "Smart pointer: " << *aman << endl;
+    cout <&lt; "Smart pointer: " <&lt; *aman <&lt; endl;
     return 0;
 }`} />

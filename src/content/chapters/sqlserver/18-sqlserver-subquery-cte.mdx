@@ -1,0 +1,111 @@
+---
+title: "Subquery dan CTE"
+description: "subquery scalar, IN/EXISTS, derived table, CTE, dan CTE rekursif"
+order: 18
+quiz:
+  - q: "CTE diawali dengan kata kunci…"
+    options: ["START", "WITH", "USING", "DECLARE"]
+    answer: 1
+    explain: "WITH nama_cte AS (SELECT ...) SELECT ... FROM nama_cte;"
+  - q: "EXISTS bernilai benar ketika…"
+    options: ["Jumlah baris nol", "Ada agregat", "Subquery menghasilkan minimal satu baris", "Subquery menghasilkan NULL"]
+    answer: 2
+    explain: "EXISTS hanya mengecek keberadaan, bukan nilai."
+  - q: "Subquery scalar harus menghasilkan…"
+    options: ["Beberapa baris", "Tidak ada hasil", "Tabel lengkap", "Satu nilai tunggal"]
+    answer: 3
+    explain: "Lebih dari satu baris menyebabkan error saat runtime."
+  - q: "CTE rekursif memerlukan…"
+    options: ["GROUP BY", "UNION ALL dan anchor member", "ORDER BY", "TOP"]
+    answer: 1
+    explain: "Anchor member + recursive member digabung UNION ALL, lalu OPTION (MAXRECURSION n)."
+  - q: "Derived table adalah…"
+    options: ["Tabel fisik", "View tersimpan", "Subquery dalam FROM dengan alias", "CTE di awal"]
+    answer: 2
+    explain: "SELECT ... FROM (SELECT ...) AS alias;"
+example:
+  code: |
+    WITH Ringkas AS (
+      SELECT divisi, COUNT(*) AS jumlah
+      FROM dbo.karyawan GROUP BY divisi
+    )
+    SELECT divisi, jumlah
+    FROM Ringkas WHERE jumlah > 3;
+---
+
+## Subquery Scalar
+
+```sql
+SELECT nama, gaji,
+       (SELECT AVG(gaji) FROM dbo.karyawan) AS rata_rata
+FROM dbo.karyawan;
+```
+
+Subquery di daftar `SELECT` harus mengembalikan tepat satu nilai. Ia dievaluasi per baris, jadi subquery yang mahal sebaiknya dihitung sekali dalam variabel atau CTE.
+
+## IN dan EXISTS
+
+```sql
+SELECT nama FROM dbo.karyawan
+WHERE id IN (SELECT id_karyawan FROM dbo.pesanan);
+
+SELECT nama FROM dbo.karyawan k
+WHERE EXISTS (SELECT 1 FROM dbo.pesanan p WHERE p.id_karyawan = k.id);
+```
+
+`EXISTS` sering lebih cepat karena berhenti begitu menemukan satu baris. `NOT EXISTS` lebih aman daripada `NOT IN` bila subquery可能 menghasilkan NULL.
+
+## Derived Table
+
+```sql
+SELECT r.divisi, r.jumlah
+FROM (
+  SELECT divisi, COUNT(*) AS jumlah
+  FROM dbo.karyawan GROUP BY divisi
+) AS r
+WHERE r.jumlah > 3;
+```
+
+Subquery di `FROM` wajib punya alias.
+
+## CTE
+
+```sql
+WITH Ringkas AS (
+  SELECT divisi, COUNT(*) AS jumlah
+  FROM dbo.karyawan GROUP BY divisi
+)
+SELECT * FROM Ringkas WHERE jumlah > 3;
+```
+
+CTE membuat query bertingkat lebih mudah dibaca dan bisa dipakai ulang dalam satu pernyataan.
+
+## CTE Rekursif
+
+```sql
+WITH Hierarki AS (
+  SELECT id, nama, 0 AS level FROM dbo.karyawan WHERE atasan_id IS NULL
+  UNION ALL
+  SELECT k.id, k.nama, h.level + 1
+  FROM dbo.karyawan k JOIN Hierarki h ON k.atasan_id = h.id
+)
+SELECT * FROM Hierarki
+OPTION (MAXRECURSION 100);
+```
+
+Bagian sebelum `UNION ALL` adalah anchor; bagian sesudahnya memanggil CTE sendiri sampai tidak ada baris baru.
+
+<div class="note">💡 CTE hanya hidup selama satu pernyataan. Kalau ingin dipakai banyak query, jadikan VIEW atau table-valued function.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (id INT, parent INT, nama NVARCHAR(20));
+INSERT INTO #t VALUES (1, NULL, N'A'), (2, 1, N'B'), (3, 2, N'C');
+WITH H AS (
+ SELECT id, parent, nama, 0 lvl FROM #t WHERE parent IS NULL
+ UNION ALL
+ SELECT t.id, t.parent, t.nama, H.lvl+1 FROM #t t JOIN H ON t.parent = H.id
+) SELECT * FROM H;
+DROP TABLE #t;`}</code></pre>

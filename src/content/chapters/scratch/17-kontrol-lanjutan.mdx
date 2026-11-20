@@ -1,0 +1,91 @@
+---
+title: "Kontrol Lanjutan"
+description: "Perulangan bersarang, stop, dan kloning terjadwal"
+order: 17
+quiz:
+  - q: "Blok \"berhenti [semua]\" akan…"
+    options: ["Mengganti kostum", "Menghentikan semua skrip di proyek", "Hentikan satu sprite", "Menghapus daftar"]
+    answer: 1
+    explain: "Pilihan \"skrip ini\" hanya menghentikan skrip tempat blok berada."
+  - q: "Perulangan bersarang berguna untuk…"
+    options: ["Mengubah volume", "Mengganti backdrop", "Membuat pola dua dimensi seperti grid", "Menghapus semua kostum"]
+    answer: 2
+    explain: "Satu loop mengatur baris, loop lain mengatur kolom."
+  - q: "Blok \"jika ... maka ... jika tidak\" digunakan untuk…"
+    options: ["Mengulang tanpa syarat", "Mengirim pesan", "Membuat kostum", "Memilih dua jalur alternatif"]
+    answer: 3
+    explain: "Hanya satu cabang yang dijalankan per evaluasi."
+  - q: "Blok \"ulangi sampai\" berbeda dengan \"ulangi 10\" karena…"
+    options: ["Jumlah iterasi bergantung kondisi", "Selalu 10 kali", "Tidak bisa berhenti", "Hanya untuk suara"]
+    answer: 0
+    explain: "Pastikan kondisi akhirnya terpenuhi agar tidak loop tanpa henti."
+  - q: "Blok \"klon [diri saya]\" sering dipasangkan dengan…"
+    options: ["ketika suara selesai", "ketika saya mulai sebagai klon", "ketika bendera diklik", "ketika saya diklik"]
+    answer: 1
+    explain: "Skrip khusus klon membedakan perilaku klon dari induknya."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur [baris] ke [1]]
+    [ulangi 5 [
+      [atur [kolom] ke [1]]
+      [ulangi 8 [
+         [klon [diri saya]]
+         [ubah [kolom] sebesar 1]
+      ]]
+      [ubah [baris] sebesar 1]
+    ]]
+---
+
+Kategori Kontrol berisi perulangan, percabangan, penundaan, kloning, dan penghentian skrip. Kombinasinya memungkinkan pola yang cukup kompleks.
+
+## Pilihan Berhenti
+
+```text
+[berhenti [semua]]     -> seluruh proyek
+[berhenti [skrip ini]] -> hanya skrip saat ini
+[berhenti [lainnya]]   -> lanjutkan skrip ini, hentikan yang lain
+```
+
+## Loop Bersarang
+
+```text
+[ulangi 5 [
+  [atur [y] ke ((baris) * 30)]
+  [ulangi 8 [
+     [atur [x] ke ((kolom) * 40)]
+     [klon [diri saya]]
+     [ubah [kolom] sebesar 1]
+  ]]
+  [ubah [baris] sebesar 1]
+]]
+```
+
+## Hindari Loop Tak Berujung
+
+Pada `ulangi sampai`, pastikan ada perubahan yang membuat kondisi menjadi benar. Kalau tidak, proyek akan terlihat macet—meski tombol stop masih bekerja.
+
+## Klon Terjadwal
+
+```text
+[ulangi sampai <(waktu sejak bendera diklik) > 30> [
+  [klon [musuh]]
+  [tunggu 2 detik]
+]]
+```
+
+<div class="note">💡 Scratch membatasi jumlah klon sekitar 300. Untuk proyek besar, hapus klon setelah selesai digunakan dengan `[hapus klon ini]`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[ulangi 3 [
+  [klon [musuh]]
+  [tunggu 1 detik]
+]]
+
+[ketika saya mulai sebagai klon]
+[tampilkan]
+[ulangi 20 [geser 5 langkah]]
+[hapus klon ini]`}</code></pre>

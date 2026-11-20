@@ -1,0 +1,133 @@
+---
+title: "Function Pointer & Callback"
+description: "mengirim fungsi sebagai argumen, qsort comparator, dan tabel dispatch"
+order: 23
+quiz:
+  - q: "Deklarasi pointer ke fungsi `int f(double)` adalah…"
+    options: ["int *f(double);", "int (*f)(double);", "int f*(double);", "(*int f)(double);"]
+    answer: 1
+    explain: "Kurung mengikat `*` ke `f` lebih dulu."
+  - q: "Callback adalah…"
+    options: ["Fungsi yang dipanggil sistem", "Fungsi yang dikirim sebagai argumen", "Error handler", "Makro"]
+    answer: 1
+    explain: "Pemanggil menentukan perilaku lewat fungsi yang dikirim."
+  - q: "`qsort` membutuhkan argumen keempat berupa…"
+    options: ["Comparator function", "Ukuran array", "Nama array", "Pointer ke elemen"]
+    answer: 0
+    explain: "Fungsi comparator menerima dua `const void *`."
+  - q: "`typedef` pada function pointer berguna untuk…"
+    options: ["Memperpendek deklarasi", "Menghapus fungsi", "Mengubah returning value", "Mengcompiler ulang"]
+    answer: 0
+    explain: "Contoh: `typedef int (*Op)(int,int);`"
+  - q: "Tabel dispatch berisi…"
+    options: ["Array function pointer", "Array string", "Struct kosong", "Stack"]
+    answer: 0
+    explain: "Cocok untuk state machine / perintah CLI."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdlib.h>
+    
+    typedef int (*Operasi)(int, int);
+    
+    int tambah(int a,int b){return a+b;}
+    int kali(int a,int b){return a*b;}
+    
+    int turun(const void *a, const void *b) {
+        int x=*(const int*)a, y=*(const int*)b;
+        return (y>x)-(y<x);
+    }
+    
+    int main(void) {
+        Operasi op = kali;
+        printf("3*4=%d\n", op(3,4));
+    
+        int a[]={3,1,4,2};
+        qsort(a,4,sizeof a[0],turun);
+        for(int i=0;i&lt;4;i++) printf("%d ",a[i]);
+        puts("");
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Function pointer membuat C bisa melakukan apa yang di bahasa lain disebut callback, strategy, dan polymorphism ringan.
+
+## Sintaks
+
+```c
+int (*op)(int, int);     /* pointer ke fungsi (int,int)->int */
+int *f(int);             /* fungsi yang mengembalikan int* — BEDA */
+```
+
+Kurung di sekitar `*op` menentukan bahwa `op` adalah pointer, bukan fungsi.
+
+## typedef
+
+```c
+typedef int (*Operasi)(int, int);
+
+Operasi o1 = tambah;
+Operasi o2 = kali;
+```
+
+Jauh lebih mudah dibaca daripada menulis ulang deklarasi panjang.
+
+## qsort Comparator
+
+```c
+int banding_string(const void *a, const void *b) {
+    const char *sa = *(const char * const *)a;
+    const char *sb = *(const char * const *)b;
+    return strcmp(sa, sb);
+}
+```
+
+Perhatikan tipe cast-nya — `qsort` memberi pointer ke elemen array.
+
+## Tabel Dispatch
+
+```c
+typedef void (*Aksi)(void);
+
+void bantuan(void) { printf("...\n"); }
+void keluar(void)  { exit(0); }
+
+Aksi tabel[] = { bantuan, keluar };
+const char *nama[] = {"help", "exit"};
+
+for (int i = 0; i < 2; i++)
+    if (strcmp(input, nama[i]) == 0) { tabel[i](); break; }
+```
+
+Menambah perintah cukup menambah baris tabel — tidak perlu `if/else` panjang.
+
+<div class="note">💡 Function pointer tidak membawa state. Kalau callback butuh konteks, kirim struktur berisi data lewat parameter `void *userdata` — pola yang dipakai banyak library C.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+
+typedef int (*Operasi)(int, int);
+
+int tambah(int a,int b){return a+b;}
+int kali(int a,int b){return a*b;}
+
+int turun(const void *a, const void *b) {
+    int x=*(const int*)a, y=*(const int*)b;
+    return (y>x)-(y<x);
+}
+
+int main(void) {
+    Operasi op = kali;
+    printf("3*4=%d\n", op(3,4));
+
+    int a[]={3,1,4,2};
+    qsort(a,4,sizeof a[0],turun);
+    for(int i=0;i&lt;4;i++) printf("%d ",a[i]);
+    puts("");
+    return 0;
+}`} />

@@ -1,0 +1,135 @@
+---
+title: Keamanan Dasar Server Linux
+description: 'Prinsip hardening awal: update, firewall, SSH, dan pembatasan akses.'
+order: 20
+quiz:
+- q: Prinsip least privilege berarti…
+  options:
+  - Memberikan izin minimum yang dibutuhkan
+  - Memberikan semua izin
+  - Menonaktifkan semua user
+  - Menghapus password
+  answer: 0
+  explain: Akun dan proses hanya boleh melakukan apa yang benar-benar diperlukan.
+- q: Praktik SSH yang baik adalah…
+  options:
+  - Menyimpan kunci di /tmp
+  - Menonaktifkan login root dan memakai kunci
+  - Mengizinkan password root
+  - Membuka port 22 ke internet tanpa batas
+  answer: 1
+  explain: Login root via password sangat rentan brute force.
+- q: Firewall dasar di Ubuntu adalah…
+  options:
+  - firewalld di semua distro
+  - selinux
+  - ufw
+  - iptables-only
+  answer: 2
+  explain: ufw menyederhanakan aturan iptables.
+- q: Perintah melihat port yang terbuka adalah…
+  options:
+  - ls -l
+  - df -h
+  - who
+  - ss -tuln
+  answer: 3
+  explain: Port terbuka yang tidak perlu sebaiknya ditutup.
+- q: Update keamanan sebaiknya…
+  options:
+  - Dijalankan berkala dan diawasi
+  - Ditunda selamanya
+  - Hanya saat server mati
+  - Dihapus
+  answer: 0
+  explain: Patch menutup celah yang sudah diketahui publik.
+example:
+  code: 'sudo apt update && sudo apt upgrade -y
+
+    sudo ufw allow OpenSSH
+
+    sudo ufw enable
+
+    sudo ufw status
+
+    sudo sshd -t
+
+    '
+---
+
+
+Server yang baru terpasang belum aman secara default. **Hardening** berarti mengurangi permukaan serangan langkah demi langkah.
+
+## Update
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+sudo apt autoremove
+```
+
+```bash
+sudo dnf update -y      # RHEL/Fedora
+sudo pacman -Syu        # Arch
+```
+
+## SSH
+
+Edit `/etc/ssh/sshd_config`:
+
+```text
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+Port 22
+AllowUsers admin
+```
+
+```bash
+sudo sshd -t
+sudo systemctl restart ssh
+```
+
+<div class="note">💡 Pastikan kunci SSH Anda sudah berhasil login sebelum menonaktifkan password. Kalau tidak, Anda bisa terkunci di luar server.</div>
+
+## Firewall
+
+```bash
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw enable
+sudo ufw status verbose
+```
+
+```bash
+sudo firewall-cmd --state
+sudo firewall-cmd --list-ports
+```
+
+## Audit Sederhana
+
+```bash
+who
+last
+sudo grep "Failed password" /var/log/auth.log
+sudo find / -perm -4000 -type f 2>/dev/null
+ls -l /etc/passwd /etc/shadow
+```
+
+| Item | Yang diperiksa |
+|---|---|
+| `/etc/shadow` | bukan world-readable |
+| setuid file | hanya yang diperlukan |
+| akun dengan shell | tidak ada akun aneh |
+| port terbuka | sesuai kebutuhan layanan |
+
+## Prinsip
+
+- Pasang hanya paket yang dibutuhkan.
+- Jalankan layanan sebagai user khusus, bukan root.
+- Simpan log dan kirim ke sistem terpusat.
+- Buat backup sebelum perubahan besar.
+
+Keamanan bukan produk sekali pasang, melainkan **proses berulang**.

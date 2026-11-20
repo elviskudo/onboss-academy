@@ -1,0 +1,102 @@
+---
+title: "Systemd dan Cron"
+description: "Menjalankan skrip otomatis saat boot dan sesuai jadwal"
+order: 20
+quiz:
+  - q: "systemd unit dengan Type=simple berguna untuk…"
+    options: ["Menjalankan layanan yang tetap aktif", "Menjalankan satu perintah sekali", "Mengganti kernel", "Menyimpan log"]
+    answer: 0
+    explain: "Systemd akan memantau dan bisa me-restart layanan bila berhenti."
+  - q: "Perintah untuk melihat status layanan adalah…"
+    options: ["sysctl status", "systemctl status nama.service", "service check nama", "init status nama"]
+    answer: 1
+    explain: "Status menampilkan active/failed beserta baris log terbaru."
+  - q: "Cron digunakan untuk…"
+    options: ["Mengompilasi kernel", "Mengganti hostname", "Menjadwal perintah berulang", "Mengatur GPIO"]
+    answer: 2
+    explain: "Contoh: tiap 5 menit atau tiap hari pukul 06.00."
+  - q: "Baris crontab '*/5 * * * * /path/script.sh' berarti…"
+    options: ["Jalankan 5 kali sehari", "Jalankan tiap Jam 5", "Jalankan 5 detik", "Jalankan tiap 5 menit"]
+    answer: 3
+    explain: "Lima field mewakili menit, jam, hari, bulan, hari dalam minggu."
+  - q: "Setelah membuat file unit baru, jalankan…"
+    options: ["systemctl daemon-reload", "systemctl reboot-only", "init reload", "cron restart"]
+    answer: 0
+    explain: "Lalu enable --now agar aktif saat boot dan langsung berjalan."
+example:
+  code: |
+    # /etc/systemd/system/sensor.service
+    [Unit]
+    Description=Pembaca sensor
+    After=network.target
+    
+    [Service]
+    Type=simple
+    ExecStart=/usr/bin/python3 /home/pi/sensor.py
+    Restart=always
+    User=pi
+    
+    [Install]
+    WantedBy=multi-user.target
+---
+
+Otomatisasi membuat Pi bekerja tanpa campur tangan. Gunakan **systemd** untuk proses yang terus berjalan dan **cron** untuk tugas berkala.
+
+## Membuat Service
+
+```ini
+[Unit]
+Description=Pembaca sensor suhu
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/proyek
+ExecStart=/usr/bin/python3 /home/pi/proyek/sensor.py
+Restart=on-failure
+RestartSec=5
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now sensor.service
+sudo systemctl status sensor.service
+journalctl -u sensor.service -f
+```
+
+## Crontab
+
+```bash
+crontab -e
+```
+
+```text
+*/5 * * * *  /usr/bin/python3 /home/pi/laporan.py >> /home/pi/laporan.log 2>&1
+0 6 * * *    /home/pi/backup.sh
+@reboot      /home/pi/startup.sh
+```
+
+## Lingkungan Variabel
+
+Systemd tidak membaca `.bashrc`. Jika skrip butuh variabel, tetapkan lewat `Environment=` atau `EnvironmentFile=` di unit.
+
+## Log
+
+```bash
+journalctl -u sensor.service --since "1 hour ago"
+tail -f /home/pi/laporan.log
+```
+
+<div class="note">💡 `Restart=always` bisa menciptakan loop jika skrip langsung error. Gunakan `Restart=on-failure` dan pantau log saat pertama kali aktif.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Contoh crontab:
+*/5 * * * * echo $(date) &gt;&gt; /home/pi/jam.log
+0 6 * * * /home/pi/backup.sh
+@reboot /home/pi/startup.sh`}</code></pre>

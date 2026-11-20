@@ -1,0 +1,148 @@
+---
+"title": "Trait"
+"description": "Kontrak perilaku, generic bound, trait object, dan blanket implementation"
+"order": 15
+"quiz":
+- "q": "Trait di Rust mirip dengan…"
+  "options":
+  - "struct"
+  - "interface"
+  - "enum"
+  - "macro"
+  "answer": 1
+  "explain": "Trait mendefinisikan method yang harus diimplementasikan tipe."
+- "q": "Trait method wajib diimplementasikan kecuali…"
+  "options":
+  - "diberi nama panjang"
+  - "mempunyai default implementation"
+  - "berada di modul lain"
+  - "berhubungan dengan enum"
+  "answer": 1
+  "explain": "Method dengan isi di trait menjadi default untuk semua implementor."
+- "q": "Bound `T: Display` berarti…"
+  "options":
+  - "T harus bisa dicetak"
+  - "T harus angka"
+  - "T harus Copy"
+  - "T adalah string"
+  "answer": 0
+  "explain": "Display adalah trait formatting untuk {}"
+- "q": "Trait object ditulis…"
+  "options":
+  - "Box<dyn Trait>"
+  - "Box<Trait>"
+  - "dyn Box<Trait>"
+  - "&impl Trait"
+  "answer": 0
+  "explain": "dyn menandakan dispatch dinamis lewat vtable."
+- "q": "Derive yang otomatis membandingkan nilai adalah…"
+  "options":
+  - "Clone"
+  - "Debug"
+  - "PartialEq"
+  - "Copy"
+  "answer": 2
+  "explain": "PartialEq menghasilkan implementasi == dan !=."
+"example":
+  "code": "trait Suara { fn bersuara(&self) -> String; }\nstruct Anjing;\nimpl Suara for Anjing {\n    fn bersuara(&self) -> String { \"Woof\".into() }\n}\nfn main() { println!(\"{}\", Anjing.bersuara()); }\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Trait adalah cara Rust mendefinisikan **perilaku bersama**. Mirip interface, tetapi bisa membawa implementasi default dan digunakan sebagai bound generic.
+
+## Mendefinisikan & Mengimplementasi
+
+```rust
+trait Ringkas {
+    fn ringkas(&self) -> String;
+    fn panjang(&self) -> usize {
+        self.ringkas().len()
+    }
+}
+
+struct Berita { judul: String }
+
+impl Ringkas for Berita {
+    fn ringkas(&self) -> String {
+        self.judul.chars().take(20).collect()
+    }
+}
+```
+
+## Trait Bound
+
+```rust
+fn cetak<T: Ringkas>(item: &T) {
+    println!("{}", item.ringkas());
+}
+
+// Alternatif dengan where:
+fn cetak2<T>(item: &T)
+where T: Ringkas,
+{
+    println!("{}", item.ringkas());
+}
+```
+
+## Derive
+
+```rust
+#[derive(Debug, Clone, PartialEq)]
+struct Titik { x: i32, y: i32 }
+```
+
+Macro derive menghasilkan implementasi otomatis untuk trait yang umum.
+
+## Trait Object
+
+```rust
+fn suara_semua(items: &[Box<dyn Suara>]) {
+    for i in items { println!("{}", i.bersuara()); }
+}
+```
+
+`dyn` dipakai saat tipe konkret baru diketahui saat runtime. Trade-off-nya: alokasi heap dan dispatch dinamis. `impl Trait` lebih cepat bila tipe tetap diketahui saat compile.
+
+## Blanket Implementation
+
+```rust
+impl<T: Display> Ringkas for T {
+    fn ringkas(&self) -> String { format!("{}", self) }
+}
+```
+
+Semua tipe yang bisa ditampilkan otomatis mendapat implementasi `Ringkas`.
+
+<div class="note">💡 Mulailah dengan generic + <code>impl Trait</code>. Pakai <code>dyn Trait</code> hanya saat kamu benar-benar butuh koleksi berisiต่าง tipe.</div>
+
+
+## Try it Yourself
+
+Tambahkan struct baru yang mengimplementasikan trait `Suara`.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`trait Suara {
+    fn bersuara(&self) -> String;
+    fn deskripsi(&self) -> String {
+        format!("Suaranya: {}", self.bersuara())
+    }
+}
+
+struct Anjing;
+struct Kucing;
+
+impl Suara for Anjing {
+    fn bersuara(&self) -> String { String::from("Woof!") }
+}
+impl Suara for Kucing {
+    fn bersuara(&self) -> String { String::from("Meong!") }
+}
+
+fn tampil<T: Suara>(s: &T) { println!("{}", s.deskripsi()); }
+
+fn main() {
+    tampil(&Anjing);
+    tampil(&Kucing);
+    let kumpulan: Vec<Box<dyn Suara>> = vec![Box::new(Anjing), Box::new(Kucing)];
+    for s in kumpulan { println!("{}", s.bersuara()); }
+}`} />

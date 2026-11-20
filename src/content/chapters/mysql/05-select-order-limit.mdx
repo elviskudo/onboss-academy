@@ -129,6 +129,10 @@ Periksa `type`, `key`, dan `rows`. Nilai `ALL` menandakan full scan; `ref` atau 
 
 <div class="note">💡 LIMIT tanpa ORDER BY tidak berarti “baris pertama”; tabel tidak punya urutan bawaan. Selalu tentukan ORDER BY yang unik untuk pagination.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="mysql" runtime="sql" code={`SELECT nama, jabatan, gaji, dept
 FROM karyawan
 ORDER BY gaji DESC, id ASC

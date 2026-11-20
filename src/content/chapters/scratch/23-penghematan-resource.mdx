@@ -1,0 +1,65 @@
+---
+title: "Penghematan Resource Proyek"
+description: "Membatasi klon, suara, dan frame agar proyek tetap lancar"
+order: 23
+quiz:
+  - q: "Jumlah klon dalam proyek Scratch dibatasi sekitar…"
+    options: ["30", "3000", "Tak terbatas", "300"]
+    answer: 3
+    explain: "Melebihi batas membuat klon baru gagal dibuat."
+  - q: "Cara menghemat klon adalah…"
+    options: ["Hapus klon yang sudah selesai", "Buat klon sebanyak mungkin", "Simpan klon di daftar", "Ubah backdrop"]
+    answer: 0
+    explain: "Gunakan blok hapus klon ini di akhir skrip klon."
+  - q: "Terlalu banyak suara yang diputar bersamaan menyebabkan…"
+    options: ["Kostum hilang", "Audio keruh dan proyek melambat", "Warna berubah", "Skor bertambah"]
+    answer: 1
+    explain: "Batasi lapisan audio aktif."
+  - q: "Loop dengan jeda terlalu pendek dapat…"
+    options: ["Menghapus daftar", "Mengubah kostum", "Membebani proyek", "Membuat suara lebih keras"]
+    answer: 2
+    explain: "Sesuaikan jeda dengan kebutuhan visual."
+  - q: "Menghapus blok yang tidak dipakai bertujuan…"
+    options: ["Menambah klon", "Mengubah volume", "Menambah variabel", "Mengurangi kebingungan dan mempermudah perawatan"]
+    answer: 3
+    explain: "Kode yang rapi lebih mudah diperbaiki."
+example:
+  code: |
+    [ketika saya mulai sebagai klon]
+    [ulangi 20 [geser 3 langkah]]
+    [hapus klon ini]
+---
+
+Proyek yang kompleks bisa melambat bila klon dan suara menumpuk. Beberapa kebiasaan sederhana menjaga performa tetap baik.
+
+## Batas Klon
+
+Scratch membatasi jumlah klon. Setiap klon yang dibuat tetap aktif sampai ada blok hapus klon ini.
+
+## Pola Hemat Klon
+
+```text
+[ketika saya mulai sebagai klon]
+[tampilkan]
+[ulangi 15 [geser 4 langkah]]
+[hapus klon ini]
+```
+
+## Audio
+
+- Hentikan suara lama sebelum memutar yang baru.
+- Gunakan volume lebih rendah untuk suara latar.
+- Hindari satu suara diputar banyak klon bersamaan.
+
+## Daftar Besar
+
+Daftar dengan ratusan item memperlambat pencarian. Hapus item yang sudah tidak diperlukan.
+
+<div class="note">💡 Simpan salinan proyek sebelum menghapus banyak blok. Versi cadangan memungkinkan kembali bila penghapusan terlalu agresif.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika saya mulai sebagai klon]
+[ulangi 10 [geser 5 langkah]]
+[hapus klon ini]`}</code></pre>

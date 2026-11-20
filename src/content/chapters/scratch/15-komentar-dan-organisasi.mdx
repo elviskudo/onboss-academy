@@ -1,0 +1,79 @@
+---
+title: "Komentar dan Organisasi Proyek"
+description: "Merapikan skrip, memberi catatan, dan mengelola sprite"
+order: 15
+quiz:
+  - q: "Cara menambahkan komentar pada blok Scratch adalah…"
+    options: ["Menulis di kostum", "Mengubah nama sprite", "Menambah backdrop", "Klik kanan blok lalu pilih Add Comment"]
+    answer: 3
+    explain: "Komentar melekat pada blok dan bisa dicolokkan."
+  - q: "Komentar berguna untuk…"
+    options: ["Menjelaskan maksud skrip", "Menghapus blok", "Menambah suara", "Mengubah warna"]
+    answer: 0
+    explain: "Catatan membantu orang lain—dan dirimu sendiri—memahami alur."
+  - q: "Untuk menggandakan sprite beserta skripnya, gunakan…"
+    options: ["Tambah backdrop", "Duplikat sprite", "Salin kostum", "Ekspor proyek"]
+    answer: 1
+    explain: "Duplikat berguna untuk membuat beberapa musuh dengan perilaku awal yang sama."
+  - q: "Menghapus blok yang tidak dipakai dapat dilakukan dengan…"
+    options: ["Mengganti kostum", "Menutup proyek", "Menyeretnya kearea blok lalu melepas", "Menghapus sprite"]
+    answer: 2
+    explain: "Blok yang terlepas bisa dibuang dengan drag ke panel blok."
+  - q: "Nama sprite yang baik sebaiknya…"
+    options: ["Sangat pendek Sprite1", "Angka acak", "Nama panggung", "Menggambarkan peran, misalnya musuh-atas"]
+    answer: 3
+    explain: "Nama deskriptif memudahkan saat memilih target broadcast atau sensor."
+example:
+  code: |
+    [ketika bendera diklik]  // komentar: reset semua keadaan awal
+    [atur [skor] ke [0]]
+    [atur [nyawa] ke [3]]
+    [ganti backdrop ke [awal]]
+---
+
+Proyek yang rapi lebih mudah dikembangkan. Scratch menyediakan komentar, pengelompokan sprite, dan nama yang bisa disesuaikan.
+
+## Menulis Komentar
+
+Klik kanan sebuah blok → **Add Comment**. Tulis penjelasan singkat, lalu klik warna komentar untuk mengubahnya. Komentar bisa dilipat agar tidak mengganggu tampilan.
+
+## Struktur Proyek yang Sehat
+
+```text
+Sprite: Pemain
+  - gerak, skor, nyawa
+
+Sprite: Musuh (duplikat x3)
+  - jalur gerak, tabrakan
+
+Panggung
+  - backdrop, variabel global, pesan
+```
+
+## Prinsip Penamaan
+
+| Objek | Nama buruk | Nama baik |
+|---|---|---|
+| Sprite | Sprite2 | musuh-kiri |
+| Variabel | x | skor-putaran |
+| Pesan | pesan1 | mulai-putaran |
+| Kostum | kostum4 | lari-2 |
+
+## Merapikan Script
+
+- Letakkan blok `ketika bendera diklik` di bagian atas.
+- Kelompokkan skrip terkait bersebelahan.
+- Hapus blok eksperimen yang sudah tidak dipakai.
+- Simpan versi cadangan sebelum perubahan besar.
+
+<div class="note">💡 Gunakan menu File → Save as untuk menyalin proyek sebelum bereksperimen. Scratch menyimpan versi local di browser, jadi named copy sangat membantu.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`// Contoh komentar di dalam skrip:
+// reset sebelum tiap putaran
+[ketika saya menerima [mulai-putaran]]
+[atur [skor] ke [0]]
+[atur [nyawa] ke [3]]
+[atur x ke [-180]] [atur y ke [0]]`}</code></pre>

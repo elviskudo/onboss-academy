@@ -1,0 +1,80 @@
+---
+title: "Regresi Logistik"
+description: "probabilitas, sigmoid, odds, threshold, dan perbedaan dengan regresi linear"
+order: 23
+quiz:
+  - q: "Regresi logistik memprediksi…"
+    options: ["Urutan waktu", "Probabilitas kelas", "Nilai kontinu bebas", "Jumlah klaster"]
+    answer: 1
+    explain: "Output antara 0 dan 1."
+  - q: "Fungsi sigmoid memetakan nilai ke…"
+    options: ["(0, ∞)", "Semua bilangan", "(0, 1)", "(-1, 1)"]
+    answer: 2
+    explain: "Bentuk S."
+  - q: "Threshold bawaan umum adalah…"
+    options: ["0.0", "1.0", "Mean", "0.5"]
+    answer: 3
+    explain: "Bisa diubah sesuai biaya kesalahan."
+  - q: "Regresi logistik包括 dalam kelompok…"
+    options: ["Time series", "Klasifikasi", "Regresi harga", "Clustering"]
+    answer: 1
+    explain: "Meski namanya \"regresi\"."
+  - q: "Menurunkan threshold akan…"
+    options: ["Tidak berpengaruh", "Menghapus data", "Menambah prediksi positif", "Mengurangi prediksi positif"]
+    answer: 2
+    explain: "Recall naik, presisi biasanya turun."
+example:
+  code: |
+    import math
+    z=2
+    p=1/(1+math.exp(-z))
+    print(round(p,3))
+---
+
+## Sigmoid
+
+```python
+import math
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+for z in [-5, 0, 5]:
+    print(z, round(sigmoid(z), 3))
+```
+
+Output selalu antara 0 dan 1 sehingga bisa dibaca sebagai probabilitas.
+
+## Keputusan Kelas
+
+```python
+prob = 0.72
+threshold = 0.5
+prediksi = 1 if prob >= threshold else 0
+print(prediksi)
+```
+
+Threshold bukan angka suci. Pada deteksi fraud, threshold 0.2 mungkin lebih masuk akal agar kasus mencurigakan tidak terlewat.
+
+## Beda dengan Regresi Linear
+
+| Aspek | Linear | Logistik |
+| --- | --- | --- |
+| Output | angka bebas | probabilitas |
+| Tugas | regresi | klasifikasi |
+| Fungsi | garis | sigmoid |
+
+<div class="note">💡 Probabilitas model tidak otomatis "terkalibrasi". Kalau aplikasi membutuhkan probabilitas yang benar-benar bermakna, lakukan calibration terpisah.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`import math
+
+def sigmoid(z):
+    return 1/(1+math.exp(-z))
+
+for z in [-4, -1, 0, 1, 4]:
+    p = sigmoid(z)
+    print(f"z={z:&gt;2} p={p:.3f} kelas={1 if p&gt;=0.5 else 0}")`}</code></pre>

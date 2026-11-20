@@ -1,0 +1,153 @@
+---
+"title": "SwiftUI State dan Data Flow"
+"description": "ObservableObject, Published, Environment, dan pola pemisahan data UI"
+"order": 24
+"quiz":
+- "q": "@Published dipakai pada…"
+  "options":
+  - "View body"
+  - "ObservableObject"
+  - "Modifier"
+  - "SceneDelegate"
+  "answer": 1
+  "explain": "Perubahan properti @Published mengirim notifikasi ke view."
+- "q": "@StateObject cocok untuk…"
+  "options":
+  - "Objek milik induk"
+  - "Data sementara"
+  - "Objek yang dibuat dan dimiliki view"
+  - "Konstanta"
+  "answer": 2
+  "explain": "Instance dibuat sekali dan bertahan selama view hidup."
+- "q": "@EnvironmentObject mengambil data dari…"
+  "options":
+  - "Database"
+  - "File plist"
+  - "Network"
+  - "Objek yang disuntikkan di atas hierarchy"
+  "answer": 3
+  "explain": "View tidak perlu menerima objek lewat initializer."
+- "q": "@AppStorage berguna untuk…"
+  "options":
+  - "Menyimpan nilai kecil di UserDefaults"
+  - "Menyimpan file besar"
+  - "Mengganti Core Data"
+  - "Mengatur warna"
+  "answer": 0
+  "explain": "Sering dipakai untuk preferensi pengguna."
+- "q": "Pemisahan ViewModel bertujuan…"
+  "options":
+  - "Menghapus SwiftUI"
+  - "Memisahkan logika dari tampilan"
+  - "Menambah ukuran file"
+  - "Mengganti compiler"
+  "answer": 1
+  "explain": "ViewModel mengelola state dan operasi, view hanya menampilkan."
+"example":
+  "code": "import SwiftUI\nimport Combine\n\nclass TodoStore: ObservableObject {\n    @Published private(set) var items: [String] = []\n\n    func tambah(_ judul: String) {\n        guard !judul.isEmpty else { return }\n        items.append(judul)\n    }\n}\n\nstruct DaftarView: View {\n    @StateObject private var store = TodoStore()\n    @State private var input = \"\"\n\n    var body: some View {\n        VStack {\n            TextField(\"Todo baru\", text: $input)\n            Button(\"Tambah\") { store.tambah(input); input = \"\" }\n            List(store.items, id: \\.self) { Text($0) }\n        }\n    }\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## ObservableObject
+
+```swift
+import SwiftUI
+import Combine
+
+class TodoStore: ObservableObject {
+    @Published private(set) var items: [String] = []
+
+    func tambah(_ judul: String) {
+        guard !judul.isEmpty else { return }
+        items.append(judul)
+    }
+}
+
+struct DaftarView: View {
+    @StateObject private var store = TodoStore()
+    @State private var input = ""
+
+    var body: some View {
+        VStack {
+            TextField("Todo baru", text: $input)
+            Button("Tambah") { store.tambah(input); input = "" }
+            List(store.items, id: \.self) { Text($0) }
+        }
+    }
+}
+```
+
+```swift
+class Pengaturan: ObservableObject {
+    @Published var modeGelap = false
+}
+```
+
+`@Published` membungkus properti dengan publisher. View yang mengamati objek ini akan diperbarui saat nilainya berubah.
+
+## Pemilihan Wrapper
+
+| Kebutuhan | Wrapper |
+|---|---|
+| Nilai sederhana milik view | `@State` |
+| Turunan dari state induk | `@Binding` |
+| Obek milik view | `@StateObject` |
+| Objek milik luar | `@ObservedObject` |
+| Dibagikan luas | `@EnvironmentObject` |
+| Preferensi kecil | `@AppStorage` |
+
+## Injeksi Environment
+
+```swift
+@main
+struct Aplikasi: App {
+    @StateObject private var store = TodoStore()
+
+    var body: some Scene {
+        WindowGroup {
+            DaftarView().environmentObject(store)
+        }
+    }
+}
+```
+
+Di view turunan, cukup `@EnvironmentObject var store: TodoStore`.
+
+## Idealnya View Tipis
+
+- View bertugas menampilkan dan menerima input.
+- ViewModel mengubah input menjadi aksi dan menyimpan state.
+- Service menangani jaringan, database, dan resource eksternal.
+
+<div class="note">💡 Hindari menggunakan `@ObservedObject` untuk objek yang dibuat di dalam view —— objek bisa dibuat ulang saat render. Pakai `@StateObject` untuk kepemilikan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`import SwiftUI
+import Combine
+
+class TodoStore: ObservableObject {
+    @Published private(set) var items: [String] = []
+
+    func tambah(_ judul: String) {
+        guard !judul.isEmpty else { return }
+        items.append(judul)
+    }
+}
+
+struct DaftarView: View {
+    @StateObject private var store = TodoStore()
+    @State private var input = ""
+
+    var body: some View {
+        VStack {
+            TextField("Todo baru", text: $input)
+            Button("Tambah") { store.tambah(input); input = "" }
+            List(store.items, id: \.self) { Text($0) }
+        }
+    }
+}`} />

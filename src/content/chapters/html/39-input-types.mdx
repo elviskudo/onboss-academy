@@ -1,0 +1,95 @@
+---
+title: "Input Types"
+description: "Berbagai jenis input form HTML5 dan cara browser memvalidasinya"
+order: 39
+quiz:
+  - q: "Input untuk alamat email adalah…"
+    options: ["type='email'", "type='text'", "type='mail'", "type='address'"]
+    answer: 0
+    explain: "email memberi validasi format @ dan keyboard khusus di mobile."
+  - q: "Input yang menyembunyikan karakter adalah…"
+    options: ["type='hidden'", "type='password'", "type='secret'", "type='mask'"]
+    answer: 1
+    explain: "password menampilkan titik/bintang."
+  - q: "Input type='number' memungkinkan…"
+    options: ["Hanya teks", "Angka dengan min/max/step", "Hanya tanggal", "Hanya warna"]
+    answer: 1
+    explain: "Bisa diatur min, max, dan step."
+  - q: "Input untuk memilih tanggal adalah…"
+    options: ["type='date'", "type='datetime'", "type='calendar'", "type='time'"]
+    answer: 0
+    explain: "date menampilkan date picker di browser modern."
+  - q: "Input type='checkbox' berbeda dengan radio karena…"
+    options: ["Checkbox bisa beberapa pilihan", "Radio lebih besar", "Checkbox tidak bisa dicentang", "Radio hanya untuk teks"]
+    answer: 0
+    explain: "Radio dalam satu group name hanya boleh satu terpilih."
+example:
+  code: |
+    <form>
+      <label>Email: <input type="email" name="email" required></label><br>
+      <label>Password: <input type="password" name="pass"></label><br>
+      <label>Umur: <input type="number" name="umur" min="1" max="120"></label><br>
+      <label>Tanggal: <input type="date" name="tanggal"></label><br>
+      <label>Warna: <input type="color" name="warna"></label><br>
+      <label><input type="checkbox" name="setuju"> Setuju</label><br>
+      <label><input type="radio" name="kelamin" value="p"> Pria</label>
+      <label><input type="radio" name="kelamin" value="w"> Wanita</label><br>
+      <button type="submit">Kirim</button>
+    </form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTML5 menambahkan banyak `type` pada input sehingga browser bisa memberi antarmuka dan validasi bawaan.
+
+## Daftar Input Type Populer
+
+| type | Fungsi |
+|------|--------|
+| `text` | Teks biasa (default) |
+| `password` | Teks tersembunyi |
+| `email` | Alamat email |
+| `tel` | Nomor telepon |
+| `url` | URL |
+| `number` | Angka |
+| `date` / `time` | Tanggal / waktu |
+| `checkbox` | Pilihan ganda |
+| `radio` | Pilihan tunggal dalam grup |
+| `file` | Upload berkas |
+| `color` | Pemilih warna |
+| `range` | Slider |
+| `hidden` | Tidak terlihat, tetap dikirim |
+
+## Validasi Bawaan
+
+```html
+<input type="email" required minlength="5">
+<input type="number" min="1" max="100" step="1">
+<input type="text" pattern="[A-Za-z]{3,}">
+```
+
+Atribut `required`, `min`, `max`, `pattern`, dan lain-lain dicek browser sebelum form dikirim.
+
+## Keyboard Mobile
+
+`type="email"` memunculkan keyboard dengan tombol `@`; `type="tel"` memunculkan keypad angka. Detail kecil yang meningkatkan pengalaman pengguna.
+
+<div class="note">💡 Validasi browser hanya lapisan pertama. Tetap validasi di server karena pengguna bisa mem-bypass HTML.</div>
+
+## Try it Yourself
+
+Coba isi form di bawah dengan email salah untuk melihat validasi bawaan.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Input Types</h1>
+  <form>
+    <p><label>Email: <input type="email" required></label></p>
+    <p><label>Umur: <input type="number" min="1" max="120"></label></p>
+    <p><label>Tanggal: <input type="date"></label></p>
+    <p><label>Warna: <input type="color" value="#E44D26"></label></p>
+    <button type="submit">Kirim</button>
+  </form>
+</body>
+</html>`} />

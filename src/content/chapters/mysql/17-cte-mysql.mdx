@@ -1,0 +1,119 @@
+---
+title: "CTE dan Window Function MySQL 8"
+description: "WITH, recursive CTE, ROW_NUMBER, RANK, dan fungsi jendela"
+order: 17
+quiz:
+  - q: "CTE di MySQL 8 diawali dengan…"
+    options: ["WITH", "LET", "DECLARE", "TEMP"]
+    answer: 1
+    explain: "WITH nama AS (SELECT ...) SELECT ..."
+  - q: "Fungsi memberi nomor urut tiap baris dalam partisi adalah…"
+    options: ["ROW_NUMBER()", "COUNT()", "SUM()", "GROUP BY"]
+    answer: 2
+    explain: "ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)"
+  - q: "Perbedaan RANK() dan DENSE_RANK() terlihat saat…"
+    options: ["Ada nilai duplikat", "Tidak ada data", "Semua NULL", "Tidak ada ORDER BY"]
+    answer: 3
+    explain: "RANK melompati nomor setelah tie; DENSE_RANK tidak."
+  - q: "CTE rekursif memakai…"
+    options: ["WITH RECURSIVE", "WITH LOOP", "REPEAT SELECT", "ITERATE"]
+    answer: 0
+    explain: "WITH RECURSIVE ... UNION ALL ..."
+  - q: "Klausa OVER dipakai oleh…"
+    options: ["Window function", "GROUP BY biasa", "WHERE biasa", "CREATE TABLE"]
+    answer: 1
+    explain: "OVER menentukan partisi dan urutan fungsi jendela."
+example:
+  code: |
+    WITH urut AS (SELECT nama, gaji, ROW_NUMBER() OVER (ORDER BY gaji DESC) AS r FROM karyawan) SELECT * FROM urut WHERE r&lt;=3;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+MySQL 8 membawa dua fitur penting: CTE dan window function. Keduanya membuat query analitik yang dulu perlu subquery bertumpuk menjadi jauh lebih rapi.
+
+## CTE Dasar
+
+```sql
+WITH rata_dept AS (
+  SELECT dept, AVG(gaji) AS rata FROM karyawan GROUP BY dept
+)
+SELECT k.nama, k.gaji, rata_dept.rata
+FROM karyawan k
+JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata;
+```
+
+CTE hidup hanya dalam satu statement dan bisa direferensikan berkali-kali.
+
+## CTE Rekursif
+
+```sql
+WITH RECURSIVE angka(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM angka WHERE n < 5
+)
+SELECT n FROM angka;
+```
+
+Bagian anchor dan recursive member dipisah `UNION ALL`. Kondisi berhenti wajib ada.
+
+## Window Function
+
+```sql
+SELECT nama, dept, gaji,
+       ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS urut,
+       RANK()       OVER (PARTITION BY dept ORDER BY gaji DESC) AS peringkat
+FROM karyawan;
+```
+
+`PARTITION BY` membagi baris menjadi kelompok; `ORDER BY` mengurutkan dalam kelompok. Baris asli tidak dicampur menjadi satu seperti GROUP BY.
+
+## Fungsi Jendela yang Umum
+
+| Fungsi | Kegunaan |
+| --- | --- |
+| `ROW_NUMBER()` | nomor unik tiap baris |
+| `RANK()` | peringkat, ada loncatan saat tie |
+| `DENSE_RANK()` | peringkat tanpa loncatan |
+| `LAG()` / `LEAD()` | nilai baris sebelumnya/sesudahnya |
+| `SUM() OVER` | total berjalan (running total) |
+
+```sql
+SELECT tanggal, omzet,
+       SUM(omzet) OVER (ORDER BY tanggal) AS kumulatif
+FROM penjualan;
+```
+
+## Top N per Grup
+
+```sql
+WITH urut AS (
+  SELECT nama, dept, gaji,
+         ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS posisi
+  FROM karyawan
+)
+SELECT * FROM urut WHERE posisi <= 2;
+```
+
+Pola ini menggantikan correlated subquery yang lambat untuk mencari beberapa baris teratas tiap kategori.
+
+<div class="note">💡 MySQL sebelum 8.0 tidak mendukung CTE dan window function. Cek versi dengan `SELECT VERSION();` sebelum memakai fitur ini.</div>
+
+## Di Dunia Nyata
+
+- **Leaderboard**: RANK() memberi peringkat dengan tie yang adil.
+- **Top produk per kategori**: ROW_NUMBER() + CTE.
+- **Pertumbuhan bulan**: LAG() membandingkan omzet bulan ini dengan sebelumnya.
+- **Running total**: SUM() OVER untuk akumulasi harian.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`WITH urut AS (
+  SELECT nama, dept, gaji,
+         ROW_NUMBER() OVER (PARTITION BY dept ORDER BY gaji DESC) AS posisi
+  FROM karyawan
+)
+SELECT nama, dept, gaji, posisi FROM urut WHERE posisi &lt;= 2 ORDER BY dept, posisi;`} />

@@ -1,0 +1,140 @@
+---
+title: "Utility Types Bawaan"
+description: "Koleksi lengkap utility type TypeScript untuk transformasi tipe sehari-hari"
+order: 21
+quiz:
+  - q: "`Pick<T, 'a'>` akan…"
+    options: ["Mengambil properti a", "Menghapus properti a", "Membuat a opsional", "Mengubah a jadi string"]
+    answer: 0
+    explain: "Pick memilih kunci tertentu dari T."
+  - q: "`Omit<T, 'a'>` akan…"
+    options: ["Mengambil a saja", "Menghapus a", "Membuat a readonly", "Mengubah tipe a"]
+    answer: 1
+    explain: "Omit kebalikan dari Pick."
+  - q: "`Record<'a'|'b', number>` menghasilkan…"
+    options: ["{ a: number; b: number }", "Array number", "Union", "any"]
+    answer: 0
+    explain: "Record memetakan setiap kunci ke tipe nilai yang sama."
+  - q: "`NonNullable<string | null>` menghasilkan…"
+    options: ["string", "null", "string | null", "any"]
+    answer: 0
+    explain: "Null dan undefined dibuang dari union."
+  - q: "`Exclude<'a'|'b', 'b'>` menghasilkan…"
+    options: ["'a'", "'b'", "'a'|'b'", "never"]
+    answer: 0
+    explain: "Exclude membuang anggota union yang cocok."
+example:
+  code: |
+    interface User { id: number; nama: string; email: string }
+    
+    type Publik = Pick<User, 'id' | 'nama'>;
+    type TanpaEmail = Omit<User, 'email'>;
+    type Peta = Record<'id' | 'nama', string>;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+TypeScript menyediakan banyak utility type siap pakai. Menguasainya menghemat ratusan baris deklarasi manual.
+
+## Berdasarkan Kunci
+
+| Utility | Fungsi |
+|---------|--------|
+| `Partial<T>` | Semua properti opsional |
+| `Required<T>` | Semua properti wajib |
+| `Readonly<T>` | Semua properti readonly |
+| `Pick<T, K>` | Ambil kunci K |
+| `Omit<T, K>` | Buang kunci K |
+| `Record<K, V>` | Objek dengan kunci K, nilai V |
+
+```ts
+interface Produk {
+  id: number;
+  nama: string;
+  harga: number;
+  stok: number;
+}
+
+type Ringkas = Pick<Produk, "id" | "nama">;
+type TanpaStok = Omit<Produk, "stok">;
+type Draft = Partial<Produk>;
+type Beku = Readonly<Produk>;
+type HargaPerStatus = Record<"murah" | "mahal", number>;
+```
+
+## Berdasarkan Union
+
+| Utility | Fungsi |
+|---------|--------|
+| `Exclude<T, U>` | Buang anggota T yang ada di U |
+| `Extract<T, U>` | Ambil anggota T yang ada di U |
+| `NonNullable<T>` | Buang null/undefined |
+| `Parameters<F>` | Tuple parameter fungsi |
+| `ConstructorParameters<F>` | Parameter constructor |
+| `ReturnType<F>` | Tipe hasil fungsi |
+| `InstanceType<F>` | Tipe instance class |
+| `ThisParameterType<F>` | Tipe `this` pada fungsi |
+| `OmitThisParameter<F>` | Buang `this` dari fungsi |
+
+```ts
+type Status = "idle" | "loading" | "error";
+type Aktif = Exclude<Status, "idle">; // "loading" | "error"
+
+function ambil(id: number, opsi: { cache: boolean }) {}
+type Arg = Parameters<typeof ambil>; // [number, { cache: boolean }]
+type Hasil = ReturnType<typeof ambil>; // void
+```
+
+## Awaited
+
+```ts
+type Angka = Awaited<Promise<number>>; // number
+```
+
+## String Utility (Intrinsic)
+
+```ts
+Uppercase<"halo">;     // "HALO"
+Lowercase<"HALO">;     // "halo"
+Capitalize<"halo">;    // "Halo"
+Uncapitalize<"Halo">;  // "halo"
+```
+
+## Komposisi
+
+```ts
+type UpdateProduk = Partial<Omit<Produk, "id">> & Pick<Produk, "id">;
+// id wajib, lainnya opsional
+```
+
+Utility bisa dirangkai untuk membentuk tipe baru yang presisi tanpa duplikasi.
+
+<div class="note">💡 Utility type hanya berupa tipe — tidak menghasilkan kode JavaScript. Aman dipakai sepuasnya.</div>
+
+## Di Dunia Nyata
+
+- `Partial<T>` dipakai untuk payload PATCH API.
+- `Pick<T, ...>` menyaring data yang boleh dikirim ke klien.
+- `Record<string, ...>` membentuk dictionary untuk cache atau lookup table.
+
+## Try it Yourself
+
+Ganti `Pick` menjadi `Omit` atau tambahkan utility `Readonly` pada contoh ini.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Produk {
+  id: number;
+  nama: string;
+  harga: number;
+  stok: number;
+}
+
+type Ringkas = Pick<Produk, "id" | "nama">;
+type Draft = Partial<Produk>;
+type Harga = Record<"murah" | "mahal", number>;
+
+const p: Ringkas = { id: 1, nama: "Kopi" };
+const d: Draft = { nama: "Teh" };
+const h: Harga = { murah: 10000, mahal: 50000 };
+
+console.log(p, d, h);
+console.log(typeof d.harga === "undefined" ? "harga belum diisi" : d.harga);`} />

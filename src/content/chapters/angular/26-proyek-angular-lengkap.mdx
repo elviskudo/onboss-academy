@@ -1,0 +1,139 @@
+---
+title: "Proyek: Aplikasi Angular Lengkap"
+description: "merangkai standalone component, signal, service, guard, dan routing jadi aplikasi nyata"
+order: 26
+quiz:
+  - q: "Struktur proyek Angular modern memakai…"
+    options: ["File HTML tanpa TypeScript", "Tanpa routing", "Standalone component dan app.config.ts", "NgModule wajib di semua tempat"]
+    answer: 2
+    explain: "Standalone adalah default sejak Angular 14+."
+  - q: "Data dari API sebaiknya ditempatkan di…"
+    options: ["index.html", "Service dengan HttpClient", "Template langsung", "File CSS"]
+    answer: 1
+    explain: "Service bisa dipakai ulang dan diuji."
+  - q: "Signal di/service berguna untuk…"
+    options: ["Mengganti routing", "Mengubah warna", "Menghapus form", "State reaktif yang dipakai banyak komponen"]
+    answer: 3
+    explain: "Satu sumber kebenaran untuk data bersama."
+  - q: "Guard dipasang pada…"
+    options: ["Pipe", "Definisi rute", "Template", "CSS"]
+    answer: 1
+    explain: "canActivate / canActivateChild di objek Routes."
+  - q: "Langkah akhir sebelum deploy adalah…"
+    options: ["ng build produksi dan cek hasilnya", "Menghapus seluruh test", "Menonaktifkan guard", "Mengubah semua nama kelas"]
+    answer: 0
+    explain: "Pastikan bundle siap dan tidak ada error."
+example:
+  code: |
+    src/app/
+      app.config.ts
+      app.routes.ts
+      core/
+        auth.service.ts
+        api.service.ts
+      features/
+        produk/
+          daftar.component.ts
+          detail.component.ts
+      shared/
+        kartu.component.ts
+---
+
+Mari satukan semua konsep menjadi aplikasi katalog produk dengan login dan keranjang.
+
+## Struktur
+
+```
+src/app/
+  app.config.ts
+  app.routes.ts
+  core/
+    auth.service.ts
+    produk.service.ts
+    keranjang.store.ts
+  features/
+    produk/daftar.component.ts
+    produk/detail.component.ts
+    auth/login.component.ts
+  shared/
+    kartu.component.ts
+```
+
+## Rute
+
+```typescript
+export const routes: Routes = [
+  { path: "", component: DaftarComponent },
+  { path: "produk/:id", component: DetailComponent },
+  {
+    path: "admin",
+    canActivate: [authGuard],
+    loadComponent: () => import("./admin/admin.component")
+      .then((m) => m.AdminComponent),
+  },
+  { path: "login", component: LoginComponent },
+  { path: "**", component: TidakDitemukanComponent },
+];
+```
+
+## Daftar Produk
+
+```typescript
+@Component({
+  standalone: true,
+  imports: [KartuComponent, AsyncPipe],
+  template: `
+    <h1>Katalog Produk</h1>
+    @if (produk$ | async; as daftar) {
+      <div class="grid">
+        @for (p of daftar; track p.id) {
+          <app-kartu [judul]="p.nama" [harga]="p.harga" />
+        } @empty {
+          <p>Belum ada produk.</p>
+        }
+      </div>
+    }
+  `,
+})
+export class DaftarComponent {
+  private api = inject(ProdukService);
+  produk$ = this.api.daftar();
+}
+```
+
+## Keranjang
+
+```typescript
+export class RingkasanComponent {
+  private keranjang = inject(KeranjangStore);
+  total = this.keranjang.total;
+  jumlah = this.keranjang.jumlah;
+}
+```
+
+## Checklist
+
+- [ ] Semua `@for` punya `track`.
+- [ ] Service dipakai untuk semua request API.
+- [ ] Rute sensitif punya guard.
+- [ ] Form punya validasi.
+- [ ] `ng build` sukses.
+
+<div class="note">💡 Bangun bertahap: mulai dari daftar statis, lalu tambahkan API, lalu guard, lalu keranjang. Setiap langkah bisa diuji sebelum lanjut.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`src/app/
+  app.config.ts
+  app.routes.ts
+  core/
+    auth.service.ts
+    api.service.ts
+  features/
+    produk/
+      daftar.component.ts
+      detail.component.ts
+  shared/
+    kartu.component.ts`}</code></pre>

@@ -1,0 +1,100 @@
+---
+title: "Perintah Dasar Docker"
+description: "Mengelola image dan container: pull, run, ps, stop, start, rm, dan logs"
+order: 10
+quiz:
+  - q: "Perintah untuk melihat container yang sedang berjalan adalah…"
+    options: ["docker ls", "docker status", "docker ps", "docker images"]
+    answer: 2
+    explain: "docker ps menampilkan container aktif; tambahkan -a untuk semua container termasuk yang sudah berhenti."
+  - q: "Opsi -d pada docker run berarti…"
+    options: ["Hapus setelah selesai", "Mode debug", "Berikan nama container", "Jalankan di latar belakang (detached)"]
+    answer: 3
+    explain: "Detached membuat container terus berjalan tanpa mengunci terminal."
+  - q: "docker stop mengirim sinyal…"
+    options: ["SIGTERM lalu SIGKILL setelah batas waktu", "SIGKILL langsung", "SIGHUP", "SIGINT"]
+    answer: 0
+    explain: "Stop memberi kesempatan aplikasi melakukan shutdown rapi sebelum dipaksa."
+  - q: "Untuk melihat keluaran stdout container, gunakan…"
+    options: ["docker tail", "docker logs", "docker cat", "docker output"]
+    answer: 1
+    explain: "docker logs membaca log yang dihasilkan proses utama container."
+  - q: "--rm pada docker run berfungsi…"
+    options: ["Menghapus volume", "Menghapus jaringan", "Menghapus container otomatis saat ia berhenti", "Menghapus image"]
+    answer: 2
+    explain: "Cocok untuk perintah sekali jalan agar tidak menumpuk container mati."
+example:
+  code: |
+    docker pull alpine:3.20
+    docker run -d --name web -p 8080:80 nginx:alpine
+    docker ps
+    docker logs web
+    docker stop web
+    docker rm web
+---
+
+Alur kerja harian Docker berputar pada beberapa perintah. Menguasainya membuat eksperimen jadi cepat: tarik image, jalankan, amati, lalu bersihkan.
+
+## Image vs Container
+
+| Perintah | Objek | Fungsi |
+|---|---|---|
+| `docker pull nginx:alpine` | Image | Unduh image ke mesin lokal |
+| `docker images` | Image | Lihat image tersimpan |
+| `docker run ...` | Container | Buat container baru dari image |
+| `docker ps -a` | Container | Lihat semua container, aktif dan mati |
+| `docker rm` | Container | Hapus container yang sudah berhenti |
+| `docker rmi` | Image | Hapus image lokal yang tidak dipakai |
+
+## Menjalankan Container
+
+```bash
+docker run -d --name web -p 8080:80 nginx:alpine
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+```
+
+`-d` = detached, `--name` = nama yang mudah diingat, `-p host:container` = pemetaan port. Tanpa `-p`, container tetap berjalan tetapi port-nya tidak bisa diakses dari host.
+
+## Siklus Hidup Container
+
+```bash
+docker stop web      # kirim SIGTERM, tunggu, lalu SIGKILL
+docker start web     # jalankan lagi dengan konfigurasi semula
+docker restart web   # stop + start
+docker pause web     # bekukan proses (SIGSTOP)
+docker unpause web
+docker rm -f web     # paksa hapus meski masih jalan
+```
+
+Container yang dihapus kehilangan seluruh perubahan pada lapisan writable-nya. Data yang ingin bertahan harus disimpan di volume atau bind mount.
+
+## Logs dan Inspeksi
+
+```bash
+docker logs -f web          # ikuti log seperti tail -f
+docker logs --tail 50 web
+docker inspect web          # detail JSON konfigurasi & jaringan
+docker top web              # proses di dalam container
+docker stats --no-stream    # pemakaian CPU/memori
+```
+
+`docker inspect` sangat berguna saat port tidak terhubung atau environment variable tidak terbaca.
+
+## Membersihkan yang Menumpuk
+
+```bash
+docker container prune   # hapus container yang berhenti
+docker image prune -a    # hapus image tanpa container
+docker system df         # lihat pemakaian disk
+docker system prune      # bersihkan semua resource tidak terpakai
+```
+
+<div class="note">💡 `docker system prune` tidak menghapus volume secara default. Tambahkan `--volumes` hanya jika kamu yakin tidak ada data penting di dalamnya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`docker pull alpine:3.20
+docker run --rm alpine:3.20 sh -c 'echo Halo dari container'
+docker ps -a
+docker images`}</code></pre>

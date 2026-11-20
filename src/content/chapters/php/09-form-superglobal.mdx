@@ -18,7 +18,7 @@ quiz:
   - q: "fungsi htmlspecialchars() dipakai untuk…"
     options: ["Menetralkan karakter HTML saat teks user ditampilkan", "Menghapus file", "Mengubah teks jadi angka", "Mengirim email"]
     answer: 0
-    explain: "< jadi &lt; — teks tampil sebagai teks, bukan dieksekusi browser sebagai tag."
+    explain: "&lt; jadi &lt; — teks tampil sebagai teks, bukan dieksekusi browser sebagai tag."
   - q: "Membaca nilai form numerik paling aman dengan…"
     options: ["(int) $_POST['qty'] langsung", "filter_var($_POST['qty'] ?? 0, FILTER_VALIDATE_INT)", "echo $_POST['qty']", "string concatenation"]
     answer: 1
@@ -133,10 +133,14 @@ $user = $stmt->fetch();
 - **Form login**: `$_POST` + `password_verify()` — tanpa validasi, kolom jadi pintu brute-force.
 - **Pencarian katalog**: `$_GET["q"]` sehingga hasil bisa dibagikan lewat URL dan tombol back browser.
 - **Keranjang belanja**: id produk disimpan di `$_SESSION`, bukan dikirim ulang tiap request.
-- **Unggahan foto profil**: periksa `$_FILES["avatar"]["size"] < 2MB` dan ekstensi gambar sebelum dipindahkan.
+- **Unggahan foto profil**: periksa `$_FILES["avatar"]["size"] &lt; 2MB` dan ekstensi gambar sebelum dipindahkan.
 - **Halaman admin**: cek `$_SESSION["peran"] === "admin"` — kalau hanya menyembunyikan tombol di HTML, pengguna bisa mengakses URL langsung.
 
 <div class="note">💡 `$_REQUEST` menggabungkan `$_GET`, `$_POST`, dan `$_COOKIE` — kamu tidak pernah tahu datanya datang dari mana, dan cookie bisa diubah pengguna. Untuk aksi penting (hapus data, ganti password), baca superglobal yang sesuai metode form secara eksplisit.</div>
+
+## Try it Yourself
+
+Perhatikan cara superglobal dibaca pada contoh ini.
 
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 // Simulasi data form yang dikirim user (tanpa server web)
@@ -152,7 +156,7 @@ $email = filter_var($_POST["email"] ?? "", FILTER_VALIDATE_EMAIL);
 
 $errors = [];
 if ($nama === "") $errors[] = "Nama wajib diisi";
-if ($umur < 1 || $umur > 120) $errors[] = "Umur tidak valid";
+if ($umur &lt; 1 || $umur > 120) $errors[] = "Umur tidak valid";
 if ($email === false) $errors[] = "Email tidak valid";
 
 if ($errors) {

@@ -7,7 +7,7 @@ quiz:
     options: ["2", "3", "4: for, foreach, while, do-while", "8"]
     answer: 2
     explain: "Keempatnya masing-masing punya tempat: penghitung, array, kondisi awal, dan minimal sekali."
-  - q: "for ($i = 0; $i < 3; $i++) akan berjalan…"
+  - q: "for ($i = 0; $i &lt; 3; $i++) akan berjalan…"
     options: ["3 kali (0, 1, 2)", "2 kali", "4 kali", "Tak terhingga"]
     answer: 0
     explain: "Loop berhenti saat kondisi tengah jadi false — nilai 3 tidak ikut dieksekusi."
@@ -154,6 +154,10 @@ Batasi maksimal 2 tingkat bersarang — lebih dari itu, angkat inner loop jadi f
 
 <div class="note">💡 Hati-hati loop tanpa batas: pastikan selalu ada kondisi yang benar-benar berubah menuju nilai berhenti, atau pasang `break` pengaman. Loop yang tidak pernah selesai memakan CPU server sampai request di-kill — dan di PHP, tiap detik yang hilang itu tagihan hosting bersama.</div>
 
+## Try it Yourself
+
+Ganti batas perulangan atau jenis loop-nya.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $buah = ["Apel", "Mangga", "Anggur"];
 
@@ -162,13 +166,13 @@ foreach ($buah as $indeks => $b) {
 }
 
 echo "---\\n";
-for ($i = 1; $i <= 3; $i++) {
+for ($i = 1; $i &lt;= 3; $i++) {
     echo "$i x 7 = " . ($i * 7) . "\\n";
 }
 
 echo "---\\n";
 $hitung = 0;
-while ($hitung < 3) {
+while ($hitung &lt; 3) {
     echo "while ke-" . ($hitung + 1) . "\\n";
     $hitung++;
 }

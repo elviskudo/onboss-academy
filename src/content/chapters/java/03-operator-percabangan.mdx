@@ -60,7 +60,7 @@ a--;                         // a kembali 10 (decrement)
 
 ## Operator Perbandingan (6 buah)
 
-Enam operator perbandingan: `==`, `!=`, `<`, `>`, `<=`, `>=`. Hasilnya selalu `boolean`.
+Enam operator perbandingan: `==`, `!=`, `<`, `>`, `&lt;=`, `>=`. Hasilnya selalu `boolean`.
 
 ```java
 int usia = 17;
@@ -83,7 +83,7 @@ boolean tidakBoleh = !punyaTiket;                // NOT: membalik nilai
 
 ## Operator Assignment (12 buah)
 
-`=` plus 11 gabungan: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`, `>>>=`. Contoh `total += nilai` identik dengan `total = total + nilai` tapi lebih ringkas dan kadang lebih cepat di-compile.
+`=` plus 11 gabungan: `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<&lt;=`, `>>=`, `>>>=`. Contoh `total += nilai` identik dengan `total = total + nilai` tapi lebih ringkas dan kadang lebih cepat di-compile.
 
 ## Operator Bitwise & Lainnya
 
@@ -92,10 +92,10 @@ Bitwise (`&`, `|`, `^`, `~`, `<<`, `>>`, `>>>`) bekerja pada level bit — dipak
 | Kategori | Jumlah | Contoh | Fungsi |
 |---|---|---|---|
 | Aritmatika | 5 (+ 2 inkrement) | `+ - * / %`, `++ --` | hitung angka |
-| Perbandingan | 6 | `== != < > <= >=` | bandingkan, hasil boolean |
+| Perbandingan | 6 | `== != &lt; > &lt;= >=` | bandingkan, hasil boolean |
 | Logika | 3 | `&& \|\| !` | gabung kondisi boolean |
 | Assignment | 12 | `= += -= *= /= %= ...` | tugaskan nilai |
-| Bitwise | 7 | `& \| ^ ~ << >> >>>` | manipulasi bit |
+| Bitwise | 7 | `& \| ^ ~ <&lt; >> >>>` | manipulasi bit |
 | Conditional | 1 | `? :` | if-else singkat bernilai |
 
 ## if-else
@@ -158,13 +158,17 @@ if (!c) return;
 
 ## Di Dunia Nyata
 
-- **Validasi form login sebelum kirim ke server**: `if (username.isEmpty() || password.length() < 8)` menolak input buruk di sisi klien.
+- **Validasi form login sebelum kirim ke server**: `if (username.isEmpty() || password.length() &lt; 8)` menolak input buruk di sisi klien.
 - **Kalkulator tarif ojek online**: switch pada `jenisLayanan` memilih base price, lalu ternary menentukan biaya malam hari.
 - **Penentuan grade ujian**: else-if chain `>=90 A`, `>=80 B`, `>=70 C` — cek dari ambil tertinggi agar rentang tidak tumpang tindih.
 - **Gate kebijakan diskon e-commerce**: `boolean layak = total >= 100_000 && !sedangPromo lain && memberAktif;` memakai short-circuit untuk efisiensi.
 - **Parser konfigurasi**: `instanceof String s` memvalidasi tipe nilai konfigurasi sebelum diproses lebih lanjut.
 
 <div class="note">💡 Selalu bungkus kondisi if dengan kurawal walau hanya satu baris — mencegah bug klasik saat kode nanti ditambahi baris baru. Jebakan terbanyak pemula Java: <code>=</code> (menugaskan) tertulis di kondisi if; Java menolaknya saat kompilasi kalau hasilnya bukan boolean.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
 
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     public static void main(String[] args) {

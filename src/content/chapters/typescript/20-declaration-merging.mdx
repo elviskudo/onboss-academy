@@ -1,0 +1,155 @@
+---
+title: "Declaration Merging & Module Augmentation"
+description: "Menggabungkan deklarasi tipe dan memperluas tipe pihak ketiga"
+order: 20
+quiz:
+  - q: "Declaration merging memungkinkan…"
+    options: ["Menggabungkan beberapa deklarasi jadi satu tipe", "Menghapus tipe", "Mengubah runtime", "Membuat class baru"]
+    answer: 0
+    explain: "Interface dengan nama sama di scope sama akan digabung."
+  - q: "Interface dan type alias berbeda karena…"
+    options: ["Type alias bisa di-merge, interface tidak", "Interface bisa di-merge, type alias tidak", "Keduanya sama", "Type alias lebih lambat"]
+    answer: 1
+    explain: "Itulah alasan interface dipakai untuk perluasan API."
+  - q: "Module augmentation dipakai untuk…"
+    options: ["Menambah tipe ke modul yang sudah ada", "Menghapus modul", "Membuat file JS", "Mengganti implementasi"]
+    answer: 0
+    explain: "Contoh: menambah method ke Array dari library."
+  - q: "Untuk menambah properti ke Window, kamu bisa…"
+    options: ["Mendeklarasikan ulang interface Window dalam declare global", "Mengubah lib.dom.d.ts", "Memakai any", "Tidak bisa"]
+    answer: 0
+    explain: "Itulah cara aman tanpa menyunting file pustaka."
+  - q: "Namespace termasuk cara merging untuk…"
+    options: ["Nilai dan tipe", "Hanya string", "Hanya function", "Tidak ada"]
+    answer: 0
+    explain: "Namespace bisa digabung dengan class/function/interface bernama sama."
+example:
+  code: |
+    interface User { nama: string }
+    interface User { umur: number }
+    // User = { nama: string; umur: number }
+    
+    declare global {
+      interface Window { __CONFIG__: { api: string } }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Declaration merging adalah kemampuan TypeScript menggabungkan beberapa deklarasi dengan nama yang sama menjadi satu definisi. Ini terdengar aneh, tapi merupakan fondasi banyak pola ekosistem.
+
+## Interface Bisa Di-merge
+
+```ts
+interface User {
+  nama: string;
+}
+
+interface User {
+  umur: number;
+}
+
+const u: User = { nama: "Sari", umur: 20 };
+```
+
+Aturannya: anggota harus kompatibel. Kalau kamu mendeklarasikan `nama: number` di salah satunya, akan muncul error.
+
+```ts
+interface User { nama: string }
+interface User { nama: number } // ❌ Subsequent property declarations...
+```
+
+## Type Alias Tidak Bisa
+
+```ts
+type A = { x: number };
+type A = { y: number }; // ❌ Duplicate identifier
+```
+
+Karena itu, kalau kamu merancang API publik yang mungkin diperluas, pilih `interface`.
+
+## Function Overload Merging
+
+```ts
+function format(x: number): string;
+function format(x: Date): string;
+function format(x: number | Date): string {
+  return String(x);
+}
+```
+
+Deklarasi overload di atas digabung dengan implementasi menjadi satu fungsi dengan dua signature.
+
+## Module Augmentation
+
+```ts
+// types/array.d.ts
+declare global {
+  interface Array<T> {
+    keUnik(): T[];
+  }
+}
+
+export {};
+```
+
+Setelah itu kamu bisa memanggil `[1,1,2].keUnik()` — tapi ingat, kamu tetap harus mengimplementasikan methodnya di runtime.
+
+## Augmenting Modul Pihak Ketiga
+
+```ts
+import "express";
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: { id: string };
+  }
+}
+```
+
+Ini cara standar menambah tipe `req.user` pada Express setelah middleware auth.
+
+## Namespace Merging
+
+```ts
+class Widget {
+  static versi = "1.0";
+}
+
+namespace Widget {
+  export const bawaan = "default";
+}
+
+Widget.versi;   // dari class
+Widget.bawaan;  // dari namespace
+```
+
+<div class="note">💡 Modifikasi tipe global berdampak ke seluruh proyek. Simpan di folder `types/` dan beri nama jelas supaya tidak membingungkan tim.</div>
+
+## Di Dunia Nyata
+
+- `@types/express` memakai augmentation untuk menambah `req.user`.
+- Library UI menambah opsi ke interface konfigurasi tanpa merusak versi sebelumnya.
+- Deklarasi CSS module memakai wildcard module: `declare module "*.module.css" { ... }`.
+
+## Try it Yourself
+
+Tambahkan deklarasi interface ketiga atau overload baru untuk mencoba merging.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`interface Konfigurasi {
+  tema: string;
+}
+interface Konfigurasi {
+  ukuran: number;
+}
+
+const cfg: Konfigurasi = { tema: "gelap", ukuran: 14 };
+console.log(cfg);
+
+function format(x: number): string;
+function format(x: string): string;
+function format(x: number | string): string {
+  return "[" + String(x) + "]";
+}
+console.log(format(42));
+console.log(format("halo"));`} />

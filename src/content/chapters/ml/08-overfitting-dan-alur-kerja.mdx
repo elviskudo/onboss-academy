@@ -27,7 +27,7 @@ example:
   code: |
     latih = [0.95, 0.96, 0.97]   # akurasi data latih
     uji   = [0.60, 0.62, 0.58]   # akurasi data uji
-
+    
     gap = sum(latih) / len(latih) - sum(uji) / len(uji)
     print("Gap latih-uji:", round(gap, 2))
     if gap > 0.15:

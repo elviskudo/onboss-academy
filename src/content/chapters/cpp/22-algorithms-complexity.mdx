@@ -1,0 +1,121 @@
+---
+title: "Kompleksitas Algoritma"
+description: "notasi Big-O, kompleksitas umum STL, dan cara menganalisis loop"
+order: 22
+quiz:
+  - q: "Notasi O(1) berarti…"
+    options: ["Waktu konstan", "Selalu 1 detik", "Satu loop", "Paling lambat"]
+    answer: 0
+    explain: "Tidak bergantung pada ukuran input."
+  - q: "Akses `std::vector[i]` memiliki kompleksitas…"
+    options: ["O(1)", "O(n)", "O(log n)", "O(n²)"]
+    answer: 0
+    explain: "Vector kontigu seperti array."
+  - q: "Pencarian dalam `std::set` adalah…"
+    options: ["O(log n)", "O(1)", "O(n)", "O(n log n)"]
+    answer: 0
+    explain: "Set memakai pohon seimbang."
+  - q: "Loop bersarang n × n umumnya menghasilkan…"
+    options: ["O(n²)", "O(n)", "O(log n)", "O(2^n)"]
+    answer: 0
+    explain: "Tiap elemen diproses n kali."
+  - q: "`std::sort` memiliki kompleksitas rata-rata…"
+    options: ["O(n log n)", "O(n²)", "O(n)", "O(log n)"]
+    answer: 0
+    explain: "Introsort: quicksort + heapsort fallback."
+example:
+  code: |
+    #include <vector>
+    #include <unordered_set>
+    #include <set>
+    #include <chrono>
+    #include <iostream>
+    
+    int main() {
+        std::vector<int> v(100000);
+        for (int i=0;i&lt;100000;i++) v[i]=i;
+    
+        auto t0 = std::chrono::high_resolution_clock::now();
+        bool a = std::binary_search(v.begin(), v.end(), 99999); // O(log n)
+        auto t1 = std::chrono::high_resolution_clock::now();
+    
+        std::unordered_set<int> s(v.begin(), v.end());          // O(1) lookup
+        bool b = s.count(99999);
+    
+        std::cout <&lt; a <&lt; b <&lt; " "\n              <&lt; std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() <&lt; " us\n";
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Kompleksitas membantu memprediksi bagaimana program bersikala saat data membesar. Fokus pada pertumbuhan, bukan waktu absolut.
+
+## Notasi Big-O
+
+| Notasi | Nama | Contoh |
+|---|---|---|
+| O(1) | konstan | `v[i]` |
+| O(log n) | logaritmik | binary search, `set` |
+| O(n) | linear | loop satu level |
+| O(n log n) | linearitmik | `sort`, `merge sort` |
+| O(n²) | kuadratik | nested loop |
+| O(2ⁿ) | eksponensial | fibonacci naif |
+
+## Analisis Loop
+
+```cpp
+for (int i = 0; i < n; i++)        // O(n)
+    for (int j = 0; j < n; j++)    // × O(n)
+        kerja();                   // → O(n²)
+
+for (int i = n; i > 1; i /= 2)     // → O(log n)
+    kerja();
+```
+
+## Kompleksitas Container STL
+
+| Container | Akses | Cari | Insert |
+|---|---|---|---|
+| `vector` | O(1) | O(n) | O(n) di tengah |
+| `list` | O(n) | O(n) | O(1) dengan iterator |
+| `set` | — | O(log n) | O(log n) |
+| `unordered_set` | — | O(1) rata-rata | O(1) rata-rata |
+
+## Waktu vs Memori
+
+Sering ada trade-off: `unordered_set` lebih cepat tapi lebih banyak memori dan tidak terurut. Pilih sesuai kebutuhan.
+
+## Pengukuran
+
+Teori tetap perlu dibuktikan dengan profiling:
+
+```cpp
+auto t0 = std::chrono::steady_clock::now();
+jalankan();
+auto t1 = std::chrono::steady_clock::now();
+```
+
+<div class="note">💡 Optimasi tanpa pengukuran sering membuang waktu. Profile dulu, temukan bottleneck, baru ubah struktur data atau algoritma.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <vector>
+#include <unordered_set>
+#include <set>
+#include <chrono>
+#include <iostream>
+
+int main() {
+    std::vector<int> v(100000);
+    for (int i=0;i&lt;100000;i++) v[i]=i;
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+    bool a = std::binary_search(v.begin(), v.end(), 99999); // O(log n)
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    std::unordered_set<int> s(v.begin(), v.end());          // O(1) lookup
+    bool b = s.count(99999);
+
+    std::cout <&lt; a <&lt; b <&lt; " "\n              <&lt; std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count() <&lt; " us\n";
+}`} />

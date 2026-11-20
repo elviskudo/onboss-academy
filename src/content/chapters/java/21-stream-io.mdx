@@ -1,0 +1,123 @@
+---
+title: "Stream API untuk I/O"
+description: "InputStream, OutputStream, buffer, dan perbedaan byte stream vs character stream"
+order: 21
+quiz:
+  - q: "InputStream bekerja dengan…"
+    options: ["Karakter Unicode", "Byte mentah", "Object Java", "Baris teks"]
+    answer: 1
+    explain: "InputStream/OutputStream = byte; Reader/Writer = character."
+  - q: "Kelas buffer yang sering dipakai adalah…"
+    options: ["BufferedReader", "FastReader", "QuickStream", "BufferLine"]
+    answer: 0
+    explain: "BufferedReader mengurangi syscall dengan membaca blok besar."
+  - q: "FileInputStream termasuk…"
+    options: ["Character stream", "Byte stream", "Object stream", "Network stream"]
+    answer: 1
+    explain: "FileInputStreamextends InputStream → byte-oriented."
+  - q: "Method `close()` pada stream penting untuk…"
+    options: ["Menghapus file", "Melepas file descriptor & flush buffer", "Membuat file", "Mengubah encoding"]
+    answer: 1
+    explain: "Gunakan try-with-resources agar otomatis."
+  - q: "Untuk menulis object Java ke file, pakai…"
+    options: ["FileWriter", "ObjectOutputStream + Serializable", "PrintStream", "StringWriter"]
+    answer: 1
+    explain: "Objek harus implements Serializable."
+example:
+  code: |
+    import java.io.*;
+    import java.nio.charset.StandardCharsets;
+    
+    public class Main {
+      public static void main(String[] args) throws IOException {
+        File f = File.createTempFile("contoh", ".txt");
+        try (BufferedWriter w = Files.newBufferedWriter(f.toPath(), StandardCharsets.UTF_8)) {
+          w.write("Baris satu"); w.newLine(); w.write("Baris dua");
+        }
+        try (BufferedReader r = Files.newBufferedReader(f.toPath(), StandardCharsets.UTF_8)) {
+          String baris;
+          while ((baris = r.readLine()) != null) System.out.println(baris);
+        }
+        f.deleteOnExit();
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Stream adalah abstraksi aliran data. Java punya dua keluarga besar: **byte stream** (`InputStream`/`OutputStream`) untuk data biner, dan **character stream** (`Reader`/`Writer`) untuk teks.
+
+## Peta Kelas
+
+| Kebutuhan | Byte | Character |
+|---|---|---|
+| File | FileInputStream | FileReader |
+| Buffer | BufferedInputStream | BufferedReader |
+| Konversi | InputStreamReader | — |
+| Cetak | PrintStream | PrintWriter |
+| Object | ObjectInputStream | — |
+
+## Membaca Teks Baris per Baris
+
+```java
+try (BufferedReader r = new BufferedReader(new FileReader("data.txt"))) {
+    r.lines().forEach(System.out::println);
+}
+```
+
+`FileReader` memakai charset default platform — untuk hasil konsisten, gunakan `Files.newBufferedReader(path, StandardCharsets.UTF_8)`.
+
+## Menulis
+
+```java
+try (PrintWriter out = new PrintWriter("hasil.txt", "UTF-8")) {
+    out.println("Baris satu");
+    out.printf("Nilai: %d%n", 90);
+}
+```
+
+## Copy Biner
+
+```java
+try (InputStream in = new FileInputStream("a.png");
+     OutputStream out = new FileOutputStream("b.png")) {
+    in.transferTo(out);   // Java 9+
+}
+```
+
+## Serialisasi
+
+```java
+class Siswa implements Serializable {
+    private static final long serialVersionUID = 1L;
+    String nama;
+}
+
+try (ObjectOutputStream o = new ObjectOutputStream(new FileOutputStream("siswa.bin"))) {
+    o.writeObject(new Siswa());
+}
+```
+
+Serialisasi Java punya risiko keamanan saat membaca data tidak tepercaya — untuk pertukaran antar sistem, lebih baik JSON.
+
+<div class="note">💡 Selalu tutup stream, terutama yang menulis — buffer yang belum di-flush bisa membuat file kosong atau terpotong. try-with-resources adalah jawabannya.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.io.*;
+import java.nio.charset.StandardCharsets;
+
+public class Main {
+  public static void main(String[] args) throws IOException {
+    File f = File.createTempFile("contoh", ".txt");
+    try (BufferedWriter w = Files.newBufferedWriter(f.toPath(), StandardCharsets.UTF_8)) {
+      w.write("Baris satu"); w.newLine(); w.write("Baris dua");
+    }
+    try (BufferedReader r = Files.newBufferedReader(f.toPath(), StandardCharsets.UTF_8)) {
+      String baris;
+      while ((baris = r.readLine()) != null) System.out.println(baris);
+    }
+    f.deleteOnExit();
+  }
+}`} />

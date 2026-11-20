@@ -36,13 +36,13 @@ example:
         nilai.push_back(85);
         sort(nilai.begin(), nilai.end());
 
-        for (int n : nilai) cout << n << " ";
-        cout << endl;
+        for (int n : nilai) cout <&lt; n <&lt; " ";
+        cout <&lt; endl;
 
         map<string, int> skor;
         skor["Sari"] = 90;
         skor["Budi"] = 85;
-        cout << "Sari: " << skor["Sari"] << endl;
+        cout <&lt; "Sari: " <&lt; skor["Sari"] <&lt; endl;
         return 0;
     }
 ---
@@ -167,6 +167,10 @@ C++17 membiarkan kamu membongkar pasangan data dalam satu baris — kode jauh le
 
 <div class="note">💡 Pilih container sesuai pola aksesnya, bukan kebiasaan. <code>vector</code> menang telak untuk kebanyakan kasus berkat cache-friendly; baru beralih ke <code>map</code>/<code>set</code> ketika pencarian by kunci benar-benar dibutuhkan.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <vector>
 #include <map>
@@ -178,19 +182,19 @@ int main() {
     nilai.push_back(95);
     sort(nilai.begin(), nilai.end());
 
-    cout << "Terurut: ";
-    for (int n : nilai) cout << n << " ";
-    cout << endl;
-    cout << "Terkecil: " << nilai.front()
-         << " | Terbesar: " << nilai.back() << endl;
+    cout <&lt; "Terurut: ";
+    for (int n : nilai) cout <&lt; n <&lt; " ";
+    cout <&lt; endl;
+    cout <&lt; "Terkecil: " <&lt; nilai.front()
+         <&lt; " | Terbesar: " <&lt; nilai.back() <&lt; endl;
 
     map<string, int> skor;
     skor["Sari"] = 90;
     skor["Budi"] = 85;
     skor["Rina"] = 92;
     for (const auto &[nama, nilaiAkhir] : skor) {
-        cout << nama << " = " << nilaiAkhir << endl;
+        cout <&lt; nama <&lt; " = " <&lt; nilaiAkhir <&lt; endl;
     }
-    cout << "Sari: " << skor["Sari"] << endl;
+    cout <&lt; "Sari: " <&lt; skor["Sari"] <&lt; endl;
     return 0;
 }`} />

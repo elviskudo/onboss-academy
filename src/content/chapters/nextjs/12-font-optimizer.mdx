@@ -1,0 +1,102 @@
+---
+title: "Font & next/font"
+description: "Google Fonts lokal, font kustom, variable font, dan performa"
+order: 12
+quiz:
+  - q: "Modul untuk font optimal di Next.js adalah…"
+    options: ["next/assets", "next/typography", "next/font", "next/css"]
+    answer: 2
+    explain: "Font diunduh saat build dan disajikan dari domain sendiri."
+  - q: "Keuntungan next/font adalah…"
+    options: ["Hanya untuk font serif", "Tidak ada request ke Google saat runtime", "Font selalu lebih besar", "Menghapus CSS"]
+    answer: 1
+    explain: "Mengurangi latensi dan menjaga privasi pengunjung."
+  - q: "CSS variable font dipakai untuk…"
+    options: ["Mengubah warna", "Membuat rute", "Menyimpan data", "Memakai nama kelas fleksibel di seluruh aplikasi"]
+    answer: 3
+    explain: "Contoh: className={inter.variable} lalu font-family: var(--font-inter)."
+  - q: "Font lokal dimuat dengan…"
+    options: ["importFont()", "localFont()", "loadFont()", "useFont()"]
+    answer: 1
+    explain: "Disertakan path ke file font."
+  - q: "display: swap berarti…"
+    options: ["Teks tampil dengan font fallback dulu lalu diganti", "Font tidak pernah tampil", "Hanya font italic", "Menghapus fallback"]
+    answer: 0
+    explain: "Mencegah teks tidak terlihat saat font belum siap."
+example:
+  code: |
+    import { Inter } from 'next/font/google';
+
+    const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+
+    <body className={inter.variable}>...</body>
+---
+
+Font bisa diam-diam memperlambat situs. `next/font` memindahkan unduhan font ke waktu build.
+
+## Google Font
+
+```tsx
+// app/layout.tsx
+import { Inter, Playfair_Display } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+});
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="id" className={`${inter.variable} ${playfair.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+```css
+body { font-family: var(--font-inter), sans-serif; }
+h1 { font-family: var(--font-playfair), serif; }
+```
+
+## Font Lokal
+
+```tsx
+import localFont from "next/font/local";
+
+const onboss = localFont({
+  src: [
+    { path: "./fonts/OnBoss-Regular.woff2", weight: "400" },
+    { path: "./fonts/OnBoss-Bold.woff2", weight: "700" },
+  ],
+  variable: "--font-onboss",
+  display: "swap",
+});
+```
+
+## Variable Font
+
+Satu file variable font bisa mencakup banyak weight:
+
+```tsx
+const inter = Inter({ subsets: ["latin"], axes: ["slnt"] });
+```
+
+## Praktik Baik
+
+- Batasi jumlah keluarga font (dua sudah cukup).
+- Gunakan `subsets` seminimal mungkin.
+- Simpan font di `next/font`, bukan `@import` CSS eksternal.
+
+<div class="note">💡 Font yang di-self-host lewat next/font mengurangi ketergantungan pada jaringan pihak ketiga — lebih cepat dan lebih ramah privasi.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+
+<body className={inter.variable}>...</body>`}</code></pre>

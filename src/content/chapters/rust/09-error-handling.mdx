@@ -142,6 +142,10 @@ println!("{}", nilai);
 
 <div class="note">💡 unwrap() aman untuk belajar dan untuk nilai yang sudah pasti. Di kode produksi, lebih suka match, expect dengan pesan jelas, atau ? di fungsi yang mengembalikan Result.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn bagi(a: i32, b: i32) -> Result<i32, String> {
     if b == 0 {
         return Err(String::from("pembagi tidak boleh nol"));

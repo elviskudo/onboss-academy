@@ -1,0 +1,127 @@
+---
+title: "Error Boundary"
+description: "menangkap error render, fallback UI, dan batasan error boundary"
+order: 19
+quiz:
+  - q: "Error boundary menangkap error saat…"
+    options: ["Async setTimeout", "Fetch gagal di efek", "Render, lifecycle, dan constructor anak", "Event handler"]
+    answer: 2
+    explain: "Error boundary tidak menangkap error di callback asynchronous."
+  - q: "Error boundary dibuat dengan…"
+    options: ["CSS", "Class component + getDerivedStateFromError", "Fungsi biasa", "useState saja"]
+    answer: 1
+    explain: "Saat ini hook belum bisa menjadi error boundary."
+  - q: "Metode componentDidCatch berguna untuk…"
+    options: ["Mengganti JSX", "Mengirim request", "Mengubah CSS", "Mencatat error ke layanan logging"]
+    answer: 3
+    explain: "getDerivedStateFromError mengubah UI; componentDidCatch untuk log."
+  - q: "Error boundary sebaiknya ditempatkan…"
+    options: ["Di CSS", "Di sekitar area UI tertentu", "Hanya di seluruh aplikasi", "Di dalam setiap tombol"]
+    answer: 1
+    explain: "Beberapa boundary kecil membuat bagian lain tetap hidup."
+  - q: "Error di event handler harus ditangani dengan…"
+    options: ["try/catch di handler itu", "Error boundary", "componentDidCatch", "useMemo"]
+    answer: 0
+    explain: "Boundary tidak menangkap kode yang berjalan di luar render."
+example:
+  code: |
+    class BatasError extends React.Component {
+      state = { error: null };
+
+      static getDerivedStateFromError(error) { return { error }; }
+
+      render() {
+        if (this.state.error) return <p>Terjadi kesalahan pada bagian ini.</p>;
+        return this.props.children;
+      }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanpa penanganan, satu error di komponen bisa membuat seluruh aplikasi putih. *Error boundary* membatasi kerusakan itu.
+
+## Membuat Boundary
+
+```jsx
+class BatasError extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("Error UI:", error, info.componentStack);
+    // kirim ke layanan logging di sini
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="error-box">
+          <h2>Yaah, bagian ini gagal dimuat.</h2>
+          <button onClick={() => this.setState({ error: null })}>
+            Coba lagi
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+```
+
+## Memakainya
+
+```jsx
+<BatasError>
+  <GrafikPenjualan />
+</BatasError>
+
+<BatasError>
+  <PanelRekomendasi />
+</BatasError>
+```
+
+Kalau grafik gagal, rekomendasi tetap tampil. Ini alasan boundary sebaiknya ditempatkan di beberapa titik strategis.
+
+## Yang Tidak Ditangkap
+
+- Error di event handler → pakai `try/catch`.
+- Error di `setTimeout`, `Promise`, atau `async` → tangani dengan `.catch`.
+- Error di boundary itu sendiri → butuh boundary di atasnya.
+
+```jsx
+async function simpan() {
+  try {
+    await api.simpan(data);
+  } catch (e) {
+    setPesan("Gagal menyimpan: " + e.message);
+  }
+}
+```
+
+## Fallback yang Baik
+
+Fallback sebaiknya informatif dan punya jalan keluar: tombol ulangi, tautan ke halaman utama, atau pesan yang menjelaskan apa yang gagal.
+
+<div class="note">💡 Error boundary bukan pengganti pengujian. Ia adalah jaring pengaman terakhir agar user tidak melihat layar kosong saat terjadi kegagalan tak terduga.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi getDerivedStateFromError dengan fungsi murni
+function getDerivedStateFromError(error) { return { error }; }
+
+function render(state) {
+  if (state.error) return "Fallback: bagian ini gagal dimuat";
+  return "Konten normal";
+}
+
+console.log(render({ error: null }));
+console.log(render(getDerivedStateFromError(new Error("boom"))));`} />

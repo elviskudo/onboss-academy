@@ -1,0 +1,138 @@
+---
+"title": "Fungsi Lanjutan"
+"description": "Default parameter, named argument, vararg, dan function overload"
+"order": 16
+"quiz":
+- "q": "Fitur yang memungkinkan pemanggilan fungsi tanpa argumen tertentu adalah…"
+  "options":
+  - "Default parameter"
+  - "Vararg"
+  - "Extension"
+  - "Inline"
+  "answer": 0
+  "explain": "Nilai default dipakai bila argumen tidak diberikan."
+- "q": "Named argument ditulis dengan…"
+  "options":
+  - "nama = nilai"
+  - "nama: nilai"
+  - "nama -> nilai"
+  - "@nama nilai"
+  "answer": 0
+  "explain": "sapa(nama = \"Budi\") membuat urutan argumen tidak tergantung posisi."
+- "q": "Kata kunci untuk jumlah argumen variabel adalah…"
+  "options":
+  - "vararg"
+  - "...args"
+  - "rest"
+  - "params"
+  "answer": 0
+  "explain": "vararg x: Int menerima nol atau lebih nilai."
+- "q": "Overload function berarti…"
+  "options":
+  - "Beberapa fungsi nama sama dengan parameter beda"
+  - "Fungsi tanpa nama"
+  - "Fungsi di dalam fungsi"
+  - "Fungsi yang selalu returning Unit"
+  "answer": 0
+  "explain": "Compiler memilih versi berdasarkan tipe dan jumlah argumen."
+- "q": "Tipe kembalian fungsi tanpa body blok ditulis setelah…"
+  "options":
+  - "titik koma"
+  - "titik dua"
+  - "sama dengan"
+  - "panah"
+  "answer": 2
+  "explain": "fun tambah(a: Int, b: Int): Int = a + b memakai expression body."
+"example":
+  "code": "fun sapa(nama: String = \"Teman\", sapaan: String = \"Halo\"): String {\n    return \"$sapaan, $nama!\"\n}\n\nfun jumlah(vararg angka: Int): Int = angka.sum()\n\nfun main() {\n    println(sapa())\n    println(sapa(sapaan = \"Selamat pagi\", nama = \"Sari\"))\n    println(jumlah(1, 2, 3, 4))\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+| Fitur | Contoh | Manfaat |
+|---|---|---|
+| Default parameter | `fun sapa(nama: String = "Teman")` | mengurangi overload |
+| Named argument | `sapa(nama = "Budi")` | urutan tidak kaku |
+| `vararg` | `fun jumlah(vararg x: Int)` | argumen jumlah bebas |
+| Expression body | `fun kuadrat(x: Int) = x * x` | fungsi pendek tanpa `return` |
+
+## Parameter Default
+
+```kotlin
+fun sapa(nama: String = "Teman", sapaan: String = "Halo"): String {
+    return "$sapaan, $nama!"
+}
+
+fun jumlah(vararg angka: Int): Int = angka.sum()
+
+fun main() {
+    println(sapa())
+    println(sapa(sapaan = "Selamat pagi", nama = "Sari"))
+    println(jumlah(1, 2, 3, 4))
+}
+```
+
+```kotlin
+fun sapa(nama: String = "Teman") = "Halo, $nama!"
+
+sapa()          // Halo, Teman!
+sapa("Budi")    // Halo, Budi!
+```
+
+Default parameter menggantikan pola overload yang berulang di Java.
+
+## Named Argument
+
+```kotlin
+formatTanggal(hari = 12, bulan = "Mei", tahun = 2026)
+```
+
+Named argument membuat kode lebih jelas, terutama saat fungsi memiliki beberapa parameter bertipe sama.
+
+## Vararg
+
+```kotlin
+fun rataRata(vararg nilai: Double): Double {
+    return if (nilai.isEmpty()) 0.0 else nilai.sum() / nilai.size
+}
+```
+
+Di dalam fungsi, `vararg` menjadi array. Untuk meneruskan array yang sudah ada, gunakan operator spread `*array`.
+
+## Expression Body
+
+```kotlin
+fun kuadrat(x: Int) = x * x
+fun dewasa(usia: Int): Boolean = usia >= 18
+```
+
+Bila hasil bisa ditulis dalam satu ekspresi, kurung kurawal tidak diperlukan.
+
+## Local Function
+
+```kotlin
+function utama() {
+    fun bantu(x: Int) = x * 2
+    println(bantu(5))
+}
+```
+
+Fungsi lokal berguna untuk logik pembantu yang hanya dipakai di satu tempat.
+
+<div class="note">💡 Utamakan expression body untuk fungsi pendek. Kode jadi lebih padat dan mengurangi kemungkinan lupa menulis <code>return</code>.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun sapa(nama: String = "Teman", sapaan: String = "Halo"): String {
+    return "$sapaan, $nama!"
+}
+
+fun jumlah(vararg angka: Int): Int = angka.sum()
+
+fun main() {
+    println(sapa())
+    println(sapa(sapaan = "Selamat pagi", nama = "Sari"))
+    println(jumlah(1, 2, 3, 4))
+}`} />

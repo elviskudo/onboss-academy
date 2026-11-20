@@ -1,0 +1,90 @@
+---
+title: "Gerak dan Koordinat"
+description: "Posisi, arah, pergerakan, dan pantulan di panggung"
+order: 10
+quiz:
+  - q: "Pusat panggung Scratch memiliki koordinat…"
+    options: ["(240, 180)", "(100, 100)", "(0, 0)", "(1, 1)"]
+    answer: 2
+    explain: "Sumbu x mendatar, sumbu y vertikal."
+  - q: "Ukuran panggung Standar Scratch adalah…"
+    options: ["800 × 600", "640 × 480", "320 × 240", "480 × 360 piksel"]
+    answer: 3
+    explain: "Rentang x −240 sampai 240, y −180 sampai 180."
+  - q: "Blok \"arah 90\" menghadap…"
+    options: ["Kanan", "Atas", "Kiri", "Bawah"]
+    answer: 0
+    explain: "Arah 0 menghadap atas, 180 kiri, −90 bawah."
+  - q: "Blok \"jika menyentuh tepian, pantulkan\" berguna untuk…"
+    options: ["Mengubah suara", "Memantulkan sprite di dinding panggung", "Mengubah kostum", "Menambah skor"]
+    answer: 1
+    explain: "Sering dipakai pada game bola atau pong."
+  - q: "Blok \"geser x sebesar 10\" mengubah…"
+    options: ["Arah sprite", "Warna sprite", "Posisi horizontal sprite", "Ukuran sprite"]
+    answer: 2
+    explain: "Nilai negatif menggeser ke kiri."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur arah ke [90]]
+    [ulangi sampai <menyentuh [tepi]> [
+       [geser 5 langkah]
+       [jika <menyentuh [tepi]> [pantulkan]]
+    ]]
+---
+
+Kategori Gerak memberi sprite kemampuan berpindah. Memahami koordinat dan arah membuat kontrol menjadi presisi.
+
+## Sistem Koordinat
+
+```text
+        y +
+         |
+   x - --+-- x +
+         |
+        y -
+```
+
+Posisi sprite dibaca dengan pelapor `(x posisi)` dan `(y posisi)`. Gunakan `[atur x ke ..]` dan `[atur y ke ..]` untuk menempatkan secara tepat.
+
+## Arah
+
+| Arah | Arah pandang |
+|---|---|
+| 0 | Atas |
+| 90 | Kanan |
+| 180 | Kiri |
+| −90 | Bawah |
+
+Blok `[hadap ...]` bisa menerima angka maupun nama arah dari dropdown.
+
+## Cara Bergerak
+
+```text
+[geser 10 langkah]           -> maju mengikuti arah
+[atur x ke 0] [atur y ke 0]  -> teleport ke titik
+[geser x sebesar 5]          -> horizontal
+[geser y sebesar -5]         -> vertikal
+```
+
+## Pantulan
+
+```text
+[jika <menyentuh [tepi]> [
+   pantulkan
+]]
+```
+
+`pantulkan` membalik arah sesuai sisi yang tersentuh. Untuk memantulkan dari sprite lain, gunakan opsi `pantulkan dari [sprite]`.
+
+<div class="note">💡 Centang kotak pelapor x/y di editor untuk menampilkan posisi secara live di panggung saat proyek berjalan—sangat membantu saat mengatur jalur gerak.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[atur x ke [0]] [atur y ke [0]]
+[ulangi 20 [
+  geser x sebesar 10
+  geser y sebesar 5
+]]`}</code></pre>

@@ -98,7 +98,7 @@ Bash punya **6 operator perbandingan angka**:
 | `-eq` | sama | `==` |
 | `-ne` | tidak sama | `!=` |
 | `-lt` | kurang dari | `<` |
-| `-le` | kurang atau sama | `<=` |
+| `-le` | kurang atau sama | `&lt;=` |
 | `-gt` | lebih dari | `>` |
 | `-ge` | lebih atau sama | `>=` |
 
@@ -157,6 +157,10 @@ grep -q "ERROR" app.log || echo "Tidak ada error"
 5. **Idempotent setup** — `[ -d node_modules ] || npm install` hanya memasang dependency jika belum ada.
 
 <div class="note">💡 Lebih aman menguji perintah langsung — `if curl -fsS "$url"; then` — daripada menjalankannya dulu lalu membaca `$?`. Kode tetap dekat dengan kondisi dan tidak bisa tertimpa perintah lain.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
 nilai=85

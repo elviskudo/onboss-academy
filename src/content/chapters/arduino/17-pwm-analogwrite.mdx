@@ -1,0 +1,83 @@
+---
+title: "PWM dengan analogWrite"
+description: "Duty cycle, pin PWM, dan kontrol kecerahan"
+order: 17
+quiz:
+  - q: "analogWrite(9, 128) menghasilkan duty cycle sekitar…"
+    options: ["0%", "50%", "128%", "12,8%"]
+    answer: 1
+    explain: "Rentang 0–255 memetakan 0–100%."
+  - q: "Pin PWM pada Uno ditandai dengan…"
+    options: ["Huruf A", "Tidak ada tanda", "Simbol ~", "Warna merah"]
+    answer: 2
+    explain: "Pin 3, 5, 6, 9, 10, 11 mendukung PWM."
+  - q: "analogWrite(9, 0) berarti…"
+    options: ["Output HIGH terus", "50%", "Error", "Output LOW terus"]
+    answer: 3
+    explain: "Nilai 255 berarti HIGH terus."
+  - q: "Frekuensi PWM default pin 9/10 Uno adalah…"
+    options: ["Sekitar 490 Hz", "1 Hz", "50 Hz", "1 MHz"]
+    answer: 0
+    explain: "Pin 3/11 lebih tinggi, sekitar 980 Hz."
+  - q: "Untuk meredupkan LED, hubungkan LED…"
+    options: ["Tanpa resistor", "lewat resistor ke pin PWM", "Langsung ke 5 V", "Ke pin analog saja"]
+    answer: 1
+    explain: "Resistor 220 Ω membatasi arus."
+example:
+  code: |
+    const int LED = 9;
+    void setup() { pinMode(LED, OUTPUT); }
+    void loop() {
+      for (int i = 0; i &lt;= 255; i++) {
+        analogWrite(LED, i);
+        delay(10);
+      }
+      for (int i = 255; i >= 0; i--) {
+        analogWrite(LED, i);
+        delay(10);
+      }
+    }
+---
+
+`analogWrite()` tidak menghasilkan tegangan analog sungguhan. Ia menghasilkan sinyal PWM—nyala dan mati cepat—yang dirasakan sebagai kecerahan rata-rata.
+
+## Duty Cycle
+
+```text
+0   -> 0%  (mati)
+64  -> 25%
+128 -> 50%
+255 -> 100%
+```
+
+## Pin PWM
+
+| Board | Pin PWM |
+|---|---|
+| Uno | 3, 5, 6, 9, 10, 11 |
+| Nano | sama dengan Uno |
+| Mega | 2–13 plus 44–46 |
+
+## Contoh Fade
+
+```cpp
+for (int nilai = 0; nilai <= 255; nilai++) {
+  analogWrite(9, nilai);
+  delay(10);
+}
+```
+
+## Servo vs LED
+
+Servo memakai PWM dengan frekuensi 50 Hz dan lebar pulsa tertentu, bukan sekadar duty cycle. Gunakan library `Servo` agar timing presisi.
+
+<div class="note">💡 Driver motor dan LED strip bisa memakai PWM yang sama, tetapi sering membutuhkan frekuensi berbeda. Ubah timer hanya bila kamu memahami efeknya ke `millis()` dan `delay()`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`void setup(){ pinMode(9, OUTPUT); }
+void loop(){
+  for(int i=0;i&lt;256;i+=16){ analogWrite(9,i); delay(50); }
+  for(int i=255;i&gt;=0;i-=16){ analogWrite(9,i); delay(50); }
+}`}</code></pre>

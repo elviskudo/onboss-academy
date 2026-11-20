@@ -1,0 +1,139 @@
+---
+"title": "Method String"
+"description": "Mengolah teks dengan Length, ToUpper, Substring, Replace, Split, dan interpolation"
+"order": 13
+"quiz":
+- "q": "Method untuk mengubah teks jadi huruf kapital semua adalah…"
+  "options":
+  - "ToLower()"
+  - "ToUpper()"
+  - "Capitalize()"
+  - "UpperCase()"
+  "answer": 1
+  "explain": "ToUpper() mengembalikan salinan huruf kapital; string asli tidak berubah."
+- "q": "Hasil dari \"Halo\".Length adalah…"
+  "options":
+  - "\"3\""
+  - "\"4\""
+  - "\"5\""
+  - "\"6\""
+  "answer": 1
+  "explain": "Length menghitung jumlah karakter, termasuk spasi."
+- "q": "Untuk memecah teks berdasarkan koma, gunakan…"
+  "options":
+  - "Split(',')"
+  - "Break(',')"
+  - "Separate(',')"
+  - "Cut(',')"
+  "answer": 0
+  "explain": "Split mengembalikan array string dari hasil pemecahan."
+- "q": "String interpolation ditulis dengan…"
+  "options":
+  - "$\"Halo {nama}\""
+  - "\"Halo \" + nama"
+  - "@\"Halo {nama}\""
+  - "#\"Halo {nama}\""
+  "answer": 0
+  "explain": "Awali string dengan $ lalu letakkan ekspresi di dalam kurung kurawal."
+- "q": "Karena string bersifat immutable, maka…"
+  "options":
+  - "isi string bisa diubah langsung"
+  - "setiap perubahan membuat string baru"
+  - "string tidak bisa dibaca"
+  - "string selalu null"
+  "answer": 1
+  "explain": "Operasi seperti Replace menghasilkan objek baru, bukan mengubah yang lama."
+"example":
+  "code": "using System;\nclass Program\n{\n    static void Main()\n    {\n        string s = \"  Halo Dunia  \";\n        Console.WriteLine(s.Trim());\n        Console.WriteLine(s.ToUpper());\n        Console.WriteLine(s.Contains(\"Dunia\"));\n        string[] bagian = \"a,b,c\".Split(',');\n        Console.WriteLine(bagian.Length);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`string` di C# menyimpan teks, dan kumpulan method bawaan membuatnya mudah diolah. Kuncinya: string bersifat **immutable** — hasil operasi selalu berupa string baru.
+
+## Method yang Sering Dipakai
+
+| Method | Fungsi |
+|---|---|
+| `Length` | Jumlah karakter |
+| `ToUpper()` / `ToLower()` | Mengubah huruf |
+| `Trim()` | Membuang spasi di tepi |
+| `Contains(x)` | Mengandung teks x |
+| `StartsWith` / `EndsWith` | Cek awal/akhir |
+| `IndexOf(x)` | Posisi pertama x, atau `-1` |
+| `Substring(i, n)` | Mengambil bagian teks |
+| `Replace(a, b)` | Mengganti semua `a` dengan `b` |
+| `Split(pemisah)` | Memecah menjadi array |
+| `string.Join` | Menggabungkan array |
+
+```csharp
+string kalimat = "Belajar C# itu menyenangkan";
+Console.WriteLine(kalimat.Substring(8, 2)); // "C#"
+Console.WriteLine(kalimat.Replace("menyenangkan", "seru"));
+```
+
+## String Interpolation
+
+Cara paling rapi menyisipkan nilai ke dalam teks:
+
+```csharp
+string nama = "Rani";
+int umur = 22;
+Console.WriteLine($"Halo {nama}, umurmu {umur} tahun.");
+```
+
+Awali dengan `$`. Kamu bahkan bisa memformat angka langsung: `{harga:C2}` untuk mata uang atau `{nilai:F1}` untuk satu angka desimal.
+
+## Verbatim String
+
+Backslash pada path Windows tidak perlu di-escape bila string diawali `@`:
+
+```csharp
+string path = @"C:" + "\Users\Rani\doc.txt"; // satu backslash di output
+```
+
+Untuk string dengan banyak tanda kutip, C# 11 menyediakan *raw string literal* yang diawali tiga tanda kutip — tapi pada contoh di bawah kami pakai escaped biasa agar mudah dibaca di editor mana pun:
+
+```csharp
+string kutipan = "Ia berkata, "C# itu menyenangkan".";
+```
+
+## StringBuilder
+
+Kalau menggabungkan teks di dalam perulangan ribuan kali, `string` biasa membuat banyak objek sementara. `StringBuilder` lebih hemat:
+
+```csharp
+using System.Text;
+var sb = new StringBuilder();
+for (int i = 0; i < 100; i++) sb.Append(i).Append(", ");
+Console.WriteLine(sb.ToString());
+```
+
+<div class="note">💡 Untuk perbandingan teks yang mengabaikan huruf besar-kecil, pakai <code>string.Equals(a, b, StringComparison.OrdinalIgnoreCase)</code> daripada mengubah keduanya dengan ToLower().</div>
+
+## Try it Yourself
+
+Coba ganti `teks` dengan kalimat lain dan lihat hasil tiap method.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+class Program
+{
+    static void Main()
+    {
+        string teks = "  Belajar C# di Onboss  ";
+        Console.WriteLine("Asli      : [" + teks + "]");
+        Console.WriteLine("Trim      : [" + teks.Trim() + "]");
+        Console.WriteLine("Besar     : " + teks.Trim().ToUpper());
+        Console.WriteLine("Panjang   : " + teks.Length);
+        Console.WriteLine("Ada C#?   : " + teks.Contains("C#"));
+        Console.WriteLine("Potongan  : " + teks.Trim().Substring(8, 2));
+
+        string[] kata = "satu,dua,tiga".Split(',');
+        Console.WriteLine("Kata ke-2 : " + kata[1]);
+        Console.WriteLine("Gabung    : " + string.Join(" | ", kata));
+
+        string nama = "Rani";
+        int umur = 22;
+        Console.WriteLine($"Halo {nama}, umurmu {umur} tahun.");
+    }
+}`} />

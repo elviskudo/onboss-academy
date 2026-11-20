@@ -1,0 +1,91 @@
+---
+title: "Combinator CSS"
+description: "Memilih elemen berdasarkan hubungan keturunan, anak, dan saudara"
+order: 10
+quiz:
+  - q: "Combinator yang memilih anak langsung adalah…"
+    options: ["spasi", ">", "+", "~"]
+    answer: 1
+    explain: "Tanda `>` hanya mencocokkan anak generasi pertama."
+  - q: "`ul li` akan memilih…"
+    options: ["Hanya li anak langsung", "Semua li di dalam ul", "li sebelum ul", "Semua li di halaman"]
+    answer: 1
+    explain: "Spasi adalah descendant combinator — bisa sekadar turunan atau cicit."
+  - q: "Combinator `+` memilih…"
+    options: ["Anak pertama", "Saudara berikutnya yang bersebelahan", "Induknya", "Semua saudara"]
+    answer: 1
+    explain: "Adjacent sibling (+) hanya memilih elemen tepat setelahnya."
+  - q: "`h2 ~ p` mempengaruhi…"
+    options: ["Paragraf pertama saja", "Semua p saudara setelah h2", "p di dalam h2", "Semua p sebelumnya"]
+    answer: 1
+    explain: "General sibling (~) mencocokkan semua saudara setelah elemen pertama."
+  - q: "Selector `section > p` tidak akan mencocokkan…"
+    options: ["<section><p>…</p></section>", "<section><div><p>…</p></div></section> dari sudut p", "p anak langsung section", "Keduanya benar"]
+    answer: 1
+    explain: "p yang bersarang di div bukan anak langsung section, melainkan keturunan."
+example:
+  code: |
+    ul li { color: #374151; }
+    ul > li { font-weight: 600; }
+    h2 + p { color: #DC2626; }
+    h2 ~ p { font-style: italic; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Selector tidak hanya berdiri sendiri — kamu juga bisa memanfaatkan **hubungan antar elemen** di pohon DOM. Empat combinator inti memberi kontrol yang jauh lebih presisi daripada sekadar class.
+
+## Empat Jenis Combinator
+
+| Combinator | Nama | Contoh | Arti |
+|------------|------|--------|------|
+| spasi | Descendant | `div p` | Semua `p` di dalam `div`, berapa level pun |
+| `>` | Child | `div > p` | Hanya `p` anak langsung |
+| `+` | Adjacent sibling | `h2 + p` | `p` tepat setelah `h2` |
+| `~` | General sibling | `h2 ~ p` | Semua `p` setelah `h2` dalam induk sama |
+
+```css
+/* semua tautan di dalam navigasi */
+nav a { color: white; }
+
+/* hanya li anak langsung dari ul utama */
+ul.menu > li { display: inline-block; }
+
+/* paragraf pertama setelah judul */
+h2 + p { font-size: 1.1rem; }
+
+/* semua paragraf setelah judul */
+h2 ~ p { color: #6B7280; }
+```
+
+## Dampak pada Spesifisitas
+
+Combinator **tidak menambah nilai spesifisitas**. `ul li` tetap bernilai dua tag, sama seperti `div p`. Yang berubah hanya cakupan elemen yang cocok, bukan kekuatannya.
+
+```css
+.card p      { color: black; }  /* 1 class + 1 tag */
+section > p  { color: gray;  }  /* 2 tag — kalah */
+```
+
+## Contoh Nyata: Daftar Bersarang
+
+Bayangkan menu dengan submenu. `nav li` akan mewarnai **semua** item termasuk submenu; `nav > ul > li` hanya item level pertama. Memilih yang tepat menghindari efek "meluber" ke dalam subtree.
+
+<div class="note">💡 Combinator `+` dan `~` hanya melihat saudara yang berada **setelah** elemen pertama, bukan sebelum. CSS tidak punya "previous sibling" standar (`:has()` baru bisa membantu kasus tertentu).</div>
+
+## Di Dunia Nyata
+
+- Memberi jarak hanya pada item setelah yang pertama: `li + li { margin-top: 8px; }`.
+- Menandai field yang langsung mengikuti label: `label + input`.
+- Menata submenu tanpa menambah class di setiap level: `.menu ul li a`.
+- Membuka gaya khusus saat checkbox dicentang: `input:checked + label`.
+
+## Try it Yourself
+
+Coba ganti `>` menjadi spasi atau ubah warna pada aturan `h3 + p` di bawah.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`ul { list-style: none; padding: 0; font-family: sans-serif; }
+ul > li { padding: 8px; border-bottom: 1px solid #E5E7EB; }
+ul li { color: #374151; }
+ul li ul > li { color: #4F46E5; padding-left: 24px; }
+h3 + p { color: #DC2626; font-weight: bold; }`} />

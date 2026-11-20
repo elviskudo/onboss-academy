@@ -1,0 +1,79 @@
+---
+title: "Pengujian Hipotesis Dasar"
+description: "hipotesis nol, alternatif, p-value, tingkat signifikansi, dan kesimpulan"
+order: 19
+quiz:
+  - q: "Hipotesis nol (H0) biasanya menyatakan…"
+    options: ["Mean tidak ada", "Tidak ada efek/perbedaan", "Ada efek besar", "Data salah"]
+    answer: 1
+    explain: "H0 adalah posisi default yang diuji."
+  - q: "p-value adalah…"
+    options: ["Ukuran efek", "Jumlah sampel", "Peluang hasil sebagaimana diamati bila H0 benar", "Probabilitas H0 benar"]
+    answer: 2
+    explain: "Bukan probabilitas H0 benar."
+  - q: "Jika p &lt; 0.05, keputusan umum adalah…"
+    options: ["Terima H0 selamanya", "Tambah data tanpa batas", "Ubah hipotesis", "Tolak H0"]
+    answer: 3
+    explain: "Hasil signifikan secara statistik pada alpha 0.05."
+  - q: "Alpha 0.05 berarti…"
+    options: ["Error 0.5", "Risiko 5% menolak H0 yang benar", "Peluang benar 95%", "Jumlah data 5%"]
+    answer: 1
+    explain: "Tingkat signifikansi = kesediaan melakukan Type I error."
+  - q: "Type I error adalah…"
+    options: ["Salah hitung mean", "Data hilang", "Menolak H0 padahal benar", "Gagal menolak H0 padahal salah"]
+    answer: 2
+    explain: "Type II = gagal menolak H0 yang sebenarnya salah."
+example:
+  code: |
+    from statistics import mean
+    awal=[10,11,12,11]; baru=[13,14,14,15]
+    print(mean(baru)-mean(awal))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Menyusun Hipotesis
+
+```text
+H0: rata-rata baru = rata-rata lama
+H1: rata-rata baru ≠ rata-rata lama
+```
+
+## Selisih dan Effect Size
+
+```python
+from statistics import mean, stdev
+
+awal = [10, 11, 12, 11]
+baru = [13, 14, 14, 15]
+
+selisih = mean(baru) - mean(awal)
+print("Selisih:", selisih)
+print("Std awal:", stdev(awal), "Std baru:", stdev(baru))
+```
+
+Sebelum bicara signifikansi, lihat dulu besarnya selisih. Dengan sampel sangat besar, selisih 0.01 bisa "signifikan" tetapi tidak berguna secara praktis.
+
+## p-value Secara Intuitif
+
+Bayangkan H0 benar. Seberapa sering kita melihat selisih sebesar ini atau lebih hanya karena kebetulan? Itulah p-value.
+
+## Kesimpulan yang Benar
+
+- `p &lt; alpha` → **tolak H0**, ada bukti perbedaan.
+- `p ≥ alpha` → **gagal menolak H0**, bukan "membuktikan H0 benar".
+
+<div class="note">💡 Signifikan statistik ≠ penting bisnis. Selalu sertakan estimasi effect size dan konteks sebelum mengambil keputusan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from statistics import mean, stdev
+
+awal = [10, 11, 12, 11]
+baru = [13, 14, 14, 15]
+print("Rata awal :", round(mean(awal), 2))
+print("Rata baru :", round(mean(baru), 2))
+print("Selisih   :", round(mean(baru)-mean(awal), 2))
+print("Effect-size sederhana:", round((mean(baru)-mean(awal))/stdev(awal), 2))`} />

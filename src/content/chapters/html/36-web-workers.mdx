@@ -1,0 +1,117 @@
+---
+title: "Web Workers"
+description: "Menjalankan JavaScript di thread terpisah agar antarmuka tetap responsif"
+order: 36
+quiz:
+  - q: "Web Worker berjalan di…"
+    options: ["Thread utama", "Thread terpisah", "Server", "Database"]
+    answer: 1
+    explain: "Worker punya thread sendiri sehingga tidak memblokir UI."
+  - q: "Worker tidak bisa mengakses…"
+    options: ["DOM", "Fetch", "setTimeout", "Message events"]
+    answer: 0
+    explain: "Worker tidak punya akses ke document/window."
+  - q: "Cara membuat worker adalah…"
+    options: ["new Worker('worker.js')", "new Thread()", "createWorker()", "document.worker()"]
+    answer: 0
+    explain: "Worker dibuat dari file JavaScript terpisah."
+  - q: "Komunikasi dengan worker memakai…"
+    options: ["postMessage() dan onmessage", "console.log", "alert", "localStorage"]
+    answer: 0
+    explain: "Pesan dikirim dua arah lewat postMessage."
+  - q: "Worker cocok untuk…"
+    options: ["Animasi CSS", "Komputasi berat", "Mengubah DOM langsung", "Menampilkan gambar"]
+    answer: 1
+    explain: "Hitungan besar/IKU cocok di worker agar UI tidak macet."
+example:
+  code: |
+    // app.js
+    const w = new Worker('hitung.js');
+    w.postMessage(1000000000);
+    w.onmessage = e => console.log('Hasil:', e.data);
+    
+    // hitung.js
+    onmessage = function(e) {
+      let total = 0;
+      for (let i = 0; i &lt; e.data; i++) total += i;
+      postMessage(total);
+    };
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JavaScript di browser berjalan di satu thread. Kalau ada perhitungan berat, seluruh halaman bisa macet. **Web Worker** memecahkan masalah itu dengan thread terpisah.
+
+## Membuat Worker
+
+```js
+const worker = new Worker('hitung.js');
+```
+
+File `hitung.js` berjalan di latar belakang, terpisah dari halaman.
+
+## Berkomunikasi
+
+```js
+// Dari halaman ke worker
+worker.postMessage(1000000);
+
+// Dari worker ke halaman
+worker.onmessage = function(e) {
+  console.log(e.data);
+};
+```
+
+Di dalam worker:
+
+```js
+onmessage = function(e) {
+  const hasil = e.data * 2;
+  postMessage(hasil);
+};
+```
+
+## Batasan Worker
+
+Tidak bisa mengakses:
+- `document` / DOM
+- `window`
+- Variabel dari halaman utama
+
+Bisa mengakses:
+- `fetch`, `XMLHttpRequest`
+- `setTimeout` / `setInterval`
+- `localStorage` (terbatas)
+
+## Menghentikan Worker
+
+```js
+worker.terminate();
+```
+
+<div class="note">💡 Worker paling berguna untuk komputasi numerik, parsing data besar, atau pengolahan gambar — bukan untuk tugas ringan yang selesai dalam milidetik.</div>
+
+## Try it Yourself
+
+Contoh ini memakai Blob URL supaya bisa langsung dicoba dalam satu file.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Web Worker</h1>
+  <button onclick="jalankan()">Hitung di Background</button>
+  <p id="hasil">Menunggu…</p>
+  <script>
+    function jalankan() {
+      const kode = "onmessage = e => { let t = 0; for (let i = 0; i &lt; e.data; i++) t += i; postMessage(t); };";
+      const url = URL.createObjectURL(new Blob([kode], {type: 'text/javascript'}));
+      const w = new Worker(url);
+      w.postMessage(5000000);
+      w.onmessage = e => {
+        document.getElementById('hasil').textContent = 'Hasil: ' + e.data;
+        w.terminate();
+      };
+    }
+  </script>
+</body>
+</html>`} />

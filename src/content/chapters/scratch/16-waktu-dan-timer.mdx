@@ -1,0 +1,87 @@
+---
+title: "Waktu dan Timer"
+description: "Menunda, mengukur durasi, dan membuat hitung mundur"
+order: 16
+quiz:
+  - q: "Blok untuk menunggu adalah…"
+    options: ["tunggu 1 detik", "jeda 1 detik", "henti 1 detik", "tunda 1 detik"]
+    answer: 0
+    explain: "Blok ini tersedia di kategori Kontrol."
+  - q: "Pelapor \"waktu sejak bendera diklik\" berguna untuk…"
+    options: ["Membaca posisi", "Mengukur durasi sejak proyek mulai", "Menampilkan skor", "Mengubah kostum"]
+    answer: 1
+    explain: "Nilainya dalam detik dan terus bertambah."
+  - q: "Untuk membuat hitung mundur 10 detik, langkah yang benar adalah…"
+    options: ["Tunggu 10 detik tanpa variabel", "Ganti kostum 10 kali", "Set variabel ke 10 lalu kurangi 1 setiap detik", "Set variabel ke 0 lalu tambah 1"]
+    answer: 2
+    explain: "Perubahan variabel memberi angka yang bisa ditampilkan."
+  - q: "Blok \"ulangi sampai waktu > 10\" termasuk pola…"
+    options: ["Perulangan tetap", "Pesan broadcast", "Efek suara", "Perulangan berbasis kondisi"]
+    answer: 3
+    explain: "Kondisi dievaluasi tiap iterasi."
+  - q: "Menunggu 0,1 detik dalam animasi berfungsi untuk…"
+    options: ["Mengatur kecepatan pergantian kostum", "Menghapus suara", "Mengubah arah", "Menyimpan daftar"]
+    answer: 0
+    explain: "Jeda kecil menciptakan ilusi gerak halus."
+example:
+  code: |
+    [ketika bendera diklik]
+    [atur [sisa] ke [10]]
+    [ulangi sampai <(sisa) = [0]> [
+       [tunggu 1 detik]
+       [ubah [sisa] sebesar -1]
+    ]]
+    [ucap [Waktu habis!] selama 2]
+---
+
+Waktu mengatur ritme proyek. Scratch menyediakan blok tunggu, pelapor waktu, dan perulangan berbasis kondisi.
+
+## Blok Waktu
+
+```text
+[tunggu 1 detik]
+(waktu sejak bendera diklik)
+[ulangi sampai <waktu > 30> [ ... ]]
+```
+
+## Hitung Mundur
+
+```text
+[atur [sisa] ke [10]]
+[ulangi sampai <(sisa) = [0]> [
+  [tunggu 1 detik]
+  [ubah [sisa] sebesar -1]
+]]
+```
+
+## Timer sebagai Skor
+
+Beberapa game memberi skor berdasarkan kecepatan:
+
+```text
+[atur [waktu-mulai] ke (waktu sejak bendera diklik)]
+// setelah selesai
+[atur [durasi] ke ((waktu sejak bendera diklik) - (waktu-mulai))]
+```
+
+## Jeda Kecil dalam Animasi
+
+```text
+[ulangi 20 [
+  ganti kostum ke [berikutnya]
+  tunggu 0,05 detik
+]]
+```
+
+<div class="note">💡 Jangan mengandalkan `tunggu 1 detik` untuk timing yang sangat presisi—Scratch memperbarui panggung sekitar 30 kali per detik, jadi jeda dibulatkan ke frame terdekat.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`[ketika bendera diklik]
+[atur [detik] ke [5]]
+[ulangi sampai &lt;(detik) &lt; [1]&gt; [
+  [ucap (detik) selama 0,5]
+  [ubah [detik] sebesar -1]
+  [tunggu 0,5 detik]
+]]`}</code></pre>

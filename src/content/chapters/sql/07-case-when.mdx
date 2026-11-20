@@ -122,6 +122,10 @@ Keduanya menangani data kosong tanpa CASE panjang. `NULLIF` mengubah string koso
 
 <div class="note">💡 CASE berhenti di kondisi pertama yang benar. Urutkan batas dari paling ketat ke paling longgar; urutan terbalik menghasilkan kategori salah tanpa error.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="sql" runtime="sql" code={`SELECT nama, gaji, dept,
        CASE
          WHEN gaji >= 11000000 THEN 'Senior'

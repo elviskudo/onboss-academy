@@ -1,0 +1,93 @@
+---
+title: "Sensor Lingkungan Lanjutan"
+description: "Membaca suhu, kelembapan, tekanan, dan kualitas udara"
+order: 15
+quiz:
+  - q: "Sensor DHT22 menghasilkan pembacaan…"
+    options: ["Tekanan dan GPS", "Cahaya dan suara", "Arus dan tegangan", "Suhu dan kelembapan"]
+    answer: 3
+    explain: "DHT11 versi murah dengan rentang dan akurasi lebih terbatas."
+  - q: "Sensor BMP280 diakses lewat…"
+    options: ["I2C atau SPI", "WiFi", "USB serial", "1-Wire"]
+    answer: 0
+    explain: "BMP280 mengukur suhu dan tekanan barometrik."
+  - q: "Pembacaan sensor sering perlu filtering karena…"
+    options: ["Waktu tidak sinkron", "Data mentah mengandung noise", "Sensor selalu salah", "GPIO terlalu cepat"]
+    answer: 1
+    explain: "Rata-rata bergerak atau median membantu hasil lebih stabil."
+  - q: "Kalibrasi sensor bertujuan…"
+    options: ["Mengubah alamat I2C", "Menghapus data lama", "Menyelaraskan pembacaan dengan nilai referensi", "Menambah kecepatan"]
+    answer: 2
+    explain: "Offset dan faktor skala ditentukan dari perbandingan dengan alat ukur andal."
+  - q: "Interval pembacaan terlalu cepat dapat…"
+    options: ["Membuat data lebih akurat", "Menurunkan konsumsi daya", "Mengubah pin jadi output", "Menghasilkan self-heating pada sensor suhu"]
+    answer: 3
+    explain: "DHT misalnya cần jeda sekitar 1–2 detik antar pembacaan."
+example:
+  code: |
+    # Konsep rata-rata bergerak
+    bacaan = [21.2, 21.4, 21.1, 21.5]
+    rata_rata = sum(bacaan) / len(bacaan)
+    
+    # Calibrasi sederhana
+    suhu_final = suhu_mentah + offset
+---
+
+Sensor lingkungan memberi Pi "indra". Agar datanya bisa dipercaya, perhatikan cara membaca, jeda, dan kalibrasi.
+
+## Jenis Sensor
+
+| Sensor | Besaran | Bus |
+|---|---|---|
+| DHT11/DHT22 | Suhu, kelembapan | Single wire |
+| BMP280 | Suhu, tekanan | I2C / SPI |
+| DS18B20 | Suhu | 1-Wire |
+| BH1750 | Intensitas cahaya | I2C |
+| MQ-135 | Kualitas udara | Analog via ADC |
+
+## Contoh DHT22
+
+```python
+import board
+import adafruit_dht
+
+dht = adafruit_dht.DHT22(board.D4)
+try:
+    print(dht.temperature, dht.humidity)
+except RuntimeError:
+    print("Pembacaan gagal, coba lagi")
+```
+
+## Filter Sederhana
+
+```python
+def rata_rata(data):
+    return sum(data) / len(data)
+
+data = []
+data.append(baca_sensor())
+if len(data) > 10:
+    data.pop(0)
+hasil = rata_rata(data)
+```
+
+## Kalibrasi
+
+```text
+referensi = 22.0 °C
+rata-rata sensor = 21.4 °C
+offset = +0.6 °C
+```
+
+Simpan offset dalam file konfigurasi agar tidak hilang saat program diperbarui.
+
+<div class="note">💡 HDMI dan USB 3.0 bisa mengganggu pembacaan sensor suhu di Pi 4. Jauhkan sensor dari sumber panas atau gunakan kabel extended.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Pementaan data sederhana:
+# suhu,kelembapan,waktu
+# 21.4,58,2026-01-12T09:00:00
+# 21.5,57,2026-01-12T09:01:00
+# Gunakan offset kalibrasi sebelum disimpan.`}</code></pre>

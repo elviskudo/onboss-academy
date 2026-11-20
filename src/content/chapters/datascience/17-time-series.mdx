@@ -1,0 +1,86 @@
+---
+title: "Analisis Deret Waktu"
+description: "komponen trend, musiman, pergerakan, moving average, dan indeks"
+order: 17
+quiz:
+  - q: "Deret waktu adalah data yang…"
+    options: ["Selalu berupa teks", "Diurutkan menurut waktu", "Diurutkan menurut abjad", "Tidak punya urutan"]
+    answer: 1
+    explain: "Waktu adalah sumbu utama."
+  - q: "Moving average berguna untuk…"
+    options: ["Menghapus trend", "Membuat data acak", "Menghaluskan fluktuasi", "Menambah musiman"]
+    answer: 2
+    explain: "Rata-rata bergeser mengurangi noise."
+  - q: "Musiman berarti pola berulang…"
+    options: ["Secara acak", "Hanya sekali", "Tanpa pola", "Padainterval tetap"]
+    answer: 3
+    explain: "Misalnya tiap akhir pekan."
+  - q: "Trend menggambarkan…"
+    options: ["Jumlah data", "Arah jangka panjang", "Fluktuasi harian", "Nilai maksimum"]
+    answer: 1
+    explain: "Bisa naik, turun, atau datar."
+  - q: "Indeks 100 pada data waktu biasanya berarti…"
+    options: ["Rata-rata semua", "Jumlah bulan", "Nilai dasar periode awal", "Nilai maksimum"]
+    answer: 2
+    explain: "Perubahan berikutnya dinyatakan relatif terhadap dasar."
+example:
+  code: |
+    data=[10,12,11,13,14,13]
+    ma=[sum(data[i-2:i+1])/3 for i in range(2,len(data))]
+    print([round(x,2) for x in ma])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Komponen Deret Waktu
+
+| Komponen | Arti |
+| --- | --- |
+| Trend | arah jangka panjang |
+| Musiman | pola berulang tetap |
+| Siklus | naik-turun tidak periodik |
+| Noise | fluktuasi acak |
+
+## Moving Average
+
+```python
+def moving_average(data, jendela=3):
+    return [sum(data[i-jendela+1:i+1]) / jendela
+            for i in range(jendela-1, len(data))]
+
+data = [10, 12, 11, 13, 14, 13, 15]
+print([round(x, 2) for x in moving_average(data)])
+```
+
+Jendela lebih besar menghasilkan garis lebih halus, tetapi respons terhadap perubahan baru lebih lambat.
+
+## Indeks
+
+```python
+dasar = data[0]
+indeks = [round(100 * x / dasar, 1) for x in data]
+print(indeks)
+```
+
+Indeks memudahkan perbandingan dua deret dengan skala berbeda.
+
+## Pertanyaan yang Biasa Diajukan
+
+- Bulan apa penjualan selalu naik?
+- Apakah tren 6 bulan terakhir positif?
+- Apakah lonjakan bulan ini di luar pola musiman?
+
+<div class="note">💡 Moving average "terlambat" mendeteksi perubahan. Untuk forecasting yang lebih baik, kombinasikan dengan musiman atau model yang mempertimbangkan tren secara eksplisit.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [10, 12, 11, 13, 14, 13, 15, 16]
+
+def ma(d, w=3):
+    return [round(sum(d[i-w+1:i+1])/w, 2) for i in range(w-1, len(d))]
+
+print("Data :", data)
+print("MA-3 :", ma(data))
+print("Indeks:", [round(100*x/data[0], 1) for x in data])`} />

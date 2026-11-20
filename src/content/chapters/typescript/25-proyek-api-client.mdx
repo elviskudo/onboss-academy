@@ -1,0 +1,202 @@
+---
+title: "Proyek: API Client Bertipe"
+description: "Membangun client API kecil dengan generics, Result, dan validasi"
+order: 25
+quiz:
+  - q: "Generics pada API client berguna untuk…"
+    options: ["Menentukan tipe response tiap endpoint", "Mengubah HTTP method", "Menambah header", "Menghapus error"]
+    answer: 0
+    explain: "Contoh: request<User>('/user') mengembalikan Promise<Hasil<User>>."
+  - q: "Generic type yang dibatasi dengan `extends` akan…"
+    options: ["Membatasi tipe yang diterima", "Menghapus tipe", "Membuat any", "Tidak ada efek"]
+    answer: 0
+    explain: "Misalnya T extends object hanya menerima objek."
+  - q: "Type parameter default ditulis…"
+    options: ["<T = string>", "<T: string>", "<T string>", "<default T>"]
+    answer: 0
+    explain: "Default dipakai kalau pemanggil tidak menyebut tipe."
+  - q: "`keyof typeof rute` menghasilkan…"
+    options: ["Union nama rute", "Nilai rute", "Jumlah rute", "any"]
+    answer: 0
+    explain: "Berguna untuk membatasi argumen nama endpoint."
+  - q: "Manfaat validasi Zod di client adalah…"
+    options: ["Response dicek saat runtime", "Mengganti fetch", "Menghapus async", "Menambah CSS"]
+    answer: 0
+    explain: "Tipe compile-time dan data runtime jadi selaras."
+example:
+  code: |
+    const RUTE = {
+      user: "/api/user",
+      produk: "/api/produk"
+    } as const;
+    
+    type NamaRute = keyof typeof RUTE;
+    
+    async function request<T>(rute: NamaRute): Promise<T> {
+      const res = await fetch(RUTE[rute]);
+      return res.json() as Promise<T>;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek penutup ini merangkai generics, literal type, Result, dan async/await menjadi sebuah API client kecil yang aman dan enak dipakai.
+
+## Definisi Rute
+
+```ts
+const RUTE = {
+  user: "/api/user",
+  produk: "/api/produk",
+  pesanan: "/api/pesanan"
+} as const;
+
+type NamaRute = keyof typeof RUTE;
+// "user" | "produk" | "pesanan"
+```
+
+Dengan `as const`, nilai rute tidak melebar jadi `string`, sehingga `keyof` menghasilkan union yang presisi.
+
+## Tipe Domain & Hasil
+
+```ts
+interface User { id: number; nama: string }
+interface Produk { id: number; nama: string; harga: number }
+
+type PetaData = {
+  user: User;
+  produk: Produk[];
+  pesanan: { id: number; total: number }[];
+};
+
+type Hasil<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+```
+
+## Client Generic
+
+```ts
+async function request<K extends NamaRute>(
+  rute: K
+): Promise<Hasil<PetaData[K]>> {
+  try {
+    const res = await fetch(RUTE[rute]);
+    if (!res.ok) {
+      return { ok: false, error: `HTTP ${res.status}` };
+    }
+    const data = (await res.json()) as PetaData[K];
+    return { ok: true, data };
+  } catch (err) {
+    const pesan = err instanceof Error ? err.message : "Error jaringan";
+    return { ok: false, error: pesan };
+  }
+}
+```
+
+Karena `K` adalah nama rute, TypeScript menyimpulkan tipe hasilnya:
+
+```ts
+const user = await request("user");
+if (user.ok) {
+  console.log(user.data.nama); // data: User
+}
+
+const produk = await request("produk");
+if (produk.ok) {
+  console.log(produk.data[0].harga); // data: Produk[]
+}
+```
+
+Kalau kamu menulis `request("pengguna")` (typo), compiler langsung menolak.
+
+## Menambah Opsi Request
+
+```ts
+interface Opsi {
+  method?: "GET" | "POST";
+  body?: unknown;
+  signal?: AbortSignal;
+}
+
+async function request<K extends NamaRute>(
+  rute: K,
+  opsi: Opsi = {}
+): Promise<Hasil<PetaData[K]>> {
+  const res = await fetch(RUTE[rute], {
+    method: opsi.method ?? "GET",
+    headers: { "Content-Type": "application/json" },
+    body: opsi.body ? JSON.stringify(opsi.body) : undefined,
+    signal: opsi.signal
+  });
+  // ...
+}
+```
+
+## Validasi Runtime
+
+Tambahkan Zod supaya assertion `as PetaData[K]` tidak berbohong:
+
+```ts
+const skema = {
+  user: z.object({ id: z.number(), nama: z.string() }),
+  produk: z.array(z.object({ id: z.number(), nama: z.string(), harga: z.number() }))
+};
+
+const hasil = skema[rute].safeParse(await res.json());
+if (!hasil.success) return { ok: false, error: "Data tidak sesuai skema" };
+return { ok: true, data: hasil.data as PetaData[K] };
+```
+
+## Penggunaan di UI
+
+```ts
+async function tampilkanNama() {
+  const hasil = await request("user");
+  const el = document.querySelector("#nama");
+  if (!el) return;
+  el.textContent = hasil.ok ? hasil.data.nama : `Gagal: ${hasil.error}`;
+}
+```
+
+<div class="note">💡 Pola ini—konstanta `as const`, peta tipe, generic function, dan Result—adalah fondasi banyak SDK modern. Begitu kamu menguasainya, membaca kode library jauh lebih mudah.</div>
+
+## Rangkuman Seri
+
+Dari tipe dasar sampai generics lanjutan, TypeScript pada dasarnya punya satu tujuan: **membuat kesalahan terlihat lebih awal**. Setiap fitur yang kamu pelajari adalah alat untuk menyatakan niat dengan lebih jelas kepada kompiler dan kepada rekan tim.
+
+## Try it Yourself
+
+Tambahkan rute baru ke objek RUTE dan lihat bagaimana tipe langsung mengikuti.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const RUTE = {
+  user: "/api/user",
+  produk: "/api/produk"
+} as const;
+
+type NamaRute = keyof typeof RUTE;
+
+interface User { id: number; nama: string }
+interface Produk { id: number; nama: string }
+
+type PetaData = { user: User; produk: Produk[] };
+type Hasil<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+// Simulasi fetch tanpa jaringan:
+const contoh: PetaData = {
+  user: { id: 1, nama: "Sari" },
+  produk: [{ id: 2, nama: "Kopi" }]
+};
+
+async function request<K extends NamaRute>(rute: K): Promise<Hasil<PetaData[K]>> {
+  return { ok: true, data: contoh[rute] };
+}
+
+(async () => {
+  const user = await request("user");
+  if (user.ok) console.log("User:", user.data.nama);
+  const produk = await request("produk");
+  if (produk.ok) console.log("Produk:", produk.data[0].nama);
+})();`} />

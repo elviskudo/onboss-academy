@@ -1,0 +1,100 @@
+---
+title: "Perbedaan Dialek SQL Populer"
+description: "MySQL, PostgreSQL, SQL Server, dan SQLite: sintaks yang berbeda"
+order: 25
+quiz:
+  - q: "Fungsi konkatenasi di MySQL adalah…"
+    options: ["CONCAT()", "||", "+", "&"]
+    answer: 0
+    explain: "MySQL memakai CONCAT(); || di MySQL berarti OR kecuali mode PIPES_AS_CONCAT."
+  - q: "Perintah untuk membatasi baris di SQL Server adalah…"
+    options: ["LIMIT", "TOP", "ROWNUM", "FETCH"]
+    answer: 1
+    explain: "SQL Server memakai SELECT TOP n ...; standar modern memakai OFFSET FETCH."
+  - q: "Tipe JSON native tersedia di…"
+    options: ["PostgreSQL (jsonb) dan MySQL", "Hanya SQLite", "Hanya SQL Server", "Tidak ada database"]
+    answer: 0
+    explain: "PostgreSQL punya jsonb; MySQL punya tipe JSON."
+  - q: "Auto increment di PostgreSQL biasanya memakai…"
+    options: ["SERIAL / IDENTITY", "AUTO_INCREMENT", "AUTOINCREMENT", "IDENTITY saja di MySQL"]
+    answer: 0
+    explain: "PostgreSQL memakai SERIAL atau GENERATED ... AS IDENTITY."
+  - q: "sqlite3 CLI untuk melihat rencana query adalah…"
+    options: ["DESCRIBE", "EXPLAIN QUERY PLAN", "SHOW EXPLAIN", "PROFILE"]
+    answer: 1
+    explain: "SQLite menyediakan EXPLAIN QUERY PLAN."
+example:
+  code: |
+    -- Contoh portable: Hindari fitur khas vendor bila tidak perlu.
+    SELECT nama, gaji FROM karyawan ORDER BY gaji DESC LIMIT 3;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SQL adalah standar, tetapi setiap database punya dialek dan ekstensi. Menulis query portable berarti memakai fitur inti standar bila memungkinkan dan mengisolasi fitur khas vendor.
+
+## Ringkasan Perbedaan
+
+| Fitur | PostgreSQL | MySQL | SQL Server | SQLite |
+| --- | --- | --- | --- | --- |
+| Limit | `LIMIT n` | `LIMIT n` | `TOP n` | `LIMIT n` |
+| String | `x \|\| y` | `CONCAT(x,y)` | `+` | `\|\|` |
+| Auto id | `SERIAL` / `IDENTITY` | `AUTO_INCREMENT` | `IDENTITY` | `INTEGER PRIMARY KEY` |
+| Tanggal | `CURRENT_DATE` | `CURDATE()` | `GETDATE()` | `date('now')` |
+| UPSERT | `ON CONFLICT` | `ON DUPLICATE KEY` | `MERGE` | `ON CONFLICT` |
+
+Daftar ini ringkas dan tidak mencakup semua versi; selalu cek dokumentasi versi yang dipakai.
+
+## Menulis Query Portable
+
+```sql
+-- Relatif portable
+SELECT dept, COUNT(*) AS jumlah
+FROM karyawan
+WHERE gaji >= 8000000
+GROUP BY dept
+ORDER BY jumlah DESC;
+```
+
+Fitur seperti `LIMIT`, `||`, dan `EXTRACT` sudah luas didukung, tetapi tetap ada pengecualian. Uji query di database target sebelum deploy.
+
+## Fitur Khas yang Berguna
+
+```sql
+-- PostgreSQL: RETURNING membuat DML mengembalikan baris
+INSERT INTO karyawan (nama, gaji) VALUES ('Baru', 9000000) RETURNING id;
+
+-- SQLite/PostgreSQL: UPSERT
+INSERT INTO pengaturan (kunci, nilai) VALUES ('tema', 'gelap')
+ON CONFLICT(kunci) DO UPDATE SET nilai = excluded.nilai;
+```
+
+## Tipe Data
+
+Perbedaan yang sering menggigit: `TEXT` di SQLite bisa menampung angka, `BOOLEAN` di PostgreSQL nyata, MySQL menyimpannya sebagai `TINYINT(1)`. Tanggal dengan timezone sebaiknya memakai `TIMESTAMPTZ` di PostgreSQL.
+
+## Strategi Multi-Database
+
+1. Pusatkan SQL khusus vendor dalam satu lapisan repositori.
+2. Pakai ORM atau query builder bila tim bekerja di banyak engine.
+3. Tulis tes integrasi terhadap database produksi yang sebenarnya.
+4. Hindari nama tabel/kolom yang sama dengan kata kunci SQL.
+
+<div class="note">💡 "SQL standar" tidak menjamin kode berjalan identik di semua mesin. Anggap portability sebagai sifat yang harus diuji, bukan asumsi.</div>
+
+## Di Dunia Nyata
+
+- **Startup**: mulai SQLite, migrasi ke PostgreSQL tanpa mengubah seluruh query.
+- **Enterprise**: SQL Server untuk sistem lama, PostgreSQL untuk layanan baru.
+- **Mobile**: sqlite di perangkat, sinkron ke MySQL di server.
+- **Analitik**: dialect engine tertentu (BigQuery, Snowflake) perlu dipelajari tersendiri.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`-- Query ini bekerja di playground SQLite dan kebanyakan database modern.
+SELECT nama, jabatan, gaji
+FROM karyawan
+WHERE gaji BETWEEN 8000000 AND 11000000
+ORDER BY gaji DESC
+LIMIT 5;`} />

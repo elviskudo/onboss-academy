@@ -1,0 +1,98 @@
+---
+title: "UPDATE dan DELETE yang Aman"
+description: "UPDATE dengan FROM, DELETE dengan join, MERGE, OUTPUT, dan transaksi"
+order: 12
+quiz:
+  - q: "Klausa yang menentukan baris mana yang diubah adalah…"
+    options: ["HAVING", "WHERE", "ORDER BY", "GROUP BY"]
+    answer: 1
+    explain: "Tanpa WHERE, UPDATE kena ke semua baris."
+  - q: "Untuk mengubah nilai berdasarkan tabel lain dipakai…"
+    options: ["CHANGE FROM", "MODIFY WITH", "UPDATE ... FROM", "UPDATE JOIN (tanpa FROM)"]
+    answer: 2
+    explain: "UPDATE t SET ... FROM t JOIN other ...;"
+  - q: "OUTPUT deleted.nama pada DELETE mengembalikan…"
+    options: ["Data sesudah dihapus", "Jumlah baris", "Error", "Data sebelum dihapus"]
+    answer: 3
+    explain: "deleted adalah tabel virtual berisi baris lama."
+  - q: "MERGE berguna untuk…"
+    options: ["Menghapus database", "INSERT/UPDATE/DELETE sekaligus berdasarkan kecocokan", "Menggabungkan kolom", "Membuat indeks"]
+    answer: 1
+    explain: "MERGE menyamakan data sumber dengan tabel target."
+  - q: "Cara paling aman mencoba UPDATE massal adalah…"
+    options: ["Matikan log", "Hapus WHERE", "Jalankan langsung di produksi", "Bungkus dalam transaksi dan cek dulu dengan SELECT"]
+    answer: 3
+    explain: "SELECT dengan filter yang sama → BEGIN TRAN → UPDATE → cek → COMMIT/ROLLBACK."
+example:
+  code: |
+    UPDATE k
+    SET k.gaji = k.gaji * 1.05
+    OUTPUT inserted.id, deleted.gaji, inserted.gaji
+    FROM dbo.karyawan AS k
+    JOIN dbo.divisi AS d ON k.divisi_id = d.id
+    WHERE d.nama = N'Teknik';
+---
+
+## UPDATE
+
+```sql
+UPDATE dbo.karyawan
+SET gaji = gaji * 1.05, diubah = SYSDATETIME()
+WHERE aktif = 1;
+```
+
+Tanpa `WHERE`, semua baris berubah. Kebiasaan baik: tulis `SELECT COUNT(*)` dengan filter yang sama terlebih dahulu.
+
+## UPDATE dari Join
+
+```sql
+UPDATE k
+SET k.gaji = k.gaji * 1.05
+FROM dbo.karyawan AS k
+JOIN dbo.divisi AS d ON k.divisi_id = d.id
+WHERE d.nama = N'Teknik';
+```
+
+Alih-alih subquery berulang, join memberi cara yang jelas untuk menentukan baris target.
+
+## DELETE
+
+```sql
+DELETE FROM dbo.pesanan
+WHERE tanggal < DATEADD(year, -2, SYSDATETIME());
+```
+
+`TRUNCATE TABLE` menghapus semua baris lebih cepat, tetapi tidak bisa memakai `WHERE`, tidak mengaktifkan trigger DELETE, dan mengreset IDENTITY.
+
+## OUTPUT untuk Audit
+
+```sql
+DELETE FROM dbo.siswa
+OUTPUT deleted.id, deleted.nama, deleted.nilai
+WHERE id = 5;
+```
+
+Baris lama bisa langsung disimpan ke tabel audit dengan `OUTPUT ... INTO dbo.audit_siswa`.
+
+## MERGE
+
+```sql
+MERGE dbo.stok AS t
+USING @data AS s ON t.kode = s.kode
+WHEN MATCHED THEN UPDATE SET t.jumlah = s.jumlah
+WHEN NOT MATCHED THEN INSERT (kode, jumlah) VALUES (s.kode, s.jumlah);
+```
+
+`MERGE` ringkas untuk sinkronisasi, tetapi harus diuji dengan saksama: konkurensi dan aturan join yang salah bisa mengubah baris yang tidak diinginkan.
+
+<div class="note">💡 Sebelum UPDATE/DELETE massal, jalankan `BEGIN TRAN;`, perintah tersebut, lalu `SELECT` verifikasi. Kalau hasilnya salah, `ROLLBACK TRAN;` langsung memulihkan keadaan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (id INT, nilai INT);
+INSERT INTO #t VALUES (1, 80), (2, 90);
+UPDATE #t SET nilai = nilai + 5 OUTPUT inserted.id, inserted.nilai WHERE id = 1;
+SELECT * FROM #t;
+DROP TABLE #t;`}</code></pre>

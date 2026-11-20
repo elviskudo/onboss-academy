@@ -1,0 +1,151 @@
+---
+title: "Regular Expression PCRE PHP"
+description: "Pola regex dengan preg_match, preg_replace, dan preg_split"
+order: 20
+quiz:
+  - q: "Fungsi PHP untuk mencocokkan regex adalah…"
+    options: ["ereg()", "preg_match()", "match()", "regex()"]
+    answer: 1
+    explain: "Prefiks preg- berasal dari PCRE."
+  - q: "`preg_match('/\\d+/', 'abc123', $m)` akan mengisi $m dengan…"
+    options: ["['123']", "['abc']", "true", "[]"]
+    answer: 0
+    explain: "Argumen ketiga menerima hasil kecocokan."
+  - q: "Flag `i` pada delimiter regex berarti…"
+    options: ["Global", "Case-insensitive", "Multiline", "Dot all"]
+    answer: 1
+    explain: "Misalnya /halo/i cocok dengan HALO."
+  - q: "`preg_replace('/\\d/', 'X', 'a1b2')` menghasilkan…"
+    options: ["a1b2", "aXbX", "XX", "error"]
+    answer: 1
+    explain: "Semua digit diganti X."
+  - q: "`preg_quote()` berguna untuk…"
+    options: ["Meng-escape karakter regex dalam string", "Menghapus regex", "Membuat delimiter", "Mengubah huruf"]
+    answer: 0
+    explain: "Penting kalau pola berasal dari input pengguna."
+example:
+  code: |
+    <?php
+    if (preg_match('/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/', $email)) {
+        echo "Email valid";
+    }
+    echo preg_replace('/\s+/', ' ', "  halo   dunia ");
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP memakai mesin regex **PCRE** (Perl Compatible Regular Expressions). Fungsi-fungsinya diawali `preg_`.
+
+## Fungsi Utama
+
+| Fungsi | Fungsi |
+|--------|--------|
+| `preg_match()` | Cari kecocokan pertama |
+| `preg_match_all()` | Semua kecocokan |
+| `preg_replace()` | Ganti teks |
+| `preg_split()` | Pecah string |
+| `preg_quote()` | Escape karakter khusus |
+| `preg_last_error()` | Error regex terakhir |
+
+## Delimiter
+
+```php
+<?php
+preg_match('/halo/i', 'Halo Dunia'); // slash
+preg_match('#https?://#', $url);     // # lebih nyaman untuk URL
+preg_match('~\d+~', 'abc123');      // tilde juga valid
+```
+
+Delimiter bisa karakter non-alphanumerik apa pun. Pilih yang tidak banyak muncul dalam pola agar tidak perlu escape.
+
+## Contoh Pencarian
+
+```php
+<?php
+$teks = "Produk: Kopi (12), Teh (8)";
+
+if (preg_match('/(\w+)\s*\((\d+)\)/', $teks, $m)) {
+    echo $m[1]; // Kopi
+    echo $m[2]; // 12
+}
+
+preg_match_all('/\d+/', $teks, $semua);
+print_r($semua[0]); // ["12", "8"]
+```
+
+## Regex Dasar
+
+| Pola | Arti |
+|------|------|
+| `\d` | Digit |
+| `\w` | Huruf, angka, underscore |
+| `\s` | Spasi |
+| `.` | Karakter apa pun kecuali newline |
+| `^` / `$` | Awal / akhir string |
+| `+` `*` `?` | Quantifier |
+| `[abc]` | Salah satu dari a, b, c |
+| `(...)` | Grup capture |
+| `\b` | Batas kata |
+
+## Validasi Input
+
+```php
+<?php
+$email = "sari@example.com";
+$polas = [
+    'email' => '/^[^\s@]+@[^\s@]+\.[^\s@]+$/',
+    'telepon' => '/^(\+62|0)8[0-9]{8,11}$/',
+    'kode' => '/^[A-Z]{2}-\d{4}$/'
+];
+
+foreach ($polas as $nama => $pola) {
+    printf("%s: %s\n", $nama, preg_match($pola, $email) ? 'valid' : 'tidak valid');
+}
+```
+
+## preg_replace dengan Callback
+
+```php
+<?php
+$teks = "harga 10000 dan 20000";
+$hasil = preg_replace_callback('/\d+/', function ($m) {
+    return number_format((int) $m[0], 0, ',', '.');
+}, $teks);
+// harga 10.000 dan 20.000
+```
+
+## Modifiers Umum
+
+| Modifier | Arti |
+|----------|------|
+| `i` | Case-insensitive |
+| `m` | `^`/`$` per baris |
+| `s` | `.` termasuk newline |
+| `u` | Mode UTF-8 |
+
+Untuk teks Indonesia dengan karakter seperti `é`, selalu pakai modifier `u`.
+
+<div class="note">💡 Regex bukan parser HTML. Gunakan `DOMDocument` atau library HTML parser untuk memproses markup.</div>
+
+## Di Dunia Nyata
+
+- Membersihkan slug: `preg_replace('/[^a-z0-9]+/', '-', strtolower($judul))`.
+- Validasi kode pos dan nomor telepon.
+- Router framework memakai regex untuk mencocokkan pola URL.
+
+## Try it Yourself
+
+Ubah nilai email atau pola regex pada contoh di atas.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$email = "sari@example.com";
+$pola = '/^[^\s@]+@[^\s@]+\.[^\s@]+$/';
+echo "Email valid? " . (preg_match($pola, $email) ? 'ya' : 'tidak') . PHP_EOL;
+
+$teks = "  harga   10000  ";
+echo "Bersih: '" . preg_replace('/\s+/', ' ', trim($teks)) . "'" . PHP_EOL;
+preg_match('/(\d+)/', $teks, $m);
+echo "Angka: " . ($m[1] ?? 'tidak ada') . PHP_EOL;
+
+$slug = "Belajar PHP & Web";
+echo "Slug: " . trim(preg_replace('/[^a-z0-9]+/', '-', strtolower($slug)), '-') . PHP_EOL;`} />

@@ -1,0 +1,129 @@
+---
+title: "Arsitektur & Build Proyek Java"
+description: "Maven/Gradle, struktur package, modularisasi, dan praktik proyek produksi"
+order: 27
+quiz:
+  - q: "File konfigurasi Maven adalah…"
+    options: ["pom.xml", "build.gradle", "package.json", "Makefile"]
+    answer: 0
+    explain: "Maven memakai Project Object Model (pom.xml)."
+  - q: "Gradle memakai file build…"
+    options: ["pom.xml", "build.gradle / build.gradle.kts", "gradle.txt", "config.xml"]
+    answer: 1
+    explain: "Gradle memakai DSL Groovy atau Kotlin."
+  - q: "Struktur standar source Maven adalah…"
+    options: ["src/main/java", "app/", "source/", "lib/src"]
+    answer: 0
+    explain: "Test ada di src/test/java."
+  - q: "JPMS (Java Platform Module System) diperkenalkan di…"
+    options: ["Java 6", "Java 8", "Java 9", "Java 17"]
+    answer: 2
+    explain: "Modul didefinisikan lewat module-info.java sejak Java 9."
+  - q: "Package naming yang umum dipakai adalah…"
+    options: ["com.perusahaan.proyek", "Proyek Utama", "src/app", "MAIN"]
+    answer: 0
+    explain: "Domain terbalik menghindari tabrakan nama global."
+example:
+  code: |
+    // src/main/java/com/contoh/belajar/App.java
+    package com.contoh.belajar;
+    
+    public class App {
+      public static void main(String[] args) {
+        System.out.println("Proyek siap di-build!");
+      }
+    }
+    
+    /* pom.xml (ringkas):
+    <project>
+      <modelVersion>4.0.0</modelVersion>
+      <groupId>com.contoh</groupId>
+      <artifactId>belajar</artifactId>
+      <version>1.0.0</version>
+    </project>
+    */
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Menulis class itu satu hal; mengelola proyek yang bisa di-build, di-test, dan di-deploy adalah hal lain. Java punya ekosistem build tooling yang matang.
+
+## Struktur Standar
+
+```
+proyek/
+├── pom.xml                       (Maven)
+├── src/
+│   ├── main/
+│   │   ├── java/com/contoh/app/  ← kode produksi
+│   │   └── resources/            ← konfigurasi, properties
+│   └── test/
+│       ├── java/                 ← JUnit test
+│       └── resources/
+└── target/                       ← hasil build (jangan di-commit)
+```
+
+## Maven vs Gradle
+
+| Aspek | Maven | Gradle |
+|---|---|---|
+| File | `pom.xml` (XML) | `build.gradle` (Groovy/Kotlin) |
+| Konvensi | kuat | fleksibel |
+| Performa | lebih lambat | inkremental & cache |
+| Cocok untuk | proyek standar enterprise | proyek besar/Android |
+
+## Perintah Umum
+
+```bash
+mvn compile          # kompilasi
+mvn test             # jalankan test
+mvn package          # hasilkan .jar
+mvn spring-boot:run  # jalankan aplikasi Spring
+
+gradle build
+gradle test
+gradle run
+```
+
+## Module (JPMS)
+
+```java
+// module-info.java
+module com.contoh.app {
+    requires java.sql;
+    exports com.contoh.app.api;
+}
+```
+
+Modul membantu menyembunyikan paket internal dan mempercepat startup.
+
+## Praktik Sehat
+
+1. Satu class = satu tanggung jawab.
+2. Pakai dependency injection, bukan `new` di mana-mana.
+3. Simpan konfigurasi di `application.properties`, bukan hardcode.
+4. Pisahkan layer: controller → service → repository.
+5. Tambahkan CI yang menjalankan `mvn test` setiap push.
+
+<div class="note">💡 Untuk proyek baru, **Gradle with Kotlin DSL** atau **Maven** keduanya pilihan aman. Ikuti konvensi tim — konsistensi lebih penting daripada preferensi pribadi.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`// src/main/java/com/contoh/belajar/App.java
+package com.contoh.belajar;
+
+public class App {
+  public static void main(String[] args) {
+    System.out.println("Proyek siap di-build!");
+  }
+}
+
+/* pom.xml (ringkas):
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.contoh</groupId>
+  <artifactId>belajar</artifactId>
+  <version>1.0.0</version>
+</project>
+*/`} />

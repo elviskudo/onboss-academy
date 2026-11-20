@@ -1,0 +1,113 @@
+---
+"title": "Kinerja dan Cache"
+"description": "Mengoptimalkan aplikasi Rails lewat caching, warming, dan query monitoring"
+"order": 26
+"quiz":
+- "q": "Jenis cache yang menyimpan hasil potongan view adalah…"
+  "options":
+  - "Query cache"
+  - "Fragment cache"
+  - "HTTP cache"
+  - "Session cache"
+  "answer": 1
+  "explain": "cache do ... end menyimpan potongan template."
+- "q": "Metode Active Support untuk membungkus hasil komputasi mahal adalah…"
+  "options":
+  - "Rails.cache.getset"
+  - "cache_result"
+  - "Rails.cache.fetch"
+  - "memoize"
+  "answer": 2
+  "explain": "fetch mengambil dari cache atau menjalankan blok bila belum ada."
+- "q": "Low-level caching berbeda dari fragment caching karena…"
+  "options":
+  - "Hanya untuk HTML"
+  - "Hanya untuk database"
+  - "Tidak bisa di production"
+  - "Bekerja di level objek/hasil method"
+  "answer": 3
+  "explain": "Low-level cache menyimpan data langsung, bukan potongan template."
+- "q": "FungsiRussian doll caching adalah…"
+  "options":
+  - "Cache bertingkat yang saling menempel"
+  - "Cache hanya di browser"
+  - "Cache gambar saja"
+  - "Menghapus cache otomatis"
+  "answer": 0
+  "explain": "Cache dalam cache: child di-reuse saat parent berubah."
+- "q": "Alat untuk menemukan N+1 query di development adalah…"
+  "options":
+  - "RSpec"
+  - "Bullet gem"
+  - "Rubocop"
+  - "Brakeman"
+  "answer": 1
+  "explain": "Bullet memberi peringatan saat query berulang terdeteksi."
+"example":
+  "code": "# low-level cache\ndef ringkasan(user)\n  Rails.cache.fetch([\"ringkasan\", user.id], expires_in: 1.hour) do\n    user.articles.sum(:views)\n  end\nend\n\n# fragment cache di view\n&lt;% cache @article do %>\n  &lt;%= render \"artikel/kartu\", article: @article %>\n&lt;% end %>\n"
+---
+
+
+## Tiga Level Cache
+
+```ruby
+# low-level cache
+def ringkasan(user)
+  Rails.cache.fetch(["ringkasan", user.id], expires_in: 1.hour) do
+    user.articles.sum(:views)
+  end
+end
+
+# fragment cache di view
+<% cache @article do %>
+  <%= render "artikel/kartu", article: @article %>
+<% end %>
+```
+
+| Level | Contoh | Cocok untuk |
+|---|---|---|
+| Query cache | aktif otomatis per request | query identik berulang dalam satu request |
+| Low-level | `Rails.cache.fetch` | hasil komputasi atau aggregate |
+| Fragment | `cache @article` | potongan HTML yang mahal dirender |
+
+## Low-level Cache
+
+```ruby
+Rails.cache.fetch("statistik", expires_in: 10.minutes) do
+  Article.group(:status).count
+end
+```
+
+Blok hanya dijalankan saat data belum ada atau sudah kedaluwarsa. Kunci cache sebaiknya mencakup semua input yang memengaruhi hasil.
+
+## Fragment dan Russian Doll
+
+```erb
+<% cache @article do %>
+  <h2><%= @article.title %></h2>
+  <% cache @article.author do %>
+    <%= @article.author.nama %>
+  <% end %>
+<% end %>
+```
+
+Saat artikel berubah, cache artikel diperbarui tetapi cache penulis tetap dipakai. Teknik bertingkat ini disebut *Russian doll caching*.
+
+## Cache Store
+
+| Store | Kelebihan | Kekurangan |
+|---|---|---|
+| Memory | cepat | hilang saat restart, per proses |
+| File | sederhana | lambat di banyak file |
+| Redis | cepat, bersama | butuh servis tambahan |
+| Memcached | cepat, ringan | tidak persisten |
+
+## Mengukur Dulu
+
+```bash
+bundle exec ruby -r bullet -e 'puts "Profil dulu sebelum mengoptimalkan"'
+```
+
+Pasang gem `bullet` di development untuk mendeteksi N+1 dan unused eager loading. Optimasi tanpa pengukuran sering membuang waktu pada bagian yang bukan bottleneck.
+
+<div class="note">💡 Invalidate cache dengan kunci yang mencakup `updated_at`, misalnya `cache [@article, "kartu"]`. Rails otomatis menambahkan `updated_at` ke cache key objek Active Record.</div>

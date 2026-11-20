@@ -1,0 +1,158 @@
+---
+"title": "Collection: List, Dictionary, dan Queue"
+"description": "Kumpulan data dinamis di luar array: List, Dictionary, Set, Stack, dan Queue"
+"order": 14
+"quiz":
+- "q": "Untuk menambah elemen ke List, gunakan…"
+  "options":
+  - "Add()"
+  - "Push()"
+  - "InsertLast()"
+  - "Append()"
+  "answer": 0
+  "explain": "List<T>.Add menambah elemen di akhir."
+- "q": "Dictionary menyimpan data pasangan…"
+  "options":
+  - "index dan nilai"
+  - "key dan value"
+  - "baris dan kolom"
+  - "node dan pointer"
+  "answer": 1
+  "explain": "Dictionary<TKey,TValue> memetakan kunci unik ke sebuah nilai."
+- "q": "HashSet berguna jika kamu ingin…"
+  "options":
+  - "elemen berurutan"
+  - "elemen unik tanpa duplikat"
+  - "data FIFO"
+  - "data LIFO"
+  "answer": 1
+  "explain": "HashSet otomatis membuang nilai yang sama."
+- "q": "Struktur Queue mengikuti prinsip…"
+  "options":
+  - "LIFO"
+  - "FIFO"
+  - "Random"
+  - "Sorted"
+  "answer": 1
+  "explain": "Queue: elemen pertama masuk adalah yang pertama keluar."
+- "q": "Untuk mengambil nilai Dictionary berdasarkan kunci yang mungkin tidak ada, gunakan…"
+  "options":
+  - "dict[k] saja"
+  - "TryGetValue"
+  - "GetValueOrDefault() saja"
+  - "Find()"
+  "answer": 1
+  "explain": "TryGetValue menghindari KeyNotFoundException."
+"example":
+  "code": "using System;\nusing System.Collections.Generic;\nclass Program\n{\n    static void Main()\n    {\n        var daftar = new List<string> { \"Apel\", \"Jeruk\" };\n        daftar.Add(\"Mangga\");\n        var nilai = new Dictionary<string, int> { [\"Rani\"] = 90 };\n        Console.WriteLine(daftar.Count);\n        Console.WriteLine(nilai[\"Rani\"]);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Array ukurannya tetap. Saat jumlah data berubah-ubah, C# menyediakan collection dari namespace `System.Collections.Generic` yang lebih fleksibel dan tetap bertipe aman.
+
+## List&lt;T&gt;
+
+```csharp
+using System.Collections.Generic;
+
+var belanja = new List<string> { "Roti", "Susu" };
+belanja.Add("Telur");           // tambah di akhir
+belanja.Insert(0, "Mentega");   // sisip di posisi tertentu
+belanja.Remove("Susu");         // hapus nilai pertama yang cocok
+Console.WriteLine(belanja.Count);
+Console.WriteLine(belanja[0]);
+```
+
+`List<T>` bisa tumbuh dan menyusut. Akses berdasarkan indeks tetap `O(1)`, tapi menyisip di tengah perlu menggeser elemen.
+
+## Dictionary&lt;TKey, TValue&gt;
+
+```csharp
+var harga = new Dictionary<string, int>
+{
+    ["Roti"] = 15000,
+    ["Susu"] = 12000
+};
+
+if (harga.TryGetValue("Roti", out int h))
+    Console.WriteLine(h);
+else
+    Console.WriteLine("Tidak ditemukan");
+```
+
+Kunci harus unik. Akses `harga["Kunci"]` akan melempar exception bila kuncinya belum ada.
+
+## HashSet&lt;T&gt;
+
+```csharp
+var unik = new HashSet<int> { 1, 2, 2, 3 };
+Console.WriteLine(unik.Count); // 3
+```
+
+Cocok untuk menghapus duplikat dan mengecek keanggotaan dengan cepat.
+
+## Stack & Queue
+
+| Collection | Prinsip | Method kunci |
+|---|---|---|
+| `Stack<T>` | LIFO (terakhir masuk, pertama keluar) | `Push`, `Pop`, `Peek` |
+| `Queue<T>` | FIFO (pertama masuk, pertama keluar) | `Enqueue`, `Dequeue`, `Peek` |
+
+```csharp
+var antrean = new Queue<string>();
+antrean.Enqueue("A");
+antrean.Enqueue("B");
+Console.WriteLine(antrean.Dequeue()); // A
+```
+
+## LINQ Singkat
+
+Dengan `using System.Linq`, collection bisa difilter dan diubah dengan gaya deklaratif:
+
+```csharp
+var angka = new List<int> { 1, 2, 3, 4, 5 };
+var genap = angka.Where(x => x % 2 == 0).ToList();
+int jumlah = angka.Sum();
+```
+
+<div class="note">💡 Pakai <code>var</code> saat tipe sudah jelas dari sisi kanan, misal <code>var daftar = new List&lt;int&gt;()</code>. Kode jadi lebih pendek tanpa kehilangan keamanan tipe.</div>
+
+## Try it Yourself
+
+Tambahkan item baru ke List atau ubah kunci Dictionary untuk bereksperimen.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Program
+{
+    static void Main()
+    {
+        var belanja = new List<string> { "Roti", "Susu" };
+        belanja.Add("Telur");
+        belanja.Insert(0, "Mentega");
+        belanja.Remove("Susu");
+        Console.WriteLine("List: " + string.Join(", ", belanja));
+
+        var harga = new Dictionary<string, int>
+        {
+            ["Roti"] = 15000,
+            ["Telur"] = 28000
+        };
+        Console.WriteLine(harga.TryGetValue("Roti", out int h) ? "Roti: " + h : "tidak ada");
+        Console.WriteLine(harga.TryGetValue("Susu", out int s) ? "Susu: " + s : "Susu tidak ada");
+
+        var unik = new HashSet<int> { 1, 2, 2, 3 };
+        Console.WriteLine("Unik: " + string.Join(", ", unik));
+
+        var antrean = new Queue<string>();
+        antrean.Enqueue("A");
+        antrean.Enqueue("B");
+        Console.WriteLine("Keluar: " + antrean.Dequeue());
+
+        var angka = new List<int> { 1, 2, 3, 4, 5 };
+        Console.WriteLine("Genap: " + string.Join(", ", angka.Where(x => x % 2 == 0)));
+    }
+}`} />

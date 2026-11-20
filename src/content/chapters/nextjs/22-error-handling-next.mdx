@@ -1,0 +1,117 @@
+---
+title: "Error Handling"
+description: "error.tsx, not-found, try/catch di Server Action, dan error response API"
+order: 22
+quiz:
+  - q: "File error.tsx harus menjadi…"
+    options: ["Route Handler", "Middleware", "Client Component", "Server Component"]
+    answer: 2
+    explain: "Diawali 'use client' agar bisa menampilkan UI interaktif."
+  - q: "error.tsx menerima props…"
+    options: ["request", "error dan reset", "params saja", "children dan modal"]
+    answer: 1
+    explain: "reset() mencoba merender ulang segmen."
+  - q: "not-found.tsx tampil saat…"
+    options: ["Terjadi error JS", "Data sedang dimuat", "Form gagal", "notFound() dipanggil atau rute tidak ada"]
+    answer: 3
+    explain: "200/404 ditentukan oleh Next.js."
+  - q: "Error di Server Action sebaiknya…"
+    options: ["Dihapus", "Ditangani dan dikembalikan sebagai pesan ke form", "Dibiarkan crash", "Ditulis ke console saja"]
+    answer: 1
+    explain: "Gunakan state untuk menampilkan pesan."
+  - q: "Route Handler yang gagal bisa mengembalikan…"
+    options: ["NextResponse.json({ error }, { status: 400 })", "throw console.log", "redirect()", "render()"]
+    answer: 0
+    explain: "Status HTTP yang tepat membantu klien."
+example:
+  code: |
+    'use client';
+    export default function Error({ error, reset }) {
+      return <div><p>{error.message}</p><button onClick={reset}>Coba lagi</button></div>;
+    }
+---
+
+Error yang tidak tertangani membuat halaman kosong. Next.js menyediakan boundary di level segmen.
+
+## error.tsx
+
+```tsx
+"use client";
+
+import { useEffect } from "react";
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error;
+  reset: () => void;
+}) {
+  useEffect(() => console.error(error), [error]);
+
+  return (
+    <div className="error">
+      <h2>Ada yang salah.</h2>
+      <p>{error.message}</p>
+      <button onClick={reset}>Coba lagi</button>
+    </div>
+  );
+}
+```
+
+Taruh di `app/produk/error.tsx` untuk melindungi segmen tersebut saja.
+
+## not-found.tsx
+
+```tsx
+// app/not-found.tsx
+export default function NotFound() {
+  return (
+    <div>
+      <h1>404 — Halaman tidak ditemukan</h1>
+      <a href="/">Kembali ke beranda</a>
+    </div>
+  );
+}
+```
+
+Panggil `notFound()` bila data tidak ada:
+
+```ts
+const produk = await ambilProduk(id);
+if (!produk) notFound();
+```
+
+## Error di Server Action
+
+```ts
+"use server";
+
+export async function simpan(prevState, formData) {
+  try {
+    await db.simpan(formData);
+    return { pesan: "Berhasil" };
+  } catch (e) {
+    return { pesan: "Gagal menyimpan, coba lagi." };
+  }
+}
+```
+
+## Route Handler
+
+```ts
+if (!valid) {
+  return NextResponse.json({ error: "Data tidak valid" }, { status: 400 });
+}
+```
+
+<div class="note">💡 Jangan menampilkan pesan error teknis mentah ke pengguna. Catat detailnya di server/log, tampilkan pesan yang ramah dan bisa ditindaklanjuti.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`'use client';
+export default function Error({ error, reset }) {
+  return <div><p>{error.message}</p><button onClick={reset}>Coba lagi</button></div>;
+}`}</code></pre>

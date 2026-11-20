@@ -1,0 +1,89 @@
+---
+title: "Menyisipkan Dokumen"
+description: "insertOne, insertMany, Ordered vs unordered, dan hasil operasi"
+order: 13
+quiz:
+  - q: "Metode untuk menyisipkan satu dokumen adalah…"
+    options: ["db.koleksi.push()", "db.koleksi.insert()", "db.koleksi.insertOne()", "db.koleksi.add()"]
+    answer: 2
+    explain: "insertOne() menerima tepat satu dokumen."
+  - q: "Field _id akan…"
+    options: ["Selalu berupa angka", "Kosong", "Ditolak jika tidak diberikan", "Dibuat otomatis sebagai ObjectId"]
+    answer: 3
+    explain: "MongoDB menambahkan _id berupa ObjectId bila tidak disediakan."
+  - q: "Hasil insertMany memuat…"
+    options: ["Daftar insertedId", "Seluruh dokumen", "Waktu server", "Hanya pesan sukses"]
+    answer: 0
+    explain: "insertMany mengembalikan acknowledged dan insertedIds/insertedCount."
+  - q: "Opsi ordered: false berarti…"
+    options: ["Menghapus duplikat", "Berhenti di error pertama", "Lanjut menyisipkan dokumen lain walau ada error", "Mengurutkan hasil"]
+    answer: 2
+    explain: "Dengan ordered false, kegagalan satu dokumen tidak menghentikan sisanya."
+  - q: "Menyisipkan dua dokumen sekaligus memakai…"
+    options: ["addMany([...])", "push([...])", "insertOne([...])", "insertMany([...])"]
+    answer: 3
+    explain: "insertMany menerima array dokumen."
+example:
+  code: |
+    db.siswa.insertOne({nama: "Ana", nilai: 88, kelas: "A"})
+    db.siswa.insertMany([
+      {nama: "Budi", nilai: 92, kelas: "B"},
+      {nama: "Rani", nilai: 79, kelas: "A"}
+    ], {ordered: false})
+---
+
+## insertOne
+
+```javascript
+const hasil = db.siswa.insertOne({
+  nama: "Ana",
+  nilai: 88,
+  kelas: "A"
+})
+print(hasil.insertedId)
+```
+
+`insertedId` berisi ObjectId yang dihasilkan server. Kamu bisa menyimpan nilai ini untuk referensi di aplikasi.
+
+## insertMany
+
+```javascript
+db.siswa.insertMany([
+  { nama: "Budi", nilai: 92, kelas: "B" },
+  { nama: "Rani", nilai: 79, kelas: "A" }
+])
+```
+
+Operasi massal jauh lebih cepat daripada memanggil `insertOne` berulang kali karena jaringan hanya dipakai sekali.
+
+## Urutan dan Kegagalan
+
+```javascript
+db.siswa.insertMany([
+  { _id: 1, nama: "Satu" },
+  { _id: 1, nama: "Duplikat" },
+  { _id: 3, nama: "Tiga" }
+], { ordered: false })
+```
+
+Secara bawaan `ordered: true`: begitu dokumen kedua gagal karena `_id` duplikat, sisanya tidak diproses. Dengan `ordered: false`, dokumen ketiga tetap masuk.
+
+## _id Buatan Sendiri
+
+```javascript
+db.produk.insertOne({ _id: "KB-01", nama: "Keyboard", harga: 350000 })
+```
+
+Boleh memakai nilai sendiri asal unik dalam koleksi. Ini berguna untuk kode produk yang memang stabil, tetapi hati-hati: `_id` tidak bisa diubah setelah disimpan.
+
+<div class="note">💡 `insertOne` bersifat atomik untuk satu dokumen. Kalau kamu butuh banyak dokumen masuk semuanya atau tidak sama sekali, gunakan transaksi MongoDB (multi-document transaction).</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_insert
+db.siswa.insertOne({nama: "Ana", nilai: 88})
+const hasil = db.siswa.insertMany([{nama: "Budi", nilai: 92}, {nama: "Rani", nilai: 79}])
+print("Jumlah masuk:", hasil.insertedCount)
+db.siswa.find({}, {_id: 0})`}</code></pre>

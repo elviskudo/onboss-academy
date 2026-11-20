@@ -137,6 +137,10 @@ Karena string immutable, `s += "x"` di dalam loop 10.000 iterasi membuat 10.000 
 
 <div class="note">💡 String bersifat immutable: <code>teks.Trim()</code> tidak menghapus spasi dari variabel asli, melainkan menghasilkan salinan baru. Selalu pakai hasil kembalian method-nya — dan beralih ke <code>StringBuilder</code> begitu penggabungan terjadi di dalam loop.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
 using System.Text;
 
@@ -159,7 +163,7 @@ class Program
         Console.WriteLine(string.Join(" - ", kata));
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i &lt; 3; i++)
         {
             sb.Append("baris ").Append(i).AppendLine();
         }

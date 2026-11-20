@@ -1,0 +1,99 @@
+---
+title: "YouTube Embed"
+description: "Menanamkan video YouTube dengan iframe dan parameter URL"
+order: 28
+quiz:
+  - q: "Cara menanam video YouTube adalah dengan…"
+    options: ["<video src='youtube'>", "<iframe src='...'>", "<img>", "<audio>"]
+    answer: 1
+    explain: "YouTube menyediakan URL embed yang dipasang di iframe."
+  - q: "Parameter YouTube yang memulai video di detik tertentu adalah…"
+    options: ["?t=", "?start=", "?time=", "?seek="]
+    answer: 0
+    explain: "Contoh: ?t=30 mulai dari detik ke-30."
+  - q: "Atribut allowfullscreen pada iframe berfungsi…"
+    options: ["Mengunci layar", "Mengizinkan video masuk mode layar penuh", "Mengubah resolusi", "Menonaktifkan suara"]
+    answer: 1
+    explain: "Tanpa ini tombol fullscreen mungkin tidak muncul."
+  - q: "URL embed YouTube biasanya berbentuk…"
+    options: ["youtube.com/embed/ID", "youtube.com/video/ID", "youtu.be/watch?ID", "youtube.com/play/ID"]
+    answer: 0
+    explain: "Format resminya https://www.youtube.com/embed/VIDEO_ID."
+  - q: "Mendownload video YouTube lalu memutarnya dengan <video> adalah…"
+    options: ["Cara yang disarankan", "Melanggar ketentuan layanan", "Lebih cepat", "Wajib"]
+    answer: 1
+    explain: "Gunakan embed resmi agar tetap mengikuti ketentuan YouTube."
+example:
+  code: |
+    <iframe width="560" height="315"
+      src="https://www.youtube.com/embed/dQw4w9WgXcQ?t=10"
+      title="Video YouTube"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+YouTube menyediakan URL khusus supaya videonya bisa ditanam di situs lain tanpa mengunduh file.
+
+## Mendapatkan URL Embed
+
+1. Buka video YouTube
+2. Klik **Share** → **Embed**
+3. Salin kode `<iframe>` yang muncul
+
+Atau susun sendiri dengan pola:
+
+```
+https://www.youtube.com/embed/VIDEO_ID
+```
+
+## Parameter yang Berguna
+
+- `?t=30` — mulai detik ke-30
+- `?autoplay=1` — putar otomatis (sering dibatasi browser)
+- `?controls=0` — sembunyikan kontrol
+- `?rel=0` — batasi video rekomendasi
+
+Gabungkan dengan `&` kalau lebih dari satu parameter.
+
+## Atribut iframe
+
+```html
+<iframe src="..."
+        title="Judul video"
+        allowfullscreen
+        allow="accelerometer; autoplay; encrypted-media; picture-in-picture">
+</iframe>
+```
+
+`title` tetap penting untuk aksesibilitas meski video sudah punya judul.
+
+## Responsif
+
+Bungkus iframe dengan container dan pakai CSS:
+
+```css
+.wrapper { position: relative; padding-bottom: 56.25%; }
+.wrapper iframe { position: absolute; width: 100%; height: 100%; }
+```
+
+<div class="note">💡 Rasio 16:9 menghasilkan padding-bottom 56,25% — trik klasik membuat video responsif.</div>
+
+## Try it Yourself
+
+Ubah nilai `t=` untuk memulai video dari detik lain.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>YouTube Embed</h1>
+  <iframe width="400" height="225"
+    src="https://www.youtube.com/embed/aqz-KE-bpKQ?t=5"
+    title="Contoh video YouTube"
+    allowfullscreen>
+  </iframe>
+</body>
+</html>`} />

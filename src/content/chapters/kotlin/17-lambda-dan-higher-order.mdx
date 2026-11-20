@@ -1,0 +1,121 @@
+---
+"title": "Lambda dan Higher-Order Function"
+"description": "Menulis fungsi sebagai nilai, lambda, it, dan fungsi seperti map/filter"
+"order": 17
+"quiz":
+- "q": "Lambda ditulis dengan…"
+  "options":
+  - "( ... )"
+  - "{ ... }"
+  - "function {}"
+  - "=> {}"
+  "answer": 1
+  "explain": "Lambda Kotlin berada di dalam kurung kurawal."
+- "q": "Nama otomatis parameter lambda tunggal adalah…"
+  "options":
+  - "this"
+  - "self"
+  - "it"
+  - "_"
+  "answer": 2
+  "explain": "it tersedia bila lambda punya satu parameter without deklarasi."
+- "q": "Fungsi yang menerima fungsi lain disebut…"
+  "options":
+  - "Nested function"
+  - "Pure function"
+  - "Extension"
+  - "Higher-order function"
+  "answer": 3
+  "explain": "Contoh: map, filter, dan fold menerima lambda."
+- "q": "Hasil dari listOf(1,2,3).map { it * 2 } adalah…"
+  "options":
+  - "[2, 4, 6]"
+  - "[1, 2, 3]"
+  - "[3, 6, 9]"
+  - "[2, 4]"
+  "answer": 0
+  "explain": "map mengubah setiap elemen dengan fungsi yang diberikan."
+- "q": "Fungsi fold dipakai untuk…"
+  "options":
+  - "Mengurutkan data"
+  - "Menggabungkan elemen jadi satu nilai"
+  - "Menghapus elemen"
+  - "Membuat salinan"
+  "answer": 1
+  "explain": "fold mengakumulasi nilai dari awal ke akhir koleksi."
+"example":
+  "code": "fun main() {\n    val angka = listOf(1, 2, 3, 4, 5)\n\n    val genap = angka.filter { it % 2 == 0 }\n    val kuadrat = angka.map { it * it }\n    val total = angka.fold(0) { akumulasi, nilai -> akumulasi + nilai }\n\n    println(genap)    // [2, 4]\n    println(kuadrat)  // [1, 4, 9, 16, 25]\n    println(total)    // 15\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Fungsi sebagai Nilai
+
+```kotlin
+fun main() {
+    val angka = listOf(1, 2, 3, 4, 5)
+
+    val genap = angka.filter { it % 2 == 0 }
+    val kuadrat = angka.map { it * it }
+    val total = angka.fold(0) { akumulasi, nilai -> akumulasi + nilai }
+
+    println(genap)    // [2, 4]
+    println(kuadrat)  // [1, 4, 9, 16, 25]
+    println(total)    // 15
+}
+```
+
+```kotlin
+val kaliDua: (Int) -> Int = { x -> x * 2 }
+println(kaliDua(5)) // 10
+```
+
+Tipe fungsi ditulis `(Parameter) -> Return`. Lambda adalah cara ringkas menulis fungsi anonim.
+
+## Parameter Terakhir
+
+```kotlin
+angka.filter { it > 3 }
+```
+
+Bila lambda adalah parameter terakhir, ia boleh ditulis di luar tanda kurung. Ini gaya yang sangat umum di Kotlin.
+
+## Operator Koleksi
+
+| Fungsi | Fungsi | Contoh hasil |
+|---|---|---|
+| `filter` | memilih elemen | `[2, 4]` |
+| `map` | mengubah tiap elemen | `[2, 4, 6]` |
+| `find` | elemen pertama yang cocok | `2` atau null |
+| `any` | apakah ada yang cocok | `true` |
+| `all` | apakah semua cocok | `false` |
+| `fold` | mengakumulasi | `15` |
+
+## Lambda dengan Dua Parameter
+
+```kotlin
+val total = listOf(1, 2, 3).fold(0) { akumulasi, nilai ->
+    akumulasi + nilai
+}
+```
+
+Saat ada dua parameter, `it` tidak tersedia — keduanya harus diberi nama.
+
+<div class="note">💡 Rantai <code>map</code> dan <code>filter</code> bersifat lazy pada <code>Sequence</code>, tetapi eager pada <code>List</code>. Untuk data besar, <code>asSequence()</code> bisa mengurangi alokasi sementara.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val angka = listOf(1, 2, 3, 4, 5)
+
+    val genap = angka.filter { it % 2 == 0 }
+    val kuadrat = angka.map { it * it }
+    val total = angka.fold(0) { akumulasi, nilai -> akumulasi + nilai }
+
+    println(genap)    // [2, 4]
+    println(kuadrat)  // [1, 4, 9, 16, 25]
+    println(total)    // 15
+}`} />

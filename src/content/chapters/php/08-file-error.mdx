@@ -149,6 +149,10 @@ var_dump(is_writable("folder"));     // penting sebelum menulis
 
 <div class="note">💡 Jangan pernah menampilkan `getMessage()` mentah dari error sistem ke user di produksi. Path file dan stack trace adalah peta bagi penyerang — catat detail lengkap ke log (`error_log`) dan tampilkan hanya pesan ramah. Error yang detailnya disembunyikan dari user tetap harus terlihat jelas olehmu di log.</div>
 
+## Try it Yourself
+
+Coba baca berkas lain atau hapus penanganan error-nya.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $path = "catatan.txt";
 

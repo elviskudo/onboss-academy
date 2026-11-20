@@ -1,0 +1,92 @@
+---
+title: "SVG"
+description: "Grafis vektor inline dengan elemen svg, shape, dan atribut stroke/fill"
+order: 30
+quiz:
+  - q: "SVG adalah grafis berbasis…"
+    options: ["Piksel", "Vektor", "Teks biasa", "Video"]
+    answer: 1
+    explain: "SVG menyimpan bentuk matematis sehingga tetap tajam saat diperbesar."
+  - q: "Elemen untuk membuat lingkaran di SVG adalah…"
+    options: ["<circle>", "<round>", "<ellipse>", "<dot>"]
+    answer: 0
+    explain: "<circle cx='50' cy='50' r='40'>."
+  - q: "Atribut untuk warna garis tepi SVG adalah…"
+    options: ["color", "stroke", "border", "fill"]
+    answer: 1
+    explain: "stroke mengatur garis; fill mengatur isi."
+  - q: "SVG bisa ditanam langsung di HTML karena…"
+    options: ["Tidak didukung browser", "Merupa­kan bagian dari standar HTML", "Harus di-compile", "Hanya untuk CSS"]
+    answer: 1
+    explain: "Sejak HTML5, tag <svg> bisa ditulis langsung di dokumen."
+  - q: "Keunggulan SVG dibanding canvas adalah…"
+    options: ["Lebih cepat untuk game", "Bisa diskalakan tanpa buram dan tiap elemen bisa di-CSS", "Tidak bisa berwarna", "Hanya untuk foto"]
+    answer: 1
+    explain: "SVG tetap tajam dan setiap bentuk tetap bisa diberi event/CSS."
+example:
+  code: |
+    <svg width="200" height="120" viewBox="0 0 200 120">
+      <rect x="10" y="10" width="80" height="80" fill="#E44D26" />
+      <circle cx="150" cy="50" r="40" fill="#264DE4" />
+      <text x="10" y="115" font-size="14">Belajar SVG</text>
+    </svg>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SVG (*Scalable Vector Graphics*) adalah format gambar vektor berbasis XML. Karena berbasis vektor, gambar tetap tajam di ukuran berapa pun.
+
+## Menanam SVG di HTML
+
+```html
+<svg width="200" height="100">
+  <rect x="10" y="10" width="80" height="60" fill="orange" />
+</svg>
+```
+
+## Bentuk Dasar
+
+| Elemen | Fungsi |
+|--------|--------|
+| `<rect>` | Persegi panjang |
+| `<circle>` | Lingkaran |
+| `<ellipse>` | Elips |
+| `<line>` | Garis |
+| `<polygon>` | Poligon |
+| `<path>` | Bentuk bebas |
+| `<text>` | Teks |
+
+## Atribut Penting
+
+- `fill` — warna isi
+- `stroke` — warna garis
+- `stroke-width` — ketebalan garis
+- `viewBox` — koordinat internal gambar
+
+## Kenapa Memakai viewBox?
+
+`viewBox` memetakan koordinat gambar ke ukuran tampilan. Dengan itu, SVG bisa mengecil atau membesar tanpa mengubah proporsi.
+
+```html
+<svg viewBox="0 0 100 100" width="50" height="50">
+  <circle cx="50" cy="50" r="40" fill="teal" />
+</svg>
+```
+
+<div class="note">💡 SVG cocok untuk logo, ikon, dan diagram. Untuk foto atau game berlapis banyak, canvas biasanya lebih tepat.</div>
+
+## Try it Yourself
+
+Ubah warna `fill` pada lingkaran di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>SVG Vektor</h1>
+  <svg width="300" height="160" viewBox="0 0 300 160">
+    <rect x="10" y="10" width="120" height="100" fill="#E44D26" rx="12"></rect>
+    <circle cx="220" cy="60" r="50" fill="#42B883"></circle>
+    <text x="10" y="145" font-size="16">Tajam di ukuran apa pun!</text>
+  </svg>
+</body>
+</html>`} />

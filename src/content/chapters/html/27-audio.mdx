@@ -1,0 +1,82 @@
+---
+title: "Audio"
+description: "Memutar file suara dengan elemen audio dan sumber format ganda"
+order: 27
+quiz:
+  - q: "Elemen HTML5 untuk audio adalah…"
+    options: ["<sound>", "<audio>", "<music>", "<wave>"]
+    answer: 1
+    explain: "<audio> adalah elemen standar untuk suara."
+  - q: "Format audio yang paling luas didukung adalah…"
+    options: ["MP3", "WAV saja", "FLAC saja", "MIDI"]
+    answer: 0
+    explain: "MP3 hampir universal; OGG dan WAV bisa jadi alternatif."
+  - q: "Atribut controls pada audio berfungsi…"
+    options: ["Menyembunyikan player", "Menampilkan tombol kontrol", "Mengubah pitch", "Mengunduh file"]
+    answer: 1
+    explain: "controls menghadirkan play/pause dan pengatur volume."
+  - q: "Elemen <source> ditaruh di dalam…"
+    options: ["<audio> atau <video>", "<img>", "<p>", "<head>"]
+    answer: 0
+    explain: "source menyediakan beberapa pilihan format untuk media."
+  - q: "Teks di antara tag <audio></audio> berfungsi sebagai…"
+    options: ["Judul", "Fallback untuk browser lama", "Subtitle", "Volume"]
+    answer: 1
+    explain: "Browser yang tidak mendukung audio akan menampilkan teks itu."
+example:
+  code: |
+    <audio controls>
+      <source src="lagu.mp3" type="audio/mpeg">
+      <source src="lagu.ogg" type="audio/ogg">
+      Browser kamu tidak mendukung audio.
+    </audio>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Elemen `<audio>` bekerja sangat mirip dengan `<video>`, hanya saja tanpa tampilan gambar.
+
+## Contoh Sederhana
+
+```html
+<audio controls>
+  <source src="suara.mp3" type="audio/mpeg">
+  Browser kamu tidak mendukung audio.
+</audio>
+```
+
+## Atribut yang Sering Dipakai
+
+Sama seperti video: `controls`, `autoplay`, `loop`, `muted`, dan `preload`.
+
+## Kapan Memakai Beberapa source?
+
+Browser berbeda mendukung format berbeda. Dengan menulis dua `<source>`, browser akan memakai yang pertama kali bisa diputarnya.
+
+```html
+<audio controls>
+  <source src="suara.mp3" type="audio/mpeg">
+  <source src="suara.ogg" type="audio/ogg">
+</audio>
+```
+
+## Audio untuk Efek Kecil
+
+Kalau kamu hanya butuh efek singkat (misalnya bunyi notifikasi), pertimbangkan Web Audio API atau JavaScript `new Audio('sfx.mp3')` untuk kontrol lebih halus.
+
+<div class="note">💡 Jangan menyetel autoplay pada musik latar tanpa kontrol yang jelas — pengguna biasanya menganggapnya mengganggu.</div>
+
+## Try it Yourself
+
+Tambahkan atribut `loop` pada pemutar di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Belajar Audio</h1>
+  <audio controls>
+    <source src="https://www.w3schools.com/html/horse.mp3" type="audio/mpeg">
+    Browser kamu tidak mendukung audio.
+  </audio>
+</body>
+</html>`} />

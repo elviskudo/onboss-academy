@@ -1,0 +1,166 @@
+---
+title: "Database dengan PDO"
+description: "Koneksi, prepared statement, dan transaksi dengan PDO"
+order: 23
+quiz:
+  - q: "PDO adalah singkatan dari…"
+    options: ["PHP Data Objects", "PHP Database Online", "Program Data Object", "Prepared Data Operation"]
+    answer: 0
+    explain: "PDO menyediakan antarmuka umum untuk banyak database."
+  - q: "Prepared statement mencegah…"
+    options: ["SQL injection", "Error syntax", "Timeout", "Cache"]
+    answer: 0
+    explain: "Nilai dikirim terpisah dari query SQL."
+  - q: "DSN untuk MySQL memakai driver…"
+    options: ["mysql:", "sqlsrv:", "pgsql:", "sqlite:"]
+    answer: 0
+    explain: "Contoh: mysql:host=localhost;dbname=toko;charset=utf8mb4"
+  - q: "`fetchAll(PDO::FETCH_ASSOC)` mengembalikan…"
+    options: ["Array asosiatif", "Objek", "String", "true"]
+    answer: 0
+    explain: "Tiap baris berupa array dengan kunci nama kolom."
+  - q: "Untuk memulai transaksi gunakan…"
+    options: ["beginTransaction()", "startTransaction()", "commit()", "rollback()"]
+    answer: 0
+    explain: "Akhiri dengan commit() atau rollback()."
+example:
+  code: |
+    <?php
+    $pdo = new PDO('mysql:host=localhost;dbname=toko;charset=utf8mb4', 'root', '');
+    $stmt = $pdo->prepare('SELECT * FROM produk WHERE id = :id');
+    $stmt->execute(['id' => 1]);
+    $produk = $stmt->fetch(PDO::FETCH_ASSOC);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PDO (PHP Data Objects) adalah lapisan abstrak database bawaan PHP. Ia mendukung MySQL, PostgreSQL, SQLite, SQL Server, dan lain-lain dengan API yang sama.
+
+## Koneksi
+
+```php
+<?php
+$dsn = 'mysql:host=localhost;dbname=toko;charset=utf8mb4';
+$pdo = new PDO($dsn, 'root', 'rahasia', [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false
+]);
+```
+
+`ERRMODE_EXCEPTION` membuat query gagal melempar `PDOException` — jauh lebih mudah ditangani daripada error diam-diam.
+
+## Query Dasar
+
+```php
+<?php
+$stmt = $pdo->query('SELECT * FROM produk');
+foreach ($stmt as $baris) {
+    echo $baris['nama'];
+}
+
+$satu = $pdo->query('SELECT COUNT(*) FROM produk')->fetchColumn();
+```
+
+## Prepared Statement
+
+```php
+<?php
+$stmt = $pdo->prepare(
+    'SELECT * FROM produk WHERE harga > :min AND kategori = :kat'
+);
+$stmt->execute([
+    'min' => 10000,
+    'kat' => 'minuman'
+]);
+$hasil = $stmt->fetchAll();
+```
+
+Placeholder bernama (`:min`) lebih mudah dibaca daripada `?`. Prepared statement memisahkan SQL dari data, sehingga input pengguna tidak bisa mengubah struktur query.
+
+```php
+// ❌ JANGAN pernah seperti ini
+$pdo->query("SELECT * FROM user WHERE nama = '$nama'");
+```
+
+## Insert, Update, Delete
+
+```php
+<?php
+$stmt = $pdo->prepare(
+    'INSERT INTO produk (nama, harga) VALUES (:nama, :harga)'
+);
+$stmt->execute(['nama' => 'Kopi', 'harga' => 25000]);
+
+$id = $pdo->lastInsertId();
+
+$stmt = $pdo->prepare('UPDATE produk SET harga = ? WHERE id = ?');
+$stmt->execute([30000, $id]);
+
+$stmt = $pdo->prepare('DELETE FROM produk WHERE id = ?');
+$stmt->execute([$id]);
+
+echo $stmt->rowCount() . " baris terpengaruh";
+```
+
+## Transaksi
+
+```php
+<?php
+try {
+    $pdo->beginTransaction();
+
+    $pdo->prepare('UPDATE saldo SET jumlah = jumlah - ? WHERE id = ?')
+        ->execute([100000, 1]);
+    $pdo->prepare('UPDATE saldo SET jumlah = jumlah + ? WHERE id = ?')
+        ->execute([100000, 2]);
+
+    $pdo->commit();
+} catch (Throwable $e) {
+    $pdo->rollBack();
+    throw $e;
+}
+```
+
+Kalau salah satu query gagal, semua perubahan dibatalkan.
+
+## Limit & Pagination
+
+```php
+<?php
+$hal = max(1, (int) ($_GET['hal'] ?? 1));
+$per = 10;
+$offset = ($hal - 1) * $per;
+
+$stmt = $pdo->prepare('SELECT * FROM produk LIMIT :limit OFFSET :offset');
+$stmt->bindValue(':limit', $per, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+```
+
+<div class="note">💡 `LIMIT ?` sering memerlukan `bindValue(..., PDO::PARAM_INT)` karena PDO default memperlakukan nilai sebagai string.</div>
+
+## Di Dunia Nyata
+
+- ORM seperti Eloquent dibangun di atas PDO.
+- Prepared statement adalah pertahanan utama terhadap SQL injection.
+- Transaksi dipakai pada transfer saldo, checkout, dan stok barang.
+
+## Try it Yourself
+
+Tambahkan produk baru atau ubah query ORDER BY pada contoh SQLite ini.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+// Contoh memakai SQLite in-memory (tidak butuh server database):
+$pdo = new PDO('sqlite::memory:');
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo->exec('CREATE TABLE produk (id INTEGER PRIMARY KEY, nama TEXT, harga INTEGER)');
+
+$stmt = $pdo->prepare('INSERT INTO produk (nama, harga) VALUES (:nama, :harga)');
+$stmt->execute(['nama' => 'Kopi', 'harga' => 25000]);
+$stmt->execute(['nama' => 'Teh', 'harga' => 15000]);
+
+$rows = $pdo->query('SELECT * FROM produk ORDER BY harga DESC')->fetchAll(PDO::FETCH_ASSOC);
+foreach ($rows as $r) {
+    echo $r['nama'] . ': ' . $r['harga'] . PHP_EOL;
+}`} />

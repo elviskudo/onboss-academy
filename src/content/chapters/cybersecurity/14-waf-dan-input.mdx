@@ -1,0 +1,77 @@
+---
+title: "WAF dan Validasi Input"
+description: "Mencegah serangan lewat filter aplikasi dan validasi di sisi server"
+order: 14
+quiz:
+  - q: "WAF terutama memeriksa…"
+    options: ["Kabel jaringan", "Prosesor", "Permintaan HTTP/HTTPS", "File system server"]
+    answer: 2
+    explain: "Web Application Firewall menganalisis header, parameter, dan body request."
+  - q: "Validasi input yang benar dilakukan di…"
+    options: ["Sisi klien saja", "Browser saja", "CDN saja", "Sisi server"]
+    answer: 3
+    explain: "Validasi klien bisa dilewati dengan alat khusus."
+  - q: "Allowlist lebih aman daripada blocklist karena…"
+    options: ["Hanya bentuk yang dikenal baik yang diterima", "Lebih cepat", "Lebih pendek", "Tidak perlu diuji"]
+    answer: 0
+    explain: "Blocklist selalu tertinggal dari variasi serangan baru."
+  - q: "Rate limiting membantu melawan…"
+    options: ["CSRF", "Brute force dan scraping", "SQL injection", "XSS reflected"]
+    answer: 1
+    explain: "Pembatasan jumlah request memperlambat percobaan otomatis."
+  - q: "Sanitasi output berguna mencegah…"
+    options: ["Port scanning", "DNS leak", "XSS saat data ditampilkan", "DDoS"]
+    answer: 2
+    explain: "Data haruskah dienkripsi konteksnya saat disisipkan ke HTML, atribut, atau JS."
+example:
+  code: |
+    # Allowlist (konsep)
+    format_username = /^[a-z0-9_]{3,20}$/
+    if tidak cocok -> tolak
+    
+    # Escape saat ditampilkan
+    "<script>" -> &lt;script&gt;
+---
+
+Serangan web paling sering masuk lewat input yang tidak dipercaya. Dua lapisan yang sering dipakai bersama adalah WAF (di depan aplikasi) dan validasi di dalam kode.
+
+## WAF Bukan Pengganti Kode Aman
+
+WAF bisa memblokir pola umum, tetapi penyerang terus mencari bypass. Anggap WAF sebagai lapisan tambahan, bukan alasan untuk melewati validasi.
+
+## Prinsip Validasi
+
+1. **Tolak apa yang tidak dikenal** (allowlist).
+2. **Validasi di server** — klien hanya untuk kenyamanan.
+3. **Normalisasi dulu** — unicode, spasi, dan huruf bisa menyamar.
+4. **Batasi ukuran** — panjang, jumlah field, ukuran file.
+5. **Escape saat output** — menyesuaikan konteks (HTML, URL, SQL, JSON).
+
+## Contoh Alur Aman
+
+```text
+input -> normalisasi -> allowlist -> simpan -> escape saat tampil
+```
+
+## Rate Limit
+
+```text
+5 percobaan login / menit / IP
+10 request API / detik / token
+```
+
+Sertakan `Retry-After` pada respons 429 agar klien yang baik bisa menunggu. Gunakan kunci berdasarkan IP **dan** akun agar penyerang tidak bisa bergilir.
+
+## Logging
+
+Catat percobaan yang ditolak tanpa menyimpan kata sandi mentah. Log yang terlalu sedikit menyulitkan forensik; log yang berisi data sensitif justru menambah risiko.
+
+<div class="note">💡 Parameterisasi query (prepared statement) adalah cara yang benar untuk mencegah SQL injection—bukan dengan membuang tanda kutip manual.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Contoh kasus:
+  input   : &lt;script&gt;alert(1)&lt;/script&gt;
+  validasi: ditolak karena tidak cocok allowlist
+  jika tetap ditampilkan: &amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;`}</code></pre>

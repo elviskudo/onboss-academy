@@ -1,0 +1,146 @@
+---
+"title": "Array"
+"description": "Array indexed dan associative, iteration, serta manipulasi elemen"
+"order": 10
+"quiz":
+- "q": "Cara mendeklarasikan array indexed adalah…"
+  "options":
+  - "arr{a,b,c}"
+  - "arr=(a b c)"
+  - "array a b c"
+  - "arr=[a,b,c]"
+  "answer": 1
+  "explain": "Kurung kurung dengan spasi memisahkan elemen."
+- "q": "Indeks array dimulai dari…"
+  "options":
+  - "1"
+  - "-1"
+  - "0"
+  - "Tergantung shell"
+  "answer": 2
+  "explain": "Seperti kebanyakan bahasa, indeks pertama adalah 0."
+- "q": "Cara membaca semua elemen array adalah…"
+  "options":
+  - "$arr"
+  - "\"$arr\""
+  - "${arr[0]}"
+  - "\"${arr[@]}\""
+  "answer": 3
+  "explain": "@ menghasilkan semua elemen sebagai kata terpisah."
+- "q": "Jumlah elemen array diperoleh dengan…"
+  "options":
+  - "${#arr[@]}"
+  - "${arr.length}"
+  - "len arr"
+  - "arr.size"
+  "answer": 0
+  "explain": "Tanda # pada parameter expansion menghitung panjang."
+- "q": "Array associative dideklarasikan dengan…"
+  "options":
+  - "declare -a arr"
+  - "declare -A arr"
+  - "array -A arr"
+  - "local -A arr"
+  "answer": 1
+  "explain": "-A membuat array dengan kunci string."
+"example":
+  "code": "#!/usr/bin/env bash\nwarna=(merah hijau biru)\necho \"${warna[0]}\"        # merah\necho \"${warna[@]}\"        # merah hijau biru\necho \"${#warna[@]}\"       # 3\n\nwarna+=(kuning)\nfor w in \"${warna[@]}\"; do\n  echo \"Warna: $w\"\ndone\n\ndeclare -A harga\nharga[kopi]=18000\nharga[teh]=12000\necho \"Kopi: ${harga[kopi]}\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+| Operasi | Sintaks | Hasil |
+|---|---|---|
+| Deklarasi | `arr=(a b c)` | tiga elemen |
+| Akses | `${arr[0]}` | `a` |
+| Semua elemen | `${arr[@]}` | `a b c` |
+| Jumlah | `${#arr[@]}` | `3` |
+| Tambah | `arr+=(d)` | elemen baru di akhir |
+
+## Array Indeksed
+
+```bash
+#!/usr/bin/env bash
+warna=(merah hijau biru)
+echo "${warna[0]}"        # merah
+echo "${warna[@]}"        # merah hijau biru
+echo "${#warna[@]}"       # 3
+
+warna+=(kuning)
+for w in "${warna[@]}"; do
+  echo "Warna: $w"
+done
+
+declare -A harga
+harga[kopi]=18000
+harga[teh]=12000
+echo "Kopi: ${harga[kopi]}"
+```
+
+```bash
+buah=(apel pisang mangga)
+echo "${buah[1]}"      # pisang
+echo "${buah[@]}"      # semua elemen
+echo "${#buah[@]}"     # 3
+```
+
+Spasi adalah pemisah elemen. `"${buah[@]}"` dengan kutip ganda menjaga setiap elemen tetap utuh.
+
+## Menambah dan Mengubah
+
+```bash
+buah+=(durian)         # tambah di akhir
+buah[0]="apel merah"   # ubah elemen pertama
+unset 'buah[1]'        # hapus elemen (indeks jadi kosong)
+```
+
+## Iterasi
+
+```bash
+for item in "${buah[@]}"; do
+  echo "Butir: $item"
+done
+
+for i in "${!buah[@]}"; do
+  echo "$i -> ${buah[$i]}"
+done
+```
+
+`${!arr[@]}` menghasilkan daftar indeks, bukan nilai.
+
+## Array Associative
+
+```bash
+declare -A ibukota
+ibukota[Jawa]="Jakarta"
+ibukota[Bali]="Denpasar"
+
+for provinsi in "${!ibukota[@]}"; do
+  echo "$provinsi: ${ibukota[$provinsi]}"
+done
+```
+
+Fitur ini memerlukan Bash 4 ke atas (macOS bawaan masih Bash 3, jadi sering perlu `brew install bash`).
+
+<div class="note">💡 Awali array dengan `local -a` di dalam fungsi agar tidak menimpa variabel global. Selalu kutip `"${arr[@]}"` saat meneruskannya sebagai argumen.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+warna=(merah hijau biru)
+echo "\${warna[0]}"        # merah
+echo "\${warna[@]}"        # merah hijau biru
+echo "\${#warna[@]}"       # 3
+
+warna+=(kuning)
+for w in "\${warna[@]}"; do
+  echo "Warna: $w"
+done
+
+declare -A harga
+harga[kopi]=18000
+harga[teh]=12000
+echo "Kopi: \${harga[kopi]}"`} />

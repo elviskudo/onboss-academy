@@ -1,0 +1,81 @@
+---
+title: "Keamanan Aplikasi Mobile"
+description: "Penyimpanan lokal, certificate pinning, dan izin aplikasi"
+order: 23
+quiz:
+  - q: "Data sensitif di perangkat mobile sebaiknya disimpan di…"
+    options: ["File teks biasa di folder publik", "Log aplikasi", "Cache browser", "Penyimpanan aman yang disediakan OS"]
+    answer: 3
+    explain: "Keychain (iOS) dan Keystore (Android) memberi perlindungan berbasis perangkat."
+  - q: "Certificate pinning bertujuan…"
+    options: ["Membatasi sertifikat yang diterima aplikasi", "Mengganti HTTPS", "Mempercepat build", "Menghapus sertifikat"]
+    answer: 0
+    explain: "Ini mempersulit serangan MITM, tetapi perlu perencanaan rotasi."
+  - q: "Izin aplikasi yang berlebih sebaiknya…"
+    options: ["Disembunyikan", "Dihapus atau diminta hanya saat dibutuhkan", "Dibiarkan agar fitur lengkap", "Disetujui semua"]
+    answer: 1
+    explain: "Izin lokasi atau kontak yang tidak dipakai menambah risiko privasi."
+  - q: "Root/jailbreak meningkatkan risiko karena…"
+    options: ["Ukuran aplikasi mengecil", "Internet lebih cepat", "Aplikasi bisa berjalan dengan hak tinggi dan kontrol keamanan dilewati", "Baterai lebih hemat"]
+    answer: 2
+    explain: "Aplikasi sensitif sering melakukan deteksi atau membatasi fitur."
+  - q: "Deep link yang aman harus…"
+    options: ["Menerima semua URL", "Menyimpan token di URL", "Tanpa batas", "Memvalidasi parameter dan asal"]
+    answer: 3
+    explain: "Parameter deep link bisa disuntikkan pihak ketiga."
+example:
+  code: |
+    Penyimpanan aman:
+      iOS     -> Keychain
+      Android -> Keystore + EncryptedSharedPreferences
+    
+    Hindari: token di SharedPreferences plaintext / logcat
+---
+
+Aplikasi mobile berjalan di perangkat yang bisa hilang, di-root, atau dipasangi aplikasi jahat. Karena itu, data sensitif tidak boleh dibiarkan di penyimpanan biasa.
+
+## Penyimpanan
+
+| Kebutuhan | Tempat yang tepat |
+|---|---|
+| Token akses | Keychain / Keystore |
+| Preferensi biasa | Pengaturan aplikasi |
+| File besar sensitif | Terenkripsi, kunci di keystore |
+| Sementara | Cache dengan masa hidup pendek |
+
+## Transport
+
+```text
+HTTPS wajib -> sertifikat terverifikasi -> pinning (opsional)
+```
+
+Pinning memberi perlindungan tambahan, tetapi jika sertifikat berubah dan aplikasi lama tidak diperbarui, pengguna bisa terblokir. Siapkan beberapa pin cadangan dan mekanisme update.
+
+## Izin
+
+```text
+kamera -> hanya saat memindai QR
+lokasi -> hanya saat fitur peta dipakai
+kontak -> hapus bila tidak ada fitur yang memakainya
+```
+
+Minta izin **saat dibutuhkan**, bukan semua sekaligus saat instalasi.
+
+## Ancaman Khusus
+
+- **Repackaging** — aplikasi dimodifikasi lalu disebarkan.
+- **Overlay attack** — lapisan palsu menipu pengguna memasukkan PIN.
+- **Clipboard sniffing** — malware membaca salinan kode OTP.
+- **Logcat** — log yang terlalu verbose membocorkan token.
+
+<div class="note">💡 Jangan menaruh rahasia permanen di biner aplikasi. Kunci yang dikirim ke perangkat bisa diekstrak; anggap sebagai data publik.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Daftar pemeriksaan mobile:
+  [ ] tidak ada token di log
+  [ ] penyimpanan sensitif terenkripsi
+  [ ] izin sesuai kebutuhan
+  [ ] deep link divalidasi
+  [ ] sertifikat diverifikasi`}</code></pre>

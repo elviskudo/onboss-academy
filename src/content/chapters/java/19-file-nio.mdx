@@ -1,0 +1,122 @@
+---
+title: "File I/O dengan NIO"
+description: "Path, Files, baca/tulis teks, dan traversal direktori dengan java.nio"
+order: 19
+quiz:
+  - q: "Kelas modern untuk merepresentasikan path adalah…"
+    options: ["File", "Path", "FileReader", "URL"]
+    answer: 1
+    explain: "`java.nio.file.Path` menggantikan banyak fungsi `java.io.File`."
+  - q: "Method untuk membaca seluruh isi file teks (Java 11+) adalah…"
+    options: ["Files.readAllBytes", "Files.readString", "Files.load", "Files.getText"]
+    answer: 1
+    explain: "Files.readString(Path, Charset) mengembalikan String."
+  - q: "Untuk menulis dengan opsi buat bila belum ada, gunakan…"
+    options: ["Files.writeString", "Files.save", "Files.put", "Files.create"]
+    answer: 0
+    explain: "Files.writeString(path, isi, StandardOpenOption.CREATE, APPEND)."
+  - q: "`Files.walk(path)` menghasilkan…"
+    options: ["List<String>", "Stream<Path> rekursif", "File saja", "Map"]
+    answer: 1
+    explain: "walk mengunjungi direktori dan seluruh turunannya."
+  - q: "Charset yang disarankan untuk teks modern adalah…"
+    options: ["ASCII", "ISO-8859-1", "UTF-8", "UTF-16"]
+    answer: 2
+    explain: "UTF-8 adalah standar web dan lintas platform."
+example:
+  code: |
+    import java.nio.file.*;
+    import java.nio.charset.StandardCharsets;
+    import java.util.stream.*;
+    
+    public class Main {
+      public static void main(String[] args) throws Exception {
+        Path p = Path.of("data", "catatan.txt");
+        Files.createDirectories(p.getParent());
+        Files.writeString(p, "Halo NIO\nBaris dua", StandardCharsets.UTF_8);
+    
+        System.out.println(Files.readString(p));
+        try (Stream<Path> s = Files.walk(Path.of("."))) {
+          s.filter(x -> x.toString().endsWith(".java")).limit(3)
+           .forEach(System.out::println);
+        }
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Package `java.nio.file` (NIO.2, Java 7+) adalah cara modern bekerja dengan file dan direktori. API-nya lebih konsisten daripada `java.io.File`.
+
+## Path
+
+```java
+import java.nio.file.*;
+
+Path p = Path.of("dokumen", "laporan.txt");
+System.out.println(p.getFileName());  // laporan.txt
+System.out.println(p.toAbsolutePath());
+```
+
+Tidak seperti `File`, `Path` murni representasi lokasi — operasi aktual ada di kelas `Files`.
+
+## Baca & Tulis
+
+```java
+String isi = Files.readString(p, StandardCharsets.UTF_8);
+List<String> baris = Files.readAllLines(p, StandardCharsets.UTF_8);
+
+Files.writeString(p, "teks baru", StandardCharsets.UTF_8);
+Files.writeString(p, "tambahan
+", StandardCharsets.UTF_8,
+                  StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+```
+
+Selalu tentukan charset eksplisit agar hasil sama di Windows dan Linux.
+
+## Operasi Umum
+
+```java
+Files.exists(p);
+Files.createFile(p);
+Files.createDirectories(p.getParent());
+Files.copy(dari, ke, StandardCopyOption.REPLACE_EXISTING);
+Files.move(dari, ke);
+Files.deleteIfExists(p);
+Files.size(p);
+```
+
+## Traversal
+
+```java
+try (Stream<Path> stream = Files.walk(Path.of("."))) {
+    stream.filter(Files::isRegularFile)
+          .filter(p -> p.toString().endsWith(".mdx"))
+          .forEach(System.out::println);
+}
+```
+
+`Files.walk` harus ditutup (try-with-resources) karena memegang resource direktori.
+
+<div class="note">💡 Untuk file besar, jangan `readString()` seluruh isi. Gunakan `Files.newBufferedReader()` dan baca baris demi baris, atau `Files.lines()` sebagai stream.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.nio.file.*;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.*;
+
+public class Main {
+  public static void main(String[] args) throws Exception {
+    Path p = Path.of("data", "catatan.txt");
+    Files.createDirectories(p.getParent());
+    Files.writeString(p, "Halo NIO\nBaris dua", StandardCharsets.UTF_8);
+
+    System.out.println(Files.readString(p));
+    try (Stream<Path> s = Files.walk(Path.of("."))) {
+      s.filter(x -> x.toString().endsWith(".java")).limit(3)
+       .forEach(System.out::println);
+    }
+  }
+}`} />

@@ -1,0 +1,135 @@
+---
+"title": "Closure"
+"description": "Menulis closure, shorthand argumen, capturing, dan escaping"
+"order": 14
+"quiz":
+- "q": "Closure adalah…"
+  "options":
+  - "Jenis array"
+  - "Blok kode yang bisa disimpan dan dipanggil"
+  - "Modul Swift"
+  - "Tipe class"
+  "answer": 1
+  "explain": "Fungsi tanpa nama yang bisa ditangkap dan dipanggil kemudian."
+- "q": "Nama otomatis argumen closure adalah…"
+  "options":
+  - "it"
+  - "this"
+  - "$0, $1, ..."
+  - "arg"
+  "answer": 2
+  "explain": "Shorthand argument names tersedia bila tipe bisa disimpulkan."
+- "q": "Atribut untuk closure yang disimpan adalah…"
+  "options":
+  - "@nonescaping"
+  - "@lazy"
+  - "@capture"
+  - "@escaping"
+  "answer": 3
+  "explain": "Closure yang dipanggil setelah fungsi kembali harus escaping."
+- "q": "Metode sorted(by:) menerima…"
+  "options":
+  - "Closure pembanding"
+  - "Array lain"
+  - "Dictionary"
+  - "String"
+  "answer": 0
+  "explain": "sorted(by:) mengembalikan array baru yang diurutkan."
+- "q": "Trailing closure ditulis…"
+  "options":
+  - "Di dalam array"
+  - "Di luar tanda kurung setelah pemanggilan"
+  - "Sebelum fungsi"
+  - "Dengan kata kunci do"
+  "answer": 1
+  "explain": "Bila closure adalah argumen terakhir, ia boleh ditaruh setelah kurung tutup."
+"example":
+  "code": "let angka = [5, 2, 8, 1]\n\nlet naik = angka.sorted { $0 &lt; $1 }\nlet kuadrat = angka.map { $0 * $0 }\nlet genap = angka.filter { $0 % 2 == 0 }\nlet total = angka.reduce(0) { $0 + $1 }\n\nprint(naik)     // [1, 2, 5, 8]\nprint(kuadrat)  // [25, 4, 64, 1]\nprint(genap)    // [2, 8]\nprint(total)    // 16\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Sintaks Dasar
+
+```swift
+let angka = [5, 2, 8, 1]
+
+let naik = angka.sorted { $0 < $1 }
+let kuadrat = angka.map { $0 * $0 }
+let genap = angka.filter { $0 % 2 == 0 }
+let total = angka.reduce(0) { $0 + $1 }
+
+print(naik)     // [1, 2, 5, 8]
+print(kuadrat)  // [25, 4, 64, 1]
+print(genap)    // [2, 8]
+print(total)    // 16
+```
+
+```swift
+let kaliDua: (Int) -> Int = { angka in
+    return angka * 2
+}
+
+let pendek: (Int) -> Int = { $0 * 2 }
+```
+
+Bila tipe sudah diketahui, deklarasi tipe bisa dihilangkan.
+
+## Trailing Closure
+
+```swift
+UIView.animate(withDuration: 0.3) {
+    view.alpha = 0
+} completion: { _ in
+    print("Selesai")
+}
+```
+
+Bentuk ini sangat umum di API Apple dan membuat kode lebih rapi.
+
+## Higher-Order Function
+
+| Fungsi | Fungsi | Contoh hasil |
+|---|---|---|
+| `map` | mengubah tiap elemen | `[1,4,9]` |
+| `filter` | memilih elemen | `[2,4]` |
+| `reduce` | menggabungkan jadi satu | `10` |
+| `sorted` | mengurutkan | `[1,2,3]` |
+| `forEach` | menjalankan aksi | mencetak tiap item |
+
+## Capturing Values
+
+```swift
+func buatPenghitung() -> () -> Int {
+    var jumlah = 0
+    return {
+        jumlah += 1
+        return jumlah
+    }
+}
+
+let hitung = buatPenghitung()
+print(hitung()) // 1
+print(hitung()) // 2
+```
+
+Closure menangkap (capture) variabel `jumlah` sehingga tetap hidup setelah fungsi selesai.
+
+<div class="note">💡 Hati-hati dengan <code>[weak self]</code> di closure kelas. Menangkap self secara kuat di closure yang disimpan properti bisa membentuk retain cycle.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`let angka = [5, 2, 8, 1]
+
+let naik = angka.sorted { $0 &lt; $1 }
+let kuadrat = angka.map { $0 * $0 }
+let genap = angka.filter { $0 % 2 == 0 }
+let total = angka.reduce(0) { $0 + $1 }
+
+print(naik)     // [1, 2, 5, 8]
+print(kuadrat)  // [25, 4, 64, 1]
+print(genap)    // [2, 8]
+print(total)    // 16`} />

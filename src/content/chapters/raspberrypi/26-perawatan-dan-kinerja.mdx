@@ -1,0 +1,93 @@
+---
+title: "Perawatan dan Kinerja"
+description: "Suhu, throttling, penyimpanan, dan pembaruan sistem"
+order: 26
+quiz:
+  - q: "Perintah untuk melihat suhu CPU adalah…"
+    options: ["suhu", "thermal read", "vcgencmd measure_temp", "cat /proc/temp"]
+    answer: 2
+    explain: "Pada Pi 5, pembacaan juga tersedia lewat /sys/class/thermal."
+  - q: "Throttling terjadi saat…"
+    options: ["Disk penuh", "Wi-Fi mati", "GPIO aktif", "CPU menurunkan kecepatan karena suhu atau daya"]
+    answer: 3
+    explain: "Periksa dengan vcgencmd get_throttled."
+  - q: "Perintah untuk melihat penggunaan memori adalah…"
+    options: ["free -h", "mem -a", "top memory", "df -h"]
+    answer: 0
+    explain: "df -h sendiri untuk ruang disk, bukan memori."
+  - q: "Membersihkan cache paket yang tidak terpakai gunakan…"
+    options: ["apt purge-cache", "sudo apt clean", "sudo apt erase", "sudo rm /"]
+    answer: 1
+    explain: "Hati-hati dengan perintah penghapusan yang terlalu luas."
+  - q: "Throttling karena daya sering disebabkan oleh…"
+    options: ["Kabel HDMI", "Mouse wireless", "Adaptor USB yang tidak cukup kuat", "Kartu microSD lambat"]
+    answer: 2
+    explain: "Pi 4/5 sebaiknya memakai adaptor resmi 3 A / 5 V atau lebih."
+example:
+  code: |
+    vcgencmd measure_temp
+    vcgencmd get_throttled
+    free -h
+    df -h
+    sudo apt clean
+---
+
+Raspberry Pi tidak punya kipas secara default dan sangat sensitif terhadap kualitas daya. Memantau keduanya mencegah perilaku aneh yang sulit didiagnosis.
+
+## Suhu
+
+```bash
+vcgencmd measure_temp
+# temp=48.2'C
+```
+
+Suhu di atas sekitar 80 °C mulai memicu throttling. Pasang heatsink atau kipas untuk beban berkelanjutan.
+
+## Status Throttling
+
+```bash
+vcgencmd get_throttled
+# throttled=0x0     -> normal
+# throttled=0x50000 -> pernah under-voltage
+```
+
+Nilai bukan nol menunjukkan riwayat sejak boot terakhir.
+
+## Daya
+
+```text
+Pi 3   : 5 V / 2,5 A
+Pi 4/5 : 5 V / 3 A (resmi), lebih banyak USB butuh lebih
+```
+
+Kabel USB yang tipis menyebabkan penurunan tegangan walaupun adaptornya cukup.
+
+## Ruang Disk
+
+```bash
+df -h
+sudo apt clean
+sudo journalctl --vacuum-size=100M
+```
+
+Kartu SD yang hampir penuh bisa membuat sistem lambat dan logging gagal.
+
+## Pembaruan
+
+```bash
+sudo apt update && sudo apt full-upgrade
+sudo rpi-eeprom-update        # Pi 4/5
+sudo reboot
+```
+
+<div class="note">💡 Gunakan SSD USB untuk proyek yang banyak menulis (database, logging intensif). Kartu microSD memiliki batas siklus tulis.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Pemeriksaan rutin:
+vcgencmd measure_temp
+vcgencmd get_throttled
+df -h
+free -h
+uptime`}</code></pre>

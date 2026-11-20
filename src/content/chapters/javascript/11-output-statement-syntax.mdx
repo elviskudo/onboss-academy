@@ -1,0 +1,120 @@
+---
+title: "Output, Statement & Sintaks JS"
+description: "Menampilkan hasil, memahami statement, dan aturan dasar sintaks JavaScript"
+order: 11
+quiz:
+  - q: "Method console untuk menampilkan pesan adalah…"
+    options: ["console.print()", "console.log()", "console.write()", "console.echo()"]
+    answer: 1
+    explain: "console.log() adalah cara standar menulis ke DevTools console."
+  - q: "Fungsi yang menampilkan dialog popup adalah…"
+    options: ["alert()", "prompt()", "confirm()", "print()"]
+    answer: 0
+    explain: "alert() menampilkan pesan dengan tombol OK."
+  - q: "Statement JavaScript biasanya diakhiri…"
+    options: ["titik", "titik koma", "koma", "titik dua"]
+    answer: 1
+    explain: "Titik koma opsional karena ASI, tapi disarankan eksplisit."
+  - q: "`document.write()` sebaiknya dihindari karena…"
+    options: ["Terlalu cepat", "Dapat menimpa seluruh dokumen setelah halaman selesai dimuat", "Tidak didukung", "Hanya untuk console"]
+    answer: 1
+    explain: "Memanggilnya setelah load bisa menghapus halaman yang sudah ada."
+  - q: "JavaScript membedakan huruf besar/kecil, disebut…"
+    options: ["case-insensitive", "case-sensitive", "loose typing", "strict mode"]
+    answer: 1
+    explain: "`nama` dan `Nama` adalah dua identifier berbeda."
+example:
+  code: |
+    console.log("Halo dunia!");
+    alert("Pesan penting");
+    const umur = 20;
+    let pesan = "Umur: " + umur;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebelum membangun logika besar, kamu perlu tahu **cara mengeluarkan hasil** dan **bagaimana baris kode dibaca** oleh mesin JavaScript.
+
+## Cara Menampilkan Output
+
+| Cara | Kode | Kapan dipakai |
+|------|------|---------------|
+| Console | `console.log("Halo")` | Debugging harian |
+| Alert | `alert("Halo")` | Notifikasi sederhana (jarang di produksi) |
+| Prompt | `prompt("Nama?")` | Mengambil input cepat |
+| Confirm | `confirm("Yakin?")` | Konfirmasi ya/tidak |
+| DOM | `el.textContent = "Halo"` | Menampilkan ke pengguna |
+
+```js
+console.log("Skor:", 90);
+console.warn("Stok menipis");
+console.error("Gagal memuat data");
+console.table([{ nama: "Sari", skor: 90 }]);
+```
+
+`console.table` sangat membantu saat memeriksa array of objects.
+
+## Statement vs Ekspresi
+
+```js
+let x = 5;        // statement: perintah
+x + 3;            // ekspresi: menghasilkan nilai 8
+const y = x + 3;  // ekspresi di dalam statement
+```
+
+- **Statement** adalah unit perintah: deklarasi, `if`, `for`, `return`.
+- **Ekspresi** adalah potongan kode yang menghasilkan nilai.
+
+## Automatic Semicolon Insertion (ASI)
+
+JavaScript menyisipkan `;` otomatis pada akhir baris. Namun ada jebakan:
+
+```js
+return
+{ ok: true }   // ❌ dianggap return undefined!
+```
+
+Penulisan `return { ok: true }` dalam satu baris aman. Karena itu, banyak style guide mewajibkan titik koma eksplisit.
+
+## Komentar
+
+```js
+// komentar satu baris
+
+/* komentar
+   beberapa baris */
+```
+
+Komentar ditulis untuk menjelaskan **mengapa**, bukan **apa** yang dilakukan kode — kode yang jelas sudah menjelaskan dirinya sendiri.
+
+## Case-Sensitive
+
+```js
+const Nama = "Budi";
+console.log(nama); // ReferenceError
+```
+
+Identifier juga tidak boleh diawali angka dan tidak boleh memakai kata kunci (`let`, `class`, `return`, dll).
+
+<div class="note">💡 Buka DevTools dengan F12 (atau Cmd+Opt+J di macOS) dan coba ketik ekspresi di Console. Itu REPL JavaScript tercepat untuk bereksperimen.</div>
+
+## Di Dunia Nyata
+
+- `console.log` dipakai untuk melacak nilai saat debugging, lalu dibersihkan sebelum commit.
+- `alert` masih berguna untuk prototipe, tapi diganti modal kustom di aplikasi produksi.
+- Penulisan statement yang rapi memungkinkan minifier seperti Terser mengompres file dengan aman.
+
+## Try it Yourself
+
+Ubah nilai `nama` atau tambahkan baris `console.log` lain pada contoh berikut.
+
+<TryIt lang="javascript" runtime="client-js" code={`const nama = "OnBoss Academy";
+const tahun = 2026;
+console.log("Nama:", nama);
+console.warn("Ini peringatan");
+console.error("Ini error contoh");
+console.table([
+  { topik: "HTML", level: "Dasar" },
+  { topik: "JavaScript", level: "Menengah" }
+]);
+document.body.innerHTML = "<h2>Halo, " + nama + "!</h2><p>Tahun " + tahun + "</p>";`} />

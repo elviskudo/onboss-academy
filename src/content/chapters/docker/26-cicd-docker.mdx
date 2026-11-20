@@ -1,0 +1,105 @@
+---
+title: "Studi Kasus: Pipeline CI/CD Docker"
+description: "Merangkai build, test, push, dan deploy dalam satu alur otomatis"
+order: 26
+quiz:
+  - q: "Tahapan yang paling tepat sebelum push image adalah…"
+    options: ["Hapus cache lalu push", "Ubah tag terus deploy", "Build lalu jalankan test pada image yang sama", "Push dulu lalu test"]
+    answer: 2
+    explain: "Artefak yang diuji harus sama persis dengan artefak yang dirilis."
+  - q: "Mengapa memakai --password-stdin saat docker login di CI?"
+    options: ["Agar login lebih cepat", "Agar image lebih kecil", "Agar token tidak kadaluarsa", "Agar kata sandi tidak muncul di argumen proses dan log"]
+    answer: 3
+    explain: "Argumen proses bisa dibaca proses lain di mesin yang sama."
+  - q: "Cache registry (`--cache-to`) digunakan untuk…"
+    options: ["Mempercepat build berikutnya di runner berbeda", "Menyimpan log", "Menghapus layer", "Mengganti base image"]
+    answer: 0
+    explain: "Cache di-sharing antar job sehingga tidak mengunduh dependency berulang."
+  - q: "Langkah rollback otomatis yang benar adalah…"
+    options: ["Menonaktifkan healthcheck", "Deploy ulang digest versi sebelumnya", "Menghapus seluruh namespace", "Membangun ulang dari branch terbaru"]
+    answer: 1
+    explain: "Digest lama masih tersedia di registry sehingga pemulihan cepat."
+  - q: "Smoke test setelah deploy biasanya memeriksa…"
+    options: ["Ukuran image", "Jumlah commit", "Endpoint dasar merespons dengan benar", "Semua baris kode terbaca"]
+    answer: 2
+    explain: "Cukup memastikan aplikasi hidup dan fungsi inti bekerja."
+example:
+  code: |
+    # contoh alur (GitHub Actions, ringkas)
+    - run: docker build --target test -t app:test .
+    - run: docker run --rm app:test npm test
+    - run: docker build -t app:${{ github.sha }} .
+    - run: echo "$TOKEN" | docker login ghcr.io -u "$USER" --password-stdin
+    - run: docker push ghcr.io/tim/app:${{ github.sha }}
+---
+
+Pipeline yang baik mengubah commit menjadi image yang bisa dilacak, diuji, dan dipulihkan. Docker memberi unit pengiriman yang konsisten dari laptop sampai produksi.
+
+## Tahapan Pipeline
+
+```text
+commit → build (test stage) → test → build final → scan → push → deploy → smoke test
+```
+
+## Contoh GitHub Actions
+
+```yaml
+name: ci
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Test
+        run: |
+          docker build --target test -t app:test .
+          docker run --rm app:test npm test
+      - name: Build & push
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" |
+            docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker build \
+            --cache-from type=registry,ref=ghcr.io/tim/app:cache \
+            --cache-to type=registry,ref=ghcr.io/tim/app:cache,mode=max \
+            -t ghcr.io/tim/app:${{ github.sha }} .
+          docker push ghcr.io/tim/app:${{ github.sha }}
+```
+
+## Tag yang Dihasilkan
+
+| Tag | Tujuan |
+|---|---|
+| `sha-<commit>` | Traceability, dipakai produksi |
+| `1.4.2` | Rilis resmi |
+| `staging` | Menunjuk build terakhir yang lolos staging |
+| `latest` | Kenyamanan lokal, bukan jaminan produksi |
+
+## Deploy dan Verifikasi
+
+```bash
+docker pull ghcr.io/tim/app:${GIT_SHA}
+docker run -d --name app-baru \
+  --health-cmd "curl -fsS localhost:8080/health || exit 1" \
+  -p 8081:80 ghcr.io/tim/app:${GIT_SHA}
+
+# smoke test
+curl -fsS http://localhost:8081/health
+```
+
+Jika gagal, hentikan `app-baru` dan biarkan versi lama tetap melayani traffic.
+
+<div class="note">💡 Jangan simpan kredensial registry di file compose atau Dockerfile. Gunakan secrets CI dan beri hak tulis hanya pada repository yang diperlukan.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# ringkasan alur CI/CD Docker:
+# 1. commit 
+# 2. docker build --target test
+# 3. docker run --rm app:test npm test
+# 4. docker build -t app:$GIT_SHA .
+# 5. docker login --password-stdin
+# 6. docker push
+# 7. deploy + smoke test`}</code></pre>

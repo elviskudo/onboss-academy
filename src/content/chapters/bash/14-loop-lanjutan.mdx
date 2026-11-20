@@ -1,0 +1,131 @@
+---
+"title": "Gelung Lanjutan"
+"description": "C-style for, until, break, continue, serta loop dengan read dan find"
+"order": 14
+"quiz":
+- "q": "Bentuk for ala C di Bash adalah…"
+  "options":
+  - "for i in 0..5"
+  - "for ((i=0; i&lt;5; i++))"
+  - "for(let i=0)"
+  - "loop i=0 to 5"
+  "answer": 1
+  "explain": "Kurung kurung ganda dipakai untuk ekspresi aritmetika."
+- "q": "Perulangan until berjalan selama kondisi…"
+  "options":
+  - "Benar"
+  - "Bernilai 0"
+  - "Salah"
+  - "Tidak berubah"
+  "answer": 2
+  "explain": "Until adalah kebalikan dari while."
+- "q": "Perintah untuk keluar dari loop adalah…"
+  "options":
+  - "exit"
+  - "stop"
+  - "return 1"
+  - "break"
+  "answer": 3
+  "explain": "exit menghentikan seluruh skrip, bukan hanya loop."
+- "q": "Perintah untuk lompat ke iterasi berikutnya adalah…"
+  "options":
+  - "continue"
+  - "next"
+  - "skip"
+  - "goto"
+  "answer": 0
+  "explain": "continue melewati sisa badan loop."
+- "q": "Cara membaca file baris per baris adalah…"
+  "options":
+  - "for baris in file"
+  - "while read -r baris; do ... done &lt; file"
+  - "cat file | read"
+  - "read file"
+  "answer": 1
+  "explain": "-r mencegah backslash diartikan sebagai escape."
+"example":
+  "code": "#!/usr/bin/env bash\nfor ((i=1; i&lt;=5; i++)); do\n  echo \"Hitungan $i\"\ndone\n\nn=0\nuntil [ \"$n\" -ge 3 ]; do\n  echo \"n=$n\"\n  ((n++))\ndone\n\nwhile read -r baris; do\n  [ -z \"$baris\" ] && continue\n  echo \"Baris: $baris\"\ndone &lt; data.txt\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Tiga Bentuk Gelung
+
+```bash
+#!/usr/bin/env bash
+for ((i=1; i<=5; i++)); do
+  echo "Hitungan $i"
+done
+
+n=0
+until [ "$n" -ge 3 ]; do
+  echo "n=$n"
+  ((n++))
+done
+
+while read -r baris; do
+  [ -z "$baris" ] && continue
+  echo "Baris: $baris"
+done < data.txt
+```
+
+| Bentuk | Kapan dipakai |
+|---|---|
+| `for x in daftar` | iterasi atas nilai yang sudah ada |
+| `for ((...))` | iterasi dengan indeks numerik |
+| `while` / `until` | jumlah iterasi belum diketahui |
+
+## Aritmetika
+
+```bash
+((i++))         # naikkan i
+i=$((i + 2))    # tambah 2
+(( total += i ))
+```
+
+Ekspresi `((...))` menghasilkan status 0 bila hasilnya bukan nol.
+
+## Membaca Berkas
+
+```bash
+while IFS= read -r baris; do
+  printf '%s\n' "$baris"
+done < data.txt
+```
+
+`IFS=` mencegah penghapusan spasi awal/akhir, dan `-r` menjaga backslash tetap literal.
+
+## Break dan Continue
+
+```bash
+for n in 1 2 3 4 5; do
+  [ "$n" -eq 3 ] && continue
+  [ "$n" -eq 5 ] && break
+  echo "$n"
+done
+```
+
+Output: 1, 2, 4. `break` menghentikan loop, `continue` hanya melewati iterasi saat ini.
+
+<div class="note">💡 Hindari `cat file | while read ...` bila kamu perlu mengubah variabel di dalam loop — pipeline membuat subshell sehingga perubahan hilang. Pakai redireksi `< file`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+for ((i=1; i&lt;=5; i++)); do
+  echo "Hitungan $i"
+done
+
+n=0
+until [ "$n" -ge 3 ]; do
+  echo "n=$n"
+  ((n++))
+done
+
+while read -r baris; do
+  [ -z "$baris" ] && continue
+  echo "Baris: $baris"
+done &lt; data.txt`} />

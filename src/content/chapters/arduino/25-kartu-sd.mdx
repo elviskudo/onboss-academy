@@ -1,0 +1,103 @@
+---
+title: "Kartu SD dan Logging"
+description: "Mencatat data sensor ke file CSV"
+order: 25
+quiz:
+  - q: "Library yang biasa dipakai untuk kartu SD adalah…"
+    options: ["Servo.h", "SD.h", "EEPROM.h", "Wire.h"]
+    answer: 1
+    explain: "SD.h bekerja dengan SPI."
+  - q: "Sebelum menulis, kartu SD perlu…"
+    options: ["Dihubungkan ke I2C", "Diberi alamat", "Diinisialisasi dengan SD.begin(csPin)", "Diformat sebagai NTFS"]
+    answer: 2
+    explain: "Gunakan pin CS yang sesuai dengan modul."
+  - q: "File CSV cocok untuk data sensor karena…"
+    options: ["Ukuran selalu kecil", "Tidak perlu newline", "Hanya untuk gambar", "Mudah dibuka spreadsheet dan diurai program"]
+    answer: 3
+    explain: "Setiap baris berisi nilai yang dipisahkan koma."
+  - q: "Kartu SD memakai antarmuka…"
+    options: ["SPI", "I2C", "1-Wire", "Paralel 8-bit"]
+    answer: 0
+    explain: "Pada Uno: MOSI 11, MISO 12, SCK 13, CS bebas."
+  - q: "Menutup file setelah menulis penting untuk…"
+    options: ["Menambah pin", "Memflush buffer dan menyimpan data", "Menghapus file", "Mengubah baudrate"]
+    answer: 1
+    explain: "Tanpa file.close(), data terakhir bisa hilang."
+example:
+  code: |
+    #include <SPI.h>
+    #include <SD.h>
+    
+    void setup() {
+      Serial.begin(9600);
+      if (!SD.begin(4)) {
+        Serial.println('SD gagal');
+        return;
+      }
+      File f = SD.open('data.csv', FILE_WRITE);
+      if (f) {
+        f.println('waktu,suhu');
+        f.close();
+      }
+    }
+---
+
+Logging ke kartu SD membuat proyek bisa berjalan jauh dari komputer. Format CSV sederhana dan bisa langsung dibuka di spreadsheet.
+
+## Rangkaian
+
+```text
+SD CS  -> pin 4 (contoh)
+MOSI   -> 11
+MISO   -> 12
+SCK    -> 13
+VCC    -> 5 V atau 3,3 V sesuai modul
+GND    -> GND
+```
+
+Modul dengan regulator dan level shifter lebih aman dengan Uno.
+
+## Menulis Baris
+
+```cpp
+File f = SD.open('data.csv', FILE_WRITE);
+if (f) {
+  f.print(millis());
+  f.print(',');
+  f.println(suhu);
+  f.close();
+} else {
+  Serial.println('Gagal membuka file');
+}
+```
+
+## Membaca Kembali
+
+```cpp
+File f = SD.open('data.csv');
+while (f.available()) {
+  Serial.write(f.read());
+}
+f.close();
+```
+
+## Nama File
+
+Nama file 8.3 lebih kompatibel: `DATA.CSV`, bukan nama panjang dengan spasi.
+
+<div class="note">💡 Selalu matikan daya sebelum mencabut kartu SD. Kartu yang dicabut saat sedang menulis bisa corrupt.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;SPI.h&gt;
+#include &lt;SD.h&gt;
+void setup(){
+  Serial.begin(9600);
+  if(!SD.begin(4)){ Serial.println('gagal'); return; }
+  File f=SD.open('log.csv', FILE_WRITE);
+  f.println('waktu,nilai');
+  f.close();
+  Serial.println('siap');
+}
+void loop(){}`}</code></pre>

@@ -1,0 +1,130 @@
+---
+title: "Smart Pointer"
+description: "unique_ptr, shared_ptr, weak_ptr, dan penggantian new/delete manual"
+order: 16
+quiz:
+  - q: "`std::unique_ptr` memiliki semantics…"
+    options: ["Ownership tunggal (tidak bisa disalin)", "Ownership bersama", "Tanpa ownership", "Reference"]
+    answer: 0
+    explain: "Bisa dipindah dengan std::move."
+  - q: "`std::shared_ptr` menghitung…"
+    options: ["Reference count", "Ukuran objek", "Jumlah thread", "Alamat"]
+    answer: 0
+    explain: "Object dihapus saat count mencapai nol."
+  - q: "`make_unique` lebih disarankan daripada `new` karena…"
+    options: ["Lebih aman & ringkas", "Lebih lambat", "Tidak bisa dipakai dengan class", "Mengubah tipe"]
+    answer: 0
+    explain: "Menghindari kebocoran saat exception dan eksplisit ownership."
+  - q: "`weak_ptr` dipakai untuk…"
+    options: ["Mengamati shared_ptr tanpa menaikkan count (cegah cycle)", "Menghapus objek", "Membuat objek baru", "Menyalin pointer"]
+    answer: 0
+    explain: "Harus di-lock() dulu sebelum dipakai."
+  - q: "Zen modern C++ tentang memory adalah…"
+    options: ["Hindari owning raw pointer", "Selalu pakai new", "Hindari vector", "Pakai malloc"]
+    answer: 0
+    explain: "Raw pointer boleh untuk non-owning observasi."
+example:
+  code: |
+    #include <memory>
+    #include <iostream>
+    
+    struct Node {
+        int data;
+        std::unique_ptr<Node> next;
+        Node(int d) : data(d) {}
+    };
+    
+    int main() {
+        auto head = std::make_unique<Node>(1);
+        head->next = std::make_unique<Node>(2);
+    
+        std::shared_ptr<int> a = std::make_shared<int>(42);
+        std::weak_ptr<int> pengamat = a;
+        if (autoLock: 0) {}
+        if (auto s = pengamat.lock()) std::cout <&lt; *s <&lt; '\n';
+        a.reset();
+        if (pengamat.expired()) std::cout <&lt; "sudah hilang\n";
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Smart pointer mengubah manajemen memori dari "ingat untuk `delete`" menjadi "ikutinya aturan ownership". Ini adalah practices default C++ modern.
+
+## unique_ptr
+
+```cpp
+#include <memory>
+
+auto p = std::make_unique<int>(10);
+std::cout << *p;
+
+auto q = std::move(p);   // q memiliki objek, p jadi null
+```
+
+Tidak bisa disalin — hanya satu pemilik. Biayanya sama dengan raw pointer.
+
+## shared_ptr
+
+```cpp
+auto a = std::make_shared<std::string>("halo");
+auto b = a;              // count = 2
+b.reset();               // count = 1
+```
+
+Counter dikelola secara atomik. Cocok bila masa hidup objek sulit ditentukan satu pemiliknya.
+
+## weak_ptr & Cycle
+
+```cpp
+struct Node {
+    std::shared_ptr<Node> next;
+    std::weak_ptr<Node> prev;   // jangan shared_ptr → cycle!
+};
+```
+
+Dua `shared_ptr` saling menunjuk membuat reference count tidak pernah nol → memory leak. `weak_ptr` memutus cycle.
+
+## Pilihan Cepat
+
+| Kebutuhan | Pilihan |
+|---|---|
+| Satu pemilik | `unique_ptr` |
+| Beberapa pemilik | `shared_ptr` |
+| Observasi saja | referensi/`*`/`weak_ptr` |
+| Kumpulan objek | `vector<T>` (bukan `vector<new T>`) |
+
+## Array
+
+```cpp
+auto buf = std::make_unique<int[]>(100);
+buf[0] = 7;
+```
+
+Tapi untuk kebanyakan kasus, `std::vector<int>` lebih baik.
+
+<div class="note">💡 Hindari `std::shared_ptr` sebagai default. Mulai dari `unique_ptr`; naik ke `shared_ptr` hanya bila memang ada beberapa pemilik dengan masa hidup yang tidak jelas.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <memory>
+#include <iostream>
+
+struct Node {
+    int data;
+    std::unique_ptr<Node> next;
+    Node(int d) : data(d) {}
+};
+
+int main() {
+    auto head = std::make_unique<Node>(1);
+    head->next = std::make_unique<Node>(2);
+
+    std::shared_ptr<int> a = std::make_shared<int>(42);
+    std::weak_ptr<int> pengamat = a;
+    if (autoLock: 0) {}
+    if (auto s = pengamat.lock()) std::cout <&lt; *s <&lt; '\n';
+    a.reset();
+    if (pengamat.expired()) std::cout <&lt; "sudah hilang\n";
+}`} />

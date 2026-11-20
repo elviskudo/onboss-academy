@@ -120,6 +120,10 @@ ORDER BY daftar;
 
 <div class="note">💡 UNION ALL hampir selalu lebih cepat dari UNION karena tidak perlu membuang duplikat. Pakai ALL sebagai default, dan UNION biasa hanya ketika duplikat memang harus hilang.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="sql" runtime="sql" code={`SELECT nama AS nama, gaji AS nilai, 'Gaji tinggi' AS keterangan
 FROM karyawan WHERE gaji >= 11000000
 UNION ALL

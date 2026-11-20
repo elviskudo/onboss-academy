@@ -1,0 +1,113 @@
+---
+title: "z-index & Overflow"
+description: "Mengatur urutan tumpukan elemen dan perilaku konten yang meluap"
+order: 20
+quiz:
+  - q: "Nilai z-index lebih besar berarti…"
+    options: ["Lebih belakang", "Lebih depan", "Lebih transparan", "Tidak berpengaruh"]
+    answer: 1
+    explain: "Di dalam stacking context yang sama, nilai besar berada di atas."
+  - q: "`overflow: hidden` akan…"
+    options: ["Menambah scrollbar", "Memotong konten berlebih", "Memperbesar elemen", "Menggeser konten"]
+    answer: 1
+    explain: "Konten di luar area dipotong dan tidak bisa digulir."
+  - q: "`overflow: auto` menambah scrollbar…"
+    options: ["Selalu", "Hanya saat konten meluap", "Tidak pernah", "Hanya di sumbu X"]
+    answer: 1
+    explain: "Auto secara cerdas muncul saat diperlukan."
+  - q: "`overflow-x: hidden` memotong…"
+    options: ["Hanya arah horizontal", "Hanya vertikal", "Keduanya", "Tidak ada"]
+    answer: 0
+    explain: "Akhiran -x membatasi sumbu horizontal saja."
+  - q: "Stacking context baru bisa dibuat oleh…"
+    options: ["opacity &lt; 1", "transform", "filter", "Semua jawaban benar"]
+    answer: 3
+    explain: "Beberapa properti seperti opacity, transform, filter, dan position+z-index menciptakan konteks baru."
+example:
+  code: |
+    .induk { position: relative; z-index: 1; }
+    .modal { position: fixed; inset: 0; z-index: 100; }
+    .kotak { overflow: auto; max-height: 120px; }
+    .potong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Dua konsep ini sering muncul bersama saat membangun UI bertumpuk: **z-index** menentukan siapa di depan, **overflow** menentukan apa yang terjadi saat isi terlalu besar.
+
+## Tumpukan dan Stacking Context
+
+```css
+.latar   { position: relative; z-index: 1; }
+.konten  { position: relative; z-index: 2; }
+.tooltip { position: absolute; z-index: 10; }
+```
+
+Tiga aturan penting:
+
+1. `z-index` hanya bekerja pada elemen dengan `position` selain `static`, atau pada flex/grid item.
+2. Nilai bisa negatif (misalnya `z-index: -1` untuk latar di belakang konten).
+3. Setiap **stacking context** bersifat mandiri — anak tidak bisa "menembus" konteks induknya.
+
+```css
+.induk { opacity: 0.99; }     /* tanpa sadar membuat context baru */
+.anak  { z-index: 99999; }    /* tetap kalah dari elemen di context atas */
+```
+
+Properti yang diam-diam membuat context baru: `opacity` &lt; 1, `transform`, `filter`, `backdrop-filter`, `isolation: isolate`, `mix-blend-mode`, dan `position: fixed`.
+
+## Nilai Overflow
+
+| Nilai | Perilaku |
+|-------|----------|
+| `visible` | Default, konten boleh keluar |
+| `hidden` | Dipotong, tanpa scrollbar |
+| `scroll` | Scrollbar selalu tampil |
+| `auto` | Scrollbar muncul saat perlu |
+| `clip` | Mirip hidden, tapi tidak bisa discroll programatik |
+
+Bisa dipisah per sumbu: `overflow-x`, `overflow-y`.
+
+```css
+.panel {
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* hentikan chain scroll ke halaman */
+}
+```
+
+## Teks Terpotih Elegan
+
+```css
+.judul-panjang {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
+}
+```
+
+Kombinasi ini mengganti akhiran teks dengan `…` — sangat berguna pada kartu dan tabel.
+
+## Overflow sebagai Clearfix Tidak Langsung
+
+`overflow: hidden` pernah dipakai untuk "membersihkan" float, tapi efek sampingnya memotong dropdown. Sekarang lebih baik pakai `display: flow-root` pada induk.
+
+<div class="note">💡 `overflow: hidden` pada `<body>` sering dipakai saat modal terbuka supaya halaman tidak ikut bergulir. Simpan nilai scroll sebelumnya agar bisa dikembalikan saat modal ditutup.</div>
+
+## Di Dunia Nyata
+
+- Modal dan dropdown memakai z-index bertingkat: overlay 100, dialog 110, tooltip 120.
+- Kolom tabel dengan teks panjang memakai ellipsis.
+- Panel log memakai `overflow-y: auto` agar riwayat bisa digulir mandiri.
+- Karousel memotong slide di luar area dengan `overflow: hidden`.
+
+## Try it Yourself
+
+Ubah `overflow-y` menjadi `hidden` atau hapus `z-index` badge untuk melihat efeknya.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; padding: 16px; }
+.kotak { position: relative; background: #EEF2FF; padding: 16px; border-radius: 8px; }
+.badge { position: absolute; top: -10px; right: -10px; z-index: 5; background: #DC2626; color: white; padding: 4px 10px; border-radius: 999px; }
+.panel { max-height: 80px; overflow-y: auto; background: #F9FAFB; border: 1px solid #E5E7EB; padding: 8px; margin-top: 24px; }
+.potong { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #FEF3C7; padding: 6px; margin-top: 12px; }`} />

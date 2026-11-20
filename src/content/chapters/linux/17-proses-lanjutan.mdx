@@ -1,0 +1,118 @@
+---
+title: 'Manajemen Proses Lanjutan: nice, jobs, dan sinyal'
+description: Mengontrol prioritas, proses latar belakang, dan sinyal dalam sesi shell.
+order: 17
+quiz:
+- q: Perintah untuk menjalankan proses di latar belakang adalah…
+  options:
+  - bg perintah
+  - perintah &
+  - perintah @
+  - perintah ||
+  answer: 1
+  explain: Ampersand di akhir membuat proses berjalan background.
+- q: Untuk melihat proses latar belakang dalam shell gunakan…
+  options:
+  - top
+  - fg
+  - jobs
+  - ps -a
+  answer: 2
+  explain: jobs hanya melihat proses dari sesi shell saat ini.
+- q: Perintah fg berfungsi untuk…
+  options:
+  - Menghentikan proses
+  - Mengubah prioritas
+  - Melihat log
+  - Membawa proses background ke foreground
+  answer: 3
+  explain: Gunakan `%1` untuk memilih job pertama.
+- q: Sinyal untuk menghentikan proses secara paksa adalah…
+  options:
+  - SIGKILL (9)
+  - SIGTERM (15)
+  - SIGHUP (1)
+  - SIGSTOP (19)
+  answer: 0
+  explain: SIGKILL tidak bisa ditangkap atau diabaikan proses.
+- q: Perintah nice mengatur…
+  options:
+  - Prioritas jaringan
+  - Prioritas penjadwalan CPU
+  - Ukuran memori
+  - Permission file
+  answer: 1
+  explain: Nilai nice lebih tinggi berarti prioritas lebih rendah.
+example:
+  code: 'sleep 300 &
+
+    jobs
+
+    fg %1
+
+    Ctrl+Z
+
+    bg %1
+
+    kill -TERM %1
+
+    nice -n 10 ./scrip-berat.sh
+
+    '
+---
+
+
+Proses tidak selalu berjalan di depan mata. Shell menyediakan kontrol untuk **foreground**, **background**, dan prioritas.
+
+## Job Control
+
+```bash
+sleep 300 &        # jalan di background
+jobs               # lihat daftar job
+fg %1              # bawa ke depan
+Ctrl+Z             # jeda proses depan
+bg %1              # lanjutkan di background
+disown %1          # lepas dari sesi shell
+```
+
+| Simbol | Arti |
+|---|---|
+| `&` | background |
+| `%1` | job nomor 1 |
+| Ctrl+C | kirim SIGINT |
+| Ctrl+Z | kirim SIGTSTP |
+
+## Sinyal
+
+```bash
+kill -l                  # daftar sinyal
+kill -TERM 1234          # minta proses berhenti rapi
+kill -KILL 1234          # paksa
+killall nginx
+pkill -f "python app.py"
+```
+
+```text
+SIGHUP  (1)  terminal ditutup
+SIGINT  (2)  Ctrl+C
+SIGTERM (15) permintaan berhenti
+SIGKILL (9)  paksa, tidak bisa ditangkap
+```
+
+<div class="note">💡 Selalu coba SIGTERM lebih dulu. SIGKILL tidak memberi proses kesempatan menutup file atau menyimpan state.</div>
+
+## Nice
+
+```bash
+nice -n 10 ./backup.sh       # prioritas lebih rendah
+renice -n 5 -p 1234          # ubah proses berjalan
+ps -o pid,ni,cmd -p 1234
+```
+
+Rentang nice umum `-20` (paling prioritas) sampai `19` (paling rendah). Proses biasa hanya bisa menaikkan nilai nice.
+
+## Praktik Baik
+
+- Gunakan `nohup perintah &` agar proses tetap hidup setelah logout.
+- Simpan PID ke file bila perlu menghentikan kemudian.
+- Pantau dengan `top` atau `htop` saat mengubah prioritas.

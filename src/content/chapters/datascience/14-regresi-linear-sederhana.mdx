@@ -1,0 +1,90 @@
+---
+title: "Regresi Linear Sederhana"
+description: "garis regresi, slope, intercept, prediksi, residual, dan R²"
+order: 14
+quiz:
+  - q: "Persamaan regresi linear sederhana adalah…"
+    options: ["y = 1/x", "y = a + bx", "y = a × b", "y = x²"]
+    answer: 1
+    explain: "a = intercept, b = slope."
+  - q: "Slope positif berarti…"
+    options: ["Tidak ada hubungan", "y konstan", "y naik saat x naik", "y turun saat x naik"]
+    answer: 2
+    explain: "Arah kemiringan garis."
+  - q: "Residual adalah…"
+    options: ["Nilai x", "Nilai y rata-rata", "Slope", "Selisih nilai asli dan prediksi"]
+    answer: 3
+    explain: "e = y - ŷ."
+  - q: "R² mengukur…"
+    options: ["Error absolut", "Proporsi variasi yang dijelaskan model", "Jumlah data", "Nilai maksimum y"]
+    answer: 1
+    explain: "Mendekati 1 berarti model menjelaskan sebagian besar variasi."
+  - q: "Prediksi di luar rentang data disebut…"
+    options: ["Regresi", "Residual", "Ekstrapolasi", "Interpolasi"]
+    answer: 2
+    explain: "Ekstrapolasi lebih berisiko karena pola mungkin berubah."
+example:
+  code: |
+    x=[1,2,3,4,5]; y=[2,4,5,4,5]
+    n=len(x)
+    b=(n*sum(a*c for a,c in zip(x,y))-sum(x)*sum(y))/(n*sum(a*a for a in x)-sum(x)**2)
+    a=sum(y)/n-b*sum(x)/n
+    print("y =",round(a,2),"+",round(b,2),"x")
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Ide Dasar
+
+Regresi linear mencari garis terbaik yang melewati titik-titik data. "Terbaik" di sini berarti jumlah kuadrat residual paling kecil — metode **least squares**.
+
+## Rumus Slope dan Intercept
+
+```python
+x = [1, 2, 3, 4, 5]
+y = [2, 4, 5, 4, 5]
+n = len(x)
+
+b = (n*sum(xi*yi for xi, yi in zip(x, y)) - sum(x)*sum(y)) /     (n*sum(xi*xi for xi in x) - sum(x)**2)
+a = sum(y)/n - b*sum(x)/n
+
+print(f"y = {a:.2f} + {b:.2f}x")
+```
+
+## Prediksi dan Residual
+
+```python
+prediksi = [a + b*xi for xi in x]
+residual = [yi - pi for yi, pi in zip(y, prediksi)]
+print(prediksi)
+print(residual)
+```
+
+Residual yang tersebar acak di sekitar nol adalah tanda model masuk akal. Kalau ada pola (misalnya U-shaped), hubungannya tidak linear.
+
+## R²
+
+```python
+rata = sum(y)/n
+sst = sum((yi-rata)**2 for yi in y)
+sse = sum(e*e for e in residual)
+r2 = 1 - sse/sst
+print(r2)
+```
+
+R² tinggi tidak otomatis berarti model bagus — bisa saja karena terlalu banyak parameter (overfitting).
+
+<div class="note">💡 Regresi menunjukkan asosiasi, bukan kausalitas. Es krim dan tenggelam sama-sama naik di musim panas, tetapi es krim tidak menyebabkan tenggelam.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`x = [1, 2, 3, 4, 5]
+y = [2, 4, 5, 4, 6]
+n = len(x)
+b = (n*sum(a*c for a,c in zip(x,y)) - sum(x)*sum(y)) / (n*sum(a*a for a in x) - sum(x)**2)
+a = sum(y)/n - b*sum(x)/n
+pred = [a + b*xi for xi in x]
+print("Model: y = %.3f + %.3fx" % (a, b))
+print("Prediksi:", [round(p, 2) for p in pred])`} />

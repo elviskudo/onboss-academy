@@ -1,0 +1,86 @@
+---
+title: "Operator Query MongoDB"
+description: "perbandingan $eq/$ne/$gt/$gte/$lt/$lte, logika $and/$or/$nor, $in/$nin, $exists"
+order: 17
+quiz:
+  - q: "Operator \"lebih besar dari\" adalah…"
+    options: ["$more", "$gt", "$lt", "$ge"]
+    answer: 1
+    explain: "$gt = greater than."
+  - q: "Operator $ne berarti…"
+    options: ["Lebih kecil", "Ada", "Sama dengan", "Tidak sama dengan"]
+    answer: 3
+    explain: "$ne = not equal."
+  - q: "Operator untuk mencocokkan salah satu dari beberapa nilai adalah…"
+    options: ["$any", "$oneOf", "$has", "$in"]
+    answer: 3
+    explain: "$in: [nilai1, nilai2] cocok dengan salah satu elemen array."
+  - q: "$or menggabungkan syarat dengan logika…"
+    options: ["NOT", "AND", "OR", "XOR"]
+    answer: 2
+    explain: "$or benar bila salah satu ekspresi di dalam array benar."
+  - q: "$exists: true digunakan untuk mencari dokumen yang…"
+    options: ["Field-nya null", "Field-nya array", "Memiliki field tersebut", "Tidak memiliki field"]
+    answer: 2
+    explain: "$exists memeriksa keberadaan field, bukan nilainya."
+example:
+  code: |
+    db.produk.find({harga: {$gte: 100000, $lte: 500000}})
+    db.produk.find({$or: [{stok: 0}, {aktif: false}]})
+    db.produk.find({kategori: {$in: ["Elektronik", "Furniture"]}, berat: {$exists: true}})
+---
+
+## Operator Perbandingan
+
+| Operator | Makna | Contoh |
+| --- | --- | --- |
+| `$eq` | sama dengan | `{harga: {$eq: 100}}` |
+| `$ne` | tidak sama | `{status: {$ne: "lunas"}}` |
+| `$gt` | lebih besar | `{nilai: {$gt: 80}}` |
+| `$gte` | lebih besar atau sama | `{nilai: {$gte: 80}}` |
+| `$lt` | lebih kecil | `{stok: {$lt: 5}}` |
+| `$lte` | lebih kecil atau sama | `{stok: {$lte: 5}}` |
+
+Bentuk `{nilai: 80}` adalah singkatan dari `{nilai: {$eq: 80}}`.
+
+## Logika
+
+```javascript
+db.produk.find({ $and: [{ stok: { $gt: 0 } }, { aktif: true }] })
+db.produk.find({ $or: [{ stok: 0 }, { aktif: false }] })
+db.produk.find({ $nor: [{ harga: { $gt: 1000000 } }, { stok: 0 }] })
+```
+
+`$and` sering bisa disingkat dengan beberapa field sekaligus. `$or` wajib berupa array ekspresi.
+
+## Keanggotaan
+
+```javascript
+db.produk.find({ kategori: { $in: ["Elektronik", "Furniture"] } })
+db.produk.find({ kategori: { $nin: ["Makanan"] } })
+```
+
+Kalau field berupa array, `$in` mencocokkan salah satu elemennya.
+
+## Keberadaan dan Tipe
+
+```javascript
+db.produk.find({ berat: { $exists: true } })
+db.produk.find({ harga: { $type: "int" } })
+```
+
+`null` dan "field tidak ada" adalah dua hal berbeda. `{field: null}` cocok dengan keduanya, sedangkan `$exists` membedakannya.
+
+<div class="note">💡 Operator query berbeda dengan **operator update**. `$inc` hanya dikenal di dalam `$set`-style update, bukan di `find()`. Mencampurnya akan menghasilkan error.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_op
+db.produk.insertMany([
+  {nama: "A", harga: 50000, stok: 0},
+  {nama: "B", harga: 250000, stok: 7},
+  {nama: "C", harga: 900000, stok: 2}
+])
+db.produk.find({$or: [{stok: 0}, {harga: {$gt: 800000}}]}, {nama: 1, _id: 0})`}</code></pre>

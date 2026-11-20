@@ -1,0 +1,82 @@
+---
+title: "Etika dan Privasi Data"
+description: "PII, anonimisasi, consent, bias model, dan tanggung jawab analis"
+order: 20
+quiz:
+  - q: "Contoh data pribadi (PII) adalah…"
+    options: ["Kode produk", "Nama + nomor telepon", "Rata-rata nilai", "Jumlah transaksi"]
+    answer: 1
+    explain: "PII mengidentifikasi individu."
+  - q: "Anonimisasi bertujuan…"
+    options: ["Mempercepat query", "Menambah kolom", "Menghapus identitas yang bisa melacak orang", "Mempercantik grafik"]
+    answer: 2
+    explain: "Data tetap berguna tanpa membuka identitas."
+  - q: "Consent berarti…"
+    options: ["Jumlah sampel", "Rata-rata data", "Format file", "Izin pengguna atas penggunaan datanya"]
+    answer: 3
+    explain: "Tanpa dasar yang sah, pengolahan data berisiko."
+  - q: "Bias pada data dapat menyebabkan…"
+    options: ["Tidak ada masalah", "Model diskriminatif", "Data lebih bersih", "Query lebih cepat"]
+    answer: 1
+    explain: "Model mempelajari bias historis."
+  - q: "Tanggung jawab analis meliputi…"
+    options: ["Mengubah data agar hasil bagus", "Menghapus semua catatan", "Menjaga kerahasiaan dan jujur melaporkan keterbatasan", "Menyembunyikan error"]
+    answer: 2
+    explain: "Integritas lebih penting daripada hasil yang terlihat menarik."
+example:
+  code: |
+    data=[{"nama":"Ana","kota":"Jakarta","nilai":88}]
+    amat=[{"id":hash(r["nama"])%10000,"kota":r["kota"],"nilai":r["nilai"]} for r in data]
+    print(amat)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Kenapa Etika Masuk Materi Data
+
+Analis memegang data orang sungguhan. Kesalahan kecil bisa merugikan individu, bukan hanya merusak grafik.
+
+## Jenis Data Sensitif
+
+| Jenis | Contoh |
+| --- | --- |
+| Identitas | nama, NIK, email |
+| Lokasi | alamat, koordinat |
+| Finansial | saldo, kartu kredit |
+| Kesehatan | diagnosis, riwayat obat |
+
+## Anonimisasi Sederhana
+
+```python
+data = [
+    {"nama": "Ana", "kota": "Jakarta", "nilai": 88},
+    {"nama": "Budi", "kota": "Bandung", "nilai": 92},
+]
+
+amat = [
+    {"id": i, "kota": r["kota"], "nilai": r["nilai"]}
+    for i, r in enumerate(data, 1)
+]
+print(amat)
+```
+
+Menghapus nama saja sering tidak cukup. Kombinasi kota + tanggal lahir + kode pos bisa mengidentifikasi seseorang.
+
+## Bias dan Kejelasan
+
+- Laporkan bagaimana data dikumpulkan.
+- Sebutkan kelompok yang mungkin tidak terwakili.
+- Jangan menghapus hasil yang tidak sesuai harapan tanpa alasan.
+
+<div class="note">💡 Tanya dulu: "Apakah orang yang datanya saya pakai akan setuju bila saya melakukan ini?" Kalau ragu, minta izin atau ubah desain analisis.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [
+    {"nama": "Ana", "kota": "Jakarta", "nilai": 88},
+    {"nama": "Budi", "kota": "Bandung", "nilai": 92},
+]
+amat = [{"id": i, "kota": r["kota"], "nilai": r["nilai"]} for i, r in enumerate(data, 1)]
+print("Tanpa identitas:", amat)`} />

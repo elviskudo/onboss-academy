@@ -1,0 +1,77 @@
+---
+title: "Warna dalam HTML"
+description: "Menulis warna dengan nama, HEX, RGB, dan HSL serta menerapkannya lewat atribut style"
+order: 15
+quiz:
+  - q: "Format warna `#ff0000` disebut…"
+    options: ["RGB", "HEX", "HSL", "Nama warna"]
+    answer: 1
+    explain: "HEX memakai 6 digit heksadesimal: #RRGGBB."
+  - q: "Penulisan RGB yang benar adalah…"
+    options: ["rgb(255, 0, 0)", "rgb(255 0 0 / 1)", "color(255,0,0)", "red(255)"]
+    answer: 0
+    explain: "Format klasik rgb(merah, hijau, biru) dengan nilai 0–255."
+  - q: "Warna `rgba(255, 0, 0, 0.5)` memiliki nilai alpha…"
+    options: ["Tidak transparan", "Setengah transparan", "Benar-benar transparan", "Warna merah muda"]
+    answer: 1
+    explain: "Alpha 0.5 berarti 50% transparan."
+  - q: "Cara mewarnai teks dalam HTML tanpa file CSS adalah…"
+    options: ["<font color='red'>", "style='color:red' pada elemen", "<color>red</color>", "color='red' pada body"]
+    answer: 1
+    explain: "Atribut style memakai properti CSS inline. Tag <font> sudah usang."
+  - q: "HSL singkatan dari…"
+    options: ["Hue, Saturation, Lightness", "Hex, Standard, Level", "High, Small, Low", "Horizontal, Vertical, Length"]
+    answer: 0
+    explain: "HSL = Hue (warna), Saturation (kejenuhan), Lightness (kecerahan)."
+example:
+  code: |
+    <p style="color:red">Teks merah dengan HEX.</p>
+    <p style="color:#00FF00">Teks hijau dengan HEX.</p>
+    <p style="color:rgb(0,0,255)">Teks biru dengan RGB.</p>
+    <p style="color:rgba(255,0,0,0.5)">Merah setengah transparan.</p>
+    <p style="background-color:hsl(120,100%,50%)">Latar hijau cerah.</p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Warna di web bisa ditulis dengan beberapa cara. Semua cara berikut menghasilkan warna yang sama, beda hanya pada sintaksnya.
+
+## Cara Menulis Warna
+
+| Cara | Contoh | Keterangan |
+|------|--------|------------|
+| Nama | `red`, `steelblue` | Mudah dibaca, terbatas |
+| HEX | `#FF0000`, `#f00` | Paling umum |
+| RGB | `rgb(255,0,0)` | Nilai 0–255 |
+| RGBA | `rgba(255,0,0,0.5)` | Ada transparansi |
+| HSL | `hsl(0,100%,50%)` | Lebih intuitif |
+
+## Menerapkan Warna
+
+```html
+<p style="color: crimson;">Teks merah.</p>
+<p style="background-color: #f0f0f0;">Latar abu muda.</p>
+```
+
+Atribut `style` disebut **inline CSS**. Untuk proyek nyata, sebaiknya warna ditaruh di file CSS terpisah agar mudah dikelola.
+
+## Memilih Kontras yang Baik
+
+Teks terang di latar terang akan sulit dibaca. Pastikan kontras cukup, terutama untuk aksesibilitas. Misalnya teks `#333` di latar putih lebih nyaman daripada `#ccc` di latar putih.
+
+<div class="note">💡 HSL sangat berguna saat kamu ingin membuat beberapa warna yang masih satu 'keluarga' — cukup ubah nilai lightness-nya.</div>
+
+## Try it Yourself
+
+Ganti warna teks dan latar di bawah ini. Coba juga `hsl(200, 80%, 40%)`.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1 style="color: #E44D26;">Warna di HTML</h1>
+  <p style="color: rgb(40,40,40);">Ini paragraf dengan warna RGB.</p>
+  <p style="background-color: rgba(0,150,255,0.25); padding: 12px;">
+    Latar ini transparan.
+  </p>
+</body>
+</html>`} />

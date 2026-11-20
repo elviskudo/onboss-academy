@@ -1,0 +1,112 @@
+---
+title: Pola Soal Wawancara dan Cara Membicarakannya
+description: Mengubah penyelesaian kode menjadi komunikasi yang jelas saat technical interview.
+order: 24
+quiz:
+- q: Langkah pertama saat menerima soal algoritma adalah…
+  options:
+  - Klarifikasi input, output, dan batasan
+  - Langsung menulis kode
+  - Menebak jawaban
+  - Menanyakan gaji
+  answer: 0
+  explain: Kejelasan batasan sering mengubah solusi yang dibutuhkan.
+- q: Berpikir keras sambil berbicara (think aloud) bertujuan…
+  options:
+  - Menghindari tes
+  - Memberi interviewer gambaran proses berpikir
+  - Mengisi waktu diam
+  - Menyembunyikan kesalahan
+  answer: 1
+  explain: Interviewer menilai cara Anda bernalar, bukan hanya hasil akhir.
+- q: Contoh yang baik untuk menguji solusi adalah…
+  options:
+  - Hanya input besar
+  - Tanpa contoh
+  - Kasus normal, kosong, dan edge case
+  - Hanya angka positif
+  answer: 2
+  explain: Contoh sederhana membantu menemukan bug logika lebih awal.
+- q: Setelah kode jadi, sebaiknya…
+  options:
+  - Langsung berkata selesai
+  - Menutup laptop
+  - Menghapus test case
+  - Ulangi kompleksitas waktu dan ruang
+  answer: 3
+  explain: Analisis kompleksitas adalah bagian dari jawaban.
+- q: Jika stuck, tindakan terbaik adalah…
+  options:
+  - Minta petunjuk kecil sambil jelaskan sudah mencoba apa
+  - Diam sampai waktu habis
+  - Mengarang jawaban
+  - Menyalahkan soal
+  answer: 0
+  explain: Kolaborasi adalah keterampilan yang dinilai dalam wawancara.
+example:
+  code: '1. Pahami: input apa? output apa? batasan berapa?
+
+    2. Contoh: "(123) -> 321"
+
+    3. Ide: retrograde dari akhir
+
+    4. Kode: fungsi kecil, nama jelas
+
+    5. Uji: normal + kosong + duplikat
+
+    6. Analisis: O(n) waktu, O(1) ruang
+
+    '
+---
+
+
+Menguasai algoritma adalah satu hal; **menjelaskannya** adalah hal lain. Wawancara dirancang untuk melihat keduanya.
+
+## Enam Langkah
+
+```text
+1. Klarifikasi   - input, output, batasan
+2. Contoh        - satu kasus sederhana
+3. Ide solusi    - jelaskan sebelum mengetik
+4. Implementasi  - kode bersih dan naming jelas
+5. Pengujian     - kasus normal dan edge case
+6. Kompleksitas  - waktu dan ruang
+```
+
+## Contoh Response
+
+```text
+"Inputnya array integer terurut, outputnya indeks atau -1.
+Saya akan pakai binary search karena datanya terurut.
+Tiap iterasi saya buang setengah ruang pencarian.
+
+Kalau array kosong, langsung return -1.
+Waktunya O(log n), ruangnya O(1)."
+```
+
+Jauh lebih baik daripada langsung menulis `for` tanpa konteks.
+
+## Kategori Soal yang Sering Muncul
+
+| Pola | Contoh |
+|---|---|
+| Array/string | two pointers, sliding window |
+| Hash map | frekuensi, dua jumlah |
+| Tree | traversal, height, BST |
+| Graf | BFS/DFS, shortest path |
+| DP | knapsack, subsequence |
+| Heap | top-K, median streaming |
+| Sorting | custom comparator |
+
+## Kesalahan Umum
+
+- Tidak bertanya apakah input bisa kosong atau duplikat.
+- Terlalu cepat mengoptimasi sebelum solusi benar.
+- Lupa menyebut kompleksitas.
+- Diam terlalu lama tanpa memberi progres.
+
+<div class="note">💡 Interviewer ingin melihat Anda sebagai rekan kerja yang bisa diajak berpikir. Solusi yang salah arah tapi dijelaskan dengan jelas sering lebih bernilai daripada kode benar yang tidak bisa dijelaskan.</div>
+
+## Latihan Efektif
+
+Kerjakan satu soal dengan dua pendekatan, lalu bandingkan. Tulis penjelasan 3 paragraf: masalah, ide, kompleksitas. Kebiasaan itu membangun kejelasan yang sama persis dengan yang dicari di wawancara.

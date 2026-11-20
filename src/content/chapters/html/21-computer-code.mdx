@@ -1,0 +1,82 @@
+---
+title: "Computer Code Elements"
+description: "Elemen khusus untuk menampilkan kode, keyboard, variabel, dan output program"
+order: 21
+quiz:
+  - q: "Elemen untuk potongan kode inline adalah…"
+    options: ["<pre>", "<code>", "<kbd>", "<samp>"]
+    answer: 1
+    explain: "<code> dipakai untuk potongan kode pendek di dalam kalimat."
+  - q: "<pre> berfungsi untuk…"
+    options: ["Menebalkan teks", "Mempertahankan spasi dan baris", "Membuat daftar", "Menyembunyikan teks"]
+    answer: 1
+    explain: "pre = preformatted, cocok untuk blok kode."
+  - q: "Elemen yang menandai input keyboard adalah…"
+    options: ["<kbd>", "<var>", "<samp>", "<code>"]
+    answer: 0
+    explain: "<kbd> menandai tombol yang harus ditekan."
+  - q: "Elemen untuk nama variabel adalah…"
+    options: ["<var>", "<samp>", "<kbd>", "<dfn>"]
+    answer: 0
+    explain: "<var> menandai variabel dalam konteks pemrograman atau matematika."
+  - q: "<samp> dipakai untuk…"
+    options: ["Contoh output dari program", "Kode sumber", "Judul artikel", "Singkatan"]
+    answer: 0
+    explain: "samp = sample output."
+example:
+  code: |
+    <p>Gunakan <code>let x = 10;</code> di JavaScript.</p>
+    <pre><code>{`function halo(nama) {
+      return "Halo " + nama;
+    }`}</code></pre>
+    <p>Tekan <kbd>Ctrl</kbd> + <kbd>S</kbd>.</p>
+    <p>Hasil: <samp>Halo OnBoss</samp></p>
+    <p>Rumus: <var>x</var> + <var>y</var> = <var>z</var></p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTML punya beberapa elemen kecil yang sering terlewat, tapi sangat berguna untuk dokumentasi teknis.
+
+## Daftar Elemen
+
+| Elemen | Kegunaan |
+|--------|----------|
+| `<code>` | Potongan kode |
+| `<pre>` | Blok kode dengan spasi asli |
+| `<kbd>` | Tombol keyboard |
+| `<samp>` | Contoh keluaran program |
+| `<var>` | Nama variabel |
+| `<dfn>` | Istilah yang didefinisikan |
+
+## Menggabungkan pre dan code
+
+```html
+<pre><code>{`for (let i = 0; i &lt; 3; i++) {
+  console.log(i);
+}`}</code></pre>
+```
+
+Perhatikan `<` ditulis `&lt;` supaya browser tidak mengira itu awal tag.
+
+## Kenapa Penting?
+
+Elemen-elemen ini memberi **makna**, bukan sekadar gaya. Pembaca layar bisa menyebut "kode" atau "tombol keyboard" dengan benar, dan mesin pencari lebih paham konteks halaman.
+
+<div class="note">💡 Kalau butuh pewarnaan sintaks (syntax highlighting), gunakan library seperti Prism atau highlight.js di atas elemen <code>&lt;pre&gt;&lt;code&gt;</code>.</div>
+
+## Try it Yourself
+
+Tambahkan satu baris kode di dalam blok `<pre>` lalu perhatikan spasinya tetap terjaga.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Computer Code</h1>
+  <p>Fungsi <code>halo()</code> punya potongan kode.</p>
+  <pre><code>function halo() {
+  return "Halo dunia!";
+}</code></pre>
+  <p>Tekan <kbd>F5</kbd> untuk memuat ulang.</p>
+</body>
+</html>`} />

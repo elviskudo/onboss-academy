@@ -1,0 +1,123 @@
+---
+title: "React dan REST API"
+description: "fetch, loading state, error handling, optimistik update, dan struktur layanan API"
+order: 24
+quiz:
+  - q: "Status loading sebaiknya disimpan…"
+    options: ["Di CSS", "Di URL", "Di state komponen atau hook", "Di localStorage"]
+    answer: 2
+    explain: "Loading adalah bagian dari UI, jadi wajar di state."
+  - q: "Response `res.ok` bernilai false bila…"
+    options: ["Method GET", "Status HTTP di luar 200–299", "JSON kosong", "Request sangat cepat"]
+    answer: 1
+    explain: "fetch tidak melempar error untuk status 404 secara otomatis."
+  - q: "Optimistik update berarti…"
+    options: ["Menunggu server selalu", "Menghapus data", "Mengganti method HTTP", "UI diubah dulu sebelum server merespons"]
+    answer: 3
+    explain: "Perlu rollback bila request gagal."
+  - q: "Lapisan api.js berguna untuk…"
+    options: ["Mengatur routing", "Memusatkan URL dan konfigurasi request", "Menyimpan CSS", "Membuat komponen"]
+    answer: 1
+    explain: "Komponen tidak perlu tahu detail endpoint."
+  - q: "AbortController dipakai untuk…"
+    options: ["Membatalkan request yang sudah usang", "Mengirim header", "Menyimpan token", "Mengubah JSON"]
+    answer: 0
+    explain: "Mencegah response lama menimpa yang baru."
+example:
+  code: |
+    async function ambilProduk(id) {
+      const res = await fetch(`/api/produk/${id}`);
+      if (!res.ok) throw new Error("Gagal memuat produk");
+      return res.json();
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hampir semua aplikasi React modern berbicara dengan API. Kuncinya adalah menjaga komunikasi itu tetap teratur.
+
+## Lapisan API
+
+```js
+// api/produk.js
+const DASAR = "/api";
+
+export async function ambilProduk(id) {
+  const res = await fetch(`${DASAR}/produk/${id}`);
+  if (!res.ok) throw new Error("Gagal memuat produk");
+  return res.json();
+}
+
+export async function simpanProduk(data) {
+  const res = await fetch(`${DASAR}/produk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Gagal menyimpan");
+  return res.json();
+}
+```
+
+## Memakai di Komponen
+
+```jsx
+function Detail({ id }) {
+  const [produk, setProduk] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    ambilProduk(id).then(setProduk).catch((e) => setError(e.message));
+  }, [id]);
+
+  if (error) return <p className="error">{error}</p>;
+  if (!produk) return <p>Memuat…</p>;
+  return <h1>{produk.nama}</h1>;
+}
+```
+
+## Update Optimistik
+
+```jsx
+async function tambahKeranjang(item) {
+  setKeranjang((lama) => [...lama, item]); // tampil lebih dulu
+
+  try {
+    await simpanKeranjang(item);
+  } catch (e) {
+    setKeranjang((lama) => lama.filter((i) => i.id !== item.id)); // rollback
+    setPesan("Gagal menambah ke keranjang");
+  }
+}
+```
+
+## Header dan Autentikasi
+
+```js
+fetch(url, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
+
+Simpan token dengan aman (httpOnly cookie lebih disarankan daripada localStorage untuk data sensitif).
+
+<div class="note">💡 Pisahkan urusan jaringan dari urusan tampilan. Komponen hanya perlu memanggil `ambilProduk()`, bukan tahu alamat endpoint atau format header.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi lapisan API + penanganan error
+function ambilProduk(id) {
+  const data = { 1: { nama: "Kopi" }, 2: { nama: "Roti" } };
+  if (!data[id]) throw new Error("Tidak ditemukan");
+  return data[id];
+}
+
+for (const id of [1, 3]) {
+  try {
+    console.log("Produk:", ambilProduk(id).nama);
+  } catch (e) {
+    console.log("Error:", e.message);
+  }
+}`} />

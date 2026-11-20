@@ -1,0 +1,120 @@
+---
+title: Mengelola Remote dan URL Repositori
+description: Menambah, mengganti, dan memeriksa remote serta strategi fork dan upstream.
+order: 23
+quiz:
+- q: Perintah melihat daftar remote adalah…
+  options:
+  - git remote list
+  - git branch -r
+  - git status --remote
+  - git remote -v
+  answer: 3
+  explain: -v menampilkan URL fetch dan push untuk tiap remote.
+- q: Remote bernama upstream biasanya merujuk ke…
+  options:
+  - Repositori asli tempat fork berasal
+  - Folder lokal
+  - Tag rilis
+  - Editor kode
+  answer: 0
+  explain: Pada alur fork, origin adalah fork Anda, upstream adalah repo sumber.
+- q: Cara mengganti URL remote adalah…
+  options:
+  - git push --url
+  - git remote set-url origin <url>
+  - git remote change origin
+  - git config remote.new
+  answer: 1
+  explain: set-url memperbarui alamat tanpa menghapus remote.
+- q: git fetch berbeda dari git pull karena…
+  options:
+  - pull hanya untuk tag
+  - Tidak ada beda
+  - fetch hanya mengunduh, pull juga menggabungkan
+  - fetch lebih cepat
+  answer: 2
+  explain: fetch aman untuk melihat perubahan tanpa mengubah working tree.
+- q: Perintah menambah remote upstream adalah…
+  options:
+  - git remote set upstream
+  - git branch upstream
+  - git clone upstream
+  - git remote add upstream <url>
+  answer: 3
+  explain: Setelah itu jalankan git fetch upstream secara berkala.
+example:
+  code: 'git remote -v
+
+    git remote add upstream https://github.com/org/asli.git
+
+    git fetch upstream
+
+    git merge upstream/main
+
+    '
+---
+
+
+Remote adalah **alamat repo di tempat lain**, biasanya GitHub, GitLab, atau server internal. Nama defaultnya `origin`.
+
+## Mengelola Remote
+
+```bash
+git remote -v
+git remote add origin https://github.com/user/app.git
+git remote set-url origin git@github.com:user/app.git
+git remote remove upstream
+```
+
+| Perintah | Fungsi |
+|---|---|
+| `git remote -v` | lihat nama dan URL |
+| `git remote add` | tambah remote |
+| `git remote set-url` | ganti alamat |
+| `git remote rename` | ganti nama |
+| `git remote prune` | hapus referensi branch yang sudah hilang |
+
+## Fork dan Upstream
+
+```text
+upstream (repo asli)
+     ↓ fork
+origin (fork Anda)
+     ↓ clone
+lokal
+```
+
+```bash
+git remote add upstream https://github.com/org/proyek.git
+git fetch upstream
+git switch main
+git merge upstream/main
+git push origin main
+```
+
+## Fetch vs Pull
+
+```bash
+git fetch origin        # unduh saja
+git merge origin/main   # gabungkan manual
+git pull origin main    # fetch + merge sekaligus
+```
+
+Banyak tim lebih menyukai `fetch` lalu `rebase` agar lebih sadar akan apa yang masuk.
+
+## SSH vs HTTPS
+
+- **HTTPS** — mudah, tapi perlu credential helper atau token.
+- **SSH** — sekali pasang kunci, nyaman untuk pemakaian harian.
+
+```bash
+ssh-keygen -t ed25519 -C "email@perusahaan.id"
+ssh -T git@github.com
+```
+
+<div class="note">💡 Jalankan `git remote prune origin` secara berkala agar branch yang sudah dihapus di server tidak tetap muncul di `git branch -r`.</div>
+
+## Remote dengan Beberapa URL
+
+Git mendukung push ke beberapa remote sekaligus lewat multiple pushurl, namun ini jarang diperlukan. Lebih aman memakai satu remote utama dan pipeline CI yang menyalin ke mirror.

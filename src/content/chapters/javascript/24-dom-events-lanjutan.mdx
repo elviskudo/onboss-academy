@@ -1,0 +1,144 @@
+---
+title: "DOM Events Lanjutan"
+description: "Event bubbling, delegation, preventDefault, dan event listener modern"
+order: 24
+quiz:
+  - q: "Fase ketika event menjalar dari anak ke induk disebut…"
+    options: ["Capturing", "Bubbling", "Targeting", "Static"]
+    answer: 1
+    explain: "Bubbling adalah fase default setelah target."
+  - q: "`event.preventDefault()` akan…"
+    options: ["Menghentikan event menjalar", "Membatalkan aksi bawaan browser", "Menghapus elemen", "Memblokir klik"]
+    answer: 1
+    explain: "Misalnya mencegah form submit atau link berpindah halaman."
+  - q: "`event.stopPropagation()` berguna untuk…"
+    options: ["Menghentikan event naik ke induk", "Membatalkan submit", "Menghapus listener", "Mengubah target"]
+    answer: 0
+    explain: "Ini menghentikan bubbling/capturing lebih lanjut."
+  - q: "Event delegation memakai prinsip…"
+    options: ["Listener di setiap anak", "Satu listener di induk", "Inline handler", "Timeout"]
+    answer: 1
+    explain: "Event dari anak bubbling ke induk lalu dicek dari event.target."
+  - q: "Opsi `{ once: true }` pada addEventListener berarti…"
+    options: ["Listener hanya jalan sekali", "Listener tidak bisa dihapus", "Event tidak bubble", "Listener jalan terus"]
+    answer: 0
+    explain: "Listener otomatis dilepas setelah pemanggilan pertama."
+example:
+  code: |
+    document.querySelector('#daftar').addEventListener('click', e => {
+      const item = e.target.closest('li');
+      if (!item) return;
+      console.log(item.textContent);
+    });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Event listener yang kamu lihat di chapter 08 baru permulaan. Memahami **alur event** memungkinkan teknik seperti delegation yang jauh lebih efisien.
+
+## Alur Event
+
+Saat kamu mengklik elemen, event melewati tiga fase:
+
+1. **Capturing** — dari `window` turun ke elemen target.
+2. **Target** — di elemen yang diklik.
+3. **Bubbling** — naik lagi ke `window`.
+
+```js
+induk.addEventListener("click", () => console.log("induk"), true);  // capturing
+anak.addEventListener("click", () => console.log("anak"));         // bubbling
+```
+
+Argumen ketiga `true` mengaktifkan capturing. Default-nya `false` (bubbling).
+
+## Membatalkan Aksi
+
+```js
+link.addEventListener("click", e => {
+  e.preventDefault();    // jangan ikuti href
+  e.stopPropagation();   // jangan beri tahu induk
+});
+```
+
+Keduanya berbeda: `preventDefault` membatalkan **perilaku browser**, `stopPropagation` menghentikan **penjalaran event**.
+
+## Event Delegation
+
+Daripada memasang listener di 1000 baris tabel, pasang satu di induknya:
+
+```js
+document.querySelector("#tabel").addEventListener("click", e => {
+  const baris = e.target.closest("tr");
+  if (!baris) return;
+  console.log("Klik baris", baris.dataset.id);
+});
+```
+
+`closest()` mencari leluhur terdekat yang cocok. Keuntungannya: elemen baru yang ditambahkan kemudian otomatis ikut ter-cover.
+
+## Opsi addEventListener
+
+```js
+el.addEventListener("click", handler, {
+  once: true,      // hanya sekali
+  capture: false,  // fase bubbling
+  passive: true,   // janji tidak memanggil preventDefault (scroll lebih halus)
+  signal: controller.signal // bisa dihapus lewat AbortController
+});
+```
+
+## Menghapus Listener
+
+```js
+const handler = () => console.log("klik");
+el.addEventListener("click", handler);
+el.removeEventListener("click", handler); // harus fungsi yang sama
+```
+
+Fungsi anonymous tidak bisa dihapus dengan `removeEventListener` karena referensinya berbeda.
+
+## Event yang Sering Dipakai
+
+| Kategori | Event |
+|----------|-------|
+| Mouse | `click`, `dblclick`, `mousedown`, `mouseup`, `mousemove` |
+| Keyboard | `keydown`, `keyup`, `keypress` |
+| Form | `submit`, `change`, `input`, `focus`, `blur` |
+| Touch | `touchstart`, `touchmove`, `touchend` |
+| Window | `resize`, `scroll`, `load` |
+
+```js
+input.addEventListener("input", e => {
+  console.log(e.target.value); // jalan tiap ketikan
+});
+```
+
+<div class="note">💡 `input` jalan setiap karakter, `change` hanya saat nilai di-commit (blur atau pilih opsi). Pilih yang sesuai kebutuhan.</div>
+
+## Di Dunia Nyata
+
+- Menu dropdown ditutup saat klik di luar dengan listener pada `document`.
+- Form mencegah reload halaman lewat `submit` + `preventDefault()`.
+- Daftar dinamis memakai delegation supaya tidak perlu pasang ulang listener.
+
+## Try it Yourself
+
+Klik nama di bawah, lalu tambahkan item baru lewat console untuk melihat delegation bekerja.
+
+<TryIt lang="javascript" runtime="client-js" code={`const daftar = document.createElement("ul");
+daftar.id = "daftar";
+["Sari", "Budi", "Andi"].forEach(n => {
+  const li = document.createElement("li");
+  li.textContent = n;
+  li.style.cursor = "pointer";
+  li.style.padding = "6px";
+  daftar.appendChild(li);
+});
+document.body.appendChild(daftar);
+daftar.addEventListener("click", e => {
+  const item = e.target.closest("li");
+  if (!item) return;
+  document.querySelectorAll("#daftar li").forEach(x => x.style.background = "");
+  item.style.background = "#C7D2FE";
+  console.log("Dipilih:", item.textContent);
+});`} />

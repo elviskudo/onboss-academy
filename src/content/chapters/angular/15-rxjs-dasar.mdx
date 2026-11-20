@@ -1,0 +1,116 @@
+---
+title: "Dasar RxJS"
+description: "Observable, subscribe, operator map/filter/switchMap, dan unsubscribe"
+order: 15
+quiz:
+  - q: "Observable adalah…"
+    options: ["Promise yang lebih lambat", "Komponen Angular", "Sumber nilai yang bisa diamati dari waktu ke waktu", "Array khusus"]
+    answer: 2
+    explain: "Observable bisa mengirim banyak nilai dari waktu ke waktu."
+  - q: "Untuk mulai menerima nilai, panggil…"
+    options: ["emit()", "subscribe()", "then()", "await"]
+    answer: 1
+    explain: "Observable malas: tidak melakukan apa pun sebelum ada subscriber."
+  - q: "Operator map berguna untuk…"
+    options: ["Menghentikan aliran", "Menggabungkan dua stream", "Membuat error", "Mengubah tiap nilai yang lewat"]
+    answer: 3
+    explain: "Mirip Array.map, tapi untuk stream."
+  - q: "switchMap cocok untuk…"
+    options: ["Menyimpan ke localStorage", "Membatalkan request lama saat nilai baru datang", "Menjumlahkan semua nilai", "Mengubah warna"]
+    answer: 1
+    explain: "Biasa dipakai pada pencarian berbasis ketikan."
+  - q: "takeUntil(destroy$) dipakai untuk…"
+    options: ["Membersihkan subscription saat komponen mati", "Mengambil nilai pertama saja", "Menambah delay", "Mengubah tipe data"]
+    answer: 0
+    explain: "Pola populer untuk mencegah memory leak."
+example:
+  code: |
+    import { interval, map, take } from "rxjs";
+
+    interval(1000).pipe(
+      map((n) => n + 1),
+      take(3)
+    ).subscribe((n) => console.log(n));
+---
+
+RxJS adalah fondasi reactive programming di Angular. HttpClient, router, dan form semuanya mengembalikan Observable.
+
+## Observable
+
+```typescript
+import { Observable } from "rxjs";
+
+const aliran = new Observable<string>((subscriber) => {
+  subscriber.next("Halo");
+  subscriber.next("Dunia");
+  subscriber.complete();
+});
+
+aliran.subscribe({
+  next: (n) => console.log(n),
+  complete: () => console.log("selesai"),
+});
+```
+
+Berbeda dengan Promise, Observable bisa mengirim banyak nilai.
+
+## Operator Umum
+
+```typescript
+import { of, map, filter, reduce } from "rxjs";
+
+of(1, 2, 3, 4).pipe(
+  filter((n) => n % 2 === 0),
+  map((n) => n * 10),
+  reduce((a, b) => a + b, 0)
+).subscribe(console.log); // 60
+```
+
+| Operator | Fungsi |
+|----------|--------|
+| `map` | ubah nilai |
+| `filter` | pilih nilai |
+| `take` | ambil N nilai |
+| `debounceTime` | tunggu jeda |
+| `distinctUntilChanged` | lewati nilai sama |
+| `switchMap` | pindah ke stream baru |
+
+## Contoh Pencarian
+
+```typescript
+this.kataCari.valueChanges.pipe(
+  debounceTime(300),
+  distinctUntilChanged(),
+  switchMap((kata) => this.api.cari(kata))
+).subscribe((hasil) => this.hasil = hasil);
+```
+
+`switchMap` membatalkan pencarian lama saat user mengetik lagi.
+
+## Cleanup
+
+```typescript
+private destroy$ = new Subject<void>();
+
+ngOnDestroy() {
+  this.destroy$.next();
+  this.destroy$.complete();
+}
+
+// di pipe: takeUntil(this.destroy$)
+```
+
+Atau pakai `take(1)` bila hanya butuh satu nilai.
+
+<div class="note">💡 Pikirkan Observable sebagai "pipa". Operator adalah saringan dan pengubah di sepanjang pipa; subscriber adalah keran yang membuka aliran.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`import { interval, map, take } from "rxjs";
+
+interval(1000).pipe(
+  map((n) => n + 1),
+  take(3)
+).subscribe((n) => console.log(n));`}</code></pre>

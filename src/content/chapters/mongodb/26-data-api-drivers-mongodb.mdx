@@ -1,0 +1,96 @@
+---
+title: "Data API dan Driver MongoDB"
+description: "REST Data API, driver resmi, koneksi dari Node.js, konsep URI dan connection pool"
+order: 26
+quiz:
+  - q: "Data API MongoDB memungkinkan…"
+    options: ["Mengganti bahasa server", "Query lewat HTTP/REST", "Menjalankan mongod di browser", "Menghapus semua indeks"]
+    answer: 1
+    explain: "Data API mengekspos operasi database lewat endpoint HTTPS."
+  - q: "URI koneksi Atlas biasanya diawali…"
+    options: ["file://", "ftp://", "http://", "mongodb+srv://"]
+    answer: 3
+    explain: "mongodb+srv:// memakai DNS SRV untuk menemukan node replica set."
+  - q: "Driver resmi berguna untuk…"
+    options: ["Mengakses MongoDB dari kode aplikasi", "Membuat grafik otomatis", "Menghapus log", "Mengganti schema database"]
+    answer: 0
+    explain: "Driver menyediakan API bahasa pemrograman untuk berkomunikasi dengan server."
+  - q: "Connection pool berfungsi untuk…"
+    options: ["Mengurutkan hasil", "Menyimpan dokumen di browser", "Menggunakan ulang koneksi", "Menghapus indeks"]
+    answer: 2
+    explain: "Pool menghindari biaya membuka koneksi baru untuk setiap permintaan."
+  - q: "Dalam Node.js, hasil find() perlu diubah dengan…"
+    options: ["parse()", "JSON.stringify() saja", "toArray() atau loop", "toString()"]
+    answer: 2
+    explain: "find() mengembalikan kursor; toArray() mengubahnya menjadi array dokumen."
+example:
+  code: |
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient("mongodb://127.0.0.1:27017");
+    await client.connect();
+    const db = client.db("sekolah");
+    const siswa = await db.collection("siswa").find({kelas: "A"}).toArray();
+    console.log(siswa);
+    await client.close();
+---
+
+## Dua Jalur Akses
+
+Aplikasi modern biasanya memakai salah satu dari dua jalur:
+
+| Jalur | Kelebihan | Catatan |
+| --- | --- | --- |
+| Driver resmi | performa tinggi, fitur lengkap | perlu package per bahasa |
+| Data API (HTTPS) | tanpa driver, cocok serverless | batas ukuran request/response |
+
+## Connection URI
+
+```text
+mongodb://127.0.0.1:27017
+mongodb+srv://user:sandi@cluster.xxxxx.mongodb.net/?retryWrites=true
+```
+
+URI memuat host, port, kredensial, opsi replica set, dan parameter TLS. Jangan menaruh kata sandi asli di repositori — gunakan variabel lingkungan.
+
+## Contoh Node.js
+
+```javascript
+import { MongoClient } from "mongodb";
+
+const client = new MongoClient(process.env.MONGO_URI);
+await client.connect();
+
+const koleksi = client.db("sekolah").collection("siswa");
+await koleksi.insertOne({ nama: "Ana", nilai: 88 });
+const hasil = await koleksi.find({ nilai: { $gte: 80 } }).toArray();
+console.log(hasil);
+
+await client.close();
+```
+
+Buat satu `MongoClient` untuk seluruh aplikasi, bukan satu per permintaan. Driver mengelola connection pool secara internal.
+
+## Data API
+
+```bash
+curl -X POST "https://data-api.mongodb.net/data/action/find"   -H "Content-Type: application/json"   -H "Access-Control-Request-Headers: *"   -H "api-key: KUNCI"   -d '{"dataSource":"Cluster0","database":"sekolah","collection":"siswa","filter":{}}'
+```
+
+Data API cocok untuk lingkungan yang tidak bisa membuka koneksi TCP panjang, misalnya fungsi serverless atau aplikasi browser yang dipercaya.
+
+<div class="note">💡 Jangan pernah menaruh kunci Data API di JavaScript sisi klien yang bisa dilihat siapa pun. Kunci itu setara dengan kata sandi database.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`const { MongoClient } = require("mongodb");
+const client = new MongoClient("mongodb://127.0.0.1:27017");
+async function jalan() {
+  await client.connect();
+  const koleksi = client.db("belajar").collection("siswa");
+  await koleksi.insertOne({nama: "Ana", nilai: 88});
+  console.log(await koleksi.countDocuments({}));
+  await client.close();
+}
+jalan();`}</code></pre>

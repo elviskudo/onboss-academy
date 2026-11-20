@@ -1,0 +1,135 @@
+---
+"title": "Tipe Data Lanjutan"
+"description": "Value type, reference type, nullable, enum, dan konversi tipe di C#"
+"order": 12
+"quiz":
+- "q": "Tipe berikut yang merupakan value type adalah…"
+  "options":
+  - "string"
+  - "class"
+  - "int"
+  - "object"
+  "answer": 2
+  "explain": "int menyimpan nilainya langsung di stack; string dan class adalah reference type."
+- "q": "Nullable int ditulis dengan…"
+  "options":
+  - "int?"
+  - "?int"
+  - "nullable<int>"
+  - "int | null"
+  "answer": 0
+  "explain": "Tanda ? setelah tipe nilai mengizinkan null, misal int? nilai = null."
+- "q": "Enum berguna untuk…"
+  "options":
+  - "menyimpan teks bebas"
+  - "mendefinisikan sekumpulan konstanta bernama"
+  - "membuat perulangan"
+  - "mengubah tipe jadi string"
+  "answer": 1
+  "explain": "Enum memberi nama pada nilai bilangan bulat agar kode lebih mudah dibaca."
+- "q": "Cast eksplisit dari double ke int ditulis…"
+  "options":
+  - "(int)nilai"
+  - "int(nilai)"
+  - "nilai as int"
+  - "Convert.int(nilai)"
+  "answer": 0
+  "explain": "Cast eksplisit memakai tanda kurung: (int)3.9 menghasilkan 3."
+- "q": "Perintah yang mengubah string menjadi int dengan aman adalah…"
+  "options":
+  - "int.Parse"
+  - "int.TryParse"
+  - "(int)string"
+  - "string.ToInt"
+  "answer": 1
+  "explain": "TryParse tidak melempar exception saat input bukan angka."
+"example":
+  "code": "using System;\nenum Hari { Senin, Selasa, Rabu, Kamis, Jumat }\n\nclass Program\n{\n    static void Main()\n    {\n        int? umur = null;\n        Console.WriteLine(umur ?? 0);\n        Hari h = Hari.Rabu;\n        Console.WriteLine(h);\n        double d = 3.9;\n        Console.WriteLine((int)d);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+C# membagi tipe menjadi dua keluarga besar. Perbedaan ini menentukan bagaimana nilai disalin dan dikirim ke method.
+
+## Value Type vs Reference Type
+
+| Value type | Reference type |
+|---|---|
+| `int`, `double`, `bool`, `char` | `string`, `class`, `array`, `object` |
+| Menyimpan nilai langsung | Menyimpan alamat ke objek |
+| Salinan mandiri saat ditugaskan | Dua variabel bisa menunjuk objek sama |
+| Turunan dari `System.ValueType` | Turunan dari `System.Object` |
+
+```csharp
+int a = 5;
+int b = a;   // b adalah salinan
+b = 9;       // a tetap 5
+
+int[] x = { 1, 2 };
+int[] y = x; // y menunjuk array yang sama
+y[0] = 99;   // x[0] ikut berubah
+```
+
+## Nullable Value Type
+
+`int` tidak bisa bernilai `null`. Tambahkan `?` untuk mengizinkan kotak kosong:
+
+```csharp
+int? skor = null;
+skor = 80;
+Console.WriteLine(skor.HasValue); // True
+Console.WriteLine(skor.Value);    // 80
+```
+
+## Enum
+
+```csharp
+enum Status { Baru, Diproses, Selesai }
+
+Status s = Status.Diproses;
+Console.WriteLine((int)s); // 1
+```
+
+Secara default anggota enum mulai dari 0. Kamu bisa menentukan sendiri nilainya, misalnya `enum Level { Rendah = 1, Tinggi = 5 }`.
+
+## Konversi Tipe
+
+- **Implisit** — aman, dari tipe kecil ke besar: `int` → `long` → `float` → `double`
+- **Eksplisit (cast)** — berisiko kehilangan data: `(int)3.9` → `3`
+- **Parse** — teks → angka: `int.Parse("42")`
+- **TryParse** — versi aman yang mengembalikan `bool`
+- **ToString / Convert** — angka → teks
+
+<div class="note">💡 Untuk uang, pakai <code>decimal</code>, bukan <code>double</code>. Decimal menyimpan basis 10 sehingga 0,1 + 0,2 benar-benar 0,3.</div>
+
+## Try it Yourself
+
+Jalankan kode ini untuk melihat perbedaan salinan value type dan reference type secara langsung.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+enum Status { Baru, Diproses, Selesai }
+
+class Program
+{
+    static void Main()
+    {
+        int a = 5;
+        int b = a;
+        b = 9;
+        Console.WriteLine("a = " + a + ", b = " + b);
+
+        int[] x = { 1, 2, 3 };
+        int[] y = x;
+        y[0] = 99;
+        Console.WriteLine("x[0] = " + x[0]);
+
+        int? skor = null;
+        Console.WriteLine("skor = " + (skor ?? 0));
+
+        Status s = Status.Selesai;
+        Console.WriteLine("status = " + s + " (" + (int)s + ")");
+
+        double d = 7.9;
+        Console.WriteLine("cast = " + (int)d);
+    }
+}`} />

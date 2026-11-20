@@ -1,0 +1,139 @@
+---
+"title": "File I/O"
+"description": "Membaca dan menulis file teks dengan File, StreamReader, dan StreamWriter"
+"order": 21
+"quiz":
+- "q": "Method singkat untuk membaca seluruh teks file adalah…"
+  "options":
+  - "File.ReadAllText"
+  - "File.Open"
+  - "File.Stream"
+  - "File.Load"
+  "answer": 0
+  "explain": "File.ReadAllText(path) mengembalikan seluruh isi sebagai string."
+- "q": "File.WriteAllText akan…"
+  "options":
+  - "menambah di akhir"
+  - "menimpa isi file"
+  - "membaca file"
+  - "menghapus folder"
+  "answer": 1
+  "explain": "WriteAllText menimpa; untuk menambah pakai AppendAllText."
+- "q": "Kelas yang cocok untuk menulis baris demi baris adalah…"
+  "options":
+  - "StreamWriter"
+  - "FileInfo"
+  - "Directory"
+  - "BinaryReader"
+  "answer": 0
+  "explain": "StreamWriter menyediakan WriteLine dan bisa membuka file dalam mode append."
+- "q": "Path.Combine berguna untuk…"
+  "options":
+  - "menggabungkan bagian path dengan aman"
+  - "membaca file"
+  - "menghapus direktori"
+  - "mengubah ekstensi"
+  "answer": 0
+  "explain": "Path.Combine menangani pemisah path lintas sistem operasi."
+- "q": "Exception saat file tidak ditemukan adalah…"
+  "options":
+  - "FileNotFoundException"
+  - "NullReferenceException"
+  - "FormatException"
+  - "ArgumentException"
+  "answer": 0
+  "explain": "FileNotFoundException dilempar oleh operasi file pada path yang tidak ada."
+"example":
+  "code": "using System;\nusing System.IO;\nclass Program\n{\n    static void Main()\n    {\n        string path = \"catatan.txt\";\n        File.WriteAllText(path, \"Baris pertama\\nBaris kedua\");\n        Console.WriteLine(File.ReadAllText(path));\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Hampir setiap aplikasi perlu membaca konfigurasi, menyimpan log, atau mengekspor data. .NET menyediakan API file yang ringkas sekaligus menangani resource dengan benar.
+
+## Method Statis pada File
+
+| Method | Fungsi |
+|---|---|
+| `File.ReadAllText(path)` | Baca seluruh teks |
+| `File.ReadAllLines(path)` | Baca menjadi array baris |
+| `File.WriteAllText(path, isi)` | Tulis (timpa) |
+| `File.AppendAllText(path, isi)` | Tambah di akhir |
+| `File.Exists(path)` | Cek keberadaan |
+| `File.Delete(path)` | Hapus file |
+| `File.Copy(src, dst)` | Salin file |
+
+```csharp
+string path = "data.txt";
+File.WriteAllLines(path, new[] { "apel", "jeruk", "mangga" });
+
+foreach (string baris in File.ReadAllLines(path))
+    Console.WriteLine("- " + baris);
+```
+
+## StreamReader & StreamWriter
+
+Untuk file besar, baca bertahap agar tidak memuat semuanya ke memori:
+
+```csharp
+using var reader = new StreamReader("data.txt");
+string? baris;
+while ((baris = reader.ReadLine()) != null)
+    Console.WriteLine(baris);
+```
+
+```csharp
+using var writer = new StreamWriter("log.txt", append: true);
+writer.WriteLine(DateTime.Now + " — program dijalankan");
+```
+
+Kata `using` memastikan file ditutup walau terjadi exception.
+
+## Path & Directory
+
+```csharp
+string folder = Path.Combine(Environment.CurrentDirectory, "data");
+Directory.CreateDirectory(folder);
+string[] files = Directory.GetFiles(folder, "*.txt");
+```
+
+Selalu pakai `Path.Combine` daripada menggabungkan dengan `"/"` agar kode tetap jalan di Windows dan macOS/Linux.
+
+## Encoding
+
+Secara default .NET memakai UTF-8. Tentukan eksplisit jika perlu:
+
+```csharp
+File.WriteAllText("data.txt", "Nusantara 🌏", Encoding.UTF8);
+```
+
+<div class="note">💡 Simpan data terstruktur sebagai JSON, bukan teks bebas. <code>JsonSerializer</code> di .NET membuatnya aman dan mudah dibaca aplikasi lain.</div>
+
+## Try it Yourself
+
+Ubah daftar baris atau tambahkan AppendAllText kedua untuk melihat pertumbuhan file.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.IO;
+
+class Program
+{
+    static void Main()
+    {
+        string path = Path.Combine(Path.GetTempPath(), "onboss-catatan.txt");
+
+        File.WriteAllLines(path, new[] { "Baris satu", "Baris dua", "Baris tiga" });
+        Console.WriteLine("File: " + path);
+        Console.WriteLine("-- Isi --");
+        foreach (string baris in File.ReadAllLines(path))
+            Console.WriteLine(baris);
+
+        File.AppendAllText(path, "Baris empat" + Environment.NewLine);
+        Console.WriteLine("-- Sesudah ditambah --");
+        Console.WriteLine(File.ReadAllText(path));
+
+        Console.WriteLine("Ukuran: " + new FileInfo(path).Length + " byte");
+        File.Delete(path);
+        Console.WriteLine("Dihapus: " + !File.Exists(path));
+    }
+}`} />

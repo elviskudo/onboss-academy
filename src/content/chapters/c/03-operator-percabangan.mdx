@@ -58,7 +58,7 @@ printf("%d\n", a > b);   // 1 (benar = 1)
 printf("%d\n", a == b);  // 0 (salah = 0)
 ```
 
-C **tidak punya tipe boolean** — perbandingan bernilai `int` 1 (benar) atau 0 (salah). Perhatikan: perbandingan memakai `==` (dua tanda), bukan `=` yang berarti penugasan. Enam operator perbandingan: `==`, `!=`, `<`, `>`, `<=`, `>=`.
+C **tidak punya tipe boolean** — perbandingan bernilai `int` 1 (benar) atau 0 (salah). Perhatikan: perbandingan memakai `==` (dua tanda), bukan `=` yang berarti penugasan. Enam operator perbandingan: `==`, `!=`, `<`, `>`, `&lt;=`, `>=`.
 
 ## Truthiness: 0 = Salah, Sisanya Benar
 
@@ -101,10 +101,10 @@ Bitwise dipakai untuk mask flag (`flags & FLAG_AKTIF`), cek ganjil cepat (`n & 1
 | Kategori | Jumlah | Contoh | Fungsi |
 |---|---|---|---|
 | Aritmatika | 5 (+ 2 unary) | `+ - * / %`, `++ --` | hitung angka |
-| Perbandingan | 6 | `== != < > <= >=` | hasil 0/1 |
+| Perbandingan | 6 | `== != &lt; > &lt;= >=` | hasil 0/1 |
 | Logika | 3 | `&& \|\| !` | gabung kondisi, short-circuit |
-| Bitwise | 6 | `& \| ^ ~ << >>` | manipulasi bit — spesialisasi C |
-| Assignment | 11 | `= += -= *= /= %= &= \|= ^= <<= >>=` | tugaskan nilai |
+| Bitwise | 6 | `& \| ^ ~ <&lt; >>` | manipulasi bit — spesialisasi C |
+| Assignment | 11 | `= += -= *= /= %= &= \|= ^= <&lt;= >>=` | tugaskan nilai |
 | Ternary | 1 | `? :` | if-else singkat bernilai |
 | Pointer | 3 | `& * ->` | alamat & dereference |
 | Lainnya | 3 | `sizeof , (koma)` | ukur tipe, gabung ekspresi |
@@ -163,6 +163,10 @@ printf("%s\n", status);
 
 <div class="note">💡 Jebakan klasik: <code>if (nilai = 5)</code> menugaskan 5 ke <code>nilai</code> (hasil selalu benar), bukan membandingkan. Gunakan <code>==</code>, atau aktifkan <code>-Wall -Wextra</code> saat kompilasi agar kompilator memperingatkan penugasan tak sengaja di kondisi.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 
 int main(void) {
@@ -185,8 +189,8 @@ int main(void) {
     }
 
     unsigned char a = 12, b = 10;
-    printf("a & b = %u, a | b = %u, a << 2 = %u\\n",
-           a & b, a | b, a << 2);
+    printf("a & b = %u, a | b = %u, a <&lt; 2 = %u\\n",
+           a & b, a | b, a <&lt; 2);
 
     int x = -5;
     printf("x=%d non-zero(dipandang benar)? %d\\n", x, x != 0);

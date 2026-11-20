@@ -1,0 +1,106 @@
+---
+title: "Keamanan Aplikasi Next.js"
+description: "CSRF, validation input, rate limit, dan header keamanan"
+order: 25
+quiz:
+  - q: "Server Action sebaiknya tetap…"
+    options: ["Ditaruh di client", "Dihapus", "Memvalidasi input meski dipanggil dari form sendiri", "Dipercaya apa adanya"]
+    answer: 2
+    explain: "Request bisa dibuat dari luar aplikasi."
+  - q: "Rate limiting berguna untuk…"
+    options: ["Membuat rute", "Membatasi percobaan login", "Mengubah warna", "Mempercepat CSS"]
+    answer: 1
+    explain: "Mencegah brute force dan penyalahgunaan API."
+  - q: "Header Content-Security-Policy berfungsi…"
+    options: ["Mengubah font", "Menyimpan data", "Mengatur rute", "Membatasi sumber skrip yang boleh dimuat"]
+    answer: 3
+    explain: "Mengurangi risiko XSS."
+  - q: "Input user sebaiknya…"
+    options: ["Dihapus", "Divalidasi di server", "Dipercaya bila sudah lewat UI", "Disimpan apa adanya"]
+    answer: 1
+    explain: "UI bisa dilewati oleh penyerang."
+  - q: "Cookie session yang aman memakai…"
+    options: ["httpOnly, secure, sameSite", "localStorage", "URL query", "console.log"]
+    answer: 0
+    explain: "Kombinasi ini membatasi pencurian sesi."
+example:
+  code: |
+    const schema = z.object({ email: z.string().email() });
+
+    export async function kirim(formData) {
+      const hasil = schema.safeParse(Object.fromEntries(formData));
+      if (!hasil.success) return { error: 'Data tidak valid' };
+    }
+---
+
+Next.js memberi banyak kemudahan, tapi tanggung jawab keamanan tetap ada di tangan kita.
+
+## Validasi Input
+
+```ts
+import { z } from "zod";
+
+const Skema = z.object({
+  email: z.string().email(),
+  pesan: z.string().min(5).max(500),
+});
+
+export async function kirim(formData: FormData) {
+  const hasil = Skema.safeParse(Object.fromEntries(formData));
+  if (!hasil.success) return { error: "Data tidak valid" };
+
+  await simpan(hasil.data);
+  return { error: "" };
+}
+```
+
+## Rate Limit Sederhana
+
+```ts
+const percobaan = new Map<string, number>();
+
+export function bolehCoba(ip: string) {
+  const n = percobaan.get(ip) ?? 0;
+  if (n >= 5) return false;
+  percobaan.set(ip, n + 1);
+  return true;
+}
+```
+
+Untuk produksi, gunakan store bersama seperti Redis.
+
+## Header keamanan
+
+```js
+// next.config.mjs
+async headers() {
+  return [{
+    source: "/(.*)",
+    headers: [
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "X-Frame-Options", value: "SAMEORIGIN" },
+    ],
+  }];
+}
+```
+
+## Prinsip
+
+- Validasi di server, bukan hanya di form.
+- Jangan pernah mempercayai data dari client.
+- Simpan rahasia hanya di server.
+- Batasi apa yang bisa dikirim ke browser.
+
+<div class="note">💡 Keamanan adalah lapisan, bukan fitur tunggal. Validasi, cookie yang benar, header, dan pembatasan akses bekerja bersama.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`const schema = z.object({ email: z.string().email() });
+
+export async function kirim(formData) {
+  const hasil = schema.safeParse(Object.fromEntries(formData));
+  if (!hasil.success) return { error: 'Data tidak valid' };
+}`}</code></pre>

@@ -1,0 +1,93 @@
+---
+title: "Studi Kasus: Gerbang Otomatis"
+description: "Menggabungkan tombol, servo, sensor, dan state machine"
+order: 29
+quiz:
+  - q: "Arsitektur yang tepat untuk gerbang otomatis adalah…"
+    options: ["Serial saja", "Sensor/tombol ke state machine lalu servo dan indikator", "Tombol langsung ke servo tanpa logika", "Servo ke sensor"]
+    answer: 1
+    explain: "State machine menjaga urutan dan mencegah servo bergerak liar."
+  - q: "Keamanan mekanis yang penting adalah…"
+    options: ["Menghapus resistor", "Mengubah baudrate", "Batasi sudut servo dan hindari jari di area gerak", "Menambah kecepatan servo"]
+    answer: 2
+    explain: "Servo cukup kuat untuk menjepit jari."
+  - q: "Jika tombol ditekan saat gerbang sedang bergerak, sistem sebaiknya…"
+    options: ["Membalik servo seketika tanpa cek", "Menambah waktu delay", "Menghapus keadaan", "Mengabaikan atau memproses setelah keadaan selesai sesuai aturan"]
+    answer: 3
+    explain: "Perilaku harus didefinisikan agar tidak bertabrakan."
+  - q: "Indikator LED berguna untuk…"
+    options: ["Menunjukkan keadaan tanpa Serial Monitor", "Mengganti servo", "Menyimpan data", "Mengubah pin"]
+    answer: 0
+    explain: "Warna berbeda bisa menandakan siap, bergerak, dan error."
+  - q: "Catu daya servo sebaiknya…"
+    options: ["Dari pin analog", "Terpisah dari Arduino dengan GND bersama", "Diambil dari pin 5V Arduino", "Tanpa GND"]
+    answer: 1
+    explain: "Servo menarik arus lebih besar daripada regulator board."
+example:
+  code: |
+    enum State { TUTUP, BUKA, MENUNGGU, KELUAR };
+    State s = TUTUP;
+    unsigned long t = 0;
+    
+    void loop() {
+      switch (s) {
+        case TUTUP:
+          if (tombolDitekan()) { servo.write(90); t=millis(); s=BUKA; }
+          break;
+        case BUKA:
+          if (millis()-t > 3000) { s=KELUAR; }
+          break;
+        case KELUAR:
+          if (tidakAdaOrang()) { servo.write(0); s=TUTUP; }
+          break;
+      }
+    }
+---
+
+Proyek gerbang menggabungkan hampir semua konsep dasar: digital input, PWM servo, state machine, dan keamanan fisik.
+
+## Komponen
+
+| Komponen | Fungsi |
+|---|---|
+| Arduino Uno | Kontrol logika |
+| Servo | Menggerakkan palang |
+| Tombol / sensor IR | Pemicu |
+| LED 3 warna | Indikator keadaan |
+| Catu 5 V eksternal | Daya servo |
+
+## Keadaan
+
+```text
+TUTUP --tombol--> BUKA --3 detik--> KELUAR --sensor kosong--> TUTUP
+```
+
+## Indikator
+
+```cpp
+switch (s) {
+  case TUTUP:  merah(); break;
+  case BUKA:   hijau(); break;
+  case KELUAR: kuning(); break;
+}
+```
+
+LED memberi informasi tanpa harus membuka Serial Monitor.
+
+## Perlindungan
+
+- Batasi sudut servo agar palang tidak membentur meja.
+- Tambahkan tombol darurat yang langsung memutus daya servo.
+- Jangan biarkan anak kecil berada di dekat mekanisme saat pengujian.
+
+<div class="note">💡 Rangkaian awal sebaiknya memakai servo kecil dan palang dari kertas. Uji logika dulu sebelum memakai mekanisme yang lebih kuat.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`// Urutan pengujian:
+// 1. Servo min/mid/max tanpa beban
+// 2. Tombol memicu perubahan keadaan
+// 3. Timer 3 detik berjalan
+// 4. Sensor kembali ke keadaan TUTUP
+// 5. LED mengikuti keadaan`}</code></pre>

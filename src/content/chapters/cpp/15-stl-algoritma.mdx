@@ -1,0 +1,122 @@
+---
+title: "STL Algorithm"
+description: "sort, find, transform, accumulate, lambda, dan iterator pada STL"
+order: 15
+quiz:
+  - q: "Header untuk algoritma STL adalah…"
+    options: ["<algorithms>", "<algorithm>", "<vector>", "<iterator>"]
+    answer: 1
+    explain: "Header `<algorithm>` berisi sort, find, dll."
+  - q: "`std::sort` memerlukan…"
+    options: ["Random access iterator", "List kosong", "Comparator selalu", "Map"]
+    answer: 0
+    explain: "Vector/deque memenuhi; std::list tidak (punya sort() sendiri)."
+  - q: "`std::find` mengembalikan…"
+    options: ["Iterator ke elemen atau end()", "Bool", "Indeks -1", "Nilai"]
+    answer: 0
+    explain: "Bandingkan hasilnya dengan `end()`."
+  - q: "`std::accumulate` digunakan untuk…"
+    options: ["Menggabungkan nilai (reduce)", "Mengurutkan", "Mencari", "Menyalin"]
+    answer: 0
+    explain: "Ada di header <numeric>."
+  - q: "Lambda `[](int x){ return x*2; }` adalah…"
+    options: ["Fungsi anonim", "Pointer", "Struct", "Macro"]
+    answer: 0
+    explain: "Bisa dikirim sebagai comparator/operation."
+example:
+  code: |
+    #include <algorithm>
+    #include <numeric>
+    #include <vector>
+    #include <iostream>
+    
+    int main() {
+        std::vector<int> v{5,2,9,1,5};
+        std::sort(v.begin(), v.end());
+        auto it = std::find(v.begin(), v.end(), 9);
+        if (it != v.end()) std::cout <&lt; "ketemu di " <&lt; (it-v.begin()) <&lt; '\n';
+    
+        int total = std::accumulate(v.begin(), v.end(), 0);
+        std::vector<int> kali;
+        std::transform(v.begin(), v.end(), std::back_inserter(kali),
+                       [](int x){ return x*2; });
+        std::cout <&lt; total <&lt; " " <&lt; kali.back() <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+STL algorithm bekerja pada rentang iterator, sehingga bisa dipakai untuk vector, array, deque, dan container lain yang kompatibel.
+
+## Konsep Rentang
+
+```cpp
+std::vector<int> v{3,1,2};
+std::sort(v.begin(), v.end());
+```
+
+`begin()` dan `end()` membentuk rentang **[begin, end)** — `end()` tidak pernah dimasukkan.
+
+## Algoritma Umum
+
+| Algoritma | Fungsi |
+|---|---|
+| `find` | cari elemen |
+| `count` | hitung kemunculan |
+| `sort` | urutkan |
+| `reverse` | balik urutan |
+| `copy` | salin |
+| `transform` | ubah tiap elemen |
+| `remove_if` | pindahkan elemen terhapus ke belakang |
+| `unique` | hilangkan duplikat berurutan |
+
+## Lambda sebagai Predikat
+
+```cpp
+auto ada = std::any_of(v.begin(), v.end(),
+                       [](int x){ return x % 2 == 0; });
+
+std::sort(v.begin(), v.end(),
+          [](int a, int b){ return a > b; });   // descending
+```
+
+## erase-remove Idiom
+
+```cpp
+v.erase(std::remove_if(v.begin(), v.end(),
+                       [](int x){ return x < 0; }),
+        v.end());
+```
+
+`remove_if` hanya memindahkan elemen; `erase` yang benar-benar memotong ukuran container.
+
+## Numeric
+
+```cpp
+#include <numeric>
+int total = std::accumulate(v.begin(), v.end(), 0);
+int gcd = std::gcd(12, 18);   // C++17
+```
+
+<div class="note">💡 C++20 memperkenalkan **ranges**: `v | std::views::filter(...) | std::views::transform(...)`. Pipelines lebih mudah dibaca daripada rentang begin/end manual.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <algorithm>
+#include <numeric>
+#include <vector>
+#include <iostream>
+
+int main() {
+    std::vector<int> v{5,2,9,1,5};
+    std::sort(v.begin(), v.end());
+    auto it = std::find(v.begin(), v.end(), 9);
+    if (it != v.end()) std::cout <&lt; "ketemu di " <&lt; (it-v.begin()) <&lt; '\n';
+
+    int total = std::accumulate(v.begin(), v.end(), 0);
+    std::vector<int> kali;
+    std::transform(v.begin(), v.end(), std::back_inserter(kali),
+                   [](int x){ return x*2; });
+    std::cout <&lt; total <&lt; " " <&lt; kali.back() <&lt; '\n';
+}`} />

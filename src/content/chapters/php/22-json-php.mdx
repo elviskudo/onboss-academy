@@ -1,0 +1,173 @@
+---
+title: "JSON di PHP"
+description: "Mengubah data ke dan dari JSON dengan json_encode/json_decode"
+order: 22
+quiz:
+  - q: "Fungsi mengubah array PHP menjadi JSON adalah…"
+    options: ["json_decode()", "json_encode()", "serialize()", "toJson()"]
+    answer: 1
+    explain: "Json_encode menghasilkan string JSON."
+  - q: "`json_decode($teks, true)` menghasilkan…"
+    options: ["Objek stdClass", "Array asosiatif", "String", "null"]
+    answer: 1
+    explain: "Argumen kedua true = associative array."
+  - q: "`JSON_PRETTY_PRINT` berguna untuk…"
+    options: ["Mempercepat encode", "Menambah indentasi", "Menghapus data", "Mengubah tipe"]
+    answer: 1
+    explain: "Hasil lebih mudah dibaca manusia."
+  - q: "Setelah json_decode, cek error dengan…"
+    options: ["json_last_error()", "error_get_last()", "isset()", "count()"]
+    answer: 0
+    explain: "Fungsi ini mengembalikan konstanta seperti JSON_ERROR_NONE."
+  - q: "Header HTTP untuk response JSON adalah…"
+    options: ["text/html", "application/json", "text/json", "application/text"]
+    answer: 1
+    explain: "Gunakan header('Content-Type: application/json')."
+example:
+  code: |
+    <?php
+    $data = ["nama" => "Sari", "skor" => [8, 9]];
+    $json = json_encode($data, JSON_PRETTY_PRINT);
+    echo $json;
+    
+    $hasil = json_decode($json, true);
+    echo $hasil['nama'];
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JSON adalah format pertukaran data utama antara PHP dan JavaScript/API. PHP menyediakan dua fungsi inti: `json_encode()` dan `json_decode()`.
+
+## Encode
+
+```php
+<?php
+$produk = [
+    "id" => 1,
+    "nama" => "Kopi",
+    "harga" => 25000,
+    "tersedia" => true,
+    "tag" => ["premium", "local"]
+];
+
+echo json_encode($produk);
+// {"id":1,"nama":"Kopi","harga":25000,"tersedia":true,"tag":["premium","local"]}
+
+echo json_encode($produk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+```
+
+Flag berguna:
+
+| Flag | Fungsi |
+|------|--------|
+| `JSON_PRETTY_PRINT` | Indentasi |
+| `JSON_UNESCAPED_UNICODE` | Karakter Unicode apa adanya |
+| `JSON_UNESCAPED_SLASHES` | Tidak escape `/` |
+| `JSON_NUMERIC_CHECK` | Angka dalam string jadi number |
+| `JSON_THROW_ON_ERROR` | Lempar `JsonException` saat gagal |
+
+## Decode
+
+```php
+<?php
+$teks = '{"nama":"Sari","umur":20}';
+
+$obj = json_decode($teks);       // stdClass
+echo $obj->nama;
+
+$arr = json_decode($teks, true); // array asosiatif
+echo $arr['nama'];
+```
+
+## Penanganan Error
+
+```php
+<?php
+$data = json_decode($teks, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    echo "JSON error: " . json_last_error_msg();
+}
+
+// Cara modern (PHP 7.3+):
+try {
+    $data = json_decode($teks, true, 512, JSON_THROW_ON_ERROR);
+} catch (JsonException $e) {
+    echo "Gagal: " . $e->getMessage();
+}
+```
+
+## Response API
+
+```php
+<?php
+header('Content-Type: application/json; charset=utf-8');
+http_response_code(200);
+
+echo json_encode([
+    'success' => true,
+    'data' => $produk
+], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+```
+
+Jangan mencetak apa pun sebelum `header()` — whitespace saja bisa memicu error "headers already sent".
+
+## JsonSerializable
+
+```php
+<?php
+class Produk implements JsonSerializable {
+    public function __construct(
+        private string $nama,
+        private float $harga
+    ) {}
+
+    public function jsonSerialize(): array {
+        return [
+            'nama' => $this->nama,
+            'harga' => number_format($this->harga, 0, ',', '.'),
+            'format' => 'rupiah'
+        ];
+    }
+}
+```
+
+Interface ini memberi kontrol penuh atas tampilan objek saat di-encode.
+
+## JSON vs Serialize
+
+```php
+<?php
+serialize($data);   // format khusus PHP, tidak portabel
+json_encode($data); // standar lintas bahasa
+```
+
+Gunakan JSON untuk API, `serialize()` hanya untuk cache internal PHP (dan tetap dengan hati-hati karena bisa berbahaya saat unserialize data tidak dipercaya).
+
+<div class="note">💡 `json_encode()` gagal pada string yang bukan UTF-8 valid. Pastikan source dan database memakai UTF-8, atau gunakan `JSON_INVALID_UTF8_SUBSTITUTE`.</div>
+
+## Di Dunia Nyata
+
+- Endpoint REST mengembalikan `{ "success": bool, "data": ..., "message": ... }`.
+- Menyimpan array konfigurasi ke file JSON.
+- `fetch()` JavaScript mem-parse response JSON dari PHP.
+
+## Try it Yourself
+
+Tambahkan karakter Unicode pada nama produk atau hapus flag UNESCAPED.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+$produk = [
+    "id" => 1,
+    "nama" => "Kopi Arabika",
+    "harga" => 45000,
+    "tag" => ["premium", "local"]
+];
+
+$json = json_encode($produk, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+echo $json . PHP_EOL;
+
+$hasil = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+echo "Nama: " . $hasil['nama'] . PHP_EOL;
+echo "Tag kedua: " . $hasil['tag'][1] . PHP_EOL;
+echo "Error: " . json_last_error_msg() . PHP_EOL;`} />

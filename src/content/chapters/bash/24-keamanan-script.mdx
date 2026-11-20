@@ -1,0 +1,137 @@
+---
+"title": "Keamanan Skrip Bash"
+"description": "Menghindari injeksi, menjaga rahasia, dan menulis skrip yang aman di produksi"
+"order": 24
+"quiz":
+- "q": "Risiko utama eval \"$input\" adalah…"
+  "options":
+  - "Skrip lebih lambat"
+  - "Eksekusi perintah arbitrer"
+  - "Variabel hilang"
+  - "Berkas terhapus otomatis"
+  "answer": 1
+  "explain": "eval mengubah teks menjadi kode — jangan pakai untuk input user."
+- "q": "Cara aman menyimpan password untuk skrip adalah…"
+  "options":
+  - "Hardcode di skrip"
+  - "Berkas world-readable"
+  - "Environment variable / secret manager"
+  - "Nama variabel aneh"
+  "answer": 2
+  "explain": "Rahasia harus masuk dari luar dan tidak tercatat di repository."
+- "q": "Izin file skrip yang aman adalah…"
+  "options":
+  - "chmod 777"
+  - "chmod 666"
+  - "chmod 444"
+  - "chmod 700"
+  "answer": 3
+  "explain": "Hanya pemilik yang boleh membaca dan menjalankan."
+- "q": "Jalur relatif di skrip cron berisiko karena…"
+  "options":
+  - "Bergantung pada direktori kerja cron"
+  - "Lebih lambat"
+  - "Tidak didukung"
+  - "Selalu salah"
+  "answer": 0
+  "explain": "Gunakan path absolut untuk perintah dan file."
+- "q": "Cara aman membandingkan hash adalah…"
+  "options":
+  - "Mengandalkan nama file"
+  - "Menggunakan utilities seperti sha256sum -c"
+  - "Membandingkan ukuran saja"
+  - "Menghapus file lama"
+  "answer": 1
+  "explain": "Perbandingan nilai hash mendeteksi perubahan isi."
+"example":
+  "code": "#!/usr/bin/env bash\nset -euo pipefail\n\n# rahasia dari environment, bukan hardcode\n: \"${API_TOKEN:?API_TOKEN wajib diisi}\"\n\numask 077\nTMP=$(mktemp)\ntrap 'rm -f \"$TMP\"' EXIT\n\n# hindari eval; kutip setiap variabel\ncurl -fsS -H \"Penulisization: Bearer $API_TOKEN\" \\\n  \"https://api.example.test/data\" -o \"$TMP\"\n\nsha256sum -c checksum.txt\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Prinsip Dasar
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# rahasia dari environment, bukan hardcode
+: "${API_TOKEN:?API_TOKEN wajib diisi}"
+
+umask 077
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+
+# hindari eval; kutip setiap variabel
+curl -fsS -H "Penulisization: Bearer $API_TOKEN" \
+  "https://api.example.test/data" -o "$TMP"
+
+sha256sum -c checksum.txt
+```
+
+| Prinsip | Penerapan |
+|---|---|
+| Jangan percaya input | validasi sebelum dipakai |
+| Jangan hardcode rahasia | environment / secret manager |
+| Least privilege | izin file dan user seminimal mungkin |
+| Gagal keras | `set -euo pipefail` |
+| Audit | log aktivitas penting |
+
+## Hindari eval
+
+```bash
+# berbahaya
+eval "echo $USER_INPUT"
+
+# aman
+printf 'Nilai: %s\n' "$USER_INPUT"
+```
+
+Bila input berisi `; rm -rf /`, eval akan benar-benar menjalankannya.
+
+## Rahasia
+
+```bash
+: "${API_TOKEN:?API_TOKEN wajib diisi}"
+```
+
+Sintaks ini menghentikan skrip bila variabel belum diset. Jangan pernah mencetak token ke log atau menyimpannya di file dengan izin dunia-baca.
+
+## Izin dan umask
+
+```bash
+umask 077   # file baru hanya bisa dibaca pemilik
+chmod 700 skrip.sh
+```
+
+## Jalur Absolut
+
+```bash
+/usr/bin/curl ...
+/opt/app/script.py
+```
+
+Tidak ada jaminan PATH di lingkungan cron atau systemd sama dengan PATH interaktif kamu.
+
+<div class="note">💡 Gunakan `command -v` untuk memastikan perintah tersedia sebelum memakainya, dan pertimbangkan `sudo -n` bila skrip perlu hak elevate tanpa prompt.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+set -euo pipefail
+
+# rahasia dari environment, bukan hardcode
+: "\${API_TOKEN:?API_TOKEN wajib diisi}"
+
+umask 077
+TMP=$(mktemp)
+trap 'rm -f "$TMP"' EXIT
+
+# hindari eval; kutip setiap variabel
+curl -fsS -H "Penulisization: Bearer $API_TOKEN" \
+  "https://api.example.test/data" -o "$TMP"
+
+sha256sum -c checksum.txt`} />

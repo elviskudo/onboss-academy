@@ -1,0 +1,98 @@
+---
+title: "MVCC, VACUUM, dan Autovacuum"
+description: "Baris mati, bloat, freeze, dan statistik tabel"
+order: 19
+quiz:
+  - q: "MVCC memberi jaminan…"
+    options: ["Pembaca tidak memblokir penulis", "Semua query lebih cepat", "Tidak perlu index", "Data selalu terenkripsi"]
+    answer: 1
+    explain: "PostgreSQL menyimpan beberapa versi baris agar transaksi konkuren tidak saling menunggu."
+  - q: "VACUUM berfungsi untuk…"
+    options: ["Menghapus baris mati dan mengupdate visibility map", "Menghapus tabel", "Membuat backup penuh", "Mengubah skema"]
+    answer: 2
+    explain: "VACUUM mereklaim ruang baris yang sudah tidak terlihat."
+  - q: "VACUUM FULL berbeda karena…"
+    options: ["Menulis ulang seluruh tabel dan mengunci", "Lebih cepat selalu", "Tidak butuh ruang", "Hanya untuk index"]
+    answer: 3
+    explain: "VACUUM FULL menghemat ruang paling banyak tetapi membutuhkan exclusive lock."
+  - q: "Autovacuum berjalan…"
+    options: ["Otomatis sesuai ambang batas", "Hanya manual", "Setiap SELECT", "Saat server mati"]
+    answer: 0
+    explain: "Autovacuum worker memantau tabel yang banyak berubah."
+  - q: "ANALYZE melakukan…"
+    options: ["Memperbarui statistik untuk optimizer", "Menghapus data", "Membuat index", "Menutup koneksi"]
+    answer: 1
+    explain: "Statistik membantu estimator memilih rencana query."
+example:
+  code: |
+    VACUUM (ANALYZE) karyawan; SELECT relname, n_dead_tup FROM pg_stat_user_tables WHERE relname='karyawan';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL memakai MVCC: UPDATE tidak menimpa baris lama, melainkan membuat versi baru. Baris lama tetap ada sampai VACUUM menyapanya.
+
+## Siklus Hidup Baris
+
+```text
+INSERT → versi baru
+UPDATE → versi lama ditandai mati + versi baru
+DELETE → versi ditandai mati
+VACUUM → ruang versi mati dikembalikan
+```
+
+Tanpa VACUUM, tabel membengkak (*bloat*) dan scan menjadi lambat.
+
+## VACUUM
+
+```sql
+VACUUM karyawan;
+VACUUM (ANALYZE, VERBOSE) karyawan;
+VACUUM FULL karyawan;   -- hati-hati: exclusive lock
+```
+
+VACUUM biasa tidak mengunci tabel untuk SELECT/INSERT. VACUUM FULL menulis ulang file dan membutuhkan ruang ekstra.
+
+## Autovacuum
+
+```sql
+SELECT name, setting FROM pg_settings WHERE name LIKE 'autovacuum%';
+ALTER TABLE karyawan SET (
+  autovacuum_vacuum_scale_factor = 0.05,
+  autovacuum_analyze_scale_factor = 0.02
+);
+```
+
+Tabel kecil dengan update sangat sering sering perlu threshold lebih agresif dari default.
+
+## Memantau
+
+```sql
+SELECT relname, n_live_tup, n_dead_tup, last_autovacuum
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC;
+```
+
+`n_dead_tup` tinggi dan `last_autovacuum` lama menandakan autovacuum tertinggal.
+
+## Transaction ID Wraparound
+
+PostgreSQL menggunakan nomor transaksi 32-bit. Jika terlalu banyak transaksi tanpa freeze, database akan menolak write untuk mencegah data lama salah terlihat. Autovacuum melakukan freeze secara berkala; jangan mematikannya.
+
+<div class="note">💡 VACUUM bukan backup dan tidak mengembalikan ruang ke sistem operasi pada bentuk biasa — ia mengembalikan ruang ke dalam tabel agar bisa dipakai ulang.</div>
+
+## Di Dunia Nyata
+
+- **Tabel transaksi**: autovacuum lebih agresif agar bloat tidak cepat.
+- **Batch update besar**: jalankan VACUUM ANALYZE setelahnya.
+- **Monitoring**: alert saat n_dead_tup melonjak.
+- **Storage penuh**: VACUUM FULL hanya dengan jendela maintenance.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT relname, n_live_tup, n_dead_tup, last_autovacuum
+FROM pg_stat_user_tables
+ORDER BY n_dead_tup DESC
+LIMIT 5;
+VACUUM (ANALYZE) karyawan;`} />

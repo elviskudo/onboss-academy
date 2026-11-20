@@ -1,0 +1,113 @@
+---
+title: "useRef & Akses DOM"
+description: "reference yang tidak memicu render, fokus input, dan menyimpan nilai sebelumnya"
+order: 15
+quiz:
+  - q: "Nilai `ref.current` berubah saat…"
+    options: ["Render bertambah", "Props berubah", "Ditulis langsung", "State berubah otomatis"]
+    answer: 2
+    explain: "Menulis ref.current tidak memicu render ulang."
+  - q: "Kegunaan umum useRef adalah…"
+    options: ["Mengirim request", "Fokus elemen dan menyimpan timer", "Mengganti useState", "Membuat CSS"]
+    answer: 1
+    explain: "Ref cocok untuk nilai yang tidak perlu ditampilkan."
+  - q: "Akses elemen DOM dilakukan lewat…"
+    options: ["<input reference={ref} />", "<input dom={ref} />", "<input id={ref} />", "<input ref={ref} />"]
+    answer: 3
+    explain: "Atribut ref diisi objek dari useRef."
+  - q: "Mengamati perubahan ref.current menyebabkan…"
+    options: ["Efek berjalan", "Render otomatis", "Tidak ada render", "Error"]
+    answer: 2
+    explain: "Bedanya dengan state: ref tidak reaktif."
+  - q: "ref.current saat pertama render biasanya…"
+    options: ["null", "0", "true", "undefined"]
+    answer: 0
+    explain: "Diisi setelah DOM terpasang, biasanya di useEffect."
+example:
+  code: |
+    const inputRef = React.useRef(null);
+
+    React.useEffect(() => { inputRef.current?.focus(); }, []);
+
+    <input ref={inputRef} placeholder="Auto fokus" />
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`useRef` menyimpan nilai yang **bertahan antar render tetapi tidak memicu render**. Anggap seperti kotak penyimpanan di dalam komponen.
+
+## Membuat Ref
+
+```jsx
+const inputRef = React.useRef(null);
+
+<input ref={inputRef} />
+```
+
+Setelah komponen terpasang, `inputRef.current` berisi elemen DOM asli.
+
+## Fokus Otomatis
+
+```jsx
+function CariProduk() {
+  const inputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return <input ref={inputRef} placeholder="Cari…" />;
+}
+```
+
+Operator `?.` menjaga kode tetap aman bila elemen belum tersedia.
+
+## Menyimpan Nilai Sebelumnya
+
+```jsx
+function PanahPerubahan({ nilai }) {
+  const sebelumnya = React.useRef(nilai);
+
+  React.useEffect(() => {
+    sebelumnya.current = nilai;
+  }, [nilai]);
+
+  const selisih = nilai - sebelumnya.current;
+  return <span>{selisih >= 0 ? "▲" : "▼"} {Math.abs(selisih)}</span>;
+}
+```
+
+## State vs Ref
+
+| | useState | useRef |
+|---|----------|--------|
+| Menulis nilai | `setNilai(x)` | `ref.current = x` |
+| Render ulang | ya | tidak |
+| Dipakai untuk tampilan | ya | tidak |
+| Dipakai untuk timer/DOM | jarang | ya |
+
+## Jebakan
+
+Jangan menulis `ref.current` saat render langsung berpengaruh pada output — React tidak akan tahu harus menggambar ulang. Kalau tampilan bergantung pada nilai itu, pakai state.
+
+<div class="note">💡 Ref itu "pintu belakang" ke DOM. Pakai secukupnya untuk fokus, scroll, ukuran elemen, atau timer — bukan untuk menggantikan alur data React.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan useRef: nilai bertahan tanpa memicu render
+function buatRef(awal) { return { current: awal }; }
+
+const renderCount = buatRef(0);
+const nilaiSebelumnya = buatRef(null);
+
+function render(nilai) {
+  renderCount.current++;
+  const delta = nilaiSebelumnya.current === null
+    ? 0 : nilai - nilaiSebelumnya.current;
+  nilaiSebelumnya.current = nilai;
+  console.log(\`render #\${renderCount.current}, delta \${delta}\`);
+}
+
+render(10); render(12); render(12); render(9);`} />

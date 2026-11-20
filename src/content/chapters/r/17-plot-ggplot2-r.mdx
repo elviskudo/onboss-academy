@@ -1,0 +1,117 @@
+---
+title: "Visualisasi dengan ggplot2"
+description: "Grammar of graphics: aes, geom, facet, theme, dan ekspor plot"
+order: 17
+quiz:
+  - q: "Fungsi awal pembuat plot ggplot2 adalah…"
+    options: ["plot()", "ggplot()", "graph()", "qplot() saja"]
+    answer: 1
+    explain: "ggplot(data, aes(...)) memulai objek plot."
+  - q: "Pemetaan data ke tampilan visual ditulis dengan…"
+    options: ["geom()", "aes()", "map()", "scale()"]
+    answer: 1
+    explain: "aes menentukan kolom mana yang dipetakan ke x, y, colour, size, dll."
+  - q: "Geom untuk diagram pencar adalah…"
+    options: ["geom_bar()", "geom_point()", "geom_line() pada data kategori", "geom_boxplot()"]
+    answer: 1
+    explain: "geom_point menampilkan titik per observasi."
+  - q: "Untuk membagi plot menjadi beberapa panel dipakai…"
+    options: ["facet_wrap()", "group_plot()", "subplot()", "grid()"]
+    answer: 0
+    explain: "facet_wrap membuat panel kecil per kategori."
+  - q: "Histogram cocok untuk…"
+    options: ["Distribusi satu variabel numerik", "Hubungan dua variabel", "Perbandingan kategori", "Peta"]
+    answer: 0
+    explain: "geom_histogram membagi data numerik menjadi bin dan menghitung frekuensinya."
+example:
+  code: |
+    library(ggplot2)
+    df <- data.frame(x=1:5, y=c(2,4,3,5,4))
+    print(ggplot(df, aes(x,y)) + geom_point() + theme_minimal())
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**ggplot2** memakai *grammar of graphics*: plot dibangun dari lapisan-lapisan independen. Data dipetakan ke estetika, lalu geometri menentukan bentuk visualnya.
+
+## Anatomi Plot
+
+```r
+library(ggplot2)
+ggplot(data = df, aes(x = umur, y = pendapatan, color = kelas)) +
+  geom_point(size = 2, alpha = 0.7) +
+  labs(title = "Umur vs Pendapatan", x = "Umur (tahun)", y = "Pendapatan (juta)") +
+  theme_minimal()
+```
+
+`aes()` memetakan **kolom**; argumen di luar `aes()` seperti `size = 2` adalah nilai **tetap**.
+
+## Memilih Geom
+
+| Pertanyaan | Geom |
+| --- | --- |
+| Distribusi angka | `geom_histogram()`, `geom_density()` |
+| Hubungan dua angka | `geom_point()`, `geom_smooth()` |
+| Perbandingan kategori | `geom_col()`, `geom_boxplot()` |
+| Perubahan waktu | `geom_line()` |
+| Proporsi | `geom_bar(position = "fill")` |
+
+```r
+ ggplot(df, aes(x = kategori)) + geom_bar(fill = "steelblue")
+ ggplot(df, aes(x = nilai)) + geom_histogram(bins = 20)
+ ggplot(df, aes(x = tanggal, y = omzet)) + geom_line()
+```
+
+## Facet dan Tema
+
+```r
+ggplot(df, aes(x = bulan, y = omzet)) +
+  geom_col() +
+  facet_wrap(~ wilayah, scales = "free_y") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+`facet_grid(baris ~ kolom)` cocok untuk dua faktor sekaligus; `facet_wrap` untuk satu faktor dengan banyak level.
+
+## Skala dan Warna
+
+```r
+ggplot(df, aes(x = nilai, fill = kelas)) +
+  geom_histogram(position = "dodge", bins = 15) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+Untuk warna yang konsisten antar plot, gunakan `scale_color_manual(values = c(A = "#E69F00", B = "#56B4E9"))`.
+
+## Menyimpan Plot
+
+```r
+ggsave("hasil.png", width = 8, height = 5, dpi = 300)
+ggsave("hasil.svg", plot = p, width = 8, height = 5)
+```
+
+Simpan SVG untuk publikasi digital, PNG untuk slide. Atur `dpi` minimal 300 bila akan dicetak.
+
+## Di Dunia Nyata
+
+- **Eksplorasi awal**: histogram mengungkap distribusi dan pencilan sebelum modeling.
+- **Laporan bulanan**: `geom_col()` + `facet_wrap(~cabang)` memberi satu panel per cabang.
+- **Diagnostik model**: `geom_point(aes(x = fitted, y = resid))` memeriksa pola residual.
+- **Dashboard**: kombinasikan dengan Shiny agar pengguna bisa mengubah filter.
+
+<div class="note">💡 Mulailah dari pertanyaan, bukan dari jenis grafik. "Apakah omzet naik tiap bulan?" mengarah ke `geom_line()`, sedangkan "kategori mana terbesar?" mengarah ke `geom_col()`.</div>
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`library(ggplot2)
+df <- data.frame(bulan = rep(c("Jan", "Feb", "Mar"), each = 2),
+                 wilayah = rep(c("Utara", "Selatan"), 3),
+                 omzet = c(100, 80, 120, 95, 135, 110))
+p <- ggplot(df, aes(x = bulan, y = omzet, fill = wilayah)) +
+  geom_col(position = "dodge") +
+  labs(title = "Omzet per Wilayah", y = "Omzet") +
+  theme_minimal()
+print(p)
+print(p + facet_wrap(~ wilayah))`} />

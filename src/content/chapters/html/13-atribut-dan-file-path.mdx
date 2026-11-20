@@ -1,0 +1,90 @@
+---
+title: "Atribut & File Path"
+description: "Cara kerja atribut HTML dan penulisan path relatif maupun absolut untuk gambar dan tautan"
+order: 13
+quiz:
+  - q: "Atribut HTML ditulis di mana?"
+    options: ["Di dalam tag pembuka", "Di antara tag pembuka dan penutup", "Setelah tag penutup", "Di luar dokumen"]
+    answer: 0
+    explain: "Atribut ditulis di dalam tag pembuka, misalnya <img src='foto.jpg'>."
+  - q: "Atribut yang menentukan alamat gambar adalah…"
+    options: ["href", "src", "alt", "class"]
+    answer: 1
+    explain: "src (source) berisi path ke file gambar, sedangkan href dipakai tautan."
+  - q: "Path `images/logo.png` adalah contoh…"
+    options: ["Path absolut", "Path relatif", "URL eksternal", "Data URI"]
+    answer: 1
+    explain: "Path relatif dihitung dari lokasi file HTML saat ini."
+  - q: "Atribut alt pada gambar berfungsi untuk…"
+    options: ["Menambah efek hover", "Teks alternatif saat gambar gagal dimuat & untuk pembaca layar", "Mengubah ukuran gambar", "Menentukan format file"]
+    answer: 1
+    explain: "alt penting untuk aksesibilitas dan SEO."
+  - q: "Path `/gambar/logo.png` (diawali garis miring) bersifat…"
+    options: ["Relatif terhadap folder saat ini", "Absolut terhadap root web server", "Relatif terhadap halaman sebelumnya", "Tidak valid di HTML"]
+    answer: 1
+    explain: "Tanda / di awal berarti mulai dari akar (root) situs."
+example:
+  code: |
+    <a href="about.html">Halaman Tentang</a>
+    <img src="images/logo.png" alt="Logo OnBoss">
+    <img src="/assets/banner.jpg" alt="Banner utama">
+    <a href="https://w3schools.com" target="_blank">Situs Luar</a>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Atribut** memberi informasi tambahan tentang elemen. Atribut selalu ditulis dalam pasangan `nama="nilai"` di dalam tag pembuka.
+
+## Atribut Umum
+
+| Atribut | Dipakai di | Fungsi |
+|---------|-----------|--------|
+| `src` | `<img>`, `<script>`, `<iframe>` | Sumber file |
+| `href` | `<a>`, `<link>` | Alamat tautan |
+| `alt` | `<img>` | Teks alternatif |
+| `title` | hampir semua elemen | Tooltip saat di-hover |
+| `class` | hampir semua elemen | Pengelompokan untuk CSS |
+| `id` | hampir semua elemen | Identitas unik |
+
+## Path Relatif vs Absolut
+
+**Path relatif** dihitung dari posisi file HTML saat ini:
+
+```html
+<img src="foto.jpg">              <!-- file di folder yang sama -->
+<img src="images/foto.jpg">       <!-- di dalam subfolder -->
+<img src="../foto.jpg">           <!-- naik satu folder -->
+```
+
+**Path absolut** dimulai dari root server:
+
+```html
+<img src="/assets/img/foto.jpg">
+```
+
+Gunakan path relatif untuk proyek lokal yang sederhana. Path absolut lebih aman saat aplikasi punya banyak halaman di berbagai level folder.
+
+## Atribut untuk Tautan
+
+```html
+<a href="https://example.com" target="_blank" rel="noopener">
+  Buka di tab baru
+</a>
+```
+
+`target="_blank"` membuka tautan di tab baru. Selalu tambahkan `rel="noopener"` untuk alasan keamanan.
+
+## Try it Yourself
+
+Ubah nilai `src` dan `alt`, lalu perhatikan apa yang terjadi kalau nama filenya salah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body>
+  <h1>Belajar Atribut</h1>
+  <p>Ini <a href="https://example.com" target="_blank">tautan contoh</a>.</p>
+  <p>Gambar di bawah punya teks alternatif:</p>
+  <img src="https://via.placeholder.com/200x100?text=OnBoss"
+       alt="Gambar contoh bertuliskan OnBoss">
+</body>
+</html>`} />

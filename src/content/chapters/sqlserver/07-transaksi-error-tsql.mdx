@@ -27,10 +27,10 @@ example:
   code: |
     BEGIN TRY
         BEGIN TRANSACTION;
-
+    
         UPDATE dbo.saldo SET saldo = saldo - 100000 WHERE id = 1;
         UPDATE dbo.saldo SET saldo = saldo + 100000 WHERE id = 2;
-
+    
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH

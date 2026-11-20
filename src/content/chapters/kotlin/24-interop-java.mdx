@@ -1,0 +1,115 @@
+---
+"title": "Interoperabilitas dengan Java"
+"description": "Memanggil library Java dari Kotlin dan sebaliknya dengan aman"
+"order": 24
+"quiz":
+- "q": "Kotlin bisa memanggil library Java karena…"
+  "options":
+  - "Java diterjemahkan ke JavaScript"
+  - "Sama-sama berjalan di JVM"
+  - "Kotlin adalah sintaks Java"
+  - "Perlu server khusus"
+  "answer": 1
+  "explain": "Keduanya dikompilasi ke bytecode JVM."
+- "q": "Anotasi untuk menangani tipe platform adalah…"
+  "options":
+  - "@Nullable"
+  - "@JavaInterop"
+  - "@JvmName"
+  - "@JvmStatic"
+  "answer": 2
+  "explain": "Platform type dari Java tidak dikenal null-nya; perlakukan dengan hati-hati."
+- "q": "Fungsi statis di companion diekspos ke Java dengan…"
+  "options":
+  - "@Static"
+  - "@Companion"
+  - "@JvmField"
+  - "@JvmStatic"
+  "answer": 3
+  "explain": "Tanpa anotasi, Java memanggilnya lewat Companion."
+- "q": "Properti Kotlin tanpa field backing bisa diekspos lewat…"
+  "options":
+  - "@JvmField"
+  - "@JvmName"
+  - "@JvmOverloads"
+  - "@JvmInline"
+  "answer": 0
+  "explain": "@JvmField mengekspos field langsung tanpa getter/setter."
+- "q": "Default parameter terlihat di Java lewat…"
+  "options":
+  - "Otomatis"
+  - "Overload tambahan dengan @JvmOverloads"
+  - "@JvmDefault"
+  - "Tidak bisa"
+  "answer": 1
+  "explain": "Tanpa anotasi ini, Java harus mengirim semua argumen."
+"example":
+  "code": "class Api @JvmOverloads constructor(\n    val baseUrl: String,\n    val timeout: Int = 30\n) {\n    companion object {\n        @JvmStatic fun buat() = Api(\"https://api.onboss.test\")\n    }\n\n    @JvmName(\"getNamaUser\")\n    fun namaUser(id: Int): String = \"User-$id\"\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Arah Kotlin → Java
+
+```kotlin
+class Api @JvmOverloads constructor(
+    val baseUrl: String,
+    val timeout: Int = 30
+) {
+    companion object {
+        @JvmStatic fun buat() = Api("https://api.onboss.test")
+    }
+
+    @JvmName("getNamaUser")
+    fun namaUser(id: Int): String = "User-$id"
+}
+```
+
+Kotlin menghasilkan bytecode yang bisa dipakai Java, tetapi beberapa fitur perlu bantuan anotasi:
+
+| Fitur Kotlin | Anotasi | Alasan |
+|---|---|---|
+| Companion function | `@JvmStatic` | dipanggil seperti static method |
+| Default parameter | `@JvmOverloads` | menghasilkan overload untuk Java |
+| Properti | `@JvmField` | field langsung, tanpa getter |
+| Nama fungsi | `@JvmName` | menghindari name mangling |
+
+## Arah Java → Kotlin
+
+```kotlin
+val daftar: List<String> = javaUtil.getNames()
+```
+
+Tipe dari Java disebut **platform type** (`String!`). Kotlin tidak tahu apakah boleh null, jadi terserah kamu:
+
+```kotlin
+val aman = javaUtil.getNama()?.trim()   // perlakukan nullable
+val yakin = javaUtil.getNama()!!.trim() // pastikan tidak null
+```
+
+## SAM Conversion
+
+```kotlin
+button.setOnClickListener { println("Klik") }
+```
+
+Antarmuka Java dengan satu abstract method (SAM) bisa ditulis sebagai lambda di Kotlin.
+
+<div class="note">💡 Saat migrasi bertahap, simpan model dan API di Kotlin, lalu biarkan file Java lama memanggilnya. Compilation bersama JVM memastikan keduanya tetap sinkron.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`class Api @JvmOverloads constructor(
+    val baseUrl: String,
+    val timeout: Int = 30
+) {
+    companion object {
+        @JvmStatic fun buat() = Api("https://api.onboss.test")
+    }
+
+    @JvmName("getNamaUser")
+    fun namaUser(id: Int): String = "User-$id"
+}`} />

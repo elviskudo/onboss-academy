@@ -1,0 +1,85 @@
+---
+title: "Feature Scaling"
+description: "min-max, standardization, kapan diperlukan, dan kebocoran data"
+order: 16
+quiz:
+  - q: "Min-max scaling menghasilkan rentang…"
+    options: ["Std 1", "0 sampai 1", "-1 sampai 1", "Rata-rata 0"]
+    answer: 1
+    explain: "Dengan rumus (x-min)/(max-min)."
+  - q: "Standardisasi z-score menghasilkan…"
+    options: ["Nilai positif semua", "Median 1", "Mean 0 dan std 1", "Rentang 0-1"]
+    answer: 2
+    explain: "z = (x - mean)/std."
+  - q: "Model yang paling sensitif terhadap skala adalah…"
+    options: ["Decision tree", "Naive Bayes kategorik", "Rule-based", "KNN dan SVM"]
+    answer: 3
+    explain: "Keduanya memakai jarak."
+  - q: "Data leakage pada scaling terjadi bila…"
+    options: ["Model disimpan", "Statistik dihitung dari seluruh data termasuk uji", "Fitur diacak", "Label dihapus"]
+    answer: 1
+    explain: "Harus fit hanya pada data latih."
+  - q: "Decision tree umumnya…"
+    options: ["Hanya butuh min-max", "Selalu gagal tanpa scaling", "Tidak butuh scaling", "Wajib scaling"]
+    answer: 2
+    explain: "Pemisahan berbasis ambang nilai."
+example:
+  code: |
+    data=[10,20,30]
+    lo,hi=min(data),max(data)
+    print([(x-lo)/(hi-lo) for x in data])
+---
+
+## Min-Max
+
+```python
+def minmax(data):
+    lo, hi = min(data), max(data)
+    return [(x - lo) / (hi - lo) if hi != lo else 0 for x in data]
+
+print(minmax([10, 20, 30]))  # [0.0, 0.5, 1.0]
+```
+
+## Standardisasi
+
+```python
+def zscore(data):
+    m = sum(data) / len(data)
+    s = (sum((x - m) ** 2 for x in data) / len(data)) ** 0.5
+    return [(x - m) / s if s else 0 for x in data]
+```
+
+Hasilnya berarti rata-rata 0 dan standar deviasi 1.
+
+## Kapan Diperlukan
+
+| Model | Scaling |
+| --- | --- |
+| KNN, SVM, k-means | wajib |
+| Regresi linear | disarankan |
+| Decision tree, random forest | tidak perlu |
+
+## Urutan yang Benar
+
+1. Bagi data latih dan uji.
+2. Hitung min/mean/std **hanya dari latih**.
+3. Terapkan transformasi ke latih dan uji.
+
+<div class="note">💡 Menghitung rata-rata dari seluruh data sebelum split adalah kebocoran halus: informasi data uji ikut masuk ke proses latih.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`def minmax(data):
+    lo, hi = min(data), max(data)
+    return [round((x-lo)/(hi-lo), 3) for x in data]
+
+def zscore(data):
+    m = sum(data)/len(data)
+    s = (sum((x-m)**2 for x in data)/len(data))**0.5
+    return [round((x-m)/s, 3) for x in data]
+
+d = [10, 20, 30, 40]
+print("MinMax:", minmax(d))
+print("ZScore:", zscore(d))`}</code></pre>

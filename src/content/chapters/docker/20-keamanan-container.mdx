@@ -1,0 +1,93 @@
+---
+title: "Keamanan Container"
+description: "Prinsip least privilege, user non-root, dan pembatasan capability"
+order: 20
+quiz:
+  - q: "Alasan menjalankan container sebagai non-root adalah…"
+    options: ["Mengurangi dampak bila aplikasi ditembus", "Membuat image lebih kecil", "Mempercepat build", "Menambah port"]
+    answer: 0
+    explain: "Jika proses root berhasil dieksploitasi, penyerang mendapat hak root di dalam container."
+  - q: "Opsi --read-only pada docker run berarti…"
+    options: ["Port ditutup", "Filesystem root container tidak bisa ditulis", "Container tidak bisa dibaca", "Hanya root yang bisa jalan"]
+    answer: 1
+    explain: "Titik yang perlu ditulis harus di-mount sebagai volume atau tmpfs."
+  - q: "Capability yang sering dicabut adalah…"
+    options: ["Semua kecuali SETUID", "Tidak ada", "NET_RAW dan SYS_ADMIN", "CHOWN saja"]
+    answer: 2
+    explain: "NET_RAW dipakai untuk raw socket, SYS_ADMIN sangat kuat dan hampir tidak pernah diperlukan."
+  - q: "docker scan / trivy digunakan untuk…"
+    options: ["Menghapus image", "Membuat Dockerfile", "Mengukur kecepatan", "Memindai image dari kerentanan yang diketahui"]
+    answer: 3
+    explain: "Pemindaian memberi daftar CVE beserta tingkat keparahannya."
+  - q: "Secret yang paling aman diberikan ke container adalah…"
+    options: ["Melalui secret manager atau mount khusus", "Di ENV image", "Di ARG build", "Di label image"]
+    answer: 0
+    explain: "ENV dan label bisa dibaca siapa pun yang memiliki akses inspect image."
+example:
+  code: |
+    FROM node:20-alpine
+    RUN adduser -D -u 10001 appuser
+    WORKDIR /app
+    COPY --chown=appuser:appuser . .
+    USER appuser
+    CMD ["node", "server.js"]
+---
+
+Container bukan mesin virtual: ia berbagi kernel dengan host. Karena itu, konfigurasi keamanan yang baik tetap wajib walaupun image berasal dari sumber tepercaya.
+
+## Prinsip Dasar
+
+1. **Image minimal** — lebih sedikit paket berarti lebih sedikit kerentanan.
+2. **Non-root** — jalankan proses dengan UID tetap.
+3. **Filesystem read-only** — tulis hanya di lokasi yang disengaja.
+4. **Capability dibatasi** — berikan hanya yang benar-benar diperlukan.
+5. **Tidak ada secret di layer** — gunakan mount atau layanan khusus.
+
+## User Non-root
+
+```dockerfile
+FROM node:20-alpine
+RUN adduser -D -u 10001 appuser
+WORKDIR /app
+COPY --chown=appuser:appuser package*.json ./
+RUN npm ci --omit=dev
+COPY --chown=appuser:appuser . .
+USER 10001
+CMD ["node", "server.js"]
+```
+
+Memberi UID numerik (bukan hanya nama) memudahkan pencocokan hak akses dengan volume di host.
+
+## Membatasi Hak
+
+```bash
+docker run --rm -d \
+  --read-only \
+  --tmpfs /tmp:size=16m \
+  --cap-drop ALL \
+  --cap-add NET_BIND_SERVICE \
+  --security-opt no-new-privileges \
+  --pids-limit 100 \
+  app:1.0
+```
+
+`no-new-privileges` mencegah proses mendapat hak lebih tinggi lewat `setuid`. `--pids-limit` melindungi dari serangan fork bomb.
+
+## Memindai Image
+
+```bash
+docker build -t app:1.0 .
+trivy image app:1.0
+trivy image --severity HIGH,CRITICAL app:1.0
+```
+
+Hasil pemindaian bukan vonis mutlak—beberapa CVE tidak relevan untuk penggunaanmu. Tetap perbarui base image secara berkala dan pin digest yang sudah terverifikasi.
+
+<div class="note">💡 Socket `/var/run/docker.sock` jangan pernah di-mount ke container yang bisa diakses pengguna biasa. Siapa pun yang bisa memanggil API Docker pada dasarnya mendapat hak root host.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`printf '%s\\n' 'FROM alpine:3.20' 'RUN adduser -D -u 10001 appuser' 'USER appuser' 'CMD ["id"]' &gt; Dockerfile
+docker build -t latihan-aman . &gt;/dev/null
+docker run --rm --read-only --cap-drop ALL latihan-aman`}</code></pre>

@@ -143,10 +143,14 @@ Alurnya: **baca → ubah di memori → tulis kembali**. Saat program dijalankan 
 
 <div class="note">💡 Pisahkan logika program dari logika berkas: simpan metode `muat` dan `simpan` dalam module khusus, sehingga bagian inti program hanya bekerja dengan array di memori. Begitu penyimpanan pindah ke database, kamu hanya menukar isi dua method itu tanpa menyentuh logika bisnis.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`daftar = []
-daftar << "Belajar variabel Ruby"
-daftar << "Pahami blok dan method"
-daftar << "Buat proyek kecil"
+daftar <&lt; "Belajar variabel Ruby"
+daftar <&lt; "Pahami blok dan method"
+daftar <&lt; "Buat proyek kecil"
 
 File.open("daftar.txt", "w") do |f|
   daftar.each { |tugas| f.puts tugas }

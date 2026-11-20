@@ -1,0 +1,84 @@
+---
+title: "K-Means Clustering"
+description: "klaster, centroid, iterasi, pemilihan k, dan keterbatasan"
+order: 25
+quiz:
+  - q: "K-means mengelompokkan data berdasarkan…"
+    options: ["Nama fitur", "Kedekatan ke centroid", "Label yang sudah ada", "Urutan waktu"]
+    answer: 1
+    explain: "Minimalkan jarak dalam klaster."
+  - q: "Termasuk supervised atau unsupervised?"
+    options: ["Reinforcement", "Semi-supervised", "Supervised", "Unsupervised"]
+    answer: 3
+    explain: "Tidak memakai label."
+  - q: "Elbow method membantu memilih…"
+    options: ["Jumlah fitur", "Threshold", "Learning rate", "Jumlah klaster k"]
+    answer: 3
+    explain: "Lihat titik di mana penurunan inertia melambat."
+  - q: "Hasil k-means dipengaruhi oleh…"
+    options: ["Waktu hari", "Inisialisasi centroid", "Nama kolom", "Jumlah baris uji"]
+    answer: 1
+    explain: "Itulah sebabnya dijalankan beberapa kali."
+  - q: "K-means kurang cocok untuk klaster…"
+    options: ["Numerik", "Berskala sama", "Berbentuk tidak bulat", "Berada di ruang 2D"]
+    answer: 2
+    explain: "Ia mengasumsikan klaster mirip bola."
+example:
+  code: |
+    titik=[(1,1),(1,2),(8,8),(9,8)]
+    c=[(1,1),(8,8)]
+    for p in titik:
+        d=[(p[0]-x)**2+(p[1]-y)**2 for x,y in c]
+        print(d.index(min(d)))
+---
+
+## Algoritma
+
+1. Pilih `k` centroid awal.
+2. Tetapkan tiap titik ke centroid terdekat.
+3. Geser centroid ke rata-rata anggotanya.
+4. Ulangi sampai stabil.
+
+## Menetapkan Titik
+
+```python
+titik = [(1, 1), (1, 2), (8, 8), (9, 8)]
+pusat = [(1, 1), (8, 8)]
+
+def jarak(a, b):
+    return (a[0]-b[0])**2 + (a[1]-b[1])**2
+
+for p in titik:
+    klaster = min(range(len(pusat)), key=lambda i: jarak(p, pusat[i]))
+    print(p, "->", klaster)
+```
+
+## Memilih k
+
+Hitung inertia (jumlah jarak kuadrat ke centroid) untuk Several nilai k. Pilih titik "siku" tempat penurunan mulai melambat.
+
+## Keterbatasan
+
+- Sensitif terhadap outlier.
+- Butuh scaling.
+- Tidak bisa klaster berbentuk elongasi atau bulan sabit.
+
+<div class="note">💡 Karena inisialisasi acak, jalankan k-means beberapa kali dengan seed berbeda lalu pilih hasil dengan inertia terendah.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`titik = [(1,1), (1,2), (2,1), (8,8), (9,8), (8,9)]
+pusat = [(1,1), (8,8)]
+
+def d2(a, b):
+    return (a[0]-b[0])**2 + (a[1]-b[1])**2
+
+klaster = [[], []]
+for p in titik:
+    i = 0 if d2(p, pusat[0]) &lt; d2(p, pusat[1]) else 1
+    klaster[i].append(p)
+
+for i, anggota in enumerate(klaster):
+    print("Klaster", i, "anggota", anggota)`}</code></pre>

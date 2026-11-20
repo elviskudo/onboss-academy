@@ -122,3 +122,13 @@ Stash default tidak menyimpan file untracked; gunakan `git stash push -u -m "WIP
 git reflog              # catatan semua pergerakan HEAD
 git reset --hard <hash> # kembali ke kondisi sebelum rebase
 ```
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`git stash
+git rebase main
+git stash pop
+git revert &lt;hash&gt;
+`}</code></pre>

@@ -1,0 +1,95 @@
+---
+title: "Agregasi: $addFields, $count, dan tahap kecil lainnya"
+description: "menambah field, menghitung hasil, $replaceRoot, $sample, serta urutan tahap yang efisien"
+order: 23
+quiz:
+  - q: "$addFields berbeda dengan $project karena…"
+    options: ["Hanya untuk indeks", "Menghapus semua field lama", "Menambah field tanpa membuang yang lain", "Hanya untuk array"]
+    answer: 2
+    explain: "$addFields mempertahankan field yang sudah ada."
+  - q: "Tahap $count menghasilkan…"
+    options: ["Semua dokumen", "Indeks baru", "Satu dokumen berisi jumlah", "Array kosong"]
+    answer: 2
+    explain: "Contoh: {$count: \"jumlah\"} menghasilkan {jumlah: n}."
+  - q: "$sample berguna untuk…"
+    options: ["Menghitung rata-rata", "Mengganti nama field", "Menyimpan hasil", "Mengambil dokumen acak"]
+    answer: 3
+    explain: "$sample: {size: n} mengambil n dokumen acak."
+  - q: "$replaceRoot menjadikan…"
+    options: ["Filter sebagai root", "Field pertama sebagai root", "Dokumen bersarang sebagai dokumen utama", "Array sebagai indeks"]
+    answer: 2
+    explain: "Berguna setelah $lookup untuk mengangkat hasil join menjadi root."
+  - q: "Tahap $limit sebaiknya diletakkan…"
+    options: ["Paling awal selalu", "Tidak boleh di pipeline", "Sebelum $match", "Setelah sort bila ingin top-N"]
+    answer: 3
+    explain: "Sort dulu lalu limit adalah pola top-N yang benar."
+example:
+  code: |
+    db.penjualan.aggregate([
+      {$addFields: {pajak: {$multiply: ["$jumlah", 0.11]}}},
+      {$count: "jumlahTransaksi"}
+    ])
+---
+
+## $addFields
+
+```javascript
+db.produk.aggregate([
+  { $addFields: {
+      hargaSetelahDiskon: { $multiply: ["$harga", 0.9] },
+      statusStok: { $cond: [{ $gt: ["$stok", 0] }, "ada", "habis"] }
+  } }
+])
+```
+
+Field lama tetap ada. Untuk mengganti nama field tanpa kehilangan yang lain, gabungkan `$addFields` dengan `$project`.
+
+## $count
+
+```javascript
+db.penjualan.aggregate([
+  { $match: { status: "lunas" } },
+  { $count: "jumlahLunas" }
+])
+```
+
+Hasilnya tepat satu dokumen: `{ jumlahLunas: 42 }`. Kalau tidak ada yang cocok, hasilnya array kosong.
+
+## $sample
+
+```javascript
+db.produk.aggregate([{ $sample: { size: 3 } }])
+```
+
+Berguna untuk mengambil contoh data saat eksplorasi. Pada koleksi besar, MongoDB memakai sampling acak yang efisien.
+
+## $replaceRoot
+
+```javascript
+db.pesanan.aggregate([
+  { $lookup: { from: "produk", localField: "kode", foreignField: "kode", as: "p" } },
+  { $unwind: "$p" },
+  { $replaceRoot: { newRoot: "$p" } }
+])
+```
+
+Dokumen hasil kini berisi field produk langsung di root, bukan bersarang di `p`.
+
+## Menyusun Tahap
+
+| Tujuan | Pola |
+| --- | --- |
+| Ringkas data | `$match → $group → $sort` |
+| Top-N | `$match → $sort → $limit` |
+| Join | `$match → $lookup → $unwind → $project` |
+| Hitung baris | `$match → $count` |
+
+<div class="note">💡 Tahap dijalankan berurutan. Memindahkan `$limit` ke depan `$match` bisa menghasilkan jawaban yang salah karena yang dibatasi bukan data yang sudah difilter.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_addfields
+db.produk.insertMany([{nama: "A", harga: 100}, {nama: "B", harga: 200}])
+db.produk.aggregate([{$addFields: {pajak: {$multiply: ["$harga", 0.1]}}}, {$count: "banyak"}])`}</code></pre>

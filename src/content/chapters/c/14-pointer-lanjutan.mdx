@@ -1,0 +1,139 @@
+---
+title: "Pointer Lanjutan"
+description: "pointer ke pointer, aritmetika pointer, void pointer, dan function pointer"
+order: 14
+quiz:
+  - q: "Aritmetika `p + 1` pada `int *p` menambah alamat sebesar…"
+    options: ["1 byte", "sizeof(int) byte", "sizeof(char) byte", "8 byte"]
+    answer: 1
+    explain: "Pointer naik sesuai ukuran tipe yang ditunjuk."
+  - q: "`void *` adalah pointer…"
+    options: ["Ke fungsi", "Generik tanpa tipe", "Selalu NULL", "Ke void variable"]
+    answer: 1
+    explain: "Harus di-cast dulu sebelum di-dereference."
+  - q: "Deklarasi pointer ke fungsi yang benar adalah…"
+    options: ["int (*f)(int);", "int *f(int);", "int f*(int);", "*int f(int);"]
+    answer: 0
+    explain: "Kurung diperlukan agar `f` diket sebagai pointer, bukan fungsi返回 pointer."
+  - q: "`**pp` berarti…"
+    options: ["Pointer ke pointer", "Pointer ke int", "Dereference dua kali dari int", "Array 2D"]
+    answer: 0
+    explain: "pp menyimpan alamat dari pointer lain."
+  - q: "Perbandingan pointer dengan `==` memeriksa…"
+    options: ["Nilai yang ditunjuk", "Alamat", "Ukuran tipe", "Jumlah elemen"]
+    answer: 1
+    explain: "Gunakan `*p == *q` untuk membandingkan nilai."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdlib.h>
+    
+    int tambah(int a, int b) { return a + b; }
+    
+    int main(void) {
+        int x = 42;
+        int *p = &x;
+        int **pp = &p;
+        printf("x = %d, lewat pp = %d\n", x, **pp);
+    
+        int (*fn)(int, int) = tambah;
+        printf("fn(2,3) = %d\n", fn(2, 3));
+    
+        void *mentah = malloc(sizeof(int));
+        *(int *)mentah = 7;
+        printf("nilai = %d\n", *(int *)mentah);
+        free(mentah);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Pointer adalah variabel yang menyimpan alamat memori. Bab 08 memperkenalkan dasarnya; sekarang kita masuk ke pola yang lebih advanced.
+
+## Aritmetika Pointer
+
+```c
+int arr[4] = {10, 20, 30, 40};
+int *p = arr;
+
+printf("%d\n", *(p + 2));   /* 30 */
+printf("%ld\n", (long)((p+1) - p));  /* 1 elemen */
+```
+
+`p + 1` maju `sizeof(*p)` byte, bukan 1 byte. Inilah sebabnya `arr[i]` setara `*(arr + i)`.
+
+## Pointer ke Pointer
+
+```c
+void ubah(int **pp) {
+    *pp = malloc(sizeof(int));
+    **pp = 99;
+}
+
+int *p = NULL;
+ubah(&p);
+printf("%d\n", *p);
+free(p);
+```
+
+Berguna bila fungsi perlu **mengganti alamat** yang disimpan pointer pemanggil.
+
+## void Pointer
+
+```c
+void *mem = malloc(16);
+int *i = mem;      /* di C, cast implisit boleh */
+int *j = (int *)mem; /* di C++ wajib cast */
+```
+
+`void *` tidak bisa diinkrementasi atau di-dereference langsung karena ukuran tipenya tidak diketahui.
+
+## Function Pointer
+
+```c
+int max(int a, int b) { return a > b ? a : b; }
+int min(int a, int b) { return a < b ? a : b; }
+
+int (*pilih)(int, int) = max;
+printf("%d\n", pilih(3, 5));
+
+pilih = min;
+printf("%d\n", pilih(3, 5));
+```
+
+Function pointer adalah dasar callback, qsort comparator, dan plugin sederhana.
+
+## const dengan Pointer
+
+```c
+const int *p;    /* nilai tidak bisa diubah lewat p */
+int * const p;   /* alamat p tidak bisa diubah */
+const int * const p; /* keduanya tidak bisa */
+```
+
+<div class="note">💡 Baca deklarasi dari kanan ke kiri: `int * const p` = "p adalah const pointer ke int". Kebiasaan ini menyelamatkanmu dari bug di kode sistem.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+
+int tambah(int a, int b) { return a + b; }
+
+int main(void) {
+    int x = 42;
+    int *p = &x;
+    int **pp = &p;
+    printf("x = %d, lewat pp = %d\n", x, **pp);
+
+    int (*fn)(int, int) = tambah;
+    printf("fn(2,3) = %d\n", fn(2, 3));
+
+    void *mentah = malloc(sizeof(int));
+    *(int *)mentah = 7;
+    printf("nilai = %d\n", *(int *)mentah);
+    free(mentah);
+    return 0;
+}`} />

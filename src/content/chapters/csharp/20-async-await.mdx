@@ -1,0 +1,137 @@
+---
+"title": "Async & Await"
+"description": "Program asinkron tanpa thread-blocking: Task, async, await, dan WhenAll"
+"order": 20
+"quiz":
+- "q": "Kata kunci yang menandai method asinkron adalah…"
+  "options":
+  - "async"
+  - "await"
+  - "thread"
+  - "task"
+  "answer": 0
+  "explain": "Modifier async di deklarasi method; await dipakai di dalamnya."
+- "q": "Return type method async yang tidak mengembalikan nilai adalah…"
+  "options":
+  - "void"
+  - "Task"
+  - "Thread"
+  - "AsyncResult"
+  "answer": 1
+  "explain": "Gunakan Task; void hanya untuk event handler."
+- "q": "Operator await berfungsi untuk…"
+  "options":
+  - "membuat thread baru"
+  - "menunggu Task selesai tanpa mem-blok thread"
+  - "menghapus exception"
+  - "mengubah tipe jadi string"
+  "answer": 1
+  "explain": "Await menyerahkan kontrol ke caller sambil menunggu hasil."
+- "q": "Task.WhenAll berguna untuk…"
+  "options":
+  - "menjalankan satu task berkali-kali"
+  - "menunggu semua task selesai bersamaan"
+  - "membatalkan task"
+  - "mengubah task jadi nilai"
+  "answer": 1
+  "explain": "WhenAll menggabungkan banyak task menjadi satu yang selesai setelah semuanya selesai."
+- "q": "CancellationToken dipakai untuk…"
+  "options":
+  - "mengukur waktu"
+  - "meminta pembatalan operasi"
+  - "menyimpan hasil"
+  - "membuat task"
+  "answer": 1
+  "explain": "Token dari CancellationTokenSource dikirim ke operasi agar bisa dihentikan."
+"example":
+  "code": "using System;\nusing System.Threading.Tasks;\nclass Program\n{\n    static async Task<string> AmbilData()\n    {\n        await Task.Delay(100);\n        return \"Data siap\";\n    }\n    static async Task Main()\n    {\n        Console.WriteLine(await AmbilData());\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operasi I/O seperti mengunduh file atau query database menghabiskan waktu menunggu, bukan CPU. Async membiarkan thread melakukan pekerjaan lain selama menunggu.
+
+## Dasar
+
+```csharp
+using System.Threading.Tasks;
+
+async Task<string> AmbilNama()
+{
+    await Task.Delay(1000);   // menunggu tanpa mem-blok
+    return "Rani";
+}
+
+async Task Main()
+{
+    string nama = await AmbilNama();
+    Console.WriteLine(nama);
+}
+```
+
+- Method `async` mengembalikan `Task`, `Task<T>`, atau `void` (khusus event)
+- `await` hanya sah di dalam method `async`
+- Exception ditangkap dengan `try/catch` seperti biasa
+
+## Paralel vs Sekuensial
+
+```csharp
+// Sekuensial: total 2 detik
+await AmbilA();
+await AmbilB();
+
+// Paralel: total 1 detik
+await Task.WhenAll(AmbilA(), AmbilB());
+```
+
+## ConfigureAwait
+
+Library sebaiknya memakai `await task.ConfigureAwait(false)` agar tidak memaksa kembali ke konteks UI. Aplikasi UI (WPF, WinForms) memang menginginkan konteks itu agar bisa mengubah kontrol setelah `await`.
+
+## Pembatalan
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+try
+{
+    await File.ReadAllTextAsync("besar.txt", cts.Token);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Dibatalkan");
+}
+```
+
+## async Main
+
+Sejak C# 7.1, `static async Task Main()` diperbolehkan — titik masuk program bisa langsung memakai `await`.
+
+<div class="note">💡 Jangan menulis <code>.Result</code> atau <code>.Wait()</code> pada Task di aplikasi UI — bisa menyebabkan deadlock. Lebih baik gunakan <code>await</code> sampai ke atas.</div>
+
+## Try it Yourself
+
+Tambah task lain ke `Task.WhenAll` atau ubah durasi `Task.Delay`.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task<string> AmbilData(string label)
+    {
+        await Task.Delay(50);
+        return label + " siap";
+    }
+
+    static async Task Main()
+    {
+        Console.WriteLine("Mulai...");
+        string a = await AmbilData("Data A");
+        Console.WriteLine(a);
+
+        Task<string>[] semua = { AmbilData("B"), AmbilData("C") };
+        string[] hasil = await Task.WhenAll(semua);
+        foreach (string h in hasil) Console.WriteLine(h);
+        Console.WriteLine("Selesai");
+    }
+}`} />

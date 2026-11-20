@@ -1,0 +1,127 @@
+---
+"title": "Operator"
+"description": "Aritmetika, perbandingan, logika, bitwise, dan operator konversi di Rust"
+"order": 11
+"quiz":
+- "q": "Operator sisa pembagian di Rust adalah…"
+  "options":
+  - "%"
+  - "/"
+  - "//"
+  - "mod"
+  "answer": 0
+  "explain": "% menghasilkan sisa, misal 7 % 3 = 1."
+- "q": "Hasil 7 / 2 untuk i32 adalah…"
+  "options":
+  - "3.5"
+  - "3"
+  - "4"
+  - "error kompilasi"
+  "answer": 1
+  "explain": "Pembagian integer membuang pecahan."
+- "q": "Operator yang mengecek ketidaksamaan adalah…"
+  "options":
+  - "="
+  - "!="
+  - "<>"
+  - "not=="
+  "answer": 1
+  "explain": "!= berarti tidak sama."
+- "q": "Operator && akan bernilai true jika…"
+  "options":
+  - "salah satu true"
+  - "keduanya true"
+  - "keduanya false"
+  - "kiri false"
+  "answer": 1
+  "explain": "&& adalah AND dengan short-circuit."
+- "q": "Untuk mengubah i32 menjadi f64, gunakan…"
+  "options":
+  - "(x as f64)"
+  - "f64(x)"
+  - "x.to_f64()"
+  - "x -> f64"
+  "answer": 0
+  "explain": "Kata kunci as melakukan cast eksplisit."
+"example":
+  "code": "fn main() {\n    let a = 7;\n    let b = 2;\n    println!(\"{} {} {} {}\", a + b, a - b, a * b, a / b);\n    println!(\"sisa {}\", a % b);\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Rust mewarisi operator yang familier dari bahasa C, tetapi dengan aturan tipe yang ketat. Kompiler menolak operasi yang mencampur tipe tanpa konversi eksplisit.
+
+## Aritmetika
+
+| Operator | Arti | Contoh | Hasil |
+|---|---|---|---|
+| `+` | Tambah | `7 + 2` | `9` |
+| `-` | Kurang | `7 - 2` | `5` |
+| `*` | Kali | `7 * 2` | `14` |
+| `/` | Bagi | `7 / 2` | `3` (integer) |
+| `%` | Sisa | `7 % 2` | `1` |
+
+Untuk desimal, gunakan tipe `f64`:
+
+```rust
+let hasil = 7.0 / 2.0; // 3.5
+```
+
+## Perbandingan
+
+`==`, `!=`, `>`, `<`, `>=`, `&lt;=` menghasilkan `bool`. Membandingkan `i32` dengan `i64` adalah error — samakan tipe dulu dengan `as`.
+
+## Logika
+
+- `&&` — AND (short-circuit)
+- `||` — OR (short-circuit)
+- `!` — NOT
+
+## Bitwise
+
+`&`, `|`, `^`, `!`, `<<`, `>>`. Operator `!` pada integer membalik semua bit, bukan negasi logika.
+
+```rust
+let flag = 0b0001 | 0b0010; // 0b0011
+```
+
+## Cast dengan `as`
+
+```rust
+let i = 42i32;
+let f = i as f64;
+let u = -1 as u8; // 255 (pembungkusan!)
+```
+
+Hati-hati: `as` bisa memotong nilai atau membungkusnya. Untuk konversi yang aman, pakai `try_into()`:
+
+```rust
+use std::convert::TryInto;
+let n: Result<u8, _> = 300i32.try_into(); // Err
+```
+
+## Operator Overload
+
+Rust membolehkan trait seperti `Add` diimplementasikan untuk tipe buatan sendiri, sehingga `+` bisa dipakai pada tipe tersebut.
+
+<div class="note">💡 Debug build Rust melakukan pengecekan overflow dan akan panic pada `i32::MAX + 1`. Mode release memotong nilai — aktifkan <code>overflow-checks = true</code> bila perlu.</div>
+
+
+## Try it Yourself
+
+Ubah nilai `a` dan `b`, lalu coba operator bitwise `a & b`.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    let a: i32 = 29;
+    let b: i32 = 6;
+    println!("a + b = {}", a + b);
+    println!("a - b = {}", a - b);
+    println!("a * b = {}", a * b);
+    println!("a / b = {}", a / b);
+    println!("a % b = {}", a % b);
+    println!("a > b  = {}", a > b);
+    println!("a & b  = {}", a & b);
+    println!("a <&lt; 1 = {}", a <&lt; 1);
+    let f = a as f64 / b as f64;
+    println!("desimal = {f:.2}");
+}`} />

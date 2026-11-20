@@ -1,0 +1,100 @@
+---
+title: "Keamanan MySQL di Produksi"
+description: "TLS, password policy, audit, firewall, dan konfigurasi aman"
+order: 23
+quiz:
+  - q: "Untuk mengharuskan koneksi TLS pada user dipakai…"
+    options: ["REQUIRE SSL", "FORCE TLS", "ENCRYPT USER", "SET SECURE"]
+    answer: 0
+    explain: "CREATE USER ... REQUIRE SSL;"
+  - q: "Plugin validasi kata sandi berguna untuk…"
+    options: ["Memaksa kompleksitas sandi", "Menghapus user", "Mengubah port", "Membuat index"]
+    answer: 0
+    explain: "validate_password memberi aturan panjang dan kompleksitas."
+  - q: "Bind-address berguna untuk…"
+    options: ["Membatasi antarmuka jaringan", "Menentukan charset", "Mengatur memory", "Membuat user"]
+    answer: 0
+    explain: "bind-address=127.0.0.1 mencegah akses dari jaringan eksternal."
+  - q: "Audit plugin digunakan untuk…"
+    options: ["Mencatat aktivitas dan query", "Mempercepat SELECT", "Menghapus log", "Mengganti storage engine"]
+    answer: 0
+    explain: "Audit log membantu kepatuhan dan forensik."
+  - q: "Kredensial sebaiknya disimpan…"
+    options: ["Di kode sumber", "Di secret manager", "Di README", "Di log"]
+    answer: 1
+    explain: "Secret manager menjaga kunci tetap keluar dari repositori."
+example:
+  code: |
+    -- Contoh user dengan TLS dan hak terbatas:
+    CREATE USER 'app'@'%' IDENTIFIED BY 'sandi-kuat' REQUIRE SSL;
+    GRANT SELECT, INSERT ON academy.* TO 'app'@'%';
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Keamanan MySQL mencakup identitas, jaringan, data, dan operasional. Satu pengaturan yang longgar bisa membatalkan semua lapisan lain.
+
+## Akun
+
+```sql
+CREATE USER 'app'@'10.0.1.%' IDENTIFIED BY 'sandi-panjang' REQUIRE SSL;
+ALTER USER 'app'@'10.0.1.%' IDENTIFIED BY 'sandi-baru';
+DROP USER 'lama'@'%';
+```
+
+Batasi host, minta TLS, dan hindari akun tanpa kata sandi.
+
+## Kebijakan Kata Sandi
+
+```sql
+INSTALL PLUGIN validate_password SONAME 'validate_password.so';
+SHOW VARIABLES LIKE 'validate_password%';
+SET GLOBAL validate_password.length = 12;
+```
+
+Gunakan kata sandi unik per lingkungan. Simpan di secret manager, bukan di file konfigurasi yang ter-commit.
+
+## Jaringan
+
+```text
+bind-address = 127.0.0.1        # hanya lokal
+firewall: izinkan port 3306 dari IP aplikasi saja
+SSH tunnel atau VPN untuk akses administrasi
+```
+
+Jangan membuka 0.0.0.0/0 kecuali ada kebutuhan dan proteksi yang jelas.
+
+## Enkripsi
+
+- TLS untuk koneksi klien–server (`REQUIRE SSL`).
+- Transparent Data Encryption untuk file data.
+- Enkripsi backup dan pisahkan kunci enkripsi.
+
+Kata sandi pengguna aplikasi tetap harus di-hash di level aplikasi, bukan disimpan plaintext di MySQL.
+
+## Audit dan Pemantauan
+
+```sql
+SHOW VARIABLES LIKE '%audit%';
+SELECT user, host FROM mysql.user;
+SHOW GRANTS FOR 'app'@'10.0.1.%';
+```
+
+Audit secara berkala siapa saja yang punya hak `SUPER`, `ALL PRIVILEGES`, atau akses dari wildcard host.
+
+<div class="note">💡 SQL injection tetap bisa terjadi walau TLS aktif. TLS melindungi transmisi, bukan logika query. Tetap gunakan prepared statement.</div>
+
+## Di Dunia Nyata
+
+- **Aplikasi web**: akun khusus dengan hak minimal dan TLS.
+- **Regulasi**: audit log untuk siapa mengubah data sensitif.
+- **Multi-environment**: kredensial berbeda untuk dev, staging, produksi.
+- **Incident response**: rotasi kredensial segera setelah kecurigaan kebocoran.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE USER 'appweb'@'localhost' IDENTIFIED BY 'sandi-panjang' REQUIRE SSL;
+GRANT SELECT, INSERT, UPDATE ON academy.* TO 'appweb'@'localhost';
+SHOW GRANTS FOR 'appweb'@'localhost';
+SELECT user, host, ssl_type FROM mysql.user WHERE user = 'appweb';`} />

@@ -1,0 +1,112 @@
+---
+title: "CSS dalam HTML"
+description: "Tiga cara menyisipkan CSS: inline, internal style, dan file eksternal"
+order: 16
+quiz:
+  - q: "Tag untuk menyimpan CSS di dalam dokumen HTML adalah…"
+    options: ["<css>", "<style>", "<script>", "<link>"]
+    answer: 1
+    explain: "<style> ditaruh di dalam <head> berisi aturan CSS."
+  - q: "Cara merujuk file CSS eksternal adalah…"
+    options: ["<link rel='stylesheet' href='style.css'>", "<css src='style.css'>", "<style src='style.css'>", "<import style.css>"]
+    answer: 0
+    explain: "<link rel='stylesheet'> adalah cara standar memuat CSS eksternal."
+  - q: "CSS inline ditulis dengan…"
+    options: ["Atribut class", "Atribut style", "Tag <style>", "File .css"]
+    answer: 1
+    explain: "Contoh: <p style='color:red'>."
+  - q: "Keunggulan CSS eksternal adalah…"
+    options: ["Hanya berlaku untuk satu elemen", "Bisa dipakai ulang di banyak halaman", "Tidak bisa diubah", "Lebih lambat"]
+    answer: 1
+    explain: "Satu file CSS bisa dipakai semua halaman sehingga perubahan cukup di satu tempat."
+  - q: "Di mana tag <link> untuk CSS sebaiknya diletakkan?"
+    options: ["Di dalam <body>", "Di dalam <head>", "Setelah </html>", "Di dalam <title>"]
+    answer: 1
+    explain: "CSS dimuat di <head> agar style siap sebelum konten dirender."
+example:
+  code: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: sans-serif; }
+        h1 { color: teal; }
+      </style>
+      <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+      <h1>Judul</h1>
+      <p style="color: crimson;">Paragraf inline.</p>
+    </body>
+    </html>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+CSS (*Cascading Style Sheets*) mengatur tampilan halaman. Ada tiga cara memasangnya di HTML.
+
+## 1. Inline CSS
+
+Ditulis langsung pada elemen lewat atribut `style`:
+
+```html
+<p style="color: red; font-size: 18px;">Halo!</p>
+```
+
+Cocok untuk percobaan cepat, tapi menyulitkan kalau dipakai berlebihan.
+
+## 2. Internal CSS
+
+Ditaruh di dalam tag `<style>` pada bagian `<head>`:
+
+```html
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h1   { color: navy; }
+  </style>
+</head>
+```
+
+Cocok untuk halaman tunggal atau contoh kecil.
+
+## 3. External CSS
+
+Disimpan di file `.css` terpisah lalu dimuat dengan `<link>`:
+
+```html
+<head>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+```
+
+Ini cara paling direkomendasikan untuk proyek nyata.
+
+## Urutan Prioritas (Cascading)
+
+Kalau ada beberapa aturan yang bertabrakan, prioritasnya:
+
+1. Inline style (paling kuat)
+2. Internal / external CSS (terakhir yang ditulis menang)
+3. Style default browser
+
+<div class="note">💡 Pikirkan CSS seperti cat: aturan yang ditulis belakangan bisa menutup aturan sebelumnya, kecuali ada inline style yang 'dilem' paling atas.</div>
+
+## Try it Yourself
+
+Ubah warna `h1` di blok `<style>` lalu lihat perubahannya.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    h1 { color: darkviolet; }
+    p { background: #f3f3f3; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>CSS Internal</h1>
+  <p>Ubah aturan di atas, lalu lihat hasilnya.</p>
+</body>
+</html>`} />

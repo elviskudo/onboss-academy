@@ -1,0 +1,130 @@
+---
+"title": "Generic dan Variance"
+"description": "Membuat kelas generik, constraint, serta memahami in dan out"
+"order": 20
+"quiz":
+- "q": "Kata kunci variance untuk produsen adalah…"
+  "options":
+  - "in"
+  - "out"
+  - "reified"
+  - "where"
+  "answer": 1
+  "explain": "out berarti kelas hanya menghasilkan T, aman untuk kovarians."
+- "q": "Kata kunci variance untuk konsumen adalah…"
+  "options":
+  - "out"
+  - "var"
+  - "in"
+  - "is"
+  "answer": 2
+  "explain": "in berarti T hanya dipakai sebagai parameter, kontravarians."
+- "q": "Kelas generik ditulis dengan…"
+  "options":
+  - "class Kotak(T)"
+  - "class Kotak[T]"
+  - "generic class Kotak"
+  - "class Kotak<T>"
+  "answer": 3
+  "explain": "Parameter tipe berada di dalam sudut kurung."
+- "q": "Constraint tipe ditulis dengan…"
+  "options":
+  - "T : Number"
+  - "T extends Number"
+  - "T where Number"
+  - "T -> Number"
+  "answer": 0
+  "explain": "T : Number membatasi T pada turunan Number."
+- "q": "Kotlin List bersifat…"
+  "options":
+  - "Kontravarian (in T)"
+  - "Kovarian (out T)"
+  - "Invariant"
+  - "Tidak generik"
+  "answer": 1
+  "explain": "List hanya menghasilkan T, sehingga dinyatakan List<out T>."
+"example":
+  "code": "class Kotak<out T>(val isi: T) {\n    fun lihat(): T = isi\n}\n\nclass Penerima<in T> {\n    fun terima(nilai: T) = println(\"Menerima $nilai\")\n}\n\nfun <T : Number> duaKali(nilai: T): Double = nilai.toDouble() * 2\n\nfun main() {\n    val angka: Kotak<Int> = Kotak(5)\n    val umum: Kotak<Number> = angka       // aman karena out\n    println(duaKali(7))\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Kelas Generik
+
+```kotlin
+class Kotak<out T>(val isi: T) {
+    fun lihat(): T = isi
+}
+
+class Penerima<in T> {
+    fun terima(nilai: T) = println("Menerima $nilai")
+}
+
+fun <T : Number> duaKali(nilai: T): Double = nilai.toDouble() * 2
+
+fun main() {
+    val angka: Kotak<Int> = Kotak(5)
+    val umum: Kotak<Number> = angka       // aman karena out
+    println(duaKali(7))
+}
+```
+
+```kotlin
+class Kotak<T>(val isi: T)
+
+val k1 = Kotak<String>("Halo")
+val k2 = Kotak<Int>(42)
+```
+
+Tipe ditebak dari argumen sehingga sering tidak perlu ditulis eksplisit.
+
+## Constraint
+
+```kotlin
+fun <T : CharSequence> panjang(x: T): Int = x.length
+```
+
+`T : CharSequence` berarti argumen harus memiliki metode `length`. Bisa juga beberapa bound dengan klausa `where`.
+
+## Variance
+
+| Kata | Arti | Contoh |
+|---|---|---|
+| `out T` | hanya menghasilkan T | `Producer<out T>` |
+| `in T` | hanya menerima T | `Consumer<in T>` |
+| tanpa kata | invariant | `MutableList<T>` |
+
+Aturan ini mencegah kasus berbahaya seperti memasukkan `String` ke `MutableList<Int>` yang sedang dilihat sebagai `MutableList<Any>`.
+
+## Star Projection
+
+```kotlin
+fun tampilkan(list: List<*>) {
+    for (item in list) println(item)
+}
+```
+
+`*` berarti "tipe apa pun", mirip `<?>` di Java.
+
+<div class="note">💡 Ingat pepatah: **producer out, consumer in**. Bila kelas hanya mengembalikan T, tandai `out`; bila hanya menerima T, tandai `in`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`class Kotak<out T>(val isi: T) {
+    fun lihat(): T = isi
+}
+
+class Penerima<in T> {
+    fun terima(nilai: T) = println("Menerima $nilai")
+}
+
+fun <T : Number> duaKali(nilai: T): Double = nilai.toDouble() * 2
+
+fun main() {
+    val angka: Kotak<Int> = Kotak(5)
+    val umum: Kotak<Number> = angka       // aman karena out
+    println(duaKali(7))
+}`} />

@@ -1,0 +1,113 @@
+---
+title: Git LFS untuk File Besar
+description: Menyimpan aset besar di luar riwayat utama dengan pointer ringan.
+order: 19
+quiz:
+- q: Git LFS menyimpan…
+  options:
+  - Semua file sebagai teks
+  - Hanya gambar
+  - Hanya log
+  - File besar di storage terpisah dan pointer di repo
+  answer: 3
+  explain: Repo menyimpan file pointer kecil berisi hash objek LFS.
+- q: Perintah untuk mulai melacak pola file dengan LFS adalah…
+  options:
+  - git lfs track "*.psd"
+  - git lfs add "*.psd"
+  - git track lfs
+  - git lfs init --track
+  answer: 0
+  explain: Perintah ini menambahkan aturan ke .gitattributes.
+- q: File .gitattributes berisi…
+  options:
+  - Pesan commit
+  - Aturan pola file yang dikelola LFS
+  - Daftar branch
+  - Konfigurasi remote
+  answer: 1
+  explain: File ini dibagikan ke tim agar perilaku LFS konsisten.
+- q: Masalah tanpa LFS saat menyimpan file besar adalah…
+  options:
+  - Hash berubah
+  - Tag hilang
+  - Riwayat repo membengkak dan clone lambat
+  - Commit gagal selamanya
+  answer: 2
+  explain: Setiap versi file besar tersimpan penuh di objek Git.
+- q: Saat clone repo dengan LFS, file asli diambil saat…
+  options:
+  - Saat commit
+  - Saat push
+  - Saat tag
+  - Checkout/smudge oleh Git LFS
+  answer: 3
+  explain: Git LFS mengganti pointer dengan konten asli ketika file di-checkout.
+example:
+  code: 'git lfs install
+
+    git lfs track "*.psd"
+
+    git lfs track "assets/video/*.mp4"
+
+    git add .gitattributes
+
+    git add assets/desain.psd
+
+    '
+---
+
+
+Git menyimpan **setiap versi** sebuah file. Untuk file desain, video, atau dataset berukuran ratusan megabyte, ini membuat riwayat cepat membengkak. Git LFS (Large File Storage) menggantinya dengan pointer kecil.
+
+## Cara Kerja
+
+```text
+di repo:    desain.psd -> "version https://git-lfs.github.com/spec/v1 ..."
+di storage: file asli disimpan terpisah
+saat checkout: pointer ditukar dengan file asli
+```
+
+## Menyiapkan
+
+```bash
+git lfs install
+git lfs track "*.psd"
+git lfs track "*.mp4"
+git lfs track "assets/dataset/**"
+git add .gitattributes
+git add desain.psd
+git commit -m "Tambah aset desain"
+```
+
+```text
+*.psd filter=lfs diff=lfs merge=lfs -text
+```
+
+## Perintah Sehari-hari
+
+```bash
+git lfs ls-files
+git lfs status
+git lfs pull
+git lfs migrate import --include="*.psd"
+```
+
+`migrate` berguna untuk memindahkan file besar yang sudah terlanjur masuk riwayat biasa.
+
+<div class="note">💡 LFS bukan pengganti sistem aset digital. Untuk tim desain besar, tetap pertimbangkan DAM atau storage khusus dengan kontrol akses yang lebih kaya.</div>
+
+## Kapan Dipakai
+
+| Jenis file | LFS? |
+|---|---|
+| Kode sumber | tidak |
+| Ikon kecil | tidak |
+| Foto produk resolusi tinggi | ya |
+| Video tutorial | ya |
+| Model machine learning | ya |
+| Dataset CSV raksasa | ya |
+
+## Pertimbangan Biaya
+
+Penyedia hosting biasanya memberi kuota LFS terpisah dari kuota repo. Pantau pemakaian bandwidth saat clone dan CI — tiap checkout aset besar bisa menghabiskan kuota bulanan.

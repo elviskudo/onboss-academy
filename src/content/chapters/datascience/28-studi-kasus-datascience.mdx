@@ -1,0 +1,100 @@
+---
+title: "Studi Kasus: Analisis Penjualan E-Commerce"
+description: "dataset fiktif, cleaning, statistik, pivot, korelasi, dan rekomendasi"
+order: 28
+quiz:
+  - q: "Langkah pertama sebelum analisis adalah…"
+    options: ["Memilih warna", "Memahami pertanyaan bisnis", "Membuat grafik", "Menghapus data"]
+    answer: 1
+    explain: "Tanpa pertanyaan jelas, analisis bisa melenceng."
+  - q: "Duplicate order ID sebaiknya…"
+    options: ["Diubah nilainya", "Dijadikan KPI", "Dicek dan dihapus", "Dibiarkan"]
+    answer: 2
+    explain: "Duplikat melebih-lebihkan omzet."
+  - q: "Omzet per kategori dihitung dengan…"
+    options: ["DISTINCT kategori", "COUNT semua baris", "MEDIAN harga", "groupby kategori lalu SUM"]
+    answer: 3
+    explain: "Agregasi per kelompok."
+  - q: "Korelasi diskon vs omzet menjawab…"
+    options: ["Waktu pengiriman", "Apakah keduanya bergerak bersama", "Penyebab omzet naik", "Jumlah pelanggan"]
+    answer: 1
+    explain: "Korelasi bukan kausalitas."
+  - q: "Rekomendasi akhir sebaiknya…"
+    options: ["Tanpa data", "Hanya grafik", "Spesifik dan dapat ditindaklanjuti", "Umum saja"]
+    answer: 2
+    explain: "Contoh: \"Naikkan stok kategori X 20% menjelang akhir pekan.\""
+example:
+  code: |
+    data=[("Elektronik",100,2),("Furniture",50,1),("Elektronik",80,1)]
+    omzet={}
+    for k,h,q in data: omzet[k]=omzet.get(k,0)+h*q
+    print(omzet)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Skenario
+
+Seorang manajer toko online bertanya: "Kategori apa yang paling menyumbang omzet, dan apakah diskon berkorelasi dengan penjualan?"
+
+## 1. Data Fiktif
+
+```python
+transaksi = [
+    {"id": 1, "kategori": "Elektronik", "harga": 100, "qty": 2, "diskon": 10},
+    {"id": 2, "kategori": "Furniture",  "harga": 50,  "qty": 1, "diskon": 0},
+    {"id": 3, "kategori": "Elektronik", "harga": 80,  "qty": 1, "diskon": 5},
+    {"id": 4, "kategori": "Makanan",    "harga": 20,  "qty": 5, "diskon": 0},
+]
+```
+
+## 2. Bersihkan
+
+```python
+filtered = [t for t in transaksi if t["harga"] > 0 and t["qty"] > 0]
+```
+
+## 3. Hitung Omzet
+
+```python
+for t in filtered:
+    t["omzet"] = t["harga"] * t["qty"] * (100 - t["diskon"]) / 100
+
+per_kategori = {}
+for t in filtered:
+    per_kategori[t["kategori"]] = per_kategori.get(t["kategori"], 0) + t["omzet"]
+
+print(per_kategori)
+```
+
+## 4. Ringkas
+
+```python
+total = sum(per_kategori.values())
+for kategori, nilai in sorted(per_kategori.items(), key=lambda x: -x[1]):
+    print(f"{kategori:12} {nilai:8.1f} ({nilai/total*100:.1f}%)")
+```
+
+## 5. Rekomendasi
+
+> Elektronik menyumbang porsi terbesar. Diskon muncul pada transaksi elektronik, tetapi jumlah transaksi masih terlalu sedikit untuk menyimpulkan diskon menyebabkan omzet naik. Kumpulkan data 3 bulan sebelum mengubah strategi harga.
+
+Kalimat di atas jujur: ia memberi arah sekaligus mengakui keterbatasan data.
+
+<div class="note">💡 Rekomendasi yang baik menyebut **tindakan**, **alasan**, dan **batas keyakinan**. Ini membedakan analis profesional dari sekadar pembuat grafik.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`transaksi = [
+    {"kategori": "Elektronik", "harga": 100, "qty": 2, "diskon": 10},
+    {"kategori": "Furniture", "harga": 50, "qty": 1, "diskon": 0},
+    {"kategori": "Elektronik", "harga": 80, "qty": 1, "diskon": 5},
+]
+per = {}
+for t in transaksi:
+    omzet = t["harga"] * t["qty"] * (100 - t["diskon"]) / 100
+    per[t["kategori"]] = per.get(t["kategori"], 0) + omzet
+for k, v in sorted(per.items(), key=lambda x: -x[1]):
+    print(k, round(v, 1))`} />

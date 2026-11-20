@@ -1,0 +1,83 @@
+---
+title: "Model Kerentanan"
+description: "CIA triad, attack surface, dan prinsip defense in depth"
+order: 10
+quiz:
+  - q: "Tiga pilar CIA dalam keamanan informasi adalah…"
+    options: ["Cache, Index, Availability", "Compliance, Insurance, Audit", "Confidentiality, Integrity, Availability", "Control, Identity, Access"]
+    answer: 2
+    explain: "Kerahasiaan menjaga kerahasiaan, integritas menjaga keakuratan, availability menjaga ketersediaan."
+  - q: "Attack surface adalah…"
+    options: ["Luas hard disk", "Jumlah karyawan", "Daftar port terbuka saja", "Seluruh titik yang bisa dipakai penyerang masuk"]
+    answer: 3
+    explain: "Termasuk input form, API, endpoint, akun, dan antarmuka fisik."
+  - q: "Defense in depth berarti…"
+    options: ["Beberapa lapisan pertahanan saling melengkapi", "Satu firewall sangat kuat", "Menyembunyikan semua log", "Menghapus semua password"]
+    answer: 0
+    explain: "Jika satu lapisan gagal, lapisan lain masih menahan serangan."
+  - q: "Pelanggaran integritas terjadi saat…"
+    options: ["Server mati", "Data diubah tanpa izin", "Data tidak bisa diakses", "Data bocor ke publik"]
+    answer: 1
+    explain: "Integritas menjaga data tetap akurat dan tidak dimanipulasi."
+  - q: "Contoh pelanggaran availability adalah…"
+    options: ["File diubah penyerang", "Email phishing diterima", "Serangan DDoS membuat situs down", "Password bocor"]
+    answer: 2
+    explain: "Availability berbicara tentang akses yang tetap tersedia saat dibutuhkan."
+example:
+  code: |
+    CIA:
+      Confidentiality -> enkripsi & kontrol akses
+      Integrity        -> hash, tanda tangan, audit trail
+      Availability     -> redundansi, backup, rate limit
+---
+
+Sebelum memilih alat keamanan, pahami dulu **apa** yang dilindungi. Model CIA memberi bahasa yang sama bagi tim teknis dan bisnis.
+
+## Tiga Pilar
+
+| Pilar | Pertanyaan | Kontrol umum |
+|---|---|---|
+| Kerahasiaan | Siapa yang boleh melihat? | Enkripsi, RBAC, MFA |
+| Integritas | Bolehkah data diubah? | Hash, checksum, audit log |
+| Ketersediaan | Bisa diakses kapan pun? | Redundansi, backup, monitoring |
+
+## Attack Surface
+
+```text
+Aplikasi web
+├─ form login
+├─ endpoint API
+├─ upload file
+├─ panel admin
+├─ akun vendor
+└─ port SSH
+```
+
+Semakin banyak permukaan, semakin banyak kemungkinan celah. Mengurangi permukaan berarti menutup fitur yang tidak dipakai, menghapus akun lama, dan membatasi akses administratif.
+
+## Vektor vs Kerentanan vs Ancaman
+
+- **Kerentanan** — kelemahan yang ada (misalnya library belum diPatch).
+- **Ancaman** — pihak atau keadaan yang bisa memanfaatkannya.
+- **Vektor** — jalur yang dipakai (input form, email, USB).
+- **Risiko** — kemungkinan × dampak.
+
+## Defense in Depth
+
+```text
+Firewall -> WAF -> autentikasi kuat -> validasi input
+        -> enkripsi -> logging -> backup -> respons insiden
+```
+
+Tidak ada satu kontrol yang sempurna. Lapisan berurutan memberi waktu deteksi dan membatasi kerusakan bila salah satu lapisan jebol.
+
+<div class="note">💡 Keamanan bukan produk yang dibeli sekali, melainkan proses yang diulang: identifikasi aset, ukur risiko, terapkan kontrol, lalu evaluasi lagi.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Latihan kecil:
+  - aset: daftar pelanggan
+  - ancaman: kebocoran data
+  - vektor: endpoint API tanpa otorisasi
+  - kontrol: token + RBAC + enkripsi + log akses`}</code></pre>

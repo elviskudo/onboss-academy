@@ -1,0 +1,109 @@
+---
+title: "Event Scheduler dan Maintenance"
+description: "Menjadwalkan query, optimasi tabel, dan pemeriksaan konsistensi"
+order: 21
+quiz:
+  - q: "Fitur MySQL untuk menjalankan query terjadwal adalah…"
+    options: ["Event Scheduler", "Cron SQL", "SET TIMER", "JOB QUEUE"]
+    answer: 1
+    explain: "CREATE EVENT dengan scheduler aktif."
+  - q: "Perintah mengaktifkan event scheduler adalah…"
+    options: ["SET GLOBAL event_scheduler = ON", "START EVENTS", "ENABLE SCHEDULER", "CREATE SCHEDULER"]
+    answer: 2
+    explain: "Variabel global event_scheduler bernilai ON/OFF/DISABLED."
+  - q: "Perintah membersihkan fragmen tabel MyISAM adalah…"
+    options: ["OPTIMIZE TABLE", "CLEAN TABLE", "VACUUM TABLE di MySQL", "REBUILD INDEX"]
+    answer: 3
+    explain: "OPTIMIZE TABLE menyusun ulang file tabel dan index."
+  - q: "CHECK TABLE berguna untuk…"
+    options: ["Memeriksa integritas tabel", "Menghapus semua baris", "Membuat user", "Menutup koneksi"]
+    answer: 0
+    explain: "CHECK TABLE memeriksa kerusakan struktur/index."
+  - q: "ANALYZE TABLE melakukan…"
+    options: ["Memperbarui statistik optimizer", "Menghapus data", "Membuat backup", "Mengubah collation"]
+    answer: 1
+    explain: "Statistik terbaru membantu optimizer memilih index."
+example:
+  code: |
+    SET GLOBAL event_scheduler = ON; CREATE EVENT evt ON SCHEDULE EVERY 1 DAY DO DELETE FROM log WHERE created_at &lt; DATE_SUB(NOW(), INTERVAL 30 DAY);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+MySQL bisa menjalankan pekerjaan terjadwal tanpa cron eksternal lewat Event Scheduler. Selain itu, ada perintah perawatan untuk menjaga statistik dan struktur tabel tetap sehat.
+
+## Event Scheduler
+
+```sql
+SET GLOBAL event_scheduler = ON;
+
+CREATE EVENT bersih_log
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_DATE + INTERVAL 1 DAY
+DO
+  DELETE FROM log WHERE dibuat < DATE_SUB(NOW(), INTERVAL 30 DAY);
+
+SHOW EVENTS;
+DROP EVENT IF EXISTS bersih_log;
+```
+
+## Interval yang Umum
+
+```sql
+ON SCHEDULE EVERY 1 HOUR
+ON SCHEDULE EVERY 6 HOUR STARTS '2026-12-01 00:00:00'
+ON SCHEDULE EVERY 1 WEEK
+```
+
+Event berjalan di dalam server, jadi perlu akun dengan hak yang tepat dan pengawasan. Jika gagal, periksa error log.
+
+## Perintah Perawatan
+
+| Perintah | Fungsi |
+| --- | --- |
+| `ANALYZE TABLE` | perbarui statistik optimizer |
+| `OPTIMIZE TABLE` | susun ulang tabel/index |
+| `CHECK TABLE` | cek kerusakan |
+| `REPAIR TABLE` | perbaiki MyISAM (tidak untuk InnoDB) |
+
+```sql
+ANALYZE TABLE karyawan;
+OPTIMIZE TABLE log;
+CHECK TABLE karyawan;
+```
+
+## Statistik Optimizer
+
+Optimizer memilih index berdasarkan statistik. Setelah import data besar atau perubahan masif, statistik bisa basi:
+
+```sql
+ANALYZE TABLE penjualan;
+EXPLAIN SELECT * FROM penjualan WHERE tanggal >= '2026-01-01';
+```
+
+## Pembersihan Data
+
+```sql
+DELETE FROM log WHERE dibuat < DATE_SUB(NOW(), INTERVAL 90 DAY);
+```
+
+Untuk tabel sangat besar, partisi per bulan dan `DROP PARTITION` biasanya jauh lebih cepat daripada DELETE massal.
+
+<div class="note">💡 Event Scheduler berjalan di server database. Jika kamu sudah punya cron di aplikasi, pertimbangkan mana yang lebih mudah dipantau dan di-audit di timmu.</div>
+
+## Di Dunia Nyata
+
+- **Retention**: hapus log lebih lama dari 30 hari tiap malam.
+- **Ringkasan**: isi tabel agregat setiap jam.
+- **Statistik**: ANALYZE setelah batch import harian.
+- **Kesehatan**: monitoring CHECK TABLE pada sistem dengan I/O tidak stabil.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`SET GLOBAL event_scheduler = ON;
+CREATE EVENT hapus_lama
+ON SCHEDULE EVERY 1 DAY
+DO DELETE FROM log WHERE dibuat &lt; DATE_SUB(NOW(), INTERVAL 7 DAY);
+SHOW EVENTS;
+ANALYZE TABLE karyawan;`} />

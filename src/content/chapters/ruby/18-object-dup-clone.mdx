@@ -1,0 +1,131 @@
+---
+"title": "Object: dup, clone, freeze, dan Marshal"
+"description": "Menyalin objek, membekukan nilai, dan serialisasi Ruby"
+"order": 18
+"quiz":
+- "q": "dup berbeda dari clone karena…"
+  "options":
+  - "dup menyalin frozen state"
+  - "dup lebih lambat"
+  - "clone menyalin frozen state dan singleton method"
+  - "clone hanya untuk string"
+  "answer": 2
+  "explain": "clone mempertahankan status beku dan method khusus objek."
+- "q": "freeze pada objek berarti…"
+  "options":
+  - "objek tidak bisa dimodifikasi"
+  - "objek dihapus"
+  - "objek jadi privat"
+  - "objek jadi nil"
+  "answer": 0
+  "explain": "Usaha mengubah objek beku memicu FrozenError."
+- "q": "Method frozen? mengembalikan…"
+  "options":
+  - "string"
+  - "bool"
+  - "integer"
+  - "objek baru"
+  "answer": 1
+  "explain": "frozen? bernilai true jika objek sudah dibekukan."
+- "q": "Marshal.dump berguna untuk…"
+  "options":
+  - "mengompres file"
+  - "membuat thread"
+  - "menghapus objek"
+  - "menserialisasi objek Ruby"
+  "answer": 3
+  "explain": "Marshal mengubah objek jadi string biner yang bisa dibaca Marshal.load."
+- "q": "Salinan dangkal (shallow copy) berarti…"
+  "options":
+  - "nested objek tetap dibagi"
+  - "semua nested objek ikut disalin"
+  - "objek tidak bisa diubah"
+  - "objek jadi konstan"
+  "answer": 0
+  "explain": "dup/clone menyalin objek utama, bukan objek di dalamnya secara rekursif."
+"example":
+  "code": "a = [1, 2]\nb = a.dup\nb <&lt; 3\np a  # [1, 2]\np b  # [1, 2, 3]\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby menyalin objek dengan `dup` atau `clone`, membekukannya dengan `freeze`, dan bisa menyerialisasinya memakai `Marshal`.
+
+## dup vs clone
+
+```ruby
+a = [1, 2]
+b = a.dup
+c = a.clone
+
+a.freeze
+# b << 3        # boleh
+# c << 3        # FrozenError: clone ikut beku
+```
+
+`clone` lebih konservatif: ia membawa status beku dan singleton method.
+
+## Shallow vs Deep Copy
+
+```ruby
+asal = [[1], [2]]
+salinan = asal.dup
+salinan[0] << 99
+p asal # [[99], [2]] — array dalam masih dibagi
+```
+
+Untuk salinan dalam, serialisasi sering dipakai:
+
+```ruby
+salinan = Marshal.load(Marshal.dump(asal))
+```
+
+## freeze
+
+```ruby
+TEKS = "konstanta".freeze
+TEKS << "x" # FrozenError
+```
+
+Freeze bersifat satu arah — tidak ada `unfreeze`. Constant di Ruby tidak otomatis beku, jadi `freeze` sering ditambahkan.
+
+## Marshal
+
+```ruby
+data = { nama: "Rani", umur: 22 }
+biner = Marshal.dump(data)
+kembali = Marshal.load(biner)
+```
+
+Marshal hanya untuk Ruby-ke-Ruby dan **jangan pernah** memuat data dari sumber tak dipercaya — bisa mengeksekusi objek berbahaya saat load.
+
+## JSON sebagai Alternatif
+
+Untuk pertukaran dengan bahasa lain, gunakan JSON:
+
+```ruby
+require "json"
+JSON.generate(data)
+JSON.parse(json)
+```
+
+<div class="note">💡 Method dengan tanda seru seperti <code>upcase!</code> mengubah objek langsung. Versi tanpa tanda seru mengembalikan objek baru — lebih aman tapi sedikit lebih banyak alokasi.</div>
+
+
+## Try it Yourself
+
+Coba ubah `dup` menjadi `clone` setelah membekukan objek asli.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`asal = [[1], [2]]
+dangkal = asal.dup
+dangkal[0] <&lt; 99
+p asal
+
+dalam = Marshal.load(Marshal.dump(asal))
+dalam[0] <&lt; 7
+p asal
+p dalam
+
+teks = " tetap".freeze
+puts "sudah beku? #{teks.frozen?}"
+puts Marshal.load(Marshal.dump({ a: 1, b: [2, 3] })).inspect`} />

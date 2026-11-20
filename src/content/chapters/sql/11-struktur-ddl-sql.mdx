@@ -1,0 +1,122 @@
+---
+title: "DDL: Membuat dan Mengubah Struktur Tabel"
+description: "CREATE, ALTER, DROP, tipe data dasar, dan constraint pada tabel"
+order: 11
+quiz:
+  - q: "Perintah untuk membuat tabel baru adalah…"
+    options: ["CREATE TABLE", "MAKE TABLE", "NEW TABLE", "INSERT TABLE"]
+    answer: 0
+    explain: "CREATE TABLE nama (...)."
+  - q: "Constraint yang menjamin setiap baris punya pembeda adalah…"
+    options: ["PRIMARY KEY", "CHECK", "DEFAULT", "UNIQUE"]
+    answer: 0
+    explain: "PRIMARY KEY = UNIQUE + NOT NULL."
+  - q: "Perintah untuk menambah kolom ke tabel yang sudah ada adalah…"
+    options: ["ALTER TABLE ... ADD COLUMN", "UPDATE TABLE ... ADD", "CREATE COLUMN", "MODIFY TABLE"]
+    answer: 0
+    explain: "ALTER TABLE ... ADD COLUMN nama tipe."
+  - q: "Perintah untuk menghapus tabel beserta strukturnya adalah…"
+    options: ["DELETE", "DROP TABLE", "TRUNCATE", "REMOVE"]
+    answer: 1
+    explain: "DROP TABLE menghapus definisi tabel; DELETE hanya barisnya."
+  - q: "DEFAULT pada kolom berfungsi untuk…"
+    options: ["Nilai otomatis saat INSERT tanpa kolom itu", "Membatasi panjang", "Mengurutkan data", "Mengunci tabel"]
+    answer: 0
+    explain: "DEFAULT dipakai bila INSERT tidak menyebutkan kolom tersebut."
+example:
+  code: |
+    CREATE TABLE siswa (
+      id INTEGER PRIMARY KEY,
+      nama TEXT NOT NULL,
+      umur INTEGER CHECK (umur >= 0),
+      kelas TEXT DEFAULT 'A'
+    );
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SQL terbagi atas beberapa kelompok perintah. **DDL** (*Data Definition Language*) mengatur struktur: tabel, kolom, dan batasan. DDL berbeda dari DML yang mengatur isi data.
+
+## Kelompok Perintah SQL
+
+| Kelompok | Perintah | Fungsi |
+| --- | --- | --- |
+| DDL | CREATE, ALTER, DROP | struktur objek |
+| DML | SELECT, INSERT, UPDATE, DELETE | data |
+| DCL | GRANT, REVOKE | hak akses |
+| TCL | BEGIN, COMMIT, ROLLBACK | transaksi |
+
+Dalam banyak database, perubahan DDL langsung tersimpan dan tidak bisa di-ROLLBACK seperti DML.
+
+## Membuat Tabel
+
+```sql
+CREATE TABLE produk (
+  id INTEGER PRIMARY KEY,
+  nama TEXT NOT NULL,
+  harga REAL CHECK (harga >= 0),
+  stok INTEGER DEFAULT 0,
+  dibuat_pada TEXT
+);
+```
+
+Tipe umum: `INTEGER`, `REAL`/`DECIMAL`, `TEXT`/`VARCHAR`, `DATE`, `BOOLEAN`. Pilih tipe yang paling sempit namun cukup — ini menghemat ruang dan memberi validasi gratis.
+
+## Constraint
+
+| Constraint | Makna |
+| --- | --- |
+| `NOT NULL` | kolom wajib berisi nilai |
+| `UNIQUE` | nilai tidak boleh duplikat |
+| `PRIMARY KEY` | UNIQUE + NOT NULL, satu per tabel |
+| `FOREIGN KEY` | merujuk ke tabel lain |
+| `CHECK` | syarat logis harus benar |
+| `DEFAULT` | nilai pengganti saat tidak diisi |
+
+```sql
+CREATE TABLE pesanan (
+  id INTEGER PRIMARY KEY,
+  id_produk INTEGER,
+  jumlah INTEGER CHECK (jumlah > 0),
+  FOREIGN KEY (id_produk) REFERENCES produk(id)
+);
+```
+
+## Mengubah Struktur
+
+```sql
+ALTER TABLE produk ADD COLUMN kategori TEXT;
+ALTER TABLE produk RENAME COLUMN harga TO harga_satuan;
+ALTER TABLE produk DROP COLUMN dibuat_pada;
+```
+
+ALTER sering membutuhkan hak khusus dan bisa mengunci tabel. Pada tabel besar, jadwalkan saat traffic rendah.
+
+## Menghapus dengan Hati-hati
+
+```sql
+DROP TABLE produk;           -- struktur + data hilang
+DELETE FROM produk;          -- data hilang, struktur tetap
+TRUNCATE TABLE produk;       -- cepat, khusus tabel besar (tidak di semua RDBMS)
+```
+
+<div class="note">💡 `DROP TABLE IF EXISTS produk;` membuat skrip migration bisa dijalankan ulang tanpa error. Kebiasaan ini sangat membantu saat mengotomatiskan deploy.</div>
+
+## Di Dunia Nyata
+
+- **Migration**: berkas SQL versi 001, 002, ... membuat skema berkembang teratur.
+- **Audit trail**: kolom `dibuat_pada` dan `diubah_pada` dengan DEFAULT waktu saat ini.
+- **Integritas**: `CHECK (stok >= 0)` mencegah stok negatif karena bug aplikasi.
+- **Relasi**: `FOREIGN KEY` memastikan pesanan tidak merujuk ke produk yang tak ada.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE TABLE siswa (
+  id INTEGER PRIMARY KEY,
+  nama TEXT NOT NULL,
+  nilai INTEGER CHECK (nilai BETWEEN 0 AND 100),
+  kelas TEXT DEFAULT 'A'
+);
+INSERT INTO siswa (nama, nilai) VALUES ('Ana', 85), ('Budi', 92), ('Rani', 78);
+SELECT * FROM siswa;`} />

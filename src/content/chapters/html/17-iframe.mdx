@@ -1,0 +1,77 @@
+---
+title: "Iframe"
+description: "Menanamkan halaman lain di dalam halaman dengan elemen iframe"
+order: 17
+quiz:
+  - q: "Elemen untuk menanamkan halaman lain adalah…"
+    options: ["<embed>", "<iframe>", "<object>", "<frame>"]
+    answer: 1
+    explain: "<iframe> (inline frame) adalah cara modern menampilkan dokumen lain di dalam halaman."
+  - q: "Atribut yang menentukan alamat iframe adalah…"
+    options: ["src", "href", "data", "url"]
+    answer: 0
+    explain: "Sama seperti gambar, iframe memakai atribut src."
+  - q: "Atribut yang mengatur judul/keterangan aksesibilitas iframe adalah…"
+    options: ["alt", "title", "name", "label"]
+    answer: 1
+    explain: "Atribut title dibaca pembaca layar untuk menjelaskan isi iframe."
+  - q: "Berikut ini yang benar tentang iframe adalah…"
+    options: ["Iframe tidak bisa di-scroll", "Iframe bisa menampilkan halaman dari situs lain yang mengizinkan", "Iframe hanya untuk gambar", "Iframe tidak punya ukuran"]
+    answer: 1
+    explain: "Beberapa situs memblokir penanaman lewat header X-Frame-Options."
+  - q: "Atribut width dan height pada iframe ditulis dalam…"
+    options: ["Pixel atau persentase", "Hanya pixel", "Hanya persentase", "Em saja"]
+    answer: 0
+    explain: "Keduanya bisa memakai px (400) atau persentase (100%)."
+example:
+  code: |
+    <iframe src="https://example.com"
+            title="Contoh halaman"
+            width="400" height="200"
+            style="border:1px solid #ccc;"></iframe>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Iframe** memungkinkan kamu menampilkan dokumen HTML lain di dalam halaman saat ini. Biasanya dipakai untuk peta, video, atau formulir pihak ketiga.
+
+## Sintaks Dasar
+
+```html
+<iframe src="https://example.com"
+        title="Deskripsi isi frame"
+        width="600" height="400"></iframe>
+```
+
+Atribut `title` penting untuk aksesibilitas — pembaca layar menyebutkannya supaya pengguna tahu apa yang ada di dalam frame.
+
+## Mengatur Tampilan
+
+```html
+<iframe src="peta.html"
+        style="width:100%; height:300px; border:0; border-radius:12px;">
+</iframe>
+```
+
+Menggunakan CSS inline membuat iframe lebih responsif daripada atribut `width`/`height` tetap.
+
+## Pembatasan Iframe
+
+Tidak semua situs boleh ditanamkan. Banyak situs mengirim header `X-Frame-Options: DENY` atau `SAMEORIGIN` yang mencegah tampil di iframe. Kalau iframe kosong padahal `src` benar, kemungkinan besar situsnya memblokir.
+
+<div class="note">💡 Iframe berguna, tapi jangan dipakai untuk seluruh layout situs. Mesin pencari kurang nyaman membaca konten di dalam iframe.</div>
+
+## Try it Yourself
+
+Coba ubah tinggi iframe dan lihat perubahan ruang yang tersedia.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Belajar Iframe</h1>
+  <iframe src="https://example.com"
+          title="Halaman contoh"
+          style="width:100%; height:220px; border:2px dashed #888;">
+  </iframe>
+</body>
+</html>`} />

@@ -1,0 +1,124 @@
+---
+title: "Tanggal dan Waktu dengan lubridate"
+description: "Parsing, timezone, aritmetika tanggal, dan ekstraksi komponen secara konsisten"
+order: 23
+quiz:
+  - q: "Fungsi lubridate untuk format year-month-day adalah…"
+    options: ["dmy()", "ymd()", "mdy()", "ymd_hms()"]
+    answer: 1
+    explain: "ymd membaca '2026-11-20'."
+  - q: "Hasil dari ymd('2026-11-20') + days(3) adalah…"
+    options: ["2026-11-23", "2026-11-17", "2026-12-20", "Error"]
+    answer: 0
+    explain: "days(3) menambah tiga hari kalender."
+  - q: "Untuk mengambil bulan dari objek tanggal dipakai…"
+    options: ["month()", "getMonth()", "dateMonth()", "extractMonth()"]
+    answer: 0
+    explain: "lubridate menyediakan year(), month(), day(), week(), dan seterusnya."
+  - q: "Fungsi untuk selisih dua tanggal dalam hari adalah…"
+    options: ["difftime(t2, t1, units='days')", "t2 - t1 saja tanpa unit", "days_between()", "datediff()"]
+    answer: 0
+    explain: "difftime menghasilkan objek difftime dengan unit yang jelas."
+  - q: "Zona waktu Asia/Jakarta memiliki offset…"
+    options: ["UTC+7", "UTC+8", "UTC+6", "UTC+5:30"]
+    answer: 0
+    explain: "WIB adalah UTC+7."
+example:
+  code: |
+    library(lubridate)
+    t <- ymd("2026-11-20")
+    print(month(t)); print(t + days(3))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Tanggal terasa sederhana sampai berhadapan dengan format berbeda, bulan tidak merata, dan zona waktu. Paket **lubridate** menyeragamkan semua itu.
+
+## Parsing Berdasarkan Urutan
+
+| Fungsi | Format contoh |
+| --- | --- |
+| `ymd()` | 2026-11-20 |
+| `dmy()` | 20-11-2026 |
+| `mdy()` | 11/20/2026 |
+| `ymd_hms()` | 2026-11-20 08:30:00 |
+
+```r
+library(lubridate)
+ymd("2026-11-20")
+dmy("20 November 2026")
+mdy_hm("11/20/2026 08:30")
+```
+
+Fungsi gagal bila urutan tidak sesuai — ini bagus, karena mencegah tanggal 03/04/2026 salah dibaca.
+
+## Aritmetika
+
+```r
+t1 <- ymd("2026-11-20")
+t1 + days(5)
+t1 - weeks(2)
+t1 + months(1)
+t1 + years(1)
+```
+
+`months(1)` berbeda dengan `days(30)`: ia menambah satu bulan kalender dan menjaga tanggal sehat. Bila tanggal tidak ada (misal 31 Februari), hasilnya tanggal terakhir bulan itu.
+
+## Ekstraksi Komponen
+
+```r
+t <- ymd_hms("2026-11-20 08:30:45")
+year(t); month(t); day(t)
+hour(t); minute(t); second(t)
+wday(t, label = TRUE)   # Jum
+yday(t)                 # hari ke-324 dalam tahun
+```
+
+## Zona Waktu
+
+```r
+t <- ymd_hms("2026-11-20 00:00:00", tz = "UTC")
+with_tz(t, "Asia/Jakarta")   # 07:00 WIB, waktu lokal berubah
+force_tz(t, "Asia/Jakarta")  # jam tetap 00:00, makna absolut berubah
+```
+
+`with_tz()` mengubah tampilan tapi bukan momen waktu. `force_tz()` mengubah momen dengan tetap mempertahankan angka jam — beda yang krusial saat menggabungkan data dari dua sistem.
+
+## Selisih Waktu
+
+```r
+mulai <- ymd_hms("2026-11-20 08:00:00")
+selesai <- ymd_hms("2026-11-20 10:30:00")
+difftime(selesai, mulai, units = "mins")   # 150
+as.numeric(difftime(selesai, mulai, units = "hours"))
+```
+
+## Interval dan Periode
+
+```r
+intr <- interval(ymd("2026-01-01"), ymd("2026-12-31"))
+ymd("2026-06-01") %within% intr   # TRUE
+t %--% (t + days(7))              # interval dari t sampai t+7
+```
+
+Gunakan `interval` untuk durasi absolut, `duration` untuk hitungan detik tetap, dan `period` untuk satuan kalender.
+
+<div class="note">💡 Simpan timestamp di database dalam UTC, lalu konversi ke zona lokal hanya saat ditampilkan. Ini mencegah kebingungan saat data dikumpulkan dari beberapa negara.</div>
+
+## Di Dunia Nyata
+
+- **Log aplikasi**: memberi rentang waktu dengan benar saat server dan pengguna beda zona.
+- **Tagihan**: `months(1)` lebih tepat daripada `days(30)`.
+- **Analisis jam sibuk**: `hour(t)` dikelompokkan untuk melihat puncak trafik.
+- **SLA**: `difftime(..., units = "mins")` mengukur durasi respons.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`library(lubridate)
+mulai <- dmy_hms("20-11-2026 08:00:00", tz = "Asia/Jakarta")
+cat("Hari:", wday(mulai, label = TRUE), "\n")
+cat("Tambah 3 hari:", as.character(mulai + days(3)), "\n")
+cat("Bulan depan:", as.character(mulai + months(1)), "\n")
+selesai <- mulai + hours(2) + minutes(30)
+print(difftime(selesai, mulai, units = "mins"))`} />

@@ -1,0 +1,131 @@
+---
+"title": "Regular Expression"
+"description": "Literal regex, match, scan, gsub, capture group, dan named capture"
+"order": 19
+"quiz":
+- "q": "Literal regex di Ruby ditulis…"
+  "options":
+  - "/pola/"
+  - "'pola'"
+  - "\"pola\""
+  - "#pola#"
+  "answer": 0
+  "explain": "Regex literal memakai garis miring, misal /\\d+/."
+- "q": "Operator =~ mengembalikan…"
+  "options":
+  - "bool"
+  - "posisi pertama atau nil"
+  - "string"
+  - "array"
+  "answer": 1
+  "explain": "Cocok di indeks 0 menghasilkan 0 — ingat 0 truthy di Ruby."
+- "q": "Method scan mengembalikan…"
+  "options":
+  - "pertama kecocokan"
+  - "semua kecocokan"
+  - "bool"
+  - "string"
+  "answer": 1
+  "explain": "scan menghasilkan array semua kecocokan."
+- "q": "Named capture ditulis…"
+  "options":
+  - "(?<nama>...)"
+  - "(?P<nama>...)"
+  - "(nama:...)"
+  - "@nama"
+  "answer": 0
+  "explain": "Hasilnya bisa diakses lewat match[:nama]."
+- "q": "Flag /i pada regex berarti…"
+  "options":
+  - "ignore whitespace"
+  - "case insensitive"
+  - "international"
+  - "inverted"
+  "answer": 1
+  "explain": "/i membuat pencocokan mengabaikan huruf besar-kecil."
+"example":
+  "code": "teks = \"Hubungi rani@onboss.id\"\np teks =~ /\\w+@\\w+\\.\\w+/\np teks.scan(/\\w+/)\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby memiliki sintaks regex yang ringkas dan terintegrasi. Regex adalah objek `Regexp`, sehingga bisa disimpan dan dipakai ulang.
+
+## Literal & Operator
+
+```ruby
+teks = "Belajar Ruby 2024"
+p teks =~ /Ruby/      # 8
+p teks.match?(/Ruby/) # true (Ruby 2.4+)
+p teks !~ /Java/      # true
+```
+
+Gunakan `match?` jika hanya butuh `true/false` — lebih cepat karena tidak membuat objek `MatchData`.
+
+## Method Umum
+
+```ruby
+teks.scan(/\d+/)            # semua angka
+teks.sub(/Ruby/, "Go")      # ganti pertama
+teks.gsub(/Ruby/, "Go")     # ganti semua
+teks.split(/\s+/)           # pecah berdasarkan spasi
+```
+
+## Capture Group
+
+```ruby
+m = "Rani, 22".match(/(\w+), (\d+)/)
+puts m[1] # Rani
+puts m[2] # 22
+```
+
+## Named Capture
+
+```ruby
+m = "Rani, 22".match(/(?<nama>\w+), (?<umur>\d+)/)
+puts m[:nama]
+puts m[:umur]
+```
+
+## Flag
+
+| Flag | Arti |
+|---|---|
+| `i` | Abaikan huruf besar-kecil |
+| `m` | Titik mencocokkan newline |
+| `x` | Perbolehkan spasi & komentar dalam pola |
+
+```ruby
+pola = /
+  \A        # awal string
+  \w+       # nama
+  @
+  \w+\.\w+  # domain
+  \z        # akhir string
+/ix
+```
+
+<div class="note">💡 Regex literal dengan `/.../` perlu escape garis miring. Untuk pola yang banyak memuat `/`, pakai `%r{...}`.</div>
+
+
+## Try it Yourself
+
+Tambahkan named capture atau ubah pola menjadi case-insensitive.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`teks = "Rani, 22 | Dimas, 20"
+p teks.scan(/(\w+), (\d+)/)
+
+m = teks.match(/(?<nama>\w+), (?<umur>\d+)/)
+puts "nama: #{m[:nama]}, umur: #{m[:umur]}"
+
+puts "RUBY".sub(/ruby/i, "Ruby")
+p "a1b2c3".scan(/\d/)
+
+pola = /
+  \A
+  (?<user>\w+)
+  @
+  (?<domain>\w+\.\w+)
+  \z
+/ix
+p "rani@onboss.id".match(pola)&.named_captures`} />

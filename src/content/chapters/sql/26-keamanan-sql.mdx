@@ -1,0 +1,114 @@
+---
+title: "Praktik Keamanan Database"
+description: "Hak least privilege, enkripsi, audit, backup, dan pengelolaan kredensial"
+order: 26
+quiz:
+  - q: "Prinsip least privilege berarti…"
+    options: ["Semua orang jadi admin", "Hak diberikan seminimal yang diperlukan", "Tidak ada hak sama sekali", "Hak selalu permanen"]
+    answer: 1
+    explain: "Akun aplikasi hanya boleh mengakses objek yang benar-benar dibutuhkan."
+  - q: "Kata sandi sebaiknya disimpan…"
+    options: ["Plaintext", "Sebagai hash dengan salt", "Di komentar kode", "Di URL"]
+    answer: 1
+    explain: "Hash satu arah dengan salt membuat kebocoran tidak langsung membuka kata sandi."
+  - q: "Backup yang baik harus…"
+    options: ["Disimpan di server yang sama", "Diuji restore secara berkala", "Dibuat sekali saja", "Tanpa enkripsi"]
+    answer: 1
+    explain: "Backup tanpa uji restore tidak bisa dipercaya saat dibutuhkan."
+  - q: "Audit log berguna untuk…"
+    options: ["Melihat siapa mengubah apa dan kapan", "Mempercepat SELECT", "Menghapus index", "Mengganti primary key"]
+    answer: 0
+    explain: "Log audit membantu forensik dan kepatuhan."
+  - q: "Kredensial database sebaiknya disimpan di…"
+    options: ["File kode sumber", "Environment variable / secret manager", "README", "Console log"]
+    answer: 1
+    explain: "Secret manager atau environment variable menjaga kredensial keluar dari repositori."
+example:
+  code: |
+    -- Hak minimum untuk aplikasi web:
+    -- SELECT, INSERT, UPDATE pada tabel yang dipakai;
+    -- Tidak diberi DROP atau hak admin.
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Keamanan database bukan satu fitur, melainkan rangkaian kebiasaan: hak akses, parameterisasi query, penyimpanan rahasia, enkripsi, audit, dan backup.
+
+## Lapisan Pertahanan
+
+| Lapisan | Tindakan |
+| --- | --- |
+| Aplikasi | prepared statement, validasi input |
+| Akun | least privilege, pisah akun baca/tulis |
+| Jaringan | firewall, TLS, batasi akses IP |
+| Data | enkripsi at-rest, hash kata sandi |
+| Operasional | audit log, backup, patch
+
+## Hak Akses
+
+```sql
+CREATE ROLE app_read ONLY;
+GRANT SELECT ON karyawan TO app_read;
+
+CREATE ROLE app_write;
+GRANT SELECT, INSERT, UPDATE ON karyawan TO app_write;
+-- Tidak memberi DROP, DELETE, atau hak supervisor
+```
+
+Nama perintah berbeda di tiap database, tetapi prinsipnya sama: akun untuk aplikasi tidak boleh menjadi superuser.
+
+## Kata Sandi
+
+```text
+kata sandi pengguna → hash + salt → disimpan di database
+```
+
+Gunakan algoritma yang dirancang untuk kata sandi, seperti bcrypt, scrypt, atau Argon2. SHA-256 biasa terlalu cepat sehingga mudah dicoba brute-force.
+
+## Enkripsi
+
+- **In transit**: TLS/SSL antara aplikasi dan database.
+- **At rest**: enkripsi disk atau kolom (TDE, pgcrypto).
+- **Backup**: enkripsi file cadangan dan kelola kuncinya terpisah.
+
+Enkripsi tidak menggantikan hak akses; keduanya bekerja bersama.
+
+## Audit dan Retensi
+
+```sql
+-- Konsep umum: tabel audit berisi aktor, aksi, waktu, dan data lama/baru
+CREATE TABLE audit_karyawan (
+  id INTEGER PRIMARY KEY,
+  aktor TEXT,
+  aksi TEXT,
+  waktu TEXT,
+  detail TEXT
+);
+```
+
+Simpan log audit di tempat yang tidak bisa dihapus sembarangan oleh akun aplikasi.
+
+## Backup dan Recovery
+
+| Prinsip | Penjelasan |
+| --- | --- |
+| 3-2-1 | 3 salinan, 2 media berbeda, 1 di lokasi terpisah |
+| Otomatis | jadwalkan, jangan mengandalkan ingatan |
+| Diuji | lakukan restore simulasi berkala |
+| RPO/RTO | tentukan berapa data hilang dan berapa lama downtime yang bisa diterima
+
+<div class="note">💡 Kredensial yang tidak sengaja masuk Git tetap bocor walau sudah dihapus di commit berikutnya. Putar (rotate) kunci segera dan bersihkan riwayat repositori.</div>
+
+## Di Dunia Nyata
+
+- **Aplikasi web**: akun DB hanya SELECT/INSERT/UPDATE pada tabel bisnis.
+- **Layanan kesehatan**: audit log dan enkripsi untuk memenuhi regulasi.
+- **E-commerce**: nomor kartu tidak disimpan; gunakan token payment gateway.
+- **Operasional**: restore backup di staging tiap bulan.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`-- Contoh prinsip hak minimum (konseptual):
+-- app_user hanya boleh SELECT/INSERT/UPDATE pada tabel yang diperlukan.
+SELECT nama, jabatan FROM karyawan;`} />

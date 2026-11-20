@@ -1,0 +1,115 @@
+---
+title: "Autentikasi di Next.js"
+description: "cookie httpOnly, session, Server Action login, dan proteksi rute"
+order: 20
+quiz:
+  - q: "Cookie httpOnly berarti…"
+    options: ["Selalu terenkripsi", "Hanya di localhost", "Tidak bisa diakses JavaScript browser", "Tidak bisa dikirim ke server"]
+    answer: 2
+    explain: "Melindungi session dari serangan XSS."
+  - q: "Session sebaiknya divalidasi di…"
+    options: ["Middleware saja", "Server", "Browser", "CSS"]
+    answer: 1
+    explain: "Middleware hanya membantu mengalihkan; server tetap berwenang."
+  - q: "Server Action login bisa membaca form lewat…"
+    options: ["window.location", "localStorage", "query selector", "FormData"]
+    answer: 3
+    explain: "Kirim lewat action={login} pada <form>."
+  - q: "Setelah login, cookie dibuat dengan…"
+    options: ["fetch biasa", "cookies().set() di server", "document.cookie di client", "localStorage.setItem"]
+    answer: 1
+    explain: "Gunakan api cookies dari next/headers."
+  - q: "Proteksi rute bisa memakai…"
+    options: ["Middleware + pengecekan di server", "CSS display:none", "Nama folder", "Metadata"]
+    answer: 0
+    explain: "Keduanya saling melengkapi."
+example:
+  code: |
+    'use server';
+    import { cookies } from 'next/headers';
+
+    export async function login(formData) {
+      const session = await verifikasi(formData);
+      (await cookies()).set('session', session, { httpOnly: true });
+    }
+---
+
+Autentikasi yang aman di Next.js memanfaatkan Server Action dan cookie httpOnly.
+
+## Server Action Login
+
+```tsx
+// app/login/action.ts
+"use server";
+
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function login(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  const session = await verifikasiKeApi(email, password);
+  if (!session) throw new Error("Kredensial salah");
+
+  const jar = await cookies();
+  jar.set("session", session.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+
+  redirect("/dashboard");
+}
+```
+
+## Form
+
+```tsx
+<form action={login}>
+  <input name="email" type="email" required />
+  <input name="password" type="password" required />
+  <button type="submit">Masuk</button>
+</form>
+```
+
+## Membaca Session
+
+```tsx
+import { cookies } from "next/headers";
+
+export default async function Dashboard() {
+  const token = (await cookies()).get("session")?.value;
+  const user = token ? await ambilUser(token) : null;
+
+  if (!user) redirect("/login");
+  return <p>Halo, {user.nama}</p>;
+}
+```
+
+## Logout
+
+```ts
+"use server";
+
+export async function logout() {
+  (await cookies()).delete("session");
+  redirect("/login");
+}
+```
+
+<div class="note">💡 Jangan menyimpan token sesi di localStorage bila bisa memakai cookie httpOnly. Cookie tidak bisa dibaca skrip, sehingga risiko XSS jauh lebih kecil.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`'use server';
+import { cookies } from 'next/headers';
+
+export async function login(formData) {
+  const session = await verifikasi(formData);
+  (await cookies()).set('session', session, { httpOnly: true });
+}`}</code></pre>

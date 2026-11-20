@@ -1,0 +1,116 @@
+---
+"title": "Quoting dan Escape"
+"description": "Mengendalikan cara shell membaca spasi, tanda kutip, dan karakter khusus"
+"order": 9
+"quiz":
+- "q": "Tanda kutip ganda membuat variabel…"
+  "options":
+  - "Diabaikan"
+  - "Dikembangkan nilainya"
+  - "Dijadikan komentar"
+  - "Dihapus"
+  "answer": 1
+  "explain": "Di dalam \" \", $nama diganti dengan nilai variabel."
+- "q": "Tanda kutip tunggal bersifat…"
+  "options":
+  - "Sama dengan ganda"
+  - "Menghapus spasi"
+  - "Literal, tanpa ekspansi"
+  - "Menjalankan perintah"
+  "answer": 2
+  "explain": "'...' mempertahankan teks apa adanya."
+- "q": "Cara menulis tanda dolar literal di dalam string ganda adalah…"
+  "options":
+  - "$$"
+  - "$"
+  - "\\$"
+  - "\\$"
+  "answer": 3
+  "explain": "Backslash melepaskan makna khusus $ di dalam kutip ganda."
+- "q": "Perintah substitution ditulis dengan…"
+  "options":
+  - "$(perintah)"
+  - "{perintah}"
+  - "[perintah]"
+  - "`perintah`"
+  "answer": 0
+  "explain": "$(...) menangkap stdout perintah sebagai teks."
+- "q": "Memilikiil dari echo \"$HOME\" adalah…"
+  "options":
+  - "Teks \"$HOME\""
+  - "Jalur home pengguna"
+  - "Kesalahan"
+  - "Daftar file"
+  "answer": 1
+  "explain": "Kutip ganda tetap melakukan ekspansi variabel."
+"example":
+  "code": "#!/usr/bin/env bash\nnama=\"OnBoss Academy\"\n\necho \"$nama\"        # nilai variabel\necho '$nama'        # teks literal $nama\necho \"Halo, ${nama}!\"\necho \"Hari ini: $(date +%A)\"\necho \"Harga: \\$10\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Tiga Mode Kutip
+
+```bash
+#!/usr/bin/env bash
+nama="OnBoss Academy"
+
+echo "$nama"        # nilai variabel
+echo '$nama'        # teks literal $nama
+echo "Halo, ${nama}!"
+echo "Hari ini: $(date +%A)"
+echo "Harga: \$10"
+```
+
+| Mode | Contoh | Ekspansi variabel | Ekspansi perintah |
+|---|---|---|---|
+| Tanpa kutip | `echo $x` | ya | ya, tapi rentan spasi |
+| Kutip ganda | `echo "$x"` | ya | ya |
+| Kutip tunggal | `echo '$x'` | tidak | tidak |
+
+## Kenapa Kutip Ganda Penting
+
+```bash
+nama="OnBoss Academy"
+echo $nama        # dua argumen: OnBoss dan Academy
+echo "$nama"      # satu argumen: OnBoss Academy
+```
+
+Tanpa kutip, shell memecah hasil ekspansi berdasarkan spasi. Ini menyebabkan error pada path yang mengandung spasi.
+
+## Escape
+
+```bash
+echo "Harga \$10"
+echo "Baris pertama\nBaris kedua"   # 
+ tidak otomatis jadi baris baru
+echo -e "Baris pertama\nBaris kedua" # -e mengaktifkan escape
+```
+
+Backslash melepaskan makna karakter berikutnya di dalam kutip ganda.
+
+## Perintah Substitution
+
+```bash
+sekarang=$(date +%Y-%m-%d)
+jumlah=$(wc -l < data.txt)
+echo "$sekarang — $jumlah baris"
+```
+
+Bentuk `$(...)` lebih disarankan daripada backtick karena bisa bersarang dan lebih mudah dibaca.
+
+<div class="note">💡 Kutip hampir semua ekspansi variabel dengan ganda: <code>"$variabel"</code>. Kebiasaan ini mencegah bug pada nama file dengan spasi dan karakter khusus.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+nama="OnBoss Academy"
+
+echo "$nama"        # nilai variabel
+echo '$nama'        # teks literal $nama
+echo "Halo, \${nama}!"
+echo "Hari ini: $(date +%A)"
+echo "Harga: \$10"`} />

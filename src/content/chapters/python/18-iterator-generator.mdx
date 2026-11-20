@@ -1,0 +1,120 @@
+---
+title: "Iterator & Generator"
+description: "iter(), next(), protokol iterator, yield, dan generator expression"
+order: 18
+quiz:
+  - q: "Protokol iterator Python terdiri dari…"
+    options: ["__iter__ dan __next__", "__str__ dan __repr__", "__get__ dan __set__", "__call__ dan __len__"]
+    answer: 0
+    explain: "iterator wajib punya __iter__ (return diri) dan __next__ (nilai berikutnya)."
+  - q: "Fungsi dengan `yield` disebut…"
+    options: ["Lambda", "Generator", "Decorator", "Comprehension"]
+    answer: 1
+    explain: "yield menghasilkan nilai dan menjeda fungsi sampai next() berikutnya."
+  - q: "`next(gen)` pada generator yang habis akan…"
+    options: ["Mengembalikan None", "StopIteration", "Error sintaks", "Mengulang dari awal"]
+    answer: 1
+    explain: "StopIteration menandai iterator habis; for-loop menangkapnya otomatis."
+  - q: "Generator expression memakai tanda kurung…"
+    options: ["[]", "{}", "()", "<>"]
+    answer: 2
+    explain: "`(x for x in data)` adalah generator expression."
+  - q: "Keunggulan generator adalah…"
+    options: ["Selalu lebih cepat", "Hemat memori karena malas", "Bisa di-index langsung", "Tidak bisa di-for"]
+    answer: 1
+    explain: "Nilai dibuat saat dibutuhkan, cocok untuk stream/data besar."
+example:
+  code: |
+    def bilangan(n):
+        for i in range(n):
+            yield i * i
+    
+    for x in bilangan(5):
+        print(x, end=" ")
+    
+    gen = (x for x in range(3))
+    print(next(gen), next(gen))
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Iterator adalah objek yang bisa di-loop. Generator adalah cara paling mudah membuat iterator buatan sendiri.
+
+## Protokol Iterator
+
+```python
+data = [1, 2, 3]
+it = iter(data)
+print(next(it))  # 1
+print(next(it))  # 2
+```
+
+`for x in data` sebenarnya memanggil `iter(data)` lalu `next(...)` berulang sampai `StopIteration`.
+
+## Membuat Iterator Sendiri
+
+```python
+class Hitung:
+    def __init__(self, awal, akhir):
+        self.n = awal
+        self.akhir = akhir
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.n > self.akhir:
+            raise StopIteration
+        v = self.n
+        self.n += 1
+        return v
+```
+
+## Generator dengan yield
+
+```python
+def deret(n):
+    for i in range(n):
+        yield i * i
+
+print(list(deret(5)))  # [0, 1, 4, 9, 16]
+```
+
+Saat `yield` dijalankan, state fungsi **disimpan**. Eksekusi lanjut dari titik itu saat `next()` dipanggil lagi. Ini berbeda dengan `return` yang mengakhiri fungsi.
+
+## Generator Expression
+
+```python
+gen = (x * 2 for x in range(1_000_000))
+print(sum(gen))   # tidak pernah membuat list 1 juta elemen
+```
+
+## send() & yield from
+
+```python
+def echo():
+    pesan = yield "siap"
+    while pesan:
+        pesan = yield f"kamu bilang: {pesan}"
+
+g = echo()
+print(next(g))            # siap
+print(g.send("halo"))     # kamu bilang: halo
+```
+
+`yield from` mendelegasikan ke generator lain — berguna untuk pipeline.
+
+<div class="note">💡 Generator hanya bisa diiterasi <b>satu kali</b>. Setelah habis, kamu harus membuat ulang. Kalau butuh beberapa kali iterasi, kembalikan list atau simpan hasilnya.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`def bilangan(n):
+    for i in range(n):
+        yield i * i
+
+for x in bilangan(5):
+    print(x, end=" ")
+
+gen = (x for x in range(3))
+print(next(gen), next(gen))`} />

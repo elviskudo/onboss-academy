@@ -1,0 +1,137 @@
+---
+title: "File & Path Modern"
+description: "pathlib, mode file, encoding, CSV, dan bekerja dengan direktori"
+order: 21
+quiz:
+  - q: "Modul modern untuk manipulasi path adalah…"
+    options: ["os.path", "pathlib", "sys", "shutil"]
+    answer: 1
+    explain: "pathlib menyediakan API berorientasi objek lintas platform."
+  - q: "Mode `'a'` saat membuka file berarti…"
+    options: ["Baca saja", "Tulis timpa", "Tambah di akhir", "Baca biner"]
+    answer: 2
+    explain: "'a' = append; file dibuat bila belum ada."
+  - q: "Cara terbaik menentukan encoding teks adalah…"
+    options: ["Dibiarkan default Always", "Tulis encoding='utf-8' eksplisit", "Pakai biner saja", "Gunakan ASCII"]
+    answer: 1
+    explain: "Eksplisit UTF-8 mencegah beda hasil di Windows/Linux."
+  - q: "`with open(...) as f:` menjamin…"
+    options: ["File lebih cepat", "File ditutup otomatis", "File jadi read-only", "Tidak perlu encoding"]
+    answer: 1
+    explain: "Context manager memanggil f.close() walau terjadi exception."
+  - q: "Modul untuk membaca CSV bawaan Python adalah…"
+    options: ["csv", "pandas", "excel", "tab"]
+    answer: 0
+    explain: "Modul `csv` sudah bawaan; pandas untuk analisis lebih lanjut."
+example:
+  code: |
+    from pathlib import Path
+    import csv
+    
+    p = Path("data") / "nilai.csv"
+    p.parent.mkdir(exist_ok=True)
+    
+    with p.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["nama", "nilai"])
+        w.writerow(["Sari", 90])
+    
+    with p.open(encoding="utf-8") as f:
+        for baris in csv.DictReader(f):
+            print(baris["nama"], baris["nilai"])
+    
+    print(p.exists(), p.stat().st_size)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Bekerja dengan file adalah kebutuhan sehari-hari: log, konfigurasi, laporan CSV. Python memudahkannya lewat `pathlib` dan context manager.
+
+## pathlib
+
+```python
+from pathlib import Path
+
+p = Path("dokumen") / "laporan.txt"
+print(p.name)       # laporan.txt
+print(p.suffix)     # .txt
+print(p.parent)     # dokumen
+p.parent.mkdir(parents=True, exist_ok=True)
+```
+
+Operator `/` menggabungkan path dengan benar di Windows maupun Unix — tidak perlu peduli `\` atau `/`.
+
+## Mode File
+
+| Mode | Arti |
+|---|---|
+| `r` | baca (default) |
+| `w` | tulis, timpa isi lama |
+| `a` | tambah di akhir |
+| `x` | buat hanya jika belum ada |
+| `b` | biner |
+| `+` | baca sekaligus tulis |
+
+```python
+with open("catatan.txt", "a", encoding="utf-8") as f:
+    f.write("Baris baru
+")
+```
+
+## Baca Baris per Baris
+
+```python
+with open("besar.log", encoding="utf-8") as f:
+    for baris in f:
+        if "ERROR" in baris:
+            print(baris.strip())
+```
+
+Jangan `.read()` seluruh file besar — iterasi baris jauh lebih hemat memori.
+
+## CSV
+
+```python
+import csv
+
+with open("nilai.csv", newline="", encoding="utf-8") as f:
+    for row in csv.DictReader(f):
+        print(row["nama"])
+```
+
+`newline=""` mencegah baris kosong ganda di Windows.
+
+## Direktori
+
+```python
+for file in Path(".").glob("*.py"):
+    print(file)
+
+for file in Path(".").rglob("*.mdx"):   # rekursif
+    print(file)
+
+p.rename("baru.txt")
+p.unlink()          # hapus file
+```
+
+<div class="note">💡 Selalu pakai <code>with</code> saat membuka file. Context manager menutup file secara otomatis walaupun exception terjadi di tengah blok — mencegah file terkunci atau buffer belum tersiram.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`from pathlib import Path
+import csv
+
+p = Path("data") / "nilai.csv"
+p.parent.mkdir(exist_ok=True)
+
+with p.open("w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["nama", "nilai"])
+    w.writerow(["Sari", 90])
+
+with p.open(encoding="utf-8") as f:
+    for baris in csv.DictReader(f):
+        print(baris["nama"], baris["nilai"])
+
+print(p.exists(), p.stat().st_size)`} />

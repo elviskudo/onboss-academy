@@ -8,7 +8,7 @@ quiz:
     answer: 1
     explain: "ERB menanam kode Ruby di dalam berkas HTML biasa."
   - q: "Tag ERB untuk menampilkan nilai adalah…"
-    options: ["<?php ?>", "{{ }}", "<%= %>", "<% %>"]
+    options: ["<?php ?>", "{{ }}", "&lt;%= %>", "&lt;% %>"]
     answer: 2
     explain: "Tanda equal mengeluarkan output, tanpa equal hanya menjalankan kode."
   - q: "View partial diberi nama dengan awalan…"
@@ -25,16 +25,16 @@ quiz:
     explain: "Semua view otomatis dibungkus layout ini."
 example:
   code: |
-    <%# app/views/products/index.html.erb %>
+    &lt;%# app/views/products/index.html.erb %>
     <h1>Produk</h1>
 
-    <% @products.each do |product| %>
+    &lt;% @products.each do |product| %>
       <div class="card">
-        <%= product.name %> - Rp<%= product.price %>
+        &lt;%= product.name %> - Rp&lt;%= product.price %>
       </div>
-    <% end %>
+    &lt;% end %>
 
-    <%= link_to "Baru", new_product_path %>
+    &lt;%= link_to "Baru", new_product_path %>
 ---
 
 View bertugas merender HTML. ERB memberi dua cara menanam Ruby, dan keduanya punya peran berbeda.
@@ -46,7 +46,7 @@ View bertugas merender HTML. ERB memberi dua cara menanam Ruby, dan keduanya pun
 <p>Total produk: <%= jumlah %></p>
 ```
 
-`<% %>` menjalankan kode tanpa mencetak, `<%= %>` mencetak hasilnya.
+`&lt;% %>` menjalankan kode tanpa mencetak, `&lt;%= %>` mencetak hasilnya.
 
 ## Melooping di View
 
@@ -109,7 +109,7 @@ View Rails umumnya tersusun dari **4 bagian**: layout, template action, partial,
 | Partial | potongan berulang | `_product.html.erb` | kartu atau form |
 | Helper | format presentasi | `number_to_currency` | tampilan yang reusable |
 
-ERB memiliki **3 tag penting**: `<% %>` menjalankan Ruby, `<%= %>` mencetak hasil yang di-escape, dan `<%# %>` memberi komentar template. Escape default melindungi dari XSS saat menampilkan input user. Jangan memakai `raw` atau `html_safe` pada data tak tepercaya.
+ERB memiliki **3 tag penting**: `&lt;% %>` menjalankan Ruby, `&lt;%= %>` mencetak hasil yang di-escape, dan `&lt;%# %>` memberi komentar template. Escape default melindungi dari XSS saat menampilkan input user. Jangan memakai `raw` atau `html_safe` pada data tak tepercaya.
 
 ## Form dan Navigasi
 

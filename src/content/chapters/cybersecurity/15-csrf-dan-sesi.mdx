@@ -1,0 +1,82 @@
+---
+title: "CSRF dan Manajemen Sesi"
+description: "Mengamankan cookie, token CSRF, dan masa hidup sesi"
+order: 15
+quiz:
+  - q: "Serangan CSRF memaksa korban mengirim…"
+    options: ["File ke server", "Email phishing", "Query SQL berbahaya", "Permintaan dari situs lain memakai sesi korban"]
+    answer: 3
+    explain: "Browser otomatis mengirim cookie, sehingga permintaan tampak sah."
+  - q: "Atribut cookie SameSite=Lax membantu…"
+    options: ["Mengurangi pengiriman cookie pada permintaan lintas situs", "Mengenkripsi cookie", "Memperpanjang sesi", "Menghapus cookie"]
+    answer: 0
+    explain: "SameSite=Strict lebih ketat, Lax kompromi untuk navigasi normal."
+  - q: "Cookie HttpOnly bertujuan…"
+    options: ["Menyimpan cookie di localStorage", "Mencegah JavaScript membaca cookie", "Menghindari pengiriman lewat HTTPS", "Menghapus cookie"]
+    answer: 1
+    explain: "Ini mengurangi dampak XSS terhadap sesi."
+  - q: "Token CSRF biasanya…"
+    options: ["Disimpan di URL tanpa kedaluwarsa", "Berupa kata sandi", "Unik per sesi dan diverifikasi di server", "Sama untuk semua pengguna"]
+    answer: 2
+    explain: "Token harus tidak dapat diprediksi dan dibandingkan dengan aman."
+  - q: "Praktik baik setelah login adalah…"
+    options: ["Membiarkan ID sesi lama", "Menyimpan sesi di URL", "Memperpanjang sesi selamanya", "Mengganti ID sesi untuk mencegah session fixation"]
+    answer: 3
+    explain: "Sesi lama bisa dipaksakan penyerang sebelum korban login."
+example:
+  code: |
+    Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=3600
+    
+    <form method="post">
+      <input type="hidden" name="csrf" value="token-unik-per-sesi">
+    </form>
+---
+
+Sesi menyimpan status login. Karena cookie dikirim otomatis, penyerang bisa "menumpang" pada sesi korban lewat permintaan lintas situs.
+
+## Anatomi Cookie Aman
+
+```http
+Set-Cookie: sid=...; HttpOnly; Secure; SameSite=Lax; Max-Age=3600
+```
+
+| Atribut | Fungsi |
+|---|---|
+| `HttpOnly` | JavaScript tidak bisa membaca |
+| `Secure` | Hanya dikirim lewat HTTPS |
+| `SameSite` | Batasi pengiriman lintas situs |
+| `Max-Age` / `Expires` | Masa hidup jelas |
+| `Path` | Batasi cakupan URL |
+
+## Token CSRF
+
+```text
+server buat token acak -> simpan di sesi -> sisipkan ke form
+saat POST -> bandingkan token form dengan token sesi
+```
+
+Gunakan perbandingan konstan-waktu untuk mencegah serangan timing. Token tidak boleh muncul di log atau URL karena URL tersimpan di riwayat dan referer.
+
+## Daur Hidup Sesi
+
+1. **Sebelum login** — sesi sementara.
+2. **Saat login sukses** — regenerasi ID sesi.
+3. **Aktif** — perbarui aktivitas, tetapkan batas diam.
+4. **Logout** — hapus di server **dan** di browser.
+5. **Kedaluwarsa** — paksa login ulang untuk operasi sensitif.
+
+## Double Submit dan Header Kustom
+
+Pola lain: kirim token di cookie dan di header `X-CSRF-Token`, lalu bandingkan. Karena penyerang lintas situs tidak bisa membaca atau menetapkan header kustom tanpa CORS, permintaannya gagal.
+
+<div class="note">💡 Jangan simpan token akses di `localStorage` bila bisa dihindari—XSS langsung bisa membacanya. Cookie `HttpOnly` dengan CSRF token lebih sulit dicuri.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Periksa cookie aplikasimu:
+  [ ] HttpOnly
+  [ ] Secure
+  [ ] SameSite
+  [ ] masa hidup terbatas
+  [ ] sesi di-regenerate saat login`}</code></pre>

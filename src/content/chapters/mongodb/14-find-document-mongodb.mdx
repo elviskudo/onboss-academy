@@ -1,0 +1,88 @@
+---
+title: "Membaca Dokumen dengan find"
+description: "filter nilai tunggal,甫 proyeksi, sort, limit, skip, dan pagination"
+order: 14
+quiz:
+  - q: "Metode membatasi jumlah hasil adalah…"
+    options: ["slice(n)", "limit(n)", "take(n)", "first(n)"]
+    answer: 1
+    explain: "limit(n) mengembalikan paling banyak n dokumen dari kursor."
+  - q: "Nilai -1 pada sort({harga: -1}) berarti…"
+    options: ["Tanpa urutan", "Menghapus", "Menaik", "Menurun"]
+    answer: 3
+    explain: "1 = ascending, -1 = descending."
+  - q: "skip(10).limit(5) mengambil…"
+    options: ["Dokumen ke-11 sampai ke-15", "10 dokumen terakhir", "Semua dokumen", "5 dokumen pertama"]
+    answer: 0
+    explain: "skip melewati 10, lalu limit mengambil 5 berikutnya."
+  - q: "Proyeksi {nama: 1, _id: 0} menampilkan…"
+    options: ["Error", "Semua field kecuali nama", "Hanya nama tanpa _id", "Hanya _id"]
+    answer: 2
+    explain: "1 berarti ikut ditampilkan, 0 berarti disembunyikan."
+  - q: "Untuk mengubah kursor menjadi array di mongosh bisa memakai…"
+    options: ["array()", "collect()", "toArray()", "toList()"]
+    answer: 2
+    explain: "Kursor MongoDB menyediakan toArray() untuk materialisasi hasil."
+example:
+  code: |
+    db.produk.find({kategori: "Elektronik"}, {nama: 1, harga: 1, _id: 0}).sort({harga: -1}).limit(3)
+---
+
+## Filter Sederhana
+
+Filter MongoDB adalah objek dengan pasangan field:nilai.
+
+```javascript
+db.produk.find({ kategori: "Elektronik" })
+db.produk.find({ stok: 0, aktif: true })
+```
+
+Beberapa field sekaligus berarti **AND**: semua syarat harus terpenuhi.
+
+## Proyeksi
+
+```javascript
+db.produk.find({}, { nama: 1, harga: 1, _id: 0 })
+```
+
+Proyeksi menghemat bandwidth ketika dokumen aslinya sangat besar. Ingat pengecualian `_id`: ia tampil kecuali kamu menuliskan `_id: 0`.
+
+## Urutan
+
+```javascript
+db.produk.find().sort({ harga: -1, nama: 1 })
+```
+
+Urutan sort dievaluasi从左到右 (kiri ke kanan). Di contoh di atas, harga menjadi kunci utama, nama menjadi kunci kedua saat harga sama.
+
+## Halaman Data
+
+```javascript
+const halaman = 2, perHalaman = 10
+db.produk.find()
+  .sort({ _id: 1 })
+  .skip((halaman - 1) * perHalaman)
+  .limit(perHalaman)
+```
+
+`skip()` semakin lambat pada halaman yang dalam karena server tetap harus melewati dokumen di depannya. Untuk dataset besar, pakai **range pagination** berdasarkan `_id` atau field tanggal.
+
+## Iterasi Kursor
+
+```javascript
+for (const dok of db.produk.find({ stok: { $gt: 0 } })) {
+  print(dok.nama)
+}
+```
+
+Kursor hanya bisa dikonsumsi sekali. Kalau perlu dipakai berulang, simpan hasilnya dengan `toArray()`.
+
+<div class="note">💡 `find()` tidak pernah mengubah urutan penyimpanan dokumen. Urutan hanya dijamin kalau kamu memanggil `sort()` dengan kunci yang unik, misalnya `_id`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_find
+db.produk.insertMany([{nama: "A", harga: 10}, {nama: "B", harga: 30}, {nama: "C", harga: 20}])
+db.produk.find({}, {nama: 1, harga: 1, _id: 0}).sort({harga: -1}).limit(2)`}</code></pre>

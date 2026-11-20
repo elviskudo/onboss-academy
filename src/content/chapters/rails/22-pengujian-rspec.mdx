@@ -1,0 +1,125 @@
+---
+"title": "Pengujian dengan RSpec"
+"description": "Test model, request, dan system dengan RSpec dan FactoryBot"
+"order": 22
+"quiz":
+- "q": "Gem untuk pengujian Rails yang populer adalah…"
+  "options":
+  - "rspec-rails"
+  - "pytest-rails"
+  - "jest-rails"
+  - "test-unit-pro"
+  "answer": 0
+  "explain": "rspec-rails menggantikan Minitest bawaan dengan DSL RSpec."
+- "q": "Generator instalasi RSpec adalah…"
+  "options":
+  - "rails generate rspec:install"
+  - "bundle rspec init"
+  - "rails new rspec"
+  - "gem install rspec"
+  "answer": 0
+  "explain": "Generator membuat .rspec, spec/rails_helper.rb, dan spec/spec_helper.rb."
+- "q": "FactoryBot dipakai untuk…"
+  "options":
+  - "Membuat data uji"
+  - "Mengganti database"
+  - "Menjalankan server"
+  - "Mengompres aset"
+  "answer": 0
+  "explain": "FactoryBot menyediakan builder data yang bersih dan dapat dikustomisasi."
+- "q": "Tipe spesies untuk menguji endpoint HTTP adalah…"
+  "options":
+  - "model spec"
+  - "request spec"
+  - "unit spec"
+  - "helper spec"
+  "answer": 1
+  "explain": "Request spec memanggil route dan memeriksa status serta body respons."
+- "q": "Perintah menjalankan seluruh test adalah…"
+  "options":
+  - "bundle exec rspec"
+  - "rails test all"
+  - "rake spec:all"
+  - "bundle exec rubocop"
+  "answer": 0
+  "explain": "bundle exec rspec menjalankan file di folder spec."
+"example":
+  "code": "RSpec.describe Article, type: :model do\n  it \"menolak judul kosong\" do\n    article = build(:article, title: nil)\n    expect(article).not_to be_valid\n  end\nend\n\nRSpec.describe \"Articles\", type: :request do\n  it \"menampilkan daftar artikel\" do\n    get \"/articles\"\n    expect(response).to have_http_status(:ok)\n  end\nend\n"
+---
+
+## Instalasi
+
+```ruby
+RSpec.describe Article, type: :model do
+  it "menolak judul kosong" do
+    article = build(:article, title: nil)
+    expect(article).not_to be_valid
+  end
+end
+
+RSpec.describe "Articles", type: :request do
+  it "menampilkan daftar artikel" do
+    get "/articles"
+    expect(response).to have_http_status(:ok)
+  end
+end
+```
+
+```ruby
+group :development, :test do
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+end
+```
+
+```bash
+bundle install
+bin/rails generate rspec:install
+```
+
+## Struktur Spec
+
+| Folder | Yang diuji |
+|---|---|
+| `spec/models` | validasi, asosiasi, method model |
+| `spec/requests` | endpoint dan respons HTTP |
+| `spec/system` | interaksi browser (Capybara) |
+| `spec/jobs` | pekerjaan background |
+| `spec/factories` | data uji |
+
+## FactoryBot
+
+```ruby
+FactoryBot.define do
+  factory :article do
+    title { "Judul contoh" }
+    body { "Isi artikel" }
+    association :author
+  end
+end
+```
+
+`build` membuat objek di memori, `create` menyimpannya ke database. Gunakan `build` bila tidak memerlukan ID.
+
+## Expectation
+
+```ruby
+expect(article).to be_valid
+expect(response).to have_http_status(:ok)
+expect { Article.create!(...) }.to change(Article, :count).by(1)
+```
+
+`change` sangat berguna untuk memastikan efek samping benar-benar terjadi.
+
+## System Spec
+
+```ruby
+it "bisa membuat artikel" do
+  visit "/articles/new"
+  fill_in "Title", with: "Belajar RSpec"
+  click_button "Simpan"
+  expect(page).to have_content("Belajar RSpec")
+end
+```
+
+<div class="note">💡 Test yang baik menguji perilaku, bukan implementasi. Uji "artikel tidak tersimpan saat judul kosong", bukan "validator presence dipanggil".</div>

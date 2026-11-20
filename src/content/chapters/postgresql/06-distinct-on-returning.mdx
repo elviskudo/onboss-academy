@@ -120,6 +120,10 @@ Baris yang dihapus tampil sekaligus — audit ringkas tanpa log manual. SQLite m
 
 <div class="note">💡 DISTINCT ON = "satu yang terbaik per kelompok" dalam satu baris klausa; RETURNING = umpan balik langsung dari UPDATE/INSERT/DELETE. Keduanya menghapus boilerplate query di lapisan aplikasi.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="postgresql" runtime="sql" code={`SELECT k.dept, k.nama, k.gaji
 FROM karyawan k
 JOIN (

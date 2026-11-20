@@ -185,6 +185,10 @@ Di proyek nyata (misal driver Linux), pola ini persis dipakai: `struct file_oper
 
 <div class="note">💡 Struct adalah model data kamu. Rancang dulu field apa saja yang dibutuhkan — menambah kolom baru jauh lebih mudah daripada merombak puluhan variabel terpisah. Untuk "perilaku", tambahkan function biasa yang menerima pointer struct; untuk "perilaku bervariasi per tipe", isi function pointer di dalam struct.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 #include <string.h>
 
@@ -217,7 +221,7 @@ int main(void) {
     };
 
     int total = 0, tertinggi = 0;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i &lt; 3; i++) {
         tampil(kelas[i], i + 1);
         total += kelas[i].nilai;
         if (kelas[i].nilai > kelas[tertinggi].nilai) tertinggi = i;

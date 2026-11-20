@@ -1,0 +1,146 @@
+---
+"title": "Networking dan JSON"
+"description": "Mengambil data dari API, mendekode JSON dengan Codable, dan menangani error"
+"order": 25
+"quiz":
+- "q": "Protokol untuk membuat URL request adalah…"
+  "options":
+  - "URLSession"
+  - "URLRequest"
+  - "JSONDecoder"
+  - "Codable"
+  "answer": 1
+  "explain": "URLRequest mengatur method, header, dan body."
+- "q": "Protokol untuk encode/decode JSON adalah…"
+  "options":
+  - "Printable"
+  - "Comparable"
+  - "Codable"
+  - "Error"
+  "answer": 2
+  "explain": "Codable = Encodable + Decodable."
+- "q": "Fungsi untuk mendekode JSON adalah…"
+  "options":
+  - "JSON.parse"
+  - "decodeJSON"
+  - "JSONDecoder.convert"
+  - "JSONDecoder().decode"
+  "answer": 3
+  "explain": "Dekode dari Data ke tipe yang conform Decodable."
+- "q": "Cara mengganti nama kunci JSON adalah…"
+  "options":
+  - "CodingKeys enum"
+  - "@JSONKey"
+  - "rename()"
+  - "mapping dict"
+  "answer": 0
+  "explain": "Enum CodingKeys memetakan nama properti Swift ke kunci JSON."
+- "q": "Status HTTP 404 berarti…"
+  "options":
+  - "Sukses"
+  - "Resource tidak ditemukan"
+  - "Server error"
+  - "Redirect"
+  "answer": 1
+  "explain": "404 Not Found harus ditangani dengan pesan ramah."
+"example":
+  "code": "import Foundation\n\nstruct Post: Decodable {\n    let id: Int\n    let title: String\n    let userId: Int\n\n    enum CodingKeys: String, CodingKey {\n        case id, title\n        case userId = \"userId\"\n    }\n}\n\nfunc ambilPost() async throws -> [Post] {\n    guard let url = URL(string: \"https://jsonplaceholder.typicode.com/posts\") else {\n        throw URLError(.badURL)\n    }\n    let (data, response) = try await URLSession.shared.data(from: url)\n    guard (response as? HTTPURLResponse)?.statusCode == 200 else {\n        throw URLError(.badServerResponse)\n    }\n    return try JSONDecoder().decode([Post].self, from: data)\n}\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Alur Permintaan
+
+```swift
+import Foundation
+
+struct Post: Decodable {
+    let id: Int
+    let title: String
+    let userId: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, title
+        case userId = "userId"
+    }
+}
+
+func ambilPost() async throws -> [Post] {
+    guard let url = URL(string: "https://jsonplaceholder.typicode.com/posts") else {
+        throw URLError(.badURL)
+    }
+    let (data, response) = try await URLSession.shared.data(from: url)
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+        throw URLError(.badServerResponse)
+    }
+    return try JSONDecoder().decode([Post].self, from: data)
+}
+```
+
+| Langkah | Kode |
+|---|---|
+| Buat URL | `URL(string: ...)` |
+| Susun request | `URLRequest` + method/header |
+| Kirim | `URLSession.shared.data(for:)` |
+| Cek status | `HTTPURLResponse.statusCode` |
+| Dekode | `JSONDecoder` |
+
+## Codable
+
+```swift
+struct Produk: Codable {
+    let nama: String
+    let harga: Int
+    let aktif: Bool
+}
+```
+
+Bila nama kunci JSON berbeda, tambahkan `CodingKeys`:
+
+```swift
+enum CodingKeys: String, CodingKey {
+    case nama = "product_name"
+    case harga
+    case aktif
+}
+```
+
+## Error yang Perlu Dicek
+
+| Keadaan | Penanganan |
+|---|---|
+| URL salah | `URLError(.badURL)` |
+| Tidak ada koneksi | `URLError.notConnectedToInternet` |
+| Status 4xx/5xx | cek `statusCode` |
+| JSON tidak sesuai | `DecodingError` dari `JSONDecoder` |
+
+<div class="note">💡 Gunakan `decodeIfPresent` untuk field opsional agar kunci yang hilang tidak menyebabkan error. Selalu tampilkan pesan yang ramah saat request gagal, bukan stack trace.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`import Foundation
+
+struct Post: Decodable {
+    let id: Int
+    let title: String
+    let userId: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, title
+        case userId = "userId"
+    }
+}
+
+func ambilPost() async throws -> [Post] {
+    guard let url = URL(string: "https://jsonplaceholder.typicode.com/posts") else {
+        throw URLError(.badURL)
+    }
+    let (data, response) = try await URLSession.shared.data(from: url)
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+        throw URLError(.badServerResponse)
+    }
+    return try JSONDecoder().decode([Post].self, from: data)
+}`} />

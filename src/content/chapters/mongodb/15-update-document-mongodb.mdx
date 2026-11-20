@@ -1,0 +1,104 @@
+---
+title: "Memperbarui Dokumen"
+description: "updateOne, updateMany, operator $set, $inc, $unset, replaceOne, dan upsert"
+order: 15
+quiz:
+  - q: "Operator untuk mengubah nilai field adalah…"
+    options: ["$put", "$set", "$change", "$modify"]
+    answer: 1
+    explain: "$set nama: nilai mengganti atau menambah field."
+  - q: "Operator untuk menambah angka pada field adalah…"
+    options: ["$sum", "$plus", "$add", "$inc"]
+    answer: 3
+    explain: "$inc {stok: -1} mengurangi stok satu."
+  - q: "updateMany berguna untuk…"
+    options: ["Semua dokumen yang cocok filter", "Menghapus koleksi", "Membuat indeks", "Satu dokumen saja"]
+    answer: 0
+    explain: "updateMany menerapkan perubahan ke semua dokumen yang cocok."
+  - q: "Opsi upsert: true berarti…"
+    options: ["Mengabaikan error", "Menghapus dokumen", "Membuat dokumen baru bila tidak ada yang cocok", "Mengganti nama koleksi"]
+    answer: 2
+    explain: "Upsert = update bila ada, insert bila tidak ada."
+  - q: "Perintah menghapus field dari dokumen adalah…"
+    options: ["$remove", "$drop", "$unset", "$delete"]
+    answer: 2
+    explain: "$unset {field: \"\"} menghapus field tersebut."
+example:
+  code: |
+    db.produk.updateOne({nama: "Keyboard"}, {$set: {harga: 325000}, $inc: {stok: -1}})
+    db.produk.updateMany({kategori: "Elektronik"}, {$set: {aktif: true}})
+    db.produk.updateOne({kode: "M-01"}, {$setOnInsert: {nama: "Mouse"}, $inc: {stok: 5}}, {upsert: true})
+---
+
+## updateOne dan updateMany
+
+```javascript
+db.produk.updateOne(
+  { nama: "Keyboard" },
+  { $set: { harga: 325000 } }
+)
+
+db.produk.updateMany(
+  { kategori: "Elektronik" },
+  { $set: { aktif: true } }
+)
+```
+
+Argumen pertama adalah filter, argumen kedua adalah **dokumen update** berisi operator. Kalau kamu menulis `{ harga: 325000 }` tanpa `$set`, MongoDB mengira itu dokumen pengganti dan field lain ikut hilang.
+
+## Operator yang Sering Dipakai
+
+| Operator | Fungsi | Contoh |
+| --- | --- | --- |
+| `$set` | ubah/tambah field | `{$set: {nama: "Baru"}}` |
+| `$inc` | tambah angka | `{$inc: {stok: -1}}` |
+| `$unset` | hapus field | `{$unset: {diskon: ""}}` |
+| `$rename` | ganti nama field | `{$rename: {lama: "baru"}}` |
+| `$min` / `$max` | simpan nilai terkecil/terbesar | `{$max: {skor: 95}}` |
+| `$push` | tambah elemen array | `{$push: {tag: "promo"}}` |
+
+## Update Bersyarat
+
+```javascript
+db.produk.updateOne(
+  { _id: id, stok: { $gt: 0 } },
+  { $inc: { stok: -1 } }
+)
+```
+
+Memasukkan kondisi `stok > 0` ke dalam filter membuat operasi aman terhadap race condition: dua pembeli bersamaan tidak akan membuat stok minus.
+
+## Upsert
+
+```javascript
+db.statistik.updateOne(
+  { tanggal: "2026-11-20" },
+  { $inc: { pengunjung: 1 } },
+  { upsert: true }
+)
+```
+
+Kalau dokumen tanggal itu belum ada, MongoDB membuatnya lalu menerapkan `$inc`. `$setOnInsert` bisa dipakai untuk field yang hanya boleh ada saat dokumen baru dibuat.
+
+## replaceOne
+
+```javascript
+db.produk.replaceOne(
+  { _id: 1 },
+  { nama: "Keyboard Pro", harga: 400000 }
+)
+```
+
+`replaceOne` mengganti seluruh dokumen kecuali `_id`. Field lama yang tidak disebutkan akan hilang.
+
+<div class="note">💡 `modifiedCount` berbeda dengan `matchedCount`. Update yang menetapkan nilai yang sama persis dengan nilai lama tetap cocok, tetapi tidak dimodifikasi.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_update
+db.produk.insertOne({nama: "Keyboard", harga: 350000, stok: 12})
+db.produk.updateOne({nama: "Keyboard"}, {$set: {harga: 325000}, $inc: {stok: -1}})
+db.produk.updateOne({kode: "M-01"}, {$setOnInsert: {nama: "Mouse"}, $inc: {stok: 5}}, {upsert: true})
+db.produk.find({}, {_id: 0})`}</code></pre>

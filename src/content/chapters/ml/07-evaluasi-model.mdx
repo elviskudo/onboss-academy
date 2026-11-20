@@ -27,7 +27,7 @@ example:
   code: |
     kenyataan = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0]
     prediksi  = [1, 0, 0, 1, 0, 1, 1, 0, 1, 0]
-
+    
     tp = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 1)
     fn = sum(1 for k, p in zip(kenyataan, prediksi) if k == 1 and p == 0)
     print("Recall:", tp / (tp + fn))

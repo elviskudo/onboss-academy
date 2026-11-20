@@ -1,0 +1,124 @@
+---
+"title": "Opsional Lanjutan"
+"description": "Optional chaining, nil coalescing, implicitly unwrapped, dan optional try"
+"order": 15
+"quiz":
+- "q": "Operator nil coalescing adalah…"
+  "options":
+  - "?:"
+  - "??"
+  - "||"
+  - "!?"
+  "answer": 1
+  "explain": "a ?? b memakai b bila a bernilai nil."
+- "q": "Optional chaining ditulis dengan…"
+  "options":
+  - "!"
+  - "&"
+  - "?"
+  - "~"
+  "answer": 2
+  "explain": "user?.alamat?.kota menghasilkan nilai opsional."
+- "q": "Implicitly unwrapped optional ditandai dengan…"
+  "options":
+  - "?"
+  - "??"
+  - "*"
+  - "!"
+  "answer": 3
+  "explain": "Tipe String! otomatis dibuka, tapi tetap bisa bernilai nil."
+- "q": "Hasil dari nil ?? \"cadangan\" adalah…"
+  "options":
+  - "\"cadangan\""
+  - "nil"
+  - "Error"
+  - "\"\""
+  "answer": 0
+  "explain": "Nilai kanan dipakai baca kiri nil."
+- "q": "Optional try ditulis dengan…"
+  "options":
+  - "try!"
+  - "try?"
+  - "throws?"
+  - "catch?"
+  "answer": 1
+  "explain": "try? mengubah error menjadi nil."
+"example":
+  "code": "struct Alamat { let kota: String }\nstruct User { let alamat: Alamat? }\n\nlet user: User? = User(alamat: Alamat(kota: \"Bandung\"))\n\nprint(user?.alamat?.kota ?? \"Tanpa kota\") // Bandung\nprint(user?.alamat?.kota.count ?? 0)      // 7\n\nvar pesan: String?\npesan = \"Halo\"\nprint(pesan!) // aman karena sudah diisi\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Optional Chaining
+
+```swift
+struct Alamat { let kota: String }
+struct User { let alamat: Alamat? }
+
+let user: User? = User(alamat: Alamat(kota: "Bandung"))
+
+print(user?.alamat?.kota ?? "Tanpa kota") // Bandung
+print(user?.alamat?.kota.count ?? 0)      // 7
+
+var pesan: String?
+pesan = "Halo"
+print(pesan!) // aman karena sudah diisi
+```
+
+```swift
+let kota = user?.alamat?.kota
+```
+
+Jika salah satu mata rantai bernilai nil, seluruh ekspresi menjadi nil — tanpa error. Hasilnya tetap opsional.
+
+## Nil Coalescing
+
+```swift
+let nama = inputNama ?? "Anonim"
+let jumlah = angkaOpsional ?? 0
+```
+
+Operator `??` menyediakan nilai cadangan. Bisa dirantai: `a ?? b ?? c`.
+
+## Force Unwrap
+
+```swift
+let x = nilai!
+```
+
+Tanda `!` berarti " saya yakin ini tidak nil". Bila ternyata nil, aplikasi crash. Gunakan hanya bila kamu benar-benar memiliki jaminan logika.
+
+## Implicitly Unwrapped Optional
+
+```swift
+var label: UILabel!
+```
+
+Biasanya dipakai untuk outlet Interface Builder yang diisi setelah view dimuat. Namespace tetap bisa dicek dengan `if let`.
+
+## Optional Try
+
+| Bentuk | Perilaku |
+|---|---|
+| `try` | error dilempar, harus ditangani |
+| `try?` | error jadi nil |
+| `try!` | error menyebabkan crash |
+
+<div class="note">💡 Rantai <code>?.</code> tidak menjamin hasil non-nil. Selalu akhiri dengan <code>??</code> atau <code>if let</code> bila kamu butuh nilai pasti.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="swift" runtime="piston" pistonName="swift" code={`struct Alamat { let kota: String }
+struct User { let alamat: Alamat? }
+
+let user: User? = User(alamat: Alamat(kota: "Bandung"))
+
+print(user?.alamat?.kota ?? "Tanpa kota") // Bandung
+print(user?.alamat?.kota.count ?? 0)      // 7
+
+var pesan: String?
+pesan = "Halo"
+print(pesan!) // aman karena sudah diisi`} />

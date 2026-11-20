@@ -1,0 +1,103 @@
+---
+title: "Struktur Sketch"
+description: "setup, loop, deklarasi global, dan alur eksekusi"
+order: 10
+quiz:
+  - q: "Fungsi yang dijalankan sekali saat Arduino menyala adalah…"
+    options: ["main()", "init()", "setup()", "loop()"]
+    answer: 2
+    explain: "setup() dipakai untuk konfigurasi pin dan komunikasi serial."
+  - q: "Fungsi yang berulang terus menerus adalah…"
+    options: ["setup()", "run()", "tick()", "loop()"]
+    answer: 3
+    explain: "loop() berjalan sampai board dimatikan atau di-reset."
+  - q: "Variabel yang dideklarasikan di luar fungsi bersifat…"
+    options: ["Global", "Lokal", "Konstan saja", "EEPROM"]
+    answer: 0
+    explain: "Nilainya bisa dibaca dan diubah dari setup maupun loop."
+  - q: "Arduino ditulis dengan bahasa…"
+    options: ["Assembly saja", "C/C++ yang disederhanakan", "Python", "JavaScript"]
+    answer: 1
+    explain: "IDE menyediakan fungsi dan macro seperti pinMode, digitalWrite, dan delay."
+  - q: "Sebelum memakai pin digital sebagai output, panggil…"
+    options: ["analogRead(pin)", "beginPin(pin)", "pinMode(pin, OUTPUT)", "digitalRead(pin)"]
+    answer: 2
+    explain: "Ini mengatur DDR register yang sesuai."
+example:
+  code: |
+    const int LED_PIN = 13;
+    int hitung = 0;
+    
+    void setup() {
+      pinMode(LED_PIN, OUTPUT);
+      Serial.begin(9600);
+    }
+    
+    void loop() {
+      digitalWrite(LED_PIN, HIGH);
+      delay(500);
+      digitalWrite(LED_PIN, LOW);
+      delay(500);
+      hitung++;
+    }
+---
+
+Setiap sketch memiliki kerangka yang sama: deklarasi, `setup()`, lalu `loop()`. Memahami alurnya membuat program lebih mudah dibaca dan di-debug.
+
+## Kerangka Minimal
+
+```cpp
+void setup() {
+  // dijalankan sekali
+}
+
+void loop() {
+  // dijalankan berulang
+}
+```
+
+`setup()` dipanggil setelah reset. `loop()` tidak pernah berhenti kecuali board mati.
+
+## Variabel
+
+```cpp
+const int LED = 13;     // konstan, tidak bisa diubah
+int suhu = 0;           // global
+bool nyala = false;
+
+void loop() {
+  int lokal = analogRead(A0);  // hanya ada di dalam loop
+}
+```
+
+Gunakan `const` untuk pin dan batas agar niat kode jelas.
+
+## Fungsi Tambahan
+
+```cpp
+void kedip(int pin, int lama) {
+  digitalWrite(pin, HIGH);
+  delay(lama);
+  digitalWrite(pin, LOW);
+  delay(lama);
+}
+```
+
+Fungsi membantu menghindari duplikasi kode saat pola yang sama dipakai berulang.
+
+## Compile dan Upload
+
+1. Pilih **Board** dan **Port** di menu Tools.
+2. Klik **Verify** untuk kompilasi.
+3. Klik **Upload** untuk mengirim sketch.
+4. Lihat hasil di Serial Monitor bila perlu.
+
+<div class="note">💡 `delay()` membekukan seluruh program. Untuk sistem yang harus merespons tombol sambil menunggu, gunakan `millis()` seperti yang akan dibahas di chapter berikutnya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`// Kerangka latihan:
+const int PIN = 13;
+void setup() { pinMode(PIN, OUTPUT); }
+void loop() { digitalWrite(PIN, HIGH); delay(200); digitalWrite(PIN, LOW); delay(800); }`}</code></pre>

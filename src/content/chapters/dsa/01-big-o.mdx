@@ -27,7 +27,7 @@ quiz:
 example:
   code: |
     # Perbandingan pertumbuhan waktu — kecil ke besar:
-    # O(1) < O(log n) < O(n) < O(n log n) < O(n^2) < O(2^n)
+    # O(1) &lt; O(log n) &lt; O(n) &lt; O(n log n) &lt; O(n^2) &lt; O(2^n)
     n = 1_000_000
     print("O(1)        :", 1)
     print("O(log n)    :", n.bit_length())
@@ -143,6 +143,10 @@ Big-O, Big-Theta, dan Big-Omega adalah **3 batas asimtotik**. O memberi batas at
 | O(n) | Masih sehat untuk n juta |
 | O(n log n) | Batas wajar sorting besar |
 | O(n^2) | Hanya untuk n ribu ke bawah |
+
+## Try it Yourself
+
+Jalankan contoh di bawah untuk melihat ide algoritma ini berjalan langsung.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`import time
 

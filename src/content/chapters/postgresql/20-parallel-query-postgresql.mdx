@@ -1,0 +1,98 @@
+---
+title: "Query Paralel dan Work Memori"
+description: "parallel workers, work_mem, hash join, dan saat paralel tidak dipakai"
+order: 20
+quiz:
+  - q: "Perintah melihat rencana paralel adalah…"
+    options: ["EXPLAIN", "SHOW PLAN", "PROFILE QUERY", "DESCRIBE EXEC"]
+    answer: 1
+    explain: "EXPLAIN menunjukkan Gather/Gather Merge dan Workers Planned."
+  - q: "Gather dalam query plan berarti…"
+    options: ["Hasil worker dikumpulkan", "Data dihapus", "Index dibuat", "Transaksi dimulai"]
+    answer: 2
+    explain: "Node Gather mengumpulkan hasil dari parallel worker."
+  - q: "work_mem mengontrol…"
+    options: ["Memori untuk sort dan hash per operasi", "Ukuran cache disk", "Jumlah koneksi", "Ukuran WAL"]
+    answer: 3
+    explain: "Sort dan hash table menggunakan work_mem sebelum spill ke disk."
+  - q: "Query berikut biasanya TIDAK paralel…"
+    options: ["UPDATE pada tabel besar", "Seq scan agregat besar", "COUNT(*) besar", "Group by besar"]
+    answer: 0
+    explain: "Operasi tulis dengan konsekuensi konsistensi umumnya tidak diparalelkan."
+  - q: "max_parallel_workers_per_gather mengatur…"
+    options: ["Jumlah worker per node Gather", "Jumlah database", "Ukuran buffer", "Jumlah index"]
+    answer: 1
+    explain: "Nilai 0 mematikan paralelisme per node."
+example:
+  code: |
+    SET max_parallel_workers_per_gather = 2; EXPLAIN SELECT COUNT(*) FROM karyawan;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL bisa membagi kerja scan dan agregasi ke beberapa worker. Ini mempercepat query analitik pada tabel besar, tetapi tidak semua query bisa diparalelkan.
+
+## Mengatur Paralelisme
+
+```sql
+SHOW max_parallel_workers_per_gather;
+SET max_parallel_workers_per_gather = 2;
+SET parallel_setup_cost = 100;
+SET min_parallel_table_scan_size = '8MB';
+```
+
+Optimizer memutuskan paralel atau tidak berdasarkan perkiraan biaya, bukan perintah eksplisit.
+
+## Membaca Rencana
+
+```sql
+EXPLAIN SELECT COUNT(*) FROM karyawan;
+```
+
+Perhatikan `Workers Planned`, `Workers Launched`, dan node `Gather`/`Gather Merge`. Bila Workers Launched = 0, cek setting dan ukuran tabel.
+
+## work_mem
+
+```sql
+SET work_mem = '16MB';
+EXPLAIN ANALYZE SELECT nama FROM karyawan ORDER BY nama;
+```
+
+`work_mem` dipakai **per operasi per worker**, bukan total query. Query dengan beberapa sort bisa memakai beberapa kali lipat. Naikkan secara moderat dan pantau pemakaian memori.
+
+## Kapan Paralel Tidak Dipakai
+
+- Query dengan LIMIT kecil
+- Fungsi bukan `PARALLEL SAFE`
+- Tabel lebih kecil dari threshold
+- Transaksi dengan `SERIALIZABLE`
+- Operasi tulis yang mengubah tabel yang sama
+
+```sql
+SELECT proname, proparallel FROM pg_proc WHERE proname = 'random';
+```
+
+## Parallel Index Scan
+
+```sql
+CREATE INDEX idx_penjualan_tanggal ON penjualan (tanggal);
+EXPLAIN SELECT * FROM penjualan WHERE tanggal >= '2026-01-01';
+```
+
+Index scan juga bisa paralel pada rentang yang luas. Untuk filter sangat selektif, index scan biasa sudah cukup.
+
+<div class="note">💡 Paralel bukan pengganti index. Query yang salah filter tetap lambat walau dibagi ke delapan worker.</div>
+
+## Di Dunia Nyata
+
+- **Laporan bulanan**: agregasi jutaan baris memakai parallel seq scan.
+- **Sort besar**: work_mem cukup menghindari disk spill.
+- **Dashboard**: materialized view menggantikan query paralel berulang.
+- **Dataset kecil**: paralel sering tidak aktif karena biaya setup lebih besar.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SET max_parallel_workers_per_gather = 2;
+EXPLAIN SELECT dept, COUNT(*) FROM karyawan GROUP BY dept;
+SHOW work_mem;`} />

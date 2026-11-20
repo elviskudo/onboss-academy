@@ -1,0 +1,87 @@
+---
+title: "MQTT untuk IoT"
+description: "Broker, topik, publish/subscribe, dan payload ringan"
+order: 23
+quiz:
+  - q: "MQTT menggunakan pola…"
+    options: ["Request/response ketat", "Peer-to-peer saja", "Broadcast saja", "Publish/subscribe"]
+    answer: 3
+    explain: "Publisher mengirim ke topik, subscriber menerima topik yang diminati."
+  - q: "Broker MQTT berfungsi…"
+    options: ["Menyalurkan pesan antar klien", "Menyimpan gambar", "Mengatur GPIO", "Mengganti kata sandi"]
+    answer: 0
+    explain: "Mosquitto adalah broker open source yang populer."
+  - q: "Topik 'ruang/tamu/suhu' bersifat…"
+    options: ["Kode warna", "Hierarki dengan slash sebagai pemisah", "Alamat IP", "Nama file"]
+    answer: 1
+    explain: "Subscriber bisa memakai wildcard + dan #."
+  - q: "QoS 1 menjamin…"
+    options: ["Tanpa jaminan", "Hanya untuk JSON", "Pesan sampai minimal sekali", "Pesan sampai tepat sekali"]
+    answer: 2
+    explain: "QoS 2 memberi jaminan tepat sekali dengan biaya lebih tinggi."
+  - q: "Keep alive pada MQTT berguna untuk…"
+    options: ["Menghapus topik", "Menambah kecepatan", "Mengubah payload", "Mendeteksi klien yang terputus"]
+    answer: 3
+    explain: "Broker akan mengirim last will bila klien tidak mengirim heartbeat."
+example:
+  code: |
+    mosquitto_pub -h broker.local -t ruang/tamu/suhu -m "27.3"
+    mosquitto_sub -h broker.local -t "ruang/#" -v
+---
+
+MQTT adalah protokol ringan yang dirancang untuk perangkat dengan daya dan bandwidth terbatas. Sangat cocok untuk jaringan sensor berbasis Pi.
+
+## Konsep
+
+| Elemen | Peran |
+|---|---|
+| Broker | Pusat penyaluran pesan |
+| Publisher | Pengirim data |
+| Subscriber | Penerima data |
+| Topic | Alamat logis pesan |
+| Payload | Isi pesan, biasanya JSON |
+
+## Pasang Broker Lokal
+
+```bash
+sudo apt install mosquitto mosquitto-clients
+mosquitto_sub -t 'sensor/#' -v &
+mosquitto_pub -t 'sensor/suhu' -m '27.3'
+```
+
+## Python
+
+```python
+import paho.mqtt.client as mqtt
+import json
+
+client = mqtt.Client()
+client.connect('broker.local', 1883, 60)
+client.publish('ruang/tamu/suhu', json.dumps({'c': 27.3}), qos=1)
+client.loop_start()
+```
+
+## Wildcard
+
+```text
+ruang/#       -> semua topik di bawah ruang
+ruang/+/suhu  -> satu level di antara ruang dan suhu
+```
+
+## Last Will
+
+```python
+client.will_set('ruang/tamu/status', 'offline', retain=True)
+```
+
+Pesan ini dikirim broker saat klien terputus tidak wajar—cara sederhana mendeteksi sensor mati.
+
+<div class="note">💡 Gunakan TLS dan username/password bila broker bisa diakses dari jaringan selain localhost. Topik juga bisa mengandung data sensitif.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Langkah uji MQTT:
+sudo apt install mosquitto mosquitto-clients
+mosquitto_sub -t 'latihan/#' -v &amp;
+mosquitto_pub -t 'latihan/suhu' -m '25.5'`}</code></pre>

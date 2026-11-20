@@ -1,0 +1,107 @@
+---
+title: "GROUP BY dan HAVING"
+description: "Agregasi per kelompok, filter pasca-agregasi, dan perbedaan dengan WHERE"
+order: 15
+quiz:
+  - q: "Klausa untuk mengelompokkan baris adalah…"
+    options: ["ORDER BY", "GROUP BY", "PARTITION BY", "WHERE"]
+    answer: 1
+    explain: "GROUP BY menggabungkan baris dengan nilai kunci sama."
+  - q: "HAVING memfilter…"
+    options: ["Baris sebelum agregasi", "Hasil agregasi per grup", "Kolom yang dipilih saja", "Tabel yang di-join"]
+    answer: 1
+    explain: "HAVING dijalankan setelah GROUP BY."
+  - q: "Fungsi agregat yang menghitung jumlah baris adalah…"
+    options: ["SUM()", "COUNT()", "AVG()", "MAX()"]
+    answer: 1
+    explain: "COUNT(*) menghitung baris, COUNT(kolom) mengabaikan NULL."
+  - q: "Kolom di SELECT saat GROUP BY harus…"
+    options: ["Semua kolom dari tabel", "Termasuk dalam GROUP BY atau agregat", "Berupa angka", "Diberi alias"]
+    answer: 1
+    explain: "Kolom non-agregat harus menjadi kunci grup agar hasilnya deterministik."
+  - q: "Urutan yang benar adalah…"
+    options: ["WHERE → GROUP BY → HAVING", "GROUP BY → WHERE → HAVING", "HAVING → GROUP BY → WHERE", "WHERE → HAVING → GROUP BY"]
+    answer: 0
+    explain: "WHERE menyaring baris, lalu GROUP BY, lalu HAVING menyaring grup."
+example:
+  code: |
+    SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata FROM karyawan GROUP BY dept HAVING COUNT(*) > 1;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+GROUP BY mengubah baris detail menjadi ringkasan per kategori. HAVING adalah filter untuk ringkasan itu — bukan untuk baris mentah.
+
+## Agregat yang Sering Dipakai
+
+| Fungsi | Arti | Perlakuan NULL |
+| --- | --- | --- |
+| `COUNT(*)` | jumlah baris | tetap dihitung |
+| `COUNT(kolom)` | jumlah nilai non-NULL | diabaikan |
+| `SUM` | total | NULL bila semua NULL |
+| `AVG` | rata-rata | NULL diabaikan |
+| `MIN` / `MAX` | nilai ekstrem | NULL diabaikan |
+
+```sql
+SELECT COUNT(*) AS total,
+       COUNT(dept) AS punya_dept,
+       AVG(gaji) AS rata_gaji
+FROM karyawan;
+```
+
+## GROUP BY
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata
+FROM karyawan
+GROUP BY dept;
+```
+
+Hasilnya satu baris per departemen. Kolom `dept` harus muncul di `GROUP BY`; kolom lain hanya boleh muncul lewat fungsi agregat.
+
+## WHERE vs HAVING
+
+```sql
+SELECT dept, COUNT(*) AS jumlah, AVG(gaji) AS rata
+FROM karyawan
+WHERE gaji >= 8000000        -- filter baris dulu
+GROUP BY dept
+HAVING COUNT(*) >= 2         -- lalu filter grup
+ORDER BY rata DESC;
+```
+
+`WHERE gaji >= ...` membuang baris sebelum dihitung, sehingga rata-rata berubah. `HAVING COUNT(*) >= 2` hanya membuang grup yang terlalu kecil setelah dihitung.
+
+## GROUP BY Beberapa Kolom
+
+```sql
+SELECT dept, jabatan, COUNT(*) AS jumlah
+FROM karyawan
+GROUP BY dept, jabatan
+ORDER BY dept, jumlah DESC;
+```
+
+Setiap kombinasi unik `dept + jabatan` menjadi satu grup. Ini dasar tabel pivot dan laporan silang.
+
+## DISTINCT vs GROUP BY
+
+`SELECT DISTINCT dept` dan `SELECT dept FROM ... GROUP BY dept` menghasilkan daftar yang sama. Pilih DISTINCT untuk deduplikasi sederhana; GROUP BY bila ada agregat.
+
+<div class="note">💡 `HAVING AVG(gaji) > 10000000` boleh ditulis di banyak database tanpa mengulang `AVG` di SELECT. Namun untuk keterbacaan, sertakan agregat itu di SELECT sehingga pembaca melihat angka yang menjadi dasar filter.</div>
+
+## Di Dunia Nyata
+
+- **Dashboard SDM**: jumlah karyawan dan rata-rata gaji per departemen.
+- **E-commerce**: total penjualan per kategori dengan minimal 10 transaksi.
+- **Log aplikasi**: hitung error per endpoint lalu ambil yang > 100.
+- **Absensi**: jumlah hadir per mahasiswa, lalu filter yang kurang dari 80%.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`SELECT dept, COUNT(*) AS jumlah, ROUND(AVG(gaji)) AS rata
+FROM karyawan
+WHERE gaji >= 7000000
+GROUP BY dept
+HAVING COUNT(*) >= 2
+ORDER BY rata DESC;`} />

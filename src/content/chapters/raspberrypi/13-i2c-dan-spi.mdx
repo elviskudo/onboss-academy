@@ -1,0 +1,83 @@
+---
+title: "I2C dan SPI"
+description: "Menghubungkan sensor lewat bus serial dengan alamat dan clock"
+order: 13
+quiz:
+  - q: "I2C memakai dua jalur utama, namely…"
+    options: ["CLK dan CS", "SDA dan SCL", "MOSI dan MISO", "TX dan RX"]
+    answer: 1
+    explain: "SDA membawa data, SCL membawa clock."
+  - q: "Alamat I2C biasanya ditulis dalam…"
+    options: ["Biner 8-bit", "Nama domain", "Heksadesimal, misal 0x48", "Desimal saja"]
+    answer: 2
+    explain: "i2cdetect menampilkan peta alamat dalam format heksadesimal."
+  - q: "SPI memerlukan pin Chip Select (CS) untuk…"
+    options: ["Menyimpan data", "Mengatur tegangan", "Mengganti clock", "Memilih perangkat yang akan diajak bicara"]
+    answer: 3
+    explain: "Beberapa perangkat bisa berbagi bus SPI selama CS berbeda."
+  - q: "Kecepatan clock SPI diatur lewat…"
+    options: ["Parameter baudrate/spi.max_speed_hz", "Alamat I2C", "Pull-up resistor", "WiFi"]
+    answer: 0
+    explain: "Terlalu cepat menyebabkan data error, terlalu lambat memperlambat pembacaan."
+  - q: "Keuntungan I2C dibanding SPI adalah…"
+    options: ["Tidak perlu alamat", "Hanya butuh dua kabel untuk banyak perangkat", "Selalu lebih cepat", "Tanpa clock"]
+    answer: 1
+    explain: "SPI lebih cepat tetapi butuh lebih banyak pin."
+example:
+  code: |
+    sudo raspi-config nonint do_i2c 1
+    i2cdetect -y 1
+    
+    # Python
+    import board, busio
+    i2c = busio.I2C(board.SCL, board.SDA)
+---
+
+I2C dan SPI adalah dua bus serial yang paling sering dipakai untuk sensor. Memilih keduanya bergantung pada jumlah pin, kecepatan, dan jarak.
+
+## Perbandingan
+
+| Aspek | I2C | SPI |
+|---|---|---|
+| Kabel | SDA + SCL (+ daya) | MOSI, MISO, SCK, CS |
+| Pengalamatan | Alamat 7-bit | Pin CS |
+| Kecepatan | 100/400 kHz | Beberapa MHz |
+| Jumlah perangkat | Banyak dalam satu bus | Tergantung CS |
+| Jarak | Pendek | Pendek–menengah |
+
+## Memindai I2C
+
+```bash
+sudo i2cdetect -y 1
+```
+
+Angka seperti `48` berarti ada perangkat di alamat `0x48`. Jika kosong, cek kabel, tegangan, dan apakah modul sudah diberi daya.
+
+## Contoh Pembacaan
+
+```python
+import board
+import busio
+import adafruit_bmp280
+
+i2c = busio.I2C(board.SCL, board.SDA)
+sensor = adafruit_bmp280.Adafruit_BMP280_I2C(i2c, address=0x76)
+print(sensor.temperature)
+```
+
+## Level Shifter
+
+Banyak sensor modul beroperasi di 5 V sementara GPIO Pi 3,3 V. Gunakan level shifter I2C dua arah agar jalur SDA/SCL aman. Untuk sensor murni 3,3 V, hubungkan langsung.
+
+<div class="note">💡 Alamat I2C bisa bentrok bila dua modul identik dipasang. Cari modul dengan jumper alamat atau gunakan multiplexer.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Langkah debug I2C:
+sudo i2cdetect -y 1
+# jika kosong:
+# 1. cek GND bersama
+# 2. cek SDA/SCL tidak tertukar
+# 3. cek tegangan modul
+# 4. cek enable_i2c di config`}</code></pre>

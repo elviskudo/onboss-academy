@@ -1,0 +1,191 @@
+---
+"title": "Proyek: Klien API & Pemroses Data"
+"description": "Menggabungkan struct, JSON, HTTP, context, goroutine, dan testing"
+"order": 25
+"quiz":
+- "q": "Pemisahan lapisan transport dan logika berguna untuk…"
+  "options":
+  - "menambah error"
+  - "mudah mengganti sumber data saat test"
+  - "menghapus JSON"
+  - "mengurangi goroutine"
+  "answer": 1
+  "explain": "Logika bisa diuji tanpa jaringan nyata."
+- "q": "Request HTTP yang bisa dibatalkan memakai…"
+  "options":
+  - "http.Get biasa"
+  - "http.NewRequestWithContext"
+  - "client.Manual"
+  - "goroutine saja"
+  "answer": 1
+  "explain": "Context menyampaikan timeout dan pembatalan ke transport."
+- "q": "Tag JSON `omitempty` berguna saat…"
+  "options":
+  - "field selalu wajib"
+  - "field nol ingin dihilangkan"
+  - "field ingin diubah tipe"
+  - "field ingin di-duplikat"
+  "answer": 1
+  "explain": "Nilai kosong tidak dikirim, menghemat payload."
+- "q": "Untuk menunggu banyak goroutine selesai, gunakan…"
+  "options":
+  - "time.Sleep"
+  - "sync.WaitGroup"
+  - "panic"
+  - "defer"
+  "answer": 1
+  "explain": "WaitGroup adalah cara kanonik untuk koordinasi sejumlah pekerja."
+- "q": "Test table-driven di Go biasanya memakai…"
+  "options":
+  - "slice of struct kasus + loop"
+  - "switch besar"
+  - "regex"
+  - "goroutine"
+  "answer": 0
+  "explain": "Tiap kasus menjadi entri struct lalu dijalankan dalam loop."
+"example":
+  "code": "package main\nimport (\n    \"fmt\"\n    \"net/http\"\n)\nfunc main() {\n    resp, err := http.Get(\"https://example.com\")\n    if err != nil { fmt.Println(err); return }\n    defer resp.Body.Close()\n    fmt.Println(resp.StatusCode)\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek penutup ini merangkum materia Go yang sudah kamu pelajari: struct, JSON, HTTP, context, goroutine, error, dan testing.
+
+## Rancangan
+
+```
+main.go        -> entry point
+model.go       -> struct + tag JSON
+client.go      -> HTTP + context
+processor.go   -> logika murni
+client_test.go -> unit test
+```
+
+## Model
+
+```go
+type Artikel struct {
+    ID     int    `json:"id"`
+    Judul  string `json:"judul"`
+    Penulis string `json:"penulis,omitempty"`
+}
+```
+
+## Klien dengan Context
+
+```go
+func Ambil(ctx context.Context, url string) ([]Artikel, error) {
+    req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+    if err != nil { return nil, err }
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil { return nil, err }
+    defer resp.Body.Close()
+
+    var data []Artikel
+    if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+        return nil, fmt.Errorf("decode %s: %w", url, err)
+    }
+    return data, nil
+}
+```
+
+## Logika Murni
+
+```go
+func JudulUnik(a []Artikel) []string {
+    terlihat := map[string]bool{}
+    var hasil []string
+    for _, art := range a {
+        if !terlihat[art.Judul] {
+            terlihat[art.Judul] = true
+            hasil = append(hasil, art.Judul)
+        }
+    }
+    return hasil
+}
+```
+
+Fungsi ini tidak tahu soal HTTP sama sekali — mudah diuji.
+
+## Konkurensi Terbatas
+
+```go
+var wg sync.WaitGroup
+for _, url := range urls {
+    wg.Add(1)
+    go func(u string) {
+        defer wg.Done()
+        data, err := Ambil(ctx, u)
+        // kumpulkan hasil dengan channel / mutex
+    }(url)
+}
+wg.Wait()
+```
+
+## Test
+
+```go
+func TestJudulUnik(t *testing.T) {
+    input := []Artikel{{Judul: "Go"}, {Judul: "Go"}, {Judul: "Clean Code"}}
+    got := JudulUnik(input)
+    if len(got) != 2 { t.Fatalf("dapat %d, ingin 2", len(got)) }
+}
+```
+
+<div class="note">💡 Kode yang bisa diuji tanpa jaringan adalah kode yang rancangannya sudah benar. Pisahkan "mengambil data" dari "mengolah data" sejak awal.</div>
+
+
+## Try it Yourself
+
+Contoh ini memakai data lokal agar bisa dijalankan di sandbox.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "context"
+    "fmt"
+    "time"
+)
+
+type Artikel struct {
+    ID     int
+    Judul  string
+    Penulis string
+}
+
+func judulUnik(data []Artikel) []string {
+    terlihat := map[string]bool{}
+    var hasil []string
+    for _, a := range data {
+        if !terlihat[a.Judul] {
+            terlihat[a.Judul] = true
+            hasil = append(hasil, a.Judul)
+        }
+    }
+    return hasil
+}
+
+func ambil(ctx context.Context, id int) (Artikel, error) {
+    select {
+    case <-time.After(10 * time.Millisecond):
+        return Artikel{ID: id, Judul: fmt.Sprintf("Artikel %d", id)}, nil
+    case <-ctx.Done():
+        return Artikel{}, ctx.Err()
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+    defer cancel()
+
+    a, err := ambil(ctx, 1)
+    if err != nil { fmt.Println(err); return }
+    fmt.Println("Ambil:", a)
+
+    data := []Artikel{
+        {ID: 1, Judul: "Go", Penulis: "Rani"},
+        {ID: 2, Judul: "Go"},
+        {ID: 3, Judul: "Clean Code"},
+    }
+    fmt.Println("Judul unik:", judulUnik(data))
+}`} />

@@ -1,0 +1,119 @@
+---
+title: "Unit & Perhitungan CSS"
+description: "Panduan lengkap satuan panjang CSS dan fungsi calc, min, max, clamp"
+order: 25
+quiz:
+  - q: "Unit `px` bersifat…"
+    options: ["Relatif terhadap induk", "Absolut terhadap layar", "Relatif terhadap viewport", "Bergantung font"]
+    answer: 1
+    explain: "Piksel adalah unit absolut (meski pada layar high-DPI diubah ke piksel fisik oleh browser)."
+  - q: "`1rem` sama dengan…"
+    options: ["Ukuran font elemen saat ini", "Ukuran font elemen <html>", "16 piksel selalu", "1% viewport"]
+    answer: 1
+    explain: "rem = root em, dihitung dari font-size elemen akar."
+  - q: "`vw` mengacu pada…"
+    options: ["Lebar viewport", "Tinggi viewport", "Lebar induk", "Lebar font"]
+    answer: 0
+    explain: "100vw = seluruh lebar jendela browser."
+  - q: "Fungsi `calc(100% - 32px)` berguna untuk…"
+    options: ["Menambah warna", "Menggabungkan satuan berbeda dalam satu nilai", "Membuat grid", "Mengubah font"]
+    answer: 1
+    explain: "Calc memungkinkan operasi aritmetika pada nilai CSS."
+  - q: "`clamp(1rem, 2vw, 2rem)` akan membatasi nilai…"
+    options: ["Antara 1rem dan 2rem", "Tepat 2vw", "Minimal 2rem", "Maksimal 1rem"]
+    answer: 0
+    explain: "Clamp menerima batas minimum, nilai preferred, dan batas maksimum."
+example:
+  code: |
+    .kotak { width: calc(100% - 2rem); padding: 1rem; }
+    h1 { font-size: clamp(1.5rem, 4vw, 3rem); }
+    .logo { width: min(240px, 40vw); }
+    .panel { height: max(200px, 30vh); }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Memilih satuan yang tepat membuat desain lebih mudah dirawat. CSS menyediakan satuan **absolut** dan **relatif**, ditambah fungsi matematika untuk menggabungkannya.
+
+## Satuan Absolut vs Relatif
+
+| Satuan | Jenis | Keterangan |
+|--------|-------|------------|
+| `px` | Absolut | Paling umum, 1 unit = 1 CSS pixel |
+| `pt`, `in`, `cm`, `mm` | Absolut | Lebih cocok untuk cetak |
+| `em` | Relatif | Terhadap font-size elemen sendiri |
+| `rem` | Relatif | Terhadap font-size `<html>` |
+| `%` | Relatif | Terhadap nilai induk (konteksnya beda-beda) |
+| `vw`, `vh` | Relatif | 1% lebar/tinggi viewport |
+| `vmin`, `vmax` | Relatif | Lebih kecil/besar dari vw dan vh |
+| `ch`, `ex` | Relatif | Lebar karakter "0" / tinggi huruf x |
+| `fr` | Relatif | Bagian ruang bebas pada Grid |
+
+## em vs rem
+
+```css
+html { font-size: 16px; }
+.parent { font-size: 20px; }
+.anak-em  { font-size: 1.5em; }  /* 30px → ikut parent */
+.anak-rem { font-size: 1.5rem; } /* 24px → ikut root */
+```
+
+Efek berlipat pada `em` bisa menguntungkan (padding tombol mengikuti ukuran teksnya) tapi berbahaya pada nested yang dalam. Untuk tipografi global, `rem` lebih aman.
+
+## Fungsi Matematika
+
+```css
+.lebar {
+  width: calc(100% - 48px);       /* kurangi padding tetap */
+}
+.judul {
+  font-size: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+}
+.gambar {
+  width: min(100%, 400px);        /* tidak lebih dari 400px */
+}
+.panel {
+  min-height: max(240px, 40vh);   /* minimal 240px */
+}
+```
+
+`clamp(min, preferred, max)` pada dasarnya gabungan `max()` dan `min()` — sangat berguna untuk tipografi dan jarak responsif tanpa media query.
+
+## Persentase Itu Kontekstual
+
+```css
+.anak { width: 50%; }        /* 50% lebar induk */
+.induk { padding: 10%; }     /* padding % mengikuti LEBAR induk, bukan tinggi! */
+.teks { font-size: 120%; }   /* mengikuti font-size induk */
+```
+
+Karena `padding` persen selalu berdasarkan lebar, `%` bisa memberi hasil mengejutkan pada container tinggi.
+
+## Viewport Unit dan Mobile
+
+`100vh` pada browser mobile sering terkena dynamically shrinking address bar. Alternatif modern:
+
+```css
+.hero {
+  min-height: 100svh; /* small viewport height */
+  min-height: 100dvh; /* dynamic viewport height */
+}
+```
+
+<div class="note">💡 Perhatikan spasi di sekitar operator pada `calc`: `calc(100%-20px)` tidak valid. Harus ditulis `calc(100% - 20px)`.</div>
+
+## Di Dunia Nyata
+
+- Sidebar memakai `width: clamp(220px, 25vw, 300px)`.
+- Input memakai `width: calc(100% - 24px)` agar tidak keluar dari padding.
+- Hero memakai `min-height: 100svh` supaya tidak tertutup bilah alamat ponsel.
+- Jarak antar bagian memakai `gap: clamp(1rem, 3vw, 2rem)`.
+
+## Try it Yourself
+
+Ganti nilai clamp atau min/max pada contoh lalu lihat bagaimana ukurannya menyesuaikan.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`.kotak { box-sizing: border-box; width: calc(100% - 32px); padding: 1rem; background: #EEF2FF; border-radius: 8px; }
+h1 { font-size: clamp(1.4rem, 4vw, 2.4rem); margin: 0; }
+.gambar { width: min(100%, 260px); height: 100px; background: #FDE68A; display: grid; place-items: center; border-radius: 8px; }
+.panel { min-height: max(90px, 20vh); background: #DCFCE7; padding: 12px; margin-top: 12px; border-radius: 8px; }`} />

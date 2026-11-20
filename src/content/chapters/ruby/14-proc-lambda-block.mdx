@@ -1,0 +1,134 @@
+---
+"title": "Block, Proc, dan Lambda"
+"description": "Perbedaan block, Proc, lambda, yield, dan closure di Ruby"
+"order": 14
+"quiz":
+- "q": "Block di Ruby bukan objek, kecuali diubah menjadi…"
+  "options":
+  - "Proc"
+  - "Method"
+  - "Class"
+  - "Symbol"
+  "answer": 0
+  "explain": "Proc adalah block yang sudah menjadi objek dan bisa disimpan."
+- "q": "Perbedaan utama lambda dan Proc adalah…"
+  "options":
+  - "lambda mengecek jumlah argumen"
+  - "Proc lebih lambat"
+  - "lambda tidak bisa dipanggil"
+  - "Proc tidak bisa closure"
+  "answer": 0
+  "explain": "Lambda memeriksa arity; Proc tidak."
+- "q": "Kata kunci yield berguna untuk…"
+  "options":
+  - "menghasilkan nilai"
+  - "memanggil block yang diberikan"
+  - "menghentikan loop"
+  - "membuat exception"
+  "answer": 1
+  "explain": "yield menjalankan block yang dilewatkan ke method."
+- "q": "Return di dalam lambda akan…"
+  "options":
+  - "kembali dari lambda"
+  - "kembali dari method pemanggil"
+  - "error"
+  - "diabaikan"
+  "answer": 0
+  "explain": "Return di lambda keluar dari lambda itu sendiri."
+- "q": "Operator & pada parameter method berfungsi untuk…"
+  "options":
+  - "mengubah blok jadi Proc"
+  - "menggandakan nilai"
+  - "mengubah tipe"
+  - "menghapus blok"
+  "answer": 0
+  "explain": "def f(&blok) menangkap block sebagai objek Proc."
+"example":
+  "code": "def dua_kali\n  yield 2\nend\nputs dua_kali { |x| x * 5 }\n\np = Proc.new { |x| puts x }\np.call(\"halo\")\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby memakai block di mana-mana — terutama pada iterator. Memahami perbedaan block, Proc, dan lambda membuat kode lebih fleksibel.
+
+## Block
+
+```ruby
+def sapa
+  yield "Rani"
+end
+
+sapa { |nama| puts "Halo #{nama}" }
+```
+
+Block adalah potongan kode yang dilewatkan ke method. Ia bukan objek sampai diubah menjadi `Proc`.
+
+## Block sebagai Objek
+
+```ruby
+def jalankan(&blok)
+  blok.call(5)
+end
+
+jalankan { |x| puts x * x }
+```
+
+Ampersand mengubah block menjadi `Proc`.
+
+## Proc vs Lambda
+
+| Aspek | Proc | Lambda |
+|---|---|---|
+| Cek jumlah argumen | Tidak | Ya |
+| `return` | Keluar dari method pemanggil | Keluar dari lambda |
+| Dibuat dengan | `Proc.new {}` | `-> {}` / `lambda {}` |
+
+```ruby
+p = Proc.new { |x, y| puts x }
+p.call(1)     # y = nil, tidak error
+
+l = ->(x, y) { puts x }
+l.call(1)     # ArgumentError
+```
+
+## Closure
+
+```ruby
+def pembuat(n)
+  ->(x) { x + n }
+end
+
+tambah5 = pembuat(5)
+puts tambah5.call(10) # 15
+```
+
+Lambda mengingat variabel dari scope saat ia dibuat — itulah closure.
+
+## Kapan Memakai Mana
+
+- **Block** — untuk iterator dan callback sekali pakai
+- **Proc** — saat ingin menyimpan block dan memanggilnya berkali-kali
+- **Lambda** — saat ingin perilaku seperti method (cek argumen & return)
+
+<div class="note">💡 Hati-hati memakai <code>return</code> di Proc yang dibuat di dalam method — ia akan mencoba keluar dari method tersebut dan bisa memicu LocalJumpError.</div>
+
+
+## Try it Yourself
+
+Coba ubah Proc menjadi lambda dan lihat bedanya saat argumen kurang.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`def jalankan(&blok)
+  blok.call(4)
+end
+
+jalankan { |x| puts "x * x = #{x * x}" }
+
+proses = Proc.new { |x| puts "proc: #{x}" }
+proses.call("Rani")
+
+penambah = ->(n) { ->(x) { x + n } }
+tambah10 = penambah.call(10)
+puts "closure: #{tambah10.call(5)}"
+
+angka = [1, 2, 3].map(&:to_s)
+p angka`} />

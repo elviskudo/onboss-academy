@@ -1,0 +1,119 @@
+---
+title: "Autentikasi di React"
+description: "login, token, protected route, dan menjaga session tetap konsisten"
+order: 25
+quiz:
+  - q: "Protected route berfungsi untuk…"
+    options: ["Mengirim email", "Mengurutkan daftar", "Mengarahkan user ke login bila belum autentikasi", "Menyembunyikan CSS"]
+    answer: 2
+    explain: "Rute penting hanya bisa dibuka setelah login."
+  - q: "Menaruh token JWT di localStorage memiliki risiko…"
+    options: ["Hanya berlaku di Safari", "Rentan terhadap XSS", "Lambat", "Tidak bisa dihapus"]
+    answer: 1
+    explain: "Cookie httpOnly + secure lebih aman untuk sesi web."
+  - q: "Setelah login berhasil, aplikasi biasanya…"
+    options: ["Menghapus semua state", "Memuat ulang CSS", "Menutup browser", "Menyimpan sesi lalu navigasi"]
+    answer: 3
+    explain: "Simpan sesi, lalu arahkan ke halaman tujuan."
+  - q: "State autentikasi sebaiknya ditempatkan…"
+    options: ["Di query string", "Di context/provider yang membungkus aplikasi", "Di setiap komponen", "Di file CSS"]
+    answer: 1
+    explain: "Banyak bagian UI perlu tahu status login."
+  - q: "Logout harus melakukan…"
+    options: ["Menghapus sesi di klien dan/atau server", "Hanya mengganti warna tombol", "Menambah rute baru", "Menghapus styled component"]
+    answer: 0
+    explain: "Pastikan token tidak tertinggal."
+example:
+  code: |
+    function Protected({ children }) {
+      const { user } = React.useContext(AuthContext);
+      if (!user) return <Navigate to="/login" replace />;
+      return children;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Autentikasi bukan sekadar form login. Yang lebih penting adalah menjaga status session tetap konsisten di seluruh aplikasi.
+
+## Auth Context
+
+```jsx
+const AuthContext = React.createContext(null);
+
+function AuthProvider({ children }) {
+  const [user, setUser] = React.useState(null);
+  const [memuat, setMuat] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch("/api/saya", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setUser)
+      .finally(() => setMuat(false));
+  }, []);
+
+  async function login(email, password) {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error("Login gagal");
+    setUser(await res.json());
+  }
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST", credentials: "include" });
+    setUser(null);
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, memuat }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+```
+
+## Rute Terlindungi
+
+```jsx
+function Protected({ children }) {
+  const { user, memuat } = React.useContext(AuthContext);
+  if (memuat) return <p>Memeriksa sesi…</p>;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+```
+
+Pasang di level rute:
+
+```jsx
+<Route path="/dashboard" element={
+  <Protected><Dashboard /></Protected>
+} />
+```
+
+## Tips Keamanan
+
+- Simpan sesi di cookie `httpOnly`, `secure`, `sameSite`.
+- Jangan taruh token di URL atau localStorage bila bisa dihindari.
+- Tetap validasi izin di server — UI hanya pembatas pengalaman, bukan pengaman.
+
+<div class="note">💡 Tiga lapisan yang saling melengkapi: server memutuskan akses, API memeriksa session, dan React menyembunyikan UI yang tidak relevan. Jangan hanya mengandalkan salah satu.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi protected route dengan fungsi murni
+function protectedView(user, memuat, konten) {
+  if (memuat) return "Memeriksa sesi…";
+  if (!user) return "Redirect ke /login";
+  return konten;
+}
+
+console.log(protectedView(null, true, "Dashboard"));
+console.log(protectedView(null, false, "Dashboard"));
+console.log(protectedView({ nama: "Sari" }, false, "Dashboard"));`} />

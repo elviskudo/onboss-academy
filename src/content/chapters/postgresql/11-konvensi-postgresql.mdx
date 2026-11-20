@@ -1,0 +1,100 @@
+---
+title: "Konvensi Penamaan dan Kutipan Identifiers"
+description: "Lowercase, snake_case, quoted identifiers, dan keyword"
+order: 11
+quiz:
+  - q: "Bila nama tabel dibuat tanpa tanda kutip, PostgreSQL menyimpannya sebagai…"
+    options: ["Huruf asli", "Huruf kecil", "Huruf kapital", "Angka"]
+    answer: 1
+    explain: "Identifier tanpa kutip dilipat ke lowercase."
+  - q: "Untuk memakai nama dengan spasi gunakan…"
+    options: ["Tanda kutip ganda", "Tanda kutip tunggal", "Kurung siku", "Backtick"]
+    answer: 0
+    explain: "\"Nama Tabel\" mengizinkan spasi, tapi menyulitkan query."
+  - q: "Tanda kutip tunggal di SQL dipakai untuk…"
+    options: ["Nama tabel", "Nilai string", "Nama kolom", "Nama database"]
+    answer: 1
+    explain: "'teks' adalah literal string."
+  - q: "Konvensi yang umum di komunitas PostgreSQL adalah…"
+    options: ["CamelCase", "snake_case huruf kecil", "UPPER_CASE", "spasi"]
+    answer: 1
+    explain: "snake_case lowercase paling sering dipakai."
+  - q: "Prefix pada tabel di skema ditulis…"
+    options: ["skema.tabel", "tabel@skema", "skema:tabel", "tabel.skema"]
+    answer: 0
+    explain: "hr.karyawan merujuk tabel karyawan di skema hr."
+example:
+  code: |
+    CREATE TABLE nama_produk (id integer, nama text); SELECT nama FROM nama_produk;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Konsistensi nama membuat query lebih mudah dibaca dan menghindari keharusan menulis tanda kutip di mana-mana.
+
+## Aturan Lipatan Identifier
+
+```sql
+CREATE TABLE Karyawan (ID integer);   -- disimpan sebagai karyawan(id)
+SELECT ID FROM KARYAWAN;              -- tetap berhasil
+```
+
+Tanpa kutip ganda, PostgreSQL menurunkan semua huruf ke lowercase. Begitu kamu membuat `"Karyawan"` dengan kutip, nama itu menjadi case-sensitive selamanya.
+
+## Kutipan
+
+| Kutipan | Fungsi |
+| --- | --- |
+| `'Ana'` | nilai string |
+| `"Nama Kolom"` | identifier dengan spasi/kapital |
+| `$$teks$$` | dollar-quoted string |
+
+```sql
+SELECT $$Halo 'dunia'$$ AS pesan;
+```
+
+## Konvensi yang Disarankan
+
+- Tabel: `kata_benda_jamak` — `produk`, `detail_pesanan`
+- Kolom: `snake_case` — `created_at`, `id_pelanggan`
+- Primary key: `id`
+- Foreign key: `id_<tabel_rujukan>`
+- Index: `idx_<tabel>_<kolom>`
+- Constraint: `chk_<tabel>_<aturan>`
+- View: `v_<nama>`
+
+## Keyword sebagai Nama
+
+```sql
+CREATE TABLE "order" (id integer);  -- bisa, tapi tidak disarankan
+CREATE TABLE pesanan (id integer);  -- lebih baik
+```
+
+Hindari kata kunci SQL seperti `order`, `user`, `table`, `select` walaupun teknisnya bisa dikutip.
+
+## Search Path
+
+```sql
+SHOW search_path;
+SET search_path TO hr, public;
+SELECT * FROM karyawan;   -- mencari hr.karyawan lebih dulu
+```
+
+`search_path` menentukan urutan skema saat nama tabel tidak dikualifikasi.
+
+<div class="note">💡 `SET search_path` di sesi aplikasi bisa berbeda antar koneksi. Untuk query kritis, selalu tulis nama skema secara eksplisit.</div>
+
+## Di Dunia Nyata
+
+- **Tim besar**: konvensi mencegah satu developer memakai `"NamaTabel"` sementara yang lain `nama_tabel`.
+- **Migration**: nama konsisten memudahkan skrip otomatis.
+- **ORM**: kebanyakan ORM menghasilkan snake_case secara default.
+- **Dokumentasi**: identifier yang terbaca sendiri mengurangi kebutuhan komentar.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE TABLE produk (id integer PRIMARY KEY, nama_produk text NOT NULL);
+SELECT nama_produk FROM produk;
+SHOW search_path;
+SELECT current_schema() AS skema_aktif;`} />

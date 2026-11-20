@@ -7,10 +7,10 @@ quiz:
     options: ["Nol kali jika kondisi false", "Minimal sekali", "Tepat 5 kali", "Hanya saat variabel nol"]
     answer: 1
     explain: "Kondisi dicek setelah isi loop, sehingga isi selalu berjalan minimal satu kali."
-  - q: "Pada for (int i = 0; i < 5; i++), nilai i saat loop berhenti adalah…"
+  - q: "Pada for (int i = 0; i &lt; 5; i++), nilai i saat loop berhenti adalah…"
     options: ["5", "4", "6", "0"]
     answer: 0
-    explain: "Loop berhenti ketika i sudah tidak memenuhi i < 5, sehingga i = 5."
+    explain: "Loop berhenti ketika i sudah tidak memenuhi i &lt; 5, sehingga i = 5."
   - q: "continue pada loop berfungsi untuk…"
     options: ["Menghentikan seluruh loop", "Melompati sisa iterasi dan lanjut ke iterasi berikutnya", "Mengulang dari awal", "Menghapus variabel"]
     answer: 1
@@ -29,7 +29,7 @@ example:
 
     int main(void) {
         int total = 0;
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i &lt;= 5; i++) {
             total += i;
             printf("i = %d, total = %d\n", i, total);
         }
@@ -141,7 +141,7 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
-Off-by-one adalah bug paling umum: gunakan `< n`, bukan `<= n`, ketika indeks berbasis 0.
+Off-by-one adalah bug paling umum: gunakan `&lt; n`, bukan `&lt;= n`, ketika indeks berbasis 0.
 
 ## Menghitung dengan Loop
 
@@ -163,11 +163,15 @@ printf("%d! = %d\n", n, faktorial);  // 10! = 3628800
 
 <div class="note">💡 Perhatikan overflow: <code>int</code> berhenti di sekitar 2,1 miliar. Faktorial cepat melampaui batas itu — gunakan <code>long long</code> untuk hasil besar, dan pastikan selalu ada update yang membuat kondisi loop menuju 0 (false) agar tidak infinite loop.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 
 int main(void) {
     int total = 0;
-    for (int i = 1; i <= 5; i++) {
+    for (int i = 1; i &lt;= 5; i++) {
         total += i;
     }
     printf("Jumlah 1..5 = %d\\n", total);
@@ -182,10 +186,10 @@ int main(void) {
     int coba = 0;
     do {
         coba++;
-    } while (coba < 0);
+    } while (coba &lt; 0);
     printf("Do-while jalan %d kali\\n", coba);
 
-    for (int i = 1; i <= 7; i++) {
+    for (int i = 1; i &lt;= 7; i++) {
         if (i == 4) continue;
         if (i > 6) break;
         printf("%d ", i);
@@ -194,7 +198,7 @@ int main(void) {
 
     long long fib_a = 0, fib_b = 1;
     printf("Fibonacci: ");
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i &lt; 10; i++) {
         printf("%lld ", fib_a);
         long long next = fib_a + fib_b;
         fib_a = fib_b;
@@ -202,8 +206,8 @@ int main(void) {
     }
     printf("\\n");
 
-    for (int b = 1; b <= 3; b++) {
-        for (int k = 1; k <= 3; k++) printf("*");
+    for (int b = 1; b &lt;= 3; b++) {
+        for (int k = 1; k &lt;= 3; k++) printf("*");
         printf("\\n");
     }
     return 0;

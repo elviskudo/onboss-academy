@@ -1,0 +1,121 @@
+---
+title: 'Observability Dasar: Log, metrik, dan jejak'
+description: Mengumpulkan sinyal dari sistem agar masalah bisa ditemukan sebelum pengguna mengeluh.
+order: 24
+quiz:
+- q: Tiga pilar observability adalah…
+  options:
+  - Log, metrik, trace
+  - CPU, RAM, disk
+  - User, role, permission
+  - HTTP, TCP, UDP
+  answer: 0
+  explain: 'Ketiganya saling melengkapi: apa yang terjadi, berapa sering, dan di mana lambatnya.'
+- q: journald diakses dengan perintah…
+  options:
+  - logread
+  - journalctl
+  - dmesg
+  - tail -f
+  answer: 1
+  explain: journalctl -u nginx -f mengikuti log layanan.
+- q: Perintah untuk melihat log kernel adalah…
+  options:
+  - last
+  - who
+  - dmesg
+  - journalctl -u ssh
+  answer: 2
+  explain: dmesg berguna untuk masalah driver dan hardware.
+- q: Metrik berbeda dari log karena…
+  options:
+  - Metrik selalu teks
+  - Log tidak bisa dicari
+  - Metrik hanya untuk error
+  - Metrik berupa angka agregat sepanjang waktu
+  answer: 3
+  explain: Metrik mudah di grafik dan diberi alert.
+- q: Kenapa trace penting pada mikroservis?
+  options:
+  - Melacak satu permintaan lintas banyak layanan
+  - Mengganti log
+  - Menghapus metrik
+  - Menambah kecepatan CPU
+  answer: 0
+  explain: Trace menunjukkan di mana waktu terbuang dalam rantai panggilan.
+example:
+  code: 'journalctl -u nginx -n 50 --no-pager
+
+    journalctl -f
+
+    dmesg -T | tail -20
+
+    tail -f /var/log/access.log | grep " 500 "
+
+    '
+---
+
+
+Ketika sistem bermasalah, pertanyaan pertama selalu: **apa yang berubah?** Observability membantu menjawabnya dengan bukti, bukan tebakan.
+
+## Tiga Sinyal
+
+| Sinyal | Bentuk | Pertanyaan |
+|---|---|---|
+| Log | event diskrit | apa yang terjadi? |
+| Metrik | angka time-series | seberapa sering/berapa lama? |
+| Trace | jejak permintaan | di mana lambatnya? |
+
+## journalctl
+
+```bash
+journalctl -u nginx -n 50 --no-pager
+journalctl -u nginx -f
+journalctl --since "1 hour ago"
+journalctl -p err -b
+```
+
+```bash
+journalctl _PID=1234
+journalctl -o json-pretty
+```
+
+## Log File
+
+```bash
+tail -f /var/log/syslog
+grep -i "failed" /var/log/auth.log
+zcat /var/log/nginx/access.log.1.gz | head
+```
+
+Rotasi log diatur oleh `logrotate`:
+
+```text
+/var/log/nginx/*.log {
+    daily
+    rotate 14
+    compress
+    missingok
+}
+```
+
+## Metrik Sederhana
+
+```bash
+uptime
+free -h
+mpstat 1 5
+iostat -x 1
+ss -s
+```
+
+Untuk skala besar, metrik dikirim ke Prometheus/Grafana. Prinsipnya tetap sama: kumpulkan angka yang bisa dibandingkan dari waktu ke waktu.
+
+<div class="note">💡 Jangan hanya mengumpulkan data. Tentukan dulu pertanyaan yang ingin dijawab dan ambang alert yang benar-benar bermakna.</div>
+
+## Praktik Baik
+
+- Gunakan timestamp konsisten (UTC disarankan).
+- Sertakan request ID agar log bisa dirangkai.
+- Hindari mencatat kata sandi atau token.
+- Uji alert secara berkala supaya tidak usang.

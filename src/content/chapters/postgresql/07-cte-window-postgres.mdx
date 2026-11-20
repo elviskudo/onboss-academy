@@ -135,6 +135,10 @@ ORDER BY id;
 
 <div class="note">💡 CTE rekursif (WITH RECURSIVE) cocok untuk data hierarki seperti struktur organisasi atau graf. Tetapkan kondisi berhenti yang jelas agar rekursi tidak berjalan tanpa akhir.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="postgresql" runtime="sql" code={`WITH rata AS (
   SELECT dept, ROUND(AVG(gaji)) AS rata
   FROM karyawan

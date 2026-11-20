@@ -1,0 +1,96 @@
+---
+title: "Streaming & Suspense"
+description: "loading.tsx, Suspense boundary, dan progressive rendering"
+order: 16
+quiz:
+  - q: "Streaming berarti…"
+    options: ["Hanya CSS yang dikirim", "Tidak ada server", "HTML dikirim bertahap ke browser", "Semua data ditunggu dulu"]
+    answer: 2
+    explain: "Bagian cepat langsung tampil, bagian lambat menyusul."
+  - q: "File loading.tsx membuat…"
+    options: ["Middleware", "Suspense boundary otomatis untuk segmen itu", "Halaman error", "Route API"]
+    answer: 1
+    explain: "Fallback tampil saat data masih dimuat."
+  - q: "Komponen Suspense menerima fallback lewat…"
+    options: ["prop loading", "slot #fallback", "children saja", "prop fallback"]
+    answer: 3
+    explain: "Contoh: <Suspense fallback={<p>Memuat…</p>}>."
+  - q: "async component di App Router bisa…"
+    options: ["Hanya di middleware", "await langsung di server component", "Hanya di client", "Tidak bisa"]
+    answer: 1
+    explain: "Next.js menunggu Promise sebelum mengirim bagian itu."
+  - q: "Streaming paling berguna bila…"
+    options: ["Ada bagian lambat yang tidak menahan bagian cepat", "Semua request sangat cepat", "Halaman statis", "Tanpa data"]
+    answer: 0
+    explain: "Misalnya rekomendasi dipisah dari judul artikel."
+example:
+  code: |
+    <Suspense fallback={<p>Memuat komentar…</p>}>
+      <Komentar />
+    </Suspense>
+
+    // app/produk/loading.tsx -> skeleton otomatis
+---
+
+Tanpa streaming, halaman menunggu semua data selesai sebelum apa pun tampil. Dengan streaming, bagian ringan langsung muncul.
+
+## loading.tsx
+
+```tsx
+// app/produk/loading.tsx
+export default function Loading() {
+  return (
+    <div className="skeleton">
+      <div className="skeleton-judul" />
+      <div className="skeleton-garis" />
+    </div>
+  );
+}
+```
+
+Next.js otomatis membungkus `page.tsx` dengan Suspense menggunakan fallback ini.
+
+## Suspense Eksplisit
+
+```tsx
+import { Suspense } from "react";
+
+export default async function Halaman() {
+  return (
+    <main>
+      <h1>Judul Artikel</h1>
+      <Suspense fallback={<p>Memuat komentar…</p>}>
+        <Komentar />
+      </Suspense>
+      <Suspense fallback={<p>Memuat rekomendasi…</p>}>
+        <Rekomendasi />
+      </Suspense>
+    </main>
+  );
+}
+
+async function Komentar() {
+  const data = await ambilKomentar();
+  return <ul>{data.map((k) => <li key={k.id}>{k.isi}</li>)}</ul>;
+}
+```
+
+Bagian `<h1>` langsung tampil meski komentar belum selesai.
+
+## Pola yang Baik
+
+- Pisahkan data cepat dan lambat ke komponen berbeda.
+- Skeleton menyerupai bentuk konten asli agar tidak meloncat.
+- Jangan menaruh seluruh halaman dalam satu Suspense bila bisa dipecah.
+
+<div class="note">💡 Streaming bukan pengganti optimasi query. Kalau satu API sangat lambat, perbaiki juga API-nya — Suspense hanya membuat pengguna tidak menunggu secara total.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`<Suspense fallback={<p>Memuat komentar…</p>}>
+  <Komentar />
+</Suspense>
+
+// app/produk/loading.tsx -> skeleton otomatis`}</code></pre>

@@ -1,0 +1,92 @@
+---
+title: "Database untuk Proyek IoT"
+description: "Menyimpan pembacaan sensor dengan SQLite dan InfluxDB"
+order: 24
+quiz:
+  - q: "Database yang tersimpan dalam satu file tanpa server adalah…"
+    options: ["SQLite", "PostgreSQL", "MySQL", "MongoDB"]
+    answer: 0
+    explain: "SQLite cocok untuk proyek Pi kecil dan portabel."
+  - q: "Perintah SQL untuk membuat tabel adalah…"
+    options: ["ADD TABLE", "CREATE TABLE", "MAKE TABLE", "NEW TABLE"]
+    answer: 1
+    explain: "Diikuti nama tabel dan definisi kolom."
+  - q: "Untuk menambah baris, gunakan…"
+    options: ["PUT INTO", "APPEND", "INSERT INTO", "ADD ROW"]
+    answer: 2
+    explain: "Contoh: INSERT INTO suhu (nilai) VALUES (27.3)."
+  - q: "InfluxDB cocok untuk…"
+    options: ["Gambar", "File teks", "Video", "Data time series seperti pembacaan sensor"]
+    answer: 3
+    explain: "Database time series dioptimalkan untuk query berdasarkan waktu."
+  - q: "Indeks pada tabel membantu…"
+    options: ["Mempercepat pencarian", "Mengecilkan baris", "Menghapus data", "Mengubah tipe kolom"]
+    answer: 0
+    explain: "Indeks mempercepat WHERE tapi menambah biaya saat menulis."
+example:
+  code: |
+    import sqlite3
+    from datetime import datetime
+    
+    conn = sqlite3.connect('sensor.db')
+    conn.execute('''CREATE TABLE IF NOT EXISTS pembacaan
+                    (waktu TEXT, suhu REAL, kelembapan REAL)''')
+    conn.execute('INSERT INTO pembacaan VALUES (?, ?, ?)',
+                 (datetime.now().isoformat(), 27.3, 60.0))
+    conn.commit()
+---
+
+Data sensor yang hanya ditampilkan sekali tidak banyak gunanya. Menyimpannya memungkinkan grafik, rata-rata, dan analisis tren.
+
+## SQLite
+
+```python
+import sqlite3
+
+conn = sqlite3.connect('/home/pi/data/sensor.db')
+conn.execute('''
+CREATE TABLE IF NOT EXISTS pembacaan (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  waktu TEXT NOT NULL,
+  suhu REAL,
+  kelembapan REAL
+)
+''')
+conn.execute('INSERT INTO pembacaan (waktu, suhu) VALUES (?, ?)',
+             (datetime.now().isoformat(), suhu))
+conn.commit()
+```
+
+## Query
+
+```python
+cur = conn.execute('SELECT waktu, suhu FROM pembacaan ORDER BY waktu DESC LIMIT 10')
+for baris in cur:
+    print(baris)
+```
+
+## InfluxDB
+
+```text
+suhu,ruang=tamu nilai=27.3 1768200000000000000
+```
+
+Data time series ditulis dengan timestamp, sehingga query rentang waktu menjadi cepat.
+
+## Retensi
+
+Tentukan berapa lama data mentah disimpan. Data lama bisa diagregat menjadi rata-rata per jam sebelum dihapus—menghemat ruang tanpa kehilangan tren.
+
+<div class="note">💡 Simpan database di direktori yang tidak hilang saat image OS ditulis ulang, atau siapkan prosedur backup otomatis.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Contoh skema:
+CREATE TABLE pembacaan (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  waktu TEXT,
+  suhu REAL,
+  kelembapan REAL
+);
+SELECT AVG(suhu) FROM pembacaan;`}</code></pre>

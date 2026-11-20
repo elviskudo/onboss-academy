@@ -1,0 +1,105 @@
+---
+title: "Agregasi: Pipeline dan Tahapannya"
+description: "konsep pipeline, $match, $group, $sort, $limit, $skip, $count, $out"
+order: 19
+quiz:
+  - q: "Agregasi MongoDB disusun sebagai…"
+    options: ["Trigger database", "Satu query SQL", "Rangkaian tahap (pipeline)", "File JSON statis"]
+    answer: 2
+    explain: "Setiap tahap menerima dokumen dari tahap sebelumnya."
+  - q: "Tahap untuk menyaring dokumen lebih awal adalah…"
+    options: ["$where", "$select", "$filter", "$match"]
+    answer: 3
+    explain: "$match mirip WHERE dan sebaiknya diletakkan di awal."
+  - q: "Tahap $group memerlukan…"
+    options: ["Nama koleksi", "Indeks unik", "Sort", "_id pengelompokan"]
+    answer: 3
+    explain: "_id menentukan kunci grup; bisa null untuk satu grup besar."
+  - q: "Fungsi akumulator di dalam $group adalah…"
+    options: ["$and, $or", "$sum, $avg, $max", "$set, $inc", "$push, $pop"]
+    answer: 1
+    explain: "Akumulator menghitung nilai lintas dokumen dalam satu grup."
+  - q: "Tahap $out berfungsi untuk…"
+    options: ["Menghapus data", "Membuat indeks", "Menampilkan hasil", "Menulis hasil ke koleksi baru"]
+    answer: 3
+    explain: "$out menyimpan hasil pipeline ke koleksi tujuan."
+example:
+  code: |
+    db.penjualan.aggregate([
+      {$match: {tahun: 2026}},
+      {$group: {_id: "$kategori", total: {$sum: "$jumlah"}, rata: {$avg: "$jumlah"}}},
+      {$sort: {total: -1}},
+      {$limit: 5}
+    ])
+---
+
+## Konsep Pipeline
+
+Agregasi adalah **sumber data →若干 tahap → hasil**. Setiap tahap mengubah bentuk dokumen lalu meneruskannya ke tahap berikutnya.
+
+```javascript
+db.penjualan.aggregate([
+  { $match: { status: "lunas" } },
+  { $group: { _id: "$kategori", total: { $sum: "$jumlah" } } },
+  { $sort: { total: -1 } }
+])
+```
+
+Dalam `$group`, tanda `$` di depan `kategori` berarti "nilai dari field kategori".
+
+## Tahap Umum
+
+| Tahap | Fungsi |
+| --- | --- |
+| `$match` | menyaring dokumen |
+| `$project` | memilih/membentuk ulang field |
+| `$group` | mengelompokkan + akumulasi |
+| `$sort` | mengurutkan |
+| `$limit` | membatasi jumlah dokumen |
+| `$skip` | melewati sejumlah dokumen |
+| `$count` | menghitung dokumen menjadi satu baris |
+| `$unwind` | meratakan array |
+| `$lookup` | join ke koleksi lain |
+| `$out` | menulis hasil ke koleksi |
+
+## Akumulator
+
+```javascript
+{
+  $group: {
+    _id: "$divisi",
+    totalGaji: { $sum: "$gaji" },
+    rataGaji: { $avg: "$gaji" },
+    tertinggi: { $max: "$gaji" },
+    terendah: { $min: "$gaji" },
+    jumlahOrang: { $sum: 1 }
+  }
+}
+```
+
+`$sum: 1` berarti "tambah satu untuk setiap dokumen dalam grup".
+
+## $out dan $merge
+
+```javascript
+db.penjualan.aggregate([
+  { $group: { _id: "$kategori", total: { $sum: "$jumlah" } } },
+  { $out: "ringkasan_kategori" }
+])
+```
+
+`$out` mengganti isi koleksi tujuan. `$merge` lebih fleksibel: bisa menggabungkan hasil ke koleksi yang sudah ada berdasarkan kunci.
+
+<div class="note">💡 Letakkan `$match` sedekat mungkin dengan awal pipeline agar indeks bisa dipakai dan dokumen yang tidak perlu tidak ikut diproses tahap berikutnya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_agregasi
+db.penjualan.insertMany([
+  {kategori: "A", jumlah: 10},
+  {kategori: "B", jumlah: 20},
+  {kategori: "A", jumlah: 15}
+])
+db.penjualan.aggregate([{$group: {_id: "$kategori", total: {$sum: "$jumlah"}, n: {$sum: 1}}}, {$sort: {total: -1}}])`}</code></pre>

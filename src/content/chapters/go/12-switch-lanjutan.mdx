@@ -1,0 +1,151 @@
+---
+"title": "Switch Lanjutan"
+"description": "Switch tanpa ekspresi, fallthrough, dan type switch di Go"
+"order": 12
+"quiz":
+- "q": "Switch di Go secara default…"
+  "options":
+  - "berhenti setelah case cocok"
+  - "jatuh ke case berikutnya"
+  - "mengulang dari awal"
+  - "menghasilkan error"
+  "answer": 0
+  "explain": "Bedakan dengan C: Go tidak perlu break di tiap case."
+- "q": "Kata kunci untuk melanjutkan ke case berikutnya adalah…"
+  "options":
+  - "continue"
+  - "next"
+  - "goto"
+  - "fallthrough"
+  "answer": 3
+  "explain": "fallthrough harus menjadi pernyataan terakhir pada case."
+- "q": "Type Switch dipakai untuk…"
+  "options":
+  - "membedakan tipe konkret pada interface"
+  - "mengubah tipe variabel"
+  - "membuat konstanta"
+  - "mengurutkan data"
+  "answer": 0
+  "explain": "switch v := x.(type) mencocokkan tipe dinamis dari interface."
+- "q": "Switch tanpa ekspresi menuliskan…"
+  "options":
+  - "switch {}"
+  - "switch ( ) {}"
+  - "switch true {}"
+  - "switch case"
+  "answer": 2
+  "explain": "switch true { case kondisi: ... } berfungsi seperti if-else berantai."
+- "q": "Beberapa nilai dalam satu case ditulis…"
+  "options":
+  - "case 1, 2:"
+  - "case 1 or 2:"
+  - "case 1 | 2:"
+  - "case [1,2]:"
+  "answer": 0
+  "explain": "Koma memisahkan beberapa nilai yang cocok pada satu case."
+"example":
+  "code": "package main\nimport \"fmt\"\nfunc main() {\n    nilai := 85\n    switch {\n    case nilai >= 90: fmt.Println(\"A\")\n    case nilai >= 75: fmt.Println(\"B\")\n    default: fmt.Println(\"C\")\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`switch` di Go lebih fleksibel daripada di kebanyakan bahasa. Kamu bisa memakainya sebagai pengganti rantai `if` yang panjang.
+
+## Switch Biasa
+
+```go
+switch hari {
+case "Senin", "Selasa":
+    fmt.Println("Awal pekan")
+case "Sabtu", "Minggu":
+    fmt.Println("Akhir pekan")
+default:
+    fmt.Println("Hari kerja biasa")
+}
+```
+
+Beberapa nilai boleh ditulis dalam satu `case` memakai koma. Tidak ada `break` otomatis — setelah `case` selesai, switch langsung keluar.
+
+## Fallthrough
+
+```go
+switch skor {
+case 100:
+    fmt.Println("Sempurna!")
+    fallthrough
+default:
+    fmt.Println("Tetap lanjut belajar")
+}
+```
+
+`fallthrough` memaksa masuk ke `case` berikutnya. Gunakan dengan hati-hati; jarang diperlukan dalam kode sehari-hari.
+
+## Switch Tanpa Ekspresi
+
+```go
+switch {
+case umur < 13:
+    fmt.Println("Anak")
+case umur < 18:
+    fmt.Println("Remaja")
+default:
+    fmt.Println("Dewasa")
+}
+```
+
+Ini setara dengan `if / else if / else`, tapi lebih mudah dibaca saat ada banyak kondisi.
+
+## Type Switch
+
+```go
+func ketahu(x interface{}) {
+    switch v := x.(type) {
+    case int:
+        fmt.Println("int", v*2)
+    case string:
+        fmt.Println("string", v)
+    default:
+        fmt.Printf("tipe lain: %T\n", v)
+    }
+}
+```
+
+`v` otomatis bertipe sesuai `case` yang cocok. Pola ini sering dipakai saat memproses data JSON heterogen.
+
+<div class="note">💡 Letakkan <code>default</code> di mana pun kamu mau — Go tidak mengharuskannya di akhir.</div>
+
+
+## Try it Yourself
+
+Tambahkan `case` baru atau ubah nilai `skor`.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+
+func kenali(x interface{}) {
+    switch v := x.(type) {
+    case int:
+        fmt.Println("Bilangan bulat:", v*2)
+    case string:
+        fmt.Println("Teks:", v)
+    case bool:
+        fmt.Println("Boolean:", !v)
+    default:
+        fmt.Printf("Tipe lain: %T\n", v)
+    }
+}
+
+func main() {
+    skor := 82
+    switch {
+    case skor >= 90:
+        fmt.Println("Nilai A")
+    case skor >= 75:
+        fmt.Println("Nilai B")
+    default:
+        fmt.Println("Perlu belajar lagi")
+    }
+    kenali(7)
+    kenali("Go")
+    kenali(false)
+}`} />

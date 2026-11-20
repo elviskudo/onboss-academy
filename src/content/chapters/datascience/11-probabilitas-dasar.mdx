@@ -1,0 +1,93 @@
+---
+title: "Dasar Probabilitas untuk Analisis"
+description: "ruang sampel, probabilitas, kejadian saling lepas, independen, dan expected value"
+order: 11
+quiz:
+  - q: "Probabilitas bernilai antara…"
+    options: ["1 dan 10", "0 dan 1", "-1 dan 1", "0 dan 100"]
+    answer: 1
+    explain: "P antara 0 (mustahil) dan 1 (pasti)."
+  - q: "Dua kejadian independen berarti…"
+    options: ["Jumlahnya 1", "Sama persis", "Satu tidak memengaruhi yang lain", "Keduanya tidak bisa terjadi"]
+    answer: 2
+    explain: "Contoh: dua kali lempar koin."
+  - q: "Probabilitas muncul angka pada koin adil adalah…"
+    options: ["0.25", "0.5", "1", "0"]
+    answer: 1
+    explain: "Dua sisi sama mungkin → 1/2."
+  - q: "Expected value dihitung dengan…"
+    options: ["Median", "Σ nilai × probabilitas", "Jumlah semua nilai", "Nilai terbesar"]
+    answer: 1
+    explain: "E[X] = ∑ x·P(x)."
+  - q: "Jumlah probabilitas seluruh ruang sampel adalah…"
+    options: ["1", "Bergantung", "0", "0.5"]
+    answer: 0
+    explain: "Total seluruh kemungkinan selalu 1."
+example:
+  code: |
+    from fractions import Fraction
+    s = ["HH","HT","TH","TT"]
+    print(Fraction(1,len(s)))  # peluang dua kepala
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Ruang Sampel
+
+Kumpulan semua hasil yang mungkin disebut **ruang sampel**. Lempar dua koin menghasilkan `HH, HT, TH, TT`.
+
+```python
+from itertools import product
+sampel = list(product("HT", repeat=2))
+print(sampel)
+```
+
+## Menghitung Probabilitas
+
+```python
+from fractions import Fraction
+
+p_kepala = Fraction(1, 2)
+p_dua_kepala = Fraction(1, 4)
+print(p_kepala + p_ekor if False else p_kepala)
+```
+
+Untuk kejadian saling lepas, `P(A atau B) = P(A) + P(B)`. Untuk kejadian independen, `P(A dan B) = P(A) × P(B)`.
+
+## Expected Value
+
+```python
+nilai = [10, 20, 30]
+prob  = [0.2, 0.5, 0.3]
+ekspektasi = sum(n * p for n, p in zip(nilai, prob))
+print(ekspektasi)
+```
+
+E[X] adalah rata-rata jangka panjang bila percobaan diulang banyak kali.
+
+## Simulasi Sederhana
+
+```python
+import random
+
+has = sum(random.random() < 0.5 for _ in range(10000)) / 10000
+print(has)  # mendekati 0.5
+```
+
+Simulasi membantu memeriksa intuisi, terutama pada soal yang sulit dihitung langsung.
+
+<div class="note">💡 Probabilitas tidak menjamin hasil satu percobaan. Peluang hujan 70% tetap bisa cerah hari ini — ia menggambarkan kecenderungan banyak hari serupa.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import random
+
+nilai = [10, 20, 30]
+prob = [0.2, 0.5, 0.3]
+ekspektasi = sum(n*p for n, p in zip(nilai, prob))
+print("E[X] =", ekspektasi)
+
+has = sum(random.random() &lt; 0.5 for _ in range(10000)) / 10000
+print("Simulasi koin:", round(has, 3))`} />

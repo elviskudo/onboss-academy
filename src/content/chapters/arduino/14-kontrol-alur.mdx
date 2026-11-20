@@ -1,0 +1,107 @@
+---
+title: "Kontrol Alur"
+description: "if, else if, switch, dan perulangan for/while"
+order: 14
+quiz:
+  - q: "Struktur untuk memilih salah satu dari banyak nilai tetap adalah…"
+    options: ["while", "for", "switch/case", "if saja"]
+    answer: 2
+    explain: "switch memudahkan cabang berdasarkan nilai variabel diskrit."
+  - q: "Pernyataan yang menghentikan switch lebih awal adalah…"
+    options: ["continue", "return", "stop", "break"]
+    answer: 3
+    explain: "Tanpa break, eksekusi jatuh ke case berikutnya."
+  - q: "Perulangan for paling cocok bila…"
+    options: ["Jumlah iterasi diketahui", "Menunggu tombol", "Membaca sensor terus", "Mengirim I2C"]
+    answer: 0
+    explain: "for memiliki inisialisasi, kondisi, dan update dalam satu baris."
+  - q: "while(true) akan…"
+    options: ["Berhenti otomatis", "Berjalan tanpa henti sampai ada break", "Berjalan sekali", "Error"]
+    answer: 1
+    explain: "Biasa dipakai dalam loop() atau state machine."
+  - q: "continue di dalam loop berarti…"
+    options: ["Keluar fungsi", "Reset variabel", "Lewati sisa iterasi ini dan lanjut ke berikutnya", "Hentikan loop"]
+    answer: 2
+    explain: "break menghentikan seluruh loop; continue hanya satu iterasi."
+example:
+  code: |
+    void loop() {
+      int nilai = analogRead(A0);
+      if (nilai &lt; 300) {
+        analogWrite(9, 50);
+      } else if (nilai &lt; 700) {
+        analogWrite(9, 150);
+      } else {
+        analogWrite(9, 255);
+      }
+    }
+---
+
+Kontrol alur menentukan keputusan dan pengulangan. Arduino memakai sintaks C/C++, jadi strukturnya sama dengan bahasa turunan C lainnya.
+
+## if / else
+
+```cpp
+if (suhu >= 30) {
+  nyalakanKipas();
+} else if (suhu >= 25) {
+  kipasPelan();
+} else {
+  matikanKipas();
+}
+```
+
+## switch
+
+```cpp
+switch (mode) {
+  case 1:
+    merah();
+    break;
+  case 2:
+    hijau();
+    break;
+  default:
+    mati();
+}
+```
+
+## for
+
+```cpp
+for (int i = 0; i < 5; i++) {
+  digitalWrite(LED, i % 2);
+  delay(200);
+}
+```
+
+Perhatikan kondisi `&lt; 5`: iterasi berjalan untuk i = 0,1,2,3,4.
+
+## while dan do-while
+
+```cpp
+while (digitalRead(TOMBOL) == LOW) {
+  // tunggu tombol ditekan
+}
+
+do {
+  baca();
+} while (adaData());
+```
+
+do-while menjamin blok dijalankan minimal sekali.
+
+<div class="note">💡 Hindari `while` tanpa jalan keluar di dalam `loop()`. Tombol yang tidak pernah tertekan membuat board tampak hang.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`for (int i=0; i&lt;5; i++) {
+  Serial.println(i);
+}
+int mode=2;
+switch(mode) {
+  case 1: Serial.println('satu'); break;
+  case 2: Serial.println('dua'); break;
+  default: Serial.println('lain');
+}`}</code></pre>

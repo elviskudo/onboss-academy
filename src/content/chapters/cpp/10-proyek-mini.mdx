@@ -14,7 +14,7 @@ quiz:
   - q: "Mengurutkan vector produk berdasarkan harga memakai…"
     options: ["reverse()", "map()", "set()", "sort dengan lambda sebagai pembanding"]
     answer: 3
-    explain: "sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga < b.harga; });"
+    explain: "sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga &lt; b.harga; });"
   - q: "Menyimpan jumlah produk per kategori paling tepat dengan…"
     options: ["vector tanpa struktur", "map<string, int>", "string gabungan", "char array"]
     answer: 1
@@ -40,7 +40,7 @@ example:
             {"Kopi", 25000}, {"Teh", 15000}, {"Jus", 20000}
         };
         for (const auto &p : katalog) {
-            cout << p.nama << " - Rp" << p.harga << endl;
+            cout <&lt; p.nama <&lt; " - Rp" <&lt; p.harga <&lt; endl;
         }
         return 0;
     }
@@ -188,6 +188,10 @@ int main() {
 
 <div class="note">💡 Kamu telah menyelesaikan 10 bab C++: dari <code>cout</code> sampai class, vector, map, lambda, dan smart pointer. Langkah berikutnya: file I/O, template, dan multi-threading untuk proyek yang lebih besar.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <vector>
 #include <string>
@@ -209,26 +213,26 @@ int main() {
         {"Roti", 12000, 8}
     };
 
-    cout << "=== KATALOG ===" << endl;
+    cout <&lt; "=== KATALOG ===" <&lt; endl;
     for (const auto &p : katalog) {
-        cout << p.nama << " - Rp" << p.harga
-             << (p.tersedia() ? " (ada)" : " (habis)") << endl;
+        cout <&lt; p.nama <&lt; " - Rp" <&lt; p.harga
+             <&lt; (p.tersedia() ? " (ada)" : " (habis)") <&lt; endl;
     }
 
     sort(katalog.begin(), katalog.end(),
-         [](const Produk &a, const Produk &b) { return a.harga < b.harga; });
-    cout << "Termurah: " << katalog.front().nama << endl;
+         [](const Produk &a, const Produk &b) { return a.harga &lt; b.harga; });
+    cout <&lt; "Termurah: " <&lt; katalog.front().nama <&lt; endl;
 
     auto it = find_if(katalog.begin(), katalog.end(),
         [](const Produk &p) { return p.nama == "Jus"; });
-    if (it != katalog.end()) cout << "Ditemukan: " << it->nama << endl;
+    if (it != katalog.end()) cout <&lt; "Ditemukan: " <&lt; it->nama <&lt; endl;
 
     int total = 0, unit = 0;
     for (const auto &p : katalog) {
         total += p.harga * p.stok;
         unit += p.stok;
     }
-    cout << "Total stok: " << unit << " unit" << endl;
-    cout << "Nilai stok: Rp" << total << endl;
+    cout <&lt; "Total stok: " <&lt; unit <&lt; " unit" <&lt; endl;
+    cout <&lt; "Nilai stok: Rp" <&lt; total <&lt; endl;
     return 0;
 }`} />

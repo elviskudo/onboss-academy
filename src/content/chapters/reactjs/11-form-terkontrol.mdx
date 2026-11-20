@@ -1,0 +1,129 @@
+---
+title: "Form Terkontrol"
+description: "input, textarea, select, checkbox, dan radio yang nilainya dipegang state"
+order: 11
+quiz:
+  - q: "Input disebut terkontrol bila…"
+    options: ["Tanpa atribut value", "Hanya ada di form", "Nilainya disimpan di state React", "Nilainya diambil dari DOM"]
+    answer: 2
+    explain: "State menjadi satu sumber kebenaran; onChange memperbaruinya."
+  - q: "Pasangan yang biasa dipakai pada input teks adalah…"
+    options: ["name + onSubmit", "value + onChange", "defaultValue + onKey", "text + onType"]
+    answer: 1
+    explain: "value mengontrol tampilan, onChange menangkap perubahan."
+  - q: "Untuk checkbox, keadaan dicek lewat…"
+    options: ["value", "selected", "active", "checked"]
+    answer: 3
+    explain: "Atribut checked mencerminkan nilai boolean di state."
+  - q: "Pada select, pilihan yang aktif ditentukan oleh…"
+    options: ["placeholder", "value pada <select>", "selected pada tiap <option>", "name pada <select>"]
+    answer: 1
+    explain: "Cukup satu value di elemen select; React mencocokkan option-nya."
+  - q: "Textarea di React ditulis…"
+    options: ["<textarea>{nilai}</textarea>", "<textarea value={nilai} onChange={...} />", "<textarea defaultValue={nilai}>", "<input type=textarea>"]
+    answer: 1
+    explain: "Gunakan value dan onChange seperti input teks."
+example:
+  code: |
+    const [nama, setNama] = React.useState("");
+    <input value={nama} onChange={(e) => setNama(e.target.value)} />
+
+    const [setuju, setSetuju] = React.useState(false);
+    <input type="checkbox" checked={setuju}
+           onChange={(e) => setSetuju(e.target.checked)} />
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Form terkontrol membuat state sebagai **satu sumber kebenaran**. Apa yang terlihat di layar selalu sama dengan apa yang ada di state.
+
+## Input Teks
+
+```jsx
+function NamaField() {
+  const [nama, setNama] = React.useState("");
+
+  return (
+    <label>
+      Nama lengkap
+      <input
+        type="text"
+        value={nama}
+        onChange={(e) => setNama(e.target.value)}
+      />
+    </label>
+  );
+}
+```
+
+Alurnya: user mengetik → `onChange` → `setNama` → render ulang → input menampilkan nilai baru.
+
+## Checkbox dan Radio
+
+```jsx
+const [setuju, setSetuju] = React.useState(false);
+const [kontak, setKontak] = React.useState("email");
+
+<input type="checkbox" checked={setuju}
+       onChange={(e) => setSetuju(e.target.checked)} />
+
+<label><input type="radio" name="kontak" value="email"
+  checked={kontak === "email"}
+  onChange={(e) => setKontak(e.target.value)} /> Email</label>
+```
+
+## Select dan Textarea
+
+```jsx
+const [kota, setKota] = React.useState("jakarta");
+const [catatan, setCatatan] = React.useState("");
+
+<select value={kota} onChange={(e) => setKota(e.target.value)}>
+  <option value="jakarta">Jakarta</option>
+  <option value="bandung">Bandung</option>
+</select>
+
+<textarea value={catatan}
+          onChange={(e) => setCatatan(e.target.value)} />
+```
+
+## Satu State untuk Banyak Field
+
+```jsx
+const [form, setForm] = React.useState({ nama: "", email: "", kota: "" });
+
+function ubah(event) {
+  const { name, value } = event.target;
+  setForm((lama) => ({ ...lama, [name]: value }));
+}
+
+<input name="nama" value={form.nama} onChange={ubah} />
+<input name="email" value={form.email} onChange={ubah} />
+```
+
+Polanya scale dengan baik: tambah field cukup menambah kunci di object.
+
+## Validasi Sederhana
+
+```jsx
+const error = !form.email.includes("@") ? "Email belum valid" : "";
+{error && <small className="error">{error}</small>}
+```
+
+<div class="note">💡 Hindari mencampur `value` dan `defaultValue`. Pilih satu: terkontrol untuk form yang perlu divalidasi, tidak terkontrol (`defaultValue`) untuk input yang benar-benar sekali baca.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan satu state untuk banyak field
+let form = { nama: "", email: "", kota: "jakarta" };
+
+function ubah(name, value) {
+  form = { ...form, [name]: value };
+}
+
+ubah("nama", "Sari");
+ubah("email", "sari@example.com");
+console.log(form);
+console.log("Valid:", form.email.includes("@"));`} />

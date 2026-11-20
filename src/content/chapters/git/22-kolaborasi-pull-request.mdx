@@ -1,0 +1,123 @@
+---
+title: Kolaborasi Melalui Pull Request
+description: Membuka, meninjau, dan menyelesaikan pull request secara efektif.
+order: 22
+quiz:
+- q: Pull request pada dasarnya adalah…
+  options:
+  - File konfigurasi remote
+  - Tag rilis
+  - Permintaan menggabungkan branch ke branch lain
+  - Perintah menghapus branch
+  answer: 2
+  explain: PR membandingkan perubahan dan memberi ruang diskusi sebelum merge.
+- q: Sebelum membuka PR, sebaiknya…
+  options:
+  - Hapus semua commit
+  - Tutup repositori
+  - Ganti remote
+  - Pastikan branch sudah sinkron dengan target dan tes lulus
+  answer: 3
+  explain: Ini mengurangi konflik dan memudahkan reviewer.
+- q: Draft PR cocok untuk…
+  options:
+  - Memberi sinyal pekerjaan sedang berjalan tanpa直接 dimerge
+  - Menyembunyikan kode selamanya
+  - Menghapus riwayat
+  - Mengganti branch utama
+  answer: 0
+  explain: Draft PR berguna untuk meminta masukan awal.
+- q: Ukuran PR yang ideal adalah…
+  options:
+  - Tanpa tes
+  - Cukup kecil untuk ditinjau dalam satu dudukan
+  - Selalu lebih dari 1000 baris
+  - Tanpa deskripsi
+  answer: 1
+  explain: PR kecil mempercepat feedback dan menurunkan risiko bug.
+- q: Squash merge menghasilkan…
+  options:
+  - Tag baru
+  - Branch baru
+  - Satu commit di branch target
+  - Semua commit asli
+  answer: 2
+  explain: Riwayat target jadi lebih rapi walau branch kerja punya banyak commit.
+example:
+  code: 'git switch -c fitur/ekspor-pdf
+
+    git add .
+
+    git commit -m "feat: tambah ekspor PDF"
+
+    git fetch origin
+
+    git rebase origin/main
+
+    git push -u origin fitur/ekspor-pdf
+
+    '
+---
+
+
+**Pull request (PR)** adalah sarana kolaborasi: Anda mengusulkan perubahan, rekan meninjau, lalu perubahan digabung setelah disetujui.
+
+## Alur Singkat
+
+```bash
+git switch -c fitur/ekspor-pdf
+# kerjakan perubahan
+git add .
+git commit -m "feat: tambah ekspor PDF"
+git fetch origin
+git rebase origin/main
+git push -u origin fitur/ekspor-pdf
+```
+
+Kemudian buat PR lewat antarmuka hosting.
+
+## Isi Deskripsi yang Baik
+
+```text
+## Apa yang berubah
+Menambahkan ekspor laporan ke PDF.
+
+## Mengapa
+Permintaan tim keuangan agar laporan bisa dibagikan tanpa Excel.
+
+## Cara menguji
+1. Buka halaman laporan.
+2. Klik "Ekspor PDF".
+3. Pastikan angka sudah sesuai.
+
+## Catatan
+Belum mendukung grafik interaktif.
+```
+
+## Peran Reviewer
+
+- Periksa logika, bukan hanya gaya kode.
+- Ajukan pertanyaan bila niat perubahan tidak jelas.
+- Bedakan komentar wajib dan saran opsional.
+- Setujui hanya setelah tes dan konflik selesai.
+
+## Opsi Merge
+
+| Opsi | Efek |
+|---|---|
+| Merge commit | mempertahankan seluruh riwayat branch |
+| Squash and merge | satu commit di target |
+| Rebase and merge | commit dipindah linear ke target |
+
+<div class="note">💡 PR yang bagus menghormati waktu reviewer. Uji sendiri dulu, jelaskan konteks, dan pecah perubahan besar menjadi beberapa PR.</div>
+
+## Setelah Merge
+
+```bash
+git switch main
+git pull origin main
+git branch -d fitur/ekspor-pdf
+git push origin --delete fitur/ekspor-pdf
+```
+
+Hapus branch lokal dan remote agar daftar branch tetap bersih.

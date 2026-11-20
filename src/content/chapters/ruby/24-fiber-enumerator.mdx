@@ -1,0 +1,146 @@
+---
+"title": "Fiber & Enumerator"
+"description": "Kontrol alur yang bisa dijeda, generator, dan iterasi eksternal"
+"order": 24
+"quiz":
+- "q": "Fiber berguna untuk…"
+  "options":
+  - "membuat thread baru"
+  - "menjeda dan melanjutkan eksekusi"
+  - "menghapus data"
+  - "mengubah kelas"
+  "answer": 1
+  "explain": "Fiber adalah coroutine ringan yang bisa di-yield dan di-resume."
+- "q": "Fiber.yield akan…"
+  "options":
+  - "menghentikan program"
+  - "menyerahkan kontrol ke pemanggil"
+  - "membuat exception"
+  - "menghapus fiber"
+  "answer": 1
+  "explain": "Eksekusi bisa dilanjutkan dengan fiber.resume."
+- "q": "Enumerator berbeda dari array karena…"
+  "options":
+  - "lebih besar"
+  - "nilainya dihitung saat diminta"
+  - "selalu terurut"
+  - "tidak bisa di.each"
+  "answer": 1
+  "explain": "Enumerator adalah iterasi malas yang bisa dikonsumsi kapan saja."
+- "q": "Method enum_for menghasilkan…"
+  "options":
+  - "array"
+  - "Enumerator"
+  - "Fiber"
+  - "Hash"
+  "answer": 1
+  "explain": "enum_for membuat enumerator dari method yang memakai yield."
+- "q": "external iterator artinya…"
+  "options":
+  - "konsumen yang mengontrol langkah iterasi"
+  - "iterator di thread lain"
+  - "iterator tanpa blok"
+  - "iterator otomatis"
+  "answer": 0
+  "explain": "Dengan Enumerator, kamu memanggil next untuk mengambil nilai berikutnya."
+"example":
+  "code": "f = Fiber.new do\n  Fiber.yield 1\n  Fiber.yield 2\nend\nputs f.resume\nputs f.resume\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Fiber dan Enumerator memberi kontrol halus atas alur eksekusi. Mereka jadi dasar fitur async di beberapa library Ruby.
+
+## Fiber
+
+```ruby
+fiber = Fiber.new do
+  puts "mulai"
+  Fiber.yield 10
+  puts "lanjut"
+  Fiber.yield 20
+  puts "selesai"
+end
+
+puts fiber.resume # mulai, lalu 10
+puts fiber.resume # lanjut, lalu 20
+puts fiber.resume # selesai
+```
+
+`resume` menjalankan sampai `Fiber.yield` atau blok selesai. Memanggil fiber yang sudah mati memicu `FiberError`.
+
+## Generator
+
+```ruby
+def angka_ganjil
+  Fiber.new do
+    1.step(by: 2).each { |n| Fiber.yield n }
+  end
+end
+
+g = angka_ganjil
+3.times { print g.resume, " " }
+```
+
+Fiber bisa menghasilkan deret tak hingga tanpa menyimpan semua nilai.
+
+## Enumerator
+
+```ruby
+e = (1..Float::INFINITY).each
+puts e.next
+puts e.next
+puts e.rewind
+puts e.next
+```
+
+`next`, `rewind`, dan `peek` mengontrol iterasi dari luar.
+
+## enum_for
+
+```ruby
+class Kata
+  def setiap_kata
+    yield "satu"
+    yield "dua"
+  end
+end
+
+e = Kata.new.enum_for(:setiap_kata)
+puts e.next
+puts e.next
+```
+
+## Lazy Enumerator
+
+```ruby
+e = (1..Float::INFINITY).lazy.select(&:even?)
+puts e.first(3).inspect
+```
+
+<div class="note">💡 Fiber tidak membuat thread baru — semua berjalan di thread yang sama. Jangan pakai untuk paralelisme; gunakan untuk kontrol alur.</div>
+
+
+## Try it Yourself
+
+Coba tambahkan satu `Fiber.yield` lagi atau panggil `next` lebih banyak.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`fiber = Fiber.new do
+  Fiber.yield "pertama"
+  Fiber.yield "kedua"
+  Fiber.yield "ketiga"
+  "selesai"
+end
+
+3.times { puts fiber.resume }
+puts fiber.alive?
+
+e = [10, 20, 30].each
+puts e.next
+puts e.peek
+puts e.next
+e.rewind
+puts e.next
+
+lazy = (1..100).lazy.map { |n| n * n }.select { |n| n.even? }
+p lazy.first(4)`} />

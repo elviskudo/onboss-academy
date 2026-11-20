@@ -1,0 +1,110 @@
+---
+title: Melihat Lebih Dalam Multi-Head Attention
+description: Cara kerja kepala attention, bentuk matriks Q K V, dan biaya komputasinya.
+order: 11
+quiz:
+- q: Pada multi-head attention, setiap head memiliki…
+  options:
+  - Vocabulary sendiri
+  - Tokenizer sendiri
+  - Optimizer sendiri
+  - Bobot proyeksi Q, K, V sendiri
+  answer: 3
+  explain: Tiap head memproyeksikan input ke ruang berbeda sehingga bisa menangkap pola berbeda.
+- q: Jika d_model = 512 dan jumlah head = 8, dimensi per head adalah…
+  options:
+  - '64'
+  - '512'
+  - '4096'
+  - '8'
+  answer: 0
+  explain: 512 / 8 = 64 dimensi per head, sehingga total biaya mirip satu head penuh.
+- q: Rumus skor attention adalah…
+  options:
+  - softmax(Q)
+  - Q·K / sqrt(d_k)
+  - Q·V
+  - K·V / sqrt(d)
+  answer: 1
+  explain: Produk titik Q dan K diskalakan agar varians tidak terlalu besar sebelum softmax.
+- q: Fungsi softmax pada attention menghasilkan…
+  options:
+  - Gradien tetap
+  - Token berikutnya
+  - Bobot probabilitas yang jumlahnya 1
+  - Vektor embedding baru
+  answer: 2
+  explain: Softmax mengubah skor menjadi distribusi bobot terhadap semua token yang terlihat.
+- q: Biaya attention standar terhadap panjang urutan n adalah…
+  options:
+  - O(1)
+  - O(n)
+  - O(log n)
+  - O(n^2)
+  answer: 3
+  explain: Matriks skor berukuran n × n, sehingga konteks panjang mahal.
+example:
+  code: 'd_model = 512
+
+    h = 8
+
+    d_k = d_model // h  # 64
+
+    skor = Q @ K.transpose() / (d_k ** 0.5)
+
+    bobot = softmax(skor)
+
+    output = bobot @ V
+
+    '
+---
+
+
+**Multi-head attention** menjalankan beberapa attention secara paralel. Setiap head bisa belajar pola berbeda:一头 cucu kata, hubungan subjek–kata kerja, atau posisi relatif.
+
+## Bentuk Matriks
+
+```text
+Q = X · Wq    K = X · Wk    V = X · Wv
+```
+
+Dengan `X` berukuran `n × d_model`, masing-masing proyeksi menghasilkan matriks `n × d_model`, kemudian dibagi menjadi `h` head.
+
+```python
+import math
+
+d_model = 512
+h = 8
+d_k = d_model // h  # 64
+
+def scaled_dot_product(Q, K, V):
+    skor = Q @ K.T / math.sqrt(d_k)
+    bobot = softmax(skor)
+    return bobot @ V
+```
+
+| Besaran | Bentuk | Catatan |
+|---|---|---|
+| `X` | n × d_model | input token |
+| `Q, K, V` | n × d_model | hasil proyeksi |
+| per head | n × d_k | d_k = d_model / h |
+| skor | n × n | satu matriks per head |
+| output | n × d_model | konkatenasi semua head |
+
+## Kenapa Dibagi?
+
+Membagi menjadi 8 head berdimensi 64 memberi kapasitas yang kira-kira setara dengan satu head 512, tetapi model bisa mempelajari beberapa relasi secara bersamaan.
+
+## Peran Tiap Huruf
+
+- **Query (Q)** — “apa yang saya cari?”
+- **Key (K)** — “apa yang bisa saya tawarkan?”
+- **Value (V)** — informasi yang sebenarnya dibawa.
+
+Cocokan Q dengan K untuk mendapat bobot, lalu gunakan bobot itu untuk menggabungkan V.
+
+<div class="note">💡 Pembagian dengan `sqrt(d_k)` mencegah skor menjadi terlalu besar saat dimensi naik — tanpa itu softmax bisa jenuh dan gradien melemah.</div>
+
+## Biaya dan Optimasi
+
+Attention standar membangun matriks `n × n`. Dua kali panjang konteks berarti sekitar empat kali memori attention. Karena itu model modern memakai **FlashAttention** (tanpa menyimpan matriks penuh di memori), sliding window, atau sparse attention.

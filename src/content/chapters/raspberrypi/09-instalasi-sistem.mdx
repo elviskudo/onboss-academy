@@ -1,0 +1,85 @@
+---
+title: "Instalasi Sistem Operasi"
+description: "Menyiapkan kartu microSD dan memasang Raspberry Pi OS"
+order: 9
+quiz:
+  - q: "Alat resmi untuk menulis image ke kartu microSD adalah…"
+    options: ["Text Editor", "Raspberry Pi Imager", "File Manager", "Browser"]
+    answer: 1
+    explain: "Imager menangani unduhan image, penulisan, dan pengaturan awal sekaligus."
+  - q: "Kapasitas kartu microSD yang disarankan untuk Raspberry Pi OS adalah…"
+    options: ["128 MB", "Tidak terbatas", "Minimal 16 GB, lebih baik 32 GB", "1 GB"]
+    answer: 2
+    explain: "Sistem plus pembaruan dan paket tambahan membutuhkan ruang lebih dari sekadar image awal."
+  - q: "File konfigurasi Wi-Fi awal bernama…"
+    options: ["network.txt", "wifi.conf", "config.sys", "wpa_supplicant.conf"]
+    answer: 3
+    explain: "File ditempatkan di partisi boot agar Wi-Fi aktif pada boot pertama (cara lama)."
+  - q: "Membuat file kosong bernama ssh di partisi boot berfungsi…"
+    options: ["Mengaktifkan server SSH saat boot pertama", "Menghapus kata sandi", "Menambah kapasitas kartu", "Mengganti hostname"]
+    answer: 0
+    explain: "Ini cara tanpa monitor untuk mengakses Pi lewat jaringan."
+  - q: "Setelah instalasi, perintah untuk memperbarui sistem adalah…"
+    options: ["apt install pi", "sudo apt update && sudo apt full-upgrade", "sudo format sd", "sudo reboot now"]
+    answer: 1
+    explain: "update menyegarkan daftar paket, full-upgrade menerapkan pembaruan."
+example:
+  code: |
+    # Ringkasan persiapan
+    1. Unduh Raspberry Pi Imager
+    2. Pilih OS: Raspberry Pi OS (64-bit)
+    3. Pilih kartu microSD
+    4. Set hostname, Wi-Fi, user, dan SSH
+    5. Write -> pasang kartu -> nyalakan
+---
+
+Raspberry Pi menyimpan sistem operasi di kartu microSD (atau SSD lewat USB). Menyiapkan kartu dengan benar menghindari masalah boot yang sering membingungkan pemula.
+
+## Langkah dengan Imager
+
+1. Pasang **Raspberry Pi Imager** di komputer.
+2. Pilih **CHOOSE OS** → Raspberry Pi OS (64-bit untuk Pi 4/5).
+3. Pilih **CHOOSE STORAGE** → kartu microSD.
+4. Klik roda pengaturan: isi hostname, Wi-Fi, username, kata sandi, dan aktifkan SSH.
+5. Klik **WRITE** dan tunggu sampai selesai.
+
+## Kartu yang Direkomendasikan
+
+| Spesifikasi | Saran |
+|---|---|
+| Kapasitas | 32 GB ke atas |
+| Kelas | Class 10 / UHS-I |
+| Merek | dari daftar resmi komunitas |
+| Cadangan | kartu kedua untuk image cadangan |
+
+## Boot Tanpa Monitor
+
+Jika Imager sudah mengatur Wi-Fi dan SSH, cukup cari alamat Pi di router atau gunakan:
+
+```bash
+ping raspberrypi.local
+ssh user@raspberrypi.local
+```
+
+Nama `raspberrypi.local` bekerja lewat mDNS bila komputer mendukungnya.
+
+## Pembaruan Pertama
+
+```bash
+sudo apt update
+sudo apt full-upgrade
+sudo reboot
+```
+
+Lalu cek suhu dan ruang disk agar tahu kondisi awal sistem.
+
+<div class="note">💡 Matikan daya sebelum mencabut kartu microSD. Kartu yang dicabut saat masih menulis bisa rusak dan sistem gagal boot.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Perintah awal setelah boot:
+hostname
+uname -a
+df -h
+vcgencmd measure_temp`}</code></pre>

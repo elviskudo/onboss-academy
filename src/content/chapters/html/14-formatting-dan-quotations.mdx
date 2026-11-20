@@ -1,0 +1,94 @@
+---
+title: "Formatting & Quotations"
+description: "Elemen untuk menebalkan, miring, kutipan, singkatan, dan teks teknis"
+order: 14
+quiz:
+  - q: "Elemen yang menandai teks penting secara semantik adalah…"
+    options: ["<b>", "<strong>", "<i>", "<u>"]
+    answer: 1
+    explain: "<strong> memberi makna 'penting'; <b> hanya efek visual."
+  - q: "Untuk kutipan panjang dari sumber lain, gunakan…"
+    options: ["<q>", "<blockquote>", "<cite>", "<code>"]
+    answer: 1
+    explain: "<blockquote> dipakai kutipan blok; <q> untuk kutipan singkat sebaris."
+  - q: "Elemen <code> biasanya dipakai untuk…"
+    options: ["Menampilkan kode komputer", "Membuat tabel", "Menyisipkan gambar", "Membuat form"]
+    answer: 0
+    explain: "<code> menandai potongan kode; sering dipasangkan dengan <pre>."
+  - q: "Elemen untuk singkatan adalah…"
+    options: ["<abbr>", "<kbd>", "<samp>", "<var>"]
+    answer: 0
+    explain: "<abbr title='HyperText Markup Language'>HTML</abbr> memberi kepanjangan saat di-hover."
+  - q: "Tag <del> digunakan untuk…"
+    options: ["Teks yang dihapus", "Teks yang disisipkan", "Teks yang ditebalkan", "Teks yang miring"]
+    answer: 0
+    explain: "<del> menandai teks yang dihapus; <ins> untuk yang disisipkan."
+example:
+  code: |
+    <p>Ini <strong>penting</strong> dan ini <em>ditekankan</em>.</p>
+    <blockquote cite="https://example.com">
+      Belajar HTML itu menyenangkan.
+    </blockquote>
+    <p>Singkatan <abbr title="HyperText Markup Language">HTML</abbr> sangat umum.</p>
+    <p>Gunakan <code>console.log()</code> untuk mencetak ke konsol.</p>
+    <p>Harga lama <del>Rp100.000</del> <ins>Rp75.000</ins>.</p>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+HTML menyediakan elemen khusus untuk memberi **makna** pada teks, bukan sekadar mengubah tampilannya.
+
+## Formatting Semantik
+
+| Elemen | Makna |
+|--------|-------|
+| `<strong>` | Teks penting |
+| `<em>` | Penekanan |
+| `<mark>` | Teks yang ditandai/disorot |
+| `<small>` | Teks kecil (catatan) |
+| `<del>` | Teks yang dihapus |
+| `<ins>` | Teks yang disisipkan |
+| `<sub>` / `<sup>` | Subskrip / superskrip |
+
+## Kutipan
+
+```html
+<!-- Kutipan singkat sebaris -->
+<p>Dia bilang <q>Halo dunia</q> dengan senyum.</p>
+
+<!-- Kutipan blok -->
+<blockquote cite="https://contoh.com/artikel">
+  <p>HTML adalah tulang punggung web.</p>
+</blockquote>
+
+<!-- Judul karya -->
+<p><cite>Belajar HTML dari Nol</cite> — OnBoss Academy</p>
+```
+
+Atribut `cite` berisi URL sumber, meski tidak selalu terlihat di browser.
+
+## Teks Teknis
+
+```html
+<p>Gunakan <code>&lt;p&gt;</code> untuk paragraf.</p>
+<pre><code>{`function halo() {
+  console.log("Halo!");
+}`}</code></pre>
+<p>Tekan <kbd>Ctrl</kbd> + <kbd>S</kbd> untuk menyimpan.</p>
+```
+
+`<pre>` mempertahankan spasi dan baris, cocok untuk kode panjang.
+
+## Try it Yourself
+
+Ubah isi kutipan dan tambahkan elemen `<mark>` di tempat yang kamu suka.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body>
+  <h1>Formatting Teks</h1>
+  <p>Aku <strong>sangat</strong> suka <em>HTML</em>.</p>
+  <blockquote>Ini adalah kutipan panjang yang tampil sebagai blok.</blockquote>
+  <p>Pelan-pelan, kata <mark>penting</mark> akan tersorot.</p>
+</body>
+</html>`} />

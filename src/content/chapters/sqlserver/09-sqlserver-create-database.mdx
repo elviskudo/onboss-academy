@@ -1,0 +1,98 @@
+---
+title: "Membuat dan Mengelola Database SQL Server"
+description: "CREATE DATABASE, file group, ALTER DATABASE, dan DROP DATABASE di T-SQL"
+order: 9
+quiz:
+  - q: "Perintah membuat database baru adalah…"
+    options: ["MAKE DATABASE", "CREATE DB", "CREATE DATABASE", "NEW DATABASE"]
+    answer: 2
+    explain: "CREATE DATABASE nama;"
+  - q: "Ekstensi file data utama SQL Server adalah…"
+    options: [".ndf", ".bak", ".mdf", ".ldf"]
+    answer: 2
+    explain: ".mdf = primary data file; .ldf = log file; .ndf = file data tambahan."
+  - q: "Perintah mengubah nama database adalah…"
+    options: ["RENAME DATABASE", "ALTER DATABASE ... SET NAME", "CHANGE DATABASE", "ALTER DATABASE ... MODIFY NAME"]
+    answer: 3
+    explain: "ALTER DATABASE lama MODIFY NAME = baru;"
+  - q: "DROP DATABASE akan…"
+    options: ["Mengganti nama", "Menghapus semua file data dan log", "Hanya mengosongkan tabel", "Membuat backup"]
+    answer: 1
+    explain: "DROP menghapus database beserta file fisiknya."
+  - q: "File dengan ekstensi .ldf menyimpan…"
+    options: ["Indeks", "Konfigurasi user", "Data tabel", "Transaction log"]
+    answer: 3
+    explain: "Log transaksi dicatat di file .ldf."
+example:
+  code: |
+    CREATE DATABASE AcademyDB;
+    GO
+    ALTER DATABASE AcademyDB MODIFY NAME = OnBossAcademy;
+    GO
+    DROP DATABASE OnBossAcademy;
+---
+
+## Membuat Database
+
+```sql
+CREATE DATABASE AcademyDB;
+GO
+```
+
+Perintah `GO` bukan T-SQL — ia adalah pemisah batch yang dikenal SSMS dan `sqlcmd`. Baris-baris sebelum `GO` dikirim ke server sebagai satu batch.
+
+## File Fisik di Balik Database
+
+| Ekstensi | Fungsi |
+| --- | --- |
+| `.mdf` | file data utama |
+| `.ndf` | file data tambahan |
+| `.ldf` | log transaksi |
+
+```sql
+CREATE DATABASE Toko
+ON PRIMARY (
+  NAME = Toko_Data,
+  FILENAME = 'C:\Data\Toko.mdf',
+  SIZE = 100MB,
+  FILEGROWTH = 20MB
+)
+LOG ON (
+  NAME = Toko_Log,
+  FILENAME = 'C:\Data\Toko.ldf',
+  SIZE = 50MB,
+  FILEGROWTH = 10MB
+);
+```
+
+Menentukan ukuran awal dan pertumbuhan mencegah auto-grow kecil yang sering terjadi berulang kali dan memecah file.
+
+## Mengubah Database
+
+```sql
+ALTER DATABASE Toko MODIFY NAME = TokoOnline;
+ALTER DATABASE TokoOnline SET READ_ONLY;
+ALTER DATABASE TokoOnline SET READ_WRITE;
+ALTER DATABASE TokoOnline SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+```
+
+Mode `SINGLE_USER` sering dipakai sebelum restore atau perbaikan, tetapi hati-hati: aplikasi yang masih terhubung akan terputus.
+
+## Menghapus
+
+```sql
+DROP DATABASE IF EXISTS TokoLama;
+```
+
+Klausa `IF EXISTS` membuat skrip aman dijalankan berulang kali — sangat berguna dalam pipeline deployment.
+
+<div class="note">💡 Jangan menghapus database untuk "mengosongkan" data. `DROP` menghilangkan file fisik dan tidak bisa dibatalkan. Untuk keperluan uji, buat database terpisah yang memang boleh dihapus.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE DATABASE LatihanSQL;
+GO
+SELECT name, state_desc FROM sys.databases WHERE name = 'LatihanSQL';
+GO`}</code></pre>

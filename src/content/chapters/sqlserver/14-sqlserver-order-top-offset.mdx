@@ -1,0 +1,84 @@
+---
+title: "ORDER BY, TOP, dan OFFSET FETCH"
+description: "pengurutan, TOP dengan PERCENT/WITH TIES, dan paginasi OFFSET FETCH"
+order: 14
+quiz:
+  - q: "Urutan hasil query ditentukan oleh…"
+    options: ["TOP", "ORDER BY", "GROUP BY", "WHERE"]
+    answer: 1
+    explain: "Tanpa ORDER BY, urutan hasil tidak dijamin."
+  - q: "TOP 10 PERCENT berarti…"
+    options: ["Baris ke-10", "10 kolom", "10 baris pertama", "Sepuluh persen dari baris hasil"]
+    answer: 3
+    explain: "TOP mendukung PERCENT."
+  - q: "WITH TIES digunakan bersama…"
+    options: ["GROUP BY", "WHERE", "DISTINCT", "TOP dan ORDER BY"]
+    answer: 3
+    explain: "WITH TIES menyertakan baris dengan nilai urutan yang sama di batas TOP."
+  - q: "OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY mengambil…"
+    options: ["Error", "10 baris pertama", "Baris ke-21 sampai ke-30", "20 baris terakhir"]
+    answer: 2
+    explain: "Lewati 20, ambil 10 berikutnya."
+  - q: "OFFSET FETCH wajib memiliki…"
+    options: ["GROUP BY", "TOP", "ORDER BY", "WHERE"]
+    answer: 2
+    explain: "SQL Server menolak OFFSET tanpa ORDER BY karena urutan harus pasti."
+example:
+  code: |
+    SELECT nama, gaji
+    FROM dbo.karyawan
+    ORDER BY gaji DESC
+    OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY;
+---
+
+## ORDER BY
+
+```sql
+SELECT nama, divisi, gaji
+FROM dbo.karyawan
+ORDER BY divisi ASC, gaji DESC;
+```
+
+Urutan di evaluasi kiri ke kanan. `ASC` adalah bawaan. Untuk hasil yang stabil, sertakan kunci unik seperti `id` di akhir daftar sort.
+
+## TOP
+
+```sql
+SELECT TOP (10) nama, gaji FROM dbo.karyawan ORDER BY gaji DESC;
+SELECT TOP (5) PERCENT nama FROM dbo.karyawan ORDER BY gaji DESC;
+```
+
+Tanda kurung sekitar angka bukan wajib, tetapi disarankan khususnya saat memakai variabel: `TOP (@n)`.
+
+## WITH TIES
+
+```sql
+SELECT TOP (3) WITH TIES nama, gaji
+FROM dbo.karyawan
+ORDER BY gaji DESC;
+```
+
+Kalau tiga orang tertinggi memiliki gaji yang sama dengan orang keempat, orang keempat ikut tampil. Cocok untuk daftar "top performer" yang adil.
+
+## OFFSET FETCH
+
+```sql
+SELECT nama
+FROM dbo.karyawan
+ORDER BY id
+OFFSET (@halaman - 1) * @perHalaman ROWS
+FETCH NEXT @perHalaman ROWS ONLY;
+```
+
+Ini pengganti `LIMIT ... OFFSET` di database lain. Paginasi memakai `OFFSET` menjadi lambat pada halaman sangat dalam; untuk data besar, pertimbangkan **keyset pagination**: `WHERE id > @terakhir ORDER BY id`.
+
+<div class="note">💡 `TOP` dan `OFFSET FETCH` tidak bisa dipakai bersama dalam satu query. Pilih `TOP` untuk potongan sederhana, `OFFSET FETCH` untuk halaman.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #t (nama NVARCHAR(50), nilai INT);
+INSERT INTO #t VALUES (N'A', 80), (N'B', 90), (N'C', 70);
+SELECT nama FROM #t ORDER BY nilai DESC OFFSET 1 ROWS FETCH NEXT 1 ROWS ONLY;
+DROP TABLE #t;`}</code></pre>

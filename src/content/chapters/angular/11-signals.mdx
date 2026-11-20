@@ -1,0 +1,117 @@
+---
+title: "Signals"
+description: "signal, computed, effect, dan update immutable di Angular modern"
+order: 11
+quiz:
+  - q: "Signal dibuat dengan…"
+    options: ["useState(nilaiAwal)", "new Signal()", "signal(nilaiAwal)", "ref(nilaiAwal)"]
+    answer: 2
+    explain: "Fungsi `signal` menghasilkan getter reaktif."
+  - q: "Nilai signal dibaca dengan…"
+    options: ["membaca {{nama}}", "memanggilnya: nama()", "membaca .value", "membaca .current"]
+    answer: 1
+    explain: "Signal adalah fungsi; panggil untuk mendapat nilainya."
+  - q: "Nilai signal diubah dengan…"
+    options: ["assign langsung nama() = x", ".value = x", "refresh()", "set() atau update()"]
+    answer: 3
+    explain: "set mengganti nilai, update menghitung dari nilai lama."
+  - q: "computed berguna untuk…"
+    options: ["Mengubah CSS", "Nilai turunan yang dihitung ulang otomatis", "Mengirim request", "Membuat komponen"]
+    answer: 1
+    explain: "computed seperti getter dengan cache reaktif."
+  - q: "effect() di Angular mirip dengan…"
+    options: ["useEffect di React", "CSS media query", "Router guard", "ngModel"]
+    answer: 0
+    explain: "Efek samping yang dijalankan saat dependency berubah."
+example:
+  code: |
+    import { signal, computed } from "@angular/core";
+
+    const harga = signal(25000);
+    const qty = signal(2);
+    const total = computed(() => harga() * qty());
+
+    qty.update((n) => n + 1);
+    console.log(total());
+---
+
+Signal adalah sistem reaktivitas halus di Angular modern. Komponen hanya diperbarui di bagian yang benar-benar bergantung pada nilai yang berubah.
+
+## Membaca dan Menulis
+
+```typescript
+import { Component, signal } from "@angular/core";
+
+@Component({
+  standalone: true,
+  template: `
+    <p>Jumlah: {{ jumlah() }}</p>
+    <button (click)="jumlah.update((n) => n + 1)">+</button>
+    <button (click)="jumlah.set(0)">Reset</button>
+  `,
+})
+class CounterComponent {
+  jumlah = signal(0);
+}
+```
+
+Ingat: `jumlah()` bukan `jumlah` saat dibaca di template.
+
+## computed
+
+```typescript
+import { signal, computed } from "@angular/core";
+
+const harga = signal(25000);
+const qty = signal(2);
+const total = computed(() => harga() * qty());
+
+console.log(total()); // 50000
+qty.set(3);
+console.log(total()); // 75000
+```
+
+`computed` hanya menghitung ulang bila `harga` atau `qty` berubah.
+
+## effect
+
+```typescript
+import { effect } from "@angular/core";
+
+effect(() => {
+  localStorage.setItem("qty", String(qty()));
+});
+```
+
+Efek berjalan setidaknya sekali dan setiap kali dependency-nya berubah.
+
+## Input Berbasis Signal
+
+```typescript
+import { Component, input } from "@angular/core";
+
+@Component({
+  standalone: true,
+  template: `<h2>{{ nama() }}</h2>`,
+})
+class KartuComponent {
+  nama = input.required<string>();
+}
+```
+
+`input.required<string>()` memberi tipe jelas dan membuat pemanggilan wajib.
+
+<div class="note">💡 Signal tidak mengharuskan seluruh aplikasi migrasi sekaligus. Kamu bisa memakainya di komponen baru sambil mempertahankan `@Input` di kode lama.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`import { signal, computed } from "@angular/core";
+
+const harga = signal(25000);
+const qty = signal(2);
+const total = computed(() => harga() * qty());
+
+qty.update((n) => n + 1);
+console.log(total());`}</code></pre>

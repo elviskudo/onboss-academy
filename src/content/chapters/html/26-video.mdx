@@ -1,0 +1,84 @@
+---
+title: "Video"
+description: "Menanamkan video dengan elemen video, source, controls, dan atribut pendukung"
+order: 26
+quiz:
+  - q: "Elemen HTML5 untuk video adalah…"
+    options: ["<media>", "<video>", "<movie>", "<embed>"]
+    answer: 1
+    explain: "<video> adalah elemen standar HTML5."
+  - q: "Atribut yang menampilkan tombol play/pause adalah…"
+    options: ["autoplay", "controls", "loop", "muted"]
+    answer: 1
+    explain: "controls menampilkan antarmuka pemutar."
+  - q: "Beberapa format video bisa dideklarasikan dengan…"
+    options: ["<source>", "<src>", "<file>", "<format>"]
+    answer: 0
+    explain: "<video><source src='a.mp4'><source src='a.webm'></video> memberi fallback format."
+  - q: "Atribut autoplay sering dipasangkan dengan muted karena…"
+    options: ["Agar lebih cepat", "Browser memblokir autoplay bersuara", "Supaya looping", "Untuk poster"]
+    answer: 1
+    explain: "Kebanyakan browser hanya mengizinkan autoplay tanpa suara."
+  - q: "Atribut poster pada video berfungsi…"
+    options: ["Menentukan gambar thumbnail sebelum diputar", "Menambah subtitle", "Mengatur kecepatan", "Menyimpan video"]
+    answer: 0
+    explain: "poster menampilkan gambar placeholder sebelum video dimainkan."
+example:
+  code: |
+    <video width="400" controls poster="thumbnail.jpg">
+      <source src="movie.mp4" type="video/mp4">
+      <source src="movie.webm" type="video/webm">
+      Browser kamu tidak mendukung elemen video.
+    </video>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sebelum HTML5, video butuh plugin Flash. Sekarang cukup satu elemen `<video>`.
+
+## Sintaks Dasar
+
+```html
+<video width="400" controls>
+  <source src="video.mp4" type="video/mp4">
+  Teks fallback untuk browser lama.
+</video>
+```
+
+Teks di antara tag muncul kalau browser tidak mendukung video.
+
+## Atribut Penting
+
+| Atribut | Fungsi |
+|---------|--------|
+| `controls` | Tombol play/pause/volume |
+| `autoplay` | Putar otomatis |
+| `loop` | Ulang terus |
+| `muted` | Awalnya tanpa suara |
+| `poster` | Gambar sebelum diputar |
+| `preload` | Saran unduh (`none`, `metadata`, `auto`) |
+
+## Format yang Umum
+
+- **MP4 (H.264)** — paling didukung
+- **WebM** — kualitas baik, ukuran kecil
+- **OGG** — Alternatif open-source
+
+Sediakan lebih dari satu `<source>` agar browser memilih yang bisa diputar.
+
+<div class="note">💡 Autoplay bersuara sering diblokir. Kalau memang harus autoplay, tambahkan <code>muted</code>.</div>
+
+## Try it Yourself
+
+Tambahkan atribut `loop` pada video di bawah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<body style="font-family: sans-serif; padding: 16px;">
+  <h1>Belajar Video</h1>
+  <video width="320" controls poster="https://via.placeholder.com/320x180?text=Video">
+    <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+    Browser kamu tidak mendukung video.
+  </video>
+</body>
+</html>`} />

@@ -1,0 +1,121 @@
+---
+title: "Tipe Kolom dan Atribut MySQL"
+description: "Tipe numerik, teks, tanggal, serta atribut NOT NULL, DEFAULT, dan ENUM"
+order: 10
+quiz:
+  - q: "Tipe yang disarankan untuk menyimpan emoji adalah…"
+    options: ["utf8", "utf8mb4", "latin1", "ascii"]
+    answer: 1
+    explain: "utf8mb4 mendukung 4 byte per karakter including emoji."
+  - q: "Atribut yang melarang nilai kosong adalah…"
+    options: ["DEFAULT", "NOT NULL", "UNSIGNED", "ZEROFILL"]
+    answer: 1
+    explain: "NOT NULL memaksa kolom selalu memiliki nilai."
+  - q: "Tipe ENUM berguna untuk…"
+    options: ["Daftar nilai tetap", "Angka desimal", "File biner", "Tanggal"]
+    answer: 0
+    explain: "ENUM membatasi nilai ke pilihan yang didefinisikan."
+  - q: "Tipe yang tepat untuk uang adalah…"
+    options: ["FLOAT", "DOUBLE", "DECIMAL", "TEXT"]
+    answer: 2
+    explain: "DECIMAL menyimpan angka desimal presisi tanpa error floating point."
+  - q: "AUTO_INCREMENT biasanya dipasangkan dengan…"
+    options: ["PRIMARY KEY", "FOREIGN KEY", "UNIQUE teks", "CHECK"]
+    answer: 0
+    explain: "Kolom auto increment umumnya menjadi primary key."
+example:
+  code: |
+    CREATE TABLE produk (
+     id INT AUTO_INCREMENT PRIMARY KEY,
+     nama VARCHAR(100) NOT NULL,
+     harga DECIMAL(12,2) NOT NULL DEFAULT 0,
+     status ENUM('aktif','nonaktif') DEFAULT 'aktif'
+    );
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Memilih tipe yang tepat menghemat penyimpanan dan memberi validasi di level database. Di MySQL, perbedaan antara `CHAR` dan `VARCHAR` atau `FLOAT` dan `DECIMAL` berdampak nyata.
+
+## Tipe Numerik
+
+| Tipe | Rentang khas | Dipakai untuk |
+| --- | --- | --- |
+| `TINYINT` | -128..127 | flag, status kecil |
+| `INT` | ±2 miliar | id, jumlah |
+| `BIGINT` | sangat besar | id berskala besar |
+| `DECIMAL(p,s)` | presisi tetap | uang, tagihan |
+| `FLOAT`/`DOUBLE` | presisi berubah | pengukuran ilmiah |
+
+```sql
+harga DECIMAL(12,2)   -- 12 digit total, 2 di belakang koma
+```
+
+## Tipe Teks
+
+| Tipe | Karakter | Catatan |
+| --- | --- | --- |
+| `CHAR(n)` | tetap n | kode tetap seperti kode pos |
+| `VARCHAR(n)` | sampai n | nama, judul |
+| `TEXT` | 64 KB | deskripsi panjang |
+| `MEDIUMTEXT` | 16 MB | artikel |
+
+`VARCHAR(255)` tidak selalu lebih baik dari `VARCHAR(50)` — panjang maksimal memengaruhi alokasi index.
+
+## Tanggal
+
+```sql
+CREATE TABLE pesanan (
+ id INT PRIMARY KEY,
+ dibuat DATETIME DEFAULT CURRENT_TIMESTAMP,
+ diubah TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ tanggal_kirim DATE NULL
+);
+```
+
+`DATETIME` menyimpan tanggal+jam apa adanya; `TIMESTAMP` mengonversi dari zona sesi ke UTC dan kembali saat dibaca.
+
+## Atribut Kolom
+
+| Atribut | Fungsi |
+| --- | --- |
+| `NOT NULL` | wajib diisi |
+| `DEFAULT` | nilai saat INSERT tanpa kolom |
+| `UNSIGNED` | hanya bilangan non-negatif |
+| `AUTO_INCREMENT` | nomor otomatis |
+| `ENUM` | pilihan tetap |
+| `COMMENT` | dokumentasi dalam skema |
+
+```sql
+stok INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'jumlah tersedia';
+```
+
+## Mengubah Kolom
+
+```sql
+ALTER TABLE produk MODIFY nama VARCHAR(150) NOT NULL;
+ALTER TABLE produk ADD COLUMN berat DECIMAL(8,2) DEFAULT 0;
+ALTER TABLE produk DROP COLUMN lama;
+```
+
+<div class="note">💡 `ENUM` memang hemat, tetapi menambah pilihan baru但 butuh ALTER TABLE. Untuk kategori yang sering berubah, gunakan tabel lookup terpisah dengan foreign key.</div>
+
+## Di Dunia Nyata
+
+- **Harga**: DECIMAL agar total tidak meleset sen.
+- **Kode pos**: CHAR atau VARCHAR, bukan INT karena bisa diawali nol.
+- **Status order**: ENUM untuk nilai yang stabil.
+- **Audit**: TIMESTAMP dengan ON UPDATE CURRENT_TIMESTAMP mencatat perubahan terakhir.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE TABLE produk (
+ id INT AUTO_INCREMENT PRIMARY KEY,
+ kode CHAR(6) NOT NULL,
+ nama VARCHAR(80) NOT NULL,
+ harga DECIMAL(10,2) NOT NULL DEFAULT 0,
+ status ENUM('aktif','nonaktif') DEFAULT 'aktif',
+ dibuat DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+DESCRIBE produk;`} />

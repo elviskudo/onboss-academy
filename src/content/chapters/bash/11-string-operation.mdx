@@ -1,0 +1,124 @@
+---
+"title": "Operasi String"
+"description": "Memotong, mengganti, dan mengukur string tanpa perintah eksternal"
+"order": 11
+"quiz":
+- "q": "Cara mengambil panjang string adalah…"
+  "options":
+  - "${var.length}"
+  - "${#var}"
+  - "len $var"
+  - "wc $var"
+  "answer": 1
+  "explain": "Parametereter expansion ${#nama} menghasilkan jumlah karakter."
+- "q": "Potong string dari karakter ke-5 adalah…"
+  "options":
+  - "${var:5}"
+  - "${var[5]}"
+  - "${var:4}"
+  - "cut -c5"
+  "answer": 2
+  "explain": "Indeks dimulai dari 0, jadi karakter kelima berindeks 4."
+- "q": "Menghapus awalan \"abc\" dari variabel adalah…"
+  "options":
+  - "${var%abc}"
+  - "${var/abc/}"
+  - "trim abc"
+  - "${var#abc}"
+  "answer": 3
+  "explain": "# menghapus pola dari awal."
+- "q": "Mengganti pertama kali \"a\" dengan \"b\" adalah…"
+  "options":
+  - "${var/a/b}"
+  - "${var//a/b}"
+  - "${var:a:b}"
+  - "sed s/a/b"
+  "answer": 0
+  "explain": "Satu slash hanya mengganti kemunculan pertama."
+- "q": "Memilikiil dari x=\"Hello\"; echo ${x^^} adalah…"
+  "options":
+  - "hello"
+  - "HELLO"
+  - "Hello"
+  - "Kesalahan"
+  "answer": 1
+  "explain": "^^ mengubah seluruh huruf menjadi kapital (Bash 4+)."
+"example":
+  "code": "#!/usr/bin/env bash\nteks=\"Belajar Bash itu menyenangkan\"\n\necho \"${#teks}\"              # panjang\necho \"${teks:0:7}\"           # Belajar\necho \"${teks#Belajar }\"      # Bash itu menyenangkan\necho \"${teks/menyenangkan/seru}\"\necho \"${teks^^}\"             # BELAJAR BASH ITU MENYENANGKAN\n\nfile=\"arsip.tar.gz\"\necho \"${file%.*}\"            # arsip.tar\necho \"${file##*.}\"           # gz\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Parametereter Expansion
+
+```bash
+#!/usr/bin/env bash
+teks="Belajar Bash itu menyenangkan"
+
+echo "${#teks}"              # panjang
+echo "${teks:0:7}"           # Belajar
+echo "${teks#Belajar }"      # Bash itu menyenangkan
+echo "${teks/menyenangkan/seru}"
+echo "${teks^^}"             # BELAJAR BASH ITU MENYENANGKAN
+
+file="arsip.tar.gz"
+echo "${file%.*}"            # arsip.tar
+echo "${file##*.}"           # gz
+```
+
+| Sintaks | Fungsi |
+|---|---|
+| `${#var}` | panjang string |
+| `${var:awal}` | potong dari indeks awal |
+| `${var:awal:panjang}` | potong dengan panjang tertentu |
+| `${var#pola}` | hapus awalan terpendek |
+| `${var##pola}` | hapus awalan terpanjang |
+| `${var%pola}` | hapus akhiran terpendek |
+| `${var%%pola}` | hapus akhiran terpanjang |
+| `${var/lama/baru}` | ganti pertama |
+| `${var//lama/baru}` | ganti semua |
+
+## Contoh Praktis
+
+```bash
+nama_file="foto-liburan-2026.jpg"
+echo "${nama_file%%-*}"   # foto
+echo "${nama_file##*.}"   # jpg
+```
+
+Pola `*` adalah wildcard, sehingga `%%-*` menghapus dari tanda hubung pertama sampai akhir.
+
+## Kasus Huruf
+
+```bash
+echo "${teks,,}"   # huruf kecil semua
+echo "${teks^^}"   # huruf besar semua
+```
+
+## Nilai Bawaan
+
+```bash
+echo "${nama:-Tamu}"     # pakai Tamu bila nama kosong
+echo "${nama:=Tamu}"     # sekaligus mengisi variabel
+echo "${nama:+Ada}"      # cetak Ada bila nama berisi
+```
+
+<div class="note">💡 Parametereter expansion lebih cepat daripada memanggil <code>sed</code> atau <code>cut</code> karena dijalankan langsung oleh shell tanpa membuat proses baru.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+teks="Belajar Bash itu menyenangkan"
+
+echo "\${#teks}"              # panjang
+echo "\${teks:0:7}"           # Belajar
+echo "\${teks#Belajar }"      # Bash itu menyenangkan
+echo "\${teks/menyenangkan/seru}"
+echo "\${teks^^}"             # BELAJAR BASH ITU MENYENANGKAN
+
+file="arsip.tar.gz"
+echo "\${file%.*}"            # arsip.tar
+echo "\${file##*.}"           # gz`} />

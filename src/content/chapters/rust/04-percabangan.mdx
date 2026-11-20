@@ -53,11 +53,11 @@ Rust membuat keputusan dengan **tipe yang jelas dan kasus yang lengkap** — tid
 
 ## 6 Operator Perbandingan dan 3 Logika
 
-Rust punya **6 operator perbandingan** (`==`, `!=`, `<`, `<=`, `>`, `>=`) dan **3 operator logika** (`&&`, `||`, `!`):
+Rust punya **6 operator perbandingan** (`==`, `!=`, `<`, `&lt;=`, `>`, `>=`) dan **3 operator logika** (`&&`, `||`, `!`):
 
 | Kategori | Jumlah | Anggota | Catatan |
 | --- | --- | --- | --- |
-| Perbandingan | 6 | `==` `!=` `<` `<=` `>` `>=` | Lewat trait PartialEq/PartialOrd |
+| Perbandingan | 6 | `==` `!=` `<` `&lt;=` `>` `>=` | Lewat trait PartialEq/PartialOrd |
 | Logika | 3 | `&&` `\|\|` `!` | Short-circuit, khusus `bool` |
 | Aritmatika | 5 | `+` `-` `*` `/` `%` | Sama seperti kalkulator |
 | Ternary | 0 | — | Tidak ada; pakai if-ekspresi |
@@ -72,7 +72,7 @@ println!("{}", a < b && b < 20); // true
 println!("{}", a > b || a == 5); // true
 ```
 
-Bedanya dengan bahasa lain: `1 < x < 5` **tidak valid** — tulis `1 < x && x < 5`. Rust juga menolak `if x {}` saat `x` bukan `bool` (tidak ada truthy/falsy).
+Bedanya dengan bahasa lain: `1 &lt; x &lt; 5` **tidak valid** — tulis `1 &lt; x && x &lt; 5`. Rust juga menolak `if x {}` saat `x` bukan `bool` (tidak ada truthy/falsy).
 
 ## if dan else
 
@@ -150,10 +150,14 @@ if let Some(s) = skor {
 - **Ongkos kirim**: `match jenis` (regular/express/economy) menentukan tarif dan estimasi hari
 - **Akses user**: `match role` (admin/editor/viewer) memilih menu yang boleh dilihat
 - **Kalkulator**: `match op` menambah/mengurang/membagi sesuai input operator
-- **Validasi input**: match guard `n if n > 0 && n < 100 => ...` membatasi nilai form
+- **Validasi input**: match guard `n if n > 0 && n &lt; 100 => ...` membatasi nilai form
 - **Terjemahan status**: `match code` mengubah "404" → "tidak ditemukan" sebelum respons API
 
 <div class="note">💡 match yang tidak lengkap adalah error kompilasi. Fitur ini mencegah bug klasik: lupa menangani satu kondisi dan membiarkannya berjalan diam-diam.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
     let nilai = 85;
@@ -178,8 +182,8 @@ if let Some(s) = skor {
 
     let a = 5;
     let b = 10;
-    println!("{} < {} = {}", a, b, a < b);
-    println!("logika: {}", a < b && b < 20);
+    println!("{} &lt; {} = {}", a, b, a &lt; b);
+    println!("logika: {}", a &lt; b && b &lt; 20);
 
     let skor: Option<i32> = Some(90);
     if let Some(s) = skor {

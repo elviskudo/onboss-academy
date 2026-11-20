@@ -1,0 +1,95 @@
+---
+title: Model Multimodal
+description: Model yang memproses teks, gambar, audio, dan video dalam satu arsitektur.
+order: 21
+quiz:
+- q: Model multimodal adalah…
+  options:
+  - Model yang hanya gambar
+  - Model yang bisa memproses lebih dari satu jenis input
+  - Model dengan banyak bahasa
+  - Model dengan banyak layer
+  answer: 1
+  explain: 'Contoh: menerima gambar dan pertanyaan teks lalu menjawab dalam teks.'
+- q: Pada vision-language model, gambar biasanya…
+  options:
+  - Diabaikan
+  - Diubah ke MIDI
+  - Dipotong menjadi patch lalu dibuat embedding
+  - Dikirim sebagai kata per kata
+  answer: 2
+  explain: Vision Transformer memecah gambar menjadi patch, lalu memproyeksikannya jadi token visual.
+- q: Keunggulan arsitektur multimodal terpadu adalah…
+  options:
+  - Tokenizer lebih sederhana
+  - Tidak butuh GPU
+  - Hanya untuk teks
+  - Informasi lintas modal bisa saling menguatkan
+  answer: 3
+  explain: Gambar dan teks berada dalam ruang representasi yang sama sehingga bisa saling merujuk.
+- q: Contoh tugas multimodal adalah…
+  options:
+  - Menjawab pertanyaan tentang isi foto
+  - Menyortir angka
+  - Menulis variabel
+  - Menghitung jumlah huruf
+  answer: 0
+  explain: Visual question answering menggabungkan pemahaman gambar dan bahasa.
+- q: Tantangan utama multimodal adalah…
+  options:
+  - Menambah vocabulary
+  - Menyelaraskan representasi antarjenis data
+  - Menghapus token
+  - Mengurangi jumlah layer
+  answer: 1
+  explain: Teks diskrit dan piksel kontinu punya struktur berbeda; proyeksi dan training yang tepat diperlukan.
+example:
+  code: 'gambar -> patch 16x16 -> embedding visual
+
+    teks   -> token -> embedding teks
+
+    [visual tokens + text tokens] -> Transformer -> jawaban
+
+    '
+---
+
+
+Manusia memahami dunia lewat banyak indra. **Model multimodal** mencoba melakukan hal yang sama: menggabungkan teks, gambar, audio, dan video.
+
+## Token Visual
+
+```text
+gambar 224×224 -> patch 16×16 -> 196 token visual
+```
+
+```python
+lebar, tinggi, patch = 224, 224, 16
+jumlah_patch = (lebar // patch) * (tinggi // patch)
+print("token visual:", jumlah_patch)
+```
+
+Setiap patch direktifikasi menjadi vektor, lalu diperlakukan seperti token kata oleh Transformer.
+
+## Arsitektur Umum
+
+| Komponen | Fungsi |
+|---|---|
+| Image encoder | mengubah piksel jadi embedding |
+| Text embedding | mengubah token teks jadi vektor |
+| Projector | menyelaraskan ruang visual dan teks |
+| LLM backbone | melakukan penalaran lintas modal |
+
+## Kemampuan yang Muncul
+
+- Menjelaskan isi foto dan membaca teks di dalam gambar (OCR).
+- Menjawab pertanyaan berbasis diagram atau grafik.
+- Memahami perintah suara yang disertai video.
+- Menghasilkan deskripsi gambar untuk aksesibilitas.
+
+<div class="note">💡 Model multimodal tetap bisa salah “melihat”. Detail kecil pada gambar, tulisan miring, atau objek di tepi frame sering terlewat — periksa kembali untuk keputusan penting.</div>
+
+## Pertimbangan Praktis
+
+- Token visual bisa jauh lebih banyak dari token teks; biaya dan konteks cepat terpakai.
+- Resolusi gambar tinggi menambah jumlah patch secara kuadratik.
+- Privasi data penting: foto medis atau dokumen pribadi harus diproses sesuai kebijakan.

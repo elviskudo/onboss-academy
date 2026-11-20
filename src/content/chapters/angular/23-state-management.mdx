@@ -1,0 +1,109 @@
+---
+title: "State Management"
+description: "service+signal, store sederhana, dan kapan memakai NgRx"
+order: 23
+quiz:
+  - q: "Untuk state lokal satu komponen, pilihan paling sederhana adalah…"
+    options: ["Redux", "LocalStorage", "signal/useState-style di komponen", "NgRx"]
+    answer: 2
+    explain: "Jangan menambah kompleksitas sebelum dibutuhkan."
+  - q: "State yang dipakai banyak fitur cocok ditempatkan di…"
+    options: ["index.html", "Service dengan signal", "Template", "CSS"]
+    answer: 1
+    explain: "Satu instance service menjadi sumber kebenaran."
+  - q: "NgRx cocok bila…"
+    options: ["Hanya satu tombol", "Static landing page", "Tanpa interaksi", "Aplikasi besar dengan alur state kompleks dan butuh audit"]
+    answer: 3
+    explain: "Boilerplate-nya sepadan dengan kebutuhan skala besar."
+  - q: "State shouldn't disimpan di localStorage kecuali…"
+    options: ["Hanya untuk CSS", "Memang perlu bertahan setelah refresh", "Selalu", "Tidak pernah"]
+    answer: 1
+    explain: "Data sensitif sebaiknya tidak disimpan di sana."
+  - q: "Selectors di NgRx berguna untuk…"
+    options: ["Mengambil dan menggabungkan bagian state", "Mengirim request", "Membuat komponen", "Mengubah rute"]
+    answer: 0
+    explain: "Selector bisa di-compose dan diuji."
+example:
+  code: |
+    @Injectable({ providedIn: "root" })
+    export class KeranjangStore {
+      private _items = signal<Produk[]>([]);
+      readonly items = this._items.asReadonly();
+      readonly total = computed(() =>
+        this._items().reduce((s, p) => s + p.harga, 0));
+
+      tambah(p: Produk) { this._items.update((l) => [...l, p]); }
+    }
+---
+
+State management bukan soal memilih library paling populer, tapi memilih kompleksitas yang sepadan dengan masalah.
+
+## Tingkatan Kebutuhan
+
+| Kebutuhan | Pilihan |
+|-----------|---------|
+| Satu komponen | `signal()` lokal |
+| Beberapa komponen satu fitur | service + signal |
+| Seluruh aplikasi, alur kompleks | NgRx / store serupa |
+
+## Store Sederhana
+
+```typescript
+import { Injectable, signal, computed } from "@angular/core";
+
+@Injectable({ providedIn: "root" })
+export class KeranjangStore {
+  private _items = signal<Produk[]>([]);
+  readonly items = this._items.asReadonly();
+  readonly jumlah = computed(() => this._items().length);
+  readonly total = computed(() =>
+    this._items().reduce((s, p) => s + p.harga, 0)
+  );
+
+  tambah(p: Produk) {
+    this._items.update((lama) => [...lama, p]);
+  }
+
+  hapus(id: number) {
+    this._items.update((lama) => lama.filter((p) => p.id !== id));
+  }
+
+  kosongkan() { this._items.set([]); }
+}
+```
+
+`asReadonly()` mencegah komponen mengubah state dari luar.
+
+## Pemakaian
+
+```typescript
+export class RingkasanComponent {
+  private store = inject(KeranjangStore);
+  total = this.store.total;
+  jumlah = this.store.jumlah;
+}
+```
+
+```html
+<p>{{ jumlah() }} item — Rp{{ total() }}</p>
+```
+
+## Kapan NgRx
+
+Pertimbangkan NgRx bila ada banyak aksi yang saling memengaruhi, perlu time-travel debugging, atau beberapa tim mengerjakan modul berbeda dengan kontrak state yang jelas.
+
+<div class="note">💡 Mulai dari yang paling sederhana. Service + signal sudah cukup untuk sebagian besar aplikasi; kamu selalu bisa bermigrasi ke store yang lebih berat nanti.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`@Injectable({ providedIn: "root" })
+export class KeranjangStore {
+  private _items = signal<Produk[]>([]);
+  readonly items = this._items.asReadonly();
+  readonly total = computed(() =>
+    this._items().reduce((s, p) => s + p.harga, 0));
+
+  tambah(p: Produk) { this._items.update((l) => [...l, p]); }
+}`}</code></pre>

@@ -1,0 +1,95 @@
+---
+title: "Dasar Pandas: Series dan DataFrame"
+description: "struktur Series/DataFrame, indeks, memilih kolom, filter, dan ringkasan"
+order: 23
+quiz:
+  - q: "Struktur satu dimensi di Pandas disebut…"
+    options: ["Dict", "Series", "DataFrame", "Array"]
+    answer: 1
+    explain: "Series = kolom + index."
+  - q: "Struktur dua dimensi disebut…"
+    options: ["List", "Tuple", "Series", "DataFrame"]
+    answer: 3
+    explain: "DataFrame mirip tabel."
+  - q: "Untuk melihat lima baris pertama dipakai…"
+    options: ["top()", "first()", "peek()", "head()"]
+    answer: 3
+    explain: "df.head()."
+  - q: "Memilih kolom \"nama\" dari df adalah…"
+    options: ["df>nama", "df[\"nama\"]", "df.nama()", "df(nama)"]
+    answer: 1
+    explain: "df[\"nama\"] paling eksplisit."
+  - q: "df.describe() menampilkan…"
+    options: ["Nama kolom saja", "Grafik", "Ringkasan statistik", "Semua baris"]
+    answer: 2
+    explain: "Count, mean, std, min, quartil, max."
+example:
+  code: |
+    data=[{"nama":"Ana","nilai":88},{"nama":"Budi","nilai":92}]
+    print([r["nama"] for r in data])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Series
+
+Series adalah array berlabel. Label disebut **index**.
+
+```python
+import pandas as pd
+
+s = pd.Series([80, 90, 75], index=["Ana", "Budi", "Rani"])
+print(s["Budi"])
+print(s.mean())
+```
+
+## DataFrame
+
+```python
+df = pd.DataFrame([
+    {"nama": "Ana", "kelas": "A", "nilai": 88},
+    {"nama": "Budi", "kelas": "B", "nilai": 92},
+    {"nama": "Rani", "kelas": "A", "nilai": 79},
+])
+print(df.head())
+print(df.shape)
+print(df.dtypes)
+```
+
+## Memilih dan Menyaring
+
+```python
+print(df["nama"])
+print(df[["nama", "nilai"]])
+print(df[df["nilai"] >= 85])
+```
+
+Filter menghasilkan DataFrame baru. Gunakan `&` untuk AND dan `|` untuk OR, lengkapi dengan tanda kurung.
+
+## Ringkasan
+
+```python
+print(df.describe())
+print(df.groupby("kelas")["nilai"].mean())
+```
+
+`groupby` memisahkan data per kategori lalu menerapkan fungsi agregat.
+
+<div class="note">💡 Tanpa Pandas pun semua operasi ini bisa ditulis dengan list dan dict seperti bab-bab sebelumnya. Pandas dipakai karena ringkas dan dioptimasi untuk data besar.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [
+    {"nama": "Ana", "kelas": "A", "nilai": 88},
+    {"nama": "Budi", "kelas": "B", "nilai": 92},
+    {"nama": "Rani", "kelas": "A", "nilai": 79},
+]
+print("Semua:", [r["nama"] for r in data])
+print("Nilai ≥85:", [r["nama"] for r in data if r["nilai"] >= 85])
+
+grup = {}
+for r in data:
+    grup.setdefault(r["kelas"], []).append(r["nilai"])
+print("Rata per kelas:", {k: sum(v)/len(v) for k, v in grup.items()})`} />

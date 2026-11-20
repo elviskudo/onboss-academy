@@ -1,0 +1,147 @@
+---
+title: "Proyek Mini: Pencatat Nilai"
+description: "menggabungkan struct, file, array dinamis, sorting, dan menu interaktif"
+order: 27
+quiz:
+  - q: "Dalam proyek ini, data siswa sebaiknya disimpan sebagai…"
+    options: ["Array of struct", "String mentah", "Float saja", "Pointer kosong"]
+    answer: 0
+    explain: "struct menyatukan nama dan nilai dalam satu unit."
+  - q: "Fungsi realloc dipakai saat…"
+    options: ["Kapasitas array perlu bertambah", "Program selesai", "Membuka file", "Mencetak menu"]
+    answer: 0
+    explain: "Jangan alokasi ulang setiap penambahan — gunakan strategi doubling."
+  - q: "Menu interaktif umumnya dibuat dengan…"
+    options: ["Loop + switch", "Rekursi tanpa base case", "Macro saja", "Thread"]
+    answer: 0
+    explain: "switch mencocokkan pilihan pengguna."
+  - q: "Sebelum keluar, program harus…"
+    options: ["Menutup file & membebaskan memori", "Menghapus source code", "Mengubah tipe", "Tidak perlu apa-apa"]
+    answer: 0
+    explain: "Ini disiplin utama pemrograman C."
+  - q: "Pemisahan kode ke beberapa file bertujuan…"
+    options: ["Keterbacaan & kemudahan maintenance", "Menghindari compiler", "Memperbesar executable", "Menghapus error"]
+    answer: 0
+    explain: "Setiap modul punya header dan implementasi sendiri."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    
+    typedef struct { char nama[32]; int nilai; } Siswa;
+    
+    int main(void) {
+        Siswa data[3];
+        int n = 0;
+        while (n &lt; 3) {
+            printf("Nama (kosong untuk selesai): ");
+            if (!fgets(data[n].nama, sizeof data[n].nama, stdin)) break;
+            data[n].nama[strcspn(data[n].nama, "\n")] = 0;
+            if (!data[n].nama[0]) break;
+            printf("Nilai: ");
+            scanf("%d", &data[n].nilai);
+            getchar();  /* buang newline */
+            n++;
+        }
+        for (int i = 0; i &lt; n; i++)
+            printf("%d. %s = %d\n", i+1, data[i].nama, data[i].nilai);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek ini merangkum seluruh bab sebelumnya: struct, array, string, I/O, dan memori. Hasilnya adalah pencatat nilai sederhana yang bisa dikembangkan.
+
+## Fitur
+
+1. Input nama dan nilai siswa.
+2. Tampilkan daftar dalam urutan tertentu.
+3. Simpan ke file teks/CSV.
+4. Menu: tambah, lihat, urutkan, keluar.
+
+## Struktur Data
+
+```c
+typedef struct {
+    char nama[32];
+    int nilai;
+} Siswa;
+
+typedef struct {
+    Siswa *item;
+    int jumlah;
+    int kapasitas;
+} Daftar;
+```
+
+Strategi pertumbuhan kapasitas:
+
+```c
+if (d->jumlah == d->kapasitas) {
+    int baru = d->kapasitas ? d->kapasitas * 2 : 4;
+    Siswa *tmp = realloc(d->item, baru * sizeof *d->item);
+    if (!tmp) return 0;      /* gagal, data lama tetap aman */
+    d->item = tmp;
+    d->kapasitas = baru;
+}
+```
+
+## Pemisahan Modul
+
+```
+proyek/
+├── siswa.h       ← deklarasi struct & fungsi
+├── siswa.c       ← implementasi CRUD
+├── util.h        ← helper input aman
+├── util.c
+├── main.c        ← menu
+└── Makefile
+```
+
+## Makefile Minimal
+
+```make
+app: main.o siswa.o util.o
+	gcc $^ -o $@
+
+%.o: %.c
+	gcc -Wall -Wextra -c $< -o $@
+
+clean:
+	rm -f *.o app
+```
+
+## Input Aman
+
+Selalu buang newline setelah `scanf`, atau lebih baik baca semua input dengan `fgets` lalu parse dengan `sscanf`.
+
+<div class="note">💡 Kembangkan proyek ini bertahap: pertama console saja, lalu tambahkan penyimpanan file, baru sorting dan pencarian. Setiap tahap harus bisa dikompilasi dan dijalankan sebelum lanjut.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct { char nama[32]; int nilai; } Siswa;
+
+int main(void) {
+    Siswa data[3];
+    int n = 0;
+    while (n &lt; 3) {
+        printf("Nama (kosong untuk selesai): ");
+        if (!fgets(data[n].nama, sizeof data[n].nama, stdin)) break;
+        data[n].nama[strcspn(data[n].nama, "\n")] = 0;
+        if (!data[n].nama[0]) break;
+        printf("Nilai: ");
+        scanf("%d", &data[n].nilai);
+        getchar();  /* buang newline */
+        n++;
+    }
+    for (int i = 0; i &lt; n; i++)
+        printf("%d. %s = %d\n", i+1, data[i].nama, data[i].nilai);
+    return 0;
+}`} />

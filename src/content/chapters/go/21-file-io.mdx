@@ -1,0 +1,145 @@
+---
+"title": "File I/O"
+"description": "os.ReadFile, os.WriteFile, bufio.Scanner, dan path lintas platform"
+"order": 21
+"quiz":
+- "q": "Fungsi untuk membaca seluruh file adalah…"
+  "options":
+  - "os.ReadFile"
+  - "os.OpenOnly"
+  - "io.ReadAllOnly"
+  - "file.Load"
+  "answer": 0
+  "explain": "os.ReadFile(path) mengembalikan ([]byte, error)."
+- "q": "os.WriteFile akan…"
+  "options":
+  - "menambah data"
+  - "menimpa file"
+  - "membaca file"
+  - "menghapus file"
+  "answer": 1
+  "explain": "Gunakan flag os.O_APPEND lewat OpenFile jika ingin menambah."
+- "q": "Mode file 0644 berarti…"
+  "options":
+  - "pemilik baca-tulis, grup & lain baca"
+  - "semua bisa tulis"
+  - "hanya pemilik baca"
+  - "file tidak bisa dibaca"
+  "answer": 0
+  "explain": "Oktal 0644 = rw-r--r--."
+- "q": "bufio.Scanner cocok untuk…"
+  "options":
+  - "membaca baris per baris"
+  - "menulis biner"
+  - "mengompres file"
+  - "menghapus direktori"
+  "answer": 0
+  "explain": "Scanner menyediakan Scan() dan Text() per baris/token."
+- "q": "Untuk menggabungkan path dengan aman, gunakan…"
+  "options":
+  - "filepath.Join"
+  - "path + \"/\" + name"
+  - "os.Concat"
+  - "strings.Add"
+  "answer": 0
+  "explain": "filepath.Join memakai pemisah sesuai sistem operasi."
+"example":
+  "code": "package main\nimport (\n    \"fmt\"\n    \"os\"\n)\nfunc main() {\n    os.WriteFile(\"catatan.txt\", []byte(\"Halo Go\"), 0644)\n    data, _ := os.ReadFile(\"catatan.txt\")\n    fmt.Println(string(data))\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operasi file di Go memakai package `os` dan `io`. Polanya konsisten: hampir semua fungsi mengembalikan `(nilai, error)`.
+
+## Baca & Tulis Sekali Jalan
+
+```go
+data, err := os.ReadFile("data.txt")
+if err != nil { return err }
+fmt.Println(string(data))
+
+err = os.WriteFile("keluar.txt", []byte("isi baru"), 0644)
+```
+
+`os.WriteFile` menimpa file. Untuk mode tambah:
+
+```go
+f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+defer f.Close()
+fmt.Fprintln(f, "baris baru")
+```
+
+## Baris per Baris
+
+```go
+f, err := os.Open("data.txt")
+if err != nil { return err }
+defer f.Close()
+
+scanner := bufio.NewScanner(f)
+for scanner.Scan() {
+    fmt.Println(scanner.Text())
+}
+if err := scanner.Err(); err != nil { return err }
+```
+
+Scanner default membatasi token 64 KB. Untuk baris sangat panjang, gunakan `bufio.Reader`.
+
+## Path & Direktori
+
+```go
+path := filepath.Join("data", "user", "profil.json")
+os.MkdirAll("data/user", 0755)
+filepath.Ext(path) // ".json"
+```
+
+`filepath.Join` menghindari masalah slash pada Windows vs Unix.
+
+## Informasi File
+
+```go
+info, err := os.Stat(path)
+fmt.Println(info.Size(), info.ModTime(), info.IsDir())
+```
+
+## JSON
+
+```go
+data, _ := json.Marshal(apps)
+os.WriteFile("apps.json", data, 0644)
+```
+
+<div class="note">💡 Selalu cek error dari <code>scanner.Err()</code> setelah loop. Tanpa itu, file yang terpotong bisa terlihat seolah selesai dengan sukses.</div>
+
+
+## Try it Yourself
+
+Tambah lebih banyak baris atau ubah isi yang ditulis.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import (
+    "bufio"
+    "fmt"
+    "os"
+    "path/filepath"
+    "strings"
+)
+
+func main() {
+    path := filepath.Join(os.TempDir(), "onboss-catatan.txt")
+    isi := "Baris satu\nBaris dua\nBaris tiga\n"
+    if err := os.WriteFile(path, []byte(isi), 0644); err != nil {
+        fmt.Println(err); return
+    }
+
+    f, _ := os.Open(path)
+    defer f.Close()
+    scanner := bufio.NewScanner(f)
+    for scanner.Scan() {
+        fmt.Println(">", strings.ToUpper(scanner.Text()))
+    }
+
+    info, _ := os.Stat(path)
+    fmt.Println("Ukuran:", info.Size(), "byte")
+    os.Remove(path)
+}`} />

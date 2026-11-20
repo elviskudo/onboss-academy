@@ -1,0 +1,116 @@
+---
+title: "List Struktur Bersarang"
+description: "Membuat list, mengambil elemen dengan [[ ]] dan $, serta mengelola struktur bertingkat"
+order: 13
+quiz:
+  - q: "Elemen list diambil dengan operator…"
+    options: ["[ ] saja", "[[ ]]", "{ }", "&lt; >"]
+    answer: 1
+    explain: "[[ ]] mengambil isi elemen; [ ] mengembalikan sub-list."
+  - q: "Operator $ pada list berfungsi untuk…"
+    options: ["Menghapus elemen", "Mengakses komponenbernama", "Menambah baris", "Mengubah tipe"]
+    answer: 1
+    explain: "$ mengambil elemen berdasarkan nama komponen."
+  - q: "list(a=1, b=2) memiliki panjang…"
+    options: ["1", "2", "4", "3"]
+    answer: 1
+    explain: "length() menghitung jumlah elemen puncak, bukan nilai di dalamnya."
+  - q: "Untuk menggabungkan dua list dipakai…"
+    options: ["c(list1, list2)", "rbind(list1, list2)", "paste(list1, list2)", "sum(list1, list2)"]
+    answer: 0
+    explain: "c() menggabungkan list menjadi satu list baru."
+  - q: "Fungsi untuk menerapkan fungsi ke tiap elemen list adalah…"
+    options: ["lapply", "sapply hanya untuk matriks", "apply saja", "each()"]
+    answer: 0
+    explain: "lapply mengembalikan list; sapply menyederhanakan hasil."
+example:
+  code: |
+    p <- list(nama="Andi", umur=25, hobi=c("baca","lari"))
+    print(p$nama); print(length(p))
+    print(lapply(p, length))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**List** adalah kontainer paling fleksibel di R: tiap elemennya boleh berupa vektor, matriks, data frame, atau list lain. Data frame sebenarnya adalah list khusus dengan kolom berpanjang sama.
+
+## Membuat List
+
+```r
+profil <- list(
+  nama = "Andi",
+  umur = 25,
+  nilai = c(80, 85, 90),
+  alamat = list(kota = "Bandung", kode = 40211)
+)
+```
+
+Elemen bisa bernama atau tidak. Nama memudahkan akses dan membuat struktur terdokumentasi sendiri.
+
+## Tiga Cara Mengambil Elemen
+
+| Cara | Hasil |
+| --- | --- |
+| `profil[1]` | list berisi satu elemen |
+| `profil[[1]]` | nilai asli elemen pertama |
+| `profil$nama` | nilai komponen bernama `nama` |
+| `profil[["umur"]]` | bentuk aman untuk nama dinamis |
+
+```r
+profil[[3]]        # vektor c(80, 85, 90)
+profil$alamat$kota # "Bandung"
+key <- "umur"; profil[[key]]  # 25
+```
+
+<div class="note">💡 `[ ]` selalu mengembalikan list, sehingga `profil[1] + 1` akan error. Gunakan `[[ ]]` bila kamu ingin nilai di dalamnya.</div>
+
+## Menambah dan Menghapus
+
+```r
+profil$email <- "andi@example.com"
+profil[["umur"]] <- 26
+profil$nama <- NULL      # menghapus elemen bernama nama
+```
+
+Menetapkan elemen ke `NULL` menghapusnya; menetapkannya ke `list(NULL)` menyisipkan elemen kosong.
+
+## Iterasi dengan apply-family
+
+```r
+lapply(profil, class)       # list berisi tipe tiap elemen
+sapply(profil, length)      # vektor panjang tiap elemen
+vapply(profil, length, integer(1))  # lebih aman: tipe hasil dipaksa
+```
+
+`vapply()` lebih ketat daripada `sapply()` karena hasilnya harus sesuai template yang diberikan — sangat berguna dalam fungsi yang dipakai ulang.
+
+## Merapikan List
+
+```r
+unlist(profil$nilai)     # vektor dari elemen list
+str(profil)              # ringkasan struktur bertingkat
+names(profil)            # daftar nama komponen
+```
+
+`str()` adalah sahabat saat menerima JSON dari API: ia memperlihatkan seluruh kedalaman struktur dalam satu tampilan ringkas.
+
+## Di Dunia Nyata
+
+- **Respons API**: JSON yang dibaca `jsonlite::fromJSON()` menjadi list bersarang.
+- **Hasil pemodelan**: objek `lm` adalah list berisi koefisien, residual, dan diagnostik.
+- **Konfigurasi**: satu list menampung parameter, path, dan credential (tentu terpisah dari kode).
+- **Multiple output**: fungsi yang mengembalikan beberapa tabel sekaligus.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`profil <- list(nama = "Sari", umur = 24,
+               nilai = c(78, 88, 92),
+               alamat = list(kota = "Surabaya"))
+print(names(profil))
+cat("Umur:", profil$umur, "\n")
+cat("Kota:", profil$alamat$kota, "\n")
+print(sapply(profil, length))
+profil$email <- "sari@example.com"
+print(names(profil))
+print(vapply(profil, function(x) length(x), integer(1)))`} />

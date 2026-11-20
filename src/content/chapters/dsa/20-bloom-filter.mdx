@@ -1,0 +1,103 @@
+---
+title: Bloom Filter
+description: Struktur probabilitas untuk mengecek apakah suatu elemen mungkin ada dalam himpunan.
+order: 20
+quiz:
+- q: Bloom filter menjawab…
+  options:
+  - “Mungkin ada” atau “pasti tidak ada”
+  - “Pasti ada” atau “pasti tidak ada”
+  - Jumlah elemen pasti
+  - Urutan elemen
+  answer: 0
+  explain: False positive mungkin, false negative tidak.
+- q: Bloom filter memakai…
+  options:
+  - Union-Find
+  - Beberapa fungsi hash pada bit array
+  - Satu pohon biner
+  - Heap
+  answer: 1
+  explain: Tiap elemen menandai beberapa bit; pengecekan melihat semua bit tersebut.
+- q: Jika semua bit hasil hash bernilai 1, maka…
+  options:
+  - Elemen pasti tidak ada
+  - Terjadi error
+  - Elemen mungkin ada
+  - Elemen pasti ada
+  answer: 2
+  explain: Bisa jadi bit tersebut dinyalakan oleh elemen lain — false positive.
+- q: Bit array tidak bisa di-reset per elemen karena…
+  options:
+  - Bit terlalu kecil
+  - Hash terlalu cepat
+  - Tidak ada alasan
+  - Beberapa elemen bisa berbagi bit yang sama
+  answer: 3
+  explain: Itulah sebabnya Bloom filter tidak mendukung penghapusan biasa.
+- q: Contoh penggunaan Bloom filter adalah…
+  options:
+  - Menghindari query database untuk kunci yang pasti tidak ada
+  - Mengurutkan data
+  - Menghitung rata-rata
+  - Membuat graf
+  answer: 0
+  explain: Menghemat akses ke penyimpanan yang mahal.
+example:
+  code: "class Bloom:\n    def __init__(self, m):\n        self.bit = [0] * m\n    def tambah(self, s, h):\n        for i in h:\n            self.bit[i % len(self.bit)] = 1\n    def ada(self, s, h):\n        return all(self.bit[i % len(self.bit)] for i in h)\n\nb = Bloom(16)\nb.tambah(\"apel\", [3, 7, 11])\nprint(b.ada(\"apel\", [3, 7, 11]))\n"
+---
+
+
+**Bloom filter** adalah struktur probabilitas yang sangat hemat memori. Ia bisa mengatakan “pasti tidak ada” dengan kepastian penuh, tetapi hanya “mungkin ada” untukpositif.
+
+## Cara Kerja
+
+```text
+bit array: 0 0 0 0 0 0 0 0
+
+tambah "apel" -> hash 3, 7, 11 -> nyalakan bit tersebut
+
+cek "apel" -> hash 3, 7, 11 -> semua 1 -> mungkin ada
+cek "jeruk" -> hash 3, 7, 12 -> bit 12 = 0 -> pasti tidak ada
+```
+
+```python
+class Bloom:
+    def __init__(self, ukuran):
+        self.bit = [0] * ukuran
+
+    def tambah(self, nilai, hash_vals):
+        for h in hash_vals:
+            self.bit[h % len(self.bit)] = 1
+
+    def mungkin_ada(self, nilai, hash_vals):
+        return all(self.bit[h % len(self.bit)] for h in hash_vals)
+
+filter = Bloom(16)
+filter.tambah("apel", [3, 7, 11])
+print(filter.mungkin_ada("apel", [3, 7, 11]))
+print(filter.mungkin_ada("jeruk", [3, 7, 12]))
+```
+
+## Trade-Off
+
+| Parameter | Efek |
+|---|---|
+| bit array lebih besar | false positive turun, memori naik |
+| lebih banyak hash | false positive turun, waktu naik |
+| terlalu banyak elemen | false positive naik |
+
+<div class="note">💡 Bloom filter sangat cocok sebagai **lapisan pertama**. Kalau hasilnya “mungkin ada”, baru lakukan pengecekan pasti ke database atau hash set.</div>
+
+## Keterbatasan
+
+- Tidak bisa menghapus elemen (kecuali Counting Bloom Filter).
+- Tidak bisa mengembalikan daftar elemen.
+- False positive harus diterima oleh desain sistem.
+
+## Penggunaan Nyata
+
+- Browser memberi tahu URL berbahaya tanpa mengunduh daftar penuh.
+- Database menghindari lookup disk untuk kunci yang tidak ada.
+- Sistem distributed memeriksa apakah suatu kunci mungkin ada di node lain.
+- Web crawler menghindari mengunjungi URL yang sudah pernah dilihat.

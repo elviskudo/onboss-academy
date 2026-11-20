@@ -1,0 +1,77 @@
+---
+title: "Keamanan Email"
+description: "SPF, DKIM, DMARC, dan kebiasaan aman beremail"
+order: 25
+quiz:
+  - q: "SPF membantu…"
+    options: ["Mengganti kata sandi", "Menentukan server yang boleh mengirim email untuk domain", "Mengenkripsi isi email", "Memblokir semua spam"]
+    answer: 1
+    explain: "SPF adalah daftar pengirim sah yang dipublikasikan di DNS."
+  - q: "DKIM berguna untuk…"
+    options: ["Menghapus lampiran", "Menyembunyikan alamat penerima", "Membuktikan email tidak diubah dan berasal dari domain tersebut", "Menambah kecepatan pengiriman"]
+    answer: 2
+    explain: "DKIM memakai tanda tangan kriptografi pada header tertentu."
+  - q: "DMARC menggabungkan…"
+    options: ["Hanya SPF", "Hanya enkripsi", "Firewall dan WAF", "SPF dan DKIM plus kebijakan penanganan"]
+    answer: 3
+    explain: "DMARC menentukan apa yang dilakukan penerima bila SPF/DKIM gagal."
+  - q: "Tanda phishing pada email adalah…"
+    options: ["Domain pengirim mirip tapi tidak sama", "Logo rapi", "Subjek singkat", "Jam kerja"]
+    answer: 0
+    explain: "Penyerang memakai domain yang tampak mirip agar korban tertipu."
+  - q: "Lampiran yang paling berisiko adalah…"
+    options: ["File teks", "File executables atau dokumen dengan macro", "PDF biasa dari rekan kerja", "Gambar PNG"]
+    answer: 1
+    explain: "Macro dan executable dapat menjalankan kode saat dibuka."
+example:
+  code: |
+    SPF  : v=spf1 include:_spf.example.com ~all
+    DKIM : selector._domainkey.example.com
+    DMARC: v=DMARC1; p=quarantine; rua=mailto:lapor@example.com
+---
+
+Email masih menjadi vektor utama phishing dan malware. Tiga mekanisme DNS berikut membantu penerima memutuskan apakah email benar-benar berasal dari domain yang diklaimnya.
+
+## SPF
+
+```text
+v=spf1 include:_spf.example.com ~all
+```
+
+`~all` berarti softfail: email dari luar daftar dicurigai, bukan langsung ditolak. `−all` lebih tegas.
+
+## DKIM
+
+DKIM menandatangani sebagian header dan isi email dengan kunci privat domain. Penerima memverifikasi tanda tangan dengan kunci publik yang dipublikasikan di DNS.
+
+```text
+DKIM-Signature: v=1; a=rsa-sha256; d=example.com; s=selector; ...
+```
+
+## DMARC
+
+```text
+v=DMARC1; p=none;       rua=mailto:lapor@example.com
+v=DMARC1; p=quarantine; rua=mailto:lapor@example.com
+v=DMARC1; p=reject;     rua=mailto:lapor@example.com
+```
+
+Mulai dari `p=none` untuk mengumpulkan laporan, lalu naikkan ke `quarantine` dan `reject` setelah konfigurasi matang.
+
+## Kebiasaan Aman
+
+- Periksa domain, bukan sekadar nama tampilan.
+- Jangan klik tautan dari email mencurigakan—ketik alamat situs sendiri.
+- Nonaktifkan macro office untuk dokumen dari luar.
+- Laporkan email phishing ke tim keamanan.
+
+<div class="note">💡 SPF, DKIM, dan DMARC melindungi domainmu dari pemalsuan saat orang lain menerima email. Mereka tidak menghentikan email phishing yang dikirim dari domain yang benar-benar dimiliki penyerang.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Pemeriksaan cepat email:
+  1. Lihat alamat pengirim sebenarnya
+  2. Arahkan kursor ke tautan, jangan klik
+  3. Cek lampiran dan ekstensinya
+  4. Jika ragu, konfirmasi lewat kanal lain`}</code></pre>

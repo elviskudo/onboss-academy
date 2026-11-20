@@ -1,0 +1,89 @@
+---
+title: "PWM Lanjutan"
+description: "Duty cycle, frekuensi, dan aplikasi pada LED serta servo"
+order: 14
+quiz:
+  - q: "Duty cycle 25% berarti sinyal HIGH selama…"
+    options: ["25 kali per detik", "25 volt", "25% dari satu periode", "25 detik"]
+    answer: 2
+    explain: "Rata-rata tegangan menjadi sekitar 25% dari level HIGH."
+  - q: "Frekuensi PWM mengatur…"
+    options: ["Tegangan maksimal", "Jumlah pin", "Alamat I2C", "Berapa kali siklus berulang per detik"]
+    answer: 3
+    explain: "LED biasanya 100–1000 Hz; servo biasanya 50 Hz."
+  - q: "gpiozero PWMLED berguna untuk…"
+    options: ["Mencerahkan atau meredupkan LED lewat value 0–1", "Membaca suhu", "Mengirim I2C", "Menyimpan file"]
+    answer: 0
+    explain: "nilai 0.5 setara duty cycle 50%."
+  - q: "Servo standar mengatur posisi berdasarkan…"
+    options: ["Warna kabel", "Lebar pulsa High dalam periode 20 ms", "Tegangan 5 V saja", "Jumlah pulsa I2C"]
+    answer: 1
+    explain: "Pulsa 1–2 ms umumnya memetakan sudut 0–180°."
+  - q: "Untuk menggerakkan motor DC, gunakan…"
+    options: ["Kabel USB", "Resistor pull-up saja", "Driver motor atau transistor + dioda", "GPIO langsung"]
+    answer: 2
+    explain: "GPIO tidak mampu menyediakan arus motor dan rentan terhadap back-EMF."
+example:
+  code: |
+    from gpiozero import PWMLED, Servo
+    from time import sleep
+    
+    led = PWMLED(18)
+    for nilai in [0, 0.25, 0.5, 0.75, 1.0]:
+        led.value = nilai
+        sleep(0.5)
+    
+    servo = Servo(17)
+    servo.min(); sleep(1); servo.mid(); sleep(1); servo.max()
+---
+
+PWM (Pulse Width Modulation) memberi "tegangan rata-rata" dengan menyalakan dan mematikan pin sangat cepat. Ini dipakai untuk meredupkan LED, menggerakkan servo, dan mengatur kecepatan motor.
+
+## Istilah Utama
+
+| Istilah | Arti |
+|---|---|
+| Period | Lamanya satu siklus penuh |
+| Frequency | 1 / period, dalam Hz |
+| Duty cycle | Persentase waktu HIGH dalam satu periode |
+
+## PWMLED
+
+```python
+from gpiozero import PWMLED
+led = PWMLED(18)
+led.value = 0.3      # 30% terang
+led.pulse()          # efek napas
+```
+
+## Servo
+
+```python
+from gpiozero import Servo
+s = Servo(17)
+s.min()      # sekitar 0 derajat
+s.mid()      # sekitar 90 derajat
+s.max()      # sekitar 180 derajat
+```
+
+Servo biasanya butuh 5 V pada kabel daya dan **GND bersama** dengan Pi. Sinyal kontrol tetap 3,3 V dari GPIO.
+
+## Motor DC
+
+```text
+GPIO -> resistor 1k -> basis transistor
+motor -> supply eksternal -> kolektor transistor
+dioda 1N4007 paralel dengan motor (flyback)
+```
+
+Driver seperti L298N atau TB6612 menyederhanakan kontrol arah dan kecepatan.
+
+<div class="note">💡 gpiozero akan membersihkan PWM saat program selesai. Jika pegawai gpio lain masih aktif, jalankan `sudo pigpiod` hanya bila memang memakai pigpio.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`# Eksperimen singkat:
+# 1. PWMLED 18 dengan value 0.1, 0.5, 1.0
+# 2. Amati perubahan kecerahan
+# 3. Servo di pin 17: min -&gt; mid -&gt; max`}</code></pre>

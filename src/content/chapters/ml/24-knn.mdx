@@ -1,0 +1,81 @@
+---
+title: "K-Nearest Neighbors (KNN)"
+description: "jarak, pemilihan k, voting, scaling, dan kelemahan KNN"
+order: 24
+quiz:
+  - q: "KNN menentukan kelas berdasarkan…"
+    options: ["Probabilitas prior saja", "Tetangga terdekat", "Aturan yang ditulis manual", "Pohon keputusan"]
+    answer: 1
+    explain: "Voting mayoritas tetangga."
+  - q: "Jarak Euclidean dihitung dengan…"
+    options: ["Rata-rata nilai", "Produk nilai", "Akar jumlah selisih kuadrat", "Jumlah selisih absolut"]
+    answer: 2
+    explain: "Rumus Pythagoras multidimensi."
+  - q: "k kecil menyebabkan model…"
+    options: ["Selalu lebih akurat", "Tidak butuh jarak", "Underfitting", "Sensitif noise"]
+    answer: 3
+    explain: "Satu tetangga outliers bisa menentukan hasil."
+  - q: "KNN wajib melakukan…"
+    options: ["Menghapus semua fitur", "Feature scaling", "One-hot semua kolom", "Log transform label"]
+    answer: 1
+    explain: "Jarak sensitif terhadap skala."
+  - q: "Kelemahan utama KNN pada data besar adalah…"
+    options: ["Harus ada GPU", "Model tidak bisa disimpan", "Prediksi lambat karena hitung jarak ke semua titik", "Tidak bisa klasifikasi"]
+    answer: 2
+    explain: "Kompleksitas prediksi tinggi."
+example:
+  code: |
+    a=(1,2); b=(4,6)
+    jarak=((a[0]-b[0])**2+(a[1]-b[1])**2)**0.5
+    print(jarak)
+---
+
+## Cara Kerja
+
+Untuk satu titik baru, cari `k` titik latih terdekat, lalu ambil mayoritas kelas (klasifikasi) atau rata-rata (regresi).
+
+## Jarak Euclidean
+
+```python
+import math
+
+def euclid(a, b):
+    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
+print(euclid((1, 2), (4, 6)))  # 5.0
+```
+
+## Memilih k
+
+| k | Efek |
+| --- | --- |
+| 1 | sangat fleksibel, sensitif noise |
+| 3–7 | umumnya stabil |
+| besar | terlalu halus, bisa underfitting |
+
+Gunakan ganjil untuk klasifikasi biner agar tidak seri.
+
+## Contoh Voting
+
+```python
+tetangga = ["A", "A", "B"]
+prediksi = max(set(tetangga), key=tetangga.count)
+print(prediksi)  # A
+```
+
+<div class="note">💡 Scaling adalah bagian dari KNN, bukan opsi. Tanpa itu, fitur dengan angka besar akan mendominasi jarak.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`import math
+
+def euclid(a, b):
+    return math.sqrt(sum((x-y)**2 for x,y in zip(a,b)))
+
+latih = [((1,2), "A"), ((2,1), "A"), ((8,8), "B")]
+baru = (2,2)
+jarak = sorted((euclid(baru, x), label) for x, label in latih)
+print("Tetangga:", jarak)
+print("Prediksi k=2:", max([l for _, l in jarak[:2]], key=[l for _, l in jarak[:2]].count))`}</code></pre>

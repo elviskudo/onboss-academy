@@ -1,0 +1,111 @@
+---
+title: "Sintaks Template Angular"
+description: "interpolasi, binding properti, binding atribut, dan event binding"
+order: 9
+quiz:
+  - q: "Interpolasi di template Angular ditulis…"
+    options: ["{nilai}", "[[ nilai ]]", "{{ nilai }}", "${nilai}"]
+    answer: 2
+    explain: "Kurung kurawal ganda menampilkan nilai expression ke teks."
+  - q: "Binding properti ditulis dengan…"
+    options: ["#property", "[property]=\"expression\"", "(property)=\"expression\"", "{{ property }}"]
+    answer: 1
+    explain: "Tanda kurung siku mengikat expression ke properti DOM/komponen."
+  - q: "Event binding memakai…"
+    options: ["[click]=\"handler()\"", "{{click}}", "@click", "(click)=\"handler()\""]
+    answer: 3
+    explain: "Tanda kurung bulat untuk mendengarkan event."
+  - q: "Binding dua arah untuk input adalah…"
+    options: ["{{ngModel}}", "[(ngModel)]", "[ngModel]", "(ngModel)"]
+    answer: 1
+    explain: "Kombinasi [] dan () berarti nilai masuk dan keluar."
+  - q: "Expression di template tidak boleh…"
+    options: ["Memanggil fungsi dengan efek samping berat", "Menampilkan variabel", "Menjumlahkan angka", "Memakai ternary"]
+    answer: 0
+    explain: "Expression dievaluasi berulang saat change detection."
+example:
+  code: |
+    <h1>{{ judul }}</h1>
+    <img [src]="foto" [alt]="judul">
+    <button (click)="simpan()">Simpan</button>
+    <input [(ngModel)]="nama">
+---
+
+Template Angular adalah HTML yang diperluas dengan expression binding. Memahami empat bentuk dasarnya membuat halaman menjadi hidup.
+
+## Empat Jenis Binding
+
+| Bentuk | Nama | Arah |
+|--------|------|------|
+| `{{ nilai }}` | Interpolasi | data → teks |
+| `[src]="url"` | Properti | data → DOM |
+| `(click)="simpan()"` | Event | DOM → komponen |
+| `[(ngModel)]="nama"` | Dua arah | keduanya |
+
+## Interpolasi
+
+```html
+<h1>Halo, {{ nama }}!</h1>
+<p>Total: {{ harga * jumlah | currency:'IDR' }}</p>
+```
+
+Expression di dalam `{{ }}` dievaluasi ulang saat data berubah. Jangan taruh perhitungan berat di sana.
+
+## Properti vs Atribut
+
+```html
+<!-- properti DOM -->
+<img [src]="fotoProduk" [disabled]="tidakAktif">
+
+<!-- atribut HTML -->
+<div [attr.aria-label]="judul">...</div>
+
+<!-- kelas dan style -->
+<div [class.aktif]="sudahBayar" [style.color]="warna">...</div>
+```
+
+Gunakan `[attr.x]` bila memang ingin menulis atribut HTML, misalnya `aria-*` atau `data-*`.
+
+## Event Binding
+
+```html
+<button (click)="tambah()">Tambah</button>
+<input (input)="onCari($event)">
+```
+
+Di komponen:
+
+```typescript
+onCari(event: Event) {
+  const nilai = (event.target as HTMLInputElement).value;
+  console.log(nilai);
+}
+```
+
+## Dua Arah dengan ngModel
+
+```typescript
+import { FormsModule } from "@angular/forms";
+
+@Component({
+  standalone: true,
+  imports: [FormsModule],
+  template: `<input [(ngModel)]="nama"><p>Halo {{ nama }}</p>`,
+})
+class ProfilComponent {
+  nama = "Sari";
+}
+```
+
+`[(ngModel)]` adalah singkatan dari `[ngModel]` + `(ngModelChange)`.
+
+<div class="note">💡 Baca `[x]` sebagai "masukkan nilai ke x", `(x)` sebagai "saat x terjadi", dan `[(x)]` sebagai "keduanya". Pola ini berlaku konsisten di seluruh Angular.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`<h1>{{ judul }}</h1>
+<img [src]="foto" [alt]="judul">
+<button (click)="simpan()">Simpan</button>
+<input [(ngModel)]="nama">`}</code></pre>

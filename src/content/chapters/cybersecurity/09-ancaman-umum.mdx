@@ -1,0 +1,81 @@
+---
+title: "Ancaman Umum"
+description: "Klasifikasi ancaman: malware, phishing, dan rekayasa sosial"
+order: 9
+quiz:
+  - q: "Serangan yang menyamar sebagai email resmi untuk memancing klik disebut…"
+    options: ["DDoS", "Phishing", "Brute force", "SQL injection"]
+    answer: 1
+    explain: "Phishing memanfaatkan kesan urgensi dan tiruan merek untuk menipu korban."
+  - q: "Malware yang mengenkripsi file korban dan meminta tebusan disebut…"
+    options: ["Spyware", "Rootkit", "Ransomware", "Adware"]
+    answer: 2
+    explain: "Ransomware biasanya menuntut pembayaran agar kunci dekripsi diberikan."
+  - q: "Rekayasa sosial mengandalkan…"
+    options: ["Kerentanan kernel", "Port terbuka", "Kesalahan sintaks SQL", "Kepercayaan dan perilaku manusia"]
+    answer: 3
+    explain: "Penyerang memanipulasi orang, bukan langsung mengeksploitasi kode."
+  - q: "Trojan horse berbeda dengan virus karena…"
+    options: ["Trojan menyamar sebagai program berguna", "Trojan selalu menyebar sendiri", "Trojan hanya di email", "Trojan tidak berbahaya"]
+    answer: 0
+    explain: "Trojan perlu dijalankan korban karena tampak sah."
+  - q: "Cara paling efektif mengurangi keberhasilan phishing adalah…"
+    options: ["Menghapus log", "Pelatihan pengguna dan verifikasi tautan", "Mengganti kata sandi tiap jam", "Menonaktifkan firewall"]
+    answer: 1
+    explain: "Manusia sering menjadi mata rantai terlemah, jadi edukasi sangat penting."
+example:
+  code: |
+    Contoh email phishing:
+      "Akun Anda akan ditutup. Klik di sini untuk verifikasi."
+    
+    Tanda bahaya:
+      - Alamat pengirim mirip tapi tidak sama
+      - Tautan mengarah ke domain asing
+      - Desakan waktu (urgent / 24 jam)
+---
+
+Ancaman siber tidak semuanya berupa kode rumit. Banyak di antaranya memanfaatkan kebiasaan manusia: terburu-buru, percaya pada nama yang dikenal, atau enggan bertanya.
+
+## Peta Ancaman
+
+| Kategori | Contoh | Sasaran |
+|---|---|---|
+| Malware | Virus, worm, trojan, ransomware | Perangkat & data |
+| Rekayasa sosial | Phishing, pretexting, baiting | Manusia |
+| Serangan jaringan | MITM, DNS spoofing | Komunikasi |
+| Serangan aplikasi | SQLi, XSS, CSRF | Web & API |
+| Serangan kredensial | Brute force, credential stuffing | Akun |
+
+## Phishing Modern
+
+```text
+Pengirim:  support@bank-secure.info
+Subjek:    Verifikasi akun dalam 24 jam
+Tautan:    https://bank-login.verify-akun.example
+```
+
+Tiga pemeriksaan cepat: lihat **domain asli** tautan, bandingkan dengan alamat resmi, dan jangan klik dari email—ketik alamat situs sendiri di browser.
+
+## Ransomware
+
+Ransomware masuk lewat lampiran, tautan, atau layanan remote yang terekspos. Setelah berjalan, ia mencari dan mengenkripsi dokumen lalu meninggalkan catatan tebusan.
+
+Mitigasinya: backup offline yang tidak bisa ditulis dari komputer utama, patch sistem, serta pembatasan hak akses. Membayar tebusan **tidak menjamin** data kembali dan mendorong serangan lanjutan.
+
+## Rekayasa Sosial Lainnya
+
+- **Pretexting** — penyerang berpura jadi IT atau vendor.
+- **Baiting** — media penyimpanan atau penawaran gratis yang menggoda.
+- **Tailgating** — mengikuti orang lain masuk area fisik.
+- **Quid pro quo** — menawarkan bantuan dengan imbalan informasi.
+
+<div class="note">💡 Budaya "tidak menghukum" saat seseorang melaporkan klik salah justru mempercepat respons insiden. Diam-diam menyembunyikan kesalahan jauh lebih berbahaya.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Cek cepat tautan mencurigakan:
+  1. Arahkan kursor ke tautan (jangan klik)
+  2. Baca domain sebelum slash pertama
+  3. Bandingkan dengan domain resmi
+  4. Jika ragu, buka situs dengan mengetik alamat sendiri`}</code></pre>

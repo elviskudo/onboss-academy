@@ -1,0 +1,86 @@
+---
+title: "Mean, Median, dan Modus untuk Machine Learning"
+description: "ringkasan data numerik, efek outlier, dan pemilihan statistik yang tepat"
+order: 9
+quiz:
+  - q: "Mean mudah terpengaruh oleh…"
+    options: ["Sorting", "Outlier", "Median", "Modus"]
+    answer: 1
+    explain: "Nilai ekstrem menarik rata-rata ke arahnya."
+  - q: "Median lebih cocok bila data…"
+    options: ["Hanya satu nilai", "Berupa teks", "Punya outlier", "Selalu normal"]
+    answer: 2
+    explain: "Median tahan terhadap nilai ekstrem."
+  - q: "Modus paling berguna untuk data…"
+    options: ["Kontinu murni", "Waktu saja", "Matrix", "Kategorik"]
+    answer: 3
+    explain: "Modus menunjukkan kategori paling umum."
+  - q: "Imputasi missing value dengan median biasanya lebih aman daripada…"
+    options: ["Nilai 0", "Mean saat ada outlier", "Mode", "Drop kolom"]
+    answer: 1
+    explain: "Median tidak ikut tertarik outlier."
+  - q: "Ringkasan data disebut juga…"
+    options: ["Deep learning", "Regularisasi", "Statistik deskriptif", "Inferensi kausal"]
+    answer: 2
+    explain: "Statistik deskriptif merangkum apa yang ada pada data."
+example:
+  code: |
+    data=[10,12,12,14,100]
+    mean=sum(data)/len(data)
+    s=sorted(data); median=(s[2]+s[3])/2
+    print(mean, median)
+---
+
+## Mean
+
+Mean atau rata-rata adalah jumlah nilai dibagi banyak data.
+
+```python
+data = [10, 12, 12, 14, 100]
+mean = sum(data) / len(data)
+print(mean)  # 29.6
+```
+
+Satu nilai 100 menggeser mean jauh dari mayoritas data yang berkisar 10–14.
+
+## Median
+
+```python
+s = sorted(data)
+median = (s[2] + s[3]) / 2
+print(median)  # 12
+```
+
+Median mengambil posisi tengah sehingga tidak peduli seberapa besar outlier.
+
+## Modus
+
+```python
+from collections import Counter
+
+kategori = ["A", "B", "A", "C", "A"]
+print(Counter(kategori).most_common(1))
+```
+
+Untuk fitur kategorik, modus sering dipakai mengisi nilai kosong.
+
+## Kapan Memakai Mana
+
+| Situasi | Pilihan |
+| --- | --- |
+| Distribusi simetris | mean |
+| Ada outlier | median |
+| Data kategori | modus |
+
+<div class="note">💡 Sebelum memilih ringkasan, lihat distribusinya. Mean tanpa konteks adalah angka yang mudah menyesatkan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`data = [10, 12, 12, 14, 100]
+mean = sum(data) / len(data)
+s = sorted(data)
+median = (s[2] + s[3]) / 2
+print("Mean:", round(mean, 2))
+print("Median:", median)`}</code></pre>

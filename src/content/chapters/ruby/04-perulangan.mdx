@@ -108,11 +108,15 @@ frekuensi = teks.split.tally             # {"a"=>3, "b"=>2, "c"=>1}
 
 - **Notifikasi email berkala**: `User.where(subscribed: true).each { |u| Mailer.send(u) }` tiap malam.
 - **Kuis dengan batas percobaan**: `loop` menampilkan soal sampai user menjawab benar atau `retry` habis.
-- **Peringatan stok kritis**: `produk.select { |p| p.stok < 5 }` lalu kirim ringkasan ke supervisor.
+- **Peringatan stok kritis**: `produk.select { |p| p.stok &lt; 5 }` lalu kirim ringkasan ke supervisor.
 - **Generator nomor invoice**: `loop { no = format("INV-%05d", nomor += 1); break unless Invoice.exists?(no) }`.
 - **Membersihkan input spreadsheet**: `baris.reject { |b| b.strip.empty? }` membuang baris kosong sebelum dihitung.
 
 <div class="note">💡 Pilih `map` bila kamu butuh hasil kembalian, `each` bila hanya butuh efek samping (cetak, simpan, kirim). Kode `each { hasil << x }` hampir selalu bisa dipangkas jadi satu baris `map` — dan hasilnya lebih mudah diuji karena bebas efek samping.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`3.times { |i| puts "Iterasi ke-#{i + 1}" }
 

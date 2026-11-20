@@ -1,0 +1,96 @@
+---
+title: 'Efisiensi Inference: KV Cache, Quantization, dan Batching'
+description: Teknik membuat model besar berjalan lebih cepat dan lebih hemat memori saat melayani pengguna.
+order: 22
+quiz:
+- q: Quantization mengubah…
+  options:
+  - Attention ke convolution
+  - Teks ke gambar
+  - Bobot ke presisi lebih rendah seperti INT8/INT4
+  - Tokenizer ke uppercase
+  answer: 2
+  explain: Presisi lebih rendah memotong memori dan sering mempercepat komputasi dengan sedikit penurunan kualitas.
+- q: KV cache menyimpan…
+  options:
+  - Seluruh bobot model
+  - Dataset training
+  - Tokenizer
+  - Key dan Value attention dari token sebelumnya
+  answer: 3
+  explain: Cache dipakai saat generate agar tidak menghitung ulang prefix.
+- q: Batching dynamic menggabungkan…
+  options:
+  - Beberapa permintaan dalam satu forward pass
+  - Beberapa layer jadi satu
+  - Beberapa token jadi satu kata
+  - Beberapa model jadi satu
+  answer: 0
+  explain: Permintaan dengan panjang mirip dikelompokkan agar GPU tetap sibuk.
+- q: Kelemahan quantization agresif adalah…
+  options:
+  - Attention hilang
+  - Kualitas jawaban bisa menurun
+  - Model tidak bisa dijalankan
+  - Tokenizer rusak
+  answer: 1
+  explain: INT4 secara agresif bisa merusak pola halus; perlu diuji pada tugas nyata.
+- q: Speculative decoding memakai…
+  options:
+  - Lebih banyak epoch
+  - Tokenizer lebih panjang
+  - Model kecil untuk menebak token lalu model besar memvalidasi
+  - Dua tokenizer
+  answer: 2
+  explain: Draft model mengusulkan beberapa token, model utama memeriksa secara paralel.
+example:
+  code: 'memori_fp16 = 7e9 * 2      # 14 GB
+
+    memori_int4 = 7e9 * 0.5    # 3.5 GB
+
+    '
+---
+
+
+Melatih model itu mahal, tetapi **melayani** model juga punya tantangan tersendiri: latensi, throughput, dan memori GPU.
+
+## KV Cache
+
+Saat menghasilkan token ke-100, model tidak perlu menghitung ulang K/V untuk 99 token pertama. Cache menyimpannya.
+
+```text
+tanpa cache: O(n²) komputasi ulang
+dengan cache: O(n) per token baru
+```
+
+Biayanya: memori cache tumbuh dengan panjang konteks dan jumlah permintaan bersamaan.
+
+## Quantization
+
+```python
+parameter = 7_000_000_000
+fp16 = parameter * 2   # 14 GB
+int8 = parameter * 1   # 7 GB
+int4 = parameter * 0.5 # 3.5 GB
+print(fp16, int8, int4)
+```
+
+| Presisi | Memori relatif | Dampak kualitas |
+|---|---|---|
+| FP16 | 1x | baseline |
+| BF16 | 1x | mirip FP16, stabil |
+| INT8 | 0.5x | sangat kecil |
+| INT4 | 0.25x | perlu pengujian |
+
+## Teknik Lain
+
+- **Continuous batching** — slot GPU diisi ulang begitu satu permintaan selesai.
+- **PagedAttention** — mengelola KV cache seperti halaman memori, mengurangi fragmentasi.
+- **Speculative decoding** — model draft menebak, model besar memverifikasi.
+- **Prefix caching** — system prompt identik tidak dihitung ulang antarpengguna.
+
+<div class="note">💡 Turunkan `max_tokens` dan minta jawaban ringkas sebelum membeli GPU lebih besar. Sering kali biaya terbuang karena model dibiarkan menulis terlalu panjang.</div>
+
+## Memilih Konfigurasi
+
+Mulai dari model terkecil yang lolos evaluated quality. Ukur **time to first token** untuk pengalaman interaktif dan **tokens per second** untuk throughput. Keduanya tidak selalu membaik dengan trik yang sama.

@@ -1,0 +1,116 @@
+---
+"title": "Keamanan Rails"
+"description": "Perlindungan bawaan Rails: CSRF, XSS, SQL injection, mass assignment, dan headers"
+"order": 23
+"quiz":
+- "q": "Token CSRF pada form Rails dicegah lewat…"
+  "options":
+  - "authenticity_token otomatis"
+  - "CORS header"
+  - "CSP saja"
+  - "Cookie biasa"
+  "answer": 0
+  "explain": "form_with menyisipkan token yang diverifikasi server."
+- "q": "ERB secara bawaan melakukan…"
+  "options":
+  - "HTML escaping"
+  - "Kompresi gzip"
+  - "Enkripsi AES"
+  - "Minifikasi"
+  "answer": 0
+  "explain": "Output &lt;%= %> di-escape sehingga tag tidak dieksekusi."
+- "q": "Cara aman membuat query dengan input user adalah…"
+  "options":
+  - "Interpolasi string"
+  - "Placeholder / bind parameter"
+  - "eval"
+  - "to_s"
+  "answer": 1
+  "explain": "where(\"title = ?\", input) mengirim nilai sebagai data."
+- "q": "Strong parameter mencegah…"
+  "options":
+  - "XSS"
+  - "Mass assignment"
+  - "CSRF"
+  - "Clickjacking"
+  "answer": 1
+  "explain": "permit membatasi atribut yang boleh di-assign dari params."
+- "q": "Content Security Policy berguna untuk…"
+  "options":
+  - "Membatasi sumber skrip yang boleh dimuat"
+  - "Mengenkripsi database"
+  - "Mengganti password"
+  - "Mempercepat migrasi"
+  "answer": 0
+  "explain": "CSP mengurangi dampak XSS lewat daftar sumber yang diizinkan."
+"example":
+  "code": "class ApplicationController &lt; ActionController::Base\n  protect_from_forgery with: :exception\n\n  before_action :set_headers\n\n  private\n  def set_headers\n    response.set_header(\"X-Content-Type-Options\", \"nosniff\")\n    response.set_header(\"X-Frame-Options\", \"SAMEORIGIN\")\n  end\nend\n"
+---
+
+## Lapisan Perlindungan
+
+```ruby
+class ApplicationController < ActionController::Base
+  protect_from_forgery with: :exception
+
+  before_action :set_headers
+
+  private
+  def set_headers
+    response.set_header("X-Content-Type-Options", "nosniff")
+    response.set_header("X-Frame-Options", "SAMEORIGIN")
+  end
+end
+```
+
+| Ancaman | Perlindungan Rails | Catatan |
+|---|---|---|
+| CSRF | authenticity token | aktif di `ApplicationController` |
+| XSS | escaping di ERB | jangan pakai `html_safe` sembarangan |
+| SQL injection | placeholder + ORM | hindari interpolasi string SQL |
+| Mass assignment | strong parameter | `require(...).permit(...)` |
+| Session fixation | reset session saat login | lakukan di controller sesi |
+
+## CSRF
+
+```erb
+<%= form_with model: @article do |f| %>
+  ...
+<% end %>
+```
+
+Rails otomatis menyisipkan token tersembunyi. Untuk request API(JSON) dari klien lain, gunakan otentikasi berbasis token daripada cookie.
+
+## XSS dan html_safe
+
+```erb
+<%= @article.body %>              <%# aman: di-escape %>
+<%= sanitize(@article.body) %>    <%# hanya tag tertentu yang diizinkan %>
+```
+
+`sanitize` mengizinkan daftar tag aman. `raw` dan `html_safe` menghapus perlindungan — pakai hanya untuk konten yang sudah kamu bersihkan sendiri.
+
+## SQL Injection
+
+```ruby
+# aman
+Article.where("title LIKE ?", "%#{params[:q]}%")
+
+# berbahaya
+Article.where("title LIKE '%#{params[:q]}%'")
+```
+
+Placeholder membuat nilai dikirim terpisah dari perintah SQL.
+
+## Headers dan Secrets
+
+```ruby
+config.action_dispatch.default_headers = {
+  "X-Frame-Options" => "SAMEORIGIN",
+  "X-Content-Type-Options" => "nosniff"
+}
+```
+
+Simpan API key di Rails credentials (`bin/rails credentials:edit`) atau environment variable, jangan di source code.
+
+<div class="note">💡 Keamanan bukan satu fitur, melainkan kebiasaan. Jalankan <code>bundle audit</code> secara berkala untuk menemukan gem dengan kerentanan yang sudah diketahui.</div>

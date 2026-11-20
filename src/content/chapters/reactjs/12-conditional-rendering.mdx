@@ -1,0 +1,109 @@
+---
+title: "Conditional Rendering"
+description: "early return, ternary, logical AND, dan daftar pola cabang di JSX"
+order: 12
+quiz:
+  - q: "Early return cocok bila…"
+    options: ["Data sedang di-map", "Membuat CSS", "Seluruh komponen punya dua versi berbeda", "Hanya satu tombol yang muncul"]
+    answer: 2
+    explain: "Lebih jelas daripada ternary bersarang untuk cabang besar."
+  - q: "`{suka && <Bintang />}` akan menampilkan Bintang saat…"
+    options: ["suka string kosong", "suka bernilai true", "suka bernilai 0", "suka undefined"]
+    answer: 1
+    explain: "Operator && hanya merender elemen bila sisi kiri truthy."
+  - q: "Masalah umum `{'0' && <X />}` adalah…"
+    options: ["X hilang", "Error sintaks", "Tidak ada masalah", "X tetap muncul karena string '0' truthy"]
+    answer: 3
+    explain: "String '0' truthy di JavaScript; ubah ke angka 0 bila ingin sembunyi."
+  - q: "Daftar dirender dengan…"
+    options: ["forEach()", "map()", "filter()", "reduce()"]
+    answer: 1
+    explain: "map mengembalikan array elemen JSX yang bisa disisipkan ke render."
+  - q: "Prop key sebaiknya berisi…"
+    options: ["ID unik dan stabil", "Index array selalu", "Nama kelas CSS", "Waktu render"]
+    answer: 0
+    explain: "ID stabil membantu React mencocokkan elemen saat urutan berubah."
+example:
+  code: |
+    if (memuat) return <p>Memuat…</p>;
+    if (!user) return <Login />;
+
+    return <>{items.map((i) => <Row key={i.id} data={i} />)}</>;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+React tidak punya sintaks khusus untuk `if` di JSX. Kamu memakai JavaScript biasa.
+
+## Tiga Pola Utama
+
+| Pola | Contoh | Cocok untuk |
+|------|--------|-------------|
+| Early return | `if (!user) return <Login />` | Cabang besar, seluruh halaman |
+| Ternary | `{aktif ? <Aktif /> : <Nonaktif />}` | Dua pilihan sejajar |
+| Logical AND | `{error && <Alert />}` | Tampil atau tidak sama sekali |
+
+```jsx
+function StatusPesanan({ pesanan, memuat }) {
+  if (memuat) return <p className="muted">Memuat pesanan…</p>;
+  if (!pesanan) return <p>Pesanan tidak ditemukan.</p>;
+
+  return (
+    <div>
+      <h2>{pesanan.kode}</h2>
+      {pesanan.lunas
+        ? <span className="badge hijau">Lunas</span>
+        : <span className="badge merah">Belum bayar</span>}
+      {pesanan.catatan && <p>{pesanan.catatan}</p>}
+    </div>
+  );
+}
+```
+
+## Jebakan Nilai Falsy
+
+```jsx
+const jumlah = 0;
+{jumlah && <p>{jumlah} item</p>}   // tidak muncul!
+
+{jumlah > 0 && <p>{jumlah} item</p>} // benar
+```
+
+Angular dan Vue punya direktif khusus; React mengandalkan kebiasaan JavaScript. Karena itu paham truthy/falsy itu wajib.
+
+## Render Daftar
+
+```jsx
+function DaftarProduk({ produk }) {
+  if (!produk.length) return <p>Belum ada produk.</p>;
+
+  return (
+    <ul>
+      {produk.map((p) => (
+        <li key={p.id}>
+          {p.nama} <strong>Rp{p.harga.toLocaleString("id-ID")}</strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Jangan memakai index sebagai `key` bila daftar bisa diurut ulang, disisip, atau dihapus. React bisa salah mencocokkan state lokal tiap baris.
+
+<div class="note">💡 Saat ragu memilih pola, mulai dari early return. Kode menjadi lebih pendek dan pembaca tidak perlu menelusuri ternary bersarang.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan tiga pola conditional rendering
+function tampilkan({ memuat, pesanan }) {
+  if (memuat) return "Memuat…";
+  if (!pesanan) return "Tidak ditemukan";
+  const badge = pesanan.lunas ? "Lunas" : "Belum bayar";
+  return \`\${pesanan.kode} — \${badge}\`;
+}
+
+console.log(tampilkan({ memuat: true, pesanan: null }));
+console.log(tampilkan({ memuat: false, pesanan: { kode: "INV-1", lunas: false } }));`} />

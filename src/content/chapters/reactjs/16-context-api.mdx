@@ -1,0 +1,117 @@
+---
+title: "Context API"
+description: "mengirim data lintas level tanpa prop drilling, provider, dan consumer"
+order: 16
+quiz:
+  - q: "Context dibuat dengan…"
+    options: ["React.memo()", "React.forwardRef()", "React.createContext()", "React.useState()"]
+    answer: 2
+    explain: "createContext menghasilkan objek Provider dan Consumer."
+  - q: "Komponen membaca context memakai…"
+    options: ["useReducer", "useContext", "useEffect", "useRef"]
+    answer: 1
+    explain: "Hook useContext mengambil nilai terdekat dari Provider."
+  - q: "Nilai context berubah menyebabkan…"
+    options: ["Tidak ada yang berubah", "Hanya Provider yang berubah", "Error", "Semua consumer render ulang"]
+    answer: 3
+    explain: "Semua komponen yang memakai context tersebut ikut diperbarui."
+  - q: "Prop drilling adalah…"
+    options: ["Membuat rute baru", "Meneruskan props lewat banyak level perantara", "Menghapus props", "Menyimpan data di URL"]
+    answer: 1
+    explain: "Context mengatasi masalah ini untuk data yang dipakai banyak tempat."
+  - q: "Context paling cocok untuk…"
+    options: ["Tema, bahasa, data user login", "Semua state aplikasi", "Hanya warna tombol", "Logika perhitungan lokal"]
+    answer: 0
+    explain: "Gunakan untuk data global yang jarang berubah strukturnya."
+example:
+  code: |
+    const TemaContext = React.createContext("terang");
+
+    function Tombol() {
+      const tema = React.useContext(TemaContext);
+      return <button className={tema}>Lanjut</button>;
+    }
+
+    <TemaContext.Provider value="gelap"><Tombol /></TemaContext.Provider>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bayangkan komponen `App` → `Layout` → `Header` → `Avatar`. Kalau `Avatar` butuh data user, tanpa context data itu harus lewat tiga perantara. Itulah *prop drilling*.
+
+## Membuat Context
+
+```jsx
+const TemaContext = React.createContext("terang");
+```
+
+Nilai di `createContext` adalah default bila tidak ada Provider di atasnya.
+
+## Provider
+
+```jsx
+function App() {
+  const [tema, setTema] = React.useState("terang");
+
+  return (
+    <TemaContext.Provider value={{ tema, setTema }}>
+      <Header />
+      <Halaman />
+      <button onClick={() => setTema(tema === "terang" ? "gelap" : "terang")}>
+        Ganti tema
+      </button>
+    </TemaContext.Provider>
+  );
+}
+```
+
+## Consumer
+
+```jsx
+function Kartu() {
+  const { tema } = React.useContext(TemaContext);
+  return (
+    <div className={`kartu kartu--${tema}`}>
+      Kartu mengikuti tema aktif.
+    </div>
+  );
+}
+```
+
+Siapa pun di bawah Provider bisa mengaksesnya, berapa level pun jaraknya.
+
+## Beberapa Context
+
+```jsx
+<TemaContext.Provider value={tema}>
+  <BahasaContext.Provider value={bahasa}>
+    <App />
+  </BahasaContext.Provider>
+</TemaContext.Provider>
+```
+
+Pisahkan context berdasarkan domain: tema, autentikasi, preferensi, keranjang. Satu context raksasa membuat render ulang meluas.
+
+## Alternatif
+
+Untuk state yang kompleks dan sering berubah, pertimbangkan library khusus (Zustand, Redux, atau Pinia di Vue). Context tetap sangat baik untuk data yang stabil.
+
+<div class="note">💡 Context bukan pengganti props. Pakai props untuk data lokal antar induk-anak, dan context untuk data yang benar-benar dibutuhkan banyak cabang UI.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan context: nilai dibaca dari provider terdekat
+function buatContext(defaultValue) {
+  return { defaultValue };
+}
+
+const Tema = buatContext("terang");
+
+function bacaContext(ctx, providerValue) {
+  return providerValue === undefined ? ctx.defaultValue : providerValue;
+}
+
+console.log(bacaContext(Tema));          // terang
+console.log(bacaContext(Tema, "gelap")); // gelap`} />

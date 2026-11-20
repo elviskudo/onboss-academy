@@ -1,0 +1,181 @@
+---
+title: "Trait & Interface PHP"
+description: "Menggunakan trait untuk reuse kode dan interface untuk kontrak"
+order: 18
+quiz:
+  - q: "Trait berguna untuk…"
+    options: ["Mewarisi banyak class", "Menggunakan ulang method tanpa inheritance", "Membuat konstanta", "Menghubungkan database"]
+    answer: 1
+    explain: "Trait adalah mekanisme copy-paste method ke class."
+  - q: "Interface berisi…"
+    options: ["Implementasi method", "Deklarasi method tanpa isi", "Properti privat", "Kode SQL"]
+    answer: 1
+    explain: "Class yang implements harus mengisi semua method."
+  - q: "Kata kunci untuk memakai trait adalah…"
+    options: ["use", "extends", "implements", "include"]
+    answer: 0
+    explain: "Contoh: class A { use B; }"
+  - q: "Sebuah class bisa implements…"
+    options: ["Hanya satu interface", "Beberapa interface", "Tidak ada", "Hanya trait"]
+    answer: 1
+    explain: "Pisahkan dengan koma: implements A, B"
+  - q: "Konflik method antar trait diselesaikan dengan…"
+    options: ["insteadof", "override", "replace", "extend"]
+    answer: 0
+    explain: "Sintaks: A::method insteadof B;"
+example:
+  code: |
+    <?php
+    interface BisaHitung {
+        public function hitung(): float;
+    }
+    
+    trait Loggable {
+        public function log(string $pesan): void {
+            echo "[LOG] $pesan\n";
+        }
+    }
+    
+    class Produk implements BisaHitung {
+        use Loggable;
+        public function __construct(private float $harga) {}
+        public function hitung(): float { return $this->harga; }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PHP hanya mendukung single inheritance — sebuah class punya satu induk. **Trait** dan **interface** melengkapi kekurangan ini dengan cara berbeda.
+
+## Interface = Kontrak
+
+```php
+<?php
+interface BisaBayar {
+    public function bayar(float $jumlah): bool;
+    public function riwayat(): array;
+}
+
+class Dompet implements BisaBayar {
+    public function bayar(float $jumlah): bool {
+        return $jumlah > 0;
+    }
+
+    public function riwayat(): array {
+        return [];
+    }
+}
+```
+
+Semua method interface bersifat publik dan harus diimplementasikan. Interface bisa有多个, dipisah koma:
+
+```php
+class Dompet implements BisaBayar, BisaEkspor {}
+```
+
+Interface juga bisa mewaris dari interface lain dengan `extends`.
+
+## Trait = Kode Siap Pakai
+
+```php
+<?php
+trait Timestampable {
+    public string $dibuat;
+
+    public function setDibuat(string $waktu): void {
+        $this->dibuat = $waktu;
+    }
+}
+
+trait Loggable {
+    public function log(string $pesan): void {
+        echo "[LOG] " . date('H:i:s') . " $pesan\n";
+    }
+}
+
+class Artikel {
+    use Timestampable, Loggable;
+}
+
+$a = new Artikel();
+$a->setDibuat('2026-01-01');
+$a->log('Artikel dibuat');
+```
+
+Trait tidak bisa di-instantiasi, tapi method-nya menjadi bagian dari class.
+
+## Konflik Method
+
+```php
+<?php
+trait A {
+    public function jalankan(): string { return "A"; }
+}
+trait B {
+    public function jalankan(): string { return "B"; }
+}
+
+class C {
+    use A, B {
+        A::jalankan insteadof B;
+        B::jalankan as jalankanB;
+    }
+}
+```
+
+`insteadof` memilih mana yang dipakai; `as` membuat alias untuk yang lain.
+
+## Mengubah Visibilitas
+
+```php
+<?php
+class Rahasia {
+    use Loggable {
+        log as protected;
+    }
+}
+```
+
+## Interface vs Abstract Class
+
+| Aspek | Interface | Abstract class |
+|-------|-----------|----------------|
+| Implementasi | Tidak ada | Boleh ada |
+| Multiple | Boleh banyak | Satu saja |
+| Properti | Tidak bisa | Bisa |
+| Konstanta | Bisa (PHP 8.2+) | Bisa |
+
+Gunakan interface untuk "bisa melakukan apa", abstract class untuk "bagian bersama dari siapa".
+
+<div class="note">💡 Trait sebaiknya tidak menyimpan state yang kompleks. Kalau mulai butuh properti dan konstruktor, pertimbangkan komposisi atau abstract class.</div>
+
+## Di Dunia Nyata
+
+- Laravel memakai trait `SoftDeletes` untuk menambah perilaku hapus lembut pada model.
+- Interface `JsonSerializable` memungkinkan class mengatur hasil `json_encode()`.
+- Repository pattern mendefinisikan interface `UserRepository` agar mudah di-mock saat testing.
+
+## Try it Yourself
+
+Tambahkan interface kedua atau trait lain untuk melihat konflik dan alias.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+interface BisaHitung {
+    public function hitung(): float;
+}
+
+trait Loggable {
+    public function log(string $pesan): void {
+        echo "[LOG] $pesan" . PHP_EOL;
+    }
+}
+
+class Produk implements BisaHitung {
+    use Loggable;
+    public function __construct(private float $harga) {}
+    public function hitung(): float { return $this->harga * 1.11; }
+}
+
+$p = new Produk(100000);
+$p->log("Produk dibuat");
+echo "Total: " . number_format($p->hitung(), 0) . PHP_EOL;`} />

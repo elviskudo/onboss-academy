@@ -135,6 +135,10 @@ Urutan pencarian variabel: **L**okal → **E**nclosing → **G**lobal → **B**u
 
 <div class="note">💡 Jangan kasih argumen default berupa list/dict (`def tambah(x, daftar=[])`) — objek itu dibuat sekali dan menempel antar pemanggilan. Default yang aman: `None`, lalu `daftar = daftar or []` di dalam tubuh fungsi.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="python" runtime="piston" pistonName="python" code={`def rata_rata(*nilai):
     if not nilai:
         return 0

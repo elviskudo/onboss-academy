@@ -1,0 +1,141 @@
+---
+title: "Number & Math JavaScript"
+description: "Tipe number, konversi, pembulatan, dan objek Math"
+order: 15
+quiz:
+  - q: "`typeof NaN` menghasilkan…"
+    options: ["'number'", "'nan'", "'undefined'", "'string'"]
+    answer: 0
+    explain: "NaN secara teknis bertipe number."
+  - q: "Cara mengecek apakah nilai NaN adalah…"
+    options: ["x == NaN", "Number.isNaN(x)", "typeof x", "x === null"]
+    answer: 1
+    explain: "NaN tidak sama dengan dirinya sendiri, jadi pakai Number.isNaN."
+  - q: "`Math.round(4.6)` menghasilkan…"
+    options: ["4", "5", "4.6", "error"]
+    answer: 1
+    explain: "Round membulatkan ke bilangan bulat terdekat."
+  - q: "`parseInt('12abc')` menghasilkan…"
+    options: ["12", "NaN", "12abc", "error"]
+    answer: 0
+    explain: "ParseInt membaca angka dari awal string sampai karakter non-angka."
+  - q: "`Math.random()` menghasilkan bilangan…"
+    options: ["0 sampai 1 (tidak termasuk 1)", "1 sampai 10", "Bulat", "Negatif"]
+    answer: 0
+    explain: "Rentangnya [0, 1), perlu dikalikan untuk batas lain."
+example:
+  code: |
+    const angka = 42;
+    console.log(Number("12.5"));
+    console.log(Math.round(4.6));
+    console.log(Math.random());
+    console.log(Number.isNaN(NaN));
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+JavaScript hanya punya **satu tipe number** untuk bilangan bulat dan desimal (IEEE-754 double precision). Tidak ada `int` atau `float` terpisah.
+
+## Literal Angka
+
+```js
+const a = 42;
+const b = 3.14;
+const c = 1e6;        // 1000000
+const d = 0b1010;     // 10 (biner)
+const e = 0xFF;       // 255 (heksadesimal)
+const f = 1_000_000;  // separator numeric
+```
+
+## Konversi ke Number
+
+| Fungsi | Contoh | Hasil |
+|--------|--------|-------|
+| `Number("12")` | string bersih | 12 |
+| `parseInt("12px")` | awalan bulat | 12 |
+| `parseFloat("3.14kg")` | awalan desimal | 3.14 |
+| `+"8"` | unary plus | 8 |
+
+```js
+Number("")      // 0
+Number("abc")   // NaN
+Number(true)    // 1
+Number(null)    // 0
+```
+
+## NaN dan Infinity
+
+```js
+0 / 0        // NaN
+1 / 0        // Infinity
+Number.isNaN(NaN)  // true
+Number.isFinite(10) // true
+```
+
+`NaN` tidak sama dengan apa pun, bahkan dirinya sendiri. Gunakan `Number.isNaN()`.
+
+## Method Math yang Sering Dipakai
+
+```js
+Math.round(4.6)   // 5
+Math.floor(4.9)   // 4
+Math.ceil(4.1)    // 5
+Math.trunc(4.9)   // 4
+Math.abs(-7)      // 7
+Math.max(1, 9, 3) // 9
+Math.min(1, 9, 3) // 1
+Math.pow(2, 8)    // 256 (atau 2 ** 8)
+Math.sqrt(81)     // 9
+```
+
+## Angka Acak
+
+```js
+const acak = Math.floor(Math.random() * 10) + 1; // 1 sampai 10
+```
+
+`Math.random()` tidak aman secara kriptografi. Untuk token atau kunci, pakai `crypto.getRandomValues()` di browser atau `crypto.randomBytes()` di Node.
+
+## Presisi Floating Point
+
+```js
+0.1 + 0.2 // 0.30000000000000004
+```
+
+Ini bukan bug JavaScript, melainkan representasi biner desimal. Untuk uang, simpan nilai dalam **sen** sebagai bilangan bulat, atau pakai library decimal.
+
+```js
+const totalSen = 100 + 200; // 300 sen = Rp3,00
+```
+
+## Format Angka
+
+```js
+new Intl.NumberFormat("id-ID", {
+  style: "currency", currency: "IDR"
+}).format(1250000);
+// "Rp1.250.000,00"
+```
+
+<div class="note">💡 `parseInt("08")` di masa lalu dianggap oktal. Selalu berikan radix eksplisit `parseInt(s, 10)` kalau memang perlu parse string angka desimal.</div>
+
+## Di Dunia Nyata
+
+- Perhitungan diskon memakai pembulatan ke sen sebelum ditampilkan.
+- Progres bar memakai `Math.min(100, (selesai/total)*100)`.
+- ID acak untuk elemen DOM memakai kombinasi `Math.random()` dan timestamp.
+
+## Try it Yourself
+
+Ubah bilangan atau method Math pada contoh ini untuk melihat hasilnya.
+
+<TryIt lang="javascript" runtime="client-js" code={`const harga = "125000";
+console.log("Number:", Number(harga));
+console.log("parseInt:", parseInt("42px", 10));
+console.log("round:", Math.round(4.6));
+console.log("floor:", Math.floor(4.9));
+console.log("ceil:", Math.ceil(4.1));
+console.log("max:", Math.max(8, 3, 12));
+const acak = Math.floor(Math.random() * 6) + 1;
+console.log("Dadu:", acak);
+console.log("Rupiah:", new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(125000));`} />

@@ -158,6 +158,10 @@ Bentuk `if: ... endif;`, `foreach: ... endforeach;`, dan `while: ... endwhile;` 
 
 <div class="note">💡 Utamakan `match` untuk memilih berdasarkan satu nilai: dia strict, tidak bisa lupa `break`, dan langsung bernilai. Tapi ingat sisi kerasnya — `match` tanpa `default` melempar `UnhandledMatchError` saat tidak ada yang cocok, sedangkan `switch` diam-diam lewat. Error yang terlihat lebih baik daripada data yang hilang tanpa kabar.</div>
 
+## Try it Yourself
+
+Ubah kondisi if/else untuk melihat cabang yang dipilih.
+
 <TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
 $nilai = 85;
 

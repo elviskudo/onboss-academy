@@ -1,0 +1,121 @@
+---
+title: 'Graf Berbobot: Dijkstra dan Prim'
+description: Algoritma jalur terpendek dan pohon rentang minimum pada graf berbobot non-negatif.
+order: 18
+quiz:
+- q: Dijkstra mencari…
+  options:
+  - Pohon rentang maksimum
+  - Siklus terpendek
+  - Jalur terpendek dari satu sumber
+  - Semua pasangan terpendek tanpa heap
+  answer: 2
+  explain: Dijkstra bersifat single-source shortest path.
+- q: Dijkstra memerlukan bobot…
+  options:
+  - Negatif semua
+  - Bulat saja
+  - Berbeda semua
+  - Non-negatif
+  answer: 3
+  explain: Bobot negatif bisa merusak sifat greedy dan memerlukan Bellman-Ford.
+- q: Prim membangun…
+  options:
+  - Minimum spanning tree
+  - Jalur terpendek
+  - Pohon berarah
+  - Komponen kuat
+  answer: 0
+  explain: MST menghubungkan semua simpul dengan total bobot minimum.
+- q: Struktur data yang biasa dipakai Dijkstra adalah…
+  options:
+  - Hash sederhana
+  - Priority queue (heap)
+  - Stack
+  - Linked list
+  answer: 1
+  explain: Heap memilih simpul dengan jarak sementara terkecil.
+- q: Kompleksitas Dijkstra dengan binary heap adalah…
+  options:
+  - O(E)
+  - O(V+E)
+  - O((V+E) log V)
+  - O(V^2) selalu
+  answer: 2
+  explain: Setiap relaxasi bisa memicu update heap.
+example:
+  code: "import heapq\ngraf = {0:[(1,4),(2,1)], 1:[(3,2)], 2:[(1,2),(3,5)]}\njarak = {0:0}\nh = [(0,0)]\nwhile h:\n    d,u = heapq.heappop(h)\n    if d > jarak.get(u, 1e9): continue\n    for v,w in graf.get(u, []):\n        nd = d + w\n        if nd &lt; jarak.get(v, 1e9):\n            jarak[v] = nd\n            heapq.heappush(h,(nd,v))\nprint(jarak)\n"
+---
+
+
+Graf berbobot menambah biaya pada setiap sisi. Dua masalah klasiknya: **jalur terpendek** dan **pohon rentang minimum**.
+
+## Representasi
+
+```python
+graf = {
+    0: [(1, 4), (2, 1)],
+    1: [(3, 2)],
+    2: [(1, 2), (3, 5)],
+    3: []
+}
+```
+
+## Dijkstra
+
+```python
+import heapq
+
+def dijkstra(graf, awal):
+    jarak = {awal: 0}
+    h = [(0, awal)]
+    while h:
+        d, u = heapq.heappop(h)
+        if d > jarak.get(u, float('inf')):
+            continue
+        for v, w in graf.get(u, []):
+            nd = d + w
+            if nd < jarak.get(v, float('inf')):
+                jarak[v] = nd
+                heapq.heappush(h, (nd, v))
+    return jarak
+
+print(dijkstra(graf, 0))
+```
+
+Ide greedy-nya: selalu kunjungi simpul dengan jarak sementara terkecil.
+
+## Prim
+
+```python
+def prim(graf, awal=0):
+    terhubung = {awal}
+    sisi = [(w, awal, v) for v, w in graf[awal]]
+    heapq.heapify(sisi)
+    total = 0
+    while sisi:
+        w, u, v = heapq.heappop(sisi)
+        if v in terhubung:
+            continue
+        terhubung.add(v)
+        total += w
+        for nxt, bobot in graf[v]:
+            if nxt not in terhubung:
+                heapq.heappush(sisi, (bobot, v, nxt))
+    return total, terhubung
+```
+
+| Aspek | Dijkstra | Prim |
+|---|---|---|
+| Tujuan | jarak minimum dari sumber | total sisi minimum |
+| Fokus | simpul terjauh | sisi termurah |
+| Hasil | tabel jarak | himpunan sisi |
+
+<div class="note">💡 Dijkstra tidak bisa menangani bobot negatif. Gunakan Bellman-Ford jika ada sisi negatif, dan deteksi siklus negatif bila diperlukan.</div>
+
+## Aplikasi
+
+- Router jaringan memilih rute tercepat.
+- Game menentukan jalan NPC.
+- Perencanaan logistik dengan biaya bahan bakar.
+- Cluster gambar berdasarkan kesamaan piksel (Prim).

@@ -1,0 +1,119 @@
+---
+title: "Slot Lanjutan & Scoped Slot"
+description: "named slot, scoped slot, dan pola render props di Vue"
+order: 20
+quiz:
+  - q: "Slot bernama didefinisikan dengan…"
+    options: ["#header di script", "v-slot:header di induk saja", "<slot name=\"header\">", "<template name=\"header\">"]
+    answer: 2
+    explain: "Induk mengirim lewat `<template #header>`."
+  - q: "Scoped slot memungkinkan…"
+    options: ["Mengganti template", "Anak mengirim data ke konten slot induk", "Induk mengubah props anak", "Menghapus slot"]
+    answer: 1
+    explain: "Contoh: <slot :item=\"item\" /> lalu #default=\"{ item }\"."
+  - q: "Singkatan untuk v-slot:header adalah…"
+    options: ["@header", ":header", "*header", "#header"]
+    answer: 3
+    explain: "Tanda # dipakai di dalam <template>."
+  - q: "Slot fallback dipakai saat…"
+    options: ["Komponen async", "Induk tidak mengirim konten slot", "Terjadi error", "Slot bernama"]
+    answer: 1
+    explain: "Tulis konten default di antara tag <slot>."
+  - q: "Pola scoped slot mirip dengan…"
+    options: ["Render props di React", "CSS grid", "Router guard", "Pinia"]
+    answer: 0
+    explain: "Anak memberi data, induk menentukan tampilannya."
+example:
+  code: |
+    <!-- anak -->
+    <slot name="header">Judul default</slot>
+    <slot :item="item" />
+
+    <!-- induk -->
+    <template #header><h2>Daftar</h2></template>
+    <template #default="{ item }"><li>{{ item.nama }}</li></template>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Slot membuat komponen menjadi wadah fleksibel. Scoped slot membawanya lebih jauh: anak memberi data, induk yang menggambar.
+
+## Slot Dasar
+
+```vue
+<!-- Kartu.vue -->
+<template>
+  <div class="kartu">
+    <slot>Isi default bila kosong</slot>
+  </div>
+</template>
+```
+
+```vue
+<Kartu>
+  <p>Konten dari induk</p>
+</Kartu>
+```
+
+## Named Slot
+
+```vue
+<!-- Layout.vue -->
+<template>
+  <header><slot name="header" /></header>
+  <main><slot /></main>
+  <footer><slot name="footer" /></footer>
+</template>
+```
+
+```vue
+<Layout>
+  <template #header><h1>Judul Halaman</h1></template>
+  <p>Konten utama</p>
+  <template #footer><small>© 2026</small></template>
+</Layout>
+```
+
+## Scoped Slot
+
+```vue
+<!-- Daftar.vue -->
+<script setup>
+const items = [{ id: 1, nama: 'Kopi' }, { id: 2, nama: 'Roti' }]
+</script>
+
+<template>
+  <ul>
+    <li v-for="item in items" :key="item.id">
+      <slot name="baris" :item="item" :index="item.id" />
+    </li>
+  </ul>
+</template>
+```
+
+```vue
+<Daftar>
+  <template #baris="{ item, index }">
+    <strong>{{ index }}.</strong> {{ item.nama }}
+  </template>
+</Daftar>
+```
+
+Konsumen bisa mengubah tampilan baris tanpa mengubah komponen `Daftar`.
+
+## Kasus Nyata
+
+Komponen tabel, dropdown, dan layout sering memakai scoped slot. Library seperti Vuetify dan Element Plus dibangun di atas pola ini.
+
+<div class="note">💡 Scoped slot adalah "render props" ala Vue. Komponen anak tetap menguasai data dan logika, induk bebas menentukan tampilan.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi scoped slot: anak memberi data ke fungsi render induk
+function Daftar(items, renderBaris) {
+  return items.map((item, i) => renderBaris(item, i)).join("\n");
+}
+
+console.log(Daftar(["Kopi", "Roti"], (item, i) => \`\${i + 1}. \${item}\`));`} />

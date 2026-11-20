@@ -1,0 +1,110 @@
+---
+title: "Common Table Expression (WITH)"
+description: "Menamai langkah perantara, CTE bertingkat, dan rekursi dasar"
+order: 17
+quiz:
+  - q: "CTE diawali dengan kata kunci…"
+    options: ["WITH", "WITH TABLE", "LET", "DECLARE"]
+    answer: 0
+    explain: "WITH nama AS (SELECT ...) SELECT ... FROM nama."
+  - q: "Beberapa CTE dipisahkan dengan…"
+    options: ["Titik koma", "Koma", "Spasi", "AND"]
+    answer: 1
+    explain: "WITH a AS (...), b AS (...) SELECT ..."
+  - q: "CTE rekursif memakai kata kunci…"
+    options: ["RECURSIVE", "LOOP", "REPEAT", "ITERATE"]
+    answer: 0
+    explain: "WITH RECURSIVE nama AS (... UNION ALL ...)."
+  - q: "CTE terutama berguna untuk…"
+    options: ["Menghapus tabel", "Membaca langkah query menjadi bernama", "Mengubah hak akses", "Menyimpan file"]
+    answer: 1
+    explain: "CTE membuat query panjang menjadi tahapan yang jelas."
+  - q: "Di SQLite/PostgreSQL, CTE bisa dipakai ulang dalam satu query…"
+    options: ["Tidak sama sekali", "Berkali-kali dengan nama yang sama", "Hanya sekali", "Hanya di ORDER BY"]
+    answer: 1
+    explain: "Selama satu statement, CTE dapat direferensikan berulang kali."
+example:
+  code: |
+    WITH rata AS (SELECT AVG(gaji) AS r FROM karyawan) SELECT nama FROM karyawan, rata WHERE gaji > rata.r;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+CTE adalah tabel sementara bernama yang hidup hanya selama satu query. Ia membuat logika query berlapis menjadi seperti resep: langkah satu, langkah dua, lalu hasil akhir.
+
+## Sintaks Dasar
+
+```sql
+WITH rata_dept AS (
+  SELECT dept, AVG(gaji) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.gaji, rata_dept.rata
+FROM karyawan k
+JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata;
+```
+
+Bandingkan dengan subquery di FROM: isi query sama, tetapi CTE ditempatkan di atas sehingga urutan membaca mengikuti urutan berpikir.
+
+## Beberapa CTE
+
+```sql
+WITH total AS (
+  SELECT SUM(gaji) AS semua FROM karyawan
+),
+tinggi AS (
+  SELECT SUM(gaji) AS bagian FROM karyawan WHERE gaji >= 10000000
+)
+SELECT ROUND(tinggi.bagian * 100.0 / total.semua, 1) AS persen
+FROM total, tinggi;
+```
+
+CTE kedua boleh merujuk CTE pertama, tetapi tidak boleh merujuk CTE yang didefinisikan setelahnya.
+
+## CTE Rekursif
+
+```sql
+WITH RECURSIVE angka(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM angka WHERE n < 5
+)
+SELECT n FROM angka;
+```
+
+Bagian pertama disebut *anchor*, bagian kedua *recursive member*. Kondisi `WHERE n &lt; 5` adalah rem agar rekursi berhenti.
+
+## CTE vs Subquery vs Tabel Sementara
+
+| Mekanisme | Umur | Cocok untuk |
+| --- | --- | --- |
+| Subquery | satu ekspresi | nilai tunggal / daftar kecil |
+| CTE | satu statement | langkah perantara yang dibaca ulang |
+| TEMP TABLE | satu sesi | hasil dipakai banyak statement |
+
+CTE tidak selalu lebih cepat — di beberapa database ia dimaterialisasi, di lain di-inline. Untuk performa, ukur dengan EXPLAIN.
+
+<div class="note">💡 Beri nama CTE sesuai arti bisnisnya, misalnya `rata_per_dept`, bukan `q1` atau `temp`. Query yang dibaca tim lain jadi jauh lebih mudah dipelihara.</div>
+
+## Di Dunia Nyata
+
+- **Laporan bertahap**: hitung total, lalu persentase, lalu format akhir.
+- **Hierarki**: `WITH RECURSIVE` menelusuri atasan → bawahan.
+- **Deret tanggal**: mengisi tanggal yang kosong sebelum digabung dengan transaksi.
+- **Debugging**: jalankan satu CTE secara terpisah untuk memeriksa hasil perantara.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`WITH rata_dept AS (
+  SELECT dept, ROUND(AVG(gaji)) AS rata
+  FROM karyawan
+  GROUP BY dept
+)
+SELECT k.nama, k.dept, k.gaji, rata_dept.rata AS rata_dept
+FROM karyawan k
+JOIN rata_dept ON k.dept = rata_dept.dept
+WHERE k.gaji > rata_dept.rata
+ORDER BY k.gaji DESC;`} />

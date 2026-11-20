@@ -142,6 +142,10 @@ teks.tambah("Halo");
 
 <div class="note">💡 Generic menghilangkan kebutuhan `any` pada utilitas (ambil pertama, buat map, cache). Praktik terbaik: tulis generik hanya saat beberapa tipe benar-benar dipakai — jangan membuat abstraksi untuk satu kasus.</div>
 
+## Try it Yourself
+
+Coba panggil fungsi generic dengan tipe lain.
+
 <TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`function ambilPertama<T>(daftar: T[]): T | undefined {
   return daftar[0];
 }

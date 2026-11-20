@@ -1,0 +1,135 @@
+---
+"title": "Go Modules"
+"description": "go.mod, go.sum, versi dependensi, dan perintah go get"
+"order": 16
+"quiz":
+- "q": "File yang mendefinisikan modul Go adalah…"
+  "options":
+  - "go.mod"
+  - "package.json"
+  - "go.sum"
+  - "Gopkg.toml"
+  "answer": 0
+  "explain": "go.mod berisi module path, versi Go, dan daftar require."
+- "q": "File go.sum berisi…"
+  "options":
+  - "daftar file sumber"
+  - "hash checksum dependensi"
+  - "konfigurasi build"
+  - "output kompilasi"
+  "answer": 1
+  "explain": "go.sum memverifikasi integritas modul yang diunduh."
+- "q": "Perintah untuk membuat modul baru adalah…"
+  "options":
+  - "go init"
+  - "go mod init"
+  - "go new"
+  - "go create"
+  "answer": 1
+  "explain": "go mod init example.com/nama membuat go.mod."
+- "q": "Versi pseudo seperti v0.0.0-20240101... menunjukkan…"
+  "options":
+  - "rilis stabil"
+  - "commit tertentu sebelum rilis"
+  - "versi cacat"
+  - "versi lokal"
+  "answer": 1
+  "explain": "Pseudo-version merekam commit saat modul belum punya tag rilis."
+- "q": "Perintah go mod tidy berguna untuk…"
+  "options":
+  - "menghapus cache"
+  - "menyesuaikan go.mod dengan import yang dipakai"
+  - "mengompilasi"
+  - "membuat binary"
+  "answer": 1
+  "explain": "tidy menambah yang kurang dan membuang yang tidak dipakai."
+"example":
+  "code": "module example.com/belajar\n\ngo 1.22\n\nrequire golang.org/x/text v0.14.0\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Go Modules adalah sistem manajemen dependensi resmi sejak Go 1.11. Modul adalah kumpulan package yang versinya tercatat bersama.
+
+## Membuat Modul
+
+```bash
+mkdir belajar-go && cd belajar-go
+go mod init example.com/belajar-go
+```
+
+Hasil `go.mod`:
+
+```go
+module example.com/belajar-go
+
+go 1.22
+```
+
+Path modul sebaiknya unik (biasanya memakai domain), meski tidak harus benar-benar online.
+
+## Menambah Dependensi
+
+```bash
+go get github.com/username/paket@v1.2.3
+```
+
+Atau cukup import di kode lalu jalankan `go mod tidy`.
+
+## Isi go.mod
+
+| Bagian | Fungsi |
+|---|---|
+| `module` | Nama modul |
+| `go` | Versi bahasa minimum |
+| `require` | Dependensi langsung |
+| `replace` | Alihkan path/versi (lokal atau fork) |
+| `exclude` | Tolak versi tertentu |
+
+```go
+require (
+    golang.org/x/text v0.14.0
+    github.com/stretchr/testify v1.8.4 // indirect
+)
+```
+
+## go.sum
+
+Setiap modul yang diunduh dicatat dengan hash SHA-256. Jangan diedit manual. Jika hash berubah, `go` akan menolak — ini melindungi dari dependensi yang dimodifikasi.
+
+## Perintah Sehari-hari
+
+| Perintah | Fungsi |
+|---|---|
+| `go mod tidy` | Selaraskan dependency dengan kode |
+| `go mod download` | Unduh ke cache |
+| `go mod verify` | Cek integritas |
+| `go list -m all` | Tampilkan semua modul |
+| `go get -u` | Perbarui versi |
+
+## Vendor (Opsional)
+
+```bash
+go mod vendor
+```
+
+Menyalin dependensi ke folder `vendor/` agar build bisa offline.
+
+<div class="note">💡 Commit Both <code>go.mod</code> dan <code>go.sum</code> ke repository. Tanpa keduanya, rekan tim bisa mendapat versi berbeda.</div>
+
+
+## Try it Yourself
+
+Modul tidak bisa dijalankan di Piston. Perhatikan struktur `go.mod` di bawah sebagai referensi.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`module example.com/belajar
+
+go 1.22
+
+require golang.org/x/text v0.14.0
+
+// Perintah berguna:
+// go mod init example.com/belajar
+// go mod tidy
+// go build ./...
+// go test ./...`} />

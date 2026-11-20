@@ -1,0 +1,81 @@
+---
+title: "Papan dan Spesifikasi Arduino"
+description: "Memilih board, tegangan logika, dan sumber daya"
+order: 9
+quiz:
+  - q: "Arduino Uno memakai mikrokontroler…"
+    options: ["Raspberry Pi SoC", "ATmega328P", "ESP32", "STM32"]
+    answer: 1
+    explain: "Uno adalah papan klasik dengan 14 pin digital dan 6 pin analog."
+  - q: "Tegangan logika Arduino Uno adalah…"
+    options: ["1,8 volt", "12 volt", "5 volt", "3,3 volt"]
+    answer: 2
+    explain: "Board 3,3 V seperti Due tidak boleh diberi sinyal 5 V tanpa level shifter."
+  - q: "Pin Vin pada Arduino digunakan untuk…"
+    options: ["Membaca suhu", "Output PWM", "Upload sketch", "Memberi daya dari sumber eksternal"]
+    answer: 3
+    explain: "Rentang yang disarankan sekitar 7–12 V; regulator di board menurunkannya ke 5 V."
+  - q: "Memori flash pada ATmega328P berfungsi untuk…"
+    options: ["Menyimpan sketch", "Menyimpan variabel sementara", "Menyimpan EEPROM", "Mengatur clock"]
+    answer: 0
+    explain: "Program yang di-upload tersimpan di flash dan tetap ada setelah mati."
+  - q: "Arduino Nano berbeda dari Uno terutama pada…"
+    options: ["Tegangan logika", "Ukuran dan bentuk yang lebih kecil", "Bahasa pemrograman", "Jumlah pin analog"]
+    answer: 1
+    explain: "Keduanya memakai ATmega328P dan ekosistem yang sama."
+example:
+  code: |
+    Spesifikasi Uno (ringkas):
+      MCU        : ATmega328P
+      Clock      : 16 MHz
+      Flash      : 32 KB
+      SRAM       : 2 KB
+      EEPROM     : 1 KB
+      Digital I/O: 14 (6 PWM)
+      Analog in  : 6
+---
+
+Memilih board yang tepat menentukan tegangan, jumlah pin, dan kemampuan komunikasi. Arduino Uno tetap menjadi referensi karena dokumentasinya sangat luas.
+
+## Papan Populer
+
+| Board | MCU | Logika | Kelebihan |
+|---|---|---|---|
+| Uno | ATmega328P | 5 V | Pemula, banyak modul |
+| Nano | ATmega328P | 5 V | Kecil, breadboard |
+| Mega | ATmega2560 | 5 V | Banyak pin |
+| Due | SAM3X8E | 3,3 V | 32-bit, cepat |
+| Pro Mini | ATmega328P | 5 V/3,3 V | Ringkas, tanpa USB |
+
+## Sumber Daya
+
+```text
+USB   -> 5 V dari komputer/charger
+Vin   -> 7-12 V, lewat regulator onboard
+5V    -> suplai 5 V langsung (hati-hati, tanpa regulator)
+3V3   -> output 3,3 V (terbatas)
+```
+
+## Peta Memori
+
+| Jenis | Isi | Hilang saat mati? |
+|---|---|---|
+| Flash | Sketch | Tidak |
+| SRAM | Variabel, stack | Ya |
+| EEPROM | Data pengguna | Tidak |
+
+Uno hanya punya SRAM 2 KB—hematlah saat memakai `String` atau buffer besar.
+
+## Pin Multipurpose
+
+Beberapa pin punya fungsi kedua: `A4/A5` = I2C (SDA/SCL), `0/1` = UART (RX/TX), `10/11/12/13` = SPI. Menggunakan pin untuk komunikasi berarti tidak bisa dipakai bersamaan untuk fungsi lain.
+
+<div class="note">💡 Hati-hati: pin 0 dan 1 dipakai USB untuk upload dan Serial Monitor. Menghubungkan kabel ke sana bisa menggagalkan upload sketch.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`Cek board di IDE:
+  Tools &gt; Board &gt; Arduino AVR Boards &gt; Arduino Uno
+  Tools &gt; Processor &gt; ATmega328P
+  Tools &gt; Port &gt; /dev/cu.usbmodem...`}</code></pre>

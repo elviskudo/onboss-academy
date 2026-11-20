@@ -1,0 +1,182 @@
+---
+title: "Proyek: REST API Sederhana"
+description: "Menggabungkan routing, PDO, JSON, dan validasi dalam satu API kecil"
+order: 25
+quiz:
+  - q: "Metode HTTP untuk mengambil data adalah…"
+    options: ["GET", "POST", "DELETE", "PATCH"]
+    answer: 0
+    explain: "GET dipakai untuk operasi baca."
+  - q: "Status code untuk data berhasil dibuat adalah…"
+    options: ["200", "201", "404", "500"]
+    answer: 1
+    explain: "201 Created untuk resource baru."
+  - q: "Cara membaca body JSON pada PHP adalah…"
+    options: ["file_get_contents('php://input')", "$_GET", "$_POST", "$_SERVER"]
+    answer: 0
+    explain: "Lalu di-decode dengan json_decode."
+  - q: "Header Content-Type untuk JSON adalah…"
+    options: ["text/plain", "application/json", "text/html", "multipart/form-data"]
+    answer: 1
+    explain: "Sertakan charset UTF-8 bila perlu."
+  - q: "Routing sederhana bisa memakai…"
+    options: ["$_SERVER['REQUEST_URI'] dan REQUEST_METHOD", "session_start()", "json_encode()", "setcookie()"]
+    answer: 0
+    explain: "Keduanya menentukan endpoint dan aksi."
+example:
+  code: |
+    <?php
+    header('Content-Type: application/json');
+    $method = $_SERVER['REQUEST_METHOD'];
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    
+    if ($method === 'GET' && $path === '/api/produk') {
+        echo json_encode(['data' => []]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Tidak ditemukan']);
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Proyek penutup merangkai hampir semua materi sebelumnya: session tidak dipakai di sini, tapi routing, PDO, JSON, validasi, dan exception bekerja bersama.
+
+## Struktur
+
+```
+api/
+  index.php       → front controller
+  config.php      → koneksi PDO
+  src/
+    ProdukRepository.php
+```
+
+## Front Controller
+
+```php
+<?php
+// api/index.php
+require __DIR__ . '/config.php';
+
+header('Content-Type: application/json; charset=utf-8');
+
+$method = $_SERVER['REQUEST_METHOD'];
+$path   = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+function respons(int $kode, array $data): never {
+    http_response_code($kode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+try {
+    if ($method === 'GET' && $path === '/api/produk') {
+        $repo = new ProdukRepository($pdo);
+        respons(200, ['data' => $repo->semua()]);
+    }
+
+    if ($method === 'POST' && $path === '/api/produk') {
+        $body = json_decode(file_get_contents('php://input'), true, 512, JSON_THROW_ON_ERROR);
+
+        $nama = trim($body['nama'] ?? '');
+        $harga = (int) ($body['harga'] ?? 0);
+
+        if ($nama === '' || $harga <= 0) {
+            respons(422, ['error' => 'nama dan harga wajib valid']);
+        }
+
+        $repo = new ProdukRepository($pdo);
+        $id = $repo->buat($nama, $harga);
+        respons(201, ['id' => $id, 'nama' => $nama]);
+    }
+
+    respons(404, ['error' => 'Endpoint tidak ditemukan']);
+} catch (JsonException $e) {
+    respons(400, ['error' => 'JSON tidak valid']);
+} catch (Throwable $e) {
+    error_log($e->getMessage());
+    respons(500, ['error' => 'Kesalahan server']);
+}
+```
+
+## Repository
+
+```php
+<?php
+class ProdukRepository {
+    public function __construct(private PDO $pdo) {}
+
+    public function semua(): array {
+        return $this->pdo
+            ->query('SELECT id, nama, harga FROM produk ORDER BY id DESC')
+            ->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function buat(string $nama, int $harga): int {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO produk (nama, harga) VALUES (?, ?)'
+        );
+        $stmt->execute([$nama, $harga]);
+        return (int) $this->pdo->lastInsertId();
+    }
+}
+```
+
+## Status Code yang Umum
+
+| Kode | Arti |
+|------|------|
+| 200 | OK |
+| 201 | Created |
+| 400 | Bad Request |
+| 401 | Unauthorized |
+| 404 | Not Found |
+| 422 | Unprocessable Entity |
+| 500 | Internal Server Error |
+
+## Menguji API
+
+```bash
+curl http://localhost:8000/api/produk
+curl -X POST http://localhost:8000/api/produk   -H 'Content-Type: application/json'   -d '{"nama":"Kopi","harga":25000}'
+```
+
+## Catatan Keamanan
+
+- Selalu gunakan prepared statement.
+- Validasi dan sanitasi semua input.
+- Jangan tampilkan `getMessage()` mentah di produksi — cukup log di server.
+- Tambahkan autentikasi (API key/JWT) untuk endpoint sensitif.
+
+<div class="note">💡 Fungsi `respons()` di atas memakai return type `never` (PHP 8.1+) karena selalu diakhiri `exit` — sinyal bagus untuk compiler dan pembaca kode.</div>
+
+## Rangkuman Seri
+
+Dari variabel dasar hingga REST API, PHP menyediakan semuanya tanpa framework. Begitu fondasi ini kuat, mempelajari Laravel atau Symfony menjadi jauh lebih mudah karena konsepnya sama — hanya dibungkus dengan struktur yang lebih rapi.
+
+## Try it Yourself
+
+Ubah `$method` menjadi POST atau `$path` menjadi endpoint lain untuk melihat responsnya.
+
+<TryIt lang="php" runtime="piston" pistonName="php" code={`<?php
+// Simulasi response API tanpa server sungguhan:
+function respons(int $kode, array $data): array {
+    return ['status' => $kode, 'body' => $data];
+}
+
+$method = 'GET';
+$path = '/api/produk';
+
+$produk = [
+    ['id' => 1, 'nama' => 'Kopi', 'harga' => 25000],
+    ['id' => 2, 'nama' => 'Teh', 'harga' => 15000]
+];
+
+if ($method === 'GET' && $path === '/api/produk') {
+    $hasil = respons(200, ['data' => $produk]);
+} else {
+    $hasil = respons(404, ['error' => 'Tidak ditemukan']);
+}
+
+echo json_encode($hasil, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . PHP_EOL;`} />

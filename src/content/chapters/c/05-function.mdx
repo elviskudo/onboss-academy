@@ -200,6 +200,10 @@ Pola ini menjadi dasar `qsort` (stdlib) dan vtable pattern pada chapter Struct â
 
 <div class="note">ğŸ’¡ Satu function, satu tanggung jawab. Jika kamu perlu menulis komentar untuk menjelaskan apa yang dilakukan function, pertimbangkan untuk memecahnya menjadi dua function dengan nama yang jelas. Untuk data yang harus berubah, ingat: kirim pointer, bukan nilainya.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
 
 int tambah(int a, int b) {
@@ -211,13 +215,13 @@ int kali(int a, int b) {
 }
 
 void sapa(char nama[], int berapa) {
-    for (int i = 1; i <= berapa; i++) {
+    for (int i = 1; i &lt;= berapa; i++) {
         printf("Halo ke-%d, %s!\\n", i, nama);
     }
 }
 
 int faktorial(int n) {
-    if (n <= 1) return 1;
+    if (n &lt;= 1) return 1;
     return n * faktorial(n - 1);
 }
 

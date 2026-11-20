@@ -1,0 +1,102 @@
+---
+title: "Transaksi, Isolation, dan Lock PostgreSQL"
+description: "BEGIN, COMMIT, ROLLBACK, SAVEPOINT, dan level isolasi"
+order: 23
+quiz:
+  - q: "Perintah memulai transaksi adalah…"
+    options: ["BEGIN", "START", "OPEN", "INIT"]
+    answer: 1
+    explain: "BEGIN atau START TRANSACTION."
+  - q: "SAVEPOINT berguna untuk…"
+    options: ["Rollback sebagian transaksi", "Membuat tabel", "Mengubah user", "Menghapus index"]
+    answer: 2
+    explain: "ROLLBACK TO SAVEPOINT membatalkan perubahan setelah titik itu."
+  - q: "Isolation default PostgreSQL adalah…"
+    options: ["READ COMMITTED", "READ UNCOMMITTED", "REPEATABLE READ", "SERIALIZABLE"]
+    answer: 3
+    explain: "Default-nya READ COMMITTED; MySQL memakai REPEATABLE READ."
+  - q: "SELECT ... FOR UPDATE melakukan…"
+    options: ["Lock baris yang dibaca", "Menghapus baris", "Membuat index", "Menyimpan transaksi"]
+    answer: 0
+    explain: "Baris terkunci sampai transaksi selesai."
+  - q: "SERIALIZABLE mencegah…"
+    options: ["Anomali serialization", "Semua error", "Index rusak", "Lock apa pun"]
+    answer: 1
+    explain: "Level tertinggi dengan kemungkinan retry saat conflict."
+example:
+  code: |
+    BEGIN; UPDATE rekening SET saldo=saldo-100 WHERE id=1; UPDATE rekening SET saldo=saldo+100 WHERE id=2; COMMIT;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Transaksi menjamin bahwa sekelompok perubahan diperlakukan sebagai satu unit. PostgreSQL memakai MVCC, sehingga pembaca umumnya tidak memblokir penulis.
+
+## Alur Dasar
+
+```sql
+BEGIN;
+UPDATE rekening SET saldo = saldo - 50000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 50000 WHERE id = 2;
+COMMIT;
+```
+
+Gagal di tengah? `ROLLBACK;`. Perintah DDL juga bisa ikut transaksi di PostgreSQL — beda dengan MySQL.
+
+## Savepoint
+
+```sql
+BEGIN;
+INSERT INTO log VALUES ('awal');
+SAVEPOINT titik;
+INSERT INTO log VALUES ('opsi');
+ROLLBACK TO SAVEPOINT titik;
+COMMIT;
+```
+
+## Level Isolasi
+
+```sql
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+```
+
+| Level | Hilangkan |
+| --- | --- |
+| READ COMMITTED | dirty read (default) |
+| REPEATABLE READ | dirty + non-repeatable read |
+| SERIALIZABLE | juga phantom read/anomali serialization
+
+## Locking Eksplisit
+
+```sql
+SELECT * FROM produk WHERE id = 1 FOR UPDATE;
+SELECT * FROM produk WHERE id = 1 FOR SHARE;
+SELECT * FROM produk FOR UPDATE SKIP LOCKED;
+```
+
+`SKIP LOCKED` berguna untuk antrean pekerjaan: beberapa worker mengambil baris berbeda tanpa saling menunggu.
+
+## Deadlock
+
+PostgreSQL mendeteksi deadlock dan membatalkan salah satu transaksi. Aplikasi harus siap retry error 40P01. Kurangi risiko dengan urutan akses tabel yang konsisten dan transaksi pendek.
+
+<div class="note">💡 Transaction yang terbuka lama membuat autovacuum tidak bisa membersihkan baris mati yang masih terlihat oleh transaksi itu. Tutup transaksi secepatnya.</div>
+
+## Di Dunia Nyata
+
+- **Transfer saldo**: dua UPDATE satu transaksi.
+- **Antrean job**: FOR UPDATE SKIP LOCKED.
+- **Migration**: DDL + DML bisa digabung.
+- **Laporan konsisten**: REPEATABLE READ memberi snapshot yang sama.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`CREATE TABLE rekening (id integer PRIMARY KEY, saldo numeric);
+INSERT INTO rekening VALUES (1, 500000), (2, 200000);
+BEGIN;
+UPDATE rekening SET saldo = saldo - 50000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 50000 WHERE id = 2;
+COMMIT;
+SELECT * FROM rekening;`} />

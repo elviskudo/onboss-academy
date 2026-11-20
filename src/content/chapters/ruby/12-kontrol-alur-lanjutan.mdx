@@ -1,0 +1,129 @@
+---
+"title": "Kontrol Alur Lanjutan"
+"description": "case, unless, ternary, modifier, dan range dalam percabangan Ruby"
+"order": 12
+"quiz":
+- "q": "Pencocokan pola pada case/when memakai operator…"
+  "options":
+  - "=="
+  - "==="
+  - "="
+  - "&lt;=>"
+  "answer": 1
+  "explain": "Case menggunakan ===, sehingga regex dan range bisa dipakai di when."
+- "q": "unless akan dijalankan jika kondisi…"
+  "options":
+  - "true"
+  - "false"
+  - "nil saja"
+  - "selalu"
+  "answer": 1
+  "explain": "unless adalah kebalikan if."
+- "q": "Bentuk modifier dari if ditulis…"
+  "options":
+  - "puts x if kondisi"
+  - "if kondisi puts x"
+  - "puts x unless: kondisi"
+  - "kondisi ? puts x"
+  "answer": 0
+  "explain": "Modifier if diletakkan setelah pernyataan."
+- "q": "Operator ternary ditulis…"
+  "options":
+  - "kondisi ? a : b"
+  - "kondisi a else b"
+  - "a if kondisi else b"
+  - "kondisi ?? a : b"
+  "answer": 0
+  "explain": "Bentuk ringkas if-else dalam satu ekspresi."
+- "q": "Range (1..5) pada when akan cocok jika…"
+  "options":
+  - "nilai antara 1 sampai 5"
+  - "nilai sama dengan 5"
+  - "nilai genap"
+  - "selalu"
+  "answer": 0
+  "explain": "Range menggunakan === untuk mengecek keanggotaan."
+"example":
+  "code": "nilai = 85\ncase nilai\nwhen 90..100 then puts \"A\"\nwhen 75...90 then puts \"B\"\nelse puts \"C\"\nend\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Ruby punya banyak cara untuk menulis percabangan. Pilih yang paling enak dibaca — bahasa ini memang mengutamakan kenyamanan penulis (*developer happiness*).
+
+## case/when
+
+```ruby
+case nilai
+when 90..100
+  puts "A"
+when 75...90
+  puts "B"
+when 0...75
+  puts "C"
+else
+  puts "Nilai di luar rentang"
+end
+```
+
+`..` termasuk batas akhir, `...` tidak. Karena `when` memakai `===`, kamu bisa memakai regex dan class:
+
+```ruby
+case input
+when /\A\d+\z/ then puts "angka"
+when String     then puts "teks"
+end
+```
+
+## unless
+
+```ruby
+unless login?
+  puts "Silakan masuk dulu"
+end
+```
+
+Sama dengan `if !login?`, tapi lebih mudah dibaca.
+
+## Modifier
+
+```ruby
+puts "panjang" if teks.length > 10
+puts "gagal" unless berhasil
+```
+
+Cocok untuk satu baris aksi sederhana.
+
+## Ternary
+
+```ruby
+status = umur >= 18 ? "dewasa" : "anak"
+```
+
+## Truthiness
+
+Di Ruby, hanya `false` dan `nil` yang bernilai palsu. `0`, `""`, dan `[]` semuanya **truthy** — berbeda dengan JavaScript atau Python.
+
+<div class="note">💡 Hati-hati dengan <code>and</code>/<code>or</code>: prioritasnya lebih rendah daripada <code>=</code>. Lebih aman memakai <code>&amp;&amp;</code> dan <code>||</code> dalam ekspresi biasa.</div>
+
+
+## Try it Yourself
+
+Ubah nilai `nilai` atau tambahkan satu `when` dengan regex.
+
+<TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`def predikat(n)
+  case n
+  when 90..100 then "A"
+  when 75...90 then "B"
+  when 60...75 then "C"
+  else "D"
+  end
+end
+
+[95, 82, 71, 40].each { |n| puts "#{n} -> #{predikat(n)}" }
+
+teks = "Ruby"
+puts "panjang" if teks.length > 3
+status = teks.empty? ? "kosong" : "ada isi"
+puts status
+puts(0 ? "nol itu truthy" : "tidak pernah")`} />

@@ -93,8 +93,8 @@ Tipe primitif disimpan sebagai nilai, bukan object — menyalin berarti menyalin
 | Kategori | Jumlah | Anggota | Contoh hasil |
 |----------|--------|---------|--------------|
 | Aritmatika | 8 | `+ - * / % ** ++ --` | `7 / 2` → `3.5` (TS juga punya `number`, bukan int terpisah) |
-| Perbandingan | 8 | `== != === !== > < >= <=` | Pakai `===` — TS menolak perbandingan beda tipe |
-| Logika | 3 | `&&` `\|\|` `!` | `x > 0 && x < 10` |
+| Perbandingan | 8 | `== != === !== > &lt; >= &lt;=` | Pakai `===` — TS menolak perbandingan beda tipe |
+| Logika | 3 | `&&` `\|\|` `!` | `x > 0 && x &lt; 10` |
 | Assignment | 13 | `=` `+=` `-=` `*=` `/=` … `>>>=` | `total += harga` |
 | Ternary | 1 | `? :` | `usia >= 17 ? "dewasa" : "anak"` |
 
@@ -163,6 +163,10 @@ Assertion hanya **meyakinkan kompilator** — ia tidak mengubah nilai saat runti
 - **Fungsi logout** diberi return `void` — kalau ada yang mencoba memakai hasilnya, `tsc` langsung komplain.
 
 <div class="note">💡 Anotasi tipe bersifat statis: `let n: number = "5"` gagal kompilasi, tetapi `Number("5")` di runtime tetap menghasilkan angka. TypeScript tidak pernah mengubah cara JavaScript bekerja.</div>
+
+## Try it Yourself
+
+Ubah anotasi tipe atau nilai pada contoh di bawah.
 
 <TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`const PPN = 0.11;
 let total: number = 100000;

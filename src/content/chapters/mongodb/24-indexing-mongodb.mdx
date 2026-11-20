@@ -1,0 +1,81 @@
+---
+title: "Indexing dan Pencarian Teks"
+description: "index tunggal, komposit, multikey, unique, sparse, TTL, explain, dan text index"
+order: 24
+quiz:
+  - q: "Perintah membuat indeks pada field harga adalah…"
+    options: ["db.produk.makeIndex({harga: 1})", "db.produk.index({harga: 1})", "db.produk.createIndex({harga: 1})", "db.produk.addIndex({harga: 1})"]
+    answer: 2
+    explain: "createIndex({field: 1}) membuat indeks ascending."
+  - q: "Indeks komposit {a: 1, b: -1} mengurutkan…"
+    options: ["keduanya naik", "keduanya turun", "a naik lalu b turun", "a turun lalu b naik"]
+    answer: 2
+    explain: "Nilai 1 = ascending, -1 = descending, mengikuti urutan field."
+  - q: "Indeks unique mencegah…"
+    options: ["Nilai duplikat pada field", "Update", "Query lambat", "Dokumen kosong"]
+    answer: 0
+    explain: "Unique index menolak dokumen dengan nilai kunci yang sama."
+  - q: "Metode untuk melihat rencana query adalah…"
+    options: ["profile()", "explain()", "plan()", "describe()"]
+    answer: 1
+    explain: "find(...).explain(\"executionStats\") menampilkan indeks yang dipakai."
+  - q: "TTL index berguna untuk…"
+    options: ["Mengenkripsi data", "Membuat backup", "Menghapus dokumen otomatis setelah waktu tertentu", "Mempercepat sort"]
+    answer: 2
+    explain: "TTL index menghapus dokumen saat field tanggal sudah melewati usia tertentu."
+example:
+  code: |
+    db.produk.createIndex({kategori: 1, harga: -1})
+    db.produk.createIndex({kode: 1}, {unique: true})
+    db.produk.createIndex({nama: "text"})
+    db.produk.find({kategori: "Elektronik"}).explain("executionStats")
+---
+
+## Indeks Tunggal dan Komposit
+
+```javascript
+db.produk.createIndex({ harga: 1 })
+db.produk.createIndex({ kategori: 1, harga: -1 })
+```
+
+Tanpa indeks, MongoDB memindai seluruh koleksi (COLLSCAN). Dengan indeks yang tepat, server melakukan IXSCAN lalu langsung mengambil dokumen yang cocok.
+
+## Jenis-jenis Indeks
+
+| Jenis | Contoh | Kegunaan |
+| --- | --- | --- |
+| Tunggal | `{harga: 1}` | filter satu field |
+| Komposit | `{kategori: 1, harga: -1}` | filter + sort |
+| Multikey | `{tag: 1}` | field array |
+| Unique | `{email: 1}, {unique: true}` | email tidak duplikat |
+| Sparse | `{unique: true, sparse: true}` | abaikan dokumen tanpa field |
+| TTL | `{dibuat: 1}, {expireAfterSeconds: 3600}` | hapus data lama |
+| Text | `{nama: "text"}` | pencarian kata |
+
+## Pencarian Teks
+
+```javascript
+db.artikel.createIndex({ judul: "text", isi: "text" })
+db.artikel.find({ $text: { $search: "mongodb indeks" } })
+```
+
+Hasil bisa diurutkan menurut relevansi dengan `$meta: "textScore"` dalam `$sort`.
+
+## Menguji dengan explain
+
+```javascript
+db.produk.find({ kategori: "Elektronik" }).explain("executionStats")
+```
+
+Perhatikan `winningPlan.stage`: `IXSCAN` berarti indeks dipakai, `COLLSCAN` berarti tidak. Bandingkan juga `totalDocsExamined` dengan `nReturned`.
+
+<div class="note">💡 Indeks tidak gratis: setiap insert/update harus memperbarui indeks, dan indeks memakan RAM. Buat indeks hanya untuk pola query yang benar-benar sering dipakai.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_index
+db.produk.insertMany([{kode: "A1", kategori: "Elektronik", harga: 100}, {kode: "B1", kategori: "Furniture", harga: 200}])
+db.produk.createIndex({kategori: 1, harga: -1})
+db.produk.find({kategori: "Elektronik"}).explain("executionStats").queryPlanner.winningPlan.stage`}</code></pre>

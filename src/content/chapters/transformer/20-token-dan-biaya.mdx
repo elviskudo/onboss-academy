@@ -1,0 +1,102 @@
+---
+title: Token, Konteks, dan Biaya Inference
+description: Memahami jendela konteks, token input/output, dan pengelolaan biaya pemakaian model.
+order: 20
+quiz:
+- q: Biaya API LLM umumnya dihitung per…
+  options:
+  - Token input dan token output
+  - Jumlah karakter unik
+  - Ukuran file model
+  - Jumlah permintaan saja
+  answer: 0
+  explain: Sebagian besar penyedia menagih token masuk dan keluar dengan tarif berbeda.
+- q: Jendela konteks adalah…
+  options:
+  - Ukuran batch training
+  - Batas token yang bisa diproses dalam satu permintaan
+  - Ukuran vocabulary
+  - Jumlah layer model
+  answer: 1
+  explain: Input ditambah output tidak boleh melebihi batas konteks model.
+- q: Cara menghemat token adalah…
+  options:
+  - Mengulang prompt berkali-kali
+  - Memakai kalimat panjang
+  - Ringkas riwayat percakapan
+  - Menambah semua dokumen
+  answer: 2
+  explain: Ringkasan atau seleksi dokumen relevan menjaga konteks tetap efisien.
+- q: KV cache berfungsi…
+  options:
+  - Menghapus token lama
+  - Mengganti tokenizer
+  - Mengurangi vocabulary
+  - Menyimpan key/value attention sebelumnya saat generate
+  answer: 3
+  explain: Cache menghindari menghitung ulang K/V untuk token yang sudah diproses.
+- q: Token output biasanya…
+  options:
+  - Lebih mahal dari token input
+  - Lebih murah dari token input
+  - Gratis
+  - Sama dengan parameter
+  answer: 0
+  explain: Banyak penyedia menetapkan harga output lebih tinggi karena biaya generate per token.
+example:
+  code: 'konteks = 128_000
+
+    input_token = 118_000
+
+    output_token = 2_000
+
+    sisa = konteks - input_token - output_token  # 8_000
+
+    '
+---
+
+
+Setiap permintaan ke LLM mengonsumsi **token**. Memahaminya membantu menjaga jawaban tetap utuh dan tagihan tetap terkendali.
+
+## Anatomi Permintaan
+
+```text
+system prompt + riwayat + dokumen + pertanyaan + jawaban <= jendela konteks
+```
+
+```python
+konteks = 128_000
+input_token = 118_000
+output_token = 2_000
+sisa = konteks - input_token - output_token
+print("sisa:", sisa)
+```
+
+Kalau `output_token` melebihi sisa, jawaban terpotong di tengah kalimat.
+
+## Strategi Efisien
+
+| Teknik | Efek |
+|---|---|
+| Ringkas riwayat | mengurangi token berulang |
+| Retrieval selektif | hanya kirim potongan relevan |
+| System prompt singkat | menghemat setiap permintaan |
+| Batasi `max_tokens` | mencegah output berlebih |
+| Cache prompt | menghemat token identik berulang |
+
+## KV Cache
+
+Saat generate, model menyimpan **Key** dan **Value** tiap layer untuk token sebelumnya. Ini mempercepat decoding, tetapi mengonsumsi memori GPU yang tumbuh seiring panjang konteks.
+
+```text
+memori KV ≈ 2 × layer × token × head × d_head × bytes
+```
+
+<div class="note">💡 “Konteks 128K” bukan berarti model selalu memperhatikan semua token dengan baik. Informasi di tengah dokumen sangat panjang kadang kurang terpakai — tetap susun dokumen penting di awal atau akhir.</div>
+
+## Praktik Produksi
+
+- Catat jumlah token tiap permintaan di log observability.
+- Beri peringatan saat percakapan mendekati batas konteks.
+- Uji panjang prompt yang realistis, bukan hanya contoh pendek.
+- Pisahkan permintaan besar menjadi beberapa panggilan bila memungkinkan.

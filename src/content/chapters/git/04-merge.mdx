@@ -10,7 +10,7 @@ quiz:
   - q: "Konflik merge muncul ketika…"
     options: ["File belum di-commit di branch manapun", "Dua branch mengubah baris yang sama dan Git tidak bisa memilih", "Nama branch terlalu panjang", "Repo terlalu besar"]
     answer: 1
-    explain: "Git menandai blok dengan <<<<<<< dan ======= dan meminta kamu memilih hasil akhir."
+    explain: "Git menandai blok dengan <<<<<<&lt; dan ======= dan meminta kamu memilih hasil akhir."
   - q: "Perintah menggabungkan branch ke branch aktif adalah…"
     options: ["git join", "git merge nama-branch", "git combine", "git pull nama-branch"]
     answer: 1
@@ -126,3 +126,12 @@ git status
 ```
 
 Pastikan tidak ada sisa konflik dan `git status` bersih sebelum lanjut.
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`git checkout main
+git merge fitur-login
+git log --graph --oneline
+`}</code></pre>

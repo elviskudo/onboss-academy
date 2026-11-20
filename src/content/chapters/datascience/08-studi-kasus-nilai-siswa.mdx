@@ -121,11 +121,15 @@ print("Juara kelas:", tertinggi["nama"], tertinggi["nilai"])
 
 - **Rapor semester** — cetak ringkasan + label lulus/tidak per siswa dari file nilai ujian.
 - **Rekap nilai tryout** — bandingkan rata-rata per kelas paralel untuk evaluasi guru.
-- **Deteksi siswa berisiko** — filter `nilai < 70` dua mata pelajaran berturut-turut sebagai daftar pemanggilan wali kelas.
+- **Deteksi siswa berisiko** — filter `nilai &lt; 70` dua mata pelajaran berturut-turut sebagai daftar pemanggilan wali kelas.
 - **Hadiah juara kelas** — `sorted(..., reverse=True)[0]` menentukan pemenang tanpa hitung manual.
 - **Evaluasi soal ujian** — rentang nilai (max - min) memberi petunjuk soal terlalu mudah atau terlalu sulit.
 
 <div class="note">💡 Saat laporan menyebut "rata-rata", selalu cek juga nilai terendah dan sebarannya. Rata-rata 78 bisa jadi berasal dari dua genius dan empat siswa yang tertinggal jauh.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="python" runtime="piston" pistonName="python" code={`siswa = [
     {"nama": "Andi",  "kelas": "A", "nilai": 82},

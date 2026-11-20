@@ -37,10 +37,10 @@ example:
     }
 
     int main() {
-        cout << tambah(4) << " " << tambah(4, 6) << endl;
+        cout <&lt; tambah(4) <&lt; " " <&lt; tambah(4, 6) <&lt; endl;
         int nilai = 21;
         gandakan(nilai);
-        cout << nilai << endl;
+        cout <&lt; nilai <&lt; endl;
         return 0;
     }
 ---
@@ -163,11 +163,15 @@ Pecah menjadi fungsi ketika: (1) blok yang sama dipakai di 2+ tempat, (2) logika
 
 - Fungsi `double celsiusKeFahrenheit(double c)` dipanggil dari laporan sensor dan dari UI sekaligus.
 - `bool validasiUsia(int umur)` mengembalikan true/false sehingga bisa dipakai di banyak form.
-- Lambda pembanding: `sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga < b.harga; });`
+- Lambda pembanding: `sort(v.begin(), v.end(), [](const Produk &a, const Produk &b){ return a.harga &lt; b.harga; });`
 - Fungsi rekursi menelusuri struktur folder atau pohon direktori.
 - Parameter default `void kirim(const string &ke, bool urgent = false)` memangkas penulisan untuk kasus biasa.
 
 <div class="note">💡 Fungsi kecil dengan satu tanggung jawab lebih mudah diuji dan dipakai ulang. Jika satu fungsi sudah menangani benda berbeda-beda — menghitung sekaligus mencetak sekaligus menyimpan — saatnya dipecah menjadi tiga.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
 
 <TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
 #include <string>
@@ -186,22 +190,22 @@ void gandakan(int &x) {
 }
 
 int faktorial(int n) {
-    if (n <= 1) return 1;
+    if (n &lt;= 1) return 1;
     return n * faktorial(n - 1);
 }
 
 int main() {
-    cout << "4 + 0 = " << tambah(4) << endl;
-    cout << "4 + 6 = " << tambah(4, 6) << endl;
-    cout << "2.5 + 3.1 = " << tambah(2.5, 3.1) << endl;
+    cout <&lt; "4 + 0 = " <&lt; tambah(4) <&lt; endl;
+    cout <&lt; "4 + 6 = " <&lt; tambah(4, 6) <&lt; endl;
+    cout <&lt; "2.5 + 3.1 = " <&lt; tambah(2.5, 3.1) <&lt; endl;
 
     int nilai = 21;
     gandakan(nilai);
-    cout << "Setelah digandakan: " << nilai << endl;
+    cout <&lt; "Setelah digandakan: " <&lt; nilai <&lt; endl;
 
-    cout << "5! = " << faktorial(5) << endl;
+    cout <&lt; "5! = " <&lt; faktorial(5) <&lt; endl;
 
     auto ganda = [](int x) { return x * 2; };
-    cout << "Lambda ganda(21) = " << ganda(21) << endl;
+    cout <&lt; "Lambda ganda(21) = " <&lt; ganda(21) <&lt; endl;
     return 0;
 }`} />

@@ -1,0 +1,152 @@
+---
+title: "Linked List"
+description: "node, alokasi dinamis, operasi insert/delete, dan traversal linked list"
+order: 18
+quiz:
+  - q: "Node linked list menyimpan…"
+    options: ["Data dan pointer ke node berikutnya", "Hanya data", "Array dan indeks", "Hash"]
+    answer: 0
+    explain: "Struktur node punya field data dan pointer next."
+  - q: "Kelebihan linked list dibanding array adalah…"
+    options: ["Akses random O(1)", "Insert/delete di tengah tanpa geser elemen", "Hemat memori selalu", "Lebih cache-friendly"]
+    answer: 1
+    explain: "Array butuh menggeser elemen; linked list cukup mengubah pointer."
+  - q: "Pointer `head` menunjukkan…"
+    options: ["Node terakhir", "Node pertama", "Node kosong", "Ukuran list"]
+    answer: 1
+    explain: "Traversal dimulai dari head."
+  - q: "Setelah `free(node)`, yang harus dilakukan adalah…"
+    options: ["Lanjut pakai pointer itu", "Set pointer sebelumnya melewatinya & set NULL", "Tidak perlu apa-apa", "Tambah node baru"]
+    answer: 1
+    explain: "Kalau tidak, pointer menjadi dangling."
+  - q: "Kompleksitas pencarian pada linked list adalah…"
+    options: ["O(1)", "O(log n)", "O(n)", "O(n²)"]
+    answer: 2
+    explain: "Harus menelusuri node satu per satu dari head."
+example:
+  code: |
+    #include <stdio.h>
+    #include <stdlib.h>
+    
+    typedef struct Node {
+        int data;
+        struct Node *next;
+    } Node;
+    
+    void tambah(Node **head, int v) {
+        Node *baru = malloc(sizeof *baru);
+        baru->data = v;
+        baru->next = *head;
+        *head = baru;
+    }
+    
+    void cetak(Node *p) {
+        while (p) { printf("%d -> ", p->data); p = p->next; }
+        printf("NULL\n");
+    }
+    
+    int main(void) {
+        Node *head = NULL;
+        tambah(&head, 3); tambah(&head, 2); tambah(&head, 1);
+        cetak(head);
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Linked list adalah kumpulan node yang saling terhubung lewat pointer. Ia adalah dasar banyak struktur data lain: stack, queue, graph adjacency list.
+
+## Struktur Node
+
+```c
+typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+```
+
+`struct Node *next` boleh self-referential karena compiler hanya butuh ukuran pointer, bukan ukuran struktur lengkap.
+
+## Operasi Dasar
+
+```c
+void push_depan(Node **head, int v) {
+    Node *n = malloc(sizeof *n);
+    if (!n) exit(1);
+    n->data = v;
+    n->next = *head;
+    *head = n;
+}
+
+int hapus_nilai(Node **head, int v) {
+    Node *cur = *head, *prev = NULL;
+    while (cur && cur->data != v) {
+        prev = cur; cur = cur->next;
+    }
+    if (!cur) return 0;
+    if (prev) prev->next = cur->next;
+    else *head = cur->next;
+    free(cur);
+    return 1;
+}
+```
+
+Kenapa `Node **`? Karena fungsi mungkin perlu mengganti `head` itu sendiri.
+
+## Traversal
+
+```c
+for (Node *p = head; p != NULL; p = p->next)
+    printf("%d ", p->data);
+```
+
+## Variasi
+
+| Jenis | Ciri |
+|---|---|
+| Singly | satu arah |
+| Doubly | punya `prev` & `next` |
+| Circular | node terakhir menunjuk head |
+| Sentinel | node dummy di depan menyederhanakan kasus kosong |
+
+## Perbandingan dengan Array
+
+| Aspek | Array | Linked List |
+|---|---|---|
+| Akses indeks | O(1) | O(n) |
+| Insert awal | O(n) | O(1) |
+| Memori | kontigu | tersebar |
+| Cache | ramah | kurang ramah |
+
+<div class="note">💡 Selalu bersihkan list sebelum program keluar. Lakukan traversal dan `free()` setiap node — ini latihan terbaik untuk memahami kepemilikan memori di C.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+
+void tambah(Node **head, int v) {
+    Node *baru = malloc(sizeof *baru);
+    baru->data = v;
+    baru->next = *head;
+    *head = baru;
+}
+
+void cetak(Node *p) {
+    while (p) { printf("%d -> ", p->data); p = p->next; }
+    printf("NULL\n");
+}
+
+int main(void) {
+    Node *head = NULL;
+    tambah(&head, 3); tambah(&head, 2); tambah(&head, 1);
+    cetak(head);
+    return 0;
+}`} />

@@ -172,6 +172,10 @@ Membuat exception sendiri membuat kode bisnis terbaca: `catch (SaldoKurangExcept
 
 <div class="note">💡 Jangan menangkap exception lalu diam tanpa tindakan — minimal cetak pesannya atau tulis ke log. Error yang disembunyikan jauh lebih sulit didebug daripada error yang terlihat; <code>catch (Exception e) {}</code> kosong adalah anti-pattern nomor satu di code review.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     static int bagi(int a, int b) throws ArithmeticException {
         if (b == 0) throw new ArithmeticException("Pembagi nol");

@@ -1,0 +1,129 @@
+---
+title: "useEffect Lebih Dalam"
+description: "dependency array, cleanup function, fetch data, dan race condition"
+order: 13
+quiz:
+  - q: "Dependency array kosong `[]` berarti efek…"
+    options: ["Tidak pernah jalan", "Jalan saat error", "Jalan sekali setelah mount", "Jalan tiap render"]
+    answer: 2
+    explain: "React menjalankannya sekali setelah komponen pertama tampil."
+  - q: "Fungsi yang dikembalikan useEffect disebut…"
+    options: ["reducer", "cleanup", "initializer", "callback"]
+    answer: 1
+    explain: "Cleanup dipanggil sebelum efek dijalankan ulang dan saat unmount."
+  - q: "AbortController dipakai untuk…"
+    options: ["Mengirim request", "Mengubah state", "Menyimpan DOM", "Membatalkan request saat efek tidak relevan lagi"]
+    answer: 3
+    explain: "controller.abort() menghentikan fetch yang masih berjalan."
+  - q: "Efek yang memakai variabel dari render harus mencantumkannya di…"
+    options: ["key", "dependency array", "style", "props.children"]
+    answer: 1
+    explain: "Kalau tidak, efek memakai nilai lama (stale closure)."
+  - q: "Efek di React berjalan…"
+    options: ["Setelah render/commit", "Sebelum render", "Bersamaan dengan constructor", "Saat import"]
+    answer: 0
+    explain: "React menggambar UI dulu, lalu menjalankan efek."
+example:
+  code: |
+    React.useEffect(() => {
+      const controller = new AbortController();
+
+      fetch(`/api/produk/${id}`, { signal: controller.signal })
+        .then((r) => r.json())
+        .then(setData)
+        .catch((e) => { if (e.name !== "AbortError") setError(e.message); });
+
+      return () => controller.abort();
+    }, [id]);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`useEffect` menyambungkan komponen ke dunia luar: API, timer, subscription, dan DOM.
+
+## Anatomi Efek
+
+```jsx
+React.useEffect(() => {
+  // 1. aksi utama
+  const timer = setInterval(() => setDetik((d) => d + 1), 1000);
+
+  // 2. cleanup (opsional)
+  return () => clearInterval(timer);
+}, []); // 3. dependency
+```
+
+| Dependency | Perilaku |
+|------------|----------|
+| tidak ada | tiap render |
+| `[]` | sekali saat mount |
+| `[id]` | saat `id` berubah |
+
+## Fetch dengan Aman
+
+```jsx
+function DetailProduk({ id }) {
+  const [produk, setProduk] = React.useState(null);
+  const [error, setError] = React.useState("");
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    fetch(`/api/produk/${id}`, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error("Gagal memuat");
+        return res.json();
+      })
+      .then(setProduk)
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      });
+
+    return () => controller.abort();
+  }, [id]);
+
+  if (error) return <p>{error}</p>;
+  if (!produk) return <p>Memuat…</p>;
+  return <h2>{produk.nama}</h2>;
+}
+```
+
+Tanpa `abort`, response lama bisa menimpa data baru saat user cepat berpindah `id` — ini disebut *race condition*.
+
+## Efek dan DOM
+
+```jsx
+const ref = React.useRef(null);
+
+React.useEffect(() => {
+  ref.current?.focus();
+}, []);
+
+<input ref={ref} />
+```
+
+Efek berjalan setelah DOM tersedia, jadi `ref.current` sudah terisi.
+
+## Kapan Tidak Perlu Efek
+
+- Mengubah data yang sudah ada di props → cukup hitung saat render.
+- Transformasi array → `map`/`filter` langsung.
+- Menangani event → gunakan event handler.
+
+<div class="note">💡 Anggap useEffect sebagai "jembatan keluar", bukan tempat meletakkan semua logika. Makin sedikit efek, makin mudah aplikasi diprediksi.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan cleanup efek saat dependency berubah
+function efek(id) {
+  const controller = { id, aborted: false };
+  console.log("fetch untuk", id);
+  return () => { controller.aborted = true; console.log("batalkan", id); };
+}
+
+let cleanup = efek(1);
+cleanup();              // user pindah halaman
+cleanup = efek(2);
+console.log("aktif:", efek.length >= 0);`} />

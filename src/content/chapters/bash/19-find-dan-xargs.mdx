@@ -1,0 +1,128 @@
+---
+"title": "find dan xargs"
+"description": "Mencari file berdasarkan nama, waktu, ukuran, lalu menjalankan aksi"
+"order": 19
+"quiz":
+- "q": "Mencari file berdasarkan nama memakai…"
+  "options":
+  - "grep -name \"*.txt\""
+  - "find . -name \"*.txt\""
+  - "ls --find txt"
+  - "locate name txt"
+  "answer": 1
+  "explain": "-name menerima pola glob."
+- "q": "Opsi -type f berarti…"
+  "options":
+  - "Hanya folder"
+  - "Hanya file teks"
+  - "Hanya file biasa"
+  - "Hanya file baru"
+  "answer": 2
+  "explain": "Gunakan -type d untuk direktori."
+- "q": "Cara menjalankan perintah untuk setiap hasil find adalah…"
+  "options":
+  - "find . | perintah"
+  - "find --run perintah"
+  - "find . -do perintah"
+  - "find . -exec perintah {} \\;"
+  "answer": 3
+  "explain": "{} diganti dengan path hasil, \\; mengakhiri perintah."
+- "q": "xargs berguna untuk…"
+  "options":
+  - "Mengubah stdin menjadi argumen perintah"
+  - "Mencari teks"
+  - "Menghapus variabel"
+  - "Mengganti nama file"
+  "answer": 0
+  "explain": "xargs mengumpulkan input lalu memanggil perintah sekaligus."
+- "q": "Cara aman menangani nama file mengandung spasi adalah…"
+  "options":
+  - "find . | xargs perintah"
+  - "find . -print0 | xargs -0 perintah"
+  - "find . -name * | xargs"
+  - "xargs -s"
+  "answer": 1
+  "explain": "Null delimiter mencegah pemisahan pada spasi."
+"example":
+  "code": "#!/usr/bin/env bash\n# temukan file .log lebih dari 7 hari\nfind /var/log -name \"*.log\" -mtime +7 -type f\n\n# hapus file sementara (hati-hati!)\nfind . -name \"*.tmp\" -type f -delete\n\n# ubah izin semua file .sh\nfind . -name \"*.sh\" -type f -exec chmod +x {} \\;\n\n# tangani nama dengan spasi\nfind . -name \"*.jpg\" -print0 | xargs -0 -n 1 echo \"Gambar:\"\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Dasar find
+
+```bash
+#!/usr/bin/env bash
+# temukan file .log lebih dari 7 hari
+find /var/log -name "*.log" -mtime +7 -type f
+
+# hapus file sementara (hati-hati!)
+find . -name "*.tmp" -type f -delete
+
+# ubah izin semua file .sh
+find . -name "*.sh" -type f -exec chmod +x {} \;
+
+# tangani nama dengan spasi
+find . -name "*.jpg" -print0 | xargs -0 -n 1 echo "Gambar:"
+```
+
+```bash
+find path [ekspresi] [aksi]
+```
+
+Ekspresi bisa dikombinasikan dengan `-a` (dan), `-o` (atau), serta `!` (negasi).
+
+| Ekspresi | Arti |
+|---|---|
+| `-name "*.log"` | nama cocok pola |
+| `-type f` | file biasa |
+| `-type d` | direktori |
+| `-mtime +7` | dimodifikasi lebih dari 7 hari lalu |
+| `-size +10M` | lebih besar dari 10 MB |
+| `-empty` | kosong |
+
+## Aksi
+
+```bash
+find . -name "*.tmp" -print
+find . -name "*.tmp" -delete
+find . -name "*.sh" -exec chmod +x {} \;
+find . -name "*.bak" -exec rm -i {} \;
+```
+
+`-exec ... \;` menjalankan perintah sekali per hasil. `-exec ... +` mengumpulkan banyak hasil dalam satu pemanggilan — lebih efisien.
+
+## xargs
+
+```bash
+find . -name "*.txt" -print0 | xargs -0 grep "TODO"
+```
+
+`-print0` memisahkan hasil dengan byte null; `-0` memberi tahu xargs untuk membaca format itu. Ini penting karena nama file boleh mengandung spasi dan baris baru.
+
+## Kedalaman
+
+```bash
+find . -maxdepth 1 -type f   # hanya direktori saat ini
+find . -mindepth 2           # lewati level pertama
+```
+
+<div class="note">💡 Uji dulu dengan `-print` sebelum memakai `-delete` atau `-exec rm`. Satu pola yang terlalu luas bisa menghapus file penting.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+# temukan file .log lebih dari 7 hari
+find /var/log -name "*.log" -mtime +7 -type f
+
+# hapus file sementara (hati-hati!)
+find . -name "*.tmp" -type f -delete
+
+# ubah izin semua file .sh
+find . -name "*.sh" -type f -exec chmod +x {} \;
+
+# tangani nama dengan spasi
+find . -name "*.jpg" -print0 | xargs -0 -n 1 echo "Gambar:"`} />

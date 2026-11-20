@@ -1,0 +1,89 @@
+---
+title: "Mengambil Data dari API"
+description: "requests, JSON, status code, parameter query, dan penanganan error"
+order: 22
+quiz:
+  - q: "Library Python populer untuk HTTP adalah…"
+    options: ["statistics", "requests", "math", "csv"]
+    answer: 1
+    explain: "requests menyederhanakan GET/POST."
+  - q: "Status HTTP 200 berarti…"
+    options: ["Error server", "Redirect", "Sukses", "Tidak ditemukan"]
+    answer: 2
+    explain: "200 OK."
+  - q: "Status 404 berarti…"
+    options: ["Sukses", "Forbidden", "Server error", "Tidak ditemukan"]
+    answer: 3
+    explain: "404 Not Found."
+  - q: "Data JSON dikonversi ke Python dengan…"
+    options: ["json.load() saja", "response.json()", "response.text()", "response.raw()"]
+    answer: 1
+    explain: "response.json() menghasilkan dict/list."
+  - q: "Parameter query dikirim lewat…"
+    options: ["headers=", "files=", "params=", "body="]
+    answer: 2
+    explain: "requests.get(url, params={...})."
+example:
+  code: |
+    import json
+    data=json.loads('{"kota":"Jakarta","suhu":30}')
+    print(data["kota"])
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Permintaan GET
+
+```python
+import requests
+
+r = requests.get("https://api.contoh.test/cuaca", params={"kota": "Jakarta"}, timeout=5)
+print(r.status_code)
+print(r.json())
+```
+
+`timeout` wajib dicantumkan agar program tidak menggantung selamanya bila server lambat.
+
+## Status dan Error
+
+| Kode | Arti |
+| --- | --- |
+| 200 | sukses |
+| 400 | permintaan salah |
+| 401/403 | otorisasi gagal |
+| 404 | tidak ditemukan |
+| 429 | terlalu banyak permintaan |
+| 500 | error server |
+
+```python
+r.raise_for_status()  # memunculkan exception untuk kode 4xx/5xx
+```
+
+## Rate Limit
+
+Banyak API membatasi jumlah permintaan. Tambahkan jeda atau gunakan pagination yang disediakan server. jangan menembak ratusan request secara bersamaan.
+
+## Menyimpan Hasil
+
+```python
+import json
+
+with open("cuaca.json", "w", encoding="utf-8") as f:
+    json.dump(r.json(), f, ensure_ascii=False, indent=2)
+```
+
+`ensure_ascii=False` menjaga karakter Indonesia tetap terbaca.
+
+<div class="note">💡 Simpan kunci API di variabel lingkungan, bukan di kode. Kunci yang tumpah ke repositori bisa disalahgunakan orang lain.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import json
+
+payload = {"kota": "Jakarta", "suhu": 30, "status": "cerah"}
+teks = json.dumps(payload, ensure_ascii=False)
+kembali = json.loads(teks)
+print(teks)
+print(kembali["kota"], kembali["suhu"])`} />

@@ -1,0 +1,138 @@
+---
+"title": "Smart Pointer"
+"description": "Box, Rc, RefCell, Arc, dan Mutex untuk pengelolaan memori"
+"order": 20
+"quiz":
+- "q": "Box<T> berguna untuk…"
+  "options":
+  - "alokasi heap dan recursive type"
+  - "membuat referensi bersama"
+  - "menghapus borrow"
+  - "mengubah tipe"
+  "answer": 0
+  "explain": "Box menyimpan nilai di heap dan memiliki ukuran tetap di stack."
+- "q": "Rc<T> dipakai saat…"
+  "options":
+  - "satu pemilik"
+  - "beberapa pemilik dalam satu thread"
+  - "akses lintas thread"
+  - "data mut"
+  "answer": 1
+  "explain": "Rc menghitung jumlah pemilik reference; tidak thread-safe."
+- "q": "RefCell<T> melakukan pengecekan borrowing saat…"
+  "options":
+  - "compile time"
+  - "runtime"
+  - "tidak pernah"
+  - "hanya debug"
+  "answer": 1
+  "explain": "Borrow aturan dicek saat runtime dan panic bila dilanggar."
+- "q": "Arc<T> adalah versi Rc yang…"
+  "options":
+  - "lebih cepat"
+  - "thread-safe"
+  - "lebih kecil"
+  - "tidak bisa di-clone"
+  "answer": 1
+  "explain": "Arc memakai atomic reference counting untuk pemakaian lintas thread."
+- "q": "Mutex<T> melindungi data dengan…"
+  "options":
+  - "mengunci akses"
+  - "menghapus data"
+  - "meng clone semua"
+  - "panic otomatis"
+  "answer": 0
+  "explain": "Hanya satu thread yang bisa memegang lock pada satu waktu."
+"example":
+  "code": "use std::rc::Rc;\nfn main() {\n    let a = Rc::new(String::from(\"data\"));\n    let b = Rc::clone(&a);\n    println!(\"{} {}\", Rc::strong_count(&a), b);\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Smart pointer adalah struct yang berperilaku seperti pointer tetapi membawa informasi dan jaminan tambahan. Rust punya beberapa, masing-masing untuk kebutuhan berbeda.
+
+## Box&lt;T&gt;
+
+```rust
+enum List {
+    Kosong,
+    Isi(i32, Box<List>),
+}
+```
+
+Box memberi ukuran tetap sehingga tipe rekursif bisa dibuat. Juga dipakai untuk pindah dari stack ke heap.
+
+## Rc&lt;T&gt;
+
+```rust
+use std::rc::Rc;
+let a = Rc::new(5);
+let b = Rc::clone(&a);
+println!("{}", Rc::strong_count(&a)); // 2
+```
+
+`clone()` hanya menambah hitungan, bukan menyalin data. `Rc` hanya untuk satu thread.
+
+## Rc + RefCell
+
+```rust
+use std::{rc::Rc, cell::RefCell};
+let nilai = Rc::new(RefCell::new(vec![1]));
+nilai.borrow_mut().push(2);
+```
+
+Pola ini memungkinkan banyak pemilik sekaligus mutable — dengan risiko panic runtime bila aturan dilanggar.
+
+## Arc + Mutex
+
+```rust
+use std::{sync::{Arc, Mutex}, thread};
+
+let total = Arc::new(Mutex::new(0));
+let mut hand = Vec::new();
+for _ in 0..4 {
+    let t = Arc::clone(&total);
+    hand.push(thread::spawn(move || {
+        *t.lock().unwrap() += 1;
+    }));
+}
+for h in hand { h.join().unwrap(); }
+```
+
+`lock()` mengembalikan `LockResult`; gunakan `unwrap()` atau tangani error poison.
+
+## Pilihan Cepat
+
+| Kebutuhan | Pilihan |
+|---|---|
+| Pemilik tunggal, heap | `Box` |
+| Banyak pemilik, satu thread | `Rc` |
+| Interior mutability | `RefCell` |
+| Banyak pemilik, lintas thread | `Arc` |
+| Mutasi lintas thread | `Arc<Mutex<T>>` |
+
+<div class="note">💡 <code>Rc::clone(&a)</code> lebih jelas daripada <code>a.clone()</code> karena menunjukkan bahwa yang dikloning adalah pointer, bukan data.</div>
+
+
+## Try it Yourself
+
+Contoh ini memakai Rc + RefCell agar bisa dijalankan tanpa thread.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`use std::cell::RefCell;
+use std::rc::Rc;
+
+fn main() {
+    let data = Rc::new(RefCell::new(vec![1, 2]));
+    let salinan = Rc::clone(&data);
+
+    println!("pemilik awal: {}", Rc::strong_count(&data));
+    salinan.borrow_mut().push(3);
+
+    {
+        let pinjaman = data.borrow();
+        println!("isi: {:?}", *pinjaman);
+    }
+
+    println!("pemilik akhir: {}", Rc::strong_count(&data));
+    println!("isi sekarang: {:?}", data.borrow());
+}`} />

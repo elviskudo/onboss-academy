@@ -1,0 +1,125 @@
+---
+title: "Move Semantics"
+description: "rvalue reference, std::move, move constructor, dan perfomance"
+order: 17
+quiz:
+  - q: "`std::move(x)` melakukan…"
+    options: ["Mengubah x jadi rvalue (cast), bukan memindahkan data", "Menyalin x", "Menghapus x", "Membuat referensi"]
+    answer: 0
+    explain: "Fungsi penerima yang menentukan apakah isi dipindah."
+  - q: "Move constructor biasanya mengambil parameter…"
+    options: ["T&& (rvalue reference)", "const T&", "T*", "T by value"]
+    answer: 0
+    explain: "Fungsi ini 'mencuri' resource dari objek sementara."
+  - q: "Setelah dipindahkan, objek asal…"
+    options: ["Valid tapi isinya tidak ditentukan", "Selalu kosong", "Tidak bisa dipakai", "Otomatis dihapus"]
+    answer: 0
+    explain: "Destructor tetap bisa dipanggil; jangan pakai nilainya sembarangan."
+  - q: "`std::move` berguna untuk…"
+    options: ["Menghindari salinan besar", "Menghapus resource", "Membuat thread", "Mengubah tipe"]
+    answer: 0
+    explain: "Efektif pada string/vektor besar."
+  - q: "`noexcept` pada move constructor memberi tahu…"
+    options: ["Tidak akan melempar exception (dipakai vector saat realloc)", "Lebih cepat", "Tidak bisa dipanggil", "Selalu sukses"]
+    answer: 0
+    explain: "Vector memilih move daripada copy saat grow bila move noexcept."
+example:
+  code: |
+    #include <iostream>
+    #include <string>
+    #include <utility>
+    #include <vector>
+    
+    int main() {
+        std::string a = "teks yang sangat panjang untuk disalin";
+        std::string b = std::move(a);   // a sekarang kosong-ish
+        std::cout <&lt; "a=[" <&lt; a <&lt; "] b=[" <&lt; b <&lt; "]\n";
+    
+        std::vector<std::string> v;
+        v.push_back(b);                 // salinan
+        v.push_back(std::move(b));      // pindahan, lebih murah
+        std::cout <&lt; v.size() <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Move semantics (C++11) mengizinkan resource dipindahkan dari objek sementara, bukan disalin. Ini menghemat alokasi memori yang mahal.
+
+## Konsep
+
+```cpp
+std::string buat() {
+    return std::string("teks panjang...");  // objek sementara (rvalue)
+}
+
+std::string s = buat();   // compiler bisa elisi / move
+```
+
+Sebelum C++11, ini menyalin seluruh isi string. Sekarang pointer internalnya yang dipindahkan.
+
+## std::move
+
+```cpp
+#include <utility>
+
+std::string a = "halo";
+std::string b = std::move(a);
+```
+
+`std::move` hanyalah `static_cast<T&&>` — ia tidak memindahkan apa pun sendiri. Penerima yang melakukan pemindahan lewat move constructor/assignment.
+
+## Move Constructor Buatan
+
+```cpp
+class Buffer {
+    int *data;
+    std::size_t n;
+public:
+    Buffer(Buffer&& other) noexcept
+        : data(other.data), n(other.n) {
+        other.data = nullptr;   // biar destructor-nya tidak free
+        other.n = 0;
+    }
+
+    ~Buffer() { delete[] data; }
+};
+```
+
+## Perfect Forwarding
+
+```cpp
+template <typename T>
+void wrapper(T&& arg) {
+    fungsi(std::forward<T>(arg));  // pertahankan lvalue/rvalue
+}
+```
+
+`std::forward` menjaga kategori nilai asli — dasar dari `emplace_back` di STL.
+
+## Kapan Dipakai
+
+- Mengembalikan objek besar dari fungsi.
+- Menyimpan objek ke container (`push_back(std::move(x))`).
+- Mengimplementasikan class yang mengelola resource.
+
+<div class="note">💡 Jangan memanggil `std::move` pada objek yang masih akan dipakai. Setelah dipindahkan, objek berada dalam state "valid tapi tidak ditentukan".</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+int main() {
+    std::string a = "teks yang sangat panjang untuk disalin";
+    std::string b = std::move(a);   // a sekarang kosong-ish
+    std::cout <&lt; "a=[" <&lt; a <&lt; "] b=[" <&lt; b <&lt; "]\n";
+
+    std::vector<std::string> v;
+    v.push_back(b);                 // salinan
+    v.push_back(std::move(b));      // pindahan, lebih murah
+    std::cout <&lt; v.size() <&lt; '\n';
+}`} />

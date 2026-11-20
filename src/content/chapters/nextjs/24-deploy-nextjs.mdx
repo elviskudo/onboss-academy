@@ -1,0 +1,90 @@
+---
+title: "Deploy ke Produksi"
+description: "build, Vercel, standalone output, dan pengecekan sebelum rilis"
+order: 24
+quiz:
+  - q: "Perintah build produksi adalah…"
+    options: ["npm test", "next lint", "npm run build", "npm run dev"]
+    answer: 2
+    explain: "Build menghasilkan folder .next yang siap dijalankan."
+  - q: "Perintah menjalankan hasil build adalah…"
+    options: ["npm install", "npm start", "npm run dev", "next dev"]
+    answer: 1
+    explain: "Biasanya dipakai di container atau server mandiri."
+  - q: "output: 'standalone' berguna untuk…"
+    options: ["Mengubah CSS", "Membuat API", "Menambah font", "Membuat bundle server yang mudah di-copy ke container"]
+    answer: 3
+    explain: "Menyertakan hanya dependensi yang dibutuhkan."
+  - q: "Sebelum deploy, pastikan…"
+    options: ["Cache dimatikan", "Variabel lingkungan sudah disetel", "Semua test dihapus", "Middleware dimatikan"]
+    answer: 1
+    explain: "Termasuk DATABASE_URL dan rahasia lainnya."
+  - q: "Vercel adalah…"
+    options: ["Platform yang menyediakan integrasi penuh dengan Next.js", "Library CSS", "Database saja", "Editor kode"]
+    answer: 0
+    explain: "Deploy cukup menghubungkan repository."
+example:
+  code: |
+    // next.config.mjs
+    const nextConfig = { output: 'standalone' };
+
+    // terminal
+    npm run build && npm start
+---
+
+Build yang sukses di lokal belum tentu langsung siap produksi. Ada beberapa pemeriksaan tambahan.
+
+## Build
+
+```bash
+npm run build
+npm start
+```
+
+Perhatikan ringkasan rute: yang ditandai statically rendered lebih cepat daripada yang dinamis.
+
+## Standalone
+
+```js
+// next.config.mjs
+const nextConfig = {
+  output: "standalone",
+};
+export default nextConfig;
+```
+
+Docker:
+
+```dockerfile
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+## Checklist
+
+- [ ] Semua environment variable tersedia di platform deploy.
+- [ ] `next build` tanpa error.
+- [ ] Gambar dan font dari domain yang diizinkan.
+- [ ] Metadata dan OG image bisa diakses publik.
+- [ ] Error boundary tersedia.
+
+## Platform
+
+Vercel memberi integrasi paling mulus. Untuk server sendiri, gunakan `npm start` di balik reverse proxy seperti Nginx.
+
+<div class="note">💡 Deploy bertahap: rilis ke preview environment, uji alur utama, lalu promosikan ke produksi. Langkah kecil mengurangi risiko.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`// next.config.mjs
+const nextConfig = { output: 'standalone' };
+
+// terminal
+npm run build && npm start`}</code></pre>

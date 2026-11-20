@@ -1,0 +1,104 @@
+---
+title: Strategi Branch dan Git Flow
+description: Pola alur kerja branch yang umum dipakai tim, dari trunk-based hingga release branch.
+order: 13
+quiz:
+- q: Branch utama pada Git Flow disebut…
+  options:
+  - origin
+  - main/master dan develop
+  - hanya main
+  - feature dan fix
+  answer: 1
+  explain: Git Flow memakai main untuk rilis stabil dan develop untuk integrasi fitur.
+- q: Trunk-based development menekankan…
+  options:
+  - Tanpa commit
+  - Hanya rilis tahunan
+  - Branch berumur pendek dan sering merge ke utama
+  - Satu branch per pengembang selamanya
+  answer: 2
+  explain: Branch dibuat singkat lalu segera di-merge agar integrasi tidak menumpuk.
+- q: Nama branch yang baik adalah…
+  options:
+  - fix
+  - baru
+  - test123
+  - feature/login-google
+  answer: 3
+  explain: Nama deskriptif memudahkan orang lain memahami tujuan branch.
+- q: Release branch dipakai untuk…
+  options:
+  - Menstabilkan versi sebelum rilis
+  - Menyimpan rahasia
+  - Menghapus commit
+  - Mengganti remote
+  answer: 0
+  explain: Perbaikan terakhir masuk ke release branch sebelum di-tag dan digabung ke main.
+- q: Kelemahan branch berumur panjang adalah…
+  options:
+  - Tidak bisa di-push
+  - Merge conflict besar dan integrasi lambat
+  - Commit terlalu kecil
+  - Terlalu banyak tag
+  answer: 1
+  explain: Semakin lama branch terpisah, semakin jauh ia dari perubahan tim lain.
+example:
+  code: "main\n └── develop\n      ├── feature/login\n      ├── feature/ekspor\n      └── release/v2.0.0\n"
+---
+
+
+Strategi branch mengatur **kapan dan bagaimana** perubahan bubar masuk ke kode utama. Tidak ada satu pola yang cocok untuk semua tim.
+
+## Git Flow
+
+```text
+main        ----o---------o------rilis
+                 \       /
+develop     --o---o---o---o---
+                \   /
+feature/x    ----o---
+```
+
+| Branch | Fungsi | Umur |
+|---|---|---|
+| main | kode produksi | permanen |
+| develop | integrasi fitur | permanen |
+| feature/* | mengerjakan satu fitur | singkat |
+| release/* | stabilisasi rilis | sedang |
+| hotfix/* | perbaikan darurat produksi | singkat |
+
+## Trunk-Based
+
+Pengembang membuat branch kecil, merge ke `main` dalam hitungan jam atau hari, dan menjaga kode selalu bisa di-deploy. Fitur besar disembunyikan dengan feature flag.
+
+```bash
+git switch -c feature/keranjang
+# beberapa commit kecil
+git fetch origin
+git rebase origin/main
+git push origin feature/keranjang
+```
+
+## Perbandingan
+
+| Aspek | Git Flow | Trunk-based |
+|---|---|---|
+| Jumlah branch | lebih banyak | sedikit |
+| Frekuensi merge | lebih jarang |非常 sering |
+| Cocok untuk | rilis terjadwal | continuous delivery |
+| Kompleksitas | sedang | rendah |
+
+<div class="note">💡 Aturan paling penting bukan nama polanya, melainkan disiplin: branch harus punya tujuan jelas dan segera selesai.</div>
+
+## Konvensi Penamaan
+
+```text
+feature/ringkas-teks
+fix/bug-tanggal
+chore/perbarui-dependensi
+docs/panduan-deploy
+refactor/rapi-parser
+```
+
+Awalan memudahkan filter dan otomatisasi changelog. Hindari nama seperti `test`, `coba`, atau `final2`.

@@ -1,0 +1,106 @@
+---
+title: "Filter Lanjutan: ANY, ALL, EXISTS, dan IS DISTINCT FROM"
+description: "Operator array, formatted NULL, dan pattern matching"
+order: 14
+quiz:
+  - q: "Operator ANY digunakan untuk…"
+    options: ["Membandingkan dengan salah satu nilai array", "Membuat tabel", "Menghapus NULL", "Mengurutkan hasil"]
+    answer: 0
+    explain: "x = ANY(array) benar bila x sama dengan salah satu elemen."
+  - q: "IS DISTINCT FROM berbeda dari <> karena…"
+    options: ["NULL diperlakukan sebagai nilai biasa", "Lebih lambat", "Hanya untuk angka", "Tidak ada beda"]
+    answer: 0
+    explain: "IS DISTINCT FROM memberi TRUE/FALSE bahkan bila salah satu operand NULL."
+  - q: "Operator LIKE dengan '_' berarti…"
+    options: ["Nol atau lebih karakter", "Tepat satu karakter", "Digit saja", "Spasi"]
+    answer: 1
+    explain: "Underscore mencocokkan tepat satu karakter."
+  - q: "ILIKE berfungsi seperti LIKE tetapi…"
+    options: ["Case-insensitive", "Lebih cepat", "Hanya untuk angka", "Tanpa wildcard"]
+    answer: 0
+    explain: "ILIKE adalah bentuk LIKE yang tidak membedakan huruf besar/kecil."
+  - q: "SIMILAR TO digunakan untuk…"
+    options: ["Pola regex terbatas ala SQL", "Menggabungkan tabel", "Menyimpan array", "Membuat index"]
+    answer: 0
+    explain: "SIMILAR TO memakai sintaks pola SQL standar dengan regex."
+example:
+  code: |
+    SELECT * FROM karyawan WHERE dept = ANY(ARRAY['Data','Product']);
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL punya operator filter yang tidak ada di banyak database lain. Memahamannya membuat query lebih ringkas sekaligus menghindari jebakan NULL.
+
+## ANY dan ALL
+
+```sql
+SELECT * FROM produk
+WHERE harga > ANY(ARRAY[10000, 20000, 30000]);
+
+SELECT * FROM produk
+WHERE harga > ALL(ARRAY[10000, 20000, 30000]);
+```
+
+`ANY` benar bila satu perbandingan benar; `ALL` harus benar untuk semua elemen.
+
+## EXISTS dan NOT EXISTS
+
+```sql
+SELECT k.nama FROM karyawan k
+WHERE EXISTS (SELECT 1 FROM proyek p WHERE p.lead_id = k.id);
+```
+
+EXISTS berhenti setelah menemukan satu baris. Gunakan NOT EXISTS daripada NOT IN bila subquery mungkin menghasilkan NULL.
+
+## Jebakan NULL
+
+```sql
+SELECT NULL = NULL;               -- NULL (unknown)
+SELECT NULL IS DISTINCT FROM NULL; -- false
+SELECT 1 IS DISTINCT FROM NULL;    -- true
+```
+
+`IS NOT DISTINCT FROM` adalah kebalikannya: NULL dianggap sama dengan NULL.
+
+## Pattern Matching
+
+| Operator | Keterangan |
+| --- | --- |
+| `LIKE` | case-sensitive, `%` dan `_` |
+| `ILIKE` | case-insensitive |
+| `SIMILAR TO` | pola regex SQL |
+| `~` | regex Posix case-sensitive |
+| `~*` | regex Posix case-insensitive |
+
+```sql
+SELECT * FROM karyawan WHERE nama ~* '^(ana|budi)';
+```
+
+## BETWEEN dan IN
+
+```sql
+SELECT * FROM karyawan
+WHERE gaji BETWEEN 8000000 AND 12000000
+  AND dept IN ('Engineering', 'Data');
+```
+
+BETWEEN inklusif pada kedua batas. Untuk timestamp, gunakan `>=` dan `<` agar batas atas tidak memotong sebagian detik.
+
+<div class="note">💡 `LIKE '%kata'` tidak bisa memakai index B-Tree biasa. Untuk pencarian teks berskala besar, pertimbangkan trigram index atau full-text search.</div>
+
+## Di Dunia Nyata
+
+- **Filter multi-nilai**: `= ANY(array)` dari parameter aplikasi.
+- **Pencarian nama**: ILIKE untuk input pengguna.
+- **Data opsional**: IS DISTINCT FROM membandingkan nilai lama/baru dalam audit.
+- **Validasi**: regex ~* untuk format kode.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT nama, dept FROM karyawan
+WHERE dept = ANY(ARRAY['Engineering','Data'])
+  AND nama ILIKE '%a%'
+  AND gaji IS NOT DISTINCT FROM gaji
+ORDER BY nama;`} />

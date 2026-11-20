@@ -12,7 +12,7 @@ quiz:
     answer: 2
     explain: "Untuk karakter non-ASCII, konversi ke []rune dulu agar tidak terpotong."
   - q: "Mengulang karakter per huruf (bukan per byte) memakai…"
-    options: ["range pada []rune", "for i := 0; i < len(s)", "split", "cut"]
+    options: ["range pada []rune", "for i := 0; i &lt; len(s)", "split", "cut"]
     answer: 0
     explain: "for _, r := range s memberi rune utuh untuk tiap karakter Unicode."
   - q: "Konstanta rune ditulis dengan…"
@@ -128,6 +128,10 @@ Empat verb paling sering: `%d` bilangan, `%s` teks, `%f` pecahan, `%t` boolean �
 - **Parsing CSV**: `bufio.Scanner` + `strings.Split` membaca tiap baris jadi kolom
 
 <div class="note">💡 len(s) menghitung byte, bukan huruf. Untuk teks multi-bahasa selalu pakai len([]rune(s)) atau range — kalau tidak, potongan substring bisa menghasilkan byte setengah jadi yang merusak UTF-8.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="go" runtime="piston" pistonName="go" code={`package main
 

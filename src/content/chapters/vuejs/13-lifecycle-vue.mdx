@@ -1,0 +1,115 @@
+---
+title: "Lifecycle Vue"
+description: "onMounted, onUpdated, onUnmounted, dan urutan hook"
+order: 13
+quiz:
+  - q: "Hook yang dipanggil setelah komponen masuk DOM adalah…"
+    options: ["onBeforeMount", "onUnmounted", "onMounted", "onCreated"]
+    answer: 2
+    explain: "Tempat mengakses elemen dan memulai timer."
+  - q: "onUnmounted berguna untuk…"
+    options: ["Menambah props", "Membersihkan listener dan timer", "Mengambil data awal", "Mengubah template"]
+    answer: 1
+    explain: "Mencegah kebocoran memori."
+  - q: "Di Composition API, hook didaftarkan…"
+    options: ["Di template", "Di CSS", "Di index.html", "Di dalam setup/script setup"]
+    answer: 3
+    explain: "Contoh: onMounted(() => { ... })."
+  - q: "onUpdated dipanggil saat…"
+    options: ["Rute berubah", "DOM selesai diperbarui karena perubahan reaktif", "Komponen dibuat", "Aplikasi di-build"]
+    answer: 1
+    explain: "Hati-hati mengubah state di sini agar tidak loop."
+  - q: "Timer yang dibuat di onMounted sebaiknya dibersihkan di…"
+    options: ["onUnmounted", "onUpdated", "onBeforeMount", "computed"]
+    answer: 0
+    explain: "Gunakan clearInterval/clearTimeout."
+example:
+  code: |
+    onMounted(() => {
+      const timer = setInterval(() => {}, 1000);
+      onUnmounted(() => clearInterval(timer));
+    });
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Setiap komponen Vue punya siklus hidup. Composition API menyediakan hook dalam bentuk fungsi.
+
+## Peta Hook
+
+| Options API | Composition API |
+|-------------|-----------------|
+| `beforeCreate` / `created` | `setup` langsung |
+| `beforeMount` | `onBeforeMount` |
+| `mounted` | `onMounted` |
+| `beforeUpdate` | `onBeforeUpdate` |
+| `updated` | `onUpdated` |
+| `beforeUnmount` | `onBeforeUnmount` |
+| `unmounted` | `onUnmounted` |
+
+## Contoh
+
+```vue
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const detik = ref(0)
+let timer
+
+onMounted(() => {
+  timer = setInterval(() => detik.value++, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(timer)
+})
+</script>
+
+<template>
+  <p>Sudah {{ detik }} detik.</p>
+</template>
+```
+
+## Mengakses Elemen
+
+```vue
+<script setup>
+import { ref, onMounted } from 'vue'
+
+const input = ref(null)
+
+onMounted(() => input.value?.focus())
+</script>
+
+<template>
+  <input ref="input">
+</template>
+```
+
+Saat `onMounted` berjalan, `input.value` sudah berisi elemen DOM.
+
+## KeepAlive
+
+```vue
+<KeepAlive>
+  <component :is="komponenAktif" />
+</KeepAlive>
+```
+
+Komponen yang disembunyikan tidak dihancurkan, sehingga mempertahankan state. Hook `onActivated` dan `onDeactivated` tersedia untuk kasus ini.
+
+<div class="note">💡 Daftarkan cleanup di tempat yang sama dengan tempat kamu membuat efek. Kode jadi mudah diaudit: setiap `setInterval` bersebelahan dengan `clearInterval`.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi lifecycle: mount -> update -> unmount
+const log = [];
+function onMounted(fn) { log.push("mounted"); fn(); }
+function onUnmounted(fn) { log.push("unmounted"); fn(); }
+
+onMounted(() => log.push("  buat timer"));
+log.push("update");
+onUnmounted(() => log.push("  hapus timer"));
+console.log(log.join(" | "));`} />

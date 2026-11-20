@@ -1,0 +1,129 @@
+---
+"title": "Borrowing Lanjutan"
+"description": "Aturan pinjam meminjam, mutable reference, slice, dan lifetime dasar"
+"order": 13
+"quiz":
+- "q": "Pada satu scope, Rust mengizinkan…"
+  "options":
+  - "banyak &mut sekaligus"
+  - "satu &mut atau banyak &"
+  - "banyak &mut dan &"
+  - "nol referensi"
+  "answer": 1
+  "explain": "Satu mutable reference eksklusif ATAU banyak immutable reference."
+- "q": "Slice ditulis dengan…"
+  "options":
+  - "&arr[1..3]"
+  - "arr.slice(1,3)"
+  - "arr[1:3]"
+  - "&arr{1..3}"
+  "answer": 0
+  "explain": "Rentang indeks dengan & membuat slice yang dipinjam."
+- "q": "Lifetime pada `&'a str` menandakan…"
+  "options":
+  - "umur string"
+  - "hubungan masa hidup referensi"
+  - "ukuran string"
+  - "encoding"
+  "answer": 1
+  "explain": "Lifetime memberi tahu kompiler dari mana referensi valid."
+- "q": "Fungsi dengan dua referensi dan satu hasil perlu lifetime karena…"
+  "options":
+  - "Rust tidak bisa menyimpulkan yang mana yang dikembalikan"
+  - "semua string statis"
+  - "parameter terlalu banyak"
+  - "kompiler lambat"
+  "answer": 0
+  "explain": "Tanpa anotasi, kompiler tidak tahu apakah hasil berasal dari argumen pertama atau kedua."
+- "q": "RefCell berguna untuk…"
+  "options":
+  - "mengganti &mut saat compile-time"
+  - "menambah kecepatan"
+  - "menghapus borrow checker"
+  - "membuat enum"
+  "answer": 0
+  "explain": "RefCell memindahkan pengecekan borrowing ke runtime."
+"example":
+  "code": "fn panjang<'a>(s: &'a str) -> usize { s.len() }\nfn main() {\n    let teks = String::from(\"halo\");\n    println!(\"{}\", panjang(&teks));\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Borrow checker adalah fitur khas Rust yang mencegah data race dan use-after-free tanpa garbage collector. Memahaminya membuat kode lebih aman.
+
+## Dua Aturan Emas
+
+1. Boleh punya **banyak** immutable reference (`&T`) secara bersamaan
+2. Atau **tepat satu** mutable reference (`&mut T`) — tidak boleh bersama yang lain
+
+```rust
+let mut x = 5;
+let a = &x;
+let b = &x;      // boleh
+// let c = &mut x; // error saat a dan b masih aktif
+println!("{} {}", a, b);
+```
+
+## Slice
+
+```rust
+let angka = [1, 2, 3, 4, 5];
+let bagian = &angka[1..4]; // [2, 3, 4]
+```
+
+Slice adalah *fat pointer*: berisi alamat awal dan panjang. `&str` juga slice dari UTF-8.
+
+## Lifetime
+
+```rust
+fn terpanjang<'a>(a: &'a str, b: &'a str) -> &'a str {
+    if a.len() > b.len() { a } else { b }
+}
+```
+
+Anotasi `'a` mengatakan hasil hidup setidaknya selama input. Kompiler menolak jika referensi yang dikembalikan bisa lebih pendek.
+
+## Elision
+
+Untuk satu input reference, lifetime hasil bisa disimpulkan:
+
+```rust
+fn pertama(s: &str) -> &str { &s[0..1] } // tanpa anotasi
+```
+
+## Interior Mutability
+
+`RefCell<T>` memindahkan aturan borrowing ke runtime:
+
+```rust
+use std::cell::RefCell;
+let nilai = RefCell::new(5);
+*nilai.borrow_mut() += 1;
+```
+
+Panic terjadi jika aturan dilanggar saat runtime. Gunakan hanya saat pola borrowing static terlalu kaku.
+
+<div class="note">💡 Error borrow checker sering selesai dengan mengubah **struktur** kode, bukan menambah `clone()`. Clone hanya saat memang perlu kepemilikan baru.</div>
+
+
+## Try it Yourself
+
+Coba hapus salah satu `println!` untuk melihat bagaimana NLL mengakhiri pinjaman lebih awal.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn terpanjang<'a>(a: &'a str, b: &'a str) -> &'a str {
+    if a.len() >= b.len() { a } else { b }
+}
+
+fn main() {
+    let mut data = vec![1, 2, 3, 4];
+    {
+        let s = &data[1..3];
+        println!("slice: {:?}", s);
+    } // pinjaman berakhir di sini
+    data.push(5);
+    println!("data: {:?}", data);
+
+    let x = "Go";
+    let y = "Rust";
+    println!("terpanjang: {}", terpanjang(x, y));
+}`} />

@@ -1,0 +1,179 @@
+---
+title: "Class Lanjutan: Abstract, Override & Accessor"
+description: "Abstract class, override, getter/setter, dan static block"
+order: 22
+quiz:
+  - q: "Abstract class tidak bisa…"
+    options: ["Diwariskan", "Di-instantiasi langsung", "Mempunyai method", "Mempunyai konstruktor"]
+    answer: 1
+    explain: "Abstract class hanya bisa menjadi induk."
+  - q: "Kata kunci `override` dipakai untuk…"
+    options: ["Membuat method baru", "Menandai method yang menimpa induk", "Menghapus method", "Membuat static"]
+    answer: 1
+    explain: "Dengan noImplicitOverride, override wajib ditulis."
+  - q: "Getter didefinisikan dengan…"
+    options: ["get nama()", "function nama()", "nama =>", "readonly nama"]
+    answer: 0
+    explain: "Getter dipanggil seperti properti tapi berupa fungsi."
+  - q: "Properti `protected` bisa diakses dari…"
+    options: ["Semua tempat", "Class dan turunannya", "Hanya class itu sendiri", "Hanya modul lain"]
+    answer: 1
+    explain: "Protected lebih longgar dari private, lebih ketat dari public."
+  - q: "Static block dijalankan saat…"
+    options: ["Instance dibuat", "Class pertama kali dievaluasi", "Method dipanggil", "Tidak pernah"]
+    answer: 1
+    explain: "Cocok untuk inisialisasi nilai statis yang kompleks."
+example:
+  code: |
+    abstract class Bentuk {
+      constructor(public nama: string) {}
+      abstract luas(): number;
+    }
+    
+    class Kotak extends Bentuk {
+      constructor(private sisi: number) { super("Kotak"); }
+      override luas() { return this.sisi ** 2; }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Class di TypeScript menambahkan anotasi tipe dan modifier ke fitur class JavaScript. Pemahaman yang baik membantu membangun domain model yang rapi.
+
+## Abstract Class
+
+```ts
+abstract class Bentuk {
+  constructor(public readonly nama: string) {}
+
+  abstract luas(): number; // wajib diimplementasikan turunan
+
+  deskripsi(): string {
+    return `${this.nama}: ${this.luas().toFixed(2)}`;
+  }
+}
+
+class Lingkaran extends Bentuk {
+  constructor(private jari: number) {
+    super("Lingkaran");
+  }
+
+  override luas(): number {
+    return Math.PI * this.jari ** 2;
+  }
+}
+```
+
+Abstract method tidak punya implementasi dan memaksa turunan mengisinya.
+
+## Modifier Akses
+
+| Modifier | Akses |
+|----------|-------|
+| `public` | Semua tempat (default) |
+| `private` | Hanya class itu sendiri |
+| `protected` | Class + turunan |
+| `readonly` | Hanya di constructor |
+
+Parameter property (`constructor(public nama: string)`) sekaligus mendeklarasikan dan menetapkan properti.
+
+## override & noImplicitOverride
+
+```ts
+class Induk {
+  jalankan(): void {}
+}
+
+class Anak extends Induk {
+  override jalankan(): void { } // ✅
+  jalan(): void {}              // ⚠️ typo, bukan override
+}
+```
+
+Dengan `noImplicitOverride: true`, lupa menulis `override` menjadi error — mencegah bug karena salah eja nama method.
+
+## Getter & Setter
+
+```ts
+class Suhu {
+  private _celsius = 0;
+
+  get celsius(): number { return this._celsius; }
+
+  set celsius(v: number) {
+    if (v < -273) throw new Error("Di bawah nol mutlak");
+    this._celsius = v;
+  }
+
+  get fahrenheit(): number {
+    return this._celsius * 9 / 5 + 32;
+  }
+}
+```
+
+TypeScript menyimpulkan tipe getter dari return type. Getter dan setter bisa punya tipe berbeda (T ≥ 4.3).
+
+## Static Members & Block
+
+```ts
+class Konfigurasi {
+  static readonly versi = "1.0";
+  static daftar: string[] = [];
+
+  static {
+    Konfigurasi.daftar.push("awal");
+  }
+}
+```
+
+## implements Interface
+
+```ts
+interface BisaSimpan {
+  simpan(): void;
+}
+
+class Database implements BisaSimpan {
+  simpan(): void { console.log("tersimpan"); }
+}
+```
+
+Interface hanya mendefinisikan kontrak; class boleh punya anggota tambahan.
+
+<div class="note">💡 Hindari `private` berlebihan pada model data sederhana. Ia menyulitkan serialisasi dan testing. Pakai `readonly` bila hanya ingin mencegah perubahan.</div>
+
+## Di Dunia Nyata
+
+- Abstract base class dipakai pada repository: `UserRepo extends BaseRepo<User>`.
+- Getter menghitung turunan seperti `totalHarga` tanpa menyimpan data duplikat.
+- Static block menginisialisasi registry plugin saat class dimuat.
+
+## Try it Yourself
+
+Tambahkan subclass baru atau ubah setter untuk melihat validasinya.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`abstract class Bentuk {
+  constructor(public readonly nama: string) {}
+  abstract luas(): number;
+  deskripsi(): string {
+    return this.nama + ": " + this.luas().toFixed(1);
+  }
+}
+
+class Kotak extends Bentuk {
+  constructor(private sisi: number) { super("Kotak"); }
+  override luas(): number { return this.sisi ** 2; }
+}
+
+class Suhu {
+  private _c = 25;
+  get celsius(): number { return this._c; }
+  set celsius(v: number) { if (v >= -273) this._c = v; }
+  get fahrenheit(): number { return this._c * 9 / 5 + 32; }
+}
+
+const k = new Kotak(4);
+console.log(k.deskripsi());
+const s = new Suhu();
+s.celsius = 30;
+console.log(s.celsius, "C =", s.fahrenheit, "F");`} />

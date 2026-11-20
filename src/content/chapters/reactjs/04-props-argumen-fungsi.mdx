@@ -147,6 +147,10 @@ function Panel({ judul, children }) {
 
 <div class="note">💡 Uji pemahamanmu: kalau komponen adalah fungsi, maka props = parameter, dan pemanggilan JSX = memanggil fungsi. Sifat immutable bukan aturan basa-basi React, melainkan konsekuensi alami dari model fungsi murni.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`function Kartu(props) {
   const penulis = props.penulis || "anonim";
   return "[" + props.judul + "] " + props.isi + " — " + penulis;

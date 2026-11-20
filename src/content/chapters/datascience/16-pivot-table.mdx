@@ -1,0 +1,100 @@
+---
+title: "Pivot Table dan Agregasi Silang"
+description: "membuat ringkasan dua dimensi, group by python, dan tabulasi silang"
+order: 16
+quiz:
+  - q: "Pivot table berguna untuk…"
+    options: ["Menyimpan file", "Merangkum data dua dimensi", "Menghapus data", "Membuat grafik pie"]
+    answer: 1
+    explain: "Baris dan kolom menjadi dua kategori ringkasan."
+  - q: "Tabulasi silang menampilkan…"
+    options: ["Jumlah baris unik", "Urutan waktu", "Frekuensi pada persilangan kategori", "Rata-rata satu kolom"]
+    answer: 2
+    explain: "Contoh: jumlah siswa per kelas per jenis kelamin."
+  - q: "Kunci dictionary untuk pivot sebaiknya…"
+    options: ["Angka acak", "String panjang", "Indeks baris", "Tuple dari dua kategori"]
+    answer: 3
+    explain: "(kelas, mapel) adalah kunci yang jelas."
+  - q: "Nilai kosong pada sel pivot sebaiknya…"
+    options: ["Diabaikan", "Diisi 0 atau ditandai", "Dihapus seluruh baris", "Diisi dengan string acak"]
+    answer: 1
+    explain: "0 atau tanda \"-\" membuat tabel mudah dibaca."
+  - q: "Agregasi yang paling umum di pivot adalah…"
+    options: ["LOG", "RANDOM", "SUM atau COUNT", "SQRT"]
+    answer: 2
+    explain: "Jumlah dan hitungan paling sering dipakai."
+example:
+  code: |
+    data=[("A","Math",80),("A","Science",70),("B","Math",90)]
+    pivot={}
+    for kelas,mapel,nilai in data:
+        pivot[(kelas,mapel)]=pivot.get((kelas,mapel),0)+nilai
+    print(pivot)
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Membangun Pivot Manual
+
+```python
+data = [
+    ("A", "Matematika", 80),
+    ("A", "IPA", 70),
+    ("B", "Matematika", 90),
+    ("B", "IPA", 85),
+]
+
+pivot = {}
+for kelas, mapel, nilai in data:
+    pivot[(kelas, mapel)] = pivot.get((kelas, mapel), 0) + nilai
+
+print(pivot)
+```
+
+Kunci berupa tuple membuat struktur tetap jelas tanpa library tambahan.
+
+## Menampilkan sebagai Tabel
+
+```python
+kelas_list = sorted({k[0] for k in pivot})
+mapel_list = sorted({k[1] for k in pivot})
+
+print("Kelas", *mapel_list)
+for kelas in kelas_list:
+    baris = [pivot.get((kelas, mapel), 0) for mapel in mapel_list]
+    print(kelas, *baris)
+```
+
+## Agregasi Lain
+
+| Agregasi | Fungsi |
+| --- | --- |
+| COUNT | jumlah kejadian |
+| SUM | total nilai |
+| AVG | rata-rata |
+| MIN/MAX | ekstrem |
+
+```python
+pengunjung = {}
+for tanggal, kota in data_kunjungan:
+    pengunjung[(tanggal, kota)] = pengunjung.get((tanggal, kota), 0) + 1
+```
+
+<div class="note">💡 Pivot yang baik punya nama baris dan kolom yang jelas. Tabel tanpa label hanya bisa dibaca oleh orang yang membuatnya.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`data = [
+    ("A", "Matematika", 80), ("A", "IPA", 70),
+    ("B", "Matematika", 90), ("B", "IPA", 85),
+]
+pivot = {}
+for kelas, mapel, nilai in data:
+    pivot[(kelas, mapel)] = pivot.get((kelas, mapel), 0) + nilai
+
+mapel = sorted({k[1] for k in pivot})
+print("Kelas", *mapel)
+for kelas in sorted({k[0] for k in pivot}):
+    print(kelas, *[pivot.get((kelas, m), 0) for m in mapel])`} />

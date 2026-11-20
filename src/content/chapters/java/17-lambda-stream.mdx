@@ -1,0 +1,129 @@
+---
+title: "Lambda & Stream API"
+description: "functional interface, lambda expression, pipeline stream, map/filter/reduce"
+order: 17
+quiz:
+  - q: "Functional interface adalah interface yang…"
+    options: ["Punya banyak method abstrak", "Punya tepat satu method abstrak", "Tidak punya method", "Selalu generik"]
+    answer: 1
+    explain: "Cocok untuk lambda; bisa dianotasi @FunctionalInterface."
+  - q: "Sintaks lambda yang benar adalah…"
+    options: ["(x) -> x * 2", "x => x * 2", "function(x) { x*2 }", "lambda x: x*2"]
+    answer: 0
+    explain: "Java memakai `->` (panah), bukan `=>`."
+  - q: "`stream.filter(...)` menghasilkan…"
+    options: ["List langsung", "Stream baru dengan elemen lolos filter", "Set", "Void"]
+    answer: 1
+    explain: "Stream bersifat lazy; operasi terminal yang menghasilkan nilai."
+  - q: "Operasi terminal berikut yang menghasilkan List adalah…"
+    options: ["map()", "filter()", "collect()", "peek()"]
+    answer: 2
+    explain: "collect(Collectors.toList()) mengubah stream balik ke collection."
+  - q: "`reduce()` berguna untuk…"
+    options: ["Memfilter", "Menggabungkan elemen jadi satu nilai", "Mengurutkan", "Menghapus duplikat"]
+    answer: 1
+    explain: "reduce adalah operasi fold/agregasi."
+example:
+  code: |
+    import java.util.*;
+    import java.util.stream.*;
+    
+    public class Main {
+      public static void main(String[] args) {
+        List<Integer> angka = Arrays.asList(1,2,3,4,5,6);
+        int total = angka.stream()
+            .filter(n -> n % 2 == 0)
+            .map(n -> n * n)
+            .reduce(0, Integer::sum);
+        System.out.println(total);  // 56
+    
+        long jumlah = angka.stream().count();
+        System.out.println(jumlah);
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Lambda (Java 8) membuat kode lebih ringkas, terutama bersama Stream API. Kombinasi keduanya menggantikan banyak loop boilerplate.
+
+## Lambda
+
+```java
+// tanpa lambda
+Comparator<String> c = new Comparator<>() {
+    public int compare(String a, String b) { return a.length() - b.length(); }
+};
+
+// dengan lambda
+Comparator<String> c = (a, b) -> a.length() - b.length();
+```
+
+Bentuk: `(parameter) -> ekspresi` atau `(parameter) -> { blok }`.
+
+## Functional Interface Bawaan
+
+| Interface | Method | Contoh |
+|---|---|---|
+| `Runnable` | `run()` | thread |
+| `Consumer<T>` | `accept(T)` | `forEach` |
+| `Supplier<T>` | `get()` | lazy value |
+| `Function<T,R>` | `apply(T)` | `map` |
+| `Predicate<T>` | `test(T)` | `filter` |
+
+```java
+Predicate<String> panjang = s -> s.length() > 3;
+System.out.println(panjang.test("halo"));  // true
+```
+
+## Method Reference
+
+```java
+daftar.forEach(System.out::println);
+daftar.sort(String::compareToIgnoreCase);
+```
+
+`::` adalah pintasan untuk lambda yang hanya memanggil method yang sudah ada.
+
+## Pipeline Stream
+
+```java
+List<String> hasil = data.stream()
+    .filter(s -> s.startsWith("A"))     // intermediate
+    .map(String::toUpperCase)            // intermediate
+    .sorted()                            // intermediate
+    .collect(Collectors.toList());       // terminal
+```
+
+Operasi **intermediate** bersifat lazy dan bisa dirantai. Operasi **terminal** (`collect`, `count`, `reduce`, `forEach`, `anyMatch`) yang memicu eksekusi.
+
+## Map vs flatMap
+
+```java
+stream.map(s -> s.split(" "))       // Stream<String[]>
+stream.flatMap(s -> Arrays.stream(s.split(" ")))  // Stream<String>
+```
+
+flatMap meratakan struktur bersarang.
+
+<div class="note">💡 Stream tidak menyimpan data dan biasanya hanya bisa dipakai sekali. Untuk transformasi kompleks dengan efek samping atau exception yang rumit, loop biasa sering lebih mudah di-debug.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+  public static void main(String[] args) {
+    List<Integer> angka = Arrays.asList(1,2,3,4,5,6);
+    int total = angka.stream()
+        .filter(n -> n % 2 == 0)
+        .map(n -> n * n)
+        .reduce(0, Integer::sum);
+    System.out.println(total);  // 56
+
+    long jumlah = angka.stream().count();
+    System.out.println(jumlah);
+  }
+}`} />

@@ -1,0 +1,105 @@
+---
+title: Algoritma Randomized
+description: Keacakan sebagai alat untuk expected performance dan sampling yang adil.
+order: 25
+quiz:
+- q: Algoritma randomized menggunakan…
+  options:
+  - Data yang rusak
+  - Keacakan sebagai bagian dari logika
+  - Hanya angka acak di output
+  - Waktu acak komputer
+  answer: 1
+  explain: Randomness dipakai untuk memilih pivot, contoh, atau langkah secara probabilistik.
+- q: Quick sort dengan pivot acak memiliki…
+  options:
+  - O(n^2) rata-rata
+  - O(1)
+  - Expected O(n log n)
+  - Worst case O(n log n) selalu
+  answer: 2
+  explain: Pivot acak membuat kasus buruk sangat tidak mungkin terjadi.
+- q: Las Vegas algorithm selalu…
+  options:
+  - Memberi jawaban salah kadang
+  - Berjalan waktu tetap
+  - Tidak pakai probabilitas
+  - Memberi jawaban benar, waktu bisa berubah
+  answer: 3
+  explain: Contohnya randomized quicksort.
+- q: Monte Carlo algorithm…
+  options:
+  - Waktu relatif tetap, jawaban bisa salah kecil
+  - Selalu benar
+  - Tidak bisa dijalankan
+  - Hanya untuk graf
+  answer: 0
+  explain: Contohnya Miller-Rabin untuk uji primalitas.
+- q: Reservoir sampling berguna untuk…
+  options:
+  - Menghapus duplikat
+  - Mengambil sampel merata dari stream panjang
+  - Menyimpan semua data
+  - Mengurutkan stream
+  answer: 1
+  explain: Tiap item punya probabilitas sama terpilih walau panjang stream tidak diketahui.
+example:
+  code: "import random\n\ndef reservoir(stream, k):\n    hasil = []\n    for i, item in enumerate(stream):\n        if i &lt; k:\n            hasil.append(item)\n        else:\n            j = random.randint(0, i)\n            if j &lt; k:\n                hasil[j] = item\n    return hasil\n\nprint(reservoir(iter(range(100)), 5))\n"
+---
+
+
+ Sebagian algoritma sengaja memakai **keacakan** untuk menghindari kasus terburuk atau memilih sampel yang adil.
+
+## Dua Keluarga
+
+| Keluarga | Waktu | Jawaban | Contoh |
+|---|---|---|---|
+| Las Vegas | bisa berubah | selalu benar | randomized quicksort |
+| Monte Carlo | relatif tetap | benar dengan probabilitas tinggi | Miller-Rabin |
+
+## Pivot Acak
+
+```python
+import random
+
+def quicksort(a):
+    if len(a) <= 1:
+        return a
+    pivot = random.choice(a)
+    kiri = [x for x in a if x < pivot]
+    tengah = [x for x in a if x == pivot]
+    kanan = [x for x in a if x > pivot]
+    return quicksort(kiri) + tengah + quicksort(kanan)
+```
+
+Tanpa acakan, input sudah terurut bisa memicu O(n²). Dengan pivot acak, **expected** waktu O(n log n).
+
+## Reservoir Sampling
+
+```python
+def reservoir(stream, k):
+    hasil = []
+    for i, item in enumerate(stream):
+        if i < k:
+            hasil.append(item)
+        else:
+            j = random.randint(0, i)
+            if j < k:
+                hasil[j] = item
+    return hasil
+```
+
+Setiap item memiliki probabilitas `k/n` terpilih, walau total `n` tidak diketahui di awal.
+
+## Kapan Dipakai
+
+- Quick sort dan hash table untuk menghindari input adversarial.
+- Estimasi besar himpunan dengansampel terbatas (HyperLogLog, MinHash).
+- Testing dengan input acak untuk menemukan edge case.
+- Simulasi dan algoritma approximate.
+
+<div class="note">💡 Randomized != tidak bisa dianalisis. Kita tetap bisa menyatakan jaminan *expected* atau *dengan probabilitas tinggi* secara matematis.</div>
+
+## Penutup DSA
+
+Dari Big-O sampai algoritma randomized, inti perjalanan ini sama: **mengenali pola, mengukur biaya, dan memilih trade-off yang sadar**. Terus latih dengan soal baru, tetapi selalu jelaskan alasan di balik pilihan struktur data Anda.

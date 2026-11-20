@@ -1,0 +1,142 @@
+---
+title: "Proyek: Dashboard React"
+description: "merangkai komponen, context, hook, routing, dan API menjadi aplikasi dashboard"
+order: 26
+quiz:
+  - q: "Struktur folder yang baik memisahkan…"
+    options: ["CSS dan JS dalam satu baris", "Hanya file index", "Komponen, halaman, hook, dan layanan API", "Semua file dalam satu folder"]
+    answer: 2
+    explain: "Pemisahan memudahkan navigasi dan pemeliharaan."
+  - q: "Layout bersama sebaiknya…"
+    options: ["Disimpan di URL", "Dibuat sekali lalu dipakai banyak halaman", "Ditulis ulang tiap halaman", "Dihapus"]
+    answer: 1
+    explain: "DrY: satu layout, banyak konten."
+  - q: "Data yang dipakai banyak halaman cocok disimpan di…"
+    options: ["Variabel global tanpa pengelolaan", "Setiap komponen secara terpisah", "Nama kelas CSS", "Context atau store"]
+    answer: 3
+    explain: "Satu sumber kebenaran mencegah inkonsistensi."
+  - q: "Langkah terakhir sebelum deploy adalah…"
+    options: ["Menonaktifkan error boundary", "Build produksi dan uji hasilnya", "Menghapus semua test", "Mengubah semua nama file"]
+    answer: 1
+    explain: "npm run build memastikan kode siap dipakai pengguna."
+  - q: "Fitur dashboard yang umum adalah…"
+    options: ["Ringkasan metrik, tabel, dan filter", "Hanya satu tombol", "Tanpa navigasi", "Tanpa penanganan error"]
+    answer: 0
+    explain: "Dashboard menampilkan informasi ringkas dan interaktif."
+example:
+  code: |
+    src/
+      components/  KartuMetrik.jsx, TabelPesanan.jsx
+      hooks/       useFetch.js
+      services/    api.js
+      pages/       Dashboard.jsx, Laporan.jsx
+      context/     AuthContext.jsx
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Saatnya merangkai semua yang sudah dipelajari menjadi satu aplikasi yang utuh.
+
+## Struktur Proyek
+
+```
+src/
+  main.jsx
+  App.jsx
+  components/
+    KartuMetrik.jsx
+    TabelPesanan.jsx
+    Sidebar.jsx
+  hooks/
+    useFetch.js
+  services/
+    api.js
+  context/
+    AuthContext.jsx
+  pages/
+    Dashboard.jsx
+    Laporan.jsx
+```
+
+## Kartu Metrik
+
+```jsx
+function KartuMetrik({ label, nilai, naik }) {
+  return (
+    <article className="metrik">
+      <small>{label}</small>
+      <strong>{nilai.toLocaleString("id-ID")}</strong>
+      <span className={naik ? "hijau" : "merah"}>
+        {naik ? "▲" : "▼"} dibanding bulan lalu
+      </span>
+    </article>
+  );
+}
+```
+
+## Halaman Dashboard
+
+```jsx
+function Dashboard() {
+  const { data, loading, error } = useFetch("/api/ringkasan");
+
+  if (loading) return <p>Memuat ringkasan…</p>;
+  if (error) return <p className="error">{error}</p>;
+
+  return (
+    <div>
+      <h1>Ringkasan Toko</h1>
+      <section className="grid-metrik">
+        <KartuMetrik label="Pesanan" nilai={data.pesanan} naik />
+        <KartuMetrik label="Omzet" nilai={data.omzet} naik={false} />
+      </section>
+      <TabelPesanan data={data.terbaru} />
+    </div>
+  );
+}
+```
+
+## Rute dan Layout
+
+```jsx
+<BrowserRouter>
+  <AuthProvider>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="laporan" element={
+          <Protected><Laporan /></Protected>
+        } />
+      </Route>
+      <Route path="login" element={<Login />} />
+    </Routes>
+  </AuthProvider>
+</BrowserRouter>
+```
+
+## Checklist Sebelum Selesai
+
+- [ ] Semua daftar punya `key` yang stabil.
+- [ ] Fetch dibatalkan saat komponen unmount.
+- [ ] Form punya label dan validasi.
+- [ ] Error punya tampilan fallback.
+- [ ] `npm run build` berhasil.
+
+<div class="note">💡 Proyek kecil yang selesai jauh lebih berharga daripada proyek besar yang setengah jadi. Mulai dari tiga metrik dan satu tabel, lalu kembangkan bertahap.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Ringkasan logika dashboard dalam data murni
+const pesanan = [
+  { id: 1, total: 25000, lunas: true },
+  { id: 2, total: 12000, lunas: false },
+];
+
+const omzet = pesanan.filter((p) => p.lunas)
+                     .reduce((s, p) => s + p.total, 0);
+
+console.log("Jumlah pesanan:", pesanan.length);
+console.log("Omzet lunas:", omzet);
+console.log("Rata-rata:", Math.round(omzet / pesanan.length));`} />

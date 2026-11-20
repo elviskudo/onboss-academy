@@ -1,0 +1,139 @@
+---
+title: "Operator Lanjutan JS"
+description: "Operator perbandingan, logika, ternary, nullish coalescing, dan spread"
+order: 13
+quiz:
+  - q: "Hasil dari `5 == '5'` adalah…"
+    options: ["false", "true", "error", "NaN"]
+    answer: 1
+    explain: "== melakukan koersi tipe, sehingga string '5' diubah jadi angka."
+  - q: "Hasil dari `5 === '5'` adalah…"
+    options: ["true", "false", "error", "undefined"]
+    answer: 1
+    explain: "=== membandingkan nilai DAN tipe, jadi berbeda."
+  - q: "`a ?? b` akan memakai b jika…"
+    options: ["a falsy", "a null atau undefined", "a true", "a lebih besar"]
+    answer: 1
+    explain: "Nullish coalescing hanya bereaksi pada null/undefined, tidak pada 0 atau ''."
+  - q: "`a || b` berbeda dari `a ?? b` karena…"
+    options: ["|| juga bereaksi pada 0 dan ''", "|| hanya untuk string", "?? tidak ada bedanya", "|| lebih lambat"]
+    answer: 0
+    explain: "|| memakai right operand untuk semua nilai falsy."
+  - q: "Operator `...` pada array disebut…"
+    options: ["spread", "rest saja", "pointer", "arrow"]
+    answer: 0
+    explain: "Spread membuka elemen; pada parameter fungsi disebut rest."
+example:
+  code: |
+    const a = 5, b = "5";
+    console.log(a == b);   // true
+    console.log(a === b);  // false
+    const nama = input ?? "Anonim";
+    const skor = nilai || 0;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Operator JavaScript lebih luas dari sekadar `+ - * /`. Memahami perbedaan *coercion* dan operator modern menyelamatkanmu dari bug yang sulit dilacak.
+
+## Perbandingan: == vs ===
+
+```js
+5 == "5"    // true  → string dikonversi jadi angka
+5 === "5"   // false → tipe beda
+null == undefined  // true
+null === undefined // false
+NaN === NaN // false (gunakan Number.isNaN)
+```
+
+**Aturan praktis:** selalu pakai `===` dan `!==` kecuali kamu memang sengaja mengizinkan koersi.
+
+## Operator Logika
+
+```js
+const boleh = usia >= 18 && punyaKartu;
+const gratis = anggota || kupon;
+const dibatalkan = !aktif;
+```
+
+Selain nilai boolean, `&&` dan `||` mengembalikan **salah satu operandnya**:
+
+```js
+"Halo" && 42   // 42
+null && 42     // null
+"Halo" || "cadangan" // "Halo"
+"" || "cadangan"     // "cadangan"
+```
+
+## Nullish Coalescing (??)
+
+```js
+const port = config.port ?? 3000;
+```
+
+Kalau `config.port` bernilai `0`, `??` tetap memakai `0`. Sedangkan `||` akan menggantinya dengan `3000` — sering bukan yang diinginkan untuk angka dan boolean.
+
+## Optional Chaining (?.)
+
+```js
+const kota = pengguna?.alamat?.kota ?? "Tidak diketahui";
+```
+
+Tanpa `?.`, mengakses `alamat` yang `undefined` akan melempar TypeError.
+
+## Ternary
+
+```js
+const status = skor >= 75 ? "Lulus" : "Belum lulus";
+```
+
+Bisa dirangkai, tapi kalau lebih dari dua level sebaiknya pakai `if/else` atau object map agar tetap terbaca.
+
+## Spread & Rest
+
+```js
+const gabung = [...a, ...b];
+const salinan = { ...pengguna, aktif: true };
+
+function jumlah(...angka) {
+  return angka.reduce((t, n) => t + n, 0);
+}
+```
+
+Pada objek, spread **dangkal** — nested object masih direferensikan bersama.
+
+## Operator Lain yang Sering Muncul
+
+| Operator | Nama | Contoh |
+|----------|------|--------|
+| `**` | Pangkat | `2 ** 3` = 8 |
+| `%` | Modulo | `10 % 3` = 1 |
+| `+=` | Assignment | `x += 2` |
+| `typeof` | Cek tipe | `typeof 5` → "number" |
+| `instanceof` | Cek kelas | `d instanceof Date` |
+| `in` | Cek properti | `"nama" in obj` |
+| `void` | Hasilkan undefined | `void 0` |
+
+<div class="note">💡 `typeof null` menghasilkan `"object"` — quirk bersejarah di JavaScript. Untuk mengecek null, gunakan `nilai === null`.</div>
+
+## Di Dunia Nyata
+
+- `??` dipakai saat membaca konfigurasi supaya nilai 0 tidak tertimpa default.
+- `?.` melindungi rendering saat data API belum lengkap.
+- Spread dipakai untuk update state immutable di React: `{...state, count: state.count + 1}`.
+
+## Try it Yourself
+
+Ganti `null` menjadi `''` atau `0` untuk melihat beda `??` dan `||`.
+
+<TryIt lang="javascript" runtime="client-js" code={`const usia = "20";
+console.log("== :", 20 == usia);
+console.log("===:", 20 === usia);
+const nama = null;
+console.log("default ?? :", nama ?? "Anonim");
+const port = 0;
+console.log("port ?? 3000:", port ?? 3000);
+console.log("port || 3000:", port || 3000);
+const user = { profil: { kota: "Bandung" } };
+console.log("kota:", user?.profil?.kota ?? "?");
+console.log("gabung:", [...[1,2], ...[3,4]]);`} />

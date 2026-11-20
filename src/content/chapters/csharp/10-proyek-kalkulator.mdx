@@ -189,6 +189,10 @@ Data (`a`, `b`, `operasi`), logika (method), dan tampilan (`Console.WriteLine`) 
 
 <div class="note">💡 Kode yang sudah berjalan jangan langsung ditulis ulang. Sempurnakan satu method, uji, lanjut method berikutnya. Proyek kecil yang selesai lebih berharga daripada proyek besar yang setengah jadi.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
 <TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
 using System.Collections.Generic;
 
@@ -226,10 +230,10 @@ class Program
         Console.WriteLine(a + " / 0 = " + Hitung("/", a, 0));
 
         List<string> riwayat = new List<string>();
-        for (int i = 1; i <= 3; i++)
+        for (int i = 1; i &lt;= 3; i++)
         {
             int total = 0;
-            for (int j = 1; j <= i; j++)
+            for (int j = 1; j &lt;= i; j++)
             {
                 total = Tambah(total, j);
             }

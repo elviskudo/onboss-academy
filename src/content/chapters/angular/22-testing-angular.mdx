@@ -1,0 +1,120 @@
+---
+title: "Testing di Angular"
+description: "unit test dengan Jasmine/Karma atau Vitest, TestBed, dan test komponen"
+order: 22
+quiz:
+  - q: "TestBed digunakan untuk…"
+    options: ["Mengirim request", "Mengompilasi CSS", "Menyiapkan lingkungan test Angular", "Membuat rute"]
+    answer: 2
+    explain: "TestBed mengonfigurasi modul/komponen yang diuji."
+  - q: "Jasmine adalah…"
+    options: ["Browser", "Framework test behavior-driven untuk JavaScript", "Framework CSS", "Library state"]
+    answer: 1
+    explain: "Angular CLI dulu menyertakannya secara default."
+  - q: "Fungsi spyOn berguna untuk…"
+    options: ["Membuat komponen", "Mengubah template", "Menambah rute", "Mengganti sementara metode dan memantau pemanggilannya"]
+    answer: 3
+    explain: "Berguna untuk menguji service tanpa request sungguhan."
+  - q: "Untuk menguji HttpInterceptor, gunakan…"
+    options: ["CommonModule", "provideHttpClientTesting()", "RouterTesting", "FormsModule"]
+    answer: 1
+    explain: "Angular menyediakan HttpTestingController."
+  - q: "Test yang baik menghindari…"
+    options: ["Bergantung pada API sungguhan", "Assert yang jelas", "Nama deskriptif", "Isolasi komponen"]
+    answer: 0
+    explain: "Gunakan mock agar test cepat dan stabil."
+example:
+  code: |
+    TestBed.configureTestingModule({
+      imports: [KartuComponent],
+    });
+
+    const fixture = TestBed.createComponent(KartuComponent);
+    fixture.componentInstance.judul = "Promo";
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain("Promo");
+---
+
+Testing membuat refactor lebih aman. Angular sudah menyediakan TestBed untuk merakit komponen dalam lingkungan terkontrol.
+
+## Test Service
+
+```typescript
+import { TestBed } from "@angular/core/testing";
+import { KeranjangService } from "./keranjang.service";
+
+describe("KeranjangService", () => {
+  it("menambah item", () => {
+    TestBed.configureTestingModule({});
+    const service = TestBed.inject(KeranjangService);
+
+    service.tambah("Kopi");
+    expect(service.daftar()).toEqual(["Kopi"]);
+  });
+});
+```
+
+## Test Komponen
+
+```typescript
+import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { KartuComponent } from "./kartu.component";
+
+describe("KartuComponent", () => {
+  let fixture: ComponentFixture<KartuComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [KartuComponent],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(KartuComponent);
+  });
+
+  it("menampilkan judul", () => {
+    fixture.componentInstance.judul = "Promo";
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain("Promo");
+  });
+});
+```
+
+`detectChanges()` memicu change detection agar template diperbarui.
+
+## Mock Service
+
+```typescript
+const apiFake = { daftar: () => of([{ id: 1, nama: "Kopi" }]) };
+
+TestBed.configureTestingModule({
+  imports: [DaftarComponent],
+  providers: [{ provide: ProdukService, useValue: apiFake }],
+});
+```
+
+## Test HTTP
+
+```typescript
+provideHttpClient(),
+provideHttpClientTesting(),
+
+const http = TestBed.inject(HttpTestingController);
+service.daftar().subscribe();
+http.expectOne("/api/produk").flush([{ id: 1 }]);
+http.verify();
+```
+
+<div class="note">💡 Uji hasil yang terlihat pengguna (teks, atribut, perilaku), bukan detail implementasi. Test yang terlalu rapuh akan sering gagal saat kode diperbaiki.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`TestBed.configureTestingModule({
+  imports: [KartuComponent],
+});
+
+const fixture = TestBed.createComponent(KartuComponent);
+fixture.componentInstance.judul = "Promo";
+fixture.detectChanges();
+expect(fixture.nativeElement.textContent).toContain("Promo");`}</code></pre>

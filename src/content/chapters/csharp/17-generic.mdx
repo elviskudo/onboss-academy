@@ -1,0 +1,144 @@
+---
+"title": "Generic: Kode yang Dipakai Ulang untuk Semua Tipe"
+"description": "Class, method, dan constraint generic dalam C#"
+"order": 17
+"quiz":
+- "q": "Keuntungan utama generic adalah…"
+  "options":
+  - "kode lebih lambat"
+  - "reuse kode dengan tetap aman tipe"
+  - "menghapus semua error"
+  - "mengubah tipe jadi object"
+  "answer": 1
+  "explain": "Generic menulis sekali kode lalu memakainya untuk banyak tipe tanpa cast."
+- "q": "Deklarasi class generic yang benar adalah…"
+  "options":
+  - "class Kotak<T>"
+  - "class Kotak<TType> where"
+  - "class <T> Kotak"
+  - "class Kotak[]"
+  "answer": 0
+  "explain": "Parameter tipe ditulis di antara kurung sudut setelah nama class."
+- "q": "Constraint `where T : class` membatasi T menjadi…"
+  "options":
+  - "tipe nilai"
+  - "tipe reference"
+  - "semua tipe"
+  - "hanya string"
+  "answer": 1
+  "explain": "Constraint class mengizinkan hanya reference type."
+- "q": "Method generic ditulis dengan…"
+  "options":
+  - "void F<T>(T x)"
+  - "void F(T x)"
+  - "T void F(x)"
+  - "generic void F<T>()"
+  "answer": 0
+  "explain": "Parameter tipe diletakkan setelah nama method sebelum parameter nilai."
+- "q": "List<int> adalah contoh…"
+  "options":
+  - "array tetap"
+  - "tipe generic"
+  - "enum"
+  - "delegate"
+  "answer": 1
+  "explain": "List<T> adalah class generic yang diinstansiasi dengan T = int."
+"example":
+  "code": "using System;\nclass Kotak<T>\n{\n    public T Isi;\n    public Kotak(T isi) { Isi = isi; }\n}\nclass Program\n{\n    static void Main()\n    {\n        var a = new Kotak<int>(5);\n        var b = new Kotak<string>(\"Halo\");\n        Console.WriteLine(a.Isi + \" \" + b.Isi);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Generic memungkinkan kamu menulis satu definisi yang bekerja untuk banyak tipe, tanpa mengorbankan keamanan tipe. `List<int>` dan `Dictionary<string, int>` adalah contoh yang sudah kamu pakai sebelumnya.
+
+## Class Generic
+
+```csharp
+class Kotak<T>
+{
+    private T isi;
+    public Kotak(T isi) => this.isi = isi;
+    public T Ambil() => isi;
+}
+
+var angka = new Kotak<int>(42);
+var teks = new Kotak<string>("Halo");
+```
+
+Kompiler membuat kode spesifik untuk tiap tipe yang dipakai, jadi tidak ada boxing dan tidak perlu cast.
+
+## Method Generic
+
+```csharp
+static T ElemenPertama<T>(T[] data) => data[0];
+
+int a = ElemenPertama(new[] { 1, 2, 3 });
+string b = ElemenPertama(new[] { "x", "y" });
+```
+
+Tipe disimpulkan dari argumen, jadi kamu jarang perlu menulis `<int>` secara eksplisit.
+
+## Constraint
+
+Batasi tipe yang boleh dipakai dengan `where`:
+
+| Constraint | Arti |
+|---|---|
+| `where T : class` | Harus reference type |
+| `where T : struct` | Harus value type |
+| `where T : new()` | Harus punya konstruktor tanpa argumen |
+| `where T : IDisposable` | Harus mengimplementasikan antarmuka |
+| `where T : BaseClass` | Harus turunan dari kelas tertentu |
+
+```csharp
+static T Buat<T>() where T : new() => new T();
+```
+
+## Interface Generic & Covariance
+
+```csharp
+interface IRepositori<T>
+{
+    void Simpan(T item);
+    T Ambil(int id);
+}
+
+IEnumerable<string> teks = new List<string>();
+IEnumerable<object> objek = teks; // covariance: aman untuk hanya-baca
+```
+
+`IEnumerable<out T>` bersifat kovarian; `IComparer<in T>` bersifat kontravarian. Keduanya menjaga arah aliran data tetap aman.
+
+<div class="note">💡 Kalau method hanya membaca dari parameter, gunakan <code>IEnumerable&lt;T&gt;</code>, bukan <code>List&lt;T&gt;</code>. Method jadi bisa menerima array, List, atau hasil LINQ tanpa diubah.</div>
+
+## Try it Yourself
+
+Coba buat `Kotak<double>` atau `Kotak<bool>` untuk merasakan fleksibilitas generic.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+
+class Kotak<T>
+{
+    private T isi;
+    public Kotak(T isi) { this.isi = isi; }
+    public T Ambil() { return isi; }
+}
+
+class Program
+{
+    static T Pertama<T>(T[] data) { return data[0]; }
+
+    static void Main()
+    {
+        var angka = new Kotak<int>(42);
+        var teks = new Kotak<string>("Halo Generic");
+        Console.WriteLine(angka.Ambil());
+        Console.WriteLine(teks.Ambil());
+        Console.WriteLine(Pertama(new[] { 7, 8, 9 }));
+        Console.WriteLine(Pertama(new[] { "apel", "jeruk" }));
+
+        IEnumerable<object> objek = new List<string> { "bisa", "kovarian" };
+        foreach (var o in objek) Console.WriteLine(o);
+    }
+}`} />

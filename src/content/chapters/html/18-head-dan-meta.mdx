@@ -1,0 +1,88 @@
+---
+title: "Head & Elemen Meta"
+description: "Memahami bagian head, metadata, viewport, title, dan tautan ke stylesheet"
+order: 18
+quiz:
+  - q: "Elemen <head> berisi…"
+    options: ["Konten yang terlihat", "Metadata dan tautan sumber daya", "Tabel database", "Gambar utama"]
+    answer: 1
+    explain: "<head> berisi info untuk browser dan mesin pencari, bukan konten tampilan."
+  - q: "Elemen yang menentukan judul tab browser adalah…"
+    options: ["<h1>", "<title>", "<header>", "<meta name='title'>"]
+    answer: 1
+    explain: "<title> di dalam <head> muncul di tab dan hasil pencarian."
+  - q: "Meta viewport berguna untuk…"
+    options: ["Mengatur responsivitas di perangkat mobile", "Menyimpan kata sandi", "Mengubah warna latar", "Membuat tabel"]
+    answer: 0
+    explain: "<meta name='viewport' content='width=device-width, initial-scale=1'> membuat halaman mengikuti lebar layar."
+  - q: "Meta description berfungsi untuk…"
+    options: ["Menampilkan pesan error", "Ringkasan halaman di hasil pencarian", "Menentukan font", "Mengatur charset"]
+    answer: 1
+    explain: "Mesin pencari sering memakai meta description sebagai cuplikan."
+  - q: "Tag <base> digunakan untuk…"
+    options: ["Menentukan URL dasar semua tautan relatif", "Membuat heading", "Menutup dokumen", "Mengimpor JavaScript"]
+    answer: 0
+    explain: "<base href='...'> mengubah acuan path relatif di seluruh dokumen."
+example:
+  code: |
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="description" content="Tutorial HTML gratis untuk pemula">
+      <title>Belajar HTML | OnBoss Academy</title>
+      <link rel="icon" href="favicon.ico">
+      <link rel="stylesheet" href="style.css">
+    </head>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Bagian `<head>` adalah 'kotak informasi' halaman. Isinya tidak terlihat pengunjung, tapi sangat berpengaruh pada browser dan mesin pencari.
+
+## Elemen yang Sering Dipakai
+
+| Elemen | Fungsi |
+|--------|--------|
+| `<title>` | Judul tab & hasil pencarian |
+| `<meta charset>` | Set karakter (pakai UTF-8) |
+| `<meta name="viewport">` | Kontrol tampilan mobile |
+| `<meta name="description">` | Ringkasan halaman |
+| `<link rel="stylesheet">` | Memuat CSS |
+| `<link rel="icon">` | Favicon di tab |
+| `<script>` | Memuat JavaScript |
+| `<base>` | URL dasar tautan relatif |
+
+## Contoh Head Lengkap
+
+```html
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Belajar HTML dari nol, gratis.">
+  <title>Belajar HTML | OnBoss</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+```
+
+## Kenapa Viewport Penting?
+
+Tanpa meta viewport, browser mobile menganggap halaman selebar desktop lalu mengecilkan tampilan. dengan viewport, lebar halaman mengikuti perangkat sehingga teks tetap terbaca.
+
+<div class="note">💡 Selalu pakai <code>&lt;meta charset="UTF-8"&gt;</code> supaya karakter seperti é, 日本語, dan emoji tampil benar.</div>
+
+## Try it Yourself
+
+Ubah `<title>` lalu perhatikan nama tab di browser berubah.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judul Tabku</title>
+</head>
+<body>
+  <h1>Lihat judul di tab browser!</h1>
+  <p>Ubah teks di tag &lt;title&gt; di atas.</p>
+</body>
+</html>`} />

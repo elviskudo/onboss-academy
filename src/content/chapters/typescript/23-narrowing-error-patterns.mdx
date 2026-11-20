@@ -1,0 +1,168 @@
+---
+title: "Pola Error & Validasi Data"
+description: "Membangun parser input aman dengan Result type dan type guard"
+order: 23
+quiz:
+  - q: "Result type `{ok:true, value:T} | {ok:false, error:E}` adalah contoh…"
+    options: ["Discriminated union", "Any", "Enum", "Class"]
+    answer: 0
+    explain: "Field `ok` bertindak sebagai discriminator."
+  - q: "Keuntungan Result dibanding throw adalah…"
+    options: ["Error menjadi bagian dari tipe", "Lebih cepat", "Tidak perlu try/catch", "Selalu lebih sederhana"]
+    answer: 0
+    explain: "Pemanggil dipaksa menangani kedua kemungkinan."
+  - q: "`unknown` cocok untuk input API karena…"
+    options: ["Lebih longgar dari any", "Memaksa validasi sebelum dipakai", "Lebih cepat", "Tidak ada alasan"]
+    answer: 1
+    explain: "Itu membuat parser aman secara default."
+  - q: "Library Zod dipakai untuk…"
+    options: ["Membuat skema dan menyimpulkan tipe", "Menggaya UI", "Mengompilasi CSS", "Mengirim email"]
+    answer: 0
+    explain: "z.infer<typeof schema> mengambil tipe dari skema runtime."
+  - q: "Assertion function harus mengembalikan…"
+    options: ["nilai", "void", "boolean", "string"]
+    answer: 1
+    explain: "Efeknya lewat `asserts x is T`, bukan return value."
+example:
+  code: |
+    type Hasil<T, E> =
+      | { ok: true; value: T }
+      | { ok: false; error: E };
+    
+    function parseAngka(s: string): Hasil<number, string> {
+      const n = Number(s);
+      return Number.isNaN(n) ? { ok: false, error: "bukan angka" } : { ok: true, value: n };
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data dari luar aplikasi — form, API, localStorage — bertipe `unknown`. Membangun lapisan validasi yang baik membuat error muncul di satu tempat, bukan tersebar sebagai `undefined is not a function`.
+
+## Result Type
+
+```ts
+type Hasil<T, E = string> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+function bagi(a: number, b: number): Hasil<number> {
+  if (b === 0) return { ok: false, error: "Pembagi nol" };
+  return { ok: true, value: a / b };
+}
+
+const hasil = bagi(10, 2);
+if (hasil.ok) {
+  console.log(hasil.value.toFixed(2));
+} else {
+  console.error(hasil.error);
+}
+```
+
+Karena `ok` adalah literal `true`/`false`, compiler dapat mempersempit tipe di setiap cabang.
+
+## Parser dengan Type Guard
+
+```ts
+interface User { nama: string; umur: number }
+
+function adalahUser(x: unknown): x is User {
+  if (typeof x !== "object" || x === null) return false;
+  const o = x as Record<string, unknown>;
+  return typeof o.nama === "string" && typeof o.umur === "number";
+}
+
+function parseUser(raw: unknown): Hasil<User> {
+  if (!adalahUser(raw)) {
+    return { ok: false, error: "Format user tidak valid" };
+  }
+  return { ok: true, value: raw };
+}
+```
+
+Catatan: `as Record<string, unknown>` di dalam guard masih berupa assertion, tapi aman karena sudah dicek `typeof object`.
+
+## Assertion Function
+
+```ts
+function assertUser(x: unknown): asserts x is User {
+  if (!adalahUser(x)) throw new Error("bukan user");
+}
+
+const data: unknown = await res.json();
+assertUser(data);
+data.nama; // ✅ User
+```
+
+## Pola dengan Zod
+
+```ts
+import { z } from "zod";
+
+const UserSchema = z.object({
+  nama: z.string().min(1),
+  umur: z.number().int().min(0)
+});
+
+type User = z.infer<typeof UserSchema>;
+
+const hasil = UserSchema.safeParse(await res.json());
+if (!hasil.success) {
+  console.log(hasil.error.issues);
+} else {
+  console.log(hasil.data.nama);
+}
+```
+
+Satu skema dipakai untuk validasi runtime **dan** sumber tipe compile time — menghindari duplikasi definisi.
+
+## Error Kustom
+
+```ts
+class ApiError extends Error {
+  constructor(public status: number, pesan: string) {
+    super(pesan);
+    this.name = "ApiError";
+  }
+}
+```
+
+## Prinsip
+
+1. Terima `unknown` di boundary.
+2. Validasi sekali, dekat sumber data.
+3. Kembalikan tipe domain yang sudah pasti.
+4. Tangani error secara eksplisit.
+
+<div class="note">💡 Jangan hanya mengandalkan `as User` pada response API. Assertion tidak memeriksa isi — kalau server berubah, error baru muncul jauh dari sumbernya.</div>
+
+## Di Dunia Nyata
+
+- Formik/React Hook Form memakai skema Zod atau Yup untuk validasi.
+- Server tRPC memvalidasi input dengan Zod lalu menyimpulkan tipe handler otomatis.
+- Fungsi `parseEnv()` memastikan variabel lingkungan ada sebelum aplikasi start.
+
+## Try it Yourself
+
+Ubah objek yang di-parse atau tambahkan field baru pada type guard.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`type Hasil<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
+
+interface User { nama: string; umur: number }
+
+function adalahUser(x: unknown): x is User {
+  if (typeof x !== "object" || x === null) return false;
+  const o = x as Record<string, unknown>;
+  return typeof o.nama === "string" && typeof o.umur === "number";
+}
+
+function parseUser(raw: unknown): Hasil<User> {
+  return adalahUser(raw)
+    ? { ok: true, value: raw }
+    : { ok: false, error: "Format tidak valid" };
+}
+
+console.log(parseUser({ nama: "Sari", umur: 20 }));
+console.log(parseUser({ nama: 123 }));`} />

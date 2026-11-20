@@ -1,0 +1,80 @@
+---
+title: "Decision Tree"
+description: "node, split, Gini, kedalaman, overfitting, dan kelebihan model pohon"
+order: 18
+quiz:
+  - q: "Decision tree memilih pemisahan berdasarkan…"
+    options: ["Urutan data", "Pemisahan yang paling memisahkan kelas", "Jumlah baris", "Nama fitur"]
+    answer: 1
+    explain: "Mengukur kemurnian seperti Gini."
+  - q: "Node daun berisi…"
+    options: ["Indeks", "Bobot", "Prediksi akhir", "Data mentah"]
+    answer: 2
+    explain: "Daun menghasilkan label/nilai."
+  - q: "Pohon terlalu dalam berisiko…"
+    options: ["Underfitting", "Data hilang", "Label berubah", "Overfitting"]
+    answer: 3
+    explain: "Menghafal data latih."
+  - q: "Kelebihan decision tree adalah…"
+    options: ["Hanya untuk teks", "Mudah dijelaskan", "Selalu paling akurat", "Tidak butuh data"]
+    answer: 1
+    explain: "Strukturnya bisa divisualisasikan."
+  - q: "Gini = 0 berarti…"
+    options: ["Pemisahan buruk", "Ada dua kelas", "Semua data di node satu kelas", "Data kosong"]
+    answer: 2
+    explain: "Kemurnian sempurna."
+example:
+  code: |
+    data=[(1,0),(2,0),(3,1),(4,1)]
+    print("Cek split x&lt;=2:",[y for x,y in data if x&lt;=2])
+---
+
+## Anatomi
+
+| Bagian | Arti |
+| --- | --- |
+| Root | node awal |
+| Internal node | syarat pemisahan |
+| Branch | hasil pemisahan |
+| Leaf | prediksi akhir |
+
+## Gini Sederhana
+
+```python
+def gini(labels):
+    n = len(labels)
+    if n == 0:
+        return 0
+    return 1 - sum((labels.count(c) / n) ** 2 for c in set(labels))
+
+print(gini([0, 0, 0]))      # 0, murni
+print(gini([0, 1, 0, 1]))   # 0.5, campuran
+```
+
+Pemisahan dipilih yang menurunkan Gini paling besar.
+
+## Kedalaman
+
+Batasi `max_depth`, `min_samples_leaf`, atau gunakan pruning. Pohon yang terlalu dalam mengikuti noise.
+
+## Kapan Cocok
+
+- Aturan bisnis yang perlu dijelaskan ke manusia.
+- Data tabular dengan hubungan non-linear.
+- Sebagai baseline sebelum model kompleks.
+
+<div class="note">💡 Satu pohon sering tidak stabil: mengubah sedikit data bisa mengubah struktur. Random forest mengatasi ini dengan menggabungkan banyak pohon.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`def gini(labels):
+    n = len(labels)
+    if n == 0:
+        return 0
+    return round(1 - sum((labels.count(c)/n)**2 for c in set(labels)), 3)
+
+print("Murni:", gini([0,0,0]))
+print("Campur:", gini([0,0,1,1]))
+print("Campur 3 kelas:", gini([0,1,2]))`}</code></pre>

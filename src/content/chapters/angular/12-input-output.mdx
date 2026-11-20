@@ -1,0 +1,121 @@
+---
+title: "Input, Output & Model"
+description: "komunikasi induk-anak dengan input, output, dan two-way binding modern"
+order: 12
+quiz:
+  - q: "Decorator klasik untuk menerima data dari induk adalah…"
+    options: ["@ViewChild", "@Injectable", "@Input", "@Output"]
+    answer: 2
+    explain: "`@Input() judul: string` dipakai di komponen anak."
+  - q: "Anak memberi tahu induk lewat…"
+    options: ["ViewEncapsulation", "@Output + EventEmitter", "@Input", "ngModel"]
+    answer: 1
+    explain: "Output berisi EventEmitter yang dipanggil dengan emit()."
+  - q: "Fungsi modern `model()` digunakan untuk…"
+    options: ["Mengirim CSS", "Membuat rute", "Mengambil API", "Two-way binding antara induk dan anak"]
+    answer: 3
+    explain: "Model adalah gabungan input+output dengan nama yang sama."
+  - q: "Pada template induk, two-way binding ditulis…"
+    options: ["{{nama}}", "[(nama)]=\"nilai\"", "[nama]=\"nilai\"", "(nama)=\"nilai\""]
+    answer: 1
+    explain: "Kurung siku + kurung bulat berarti dua arah."
+  - q: "Input signal wajib ditulis dengan…"
+    options: ["input.required<T>()", "signal()", "computed()", "effect()"]
+    answer: 0
+    explain: "Ini menandai bahwa induk harus mengirim props tersebut."
+example:
+  code: |
+    // anak
+    @Input() judul = "";
+    @Output() pilih = new EventEmitter<string>();
+
+    // induk
+    <app-kartu [judul]="'Promo'" (pilih)="buka($event)" />
+---
+
+Komponen yang baik tidak mengetahui terlalu banyak tentang induknya. Ia menerima data lewat input dan melaporkan kejadian lewat output.
+
+## Input Klasik
+
+```typescript
+import { Component, Input } from "@angular/core";
+
+@Component({
+  selector: "app-kartu",
+  standalone: true,
+  template: `<h3>{{ judul }}</h3><p>{{ deskripsi }}</p>`,
+})
+export class KartuComponent {
+  @Input() judul = "";
+  @Input() deskripsi = "";
+}
+```
+
+## Output Klasik
+
+```typescript
+import { Component, Output, EventEmitter } from "@angular/core";
+
+export class KartuComponent {
+  @Output() dipilih = new EventEmitter<string>();
+
+  pilih() {
+    this.dipilih.emit("Kartu dipilih");
+  }
+}
+```
+
+Di induk:
+
+```html
+<app-kartu
+  judul="Promo"
+  (dipilih)="bukaDetail($event)"
+/>
+```
+
+## Gaya Signal Modern
+
+```typescript
+import { Component, input, output } from "@angular/core";
+
+@Component({
+  selector: "app-kartu",
+  standalone: true,
+  template: `
+    <h3>{{ judul() }}</h3>
+    <button (click)="pilih.emit(judul())">Pilih</button>
+  `,
+})
+export class KartuComponent {
+  judul = input.required<string>();
+  pilih = output<string>();
+}
+```
+
+## Two-way dengan model()
+
+```typescript
+export class InputNamaComponent {
+  nama = model("");
+}
+```
+
+```html
+<app-input-nama [(nama)]="namaUser" />
+```
+
+Anak bisa mengubah `nama()` dan nilainya langsung kembali ke induk.
+
+<div class="note">💡 Jangan mengubah `@Input` secara langsung di dalam anak. Kirim event agar induk yang memutuskan — data tetap mengalir satu arah dan lebih mudah dilacak.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`// anak
+@Input() judul = "";
+@Output() pilih = new EventEmitter<string>();
+
+// induk
+<app-kartu [judul]="'Promo'" (pilih)="buka($event)" />`}</code></pre>

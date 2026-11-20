@@ -1,0 +1,168 @@
+---
+"title": "Proyek Minimumi: Skrip Deploy Sederhana"
+"description": "Menggabungkan variabel, fungsi, trap, validasi, logging, dan backup"
+"order": 25
+"quiz":
+- "q": "Struktur yang baik untuk skrip deploy adalah…"
+  "options":
+  - "Semua perintah berurutan tanpa fungsi"
+  - "Fungsi per tahap + fungsi utama"
+  - "Banyak eval"
+  - "Tanpa pengecekan error"
+  "answer": 1
+  "explain": "Fungsi memisahkan build, test, backup, dan deploy."
+- "q": "Sebelum deploy, sebaiknya…"
+  "options":
+  - "Hapus semua log"
+  - "Mengganti password"
+  - "Jalankan test dan simpan backup"
+  - "Menutup terminal"
+  "answer": 2
+  "explain": "Validasi dan cadangan mengurangi risiko rollback."
+- "q": "Fungsi logging yang baik menulis pesan ke…"
+  "options":
+  - "stdout tanpa informasi"
+  - "Berkas rahasia"
+  - "Variabel saja"
+  - "stderr dengan format waktu"
+  "answer": 3
+  "explain": "stderr memisahkan log dari hasil perintah."
+- "q": "set -euo pipefail bertujuan…"
+  "options":
+  - "Menghentikan skrip saat ada kegagalan"
+  - "Mempercepat deploy"
+  - "Menyembunyikan error"
+  - "Mengganti git"
+  "answer": 0
+  "explain": "Kegagalan harus terlihat dan menghentikan tahap berikutnya."
+- "q": "Kembali yang aman memerlukan…"
+  "options":
+  - "Berkas README"
+  - "Cadangan versi sebelumnya"
+  - "Warna terminal"
+  - "chmod 777"
+  "answer": 1
+  "explain": "Tanpa cadangan, rollback hanya dengan menebak-nebak."
+"example":
+  "code": "#!/usr/bin/env bash\nset -euo pipefail\n\nAPP_DIR=\"/opt/app\"\nBACKUP_DIR=\"/opt/backup\"\n\nlog() { printf '[%s] %s\\n' \"$(date +%FT%T)\" \"$*\" >&2; }\n\nbackup() {\n  local arsip=\"$BACKUP_DIR/app-$(date +%Y%m%d%H%M%S).tar.gz\"\n  mkdir -p \"$BACKUP_DIR\"\n  tar -czf \"$arsip\" -C \"$APP_DIR\" .\n  echo \"$arsip\"\n}\n\ntest_app() {\n  log \"Menjalankan test...\"\n  (cd \"$APP_DIR\" && make test)\n}\n\ndeploy() {\n  log \"Mulai deploy\"\n  test_app\n  backup\n  (cd \"$APP_DIR\" && git pull --ff-only)\n  systemctl restart app\n  log \"Deploy selesai\"\n}\n\ndeploy\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Tahapan Deploy
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/opt/app"
+BACKUP_DIR="/opt/backup"
+
+log() { printf '[%s] %s\n' "$(date +%FT%T)" "$*" >&2; }
+
+backup() {
+  local arsip="$BACKUP_DIR/app-$(date +%Y%m%d%H%M%S).tar.gz"
+  mkdir -p "$BACKUP_DIR"
+  tar -czf "$arsip" -C "$APP_DIR" .
+  echo "$arsip"
+}
+
+test_app() {
+  log "Menjalankan test..."
+  (cd "$APP_DIR" && make test)
+}
+
+deploy() {
+  log "Mulai deploy"
+  test_app
+  backup
+  (cd "$APP_DIR" && git pull --ff-only)
+  systemctl restart app
+  log "Deploy selesai"
+}
+
+deploy
+```
+
+| Tahap | Tujuan | Kegagalan menyebabkan |
+|---|---|---|
+| Cek prasyarat | memastikan tool & hak ada | berhenti lebih awal |
+| Uji | memverifikasi kode | deploy dibatalkan |
+| Cadangan | menyimpan versi lama | rollback bisa dilakukan |
+| Pull/rsync | memperbarui file | versi baru tidak aktif |
+| Ulangi layanan | memuat versi baru | perubahan belum dipakai |
+
+## Fungsi Utilitas
+
+```bash
+log() {
+  printf '[%s] %s\n' "$(date +%FT%T)" "$*" >&2
+}
+
+gagal() {
+  log "ERROR: $*"
+  exit 1
+}
+```
+
+Catatanging ke stderr memisahkan pesan dari output yang mungkin dipakai pipeline lain.
+
+## Prasyarat
+
+```bash
+command -v git >/dev/null || gagal "git tidak ditemukan"
+[ -d "$APP_DIR" ] || gagal "Folder aplikasi tidak ada"
+```
+
+Cek lebih awal memberi pesan yang jelas daripada error "command not found" di tengah jalan.
+
+## Kembali
+
+```bash
+rollback() {
+  local arsip="$1"
+  [ -f "$arsip" ] || gagal "Cadangan tidak ditemukan"
+  tar -xzf "$arsip" -C "$APP_DIR"
+  systemctl restart app
+}
+```
+
+Simpan daftar backup terakhir dan uji prosedur rollback secara berkala — backup yang tidak pernah diuji bukan jaminan.
+
+<div class="note">💡 Jadikan skrip idempoten: menjalankannya dua kali boleh, asalkan hasil akhirnya sama. Hindari aksi yang menambah entri duplikat setiap kali dijalankan.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/opt/app"
+BACKUP_DIR="/opt/backup"
+
+log() { printf '[%s] %s\n' "$(date +%FT%T)" "$*" >&2; }
+
+backup() {
+  local arsip="$BACKUP_DIR/app-$(date +%Y%m%d%H%M%S).tar.gz"
+  mkdir -p "$BACKUP_DIR"
+  tar -czf "$arsip" -C "$APP_DIR" .
+  echo "$arsip"
+}
+
+test_app() {
+  log "Menjalankan test..."
+  (cd "$APP_DIR" && make test)
+}
+
+deploy() {
+  log "Mulai deploy"
+  test_app
+  backup
+  (cd "$APP_DIR" && git pull --ff-only)
+  systemctl restart app
+  log "Deploy selesai"
+}
+
+deploy`} />

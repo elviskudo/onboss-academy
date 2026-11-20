@@ -38,10 +38,10 @@ import TryIt from '../../../components/TryIt.astro';
 | Kategori | Jumlah | Anggota | Fungsi |
 |----------|--------|---------|--------|
 | Aritmatika | 8 | `+ - * / % ** ++ --` | Hitung, sisa bagi, pangkat, tambah/kurang sendiri |
-| Perbandingan | 8 | `== != === !== > < >= <=` | Bandingkan dua nilai → `boolean` |
+| Perbandingan | 8 | `== != === !== > &lt; >= &lt;=` | Bandingkan dua nilai → `boolean` |
 | Logika | 3 | `&&` `\|\|` `!` | Gabungkan kondisi: AND, OR, NOT |
-| Bitwise | 6 | `& \| ^ ~ << >> >>>` | Operasi per bit — jarang dipakai di web |
-| Assignment | 13 | `=` `+=` `-=` `*=` `/=` `%=` `**=` `<<=` `>>=` `>>>=` `&=` `\|=` `^=` | Tugaskan, sering digabung operasi |
+| Bitwise | 6 | `& \| ^ ~ <&lt; >> >>>` | Operasi per bit — jarang dipakai di web |
+| Assignment | 13 | `=` `+=` `-=` `*=` `/=` `%=` `**=` `<&lt;=` `>>=` `>>>=` `&=` `\|=` `^=` | Tugaskan, sering digabung operasi |
 | Ternary | 1 | `? :` | Percabangan dalam satu ekspresi |
 | Spesial | 6 | `typeof delete void in instanceof new` | Cek tipe, hapus properti, buat object |
 
@@ -112,7 +112,7 @@ if (skor >= 90) {
 const status = umur >= 17 ? "dewasa" : "anak-anak";
 ```
 
-Gunakan ternary untuk kondisi singkat; jika percabangan panjang, if-else lebih terbaca. Ternary adalah **ekspresi** (menghasilkan nilai), sehingga bisa bersarang: `x > 0 ? "positif" : x < 0 ? "negatif" : "nol"` — tapi dua tingkat sudah batas wajar.
+Gunakan ternary untuk kondisi singkat; jika percabangan panjang, if-else lebih terbaca. Ternary adalah **ekspresi** (menghasilkan nilai), sehingga bisa bersarang: `x > 0 ? "positif" : x &lt; 0 ? "negatif" : "nol"` — tapi dua tingkat sudah batas wajar.
 
 ## switch
 
@@ -155,6 +155,10 @@ Anti-pattern: nesting if 4 tingkat dalam. Balik kondisi pakai `return`/`continue
 - **Validasi form**: `if (!email.includes("@"))` menahan submit sebelum dikirim ke server.
 - **Akses halaman admin**: `user.role === "admin" ? panel : "403 Forbidden"`.
 
+## Try it Yourself
+
+Coba ganti operator atau nilai kondisinya.
+
 <TryIt lang="javascript" runtime="client-js" code={`function nilaiHuruf(skor) {
   if (skor >= 90) return "A";
   if (skor >= 80) return "B";
@@ -165,4 +169,4 @@ for (const s of [95, 82, 71, 55]) {
   console.log(\`Skor \${s} → Nilai \${nilaiHuruf(s)}\`);
 }
 const jam = new Date().getHours();
-console.log(jam >= 22 || jam < 4 ? "🌙 Waktunya tidur" : "☕ Waktunya ngoding");`} />
+console.log(jam >= 22 || jam &lt; 4 ? "🌙 Waktunya tidur" : "☕ Waktunya ngoding");`} />

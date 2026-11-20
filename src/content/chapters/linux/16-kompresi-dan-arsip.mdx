@@ -1,0 +1,123 @@
+---
+title: 'Kompresi dan Arsip: tar, gzip, zip'
+description: Menggabungkan dan mengompresi file untuk backup serta distribusi.
+order: 16
+quiz:
+- q: Perintah membuat arsip tar adalah…
+  options:
+  - tar -cvf arsip.tar folder/
+  - tar -xvf arsip.tar
+  - gzip folder/
+  - zip -r folder
+  answer: 0
+  explain: c = create, v = verbose, f = file.
+- q: Opsi untuk mengekstrak tar adalah…
+  options:
+  - tar -zvf arsip.tar
+  - tar -xvf arsip.tar
+  - tar -cvf arsip.tar
+  - tar -tf arsip.tar
+  answer: 1
+  explain: x = extract.
+- q: Kombinasi tar+gzip biasa ditulis…
+  options:
+  - gzip -tar folder/
+  - zip -czf arsip.zip
+  - tar -czf arsip.tar.gz folder/
+  - tar -cgz arsip.gz folder/
+  answer: 2
+  explain: z memberi tahu tar untuk memakai gzip.
+- q: Perintah melihat isi arsip tanpa mengekstrak adalah…
+  options:
+  - tar -lf arsip.tar
+  - ls -tar arsip
+  - unzip -l arsip.tar
+  - tar -tf arsip.tar
+  answer: 3
+  explain: t = list.
+- q: Ekstensi .tar.gz juga sering disingkat…
+  options:
+  - .tgz
+  - .tgzip
+  - .gztar
+  - .tarz
+  answer: 0
+  explain: Keduanya format yang sama.
+example:
+  code: 'mkdir -p backup && echo "data" > backup/data.txt
+
+    tar -czf backup.tar.gz backup/
+
+    tar -tzf backup.tar.gz
+
+    mkdir hasil && tar -xzf backup.tar.gz -C hasil
+
+    gzip -k backup/data.txt
+
+    '
+---
+
+
+Linux memisahkan dua konsep: **arsip** (menggabungkan banyak file) dan **kompresi** (mengecilkan ukuran). `tar` melakukan yang pertama, gzip/xz/zstd melakukan yang kedua.
+
+## tar
+
+```bash
+tar -cvf arsip.tar folder/          # buat arsip
+tar -tvf arsip.tar                  # lihat isi
+tar -xvf arsip.tar                  # ekstrak
+tar -xvf arsip.tar -C /tmp/hasil    # ekstrak ke folder lain
+```
+
+| Opsi | Arti |
+|---|---|
+| `c` | create |
+| `x` | extract |
+| `t` | list |
+| `v` | verbose |
+| `f` | nama file |
+| `z` | gzip |
+| `j` | bzip2 |
+| `J` | xz |
+
+## Kompresi
+
+```bash
+tar -czf site.tar.gz site/        # gzip, cepat
+tar -cJf data.tar.xz data/        # xz, lebih kecil
+gzip -k file.txt                  # menghasilkan file.txt.gz
+gunzip file.txt.gz
+```
+
+```bash
+zip -r proyek.zip proyek/
+unzip proyek.zip -d tujuan/
+```
+
+## Memilih Format
+
+| Format | Kecepatan | Rasio | Catatan |
+|---|---|---|---|
+| gzip | cepat | sedang | paling kompatibel |
+| bzip2 | sedang | baik | jarang dipakai sekarang |
+| xz | lambat | sangat baik | cocok untuk arsip besar |
+| zstd | sangat cepat | baik | modern, makin populer |
+
+## Backup Praktis
+
+```bash
+tar --exclude='node_modules' \
+    --exclude='*.log' \
+    -czf backup-$(date +%F).tar.gz /srv/app
+```
+
+<div class="note">💡 Arsip tidak mengenkripsi data. Untuk backup yang berisi rahasia, tambahkan enkripsi dengan `gpg` atau simpan di storage terenkripsi.</div>
+
+## Pemeriksaan
+
+```bash
+gzip -t file.tar.gz
+tar -tzf file.tar.gz > /dev/null && echo "ARSIP OK"
+```
+
+Selalu uji arsip backup secara berkala — backup yang tidak bisa dibuka bukan backup.

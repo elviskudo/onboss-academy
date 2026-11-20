@@ -1,0 +1,117 @@
+---
+title: Mencari Commit Penyebab Bug dengan Bisect
+description: Menggunakan pencarian biner pada riwayat commit untuk menemukan regresi.
+order: 20
+quiz:
+- q: git bisect bekerja dengan…
+  options:
+  - Membagi rentang commit menjadi dua berkali-kali
+  - Membaca semua diff satu per satu
+  - Menghapus commit secara acak
+  - Mengganti branch
+  answer: 0
+  explain: Pencarian biner menemukan commit pertama yang buruk dalam jumlah langkah logaritmik.
+- q: Perintah untuk memulai bisect adalah…
+  options:
+  - git bisect run
+  - git bisect start
+  - git bisect init
+  - git bisect begin
+  answer: 1
+  explain: Setelah itu tandai commit baik dan buruk.
+- q: Penanda commit yang masih berfungsi adalah…
+  options:
+  - git bisect pass
+  - git bisect true
+  - git bisect good
+  - git bisect ok
+  answer: 2
+  explain: good menandakan titik awal sebelum bug muncul.
+- q: Otomatisasi bisect memakai…
+  options:
+  - git bisect auto
+  - git bisect script
+  - git bisect --yes
+  - git bisect run <perintah>
+  answer: 3
+  explain: Perintah harus keluar 0 untuk good dan bukan 0 untuk bad.
+- q: Setelah selesai, jalankan…
+  options:
+  - git bisect reset
+  - git bisect stop
+  - git bisect clear
+  - git checkout HEAD
+  answer: 0
+  explain: reset mengembalikan HEAD ke posisi sebelum sesi bisect dimulai.
+example:
+  code: 'git bisect start
+
+    git bisect bad
+
+    git bisect good v2.1.0
+
+    # jalankan tes -> git bisect good / git bisect bad
+
+    git bisect reset
+
+    '
+---
+
+
+Ketika bug muncul padahal rilis sebelumnya baik, **bisect** mencari commit pertama yang menyebabkan masalah tanpa memeriksa ratusan commit satu per satu.
+
+## Alur Manual
+
+```bash
+git bisect start
+git bisect bad                 # HEAD sekarang rusak
+git bisect good v2.1.0         # rilis lama masih baik
+```
+
+Git otomatis checkout commit di tengah. Uji aplikasi, lalu beri tahu hasilnya:
+
+```bash
+git bisect good    # commit ini masih aman
+git bisect bad     # commit ini sudah rusak
+```
+
+Ulangi sampai Git menampilkan commit penjahatnya.
+
+## Alur Otomatis
+
+```bash
+git bisect start
+git bisect bad HEAD
+git bisect good v2.1.0
+git bisect run npm test -- --testNamePattern=checkout
+git bisect reset
+```
+
+Skrip tes harus:
+
+- keluar dengan kode `0` untuk kondisi baik;
+- keluar bukan nol untuk kondisi buruk;
+- keluar `125` bila hasil tidak bisa ditentukan (misalnya dependency gagal install).
+
+## Contoh Keluaran
+
+```text
+a1b2c3d is the first bad commit
+commit a1b2c3d
+Author: ...
+Date:   ...
+
+    refactor: ubah perhitungan diskon
+```
+
+<div class="note">💡 Bisect bekerja paling baik bila commit bersifat atomik. Riwayat yang penuh commit “campuran” membuat hasilnya benar secara teknis tapi sulit diartikan.</div>
+
+## Setelah Ketemu
+
+```bash
+git show a1b2c3d
+git revert a1b2c3d
+git bisect reset
+```
+
+Jangan lupa `reset` — tanpa itu Anda tetap berada dalam mode bisect.

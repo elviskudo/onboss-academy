@@ -1,0 +1,120 @@
+---
+title: "Testing dengan JUnit"
+description: "unit test, assertion, lifecycle annotation, dan praktik pengujian yang baik"
+order: 25
+quiz:
+  - q: "Framework testing standar Java adalah…"
+    options: ["JUnit", "Jest", "pytest", "RSpec"]
+    answer: 0
+    explain: "JUnit 5 (Jupiter) adalah versi modern yang banyak dipakai."
+  - q: "Annotation untuk menandai method sebagai test adalah…"
+    options: ["@Test", "@Run", "@Case", "@Check"]
+    answer: 0
+    explain: "@Test dari org.junit.jupiter.api.Test."
+  - q: "`assertEquals(4, 2+2)` termasuk…"
+    options: ["Assertion", "Fixture", "Mock", "Bench"]
+    answer: 0
+    explain: "Assertion memverifikasi hasil terhadap nilai yang diharapkan."
+  - q: "`@BeforeEach` dijalankan…"
+    options: ["Sekali sebelum semua test", "Sebelum setiap test", "Setelah setiap test", "Hanya saat gagal"]
+    answer: 1
+    explain: "Cocok untuk menyiapkan data segar tiap test."
+  - q: "Test yang baik sebaiknya…"
+    options: ["Bergantung pada test lain", "Independen dan berulang", "Mengakses database produksi", "Tanpa assertion"]
+    answer: 1
+    explain: "Isolasi membuat test bisa dijalankan dalam urutan apa pun."
+example:
+  code: |
+    import org.junit.jupiter.api.Test;
+    import static org.junit.jupiter.api.Assertions.*;
+    
+    class KalkulatorTest {
+      @Test
+      void tambahBilanganPositif() {
+        assertEquals(5, Kalkulator.tambah(2, 3));
+      }
+    
+      @Test
+      void bagiDenganNol() {
+        assertThrows(ArithmeticException.class, () -> Kalkulator.bagi(1, 0));
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Testing otomatis memberi kepercayaan saat mengubah kode. JUnit 5 adalah standar de facto di ekosistem Java.
+
+## Test Pertama
+
+```java
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class MatematikaTest {
+    @Test
+    void kuadratPositif() {
+        assertEquals(9, Matematika.kuadrat(3));
+    }
+}
+```
+
+## Assertion Umum
+
+| Assertion | Cek |
+|---|---|
+| `assertEquals(expected, actual)` | kesamaan nilai |
+| `assertNotEquals` | ketidaksamaan |
+| `assertTrue` / `assertFalse` | kondisi boolean |
+| `assertNull` / `assertNotNull` | null |
+| `assertThrows(E.class, () -> ...)` | exception |
+| `assertArrayEquals` | isi array |
+| `assertAll(...)` | beberapa assertion sekaligus |
+
+## Lifecycle
+
+```java
+@BeforeAll static void sekaliDiAwal() { ... }
+@BeforeEach void sebelumTiapTest() { ... }
+@AfterEach  void sesudahTiapTest() { ... }
+@AfterAll  static void sekaliDiAkhir() { ... }
+```
+
+## Parameterized Test
+
+```java
+@ParameterizedTest
+@ValueSource(ints = {1, 2, 3})
+void ganjilAtauGenap(int n) {
+    assertTrue(n > 0);
+}
+```
+
+## Naming
+
+Pakai nama yang mengatakan **skenario + ekspektasi**:
+
+```java
+void tarikSaldoLebihBesar_melemparException() { ... }
+void loginSalahPassword_mengembalikanFalse() { ... }
+```
+
+<div class="note">💡 Pola **AAA** membantu kerapian test: **Arrange** (siapkan data), **Act** (panggil method), **Assert** (cek hasil). Satu test sebaiknya menguji satu perilaku.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class KalkulatorTest {
+  @Test
+  void tambahBilanganPositif() {
+    assertEquals(5, Kalkulator.tambah(2, 3));
+  }
+
+  @Test
+  void bagiDenganNol() {
+    assertThrows(ArithmeticException.class, () -> Kalkulator.bagi(1, 0));
+  }
+}`} />

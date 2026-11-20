@@ -1,0 +1,120 @@
+---
+"title": "Operator dan Ekspresi"
+"description": "Operator aritmetika, perbandingan, logika, dan penugasan dalam Kotlin"
+"order": 11
+"quiz":
+- "q": "Operator untuk membagi dua bilangan bulat dalam Kotlin adalah…"
+  "options":
+  - "/"
+  - "%"
+  - "//"
+  - "div"
+  "answer": 0
+  "explain": "Pada Int, / menghasilkan pembulatan ke bawah; gunakan Double untuk hasil desimal."
+- "q": "Operator modulus yang menghasilkan sisa bagi adalah…"
+  "options":
+  - "%"
+  - "^"
+  - "//"
+  - "mod"
+  "answer": 0
+  "explain": "7 % 3 menghasilkan 1."
+- "q": "Operator perbandingan samadengan di Kotlin adalah…"
+  "options":
+  - "=="
+  - "==="
+  - "="
+  - "eq"
+  "answer": 0
+  "explain": "== membandingkan nilai; === membandingkan referensi objek."
+- "q": "Operator logika DAN adalah…"
+  "options":
+  - "&&"
+  - "&"
+  - "and then"
+  - "&&&"
+  "answer": 0
+  "explain": "&& melakukan short-circuit AND."
+- "q": "Hasil dari 7 / 2 pada tipe Int adalah…"
+  "options":
+  - "3.5"
+  - "3"
+  - "4"
+  - "Error"
+  "answer": 1
+  "explain": "Pembagian Int membuang bagian desimal, jadi hasilnya 3."
+"example":
+  "code": "fun main() {\n    val a = 7\n    val b = 2\n    println(a + b)   // 9\n    println(a - b)   // 5\n    println(a * b)   // 14\n    println(a / b)   // 3 (bulat)\n    println(a % b)   // 1\n    println(a > b && b != 0) // true\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Operator Aritmetika
+
+```kotlin
+fun main() {
+    val a = 7
+    val b = 2
+    println(a + b)   // 9
+    println(a - b)   // 5
+    println(a * b)   // 14
+    println(a / b)   // 3 (bulat)
+    println(a % b)   // 1
+    println(a > b && b != 0) // true
+}
+```
+
+| Operator | Arti | Contoh | Hasil |
+|---|---|---|---|
+| `+` | tambah | `7 + 2` | 9 |
+| `-` | kurang | `7 - 2` | 5 |
+| `*` | kali | `7 * 2` | 14 |
+| `/` | bagi | `7 / 2` | 3 (untuk Int) |
+| `%` | sisa bagi | `7 % 2` | 1 |
+
+Untuk hasil desimal, setidaknya salah satu operand harus `Double`: `7.0 / 2` menghasilkan `3.5`.
+
+## Operator Perbandingan
+
+```kotlin
+val sama = 5 == 5         // true
+val beda = 5 != 3         // true
+val lebih = 5 >= 5        // true
+```
+
+`==` memanggil `equals`, sedangkan `===` benar-benar memeriksa apakah dua variabel menunjuk objek yang sama di memori.
+
+## Operator Logika dan Short-circuit
+
+```kotlin
+if (usia >= 18 && punyaKartu) { println("Boleh masuk") }
+if (nama.isNullOrEmpty() || nama == "anonim") { println("Tanpa nama") }
+```
+
+`&&` tidak mengevaluasi sisi kanan bila sisi kiri sudah `false`. Begitu juga `||` berhenti bila sisi kiri sudah `true`.
+
+## Penugasan Majemuk
+
+```kotlin
+var total = 10
+total += 5   // sama dengan total = total + 5
+total *= 2
+total--
+```
+
+<div class="note">💡 Kotlin tidak punya operator ternary seperti <code>condition ? a : b</code>. Gunakan ekspresi <code>if</code>: <code>val status = if (aktif) "Aktif" else "Nonaktif"</code>.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="kotlin" runtime="piston" pistonName="kotlin" code={`fun main() {
+    val a = 7
+    val b = 2
+    println(a + b)   // 9
+    println(a - b)   // 5
+    println(a * b)   // 14
+    println(a / b)   // 3 (bulat)
+    println(a % b)   // 1
+    println(a > b && b != 0) // true
+}`} />

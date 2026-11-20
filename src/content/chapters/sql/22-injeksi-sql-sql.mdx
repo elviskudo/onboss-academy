@@ -1,0 +1,101 @@
+---
+title: "Mencegah SQL Injection"
+description: "Mengapa konkatenasi string berbahaya dan cara memakai prepared statement"
+order: 22
+quiz:
+  - q: "SQL injection terjadi ketika…"
+    options: ["Input pengguna disisipkan langsung ke query SQL", "Database kehabisan ruang", "Query memakai JOIN", "Index terlalu banyak"]
+    answer: 0
+    explain: "Teks dari pengguna dapat mengubah struktur query bila digabung sebagai string."
+  - q: "Cara utama mencegah injection adalah…"
+    options: ["Prepared statement / parameterized query", "Menyembunyikan error", "Menghapus index", "Menambah LIMIT"]
+    answer: 0
+    explain: "Parameter dikirim terpisah dari perintah SQL sehingga tidak dianggap kode."
+  - q: "Contoh input berbahaya untuk field nama adalah…"
+    options: ["' OR '1'='1", "Budi", "Andi Sari", "2026-11-20"]
+    answer: 0
+    explain: "Input itu dapat mengubah kondisi WHERE bila langsung dikonkatenasi."
+  - q: "Prepared statement juga memberi keuntungan…"
+    options: ["Query lebih mudah di-cache dan aman", "Tabel jadi lebih kecil", "Index otomatis hilang", "Semua kolom jadi TEXT"]
+    answer: 0
+    explain: "Parameter membuat query bisa dipakai ulang dengan nilai berbeda."
+  - q: "Validasi input di aplikasi…"
+    options: ["Menggantikan prepared statement", "Tetap diperlukan sebagai lapisan tambahan", "Tidak pernah berguna", "Hanya untuk warna UI"]
+    answer: 1
+    explain: "Validasi panjang dan tipe membantu, tetapi bukan pengganti parameterisasi."
+example:
+  code: |
+    -- AMAN: gunakan parameter, bukan konkatenasi teks
+    SELECT * FROM users WHERE username = ?; -- nilai dikirim terpisah
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+SQL injection terjadi ketika data dari pengguna dianggap sebagai bagian dari perintah SQL. Dampaknya bisa pengambilan data seluruh tabel, penghapusan data, sampai pengambilan alih akun.
+
+## Contoh Rentan
+
+```python
+# JANGAN seperti ini
+sql = "SELECT * FROM users WHERE nama = '" + input_nama + "'"
+```
+
+Jika `input_nama` berisi `' OR '1'='1`, query berubah menjadi filter yang selalu benar. Pengguna mendapat semua baris tanpa kata sandi yang benar.
+
+## Prepared Statement
+
+```python
+# Python (sqlite3): tanda ? adalah placeholder
+cur.execute("SELECT * FROM users WHERE nama = ?", (input_nama,))
+```
+
+```javascript
+// Node.js (mysql2)
+db.execute('SELECT * FROM_users WHERE nama = ?', [inputNama]);
+```
+
+Nilai dikirim sebagai data, bukan teks perintah. Meski input mengandung tanda kutip, database tetap memperlakukannya sebagai satu string.
+
+## Aturan Praktis
+
+1. Gunakan parameter untuk **semua** nilai yang berasal dari luar.
+2. Jangan menginterpolasi nama tabel atau kolom dari input pengguna. Jika terpaksa, whitelist nilai yang diizinkan.
+3. Batasi hak akun database: aplikasi tidak perlu hak `DROP TABLE`.
+4. Validasi panjang, tipe, dan format sebagai lapisan tambahan.
+5. Simpan kata sandi sebagai hash, bukan plaintext.
+
+## Kesalahan yang Sering Dianggap Aman
+
+| Cara | Masalah |
+| --- | --- |
+| Meloloskan tanda kutip manual | aturan escaping beda per database |
+| Menyaring kata `SELECT` | bisa dipotong menjadi `SEL` + `ECT` |
+| Menyembunyikan pesan error | menutup gejala, bukan penyebab |
+| Menaruh logika di frontend | pengguna bisa mengirim request langsung
+
+## Contoh Aman dengan Whitelist
+
+```python
+allowed = {"nama": "nama", "tanggal": "created_at"}
+kolom = allowed.get(user_input, "nama")
+sql = f"SELECT {kolom} FROM pesanan WHERE id = ?"
+```
+
+Nama kolom tidak bisa diparameterisasi, jadi penggunaan whitelist adalah pendekatan yang benar.
+
+<div class="note">💡 ORM biasanya memakai prepared statement secara default. Itu bagus, tetapi tetap waspada saat kamu menulis raw query atau query builder dengan string interpolation.</div>
+
+## Di Dunia Nyata
+
+- **Form login**: parameter untuk username dan password.
+- **Filter pencarian**: parameter untuk kata kunci LIKE.
+- **Laporan dinamis**: whitelist untuk nama kolom sorting.
+- **Audit keamanan**: scanner mencari pola konkatenasi SQL di kode.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`-- Perhatikan perbedaan dua baris ini:
+-- BERBAHAYA bila nilai pengguna langsung disisipkan ke dalam teks query.
+-- AMAN: placeholder ? menerima data terpisah dari perintah.
+SELECT * FROM karyawan WHERE nama = ?;`} />

@@ -1,0 +1,155 @@
+---
+"title": "Nullable Reference dan Exception Lanjutan"
+"description": "Menangani nilai bisa-kosong, throw, custom exception, dan finally di C# modern"
+"order": 16
+"quiz":
+- "q": "Apa yang terjadi jika memanggil method pada variabel bernilai null?"
+  "options":
+  - "Exception TypeError"
+  - "NullReferenceException"
+  - "Compile error selalu"
+  - "Program otomatis skip"
+  "answer": 1
+  "explain": "C# melempar NullReferenceException saat anggota diakses dari null."
+- "q": "Operator ! (null-forgiving) pada `x!` berarti…"
+  "options":
+  - "x dibatalkan"
+  - "beri tahu kompiler saya yakin x tidak null"
+  - "x diubah jadi nol"
+  - "x dibuang"
+  "answer": 1
+  "explain": "Operator ini hanya memengaruhi analisis statis kompiler, bukan runtime."
+- "q": "Blok finally dijalankan…"
+  "options":
+  - "hanya saat exception"
+  - "hanya saat sukses"
+  - "selalu, sukses atau gagal"
+  - "tidak pernah"
+  "answer": 2
+  "explain": "Finally cocok untuk membersihkan resource seperti file atau koneksi."
+- "q": "Kata kunci untuk melempar exception adalah…"
+  "options":
+  - "raise"
+  - "throw"
+  - "catch"
+  - "panic"
+  "answer": 1
+  "explain": "throw new Exception(\"pesan\") menghentikan alur normal dan mencari handler."
+- "q": "NullReferenceException termasuk turunan dari…"
+  "options":
+  - "System.Exception"
+  - "System.String"
+  - "System.ValueType"
+  - "System.Enum"
+  "answer": 0
+  "explain": "Semua exception di .NET berakar pada System.Exception."
+"example":
+  "code": "using System;\nclass Program\n{\n    static void Main()\n    {\n        string? nama = null;\n        Console.WriteLine(nama ?? \"Tanpa nama\");\n        try\n        {\n            int.Parse(\"abc\");\n        }\n        catch (FormatException e)\n        {\n            Console.WriteLine(e.Message);\n        }\n        finally\n        {\n            Console.WriteLine(\"Selesai\");\n        }\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Null dan exception adalah dua sumber bug paling umum. C# modern menyediakan alat untuk keduanya: *nullable reference types* dan blok `try` yang rapi.
+
+## Nullable Reference Types
+
+Sejak C# 8, aktifkan dengan `<Nullable>enable</Nullable>` di file proyek. Tipe biasa seperti `string` dianggap **tidak boleh null**; tulis `string?` jika boleh.
+
+```csharp
+string Pasti = "Halo";    // harus diisi
+string? BolehKosong = null; // boleh null
+
+Console.WriteLine(BolehKosong?.Length ?? 0);
+```
+
+- `?.` — null-conditional: akses anggota hanya jika tidak null
+- `??` — null-coalescing: pakai nilai kanan jika kiri null
+- `??=` — tetapkan nilai jika masih null
+- `!` — null-forgiving: beri tahu kompiler "saya yakin ini tidak null"
+
+```csharp
+string? input = null;
+input ??= "default"; // sekarang "default"
+```
+
+## Exception
+
+```csharp
+try
+{
+    int angka = int.Parse("abc"); // melempar FormatException
+}
+catch (FormatException e)
+{
+    Console.WriteLine("Format salah: " + e.Message);
+}
+catch (Exception e)
+{
+    Console.WriteLine("Error umum: " + e.Message);
+}
+finally
+{
+    Console.WriteLine("Selalu dijalankan");
+}
+```
+
+Tangkap yang paling spesifik dahulu. Blok `finally` tetap berjalan walau `return` dipanggil di dalam `try`.
+
+## Membuat Exception Sendiri
+
+```csharp
+public class SaldoKurangException : Exception
+{
+    public SaldoKurangException(string pesan) : base(pesan) { }
+}
+
+void Tarik(decimal jumlah)
+{
+    if (jumlah > Saldo)
+        throw new SaldoKurangException("Saldo tidak cukup");
+}
+```
+
+## using Declaration
+
+Untuk resource yang harus ditutup, `using` menggantikan `finally`:
+
+```csharp
+using var reader = new StreamReader("data.txt");
+string isi = reader.ReadToEnd();
+// file otomatis ditutup di akhir scope
+```
+
+<div class="note">💡 Jangan pakai exception untuk alur bisnis normal. ITU mahal dan kode jadi sulit diikuti. Untukinput yang mungkin salah, <code>TryParse</code> lebih tepat daripada <code>Parse</code> + catch.</div>
+
+## Try it Yourself
+
+Ubah abc menjadi angka untuk melihat cabang try berhasil.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+
+class Program
+{
+    static void Main()
+    {
+        string? nama = null;
+        Console.WriteLine("Nama: " + (nama ?? "Tanpa nama"));
+        Console.WriteLine("Panjang aman: " + (nama?.Length ?? 0));
+        nama ??= "Onboss";
+        Console.WriteLine("Sesudah ??=, nama = " + nama);
+
+        try
+        {
+            int x = int.Parse("abc");
+            Console.WriteLine(x);
+        }
+        catch (FormatException e)
+        {
+            Console.WriteLine("Tertangkap: " + e.GetType().Name);
+        }
+        finally
+        {
+            Console.WriteLine("Finally selalu jalan");
+        }
+    }
+}`} />

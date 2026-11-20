@@ -1,0 +1,141 @@
+---
+title: "Multithreading C++"
+description: "std::thread, mutex, lock_guard, atomic, condition_variable, dan async"
+order: 21
+quiz:
+  - q: "Kelas thread standar C++ ada di header…"
+    options: ["<thread>", "<threads>", "<pthread>", "<concurrency>"]
+    answer: 0
+    explain: "Diperkenalkan C++11."
+  - q: "`lock_guard<mutex>` berguna untuk…"
+    options: ["Melepaskan lock otomatis saat keluar scope", "Membuat thread", "Mengunci selamanya", "Menghapus mutex"]
+    answer: 0
+    explain: "Ini RAII untuk sinkronisasi."
+  - q: "`std::atomic<int>` menjamin…"
+    options: ["Operasi atomik tanpa mutex eksplisit", "Urutan terurut", "Thread otomatis", "Tidak bisa dibaca"]
+    answer: 0
+    explain: "Cocok untuk counter sederhana."
+  - q: "`condition_variable` dipakai untuk…"
+    options: ["Menunggu sinyal dari thread lain", "Membuat mutex", "Menghapus thread", "Mengurutkan data"]
+    answer: 0
+    explain: "Dasar producer–consumer."
+  - q: "`std::async` mengembalikan…"
+    options: ["std::future dengan hasil fungsi", "Thread baru", "Void", "Mutex"]
+    answer: 0
+    explain: "Panggil `.get()` untuk mengambil hasil (blok sampai siap)."
+example:
+  code: |
+    #include <thread>
+    #include <mutex>
+    #include <atomic>
+    #include <iostream>
+    
+    std::mutex m;
+    std::atomic<int> total{0};
+    
+    void kerja(int n) {
+        for (int i = 0; i &lt; n; i++) {
+            total.fetch_add(1);
+            std::lock_guard<std::mutex> lock(m);
+            std::cout <&lt; "thread " <&lt; std::this_thread::get_id() <&lt; " \n";
+        }
+    }
+    
+    int main() {
+        std::thread a(kerja, 3), b(kerja, 3);
+        a.join(); b.join();
+        std::cout <&lt; "total=" <&lt; total <&lt; '\n';
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+C++11 menjadikan multithreading bagian dari standar — tidak lagi bergantung pada POSIX pthread atau Windows API.
+
+## Thread Dasar
+
+```cpp
+#include <thread>
+
+void tugas(int id) { std::cout << id << '
+'; }
+
+std::thread t(tugas, 1);
+t.join();     // tunggu selesai
+// t.detach();  // lepas, jalan mandiri (hati-hati!)
+```
+
+`std::thread` yang masih joinable saat destructor dipanggil menyebabkan `std::terminate`.
+
+## Mutex & RAII
+
+```cpp
+std::mutex m;
+
+void aman() {
+    std::lock_guard<std::mutex> lock(m);
+    /* kritis */
+}   // lock otomatis dilepas
+```
+
+Alternative: `std::unique_lock` (bisa di-unlock manual & dipindah) dipakai dengan `condition_variable`.
+
+## Atomic
+
+```cpp
+std::atomic<int> counter{0};
+counter++;                  // atomik
+counter.fetch_add(5);
+```
+
+Lebih ringan daripada mutex untuk operasi sederhana. Bisa menentukan memory order bila dibutuhkan.
+
+## Condition Variable
+
+```cpp
+std::condition_variable cv;
+std::queue<int> antrian;
+
+// konsumen
+std::unique_lock<std::mutex> lock(m);
+cv.wait(lock, []{ return !antrian.empty(); });
+int v = antrian.front(); antrian.pop();
+
+// produser
+{ std::lock_guard<std::mutex> l(m); antrian.push(1); }
+cv.notify_one();
+```
+
+## Async & Future
+
+```cpp
+auto f = std::async(std::launch::async, hitung, 10);
+int hasil = f.get();
+```
+
+<div class="note">💡 Data race adalah undefined behavior. Lindungi semua state bersama dengan mutex/atomic, atau desain ulang agar tiap thread punya data sendiri (thread-local / reduce di akhir).</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="cpp" runtime="piston" pistonName="c++" code={`#include <thread>
+#include <mutex>
+#include <atomic>
+#include <iostream>
+
+std::mutex m;
+std::atomic<int> total{0};
+
+void kerja(int n) {
+    for (int i = 0; i &lt; n; i++) {
+        total.fetch_add(1);
+        std::lock_guard<std::mutex> lock(m);
+        std::cout <&lt; "thread " <&lt; std::this_thread::get_id() <&lt; " \n";
+    }
+}
+
+int main() {
+    std::thread a(kerja, 3), b(kerja, 3);
+    a.join(); b.join();
+    std::cout <&lt; "total=" <&lt; total <&lt; '\n';
+}`} />

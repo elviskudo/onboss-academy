@@ -1,0 +1,125 @@
+---
+title: "Date & Time API"
+description: "LocalDate, LocalTime, LocalDateTime, Duration, Period, dan formatter modern"
+order: 22
+quiz:
+  - q: "Kelas untuk tanggal tanpa waktu adalah…"
+    options: ["Date", "LocalDate", "Calendar", "Timestamp"]
+    answer: 1
+    explain: "LocalDate menyimpan tahun-bulan-hari tanpa zona."
+  - q: "`LocalDateTime.now()` mengembalikan…"
+    options: ["Tanggal saja", "Waktu saja", "Tanggal + waktu tanpa zona", "Tanggal + zona"]
+    answer: 2
+    explain: "Untuk zona, pakai ZonedDateTime."
+  - q: "`Duration` dipakai untuk selisih…"
+    options: ["Tanggal (hari/bulan)", "Waktu (jam/menit/detik)", "Zona waktu", "Format"]
+    answer: 1
+    explain: "Period untuk tanggal, Duration untuk waktu berbasis detik/nano."
+  - q: "Format tanggal ISO standar adalah…"
+    options: ["dd/MM/yyyy", "yyyy-MM-dd", "MM-dd-yyyy", "yyyy/MM/dd"]
+    answer: 1
+    explain: "ISO-8601: 2026-11-20."
+  - q: "Kelas lama `java.util.Date` sebaiknya…"
+    options: ["Dipakai terus", "Dihindari, diganti java.time", "Dihapus dari JDK", "Dipakai hanya untuk format"]
+    answer: 1
+    explain: "API java.time (Java 8+) immutable dan thread-safe."
+example:
+  code: |
+    import java.time.*;
+    import java.time.format.DateTimeFormatter;
+    
+    public class Main {
+      public static void main(String[] args) {
+        LocalDate hariIni = LocalDate.now();
+        LocalDate ultah = LocalDate.of(2000, 5, 17);
+        System.out.println(hariIni);
+    
+        Period usia = Period.between(ultah, hariIni);
+        System.out.println("Usia: " + usia.getYears() + " tahun");
+    
+        LocalDateTime n = LocalDateTime.now().plusDays(7);
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+        System.out.println(n.format(f));
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+API `java.time` (Java 8) menggantikan `Date` dan `Calendar` yang rawan bug dan mutable. Semua kelas di sini **immutable** dan thread-safe.
+
+## Kelas Inti
+
+| Kelas | Isi | Contoh |
+|---|---|---|
+| `LocalDate` | tanggal | `2026-11-20` |
+| `LocalTime` | jam | `14:30:00` |
+| `LocalDateTime` | keduanya | `2026-11-20T14:30` |
+| `ZonedDateTime` | + zona | `...+07:00[Asia/Jakarta]` |
+| `Instant` | timestamp UTC | mesin/timezone |
+
+```java
+LocalDate hari = LocalDate.of(2026, 11, 20);
+LocalTime jam = LocalTime.of(9, 30);
+LocalDateTime rapat = LocalDateTime.of(hari, jam);
+```
+
+## Manipulasi
+
+```java
+LocalDate besok = hari.plusDays(1);
+LocalDate kemarin = hari.minusWeeks(1);
+LocalDate akhirBulan = hari.with(TemporalAdjusters.lastDayOfMonth());
+```
+
+Karena immutable, setiap operasi mengembalikan objek **baru** — objek asli tidak berubah.
+
+## Selisih
+
+```java
+Period p = Period.between(ultah, LocalDate.now());
+long hari = ChronoUnit.DAYS.between(ultah, LocalDate.now());
+
+Duration d = Duration.between(mulai, selesai);
+System.out.println(d.toHours());
+```
+
+## Format & Parse
+
+```java
+DateTimeFormatter f = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+String teks = LocalDate.now().format(f);
+LocalDate balik = LocalDate.parse("20/11/2026", f);
+```
+
+## Zona Waktu
+
+```java
+ZonedDateTime jakarta = ZonedDateTime.now(ZoneId.of("Asia/Jakarta"));
+Instant UTC = Instant.now();
+```
+
+Selalu simpan timestamp di database sebagai UTC; konversi ke zona lokal hanya saat ditampilkan.
+
+<div class="note">💡 Jangan pakai `SimpleDateFormat` di kode baru — kelas itu mutable dan tidak thread-safe. `DateTimeFormatter` adalah penggantinya yang immutable.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.time.*;
+import java.time.format.DateTimeFormatter;
+
+public class Main {
+  public static void main(String[] args) {
+    LocalDate hariIni = LocalDate.now();
+    LocalDate ultah = LocalDate.of(2000, 5, 17);
+    System.out.println(hariIni);
+
+    Period usia = Period.between(ultah, hariIni);
+    System.out.println("Usia: " + usia.getYears() + " tahun");
+
+    LocalDateTime n = LocalDateTime.now().plusDays(7);
+    DateTimeFormatter f = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+    System.out.println(n.format(f));
+  }
+}`} />

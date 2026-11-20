@@ -1,0 +1,155 @@
+---
+title: "Decorator TypeScript"
+description: "Decorator class, method, property, dan eksperimen emitDecoratorMetadata"
+order: 18
+quiz:
+  - q: "Decorator ditulis dengan sintaks…"
+    options: ["@nama", "#nama", "$nama", "<nama>"]
+    answer: 0
+    explain: "Decorator memakai tanda @ di atas deklarasi."
+  - q: "Agar decorator bisa dipakai, tsconfig perlu…"
+    options: ["experimentalDecorators: true", "strict: false", "noEmit: true", "target ES5"]
+    answer: 0
+    explain: "Ini masih berstatus eksperimen di TypeScript."
+  - q: "Decorator class menerima parameter…"
+    options: ["Instance class", "Constructor class", "Nama method", "Property descriptor saja"]
+    answer: 1
+    explain: "Class decorator menerima constructor sebagai argumen."
+  - q: "Decorator method bisa mengganti…"
+    options: ["Nama class", "Property descriptor", "Import", "Tipe return"]
+    answer: 1
+    explain: "Dengan descriptor, kamu bisa membungkus method aslinya."
+  - q: "Decorators stage 3 di JavaScript…"
+    options: ["Sudah sama persis dengan TS lama", "Berbeda sintaks dan model", "Tidak ada", "Hanya untuk class"]
+    answer: 1
+    explain: "Standar baru memiliki model berbeda; TS 5+ mendukungnya dengan opsi terbaru."
+example:
+  code: |
+    function log(target: unknown, key: string, descriptor: PropertyDescriptor) {
+      const asli = descriptor.value;
+      descriptor.value = function (...args: unknown[]) {
+        console.log("Dipanggil:", key);
+        return asli.apply(this, args);
+      };
+    }
+    
+    class Layanan {
+      @log
+      jalankan() { return "selesai"; }
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Decorator adalah fungsi yang dijalankan saat class atau anggotanya didefinisikan. Ia dipakai oleh framework seperti Angular dan NestJS untuk dependency injection, routing, dan validasi.
+
+## Mengaktifkan
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+Opsi `emitDecoratorMetadata` menyimpan informasi tipe parameter ke metadata runtime — dibutuhkan oleh container DI.
+
+## Jenis Decorator
+
+| Jenis | Kapan jalan | Parameter |
+|-------|-------------|-----------|
+| Class | Saat class didefinisikan | constructor |
+| Method | Saat method didefinisikan | target, key, descriptor |
+| Property | Saat properti didefinisikan | target, key |
+| Parameter | Saat parameter didefinisikan | target, key, index |
+| Accessor | Saat getter/setter didefinisikan | descriptor |
+
+## Contoh: Logging Method
+
+```ts
+function Log(target: object, key: string, descriptor: PropertyDescriptor) {
+  const asli = descriptor.value;
+  descriptor.value = function (...args: unknown[]) {
+    console.log(`[LOG] ${key} dipanggil dengan`, args);
+    return asli.apply(this, args);
+  };
+  return descriptor;
+}
+
+class Kalkulator {
+  @Log
+  tambah(a: number, b: number) {
+    return a + b;
+  }
+}
+```
+
+## Decorator Factory
+
+```ts
+function Rute(path: string) {
+  return function (target: object, key: string) {
+    Reflect.defineMetadata("rute", path, target, key);
+  };
+}
+
+class Controller {
+  @Rute("/user")
+  ambilUser() {}
+}
+```
+
+Fungsi luar menerima konfigurasi, fungsi dalam menjadi decorator sungguhan.
+
+## Decorator Class
+
+```ts
+function Komponen(nama: string) {
+  return <T extends { new (...args: any[]): {} }>(ctor: T) => {
+    return class extends ctor {
+      static namaKomponen = nama;
+    };
+  };
+}
+
+@Komponen("KartuProduk")
+class Kartu {}
+```
+
+## Status Standar
+
+Decorator JavaScript (Stage 3) sudah berbeda dari implementasi eksperimen TypeScript. TypeScript 5 mendukung standar baru lewat opsi `experimentalDecorators: false`, tapi banyak library masih mengandalkan model lama.
+
+<div class="note">💡 Decorator menambah kompleksitas dan bisa menyembunyikan perilaku. Pakai hanya kalau ekosistemmu (Angular/NestJS) memang membutuhkannya.</div>
+
+## Di Dunia Nyata
+
+- `@Injectable()` menandai class yang bisa disuntikkan dependensinya.
+- `@Get('/user')` mendaftarkan handler rute di NestJS.
+- `@Input()` di Angular menandai properti yang bisa menerima nilai dari komponen induk.
+
+## Try it Yourself
+
+Ubah nama method atau argumentasi pada contoh decorators sederhana ini.
+
+<TryIt lang="typescript" runtime="piston" pistonName="typescript" code={`// Simulasi perilaku decorator tanpa opsi kompiler:
+type Descriptor = PropertyDescriptor;
+
+function Log(key: string, descriptor: Descriptor): Descriptor {
+  const asli = descriptor.value as (...a: number[]) => number;
+  return {
+    ...descriptor,
+    value: (...args: number[]) => {
+      console.log("[LOG] " + key + " → " + args.join(", "));
+      return asli(...args);
+    }
+  };
+}
+
+const descriptor: Descriptor = {
+  value: (a: number, b: number) => a + b
+};
+const dipasang = Log("tambah", descriptor);
+console.log("Hasil:", (dipasang.value as Function)(3, 4));`} />

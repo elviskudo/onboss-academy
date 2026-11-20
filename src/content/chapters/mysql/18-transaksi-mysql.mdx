@@ -1,0 +1,111 @@
+---
+title: "Transaksi dan Locking di MySQL"
+description: "BEGIN, COMMIT, ROLLBACK, isolation level, dan deadlock"
+order: 18
+quiz:
+  - q: "Perintah MySQL untuk memulai transaksi adalah…"
+    options: ["START TRANSACTION", "BEGIN TRANSACTION", "OPEN TRANSACTION", "INIT TRANSACTION"]
+    answer: 0
+    explain: "START TRANSACTION atau BEGIN keduanya diterima MySQL."
+  - q: "ROLLBACK akan…"
+    options: ["Menyimpan perubahan", "Membatalkan perubahan belum commit", "Menghapus tabel", "Membuat index"]
+    answer: 1
+    explain: "ROLLBACK mengembalikan ke keadaan sebelum transaksi."
+  - q: "Isolation level default InnoDB adalah…"
+    options: ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"]
+    answer: 2
+    explain: "InnoDB memakai REPEATABLE READ secara default."
+  - q: "Deadlock terjadi ketika…"
+    options: ["Dua transaksi saling menunggu lock", "Query terlalu cepat", "Index hilang", "Server restart"]
+    answer: 0
+    explain: "MySQL akan membatalkan salah satu transaksi untuk memutus siklus."
+  - q: "Auto-commit berarti…"
+    options: ["Tiap statement langsung permanen", "Semua query ditunda", "Tidak bisa ROLLBACK selamanya", "Hanya SELECT yang berjalan"]
+    answer: 0
+    explain: "Tanpa START TRANSACTION, setiap perintah DML langsung di-commit."
+example:
+  code: |
+    START TRANSACTION; UPDATE akun SET saldo=saldo-100 WHERE id=1; UPDATE akun SET saldo=saldo+100 WHERE id=2; COMMIT;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Transaksi menjaga beberapa perubahan tetap konsisten. InnoDB adalah storage engine MySQL yang mendukung transaksi dan foreign key; MyISAM tidak.
+
+## Alur Transaksi
+
+```sql
+START TRANSACTION;
+UPDATE rekening SET saldo = saldo - 50000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 50000 WHERE id = 2;
+COMMIT;
+```
+
+Jika salah satu gagal: `ROLLBACK;`. Gunakan `SAVEPOINT nama;` untuk rollback sebagian.
+
+## Isolation Level
+
+```sql
+SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SELECT @@transaction_isolation;
+```
+
+| Level | Fenomena yang dicegah |
+| --- | --- |
+| READ UNCOMMITTED | hampir tidak ada jaminan |
+| READ COMMITTED | dirty read |
+| REPEATABLE READ | dirty + non-repeatable read (default InnoDB) |
+| SERIALIZABLE | semua, dengan konkurensi terendah
+
+## Locking
+
+```sql
+SELECT * FROM produk WHERE id = 1 FOR UPDATE;
+SELECT * FROM produk WHERE id = 1 LOCK IN SHARE MODE;
+```
+
+`FOR UPDATE` mengunci baris yang dibaca agar transaksi lain tidak mengubahnya sampai selesai. Gunakan hanya di dalam transaksi.
+
+## Deadlock
+
+```text
+Transaksi A: kunci baris 1 → minta baris 2
+Transaksi B: kunci baris 2 → minta baris 1
+→ siklus; MySQL membatalkan salah satu
+```
+
+Cara mengurangi:
+
+1. Selalu akses tabel dan baris dalam urutan yang sama.
+2. Perpendek transaksi.
+3. Pastikan kolom filter ter-index agar lock tidak melebar.
+4. Siapkan retry di aplikasi saat error 1213 (deadlock).
+
+## Autocommit
+
+```sql
+SELECT @@autocommit;
+SET autocommit = 0;   -- hati-hati, berlaku untuk sesi
+```
+
+Sebaiknya biarkan autocommit = 1 dan gunakan `START TRANSACTION` eksplisit hanya untuk operasi yang memang perlu.
+
+<div class="note">💡 Transaksi yang dibiarkan terbuka sambil menunggu input pengguna adalah resep untuk lock berjam-jam. Kumpulkan data dulu, lalu buka transaksi, kerjakan, dan tutup segera.</div>
+
+## Di Dunia Nyata
+
+- **Transfer saldo**: dua UPDATE dalam satu transaksi.
+- **Pemesanan**: stok berkurang + pesanan dibuat + log dicatat.
+- **Import data**: ROLLBACK bila ada baris invalid.
+- **Stok konkuren**: FOR UPDATE mencegah dua pembeli mengambil barang terakhir.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="mysql" runtime="sql" code={`CREATE TABLE rekening (id INT PRIMARY KEY, saldo DECIMAL(10,2));
+INSERT INTO rekening VALUES (1, 500000), (2, 200000);
+START TRANSACTION;
+UPDATE rekening SET saldo = saldo - 50000 WHERE id = 1;
+UPDATE rekening SET saldo = saldo + 50000 WHERE id = 2;
+COMMIT;
+SELECT * FROM rekening;`} />

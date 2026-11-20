@@ -60,12 +60,12 @@ WHERE dept IN ('Data', 'Engineering')
   AND gaji >= 9000000;
 ```
 
-Delapan operator pembanding utama: `=`, `<>`, `<`, `>`, `<=`, `>=`, `BETWEEN`, `IS NULL`. Ditambah 4 operator set/pencocokan — `IN`, `LIKE`, `ILIKE`, `SIMILAR TO`. Digabungkan dengan `AND`, `OR`, dan kurung untuk prioritas.
+Delapan operator pembanding utama: `=`, `<>`, `<`, `>`, `&lt;=`, `>=`, `BETWEEN`, `IS NULL`. Ditambah 4 operator set/pencocokan — `IN`, `LIKE`, `ILIKE`, `SIMILAR TO`. Digabungkan dengan `AND`, `OR`, dan kurung untuk prioritas.
 
 | Operator | Arti | Contoh | Kapan dipakai |
 | --- | --- | --- | --- |
 | `=` / `<>` | sama / tidak sama | `gaji <> 0` | perbandingan nilai tunggal |
-| `<` `>` `<=` `>=` | kurang/besar | `gaji > 9000000` | rentang terbuka |
+| `<` `>` `&lt;=` `>=` | kurang/besar | `gaji > 9000000` | rentang terbuka |
 | BETWEEN a AND b | di antara (inklusif) | gaji BETWEEN 8000000 AND 11000000 | rentang tertutup |
 | IN (daftar) | termasuk salah satu | dept IN ('Data','Product') | daftar pilihan pendek |
 | IS NULL / IS NOT NULL | mengecek kosong | email IS NULL | kolom opsional |
@@ -117,6 +117,10 @@ Postgres membolehkan `FETCH FIRST n ROWS ONLY` (standar SQL) sebagai alternatif 
 - **Peringkat gaji** — `ORDER BY gaji DESC NULLS LAST` menjamin karyawan tanpa data gaji duduk di posisi paling bawah, bukan di atas.
 
 <div class="note">💡 Di Postgres, tipe data dijaga ketat: WHERE gaji > 'abc' akan error karena INTEGER tidak bisa dibandingkan dengan teks. Ketegasan ini mencegah kejanggalan data jauh sebelum jadi bug aplikasi.</div>
+
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
 
 <TryIt lang="postgresql" runtime="sql" code={`SELECT nama, gaji, dept
 FROM karyawan

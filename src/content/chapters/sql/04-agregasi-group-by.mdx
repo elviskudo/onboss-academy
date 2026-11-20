@@ -121,6 +121,10 @@ Fungsi agregat bisa dipakai di subquery untuk membandingkan tiap baris dengan ni
 
 <div class="note">💡 GROUP BY tanpa HAVING tetap valid — HAVING bersifat opsional. Sebaliknya, fungsi agregat pada SELECT wajib punya GROUP BY (atau memang dimaksudkan meringkas seluruh tabel).</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="sql" runtime="sql" code={`SELECT dept,
        COUNT(*) AS jumlah,
        MIN(gaji) AS termurah,

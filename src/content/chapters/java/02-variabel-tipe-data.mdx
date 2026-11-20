@@ -166,6 +166,10 @@ String adalah object, jadi pakai `equals()` untuk membandingkan isi. Detail leng
 
 <div class="note">💡 Java punya <b>autoboxing</b>: int ↔ Integer, boolean ↔ Boolean. Berguna di collection (ArrayList hanya menerima object, bukan tipe primitif) — tapi waspadai <code>Integer == Integer</code> di luar range -128..127 yang bisa bernilai false walau angkanya sama.</div>
 
+## Try it Yourself
+
+Coba jalankan contoh berikut, lalu ubah nilainya sendiri untuk melihat hasilnya.
+
 <TryIt lang="java" runtime="piston" pistonName="java" code={`public class Main {
     public static void main(String[] args) {
         int umur = 20;
@@ -178,7 +182,7 @@ String adalah object, jadi pakai `equals()` untuk membandingkan isi. Detail leng
 
         System.out.println(nama + ", umur " + umur + ", tinggi " + tinggi);
         System.out.println("Grade " + grade + " | aktif " + aktif);
-        System.out.println("Nilai di bawah batas: " + (umur < BATAS));
+        System.out.println("Nilai di bawah batas: " + (umur &lt; BATAS));
         System.out.println("Tahun: " + tahun);
 
         double rata = (double) (80 + 90) / 2;

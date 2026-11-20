@@ -1,0 +1,108 @@
+---
+title: "Normalisasi Database"
+description: "1NF, 2NF, 3NF, dependensi fungsional, dan kapan denormalisasi"
+order: 24
+quiz:
+  - q: "Tujuan normalisasi adalah…"
+    options: ["Menambah duplikasi", "Mengurangi redudansi dan anomali", "Menghapus index", "Mengubah semua jadi TEXT"]
+    answer: 1
+    explain: "Normalisasi memecah data agar setiap fakta disimpan sekali."
+  - q: "1NF melarang…"
+    options: ["Primary key", "Nilai bertabel dalam satu sel", "Foreign key", "WHERE"]
+    answer: 1
+    explain: "1NF mensyaratkan setiap sel berisi satu nilai atomik."
+  - q: "2NF mengatasi dependensi…"
+    options: ["Transitif", "Parsial pada kunci komposit", "Siklus", "Foreign key"]
+    answer: 1
+    explain: "2NF mensyaratkan atribut non-kunci bergantung pada seluruh kunci primer."
+  - q: "3NF menghilangkan dependensi…"
+    options: ["Parsial", "Transitif", "Fungsional pada kunci", "Join"]
+    answer: 1
+    explain: "3NF melarang atribut non-kunci bergantung pada atribut non-kunci lain."
+  - q: "Denormalisasi dilakukan untuk…"
+    options: ["Meningkatkan redudansi demi performa baca", "Menghapus semua relasi", "Menghilangkan primary key", "Membuat data hilang"]
+    answer: 0
+    explain: "Denormalisasi menyimpan salinan data agar join berkurang."
+example:
+  code: |
+    -- Struktur mentah: satu sel berisi beberapa kategori (melanggar 1NF)
+    -- Struktur rapi: tabel siswa, tabel kelas, tabel pendaftaran
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Normalisasi adalah proses menyusun tabel agar data tidak berulang tanpa alasan. Ia mencegah tiga anomali: insert (tidak bisa menambah data tanpa data lain), update (satu fakta harus diubah di banyak tempat), dan delete (menghapus satu hal menghilangkan fakta lain).
+
+## Dependensi Fungsional
+
+Notasi `A → B` berarti nilai A menentukan nilai B secara unik. Misalnya `nim → nama` karena satu NIM hanya dimiliki satu mahasiswa.
+
+```text
+(nim, kode_mk) → nilai
+nim → nama, alamat
+kode_mk → nama_mk, sks
+```
+
+## 1NF — Nilai Atomik
+
+```text
+-- SALAH
+siswa: | 1 | Ana | Matematika, Fisika |
+
+-- BENAR
+siswa:    | 1 | Ana |
+pendaftaran: | 1 | Matematika |
+             | 1 | Fisika   |
+```
+
+## 2NF — Bergantung pada Seluruh Kunci
+
+Jika kunci primer komposit `(nim, kode_mk)`, kolom `nama` yang hanya bergantung pada `nim` harus dipindah ke tabel `mahasiswa`.
+
+```sql
+CREATE TABLE mahasiswa (nim TEXT PRIMARY KEY, nama TEXT);
+CREATE TABLE nilai (nim TEXT, kode_mk TEXT, skor INTEGER,
+                    PRIMARY KEY (nim, kode_mk));
+```
+
+## 3NF — Tidak Bergantung pada Non-Kunci
+
+```text
+-- SALAH: kota → provinsi, sementara kota bukan kunci
+karyawan(id, nama, kota, provinsi)
+
+-- BENAR
+karyawan(id, nama, kota)
+wilayah(kota PRIMARY KEY, provinsi)
+```
+
+## Denormalisasi
+
+Normalisasi hingga 3NF adalah target umum aplikasi transaksional. Sistem analitik sering menyimpan salinan `nama_produk` di tabel fakta penjualan agar tidak perlu join setiap laporan — itu denormalisasi sadar, bukan kesalahan desain.
+
+| Kebutuhan | Pilihan |
+| --- | --- |
+| Transaksi (insert/update sering) | Normalisasi |
+| Laporan (baca jutaan baris) | Denormalisasi / star schema |
+
+<div class="note">💡 Denormalisasi menciptakan dua sumber kebenaran. Jika dipakai, siapkan proses yang jelas untuk menyinkronkan salinan.</div>
+
+## Di Dunia Nyata
+
+- **E-commerce**: produk, kategori, dan varian dipisah agar harga tidak duplikat.
+- **Akademik**: mahasiswa, mata kuliah, dan nilai adalah tiga tabel berbeda.
+- **Analitik**: tabel fakta penjualan menyimpan salinan nama cabang untuk kecepatan.
+- **Migration**: normalisasi sering dilakukan saat sistem lama mulai bermasalah.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="sql" runtime="sql" code={`CREATE TABLE mahasiswa (nim TEXT PRIMARY KEY, nama TEXT);
+CREATE TABLE mata_kuliah (kode TEXT PRIMARY KEY, nama TEXT, sks INTEGER);
+CREATE TABLE nilai (
+  nim TEXT, kode TEXT, skor INTEGER,
+  PRIMARY KEY (nim, kode)
+);
+INSERT INTO mahasiswa VALUES ('M1', 'Ana'), ('M2', 'Budi');
+INSERT INTO nilai VALUES ('M1', 'MK1', 85), ('M2', 'MK1', 90);
+SELECT m.nama, n.skor FROM nilai n JOIN mahasiswa m ON m.nim = n.nim;`} />

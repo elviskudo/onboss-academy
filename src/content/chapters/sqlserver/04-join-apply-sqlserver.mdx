@@ -28,7 +28,7 @@ example:
     SELECT k.nama, d.nama AS divisi
     FROM dbo.karyawan AS k
     INNER JOIN dbo.divisi AS d ON d.id = k.divisi_id;
-
+    
     SELECT k.nama, g.gaji
     FROM dbo.karyawan AS k
     OUTER APPLY (

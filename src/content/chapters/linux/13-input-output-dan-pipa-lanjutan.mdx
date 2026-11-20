@@ -1,0 +1,131 @@
+---
+title: Pipa, Redirection, dan tee
+description: Menggabungkan perintah serta menyimpan dan melihat output secara bersamaan.
+order: 13
+quiz:
+- q: Perintah tee menulis output ke…
+  options:
+  - Log sistem
+  - Layar dan file sekaligus
+  - File saja
+  - Memori saja
+  answer: 1
+  explain: tee membantu saat Anda ingin melihat progres sekaligus menyimpan catatan.
+- q: Untuk menangkap error ke file yang sama dengan output gunakan…
+  options:
+  - '&1'
+  - 2>1
+  - 2>&1
+  - 1>&2
+  answer: 2
+  explain: '`perintah > log 2>&1` mengarahkan stderr ke stdout.'
+- q: Pipa | meneruskan…
+  options:
+  - Variabel lingkungan
+  - File konfigurasi
+  - Sinyal proses
+  - Output perintah kiri sebagai input perintah kanan
+  answer: 3
+  explain: Ini dasar komposisi perintah Unix.
+- q: Perintah untuk membuang output ke /dev/null adalah…
+  options:
+  - '> /dev/null'
+  - '> /zero'
+  - '> null'
+  - '> /dev/zero'
+  answer: 0
+  explain: /dev/null adalah perangkat yang langsung membuang data.
+- q: Here-doc `<<` digunakan untuk…
+  options:
+  - Menjalankan background
+  - Memberikan input multibaris dalam skrip
+  - Menghapus file
+  - Mengganti permission
+  answer: 1
+  explain: Sering dipakai untuk menulis konfigurasi dari shell script.
+example:
+  code: 'ls /etc | tee daftar-etc.txt | head -5
+
+    grep -i error /var/log/syslog 2>/dev/null | tee error.log
+
+    cat > pesan.txt <<EOF
+
+    Baris pertama
+
+    Baris kedua
+
+    EOF
+
+    '
+---
+
+
+Shell Unix dibangun di atas ide sederhana: **setiap perintah adalah filter**. Dengan pipe dan redirection, filter-filter itu dirangkai.
+
+## Pipa
+
+```bash
+ps aux | grep nginx | head -5
+cat data.txt | sort | uniq -c | sort -rn
+```
+
+Setiap perintah hanya melakukan satu hal, tetapi rangkaiannya kuat.
+
+## Redirection
+
+```bash
+perintah > hasil.txt        # stdout, timpa
+perintah >> hasil.txt       # stdout, tambah
+perintah 2> error.txt       # stderr
+perintah > semua.txt 2>&1   # keduanya
+perintah < input.txt        # stdin dari file
+perintah > /dev/null        # buang output
+```
+
+## tee
+
+```bash
+make build 2>&1 | tee build.log
+```
+
+Anda tetap melihat progres build di layar dan log tersimpan untuk investigasi.
+
+## Here-doc
+
+```bash
+cat > config.yaml <<EOF
+app: belajar
+mode: development
+EOF
+```
+
+Kata `EOF` bebas asal sama di awal dan akhir. Tanda `<<-` mengizinkan indentasi tab.
+
+## File Descriptor
+
+| Nomor | Nama | Default |
+|---|---|---|
+| 0 | stdin | keyboard |
+| 1 | stdout | layar |
+| 2 | stderr | layar |
+
+```bash
+exec 3> laporan.txt
+echo "awal" >&3
+exec 3>&-
+```
+
+<div class="note">💡 Urutan matters: `2>&1` harus ditulis **setelah** `> file`, kalau tidak error tetap masuk ke layar lama.</div>
+
+## Contoh Praktis
+
+```bash
+{
+  echo "=== Disk ==="
+  df -h
+  echo "=== Memori ==="
+  free -h
+} > laporan-sistem.txt
+```
+
+Kurung kurawal menggabungkan beberapa perintah dalam satu blok output.

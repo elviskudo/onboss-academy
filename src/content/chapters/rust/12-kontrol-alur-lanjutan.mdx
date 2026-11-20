@@ -1,0 +1,139 @@
+---
+"title": "Kontrol Alur Lanjutan"
+"description": "Match dengan guard, if let, while let, dan loop break value"
+"order": 12
+"quiz":
+- "q": "Match di Rust harus…"
+  "options":
+  - "memiliki default"
+  - "mencakup semua kemungkinan"
+  - "mengandung break"
+  - "menghasilkan bool"
+  "answer": 1
+  "explain": "Match bersifat exhaustive; kompiler menolak jika ada kemungkinan tak tercakup."
+- "q": "Guard pada match ditulis dengan…"
+  "options":
+  - "when"
+  - "if"
+  - "where"
+  - "case"
+  "answer": 1
+  "explain": "Some(x) if x > 10 adalah contoh match guard."
+- "q": "if let berguna untuk…"
+  "options":
+  - "menggantikan semua match"
+  - "menangani satu pola saja"
+  - "membuat perulangan"
+  - "mengubah tipe"
+  "answer": 1
+  "explain": "if let adalah versi ringkas match saat hanya satu pola yang penting."
+- "q": "Nilai dari loop bisa diambil dengan…"
+  "options":
+  - "return di akhir"
+  - "break nilai"
+  - "yield"
+  - "output"
+  "answer": 1
+  "explain": "break 42 membuat expression loop bernilai 42."
+- "q": "Label pada loop ditulis…"
+  "options":
+  - "'label:"
+  - "@label:"
+  - "label:"
+  - "#label"
+  "answer": 0
+  "explain": "Gunakan 'nama: loop { } lalu break 'nama untuk keluar dari loop bersarang."
+"example":
+  "code": "fn main() {\n    let x = Some(7);\n    match x {\n        Some(n) if n > 5 => println!(\"besar: {}\", n),\n        Some(_) => println!(\"kecil\"),\n        None => println!(\"kosong\"),\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`match` adalah salah satu fitur paling kuat di Rust. Ia bukan sekadar switch — ia mencocokkan **pola** dan dijamin mencakup semua kemungkinan.
+
+## Match dengan Pola
+
+```rust
+match kode {
+    200 => "OK",
+    404 => "Tidak ditemukan",
+    500..=599 => "Error server",
+    _ => "Lainnya",
+}
+```
+
+Rentang `..=` dan `_` (wildcard) membantu menyusun cabang.
+
+## Guard
+
+```rust
+match nilai {
+    Some(n) if n % 2 == 0 => println!("genap {}", n),
+    Some(n) => println!("ganjil {}", n),
+    None => {}
+}
+```
+
+Guard dievaluasi setelah pola cocok.
+
+## if let & while let
+
+```rust
+if let Some(nama) = maybe_nama {
+    println!("Halo {}", nama);
+}
+
+while let Some(item) = antrean.pop() {
+    proses(item);
+}
+```
+
+Keduanya mengabaikan pola lain — ringkas, tetapi kurang eksplisit daripada `match`.
+
+## loop sebagai Expression
+
+```rust
+let hasil = loop {
+    let n = hitung();
+    if n > 10 { break n; }
+};
+```
+
+Berbeda dengan `while`, `loop` bisa mengembalikan nilai lewat `break nilai`.
+
+## Label
+
+```rust
+'cari: for i in 0..10 {
+    for j in 0..10 {
+        if i * j == 42 { break 'cari; }
+    }
+}
+```
+
+<div class="note">💡 Karena match wajib exhaustive, kompiler akan mengingatkanmu saat ada varian enum baru yang belum ditangani — ini fitur keamanan yang sangat berguna.</div>
+
+
+## Try it Yourself
+
+Tambahkan cabang `None` atau ubah nilai menjadi `None`.
+
+<TryIt lang="rust" runtime="piston" pistonName="rust" code={`fn main() {
+    for nilai in [Some(12), Some(3), None] {
+        match nilai {
+            Some(n) if n > 10 => println!("{} besar", n),
+            Some(n) => println!("{} kecil", n),
+            None => println!("tidak ada nilai"),
+        }
+    }
+
+    let hasil = loop {
+        let x = 7;
+        if x > 5 { break x * 2; }
+    };
+    println!("dari loop: {}", hasil);
+
+    if let Some(n) = Some(9) {
+        println!("if let: {}", n);
+    }
+}`} />

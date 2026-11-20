@@ -1,0 +1,107 @@
+---
+title: "Styling di React"
+description: "CSS module, inline style, className dinamis, dan librari styling populer"
+order: 20
+quiz:
+  - q: "CSS Module mengatasi masalah…"
+    options: ["Fetch data", "Routing", "Bentrok nama kelas global", "Ukuran file JS"]
+    answer: 2
+    explain: "Nama kelas di-scope otomatis ke file komponen."
+  - q: "Import CSS Module dilakukan dengan…"
+    options: ["<style src='...'/>", "import s from './Card.module.css'", "import './Card.css' as s", "require css langsung di JSX"]
+    answer: 1
+    explain: "Hasil import adalah object pemetaan nama kelas."
+  - q: "Inline style di React menerima…"
+    options: ["String CSS mentah", "File CSS", "Array kelas", "Object JavaScript"]
+    answer: 3
+    explain: "Contoh: style={{ color: 'red' }}."
+  - q: "Nama properti CSS dengan tanda hubung ditulis…"
+    options: ["dengan underscore", "camelCase (backgroundColor)", "kebab-case (background-color)", "UPPERCASE"]
+    answer: 1
+    explain: "React mengubah camelCase menjadi kebab-case saat menulis ke DOM."
+  - q: "Styled-components termasuk kategori…"
+    options: ["CSS-in-JS", "CSS Module", "Utility CSS", "Framework routing"]
+    answer: 0
+    explain: "Styling ditulis dalam JavaScript di dalam komponen."
+example:
+  code: |
+    import s from "./Kartu.module.css";
+
+    <Kartu className={`${s.kartu} ${aktif ? s.aktif : ""}`} />
+    <div style={{ backgroundColor: "#fff", padding: 16 }}>...</div>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+React tidak memaksa gaya tertentu. Kamu bisa memakai CSS biasa, CSS Module, atau CSS-in-JS.
+
+## CSS Biasa
+
+```css
+/* kartu.css */
+.kartu { padding: 16px; border-radius: 12px; }
+.kartu.aktif { border-color: teal; }
+```
+
+```jsx
+import "./kartu.css";
+
+<div className={"kartu" + (aktif ? " aktif" : "")}>...</div>
+```
+
+Risikonya: nama `.kartu` bisa bentrok dengan file lain.
+
+## CSS Module
+
+```css
+/* Kartu.module.css */
+.kartu { padding: 16px; }
+.aktif { outline: 2px solid teal; }
+```
+
+```jsx
+import s from "./Kartu.module.css";
+
+function Kartu({ aktif }) {
+  return (
+    <div className={`${s.kartu} ${aktif ? s.aktif : ""}`}>
+      Isi kartu
+    </div>
+  );
+}
+```
+
+Nama kelas diubah menjadi sesuatu seperti `Kartu_kartu__x7a2b`, jadi tidak bentrok.
+
+## Inline Style
+
+```jsx
+const gaya = { backgroundColor: "#fff", marginTop: 12, fontWeight: 600 };
+<div style={gaya}>Halo</div>
+```
+
+Cocok untuk nilai dinamis sederhana (misal lebar dari state), bukan untuk seluruh tema.
+
+## Memilih Pendekatan
+
+| Kebutuhan | Pilihan |
+|-----------|---------|
+| Proyek kecil | CSS biasa |
+| Komponen banyak, tim besar | CSS Module |
+| Styling bergantung props | CSS-in-JS / CSS variable |
+| Utilitas cepat | Tailwind CSS |
+
+<div class="note">💡 Rekomendasi praktis: CSS Module untuk struktur, CSS variable untuk warna/tema, dan inline style hanya untuk nilai yang benar-benar berubah saat runtime.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Membangun className dinamis seperti pola CSS Module
+function kelas(...bagian) {
+  return bagian.filter(Boolean).join(" ");
+}
+
+const s = { kartu: "Kartu_kartu__a1", aktif: "Kartu_aktif__b2" };
+console.log(kelas(s.kartu, false && s.aktif));
+console.log(kelas(s.kartu, true && s.aktif));`} />

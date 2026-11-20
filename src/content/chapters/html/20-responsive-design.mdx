@@ -1,0 +1,109 @@
+---
+title: "Responsive Web Design"
+description: "Meta viewport, media query, dan teknik membuat halaman nyaman di semua ukuran layar"
+order: 20
+quiz:
+  - q: "Tag meta yang wajib ada untuk desain responsif adalah…"
+    options: ["charset", "viewport", "description", "author"]
+    answer: 1
+    explain: "Meta viewport membuat lebar halaman mengikuti perangkat."
+  - q: "CSS media query ditulis dengan…"
+    options: ["@media", "@import", "@supports", "@keyframes"]
+    answer: 0
+    explain: "@media (max-width: 600px) { ... } menerapkan aturan hanya di layar kecil."
+  - q: "Satuan yang relatif terhadap ukuran font elemen saat ini adalah…"
+    options: ["px", "em", "cm", "pt"]
+    answer: 1
+    explain: "em relatif terhadap font-size elemen; rem terhadap font-size root."
+  - q: "Gambar responsif biasanya memakai CSS…"
+    options: ["width: 500px", "width: 100%; height: auto", "float: left", "position: fixed"]
+    answer: 1
+    explain: "width:100% membuat gambar mengikuti lebar container."
+  - q: "Pendekatan 'mobile first' berarti…"
+    options: ["Desain untuk mobile dulu, lalu perbesar", "Desain untuk desktop dulu", "Hanya untuk tablet", "Tanpa CSS"]
+    answer: 0
+    explain: "Mulai dari layar kecil, lalu tambahkan aturan untuk layar lebih besar."
+example:
+  code: |
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <style>
+      .kotak { width: 100%; padding: 16px; }
+      @media (min-width: 768px) {
+        .kotak { width: 50%; }
+      }
+      img { max-width: 100%; height: auto; }
+    </style>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+**Responsive design** membuat halaman tetap enak dibaca di ponsel, tablet, dan desktop.
+
+## Langkah 1: Meta Viewport
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+```
+
+Tanpa ini, ponsel menganggap halaman selebar desktop lalu mengecilkannya.
+
+## Langkah 2: Media Query
+
+```css
+/* Aturan umum (mobile first) */
+.kolom { width: 100%; }
+
+/* Layar 768px ke atas */
+@media (min-width: 768px) {
+  .kolom { width: 50%; }
+}
+```
+
+Media query bisa juga memakai `max-width` untuk menarget layar kecil.
+
+## Langkah 3: Gambar Fleksibel
+
+```css
+img {
+  max-width: 100%;
+  height: auto;
+}
+```
+
+Ini mencegah gambar melebar keluar dari container.
+
+## Satuan yang Fleksibel
+
+- `px` — tetap, tidak ikut zoom relatif
+- `em` — relatif terhadap elemen induk
+- `rem` — relatif terhadap `<html>`
+- `%` — relatif terhadap container
+- `vw` / `vh` — relatif terhadap lebar/tinggi viewport
+
+<div class="note">💡 Coba ubah ukuran jendela browser saat melihat halaman responsif. Itu cara paling cepat menguji hasilnya.</div>
+
+## Try it Yourself
+
+Perkecil jendela pratinjau dan lihat warna latar berubah di bawah 600px.
+
+<TryIt lang="html" runtime="client-html" pistonName="html" code={`<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: sans-serif; padding: 20px; background: #eef; }
+  .card { background: white; padding: 20px; border-radius: 12px; }
+  @media (max-width: 600px) {
+    body { background: #ffe9d6; }
+    .card { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Responsif</h1>
+    <p>Perkecil jendela untuk melihat perubahan.</p>
+  </div>
+</body>
+</html>`} />

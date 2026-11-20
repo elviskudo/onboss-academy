@@ -1,0 +1,102 @@
+---
+title: "Membuat dan Mengubah Tabel"
+description: "CREATE TABLE, IDENTITY, DEFAULT, CHECK, ALTER TABLE, dan DROP TABLE"
+order: 10
+quiz:
+  - q: "Kolom nomor otomatis di SQL Server memakai…"
+    options: ["GENERATED", "AUTO_INCREMENT", "IDENTITY", "SERIAL"]
+    answer: 2
+    explain: "INT IDENTITY(1,1) menghasilkan 1, 2, 3, ..."
+  - q: "Fungsi DEFAULT pada kolom adalah…"
+    options: ["Membuat indeks", "Menghapus duplikat", "Nilai saat INSERT tidak menyebut kolom", "Mengurutkan data"]
+    answer: 2
+    explain: "DEFAULT dipakai bila nilai tidak diberikan."
+  - q: "CHECK constraint berfungsi untuk…"
+    options: ["Mempercepat SELECT", "Menggabungkan tabel", "Menyimpan log", "Membatasi nilai yang masuk"]
+    answer: 3
+    explain: "CHECK menolak nilai yang melanggar syarat логика."
+  - q: "Perintah menambah kolom adalah…"
+    options: ["INSERT COLUMN", "ALTER TABLE ... ADD", "UPDATE TABLE ... ADD", "MODIFY TABLE ... ADD"]
+    answer: 1
+    explain: "ALTER TABLE nama ADD kolom tipe;"
+  - q: "Perbedaan DROP TABLE dan TRUNCATE TABLE adalah…"
+    options: ["Tidak ada beda", "TRUNCATE tidak bisa di SQL Server", "TRUNCATE menghapus struktur", "DROP menghapus struktur; TRUNCATE hanya isi"]
+    answer: 3
+    explain: "TRUNCATE cepat, tetapi tabel tetap ada beserta indeksnya."
+example:
+  code: |
+    CREATE TABLE dbo.siswa (
+      id INT IDENTITY(1,1) PRIMARY KEY,
+      nama NVARCHAR(100) NOT NULL,
+      nilai INT CHECK (nilai BETWEEN 0 AND 100),
+      kelas CHAR(1) DEFAULT 'A'
+    );
+---
+
+## Sintaks Dasar
+
+```sql
+CREATE TABLE dbo.siswa (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  nama NVARCHAR(100) NOT NULL,
+  nilai INT CHECK (nilai BETWEEN 0 AND 100),
+  kelas CHAR(1) DEFAULT 'A',
+  dibuat DATETIME2 DEFAULT SYSDATETIME()
+);
+```
+
+Skema `dbo` adalah skema bawaan. Menuliskannya secara eksplisit membuat query lebih jelas dan menghindari ambiguitas saat ada beberapa skema.
+
+## Memilih Tipe
+
+| Kebutuhan | Tipe |
+| --- | --- |
+| Nama dengan aksara non-ASCII | `NVARCHAR` |
+| Kode tetap | `CHAR` / `NCHAR` |
+| Uang | `DECIMAL(18,2)` |
+| Tanggal + jam presisi | `DATETIME2` |
+| Nilai besar otomatis | `BIGINT IDENTITY` |
+
+`FLOAT` dan `REAL` menyimpan aproksimasi biner — jangan dipakai untuk harga atau saldo.
+
+## Constraint
+
+```sql
+CREATE TABLE dbo.pesanan (
+  id INT IDENTITY PRIMARY KEY,
+  id_siswa INT NOT NULL,
+  kode VARCHAR(20) UNIQUE,
+  jumlah INT CHECK (jumlah > 0),
+  CONSTRAINT FK_pesanan_siswa FOREIGN KEY (id_siswa)
+    REFERENCES dbo.siswa(id)
+);
+```
+
+| Constraint | Makna |
+| --- | --- |
+| `PRIMARY KEY` | unik + tidak null |
+| `UNIQUE` | nilai tidak duplikat |
+| `FOREIGN KEY` | referensi ke tabel lain |
+| `CHECK` | syarat logis |
+| `DEFAULT` | nilai pengganti |
+
+## Mengubah Struktur
+
+```sql
+ALTER TABLE dbo.siswa ADD email NVARCHAR(255);
+ALTER TABLE dbo.siswa ALTER COLUMN nama NVARCHAR(150) NOT NULL;
+ALTER TABLE dbo.siswa DROP COLUMN kelas;
+```
+
+`ALTER COLUMN` gagal bila ada data yang melanggar aturan baru. Periksa dulu DATanya sebelum mengubah tipe atau menambah `NOT NULL`.
+
+<div class="note">💡 `IDENTITY` tidak menjamin nomor tanpa celah. Transaksi yang dibatalkan atau baris yang dihapus meninggalkan lubang — itu normal dan tidak perlu "diperbaiki".</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`CREATE TABLE #latihan (id INT IDENTITY, nama NVARCHAR(50));
+INSERT INTO #latihan (nama) VALUES ('Ana'), ('Budi');
+SELECT * FROM #latihan;
+DROP TABLE #latihan;`}</code></pre>

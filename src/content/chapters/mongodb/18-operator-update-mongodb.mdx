@@ -1,0 +1,89 @@
+---
+title: "Operator Update dan Array"
+description: "$set, $unset, $inc, $push, $pull, $addToSet, $pop, dan operator posisional"
+order: 18
+quiz:
+  - q: "Operator untuk menambah elemen ke array adalah…"
+    options: ["$insert", "$push", "$add", "$append"]
+    answer: 1
+    explain: "$push menambah elemen ke akhir array."
+  - q: "$addToSet berbeda dengan $push karena…"
+    options: ["Mengurutkan array", "Membatasi panjang", "Menghapus elemen", "Mencegah duplikat"]
+    answer: 3
+    explain: "$addToSet hanya menambah bila nilai belum ada."
+  - q: "Operator untuk menghapus elemen array berdasarkan nilai adalah…"
+    options: ["$pop", "$unset", "$delete", "$pull"]
+    answer: 3
+    explain: "$pull menghapus semua elemen yang cocok."
+  - q: "$pop dengan nilai 1 menghapus…"
+    options: ["Tidak ada", "Elemen pertama", "Elemen terakhir", "Semua elemen"]
+    answer: 2
+    explain: "$pop: 1 mengambil elemen akhir; -1 elemen awal."
+  - q: "Operator posisional $ digunakan untuk…"
+    options: ["Membuat indeks", "Menghapus dokumen", "Mengganti seluruh array", "Mengubah elemen yang cocok dengan filter"]
+    answer: 3
+    explain: "Contoh: {$set: {\"nilai.$.skor\": 90}} mengubah elemen yang cocok."
+example:
+  code: |
+    db.siswa.updateOne({nim: "001"}, {$push: {tag: "aktif"}, $addToSet: {hobi: "membaca"}})
+    db.siswa.updateOne({nim: "001"}, {$pull: {tag: "lulus"}})
+    db.siswa.updateOne({nim: "001", "nilai.mapel": "Matematika"}, {$set: {"nilai.$.skor": 95}})
+---
+
+## Update Field Skalar
+
+```javascript
+db.pengguna.updateOne(
+  { _id: 1 },
+  { $set: { nama: "Ana", terakhirLogin: new Date() },
+    $inc: { jumlahLogin: 1 },
+    $unset: { tokenLama: "" } }
+)
+```
+
+Beberapa operator bisa dipakai dalam satu dokumen update, tetapi operator yang sama tidak boleh diulang untuk field yang sama.
+
+## Menambah ke Array
+
+```javascript
+db.pengguna.updateOne({ _id: 1 }, { $push: { tag: "promo" } })
+db.pengguna.updateOne({ _id: 1 }, { $addToSet: { tag: "promo" } })
+```
+
+`$push` selalu menambah, sehingga bisa muncul dua kali. `$addToSet` memperlakukan array seperti himpunan.
+
+## Menghapus dari Array
+
+| Operator | Cara kerja |
+| --- | --- |
+| `$pull` | hapus semua elemen yang nilai/cocok syaratnya |
+| `$pop: 1` | hapus elemen terakhir |
+| `$pop: -1` | hapus elemen pertama |
+| `$pullAll` | hapus beberapa nilai sekaligus |
+
+```javascript
+db.pengguna.updateOne({ _id: 1 }, { $pull: { tag: "promo" } })
+```
+
+## Elemen yang Cocok
+
+```javascript
+db.siswa.updateOne(
+  { nim: "001", "nilai.mapel": "Matematika" },
+  { $set: { "nilai.$.skor": 95 } }
+)
+```
+
+`$` merujuk ke elemen array pertama yang cocok dengan syarat pada filter. Untuk semua elemen yang cocok, pakai `$[]` (MongoDB 3.6+) atau `$[identifier]` dengan arrayFilters.
+
+<div class="note">💡 `$` hanya bisa dipakai jika field array tersebut muncul di filter. Tanpa itu MongoDB akan mengeluh karena tidak tahu elemen mana yang dimaksud.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<pre><code>{`use belajar_update_op
+db.siswa.insertOne({nim: "001", tag: ["baru"], nilai: [{mapel: "Matematika", skor: 80}]})
+db.siswa.updateOne({nim: "001"}, {$addToSet: {tag: "aktif"}, $push: {tag: "rapi"}})
+db.siswa.updateOne({nim: "001", "nilai.mapel": "Matematika"}, {$set: {"nilai.$.skor": 95}})
+db.siswa.findOne({nim: "001"}, {_id: 0})`}</code></pre>

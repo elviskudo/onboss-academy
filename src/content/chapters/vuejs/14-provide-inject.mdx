@@ -1,0 +1,121 @@
+---
+title: "Provide & Inject"
+description: "mengirim data lintas level tanpa prop drilling"
+order: 14
+quiz:
+  - q: "Data disediakan lewat…"
+    options: ["emit(key)", "props(key)", "provide(key, value)", "inject(key, value)"]
+    answer: 2
+    explain: "Biasanya dipanggil di komponen induk."
+  - q: "Anak mengambil data dengan…"
+    options: ["get(key)", "inject(key)", "provide(key)", "use(key)"]
+    answer: 1
+    explain: "inject bisa menerima nilai default."
+  - q: "Provide/inject paling cocok untuk…"
+    options: ["Satu input lokal", "CSS", "Nama file", "Data yang dibutuhkan banyak cabang, seperti tema"]
+    answer: 3
+    explain: "Menghindari prop drilling panjang."
+  - q: "Nilai yang disediakan bisa berupa…"
+    options: ["Hanya fungsi", "Ref reactive", "String statis saja", "Hanya object"]
+    answer: 1
+    explain: "Bila ingin reaktif, kirim ref/computed."
+  - q: "Untuk mencegah konsumen mengubah data, gunakan…"
+    options: ["readonly()", "freeze()", "inject()", "computed()"]
+    answer: 0
+    explain: "readonly membungkus ref/object agar hanya bisa dibaca."
+example:
+  code: |
+    // induk
+    provide('tema', ref('gelap'))
+
+    // anak jauh
+    const tema = inject('tema', ref('terang'))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+`provide`/`inject` adalah versi Vue dari context: induk menyediakan data, keturunan mana pun bisa mengambilnya.
+
+## Dasar
+
+```vue
+<!-- App.vue -->
+<script setup>
+import { provide, ref, readonly } from 'vue'
+
+const tema = ref('terang')
+provide('tema', readonly(tema))
+</script>
+```
+
+```vue
+<!-- Tombol.vue, berapa level pun di bawahnya -->
+<script setup>
+import { inject } from 'vue'
+
+const tema = inject('tema', 'terang')
+</script>
+
+<template>
+  <button :class="tema">Lanjut</button>
+</template>
+```
+
+Argumen kedua `inject` adalah default bila tidak ada provider.
+
+## Reactive Value
+
+```js
+const user = ref(null);
+provide('user', user);
+```
+
+Anak bisa membaca `user.value`, dan perubahan di induk langsung terlihat.
+
+## Symbol sebagai Kunci
+
+```js
+// kunci.js
+export const KunciTema = Symbol('tema');
+
+// pemakaian
+provide(KunciTema, tema);
+const tema = inject(KunciTema);
+```
+
+Symbol mencegah bentrok nama antar fitur.
+
+## Simpan di File Terpisah
+
+```
+src/
+  composables/
+    useTema.js   -> provide + inject dibungkus rapi
+```
+
+```js
+export function sediakanTema() {
+  const tema = ref('terang');
+  provide(KunciTema, readonly(tema));
+  return { tema };
+}
+
+export function pakaiTema() {
+  return inject(KunciTema, ref('terang'));
+}
+```
+
+<div class="note">💡 Gunakan provide/inject untuk data "infrastruktur" seperti tema, bahasa, atau sesi. Untuk data fitur biasa, props tetap lebih jelas alurnya.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi provide/inject dengan Map
+const context = new Map();
+function provide(key, value) { context.set(key, value); }
+function inject(key, fallback) { return context.get(key) ?? fallback; }
+
+provide("tema", "gelap");
+console.log(inject("tema", "terang"));
+console.log(inject("bahasa", "id"));`} />

@@ -1,0 +1,142 @@
+---
+"title": "Generics"
+"description": "Type parameter, constraint, dan fungsi generik di Go 1.18+"
+"order": 20
+"quiz":
+- "q": "Deklarasi fungsi generik yang benar adalah…"
+  "options":
+  - "func F[T any](x T) T"
+  - "func F(x T) T"
+  - "func<T> F(x T)"
+  - "generic func F(x T)"
+  "answer": 0
+  "explain": "Parameter tipe ditulis di antara kurung siku setelah nama fungsi."
+- "q": "Constraint any berarti…"
+  "options":
+  - "hanya string"
+  - "tipe apa pun"
+  - "hanya number"
+  - "hanya struct"
+  "answer": 1
+  "explain": "any adalah alias untuk interface{} yang kini dipakai sebagai constraint."
+- "q": "Untuk membatasi T hanya tipe yang bisa dibandingkan, gunakan…"
+  "options":
+  - "comparable"
+  - "compare"
+  - "equatable"
+  - "orders"
+  "answer": 0
+  "explain": "comparable adalah constraint bawaan untuk operator == dan !=."
+- "q": "Constraint kustom ditulis dengan…"
+  "options":
+  - "interface { ~int | ~float64 }"
+  - "union(int, float64)"
+  - "type int or float"
+  - "enum"
+  "answer": 0
+  "explain": "Constraint adalah interface yang memuat union tipe dengan tilde."
+- "q": "Manfaat utama generics adalah…"
+  "options":
+  - "kode lebih pendek dan tetap aman tipe"
+  - "menghapus semua error"
+  - "program lebih lambat"
+  - "menggantikan interface"
+  "answer": 0
+  "explain": "Satu implementasi bisa dipakai banyak tipe tanpa cast."
+"example":
+  "code": "package main\nimport \"fmt\"\nfunc Pertama[T any](s []T) T { return s[0] }\nfunc main() {\n    fmt.Println(Pertama([]int{1, 2}))\n    fmt.Println(Pertama([]string{\"a\", \"b\"}))\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Generics hadir di Go 1.18. Mereka memungkinkan fungsi dan tipe ditulis sekali untuk banyak tipe tanpa kehilangan keamanan.
+
+## Fungsi Generik
+
+```go
+func Pertama[T any](data []T) T {
+    return data[0]
+}
+```
+
+Tipe disimpulkan dari argumen:
+
+```go
+Pertama([]int{1, 2})       // T = int
+Pertama([]string{"a", "b"}) // T = string
+```
+
+## Constraint
+
+```go
+func Maks[T comparable](a, b T) bool {
+    return a == b
+}
+```
+
+`comparable` hanya menerima tipe yang bisa dibandingkan dengan `==`.
+
+## Constraint Kustom
+
+```go
+type Angka interface {
+    ~int | ~int64 | ~float64
+}
+
+func Jumlah[T Angka](data []T) T {
+    var total T
+    for _, v := range data { total += v }
+    return total
+}
+```
+
+Tanda `~` berarti "semua tipe dengan underlying type ini", jadi `type Meter int` juga diterima.
+
+## Tipe Generik
+
+```go
+type Kotak[T any] struct { Isi T }
+
+func (k Kotak[T]) Ambil() T { return k.Isi }
+
+k := Kotak[string]{Isi: "Halo"}
+```
+
+## Kapan Tidak Perlu Generics
+
+| Gunakan | Kapan |
+|---|---|
+| `interface` | Perilaku berbeda per tipe, dispatch dinamis |
+| Generics | Algoritma sama untuk banyak tipe |
+| `any` | Tipe benar-benar tidak diketahui (JSON) |
+
+Generics bukan pengganti interface. Keduanya saling melengkapi.
+
+<div class="note">💡 Mulailah dengan fungsi konkret. Saat kamu menyalin kode yang sama untuk tiga tipe berbeda, baru pertimbangkan generics.</div>
+
+
+## Try it Yourself
+
+Coba panggil `Jumlah` dengan `[]float64` atau buat `Kotak[bool]`.
+
+<TryIt lang="go" runtime="piston" pistonName="go" code={`package main
+import "fmt"
+
+type Angka interface { ~int | ~int64 | ~float64 }
+
+func Jumlah[T Angka](data []T) T {
+    var total T
+    for _, v := range data { total += v }
+    return total
+}
+
+type Kotak[T any] struct{ Isi T }
+func (k Kotak[T]) Ambil() T { return k.Isi }
+
+func main() {
+    fmt.Println("Int  :", Jumlah([]int{1, 2, 3, 4}))
+    fmt.Println("Float:", Jumlah([]float64{1.5, 2.5}))
+
+    k := Kotak[string]{Isi: "generics"}
+    fmt.Println("Kotak:", k.Ambil())
+}`} />

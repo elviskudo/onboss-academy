@@ -1,0 +1,112 @@
+---
+title: 'Dynamic Programming: Memoization dan Tabulation'
+description: Mengoptimalkan submasalah berulang dengan menyimpan hasil perhitungan.
+order: 17
+quiz:
+- q: Dynamic programming cocok untuk masalah dengan…
+  options:
+  - Tanpa rekursi
+  - Submasalah tumpang tindih dan struktur optimal
+  - Data sudah terurut
+  - Hanya satu input
+  answer: 1
+  explain: Dua syarat ini memungkinkan hasil submasalah dipakai ulang.
+- q: Memoization berarti…
+  options:
+  - Membuat tabel 2D
+  - Mengubah input
+  - Menyimpan hasil fungsi rekursif
+  - Menghapus array
+  answer: 2
+  explain: Pendekatan top-down dengan cache.
+- q: Tabulation berarti…
+  options:
+  - Menulis catatan di kertas
+  - Menyimpan di database
+  - Menghapus cache
+  - Mengisi tabel dari bawah ke atas
+  answer: 3
+  explain: Pendekatan bottom-up tanpa rekursi.
+- q: DP Fibonacci dengan memoization memiliki kompleksitas…
+  options:
+  - O(n)
+  - O(2^n)
+  - O(n^2)
+  - O(log n)
+  answer: 0
+  explain: Setiap nilai dihitung sekali lalu disimpan.
+- q: Contoh masalah DP klasik adalah…
+  options:
+  - Menggabungkan dua list
+  - Knapsack dan LCS
+  - Binary search
+  - Mencari akar tree
+  answer: 1
+  explain: Keduanya memiliki keputusan bertahap dengan submasalah berulang.
+example:
+  code: "def fib(n, memo={}):\n    if n in memo:\n        return memo[n]\n    if n &lt;= 1:\n        return n\n    memo[n] = fib(n-1) + fib(n-2)\n    return memo[n]\n\nprint(fib(50))\n"
+---
+
+
+Rekursi Fibonacci naif menghitung ulang nilai yang sama berkali-kali. **Dynamic programming (DP)** menyimpan hasilnya agar tiap submasalah dihitung sekali.
+
+## Rekursi Boros
+
+```python
+def fib_naif(n):
+    if n <= 1:
+        return n
+    return fib_naif(n - 1) + fib_naif(n - 2)
+```
+
+Pohon pemanggilannya tumbuh eksponensial.
+
+## Memoization (Top-Down)
+
+```python
+def fib(n, memo=None):
+    if memo is None:
+        memo = {}
+    if n in memo:
+        return memo[n]
+    if n <= 1:
+        return n
+    memo[n] = fib(n - 1, memo) + fib(n - 2, memo)
+    return memo[n]
+```
+
+## Tabulation (Bottom-Up)
+
+```python
+def fib_tabel(n):
+    if n <= 1:
+        return n
+    a, b = 0, 1
+    for _ in range(2, n + 1):
+        a, b = b, a + b
+    return b
+```
+
+| Aspek | Memoization | Tabulation |
+|---|---|---|
+| Arah | atas -> bawah | bawah -> atas |
+| Implementasi | rekursi + cache | loop + array |
+| Semua state dihitung | tidak harus | ya |
+| Risiko | kedalaman rekursi | perlu urutan tepat |
+
+## Contoh Knapsack Ringkas
+
+```python
+def knapsack(bobot, nilai, kapasitas):
+    n = len(bobot)
+    dp = [[0] * (kapasitas + 1) for _ in range(n + 1)]
+    for i in range(1, n + 1):
+        for k in range(kapasitas + 1):
+            dp[i][k] = dp[i-1][k]
+            if bobot[i-1] <= k:
+                dp[i][k] = max(dp[i][k],
+                               nilai[i-1] + dp[i-1][k-bobot[i-1]])
+    return dp[n][kapasitas]
+```
+
+<div class="note">💡 DP bukan sekadar “pakai array”. Kuncinya adalah merumuskan **state** dan **transisi** dengan benar sebelum menulis kode.</div>

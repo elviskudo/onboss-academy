@@ -1,0 +1,114 @@
+---
+title: "Background CSS"
+description: "Mengatur warna, gambar, posisi, ukuran, dan pengulangan latar"
+order: 15
+quiz:
+  - q: "Properti untuk memuat gambar latar adalah…"
+    options: ["background-image", "background-src", "background-url", "img-background"]
+    answer: 0
+    explain: "Gunakan `background-image: url('gambar.jpg')`."
+  - q: "Nilai `background-repeat: no-repeat` berarti…"
+    options: ["Gambar diulang", "Gambar tidak diulang", "Gambar dipotong", "Gambar ikut scroll"]
+    answer: 1
+    explain: "Secara default gambar latar diulang di kedua arah."
+  - q: "`background-size: cover` akan…"
+    options: ["Mengulang gambar", "Mengisi area dan memotong bagian berlebih", "Menyesuaikan lebar saja", "Mengecilkan gambar"]
+    answer: 1
+    explain: "Cover menjaga rasio dan memenuhi area, sehingga bagian tepi bisa terpotong."
+  - q: "`background-attachment: fixed` membuat latar…"
+    options: ["Ikut bergulir", "Tetap saat halaman digulir", "Berubah warna", "Berulang"]
+    answer: 1
+    explain: "Latar terkunci terhadap viewport, efek parallax sederhana."
+  - q: "`background-position: center` menempatkan gambar di…"
+    options: ["Kiri atas", "Tengah", "Kanan bawah", "Acak"]
+    answer: 1
+    explain: "Nilai ini memusatkan gambar di dalam area latar."
+example:
+  code: |
+    .hero {
+      background-image: url('pemandangan.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 320px;
+    }
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Properti `background` bukan hanya soal warna. Kamu bisa menumpuk warna, gambar, gradien, dan mengatur bagaimana semuanya diposisikan.
+
+## Properti Background Inti
+
+| Properti | Fungsi | Nilai umum |
+|----------|--------|------------|
+| `background-color` | Warna dasar | `#fff`, `transparent` |
+| `background-image` | Gambar/gradien | `url(...)`, `linear-gradient(...)` |
+| `background-repeat` | Pengulangan | `repeat`, `no-repeat`, `repeat-x` |
+| `background-position` | Posisi awal | `center`, `top right`, `50% 20%` |
+| `background-size` | Ukuran | `cover`, `contain`, `100px auto` |
+| `background-attachment` | Perilaku saat scroll | `scroll`, `fixed`, `local` |
+| `background-origin` | Titik awar ukuran | `border-box`, `padding-box`, `content-box` |
+
+## Shorthand
+
+```css
+.hero {
+  background: #222 url('pemandangan.jpg') center / cover no-repeat fixed;
+}
+```
+
+Urutan shorthand yang aman: `color image position / size repeat attachment origin clip`. Tanda `/` memisahkan posisi dan ukuran.
+
+## Beberapa Gambar Sekaligus
+
+CSS mendukung multiple background — gambar pertama berada paling depan:
+
+```css
+.hero {
+  background-image:
+    linear-gradient(rgb(0 0 0 / 0.45), rgb(0 0 0 / 0.45)),
+    url('pemandangan.jpg');
+  background-size: cover, cover;
+  background-position: center, center;
+}
+```
+
+Teknik ini sering dipakai supaya teks tetap terbaca di atas foto tanpa menambah elemen overlay.
+
+## cover vs contain
+
+- `cover` — gambar memenuhi seluruh area, rasio terjaga, bagian tertentu bisa terpotong.
+- `contain` — seluruh gambar terlihat, area kosong bisa tersisa.
+
+<div class="note">💡 Gambar latar tidak punya teks alternatif. Kalau gambar membawa informasi (grafik, teks), pakai elemen `<img>` dengan atribut `alt`.</div>
+
+## Di Dunia Nyata
+
+- Header situs memakai `cover` + gradien gelap agar judul tetap kontras.
+- Pola subtil memakai gambar kecil dengan `repeat` (noise, dots, grid).
+- Ikon CSS sering dibuat dari gambar kecil dengan `no-repeat` dan `background-position` (sprite).
+- Halaman login memakai `fixed` supaya latar tidak ikut bergeser saat form panjang digulir.
+
+## Try it Yourself
+
+Ganti `cover` menjadi `contain` atau ubah warna gradien pada contoh latar berikut.
+
+<TryIt lang="css" runtime="client-css" pistonName="css" code={`body { font-family: sans-serif; margin: 0; }
+.hero {
+  min-height: 200px;
+  padding: 32px;
+  color: white;
+  background-image:
+    linear-gradient(rgb(79 70 229 / 0.8), rgb(17 24 39 / 0.85)),
+    url('https://picsum.photos/seed/onboss/800/400');
+  background-size: cover;
+  background-position: center;
+}
+.hero h1 { margin: 0; }
+.kotak {
+  height: 80px;
+  margin: 16px;
+  border: 1px dashed #9CA3AF;
+  background: repeating-linear-gradient(45deg, #EEF2FF 0 10px, #fff 10px 20px);
+}`} />

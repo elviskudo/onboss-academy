@@ -123,6 +123,10 @@ Python menerima `key`, sehingga objek tidak perlu diubah. `sorted(produk, key=la
 
 <div class="note">💡 Di produksi Python pakai `sorted(data)` atau `data.sort()` — implementasi Timsort (gabungan merge + insertion) yang sudah dioptimasi C. Tiga algoritma di atas dipelajari untuk memahami prinsip, bukan dipakai ulang.</div>
 
+## Try it Yourself
+
+Jalankan contoh di bawah untuk melihat ide algoritma ini berjalan langsung.
+
 <TryIt lang="python" runtime="piston" pistonName="python" code={`def bubble_sort(a):
     a = list(a)
     n = len(a)
@@ -138,21 +142,21 @@ def selection_sort(a):
     for i in range(n):
         m = i
         for j in range(i + 1, n):
-            if a[j] < a[m]:
+            if a[j] &lt; a[m]:
                 m = j
         a[i], a[m] = a[m], a[i]
     return a
 
 def merge_sort(a):
-    if len(a) <= 1:
+    if len(a) &lt;= 1:
         return a
     mid = len(a) // 2
     kiri = merge_sort(a[:mid])
     kanan = merge_sort(a[mid:])
     hasil = []
     i = j = 0
-    while i < len(kiri) and j < len(kanan):
-        if kiri[i] <= kanan[j]:
+    while i &lt; len(kiri) and j &lt; len(kanan):
+        if kiri[i] &lt;= kanan[j]:
             hasil.append(kiri[i]); i += 1
         else:
             hasil.append(kanan[j]); j += 1

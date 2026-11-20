@@ -136,6 +136,10 @@ Untuk numerik, `summary()` memberi 6 angka: Min, Q1, Median, Mean, Q3, Max (dita
 
 <div class="note">💡 Selalu pasangkan ukuran pusat dengan ukuran sebaran: mean + SD untuk data simetris, median + IQR untuk data skewed. Angka pusat tanpa sebaran menyembunyikan apakah observasi konsisten atau kacau.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="r" runtime="piston" pistonName="r" code={`penjualan <- c(12, 15, 18, 18, 21, 25, 100, NA)
 print(summary(penjualan))
 cat("Mean:", round(mean(penjualan, na.rm = TRUE), 2), "\n")

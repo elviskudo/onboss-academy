@@ -1,0 +1,195 @@
+---
+"title": "Proyek: Manajer Tugas Konsol"
+"description": "Menggabungkan class, generic collection, LINQ, JSON, exception, dan async jadi aplikasi kecil"
+"order": 25
+"quiz":
+- "q": "Pemisahan antara model dan tampilan berguna untuk…"
+  "options":
+  - "membuat kode lebih sulit"
+  - "memudahkan pengujian dan perubahan"
+  - "menghapus exception"
+  - "mengurangi jumlah baris"
+  "answer": 1
+  "explain": "Logika bisa diuji tanpa bergantung pada Console."
+- "q": "Menyimpan daftar tugas sebaiknya memakai…"
+  "options":
+  - "var[]"
+  - "List<Tugas>"
+  - "string tunggal"
+  - "int"
+  "answer": 1
+  "explain": "List<T> bisa bertambah dan tetap bertipe aman."
+- "q": "Fungsi untuk mencari tugas berdasarkan kata kunci paling cocok memakai…"
+  "options":
+  - "Regex saja"
+  - "LINQ Where"
+  - "perulangan tanpa syarat"
+  - "try-catch"
+  "answer": 1
+  "explain": "Where menyaring koleksi dengan predicate yang jelas."
+- "q": "Saat menyimpan ke JSON, properti yang tidak ingin ikut diberi atribut…"
+  "options":
+  - "[JsonSkip]"
+  - "[JsonIgnore]"
+  - "[IgnoreData]"
+  - "[NoSerialize]"
+  "answer": 1
+  "explain": "[JsonIgnore] dari System.Text.Json."
+- "q": "Alur program yang baik untuk aplikasi konsol adalah…"
+  "options":
+  - "baca input → validasi → proses → tampilkan hasil"
+  - "tampilkan hasil → proses → input"
+  - "proses → exception → selesai"
+  - "tanpa validasi"
+  "answer": 0
+  "explain": "Validasi sebelum proses mencegah data buruk masuk ke logika bisnis."
+"example":
+  "code": "using System;\nusing System.Collections.Generic;\nusing System.Linq;\nclass Tugas\n{\n    public string Judul { get; set; } = \"\";\n    public bool Selesai { get; set; }\n}\nclass Program\n{\n    static void Main()\n    {\n        var daftar = new List<Tugas>\n        {\n            new Tugas { Judul = \"Belajar LINQ\" },\n            new Tugas { Judul = \"Latih generic\", Selesai = true }\n        };\n        foreach (var t in daftar.Where(t => !t.Selesai))\n            Console.WriteLine(\"[ ] \" + t.Judul);\n    }\n}\n"
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Sekarang semua materi bertemu dalam satu aplikasi kecil: **manajer tugas di konsol**. Fokusnya bukan fitur banyak, tapi struktur yang rapi.
+
+## Rancangan
+
+| Lapisan | Tanggung jawab |
+|---|---|
+| Model `Tugas` | Data: judul, status, prioritas |
+| `ManajerTugas` | Logika: tambah, selesai, hapus, cari |
+| `Program.Main` | Baca perintah dari pengguna |
+
+## Model
+
+```csharp
+class Tugas
+{
+    public int Id { get; set; }
+    public string Judul { get; set; } = "";
+    public bool Selesai { get; set; }
+    public int Prioritas { get; set; } = 1;
+}
+```
+
+## Logika dengan LINQ
+
+```csharp
+class ManajerTugas
+{
+    private readonly List<Tugas> _daftar = new();
+    private int _nextId = 1;
+
+    public Tugas Tambah(string judul)
+    {
+        var t = new Tugas { Id = _nextId++, Judul = judul };
+        _daftar.Add(t);
+        return t;
+    }
+
+    public IEnumerable<Tugas> Cari(string kata) =>
+        _daftar.Where(t => t.Judul.Contains(kata, StringComparison.OrdinalIgnoreCase));
+
+    public bool Selesaikan(int id)
+    {
+        var t = _daftar.FirstOrDefault(x => x.Id == id);
+        if (t is null) return false;
+        t.Selesai = true;
+        return true;
+    }
+
+    public int SelesaiCount => _daftar.Count(t => t.Selesai);
+}
+```
+
+## Perintah Konsol
+
+```csharp
+while (true)
+{
+    Console.Write("perintah > ");
+    string? baris = Console.ReadLine();
+    if (baris == "keluar") break;
+
+    string[] bagian = baris?.Split(' ', 2) ?? Array.Empty<string>();
+    switch (bagian[0])
+    {
+        case "tambah":
+            if (bagian.Length == 2) manager.Tambah(bagian[1]);
+            else Console.WriteLine("Contoh: tambah Belajar C#");
+            break;
+        case "selesai":
+            if (int.TryParse(bagian.ElementAtOrDefault(1), out int id)
+                && manager.Selesaikan(id)) Console.WriteLine("Oke");
+            else Console.WriteLine("Id tidak valid");
+            break;
+    }
+}
+```
+
+## Validasi dan Exception
+
+Validasi mengembalikan `bool`/pesan, bukan melempar exception untuk kesalahan pengguna. Exception disimpan untuk kondisi benar-benar tak terduga seperti file rusak.
+
+<div class="note">💡 Tulis versi kecil yang benar dulu: tambah + tampilkan. Setelah itu baru tambahkan cari, hapus, dan persistensi JSON satu per satu.</div>
+
+## Try it Yourself
+
+Tambah lebih banyak tugas atau panggil `Selesaikan` dengan id lain.
+
+<TryIt lang="csharp" runtime="piston" pistonName="csharp" code={`using System;
+using System.Collections.Generic;
+using System.Linq;
+
+class Tugas
+{
+    public int Id { get; set; }
+    public string Judul { get; set; } = "";
+    public bool Selesai { get; set; }
+}
+
+class ManajerTugas
+{
+    private readonly List<Tugas> _daftar = new();
+    private int _nextId = 1;
+
+    public Tugas Tambah(string judul)
+    {
+        var t = new Tugas { Id = _nextId++, Judul = judul };
+        _daftar.Add(t);
+        return t;
+    }
+
+    public bool Selesaikan(int id)
+    {
+        var t = _daftar.FirstOrDefault(x => x.Id == id);
+        if (t == null) return false;
+        t.Selesai = true;
+        return true;
+    }
+
+    public IEnumerable<Tugas> Cari(string kata) =>
+        _daftar.Where(t => t.Judul.Contains(kata, StringComparison.OrdinalIgnoreCase));
+
+    public void Tampilkan()
+    {
+        foreach (var t in _daftar)
+            Console.WriteLine((t.Selesai ? "[x] " : "[ ] ") + t.Id + ". " + t.Judul);
+        Console.WriteLine("Selesai: " + _daftar.Count(t => t.Selesai));
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        var m = new ManajerTugas();
+        m.Tambah("Belajar generic");
+        m.Tambah("Latih LINQ");
+        m.Tambah("Tulis unit test");
+        m.Selesaikan(2);
+        m.Tampilkan();
+
+        Console.WriteLine("-- Cari 'linq' --");
+        foreach (var t in m.Cari("linq")) Console.WriteLine(t.Judul);
+    }
+}`} />

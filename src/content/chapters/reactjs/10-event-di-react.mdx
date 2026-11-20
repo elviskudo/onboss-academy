@@ -1,0 +1,135 @@
+---
+title: "Event Handling"
+description: "onClick, peristiwa form, synthetic event, dan pola handler yang rapi"
+order: 10
+quiz:
+  - q: "Cara menangani klik yang benar di React adalah…"
+    options: ["onClick=\"fungsi()\"", "click={fungsi}", "onClick={fungsi}", "onclick=fungsi"]
+    answer: 2
+    explain: "React memakai nama camelCase dan menerima fungsi, bukan string."
+  - q: "Untuk mencegah form melakukan submit standar, panggil…"
+    options: ["return false", "event.stopPropagation()", "event.preventDefault()", "event.cancel()"]
+    answer: 2
+    explain: "preventDefault menghentikan aksi bawaan browser."
+  - q: "Objek event di React disebut…"
+    options: ["SyntheticEvent", "DOMEvent", "ReactEvent", "NativeEvent"]
+    answer: 0
+    explain: "React membungkus event browser menjadi SyntheticEvent yang konsisten lintas browser."
+  - q: "Mengapa handler sering dibuat terpisah, bukan inline panjang?"
+    options: ["Karena JSX tidak mendukung arrow function", "Agar lebih mudah dibaca dan diuji", "Karena inline dilarang", "Agar event tidak jalan"]
+    answer: 1
+    explain: "Handler terpisah memudahkan debugging dan pemakaian ulang."
+  - q: "event.target merujuk pada…"
+    options: ["Komponen induk", "Elemen yang memicu event", "Window", "Document"]
+    answer: 1
+    explain: "target adalah elemen tempat event berasal."
+example:
+  code: |
+    function Tombol({ onClick }) {
+      return <button onClick={() => onClick("ditekan")}>Tekan</button>;
+    }
+
+    <form onSubmit={(e) => { e.preventDefault(); console.log("kirim"); }}>
+      <input onChange={(e) => console.log(e.target.value)} />
+      <button type="submit">Simpan</button>
+    </form>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Event di React tidak jauh berbeda dari event DOM, hanya penulisannya yang diseragamkan.
+
+## Nama Event camelCase
+
+| DOM | React |
+|-----|-------|
+| `onclick` | `onClick` |
+| `onchange` | `onChange` |
+| `onsubmit` | `onSubmit` |
+| `onmouseover` | `onMouseEnter` |
+
+```jsx
+function TombolSuka() {
+  const [suka, setSuka] = React.useState(false);
+
+  return (
+    <button onClick={() => setSuka(!suka)}>
+      {suka ? "❤️ Disukai" : "🤍 Suka"}
+    </button>
+  );
+}
+```
+
+## Menerima Argumen
+
+Ada dua gaya umum:
+
+```jsx
+// arrow function — argumen bebas
+<button onClick={() => hapus(id)}>Hapus</button>
+
+// bind lewat parameter event
+<button onClick={(event) => console.log(event.target)}>Klik</button>
+```
+
+Arrow function membuat fungsi baru tiap render. Untuk daftar besar, pola ini bisa dioptimasi dengan `useCallback` (dibahas di bab tersendiri).
+
+## Event Form
+
+```jsx
+function FormCari({ onSubmit }) {
+  const [kata, setKata] = React.useState("");
+
+  function kirim(event) {
+    event.preventDefault();
+    if (!kata.trim()) return;
+    onSubmit(kata.trim());
+    setKata("");
+  }
+
+  return (
+    <form onSubmit={kirim}>
+      <input
+        value={kata}
+        onChange={(e) => setKata(e.target.value)}
+        placeholder="Cari produk…"
+      />
+      <button type="submit">Cari</button>
+    </form>
+  );
+}
+```
+
+`preventDefault()` penting agar halaman tidak memuat ulang saat form dikirim.
+
+## Bubble dan Stop
+
+Event React menjalar (bubble) ke atas. `event.stopPropagation()` menghentikan perjalanan itu.
+
+```jsx
+<div onClick={() => console.log("induk")}>
+  <button onClick={(e) => { e.stopPropagation(); console.log("anak"); }}>
+    Klik
+  </button>
+</div>
+```
+
+<div class="note">💡 Event handler sebaiknya tetap kecil: baca data, lalu panggil fungsi lain. Logika bisnis yang panjang lebih enak diuji bila berdiri sendiri.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Mensimulasikan event handler + bubbling secara sederhana
+const log = [];
+
+function induk() { log.push("induk"); }
+function anak(stop) {
+  log.push("anak");
+  if (!stop) induk();
+}
+
+anak(false);
+anak(true);
+console.log(log.join(" | "));
+// -> anak | induk | anak`} />

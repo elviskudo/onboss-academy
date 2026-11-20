@@ -1,0 +1,124 @@
+---
+title: "Data Frame Lanjutan"
+description: "Manipulasi kolom, faktor, penggabungan baris/kolom, dan agregasi dengan base R"
+order: 14
+quiz:
+  - q: "Fungsi untuk menambah kolom pada data frame adalah…"
+    options: ["df$baru <- ...", "add(df, baru)", "append(df, baru)", "df + baru"]
+    answer: 0
+    explain: "Operator $ menambah atau mengubah kolom secara langsung."
+  - q: "merge(df1, df2) secara default menggabungkan berdasarkan…"
+    options: ["index baris", "kolom dengan nama sama", "urutan acak", "kolom pertama saja"]
+    answer: 1
+    explain: "merge mencari kolom bernama sama sebagai kunci."
+  - q: "Menggabungkan dua data frame secara horizontal dengan kolom sama banyak dipakai…"
+    options: ["cbind()", "rbind()", "merge()", "stack()"]
+    answer: 0
+    explain: "cbind menambah kolom; rbind menambah baris."
+  - q: "aggregate(nilai ~ kelas, data=df, FUN=mean) menghasilkan…"
+    options: ["data frame ringkas per kelas", "vektor nilai mentah", "matriks kovarians", "grafik"]
+    answer: 0
+    explain: "aggregate mengelompokkan lalu menerapkan fungsi per grup."
+  - q: "Untuk mengurutkan data frame berdasarkan kolom umur menurun dipakai…"
+    options: ["sort(df$umur)", "df[order(-df$umur), ]", "arrange(df, -umur) di base R", "rev(df)"]
+    answer: 1
+    explain: "order menghasilkan indeks; indeks itu dipakai untuk mengurutkan baris."
+example:
+  code: |
+    df <- data.frame(kelas=c("A","B","A"), nilai=c(80,90,85))
+    df$tambah <- df$nilai + 5
+    print(aggregate(nilai ~ kelas, df, mean))
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Data frame adalah struktur utama untuk data tabular di R: setiap kolom adalah vektor dengan panjang sama. Menguasai manipulasinya dengan *base R* membantu memahami apa yang terjadi di balik `dplyr`.
+
+## Inspeksi Cepat
+
+```r
+dim(df)       # baris, kolom
+str(df)       # struktur dan tipe
+head(df, 3)   # 3 baris pertama
+summary(df)   # ringkasan tiap kolom
+names(df)     # daftar kolom
+```
+
+## Menambah dan Memilih Kolom
+
+```r
+df <- data.frame(nama = c("Ana", "Budi"), nilai = c(80, 92))
+df$predikat <- ifelse(df$nilai >= 90, "A", "B")
+df <- df[, c("nama", "predikat", "nilai")]
+
+df[df$nilai > 85, ]           # filter baris
+df[1:2, c("nama", "nilai")]   # potong baris dan kolom
+```
+
+`ifelse()` bekerja vektorised, berbeda dengan `if` yang hanya menerima satu kondisi.
+
+## Mengurutkan
+
+```r
+df <- df[order(df$nilai), ]              # naik
+df <- df[order(-df$nilai, df$nama), ]    # turun, lalu nama
+
+# urutan berdasarkan teks dengan urutan faktor khusus
+df$kelas <- factor(df$kelas, levels = c("A", "B", "C"))
+df <- df[order(df$kelas), ]
+```
+
+## Gabung Data
+
+| Fungsi | Arah | Catatan |
+| --- | --- | --- |
+| `rbind(a, b)` | baris | kolom harus sama |
+| `cbind(a, b)` | kolom | jumlah baris harus sama |
+| `merge(a, b, by = "id")` | berdasarkan kunci | mirip `JOIN` di SQL |
+| `merge(..., all.x = TRUE)` | left join | baris kiri tetap semua |
+
+```r
+siswa <- data.frame(id = 1:3, nama = c("Ana", "Budi", "Rani"))
+nilai <- data.frame(id = c(1, 2), skor = c(80, 90))
+merge(siswa, nilai, by = "id", all.x = TRUE)
+```
+
+## Agregasi dengan formula
+
+```r
+penjualan <- data.frame(wilayah = c("Utara", "Utara", "Selatan"),
+                        omzet = c(100, 150, 200))
+aggregate(omzet ~ wilayah, data = penjualan, FUN = sum)
+aggregate(cbind(omzet) ~ wilayah, data = penjualan,
+          FUN = function(x) c(total = sum(x), rata = mean(x)))
+```
+
+Formula `y ~ x` dibaca "y menurut x". Untuk banyak kolom group, tulis `y ~ x1 + x2`.
+
+## Missing Value di Data Frame
+
+```r
+colSums(is.na(df))            # jumlah NA per kolom
+df <- df[complete.cases(df), ] # buang baris yang ada NA-nya
+df$nilai[is.na(df$nilai)] <- median(df$nilai, na.rm = TRUE)
+```
+
+Imputasi dengan median harus dicatat dalam laporan: ia mengubah distribusi dan jumlah observasi efektif.
+
+## Di Dunia Nyata
+
+- **Laporan penjualan**: `aggregate(omzet ~ wilayah, sum)` merangkum per cabang.
+- **Daftar hadir**: `merge()` mencocokkan peserta dengan data presensi berdasarkan NIM.
+- **Pembersihan data**: `colSums(is.na())` menunjukkan kolom paling rusak.
+- **Penyiapan model**: `df[complete.cases(df), ]` memberi data latih yang bersih.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="r" runtime="piston" pistonName="r" code={`df <- data.frame(nama = c("Ana", "Budi", "Rani", "Dewi"),
+                  kelas = c("A", "B", "A", "B"),
+                  nilai = c(80, 92, 85, 78))
+df$predikat <- ifelse(df$nilai >= 85, "Baik", "Cukup")
+print(df[order(-df$nilai), ])
+print(aggregate(nilai ~ kelas, data = df, FUN = mean))
+print(colSums(is.na(df)))`} />

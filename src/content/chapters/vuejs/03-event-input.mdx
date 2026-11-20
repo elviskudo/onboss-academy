@@ -146,6 +146,10 @@ Setiap keystroke memperbarui `state.teks` — inilah inti two-way binding. Array
 
 <div class="note">💡 Hindari logika berat langsung di template (`@click=\"berat()\"` dipanggil tiap render untuk method non-cached). Untuk perhitungan turunan mahal, pindahkan ke `computed` — materi bab berikutnya.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`// Meniru pola v-model + @click dengan function handler
 const state = { teks: "", jumlah: 0, log: [] };
 

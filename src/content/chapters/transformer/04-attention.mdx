@@ -136,3 +136,14 @@ Hasil semua kepala digabung dan diproyeksikan kembali — kapasitas menangkap po
 - **Chatbot** — causal mask memastikan jawaban hanya memakai prompt dan token yang sudah dihasilkan.
 
 <div class="note">💡 Attention bersifat dua arah (bidirectional) pada BERT, sedangkan GPT memakai attention autoregresif: hanya melihat token sebelumnya — inilah yang membuat GPT pandai melanjutkan teks.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh berikut untuk melihat hasilnya.
+
+<pre><code>{`import math
+skor = [1.0, 2.5, 0.3]
+exp = [math.exp(x) for x in skor]
+bobot = [e/sum(exp) for e in exp]
+print([round(b,3) for b in bobot])
+`}</code></pre>

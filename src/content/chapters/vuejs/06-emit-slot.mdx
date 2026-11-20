@@ -141,6 +141,10 @@ Pada list, payload ID membuat induk tahu item mana yang berubah: `<TugasItem @ha
 
 <div class="note">💡 `$emit` membuat komponen **reusable**: TombolBeli tidak tahu apa yang terjadi setelah diklik — tambah keranjang, checkout, atau analitik, semuanya ditentukan induk. Inilah alasan Vue disebut progresif: pola kecil yang tetap masuk akal saat aplikasi membesar.</div>
 
+## Try it Yourself
+
+Coba ubah kode di bawah lalu jalankan kembali untuk melihat bagaimana logika di balik komponen bekerja.
+
 <TryIt lang="javascript" runtime="client-js" code={`// Meniru pola $emit dengan event emitter mini
 function buatEmittable(nama) {
   const listeners = {};

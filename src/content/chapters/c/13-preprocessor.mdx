@@ -1,0 +1,136 @@
+---
+title: "Preprocessor"
+description: "#define, macro function, #include, conditional compilation, dan header guard"
+order: 13
+quiz:
+  - q: "`#include <stdio.h>` melakukan…"
+    options: ["Mengimpor library saat runtime", "Menyisipkan isi header saat preprocessing", "Mengompilasi ulang kernel", "Membuat variabel global"]
+    answer: 1
+    explain: "Preprocessor menyalin teks header sebelum kompilasi."
+  - q: "Header guard digunakan untuk…"
+    options: ["Mencegah deklarasi ganda", "Mengunci file", "Menghindari error runtime", "Mengompres header"]
+    answer: 0
+    explain: "Biasa dengan `#ifndef ... #define ... #endif`."
+  - q: "Macro dengan parameter sebaiknya ditulis…"
+    options: ["Tanpa kurung", "Dengan kurung di sekitar parameter dan hasil", "Dengan tanda kutip", "Dengan kata kunci function"]
+    answer: 1
+    explain: "`#define KUADAT(x) ((x)*(x))` menghindari bugs prioritas."
+  - q: "`#ifdef DEBUG` akan benar bila…"
+    options: ["DEBUG didefinisikan", "DEBUG bernilai 0", "DEBUG tidak ada", "Selalu salah"]
+    answer: 0
+    explain: "ifdef hanya cek keberadaan definisi, bukan nilainya."
+  - q: "`#undef X` berguna untuk…"
+    options: ["Menghapus definisi makro X", "Membuat variabel X", "Mengimpor X", "Mengakhiri program"]
+    answer: 0
+    explain: "Setelah di-undef, `#ifdef X` jadi salah."
+example:
+  code: |
+    #include <stdio.h>
+    
+    #ifndef GUARD_H
+    #define GUARD_H
+    
+    #define MAKS 100
+    #define KUADAT(x) ((x) * (x))
+    
+    #ifdef DEBUG
+    #define LOG(m) printf("[DEBUG] %s\n", m)
+    #else
+    #define LOG(m) /* diabaikan */
+    #endif
+    
+    #endif
+    
+    int main(void) {
+        printf("%d %d\n", MAKS, KUADAT(4));
+        LOG("mulai");
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Preprocessor berjalan **sebelum** compiler. Ia memproses direktif yang diawali `#`: menyertakan file, mengganti teks, dan memilih bagian kode mana yang ikut dikompilasi.
+
+## #define
+
+```c
+#define PI 3.14159
+#define MAKS(a, b) ((a) > (b) ? (a) : (b))
+```
+
+Kurung sangat penting. Tanpa kurung, `MAKS(1+2, 3)` bisa menjadi `1 + 2 > 3 ? ...` dengan hasil salah.
+
+## #include
+
+```c
+#include <stdio.h>   /* header sistem */
+#include "util.h"     /* header lokal proyek */
+```
+
+Tanda `<>` mencari di include path sistem; `""` mencari di direktori file sumber dulu.
+
+## Header Guard
+
+```c
+#ifndef UTIL_H
+#define UTIL_H
+
+void bantu(void);
+
+#endif
+```
+
+Tanpa guard, dua kali `#include "util.h"` menyebabkan deklarasi duplikat. Alternatif modern: `#pragma once` (didukung GCC/Clang/MSVC).
+
+## Conditional Compilation
+
+```c
+#ifdef DEBUG
+    printf("nilai x = %d\n", x);
+#endif
+
+#if defined(__linux__)
+    /* kode khusus Linux */
+#elif defined(_WIN32)
+    /* kode khusus Windows */
+#endif
+```
+
+## Makro vs Fungsi
+
+| Aspek | Makro | Fungsi |
+|---|---|---|
+| Waktu | preprocessing | runtime |
+| Tipe | tidak dicek | dicek compiler |
+| Efek samping | bisa evaluasi ganda | sekali |
+| Debug | sulit | mudah |
+
+Untuk ekspresi kompleks, `static inline` sering lebih aman daripada makro.
+
+<div class="note">💡 Hati-hati makro dengan argumen bertambah: `#define KUADAT(x) ((x)*(x))` membuat `KUADAT(i++)` menaikkan `i` dua kali. Pakai fungsi inline bila ragu.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+#ifndef GUARD_H
+#define GUARD_H
+
+#define MAKS 100
+#define KUADAT(x) ((x) * (x))
+
+#ifdef DEBUG
+#define LOG(m) printf("[DEBUG] %s\n", m)
+#else
+#define LOG(m) /* diabaikan */
+#endif
+
+#endif
+
+int main(void) {
+    printf("%d %d\n", MAKS, KUADAT(4));
+    LOG("mulai");
+    return 0;
+}`} />

@@ -1,0 +1,97 @@
+---
+title: "Fallthrough Attributes & $attrs"
+description: "atribut yang otomatis diteruskan, inheritAttrs, dan v-bind=\"$attrs\""
+order: 21
+quiz:
+  - q: "Fallthrough attributes adalah…"
+    options: ["CSS bawaan", "Event router", "Atribut yang otomatis jatuh ke elemen root anak", "Props yang dihapus"]
+    answer: 2
+    explain: "Contoh class/style/id yang tidak didefinisikan sebagai props."
+  - q: "Untuk mematikan pewarisan otomatis, gunakan…"
+    options: ["v-skip", "inheritAttrs: false", "noInherit: true", "attrs: false"]
+    answer: 1
+    explain: "Lalu tentukan sendiri lewat v-bind=\"$attrs\"."
+  - q: "Di `<script setup>`, atribut diakses lewat…"
+    options: ["$attrs", "this.attrs", "getAttrs()", "useAttrs()"]
+    answer: 3
+    explain: "useAttrs() mengembalikan objek atribut."
+  - q: "Event listener termasuk di $attrs?"
+    options: ["Hanya class", "Ya", "Tidak", "Hanya onclick"]
+    answer: 1
+    explain: "Listener seperti onClick ikut diteruskan."
+  - q: "Ini berguna saat…"
+    options: ["Root komponen bukan elemen tempat atribut harus jatuh", "Selalu", "Tidak pernah", "Hanya di CSS"]
+    answer: 0
+    explain: "Misalnya tombol dengan wrapper dan elemen button di dalamnya."
+example:
+  code: |
+    <script setup>
+    import { useAttrs } from 'vue'
+    defineOptions({ inheritAttrs: false })
+    const attrs = useAttrs()
+    </script>
+
+    <template><button v-bind="attrs">Klik</button></template>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Vue secara otomatis meneruskan atribut yang tidak didefinisikan sebagai props ke elemen root. Ini disebut *fallthrough*.
+
+## Perilaku Default
+
+```vue
+<!-- Tombol.vue -->
+<template>
+  <button class="tombol">Klik</button>
+</template>
+```
+
+```vue
+<Tombol class="utama" id="simpan" @click="simpan" />
+```
+
+Hasilnya elemen `<button>` mendapat `class="tombol utama"`, `id="simpan"`, dan listener klik.
+
+## Mengambil Kendali
+
+```vue
+<script setup>
+import { useAttrs } from 'vue'
+
+defineOptions({ inheritAttrs: false })
+const attrs = useAttrs()
+</script>
+
+<template>
+  <div class="wrapper">
+    <button v-bind="attrs">Klik</button>
+  </div>
+</template>
+```
+
+Sekarang atribut jatuh ke `<button>`, bukan ke `<div>` wrapper.
+
+## Multi-root
+
+```vue
+<template>
+  <h2>Judul</h2>
+  <p>Paragraf</p>
+</template>
+```
+
+Kalau komponen punya dua root, Vue tidak tahu harus meneruskan atribut ke mana. Kamu harus memakai `v-bind="$attrs"` secara eksplisit di salah satu elemen.
+
+<div class="note">💡 Fallthrough menghemat penulisan props untuk atribut umum seperti `class`, `id`, dan event. Ambil kendali hanya bila struktur DOM-mu menuntut begitu.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi penggabungan class fallthrough
+function gabungClass(kelasSendiri, attrs) {
+  return [kelasSendiri, attrs.class].filter(Boolean).join(" ");
+}
+
+console.log(gabungClass("tombol", { class: "utama", id: "simpan" }));`} />

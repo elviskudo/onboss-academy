@@ -1,0 +1,120 @@
+---
+title: "Memasang dan Mengelola PostgreSQL"
+description: "initdb, pg_ctl, psql, dan struktur direktori cluster"
+order: 9
+quiz:
+  - q: "Perintah inisialisasi cluster PostgreSQL adalah…"
+    options: ["initdb", "pg_init", "createdb cluster", "postgres --init"]
+    answer: 1
+    explain: "initdb membuat direktori data baru."
+  - q: "Klien baris perintah PostgreSQL adalah…"
+    options: ["psql", "pgsql", "sql", "pgcli-only"]
+    answer: 2
+    explain: "psql adalah klien resmi."
+  - q: "Perintah melihat daftar database di psql adalah…"
+    options: ["\\l", "\\d", "\\dt", "\\db"]
+    answer: 3
+    explain: "\\l atau \\list menampilkan database."
+  - q: "Perintah melihat daftar tabel adalah…"
+    options: ["\\dt", "\\dl", "\\tables", "\\t"]
+    answer: 0
+    explain: "\\dt menampilkan tabel pada skema aktif."
+  - q: "Perintah menghentikan server dengan aman adalah…"
+    options: ["pg_ctl stop", "kill -9 postgres", "DROP SERVER", "pg_ctl kill"]
+    answer: 1
+    explain: "pg_ctl stop mengirim sinyal shutdown yang benar."
+example:
+  code: |
+    initdb -D /var/lib/pgdata
+    pg_ctl -D /var/lib/pgdata start
+    psql -U postgres -c "\l"
+    createdb academy
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+PostgreSQL menyimpan data dalam **cluster** — satu direktori data yang dikelola oleh satu server. Di dalamnya ada database, dan di dalam database ada skema serta tabel.
+
+## Inisialisasi Cluster
+
+```bash
+initdb -D /var/lib/pgdata --encoding=UTF8 --locale=en_US.UTF-8
+pg_ctl -D /var/lib/pgdata -l /tmp/pg.log start
+pg_ctl -D /var/lib/pgdata stop
+```
+
+`initdb` hanya dijalankan sekali. menjalankannya lagi pada direktori yang sudah ada akan gagal.
+
+## Koneksi dengan psql
+
+```bash
+psql -U postgres -h 127.0.0.1 -d academy
+psql -U postgres -c "SELECT version();"
+```
+
+Perintah meta psql diawali backslash:
+
+| Perintah | Fungsi |
+| --- | --- |
+| `\l` | daftar database |
+| `\c nama` | pindah database |
+| `\dt` | daftar tabel |
+| `\d tabel` | struktur tabel |
+| `\du` | daftar role |
+| `\q` | keluar
+
+## Membuat Database dan Skema
+
+```sql
+CREATE DATABASE academy;
+\c academy
+CREATE SCHEMA hr;
+CREATE TABLE hr.karyawan (id integer PRIMARY KEY, nama text);
+SELECT * FROM hr.karyawan;
+```
+
+`public` adalah skema default. Skema membantu memisahkan objek antar tim dalam satu database.
+
+## Struktur Direktori
+
+```text
+PGDATA/
+ ├─ base/          file database dan tabel
+ ├─ global/        catalog cluster
+ ├─ pg_wal/        write-ahead log
+ ├─ pg_stat_tmp/   statistik sementara
+ └─ postgresql.conf, pg_hba.conf
+```
+
+`pg_wal` sangat penting untuk recovery; jangan dihapus manual.
+
+## Konfigurasi Awal
+
+```text
+listen_addresses = 'localhost'
+port = 5432
+shared_buffers = 128MB
+max_connections = 100
+```
+
+Ubah `postgresql.conf` lalu restart atau `pg_ctl reload`. `pg_hba.conf` mengatur siapa boleh terhubung dengan metode apa.
+
+<div class="note">💡 Gunakan `pg_ctl stop -m fast` untuk shutdown terkendali. `-m immediate` seperti crash dan memaksa recovery saat start berikutnya.</div>
+
+## Di Dunia Nyata
+
+- **Development**: Docker image postgres resmi paling praktis.
+- **Produksi**: pakai systemd untuk start/stop otomatis.
+- **Backup**: `pg_basebackup` memanfaatkan WAL.
+- **Diagnosis**: `pg_stat_activity` menunjukkan koneksi aktif.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT current_database() AS db,
+       current_user AS pengguna,
+       version() AS versi;
+CREATE SCHEMA IF NOT EXISTS demo;
+CREATE TABLE demo.catat (id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY, teks text);
+INSERT INTO demo.catat(teks) VALUES ('halo postgres');
+SELECT * FROM demo.catat;`} />

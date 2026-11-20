@@ -1,0 +1,106 @@
+---
+title: "Monitoring dan Diagnostic"
+description: "pg_stat_activity, pg_stat_statements, log, dan health check"
+order: 25
+quiz:
+  - q: "View untuk melihat koneksi aktif adalah…"
+    options: ["pg_stat_activity", "pg_settings", "pg_tables", "pg_indexes"]
+    answer: 1
+    explain: "pg_stat_activity menampilkan query dan state tiap sesi."
+  - q: "Ekstensi untuk statistik query adalah…"
+    options: ["pg_stat_statements", "pg_stat_activity", "pg_monitor", "pg_stat_io"]
+    answer: 2
+    explain: "pg_stat_statements mengagregasi query berdasarkan normalized text."
+  - q: "state = 'idle in transaction' menandakan…"
+    options: ["Transaksi terbuka tanpa query aktif", "Query sedang jalan", "Koneksi mati", "Index rusak"]
+    answer: 3
+    explain: "Ini sering menandakan bug aplikasi yang lupa commit."
+  - q: "Perintah melihat parameter server adalah…"
+    options: ["SHOW nama_parameter", "GET PARAM", "SELECT PARAMS", "DISPLAY CONFIG"]
+    answer: 0
+    explain: "SHOW work_mem; atau query pg_settings."
+  - q: "Log yang mencatat query lambat diatur oleh…"
+    options: ["log_min_duration_statement", "log_all", "slow_query_log", "log_statement_only"]
+    answer: 1
+    explain: "Nilai dalam ms; 0 mencatat semua statement."
+example:
+  code: |
+    SELECT pid, state, query FROM pg_stat_activity WHERE state <> 'idle'; SHOW log_min_duration_statement;
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Monitoring menjawab tiga pertanyaan: siapa yang terhubung, query apa yang berjalan, dan mana yang paling mahal. PostgreSQL menyediakan statistik bawaan tanpa alat eksternal.
+
+## Koneksi Aktif
+
+```sql
+SELECT pid, usename, application_name, state, wait_event_type,
+       now() - query_start AS durasi, left(query, 80) AS query
+FROM pg_stat_activity
+WHERE state <> 'idle'
+ORDER BY durasi DESC;
+```
+
+`wait_event_type` memberi tahu apakah sesi menunggu lock, I/O, atau client.
+
+## pg_stat_statements
+
+```sql
+CREATE EXTENSION pg_stat_statements;
+SELECT calls, round(total_exec_time::numeric, 1) AS total_ms,
+       left(query, 80) AS query
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 10;
+```
+
+Aktifkan juga di `shared_preload_libraries` dan restart server.
+
+## Statistik Tabel dan Index
+
+```sql
+SELECT relname, seq_scan, idx_scan, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables ORDER BY seq_scan DESC;
+
+SELECT indexrelname, idx_scan, idx_tup_read
+FROM pg_stat_user_indexes ORDER BY idx_scan;
+```
+
+Index dengan `idx_scan = 0` pada tabel besar calon untuk dievaluasi.
+
+## Konfigurasi Log
+
+```sql
+SHOW log_min_duration_statement;
+SET log_min_duration_statement = 1000;
+SHOW logging_collector;
+```
+
+Mulai dengan ambang 1 detik, lalu sesuaikan. Terlalu banyak log bisa memenuhi disk.
+
+## Health Check Sederhana
+
+```sql
+SELECT 1;
+SELECT now() - pg_postmaster_start_time() AS uptime;
+SELECT pg_is_in_recovery();
+```
+
+<div class="note">💡 `idle in transaction` yang berlangsung lama lebih berbahaya daripada query lambat: ia menahan lock dan mencegah VACUUM membersihkan baris mati.</div>
+
+## Di Dunia Nyata
+
+- **Incident**: cari sesi dengan durasi panjang dan wait_event lock.
+- **Optimasi**: pg_stat_statements menunjukkan query dengan total waktu terbesar.
+- **Kapasitas**: pantau jumlah koneksi dan ukuran database.
+- **Replika**: pg_is_in_recovery membedakan source dan replica.
+
+## Try it Yourself
+Coba ubah kode di bawah lalu jalankan untuk melihat apa yang berubah.
+
+<TryIt lang="postgresql" runtime="sql" code={`SELECT pid, state, left(query, 60) AS query
+FROM pg_stat_activity
+WHERE state <> 'idle'
+ORDER BY query_start;
+SELECT pg_is_in_recovery() AS replika;`} />

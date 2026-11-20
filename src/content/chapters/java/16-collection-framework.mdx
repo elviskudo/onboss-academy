@@ -1,0 +1,131 @@
+---
+title: "Collection Framework"
+description: "List, Set, Queue, Map dan perbedaan ArrayList, LinkedList, HashSet, TreeMap"
+order: 16
+quiz:
+  - q: "Interface untuk kumpulan berurutan dan boleh duplikat adalah…"
+    options: ["Set", "List", "Map", "Queue"]
+    answer: 1
+    explain: "List menjaga urutan sisipan dan mengizinkan duplikat."
+  - q: "HashSet menjamin…"
+    options: ["Urutan sisipan", "Elemen unik", "Urutan terurut", "Akses indeks"]
+    answer: 1
+    explain: "Set tidak boleh ada duplikat; HashSet tidak menjamin urutan."
+  - q: "Map menyimpan…"
+    options: ["Pasangan kunci–nilai", "Elemen tunggal", "Antrian", "Stack"]
+    answer: 0
+    explain: "Map memetakan key ke value; key tidak boleh duplikat."
+  - q: "Akses random paling cepat ada pada…"
+    options: ["LinkedList", "ArrayList", "TreeSet", "PriorityQueue"]
+    answer: 1
+    explain: "ArrayList berbasis array → get(i) O(1); LinkedList O(n)."
+  - q: "TreeMap menyimpan key…"
+    options: ["Sembarangan", "Terurut (sorted)", "Dengan duplikat", "Sesuai waktu akses"]
+    answer: 1
+    explain: "TreeMap memakai pohon merah-hitam dan mengurutkan key secara natural/ Comparator."
+example:
+  code: |
+    import java.util.*;
+    
+    public class Main {
+      public static void main(String[] args) {
+        List<String> daftar = new ArrayList<>();
+        daftar.add("Budi"); daftar.add("Sari"); daftar.add("Budi");
+        System.out.println(daftar);
+    
+        Set<String> unik = new HashSet<>(daftar);
+        System.out.println(unik);
+    
+        Map<String,Integer> nilai = new TreeMap<>();
+        nilai.put("Sari", 90); nilai.put("Budi", 85);
+        for (var e : nilai.entrySet())
+          System.out.println(e.getKey() + ": " + e.getValue());
+      }
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Java Collection Framework adalah seperangkat interface dan implementasi untuk menyimpan sekumpulan object. Memilih implementasi yang tepat berdampak besar pada performa.
+
+## Peta Interface
+
+```
+Collection
+├── List    → ArrayList, LinkedList, Vector
+├── Set     → HashSet, LinkedHashSet, TreeSet
+└── Queue   → LinkedList, PriorityQueue, ArrayDeque
+
+Map (terpisah) → HashMap, LinkedHashMap, TreeMap
+```
+
+## Perbandingan Cepat
+
+| Implementasi | Urutan | Duplikat | Akses | Kapan dipakai |
+|---|---|---|---|---|
+| ArrayList | sisipan | ya | O(1) | default umum |
+| LinkedList | sisipan | ya | O(n) | sering insert/delete di tengah |
+| HashSet | tidak | tidak | O(1) | cek keanggotaan cepat |
+| LinkedHashSet | sisipan | tidak | O(1) | unik + urutan |
+| TreeSet | terurut | tidak | O(log n) | butuh sorting |
+| HashMap | tidak | key unik | O(1) | lookup cepat |
+| TreeMap | key terurut | key unik | O(log n) | butuh rentang/urutan |
+
+## Iterasi
+
+```java
+for (String s : daftar) { ... }
+
+daftar.forEach(s -> System.out.println(s));
+
+Iterator<String> it = daftar.iterator();
+while (it.hasNext()) {
+    if (it.next().isEmpty()) it.remove();  // hapus saat iterasi
+}
+```
+
+## Sort & Comparator
+
+```java
+daftar.sort(Comparator.naturalOrder());
+daftar.sort((a, b) -> b.length() - a.length());
+
+class Siswa {
+    String nama;
+    int nilai;
+}
+daftarSiswa.sort(Comparator.comparingInt(s -> s.nilai).reversed());
+```
+
+## Of/Factory Methods (Java 9+)
+
+```java
+List<String> l = List.of("a", "b");
+Set<Integer> s = Set.of(1, 2);
+Map<String,Integer> m = Map.of("a", 1, "b", 2);
+```
+
+Hasilnya immutable — `add()` akan melempar `UnsupportedOperationException`.
+
+<div class="note">💡 Default yang aman: <b>ArrayList</b> untuk list, <b>HashSet</b> untuk set, <b>HashMap</b> untuk map. Ganti ke varian Linked/Tree hanya kalau kamu benar-benar butuh urutan atau sorting.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="java" runtime="piston" pistonName="java" code={`import java.util.*;
+
+public class Main {
+  public static void main(String[] args) {
+    List<String> daftar = new ArrayList<>();
+    daftar.add("Budi"); daftar.add("Sari"); daftar.add("Budi");
+    System.out.println(daftar);
+
+    Set<String> unik = new HashSet<>(daftar);
+    System.out.println(unik);
+
+    Map<String,Integer> nilai = new TreeMap<>();
+    nilai.put("Sari", 90); nilai.put("Budi", 85);
+    for (var e : nilai.entrySet())
+      System.out.println(e.getKey() + ": " + e.getValue());
+  }
+}`} />

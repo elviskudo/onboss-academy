@@ -1,0 +1,123 @@
+---
+"title": "Memproses Teks dengan sed"
+"description": "Substitusi, penghapusan baris, dan penyuntingan stream dengan sed"
+"order": 17
+"quiz":
+- "q": "Perintah sed untuk mengganti pertama kali \"a\" dengan \"b\" adalah…"
+  "options":
+  - "sed 's/a/b/g'"
+  - "sed 's/a/b/'"
+  - "sed 'g/a/b/'"
+  - "sed -i 'a b'"
+  "answer": 1
+  "explain": "Tanpa flag g, hanya kemunculan pertama per baris yang diganti."
+- "q": "Flag g pada sed berarti…"
+  "options":
+  - "Ganti baris"
+  - "Mode debug"
+  - "Global, semua kemunculan"
+  - "Simpan file"
+  "answer": 2
+  "explain": "s/a/b/g mengganti semua \"a\" di setiap baris."
+- "q": "Opsi -i pada sed berarti…"
+  "options":
+  - "Abaikan huruf besar"
+  - "Tampilkan nomor baris"
+  - "Mode interaktif"
+  - "Sunting file secara langsung"
+  "answer": 3
+  "explain": "sed -i menimpa file asli — hati-hati di macOS butuh -i ''."
+- "q": "Cara menghapus baris kosong dengan sed adalah…"
+  "options":
+  - "sed '/^$/d'"
+  - "sed 's/^$//'"
+  - "sed -n 'p'"
+  - "sed '/d/'"
+  "answer": 0
+  "explain": "/^$/d menghapus baris yang hanya berisi awal-akhir baris."
+- "q": "Cara menampilkan baris 1 sampai 5 adalah…"
+  "options":
+  - "sed '1,5'"
+  - "sed -n '1,5p'"
+  - "sed -p 1:5"
+  - "head -5 sed"
+  "answer": 1
+  "explain": "-n menekan output default, p mencetak rentang yang dipilih."
+"example":
+  "code": "#!/usr/bin/env bash\n# ganti kata di semua baris\nsed 's/kopi/teh/g' minuman.txt\n\n# hapus baris kosong dan komentar\nsed '/^$/d; /^#/d' konfigurasi.conf\n\n# tampilkan baris 2 sampai 4 saja\nsed -n '2,4p' data.txt\n\n# sunting langsung dengan backup\nsed -i.bak 's/8080/3000/g' app.conf\n"
+---
+
+
+import TryIt from '../../../components/TryIt.astro';
+
+## Sintaks Substitusi
+
+```bash
+#!/usr/bin/env bash
+# ganti kata di semua baris
+sed 's/kopi/teh/g' minuman.txt
+
+# hapus baris kosong dan komentar
+sed '/^$/d; /^#/d' konfigurasi.conf
+
+# tampilkan baris 2 sampai 4 saja
+sed -n '2,4p' data.txt
+
+# sunting langsung dengan backup
+sed -i.bak 's/8080/3000/g' app.conf
+```
+
+```
+s/pola/pengganti/flag
+```
+
+Pola memakai regular expression. Karakter `/` bisa diganti dengan delimiter lain bila teks mengandung slash:
+
+```bash
+sed 's|/var/www|/srv/app|g' config.txt
+```
+
+## Flag yang Umum
+
+| Flag | Arti |
+|---|---|
+| `g` | ganti semua kemunculan dalam satu baris |
+| `i` | abaikan huruf besar/kecil |
+| `2` | ganti kemunculan kedua saja |
+
+## Alamat dan Rentang
+
+```bash
+sed -n '1,10p' file.txt       # baris 1-10
+sed '/error/p' log.txt        # baris mengandung error
+sed '/START/,/END/d' file.txt # hapus blok berlabel
+```
+
+`-n` mematikan pencetakan otomatis; tanpa itu, setiap baris tetap muncul walaupun sudah dicetak dengan `p`.
+
+## In-place Editing
+
+```bash
+sed -i.bak 's/lama/baru/g' file.txt
+```
+
+Bash di Linux memakai `-i`, sedangkan macOS (BSD sed) memerlukan argumen ekstensi seperti `-i.bak`. Cadangan membantu saat perubahan ternyata salah.
+
+<div class="note">💡 sed memproses per baris. Untuk mengganti teks yang melintang beberapa baris, gunakan awk atau perl dengan mode slurp.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="bash" runtime="piston" pistonName="bash" code={`#!/usr/bin/env bash
+# ganti kata di semua baris
+sed 's/kopi/teh/g' minuman.txt
+
+# hapus baris kosong dan komentar
+sed '/^$/d; /^#/d' konfigurasi.conf
+
+# tampilkan baris 2 sampai 4 saja
+sed -n '2,4p' data.txt
+
+# sunting langsung dengan backup
+sed -i.bak 's/8080/3000/g' app.conf`} />

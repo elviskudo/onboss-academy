@@ -1,0 +1,153 @@
+---
+title: "Dekorator"
+description: "fungsi sebagai decorator, @syntax, functools.wraps, dan decorator dengan argumen"
+order: 20
+quiz:
+  - q: "Decorator pada dasarnya adalah…"
+    options: ["Class khusus", "Fungsi yang menerima fungsi dan mengembalikan fungsi", "Kata kunci bawaan", "Modul"]
+    answer: 1
+    explain: "Decorator = higher-order function yang membungkus fungsi lain."
+  - q: "`@login` setara dengan…"
+    options: ["f = login", "f = login(f)", "login(f())", "import login"]
+    answer: 1
+    explain: "Sintaks @ menerapkan dekorator ke fungsi di bawahnya."
+  - q: "`functools.wraps` berguna untuk…"
+    options: ["Mempercepat fungsi", "Menjaga __name__ dan docstring", "Menambah parameter", "Menghapus error"]
+    answer: 1
+    explain: "wraps menyalin metadata fungsi asli ke wrapper."
+  - q: "Decorator dengan argumen ditulis…"
+    options: ["@deco(1)", "@deco arg 1", "@deco:1", "@1 deco"]
+    answer: 0
+    explain: "Factory decorator mengembalikan dekorator sebenarnya."
+  - q: "Contoh penggunaan decorator nyata adalah…"
+    options: ["Logging dan autentikasi", "Mengganti tipe variabel", "Mengimpor modul", "Membuat list"]
+    answer: 0
+    explain: "Decorator cocok untuk concern melintang: log, timing, cek hak akses."
+example:
+  code: |
+    import time
+    from functools import wraps
+    
+    def ukur_waktu(f):
+        @wraps(f)
+        def bungkus(*args, **kwargs):
+            mulai = time.time()
+            hasil = f(*args, **kwargs)
+            print(f"{f.__name__}: {time.time()-mulai:.4f}s")
+            return hasil
+        return bungkus
+    
+    @ukur_waktu
+    def kerja(n):
+        return sum(range(n))
+    
+    print(kerja(1000))
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Decorator membungkus fungsi atau class untuk menambah perilaku tanpa mengubah kode aslinya. Ini fondasi banyak framework Python (Flask, FastAPI, pytest).
+
+## Dekorator Manual
+
+```python
+def sapa(f):
+    def bungkus(nama):
+        print("Sebelum panggil")
+        hasil = f(nama)
+        print("Sesudah panggil")
+        return hasil
+    return bungkus
+
+def halo(nama):
+    return f"Halo {nama}"
+
+halo = sapa(halo)
+```
+
+## Sintaks @
+
+```python
+@sapa
+def halo(nama):
+    return f"Halo {nama}"
+```
+
+Dua bentuk di atas identik. Dekorator dijalankan **saat fungsi didefinisikan**, bukan saat dipanggil.
+
+## Menjaga Metadata
+
+Tanpa `wraps`, `halo.__name__` berubah jadi `"bungkus"`. Gunakan:
+
+```python
+from functools import wraps
+
+def sapa(f):
+    @wraps(f)
+    def bungkus(*args, **kwargs):
+        return f(*args, **kwargs)
+    return bungkus
+```
+
+## Dekorator Bertingkat
+
+```python
+@auth
+@cache
+def ambil_data(id):
+    ...
+```
+
+Urutan penerapan: dari bawah ke atas (`cache` dulu, lalu `auth`). Urutan pemanggilan: dari atas ke bawah.
+
+## Dekorator dengan Argumen
+
+```python
+def ulang(n):
+    def dekorator(f):
+        @wraps(f)
+        def bungkus(*a, **kw):
+            for _ in range(n):
+                hasil = f(*a, **kw)
+            return hasil
+        return bungkus
+    return dekorator
+
+@ulang(3)
+def coba():
+    print("dijalankan")
+```
+
+## Decorator pada Class
+
+```python
+@dataclass
+class Titik:
+    x: int
+    y: int
+```
+
+`dataclass` otomatis membuat `__init__`, `__repr__`, dan `__eq__` — contoh dekorator dari pustaka standar.
+
+<div class="note">💡 Decorator paling cocok untuk <b>concern melintang</b>: logging, timing, validasi token, retry, cache. Jangan dipakai untuk logika bisnis inti — tetap tulis fungsi biasa agar alur mudah diikuti.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`import time
+from functools import wraps
+
+def ukur_waktu(f):
+    @wraps(f)
+    def bungkus(*args, **kwargs):
+        mulai = time.time()
+        hasil = f(*args, **kwargs)
+        print(f"{f.__name__}: {time.time()-mulai:.4f}s")
+        return hasil
+    return bungkus
+
+@ukur_waktu
+def kerja(n):
+    return sum(range(n))
+
+print(kerja(1000))`} />

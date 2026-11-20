@@ -133,6 +133,10 @@ CTE menghitung rata-rata per departemen; CASE memberi label posisi; JOIN menyatu
 
 <div class="note">💡 JSONB cocok untuk atribut fleksibel; tetap gunakan kolom terpisah untuk data yang sering difilter, di-join, atau dijadikan constraint. Keduanya bisa hidup berdampingan dalam satu tabel.</div>
 
+## Try it Yourself
+
+Ubah nilai di editor lalu jalankan untuk melihat hasilnya.
+
 <TryIt lang="postgresql" runtime="sql" code={`WITH rata AS (
   SELECT dept, ROUND(AVG(gaji)) AS rata
   FROM karyawan

@@ -1,0 +1,113 @@
+---
+title: "Dictionary Lanjutan"
+description: "get, setdefault, update, comprehension, dan urutan key pada dict modern"
+order: 15
+quiz:
+  - q: "`d.get('kunci', 0)` mengembalikan…"
+    options: ["Error jika kunci tidak ada", "0 jika kunci tidak ada", "Selalu None", "Key pertamanya"]
+    answer: 1
+    explain: "get menerima nilai default opsional, tidak menaikkan KeyError."
+  - q: "`setdefault('a', [])` berguna untuk…"
+    options: ["Menghapus key", "Membuat key dengan nilai awal jika belum ada", "Mengurutkan dict", "Mengganti nama key"]
+    answer: 1
+    explain: "Mengembalikan nilai existing, atau membuatnya dengan default bila belum ada."
+  - q: "Sejak Python 3.7, dictionary…"
+    options: ["Selalu terurut acak", "Menyimpan urutan penyisipan", "Hanya boleh 10 key", "Tidak bisa di-copy"]
+    answer: 1
+    explain: "Urutan sisipan dijamin oleh spesifikasi bahasa."
+  - q: "Cara menggabungkan dua dict yang benar (3.9+) adalah…"
+    options: ["d1 + d2", "d1 | d2", "d1 & d2", "merge(d1, d2)"]
+    answer: 1
+    explain: "Operator `|` menggabungkan dict; `|=` untuk update in-place."
+  - q: "`d.items()` mengembalikan…"
+    options: ["List key", "Pasangan (key, value) sebagai view", "Nilai saja", "Salinan dictionary"]
+    answer: 1
+    explain: "items() adalah view iteratif atas pasangan kunci–nilai."
+example:
+  code: |
+    nilai = {"ani": 90, "budi": 85}
+    print(nilai.get("sari", 0))
+    
+    nilai.setdefault("sari", 0)
+    nilai["sari"] += 10
+    print(nilai)
+    
+    lain = {"rina": 88}
+    gabung = nilai | lain
+    print(gabung)
+    
+    for nama, skor in gabung.items():
+        print(nama, skor)
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Dictionary adalah struktur kunci–nilai yang paling sering dipakai setelah list. Python menyediakan banyak helper agar kode tetap ringkas dan aman.
+
+## Akses Aman
+
+```python
+data = {"nama": "Sari"}
+print(data["nama"])          # Sari
+print(data["umur"])          # KeyError!
+print(data.get("umur", 0))   # 0 → lebih aman
+```
+
+## Menambah & Memperbarui
+
+```python
+data.update({"kota": "Bandung", "umur": 20})
+data |= {"aktif": True}      # Python 3.9+
+
+data.setdefault("login", 0)
+data["login"] += 1           # pola penghitung yang aman
+```
+
+## Iterasi
+
+```python
+for k in data:            # key
+for v in data.values():   # nilai
+for k, v in data.items(): # pasangan — paling sering dipakai
+```
+
+`keys()`, `values()`, `items()` mengembalikan **view**: perubahan dict langsung terlihat, tanpa menyalin seluruh isi.
+
+## Urutan & Copy
+
+Sejak 3.7, dict menjaga urutan sisipan. Ini berguna saat menghasilkan JSON atau laporan yang konsisten.
+
+```python
+a = {"x": 1}
+b = a            # referensi yang sama
+c = a.copy()     # shallow copy
+d = dict(a)      # shallow copy juga
+```
+
+Untuk nested dict, pakai `copy.deepcopy()` agar objek dalam tidak ikut berbagi.
+
+## Dict Comprehension
+
+```python
+sku = ["A-1", "B-2"]
+harga = {k: 10000 for k in sku}
+```
+
+<div class="note">💡 Kunci dict harus <b>hashable</b> (string, angka, tuple berisi nilai hashable). List tidak bisa jadi kunci. Kalau butuh beberapa nilai per kunci, simpan list/dict sebagai <i>nilai</i>.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="python" runtime="piston" pistonName="python" code={`nilai = {"ani": 90, "budi": 85}
+print(nilai.get("sari", 0))
+
+nilai.setdefault("sari", 0)
+nilai["sari"] += 10
+print(nilai)
+
+lain = {"rina": 88}
+gabung = nilai | lain
+print(gabung)
+
+for nama, skor in gabung.items():
+    print(nama, skor)`} />

@@ -1,0 +1,113 @@
+---
+title: "Internasionalisasi Next.js"
+description: "rute locale, dictionary, dan format tanggal berbahasa"
+order: 19
+quiz:
+  - q: "Pola rute umum untuk i18n adalah…"
+    options: ["app/i18n/page.tsx", "public/lang/", "app/[lang]/page.tsx", "app/lang/page.tsx"]
+    answer: 2
+    explain: "Parameter lang dipakai untuk memilih dictionary."
+  - q: "Dictionary sebaiknya disimpan di…"
+    options: ["URL query", "File JSON per bahasa", "CSS", "localStorage"]
+    answer: 1
+    explain: "Misalnya dictionaries/id.json dan en.json."
+  - q: "generateStaticParams bisa dipakai untuk…"
+    options: ["Mengubah warna", "Menghapus rute", "Menambah middleware", "Membuat halaman statis untuk tiap locale"]
+    answer: 3
+    explain: "Next.js tahu semua nilai lang yang mungkin."
+  - q: "Atribut lang pada <html> penting untuk…"
+    options: ["Routing", "Aksesibilitas dan pembaca layar", "Ukuran font", "Cache"]
+    answer: 1
+    explain: "Bantu screen reader memilih pengucapan yang tepat."
+  - q: "Format tanggal lokal bisa memakai…"
+    options: ["Intl.DateTimeFormat", "String biasa", "CSS", "Date.now()"]
+    answer: 0
+    explain: "Contoh locale 'id-ID'."
+example:
+  code: |
+    // app/[lang]/page.tsx
+    const dict = (await import(`@/dictionaries/${lang}.json`)).default;
+
+    export function generateStaticParams() {
+      return [{ lang: 'id' }, { lang: 'en' }];
+    }
+---
+
+Aplikasi multi-bahasa bukan hanya mengganti label. Rute, metadata, dan format juga ikut menyesuaikan.
+
+## Struktur
+
+```
+app/
+  [lang]/
+    layout.tsx
+    page.tsx
+dictionaries/
+  id.json
+  en.json
+middleware.ts
+```
+
+## Memuat Dictionary
+
+```ts
+// lib/dictionary.ts
+const dictionaries = {
+  id: () => import("@/dictionaries/id.json").then((m) => m.default),
+  en: () => import("@/dictionaries/en.json").then((m) => m.default),
+};
+
+export const getDictionary = (lang: string) =>
+  dictionaries[lang]?.() ?? dictionaries.id();
+```
+
+```tsx
+export default async function Page({ params }) {
+  const dict = await getDictionary(params.lang);
+  return <h1>{dict.selamatDatang}</h1>;
+}
+```
+
+## Atribut html lang
+
+```tsx
+export default async function Layout({ children, params }) {
+  return (
+    <html lang={params.lang}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+## Redirect Awal
+
+```ts
+// middleware.ts
+if (request.nextUrl.pathname === "/") {
+  return NextResponse.redirect(new URL("/id", request.url));
+}
+```
+
+## Format Lokal
+
+```ts
+new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" })
+  .format(25000);
+
+new Intl.DateTimeFormat("id-ID", { dateStyle: "long" })
+  .format(new Date());
+```
+
+<div class="note">💡 Simpan terjemahan sebagai data, bukan cabang `if` di komponen. Menambah bahasa baru cukup membuat satu file JSON.</div>
+
+## Try it Yourself
+
+Perhatikan contoh berikut, lalu salin ke proyekmu dan ubah nilainya untuk bereksperimen.
+
+<pre><code>{`// app/[lang]/page.tsx
+const dict = (await import(\`@/dictionaries/\${lang}.json\`)).default;
+
+export function generateStaticParams() {
+  return [{ lang: 'id' }, { lang: 'en' }];
+}`}</code></pre>

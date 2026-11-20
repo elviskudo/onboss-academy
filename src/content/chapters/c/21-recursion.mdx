@@ -1,0 +1,115 @@
+---
+title: "Rekursi"
+description: "fungsi memanggil diri, base case, recursive case, dan contoh faktorial/fibonacci"
+order: 21
+quiz:
+  - q: "Bagian yang menghentikan rekursi disebut…"
+    options: ["Recursive case", "Base case", "Loop", "Return"]
+    answer: 1
+    explain: "Tanpa base case, rekursi berlanjut sampai stack overflow."
+  - q: "Faktorial dari 0 adalah…"
+    options: ["0", "1", "Error", "Tidak terdefinisi"]
+    answer: 1
+    explain: "0! = 1 menurut definisi."
+  - q: "Rekursi menggunakan…"
+    options: ["Heap saja", "Call stack", "File", "Register khusus"]
+    answer: 1
+    explain: "Setiap pemanggilan menambah frame di stack."
+  - q: "Fibonacci naif memiliki kompleksitas…"
+    options: ["O(n)", "O(log n)", "O(2^n)", "O(1)"]
+    answer: 2
+    explain: "Banyak submasalah dihitung ulang; gunakan memoization."
+  - q: "Rekursi paling cocok untuk…"
+    options: ["Struktur hierarkis seperti tree", "Semua loop", "I/O file", "Mengurutkan array besar"]
+    answer: 0
+    explain: "Tree, graf, dan ekspresi bersarang alami dinyatakan secara rekursif."
+example:
+  code: |
+    #include <stdio.h>
+    
+    long faktorial(int n) {
+        if (n &lt;= 1) return 1;      /* base case */
+        return n * faktorial(n - 1); /* recursive case */
+    }
+    
+    int fib(int n) {
+        if (n &lt; 2) return n;
+        return fib(n-1) + fib(n-2);
+    }
+    
+    int main(void) {
+        printf("5! = %ld\n", faktorial(5));
+        printf("fib(8) = %d\n", fib(8));
+        return 0;
+    }
+---
+import TryIt from '../../../components/TryIt.astro';
+
+Rekursi terjadi saat sebuah fungsi memanggil dirinya sendiri. Ia adalah alternatif loop untuk masalah yang bisa dipecah jadi submasalah yang lebih kecil.
+
+## Dua Bagian Wajib
+
+```c
+int jumlah(int n) {
+    if (n == 0) return 0;        /* base case */
+    return n + jumlah(n - 1);    /* recursive case */
+}
+```
+
+Setiap pemanggilan menyimpan variabel lokal di **call stack**. Setelah base case tercapai, frame-frame di-"unwrap" satu per satu.
+
+## Contoh: Binary Search Rekursif
+
+```c
+int cari(int a[], int l, int r, int x) {
+    if (l > r) return -1;
+    int mid = l + (r - l) / 2;
+    if (a[mid] == x) return mid;
+    if (a[mid] > x) return cari(a, l, mid - 1, x);
+    return cari(a, mid + 1, r, x);
+}
+```
+
+## Rekursi vs Iterasi
+
+| Aspek | Rekursi | Iterasi |
+|---|---|---|
+| Kode | ringkas untuk tree/graph | eksplisit |
+| Memori | O(n) stack | O(1) |
+| Risiko | stack overflow | tidak |
+| Performa | ada overhead panggilan | biasanya lebih cepat |
+
+## Rekursi Ekor (Tail Recursion)
+
+```c
+int jumlah_ekor(int n, int akum) {
+    if (n == 0) return akum;
+    return jumlah_ekor(n - 1, akum + n);
+}
+```
+
+Kalau compiler melakukan tail-call optimization, frame lama bisa dipakai ulang. Tidak semua compiler menjamin ini.
+
+<div class="note">💡 Selalu tanya: "Apakah base case pasti tercapai?" Rekursi tanpa jaminan itu resep stack overflow. Untuk input besar, iterasi hampir selalu lebih aman.</div>
+
+## Try it Yourself
+
+Salin kode di bawah ke editor, jalankan, lalu ubah nilainya untuk melihat apa yang berubah.
+
+<TryIt lang="c" runtime="piston" pistonName="c" code={`#include <stdio.h>
+
+long faktorial(int n) {
+    if (n &lt;= 1) return 1;      /* base case */
+    return n * faktorial(n - 1); /* recursive case */
+}
+
+int fib(int n) {
+    if (n &lt; 2) return n;
+    return fib(n-1) + fib(n-2);
+}
+
+int main(void) {
+    printf("5! = %ld\n", faktorial(5));
+    printf("fib(8) = %d\n", fib(8));
+    return 0;
+}`} />

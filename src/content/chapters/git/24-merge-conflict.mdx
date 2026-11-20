@@ -1,0 +1,117 @@
+---
+title: Memahami dan Menyelesaikan Merge Conflict
+description: Membaca penanda konflik dan memilih resolusi yang benar.
+order: 24
+quiz:
+- q: Konflik merge terjadi saat…
+  options:
+  - Dua cabang mengubah baris yang sama secara berbeda
+  - File baru ditambahkan
+  - Commit belum di-push
+  - Branch dihapus
+  answer: 0
+  explain: Git tidak bisa memilih otomatis mana perubahan yang harus menang.
+- q: Penanda konflik `=======` memisahkan…
+  options:
+  - Dua remote
+  - Versi HEAD dan versi branch lain
+  - Dua file berbeda
+  - Dua commit kosong
+  answer: 1
+  explain: Bagian atas adalah HEAD, bagian bawah adalah perubahan yang digabung.
+- q: Setelah konflik diselesaikan, langkah berikutnya adalah…
+  options:
+  - Menghapus seluruh branch
+  - git stash
+  - git add file lalu git commit atau git rebase --continue
+  - git reset --hard
+  answer: 2
+  explain: Menandai file sebagai resolved memberi sinyal ke Git bahwa konflik selesai.
+- q: Perintah untuk membatalkan merge yang sedang konflik adalah…
+  options:
+  - git revert --abort
+  - git reset --soft
+  - git clean -fd
+  - git merge --abort
+  answer: 3
+  explain: merge --abort mengembalikan keadaan sebelum merge dimulai.
+- q: Strategi `ours` pada merge artinya…
+  options:
+  - Memakai versi cabang saat ini untuk file yang konflik
+  - Memakai versi cabang lain
+  - Menghapus kedua versi
+  - Menggabungkan teks keduanya
+  answer: 0
+  explain: 'Hati-hati: nama ours/ours bisa membingungkan saat rebase karena perannya bertukar.'
+example:
+  code: '<<<<<<&lt; HEAD
+
+    const diskon = 0.10;
+
+    =======
+
+    const diskon = 0.15;
+
+    >>>>>>> fitur/harga-baru
+
+    '
+---
+
+
+Konflik bukan tanda Git rusak — itu tanda dua orang mengubah **tempat yang sama**. Git berhenti dan meminta keputusan manusia.
+
+## Membaca Penanda
+
+```text
+<<<<<<< HEAD
+kode versi cabang saat ini
+=======
+kode versi cabang yang digabung
+>>>>>>> nama-branch
+```
+
+Pilih salah satu, gabungkan keduanya, atau tulis versi baru. Hapus semua penanda `<<<<<<<`, `=======`, dan `>>>>>>>`.
+
+## Langkah Penyelesaian
+
+```bash
+git merge fitur/harga-baru
+# konflik muncul
+code src/harga.js
+git add src/harga.js
+git commit
+```
+
+Saat konflik terjadi dalam rebase:
+
+```bash
+git add src/harga.js
+git rebase --continue
+```
+
+## Mencegah Konflik
+
+- Tarik perubahan terbaru sebelum mulai mengerjakan file yang sama.
+- Pisahkan file per fitur bila memungkinkan.
+- Gunakan format kode dan aturan baris yang konsisten.
+- Komunikasikan saat akan menyentuh file bersama.
+
+```bash
+git config merge.conflictstyle diff3
+```
+
+`diff3` menambahkan versi **base** di tengah sehingga lebih mudah melihat apa yang berubah di masing-masing cabang.
+
+<div class="note">💡 Jangan menyelesaikan konflik hanya dengan menghapus salah satu blok. Pahami mengapa tiap perubahan dibuat — bisa jadi keduanya membawa perbaikan penting.</div>
+
+## Konflik Bukan Teks
+
+Untuk file biner seperti gambar, Git tidak bisa menampilkan penanda. Pilih salah satu versi:
+
+```bash
+git checkout --ours  aset/logo.png
+git checkout --theirs aset/logo.png
+git add aset/logo.png
+```
+
+Setelah itu uji hasilnya sebelum commit.

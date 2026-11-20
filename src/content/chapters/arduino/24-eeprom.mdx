@@ -1,0 +1,104 @@
+---
+title: "EEPROM"
+description: "Menyimpan data yang tetap ada setelah mati"
+order: 24
+quiz:
+  - q: "EEPROM digunakan untuk…"
+    options: ["Menyimpan data kecil secara permanen", "Menjalankan sketch", "Menyimpan variabel sementara", "Mengatur clock"]
+    answer: 0
+    explain: "Isinya tidak hilang saat listrik padam."
+  - q: "Kapasitas EEPROM ATmega328P adalah…"
+    options: ["512 MB", "1024 byte", "32 KB", "2 KB"]
+    answer: 1
+    explain: "Cukup untuk kalibrasi atau pengaturan kecil."
+  - q: "Fungsi untuk menulis byte ke EEPROM adalah…"
+    options: ["EEPROM.put only", "writeMem()", "EEPROM.write(alamat, nilai)", "EEPROM.save()"]
+    answer: 2
+    explain: "Alamat dimulai dari 0."
+  - q: "Jumlah siklus tulis EEPROM terbatas, sekitar…"
+    options: ["Tak terbatas", "10 kali", "1 juta kali per detik", "100.000 kali"]
+    answer: 3
+    explain: "Jangan menulis tiap loop tanpa keperluan."
+  - q: "Untuk menyimpan struct, gunakan…"
+    options: ["EEPROM.put() dan EEPROM.get()", "Serial.print()", "analogWrite()", "digitalRead()"]
+    answer: 0
+    explain: "Kedua fungsi menangani beberapa byte sekaligus."
+example:
+  code: |
+    #include <EEPROM.h>
+    
+    struct Pengaturan {
+      int batasAtas;
+      int batasBawah;
+      byte mode;
+    };
+    
+    void setup() {
+      Pengaturan p{30, 24, 1};
+      EEPROM.put(0, p);
+    
+      Pengaturan q;
+      EEPROM.get(0, q);
+      Serial.println(q.batasAtas);
+    }
+---
+
+EEPROM adalah memori kecil yang bertahan setelah board dimatikan. Cocok untuk kalibrasi, batas ambang, atau pengaturan pengguna.
+
+## Dasar
+
+```cpp
+#include <EEPROM.h>
+
+EEPROM.write(0, 42);
+byte nilai = EEPROM.read(0);
+```
+
+Alamat 0–1023 pada Uno.
+
+## Struct
+
+```cpp
+struct Settings {
+  int suhuMaks;
+  int suhuMin;
+  byte mode;
+};
+
+Settings s{30, 24, 1};
+EEPROM.put(0, s);
+
+Settings baca;
+EEPROM.get(0, baca);
+```
+
+## Update Hemat
+
+```cpp
+if (EEPROM.read(alamat) != nilaiBaru) {
+  EEPROM.write(alamat, nilaiBaru);
+}
+```
+
+Hindari menulis nilai yang sama—perpanjang umur EEPROM.
+
+## Checksum
+
+Tambahkan checksum sederhana untuk mendeteksi data rusak:
+
+```cpp
+byte checksum = a ^ b ^ c;
+```
+
+<div class="note">💡 EEPROM bukan pengganti database. Untuk log sensor yang terus bertambah, gunakan kartu SD atau kirim ke komputer.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`#include &lt;EEPROM.h&gt;
+void setup(){
+  Serial.begin(9600);
+  EEPROM.write(0, 7);
+  Serial.println(EEPROM.read(0));
+}
+void loop(){}`}</code></pre>

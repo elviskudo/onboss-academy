@@ -1,0 +1,116 @@
+---
+title: Disjoint Set Union (Union-Find)
+description: Struktur untuk mengelola himpunan tak saling overlap dengan operasi gabung dan pencarian akar.
+order: 14
+quiz:
+- q: Union-Find digunakan untuk…
+  options:
+  - Mengurutkan angka
+  - Menghitung faktorial
+  - Mengelola komponen yang bisa digabung
+  - Menyimpan data berurutan
+  answer: 2
+  explain: Struktur ini menjawab “apakah dua elemen berada dalam grup yang sama?”.
+- q: Find dengan path compression melakukan…
+  options:
+  - Menghapus node
+  - Menggabungkan dua array
+  - Mengurutkan tree
+  - Mengubah setiap node agar menunjuk langsung ke akar
+  answer: 3
+  explain: Ini meratakan pohon sehingga pencarian berikutnya lebih cepat.
+- q: Union by rank berarti…
+  options:
+  - Menggantikan akar pohon pendek ke akar pohon tinggi
+  - Selalu memilih akar terkiri
+  - Membuang pohon lebih besar
+  - Mengganti nomor node
+  answer: 0
+  explain: Pohon tetap pendek sehingga kompleksitas mendekati konstan.
+- q: Kompleksitas amortized Union-Find dengan dua optimasi adalah…
+  options:
+  - O(2^n)
+  - O(1) hampir konstan
+  - O(n^2)
+  - O(n!)
+  answer: 1
+  explain: Fungsi Ackermann inverse tumbuh sangat lambat sehingga dianggap konstan.
+- q: Contoh penggunaan Union-Find adalah…
+  options:
+  - Menghitung rata-rata
+  - Membuat histogram
+  - Mendeteksi siklus pada graf tak berbobot
+  - Mencari kata terpanjang
+  answer: 2
+  explain: Kruskal dan deteksi komponen terhubung memakai struktur ini.
+example:
+  code: "parent = list(range(5))\n\ndef find(x):\n    if parent[x] != x:\n        parent[x] = find(parent[x])  # path compression\n    return parent[x]\n\ndef union(a, b):\n    ra, rb = find(a), find(b)\n    if ra != rb:\n        parent[rb] = ra\n\nunion(0, 1); union(1, 2)\nprint(find(0) == find(2))  # True\n"
+---
+
+
+**Union-Find** menjawab pertanyaan sederhana yang muncul di banyak algoritma: “Apakah dua elemen berada dalam kelompok yang sama?”
+
+## Representasi
+
+Setiap elemen punya `parent`. Awalnya setiap elemen adalah akar bagi dirinya sendiri.
+
+```python
+parent = list(range(6))
+print(parent)  # [0, 1, 2, 3, 4, 5]
+```
+
+## Find dan Union
+
+```python
+def find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]  # path halving
+        x = parent[x]
+    return x
+
+def union(a, b):
+    ra, rb = find(a), find(b)
+    if ra != rb:
+        parent[rb] = ra
+```
+
+## Dua Optimasi
+
+| Teknik | Efek |
+|---|---|
+| Path compression | node langsung menunjuk akar |
+| Union by size/rank | pohon pendek menempel ke pohon panjang |
+
+```python
+size = [1] * len(parent)
+
+def union_ukuran(a, b):
+    ra, rb = find(a), find(b)
+    if ra == rb:
+        return
+    if size[ra] < size[rb]:
+        ra, rb = rb, ra
+    parent[rb] = ra
+    size[ra] += size[rb]
+```
+
+Tanpa optimasi, operasi bisa O(n). Dengan keduanya, kompleksitas amortized mendekati O(1).
+
+## Contoh: Komponen Graf
+
+```python
+tepi = [(0,1), (2,3), (1,2)]
+for a, b in tepi:
+    union(a, b)
+print(find(0) == find(3))  # True
+print(find(0) == find(4))  # False
+```
+
+<div class="note">💡 Union-Find hanya bisa **menggabungkan**, tidak memisahkan. Untuk konektivitas dinamis dengan penghapusan, diperlukan struktur lain.</div>
+
+## Aplikasi Nyata
+
+- Algoritma Kruskal untuk minimum spanning tree.
+- Deteksi siklus pada graf tak berbobot.
+- Mengelompokkan akun yang terhubung oleh transaksi.
+- Label komponen pada citra digital.

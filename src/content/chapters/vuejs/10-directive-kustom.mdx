@@ -1,0 +1,121 @@
+---
+title: "Custom Directive"
+description: "membuat directive sendiri, lifecycle hook directive, dan argumen/value"
+order: 10
+quiz:
+  - q: "Directive kustom didaftarkan dengan…"
+    options: ["app.use('nama')", "defineDirective()", "app.directive('nama', definisi)", "app.component('nama', definisi)"]
+    answer: 2
+    explain: "Di `<script setup>`, konvensi nama variabel `vNama` otomatis terdaftar."
+  - q: "Hook directive yang dipanggil saat elemen dipasang adalah…"
+    options: ["unmounted", "mounted", "created", "updated"]
+    answer: 1
+    explain: "Tempat umum untuk fokus atau mengubah DOM."
+  - q: "Nilai dari `v-warna=\"'merah'\"` diterima sebagai…"
+    options: ["binding.arg", "binding.modifiers", "binding.oldValue", "binding.value"]
+    answer: 3
+    explain: "Expression setelah tanda sama dengan masuk ke value."
+  - q: "Modifier directive dibaca melalui…"
+    options: ["binding.instance", "binding.modifiers", "binding.value", "binding.arg"]
+    answer: 1
+    explain: "Contoh v-focus.pertama → { pertama: true }."
+  - q: "Directive sebaiknya dipakai untuk…"
+    options: ["Manipulasi DOM tingkat rendah", "Mengganti computed", "Mengirim API", "Membuat rute"]
+    answer: 0
+    explain: "Untuk logika berstate, lebih baik komponen atau composable."
+example:
+  code: |
+    const vFokus = {
+      mounted(el) { el.focus(); }
+    };
+
+    <input v-fokus>
+---
+
+import TryIt from '../../../components/TryIt.astro';
+
+Directive adalah cara Vue memberi "perilaku tambahan" pada elemen DOM. Bawaan seperti `v-if` dan `v-model` sudah banyak, tapi kamu bisa membuat sendiri.
+
+## Mendaftarkan
+
+```vue
+<script setup>
+const vFokus = {
+  mounted(el) {
+    el.focus();
+  },
+};
+</script>
+
+<template>
+  <input v-fokus placeholder="Auto fokus">
+</template>
+```
+
+Dengan `<script setup>`, variabel `vFokus` otomatis tersedia sebagai `v-fokus`.
+
+## Menerima Nilai
+
+```vue
+<script setup>
+const vWarna = {
+  mounted(el, binding) {
+    el.style.color = binding.value;
+    if (binding.modifiers.tebal) el.style.fontWeight = 'bold';
+  },
+  updated(el, binding) {
+    el.style.color = binding.value;
+  },
+};
+</script>
+
+<template>
+  <p v-warna.tebal="'teal'">Teks berwarna</p>
+</template>
+```
+
+## Hook yang Tersedia
+
+| Hook | Saat |
+|------|------|
+| `created` | sebelum atribut terpasang |
+| `beforeMount` | sebelum elemen masuk DOM |
+| `mounted` | sesudah masuk DOM |
+| `beforeUpdate` | sebelum update |
+| `updated` | sesudah update |
+| `beforeUnmount` | sebelum dihapus |
+| `unmounted` | sesudah dihapus |
+
+## Contoh: Klik di Luar
+
+```js
+const vKlikLuar = {
+  mounted(el, binding) {
+    el._handler = (e) => {
+      if (!el.contains(e.target)) binding.value(e);
+    };
+    document.addEventListener('click', el._handler);
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el._handler);
+  },
+};
+```
+
+<div class="note">💡 Cleanup di `unmounted` wajib bila directive menambah event listener global. Kalau tidak, listener bisa tetap hidup setelah komponen hilang.</div>
+
+## Try it Yourself
+
+Jalankan contoh di bawah, lalu ubah bagian kecil untuk melihat apa yang berubah.
+
+<TryIt lang="javascript" runtime="client-js" code={`// Simulasi directive mounted/updated: menerapkan nilai ke objek
+const el = { style: {} };
+const binding = { value: "teal", modifiers: { tebal: true } };
+
+function mounted(el, binding) {
+  el.style.color = binding.value;
+  if (binding.modifiers.tebal) el.style.fontWeight = "bold";
+}
+
+mounted(el, binding);
+console.log(el.style);`} />

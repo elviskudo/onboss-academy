@@ -1,0 +1,87 @@
+---
+title: "Operator"
+description: "Aritmatika, perbandingan, logika, dan bitwise"
+order: 13
+quiz:
+  - q: "Operator % menghasilkan…"
+    options: ["Pangkat", "Sisa pembagian", "Hasil bagi bulat", "Perkalian"]
+    answer: 1
+    explain: "7 % 3 bernilai 1."
+  - q: "Hasil 7 / 2 pada Arduino (int) adalah…"
+    options: ["4", "Error", "3", "3.5"]
+    answer: 2
+    explain: "Pembagian dua int membuang bagian desimal."
+  - q: "Operator == digunakan untuk…"
+    options: ["Menetapkan nilai", "Menambah", "Mengganti tipe", "Membandingkan kesamaan"]
+    answer: 3
+    explain: "Penugasan memakai =, perbandingan memakai ==."
+  - q: "Operator && berarti…"
+    options: ["DAN logika", "ATAU logika", "Bukan", "Modulo"]
+    answer: 0
+    explain: "Keduanya harus benar agar hasil benar."
+  - q: "Operator <&lt; pada bitwise melakukan…"
+    options: ["Pembacaan analog", "Pergeseran bit ke kiri", "Perkalian matrix", "Perbandingan string"]
+    answer: 1
+    explain: "1 <&lt; 3 menghasilkan 8 (binary 1000)."
+example:
+  code: |
+    int a = 7, b = 2;
+    Serial.println(a / b);   // 3
+    Serial.println(a % b);   // 1
+    Serial.println(a > b);   // 1 (true)
+    Serial.println(1 <&lt; 3);  // 8
+---
+
+Operator meliputi hitungan, perbandingan, dan manipulasi bit. Awasi pembagian integer dan perbedaan `=` versus `==`—dua sumber bug klasik.
+
+## Aritmatika
+
+| Operator | Contoh | Hasil |
+|---|---|---|
+| `+` | `5+2` | 7 |
+| `-` | `5-2` | 3 |
+| `*` | `5*2` | 10 |
+| `/` | `5/2` | 2 (int) |
+| `%` | `5%2` | 1 |
+
+## Perbandingan dan Logika
+
+```cpp
+if (suhu > 30 && nyala == false) { ... }
+if (tombol == HIGH || baterai < 20) { ... }
+if (!selesai) { ... }
+```
+
+Operator `&&` dan `||` melakukan short-circuit: bagian kanan tidak dievaluasi bila bagian kiri sudah menentukan hasil.
+
+## Increment
+
+```cpp
+i++;     // tambah 1
+i--;     // kurang 1
+i += 5;  // i = i + 5
+```
+
+## Bitwise
+
+```cpp
+byte nilai = 0b1010;
+byte terbalik = ~nilai;        // 0b0101 (dalam 8 bit)
+byte atas = nilai & 0xF0;      // ambil 4 bit atas
+byte aplikasi = nilai | 0x01;  // nyalakan bit 0
+```
+
+Bitwise sering dipakai untuk menghemat pin—misalnya menyimpan delapan status LED dalam satu `byte`.
+
+<div class="note">💡 Jika ingin hasil desimal dari pembagian, jadikan salah satu operand `float`: `7 / 2.0` menghasilkan `3.5`.</div>
+
+## Try it Yourself
+Pelajari contoh berikut, lalu salin ke lingkungan kerjamu untuk bereksperimen.
+
+<pre><code>{`int a=7,b=2;
+Serial.println(a+b);
+Serial.println(a-b);
+Serial.println(a*b);
+Serial.println(a/b);
+Serial.println(a%b);
+Serial.println(a==b);`}</code></pre>

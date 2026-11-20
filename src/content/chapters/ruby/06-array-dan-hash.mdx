@@ -115,7 +115,7 @@ puts frekuensi.inspect
 
 ## Mutable vs Immutable
 
-Array dan Hash **mutable**: `buah << "x"` mengubah objek yang sama. Struktur immutable alami di Ruby hanyalah nilai skalar (Integer, Float, Symbol, true, false, nil). Untuk melindungi struktur dari perubahan diam-diam, tambahkan `.freeze` — mengubahnya lalu melempar `FrozenError`.
+Array dan Hash **mutable**: `buah <&lt; "x"` mengubah objek yang sama. Struktur immutable alami di Ruby hanyalah nilai skalar (Integer, Float, Symbol, true, false, nil). Untuk melindungi struktur dari perubahan diam-diam, tambahkan `.freeze` — mengubahnya lalu melempar `FrozenError`.
 
 ## Kapan Pakai Mana
 
@@ -135,6 +135,10 @@ Array dan Hash **mutable**: `buah << "x"` mengubah objek yang sama. Struktur imm
 - **Filter duplikat**: `url_dikunjungi.uniq.length` menghitung jumlah pengunjung unik dari log.
 
 <div class="note">💡 `h[:kosong]` pada Hash biasa diam-diam mengembalikan `nil` tanpa error — nyaman untuk `h[:x] ||= 0`, tetapi membuat salah ketik kunci (`:harga` vs `:hargaTotal`) lolos sebagai "nilai kosong". Untuk kunci yang wajib ada, pakai `fetch` yang langsung melempar `KeyError`.</div>
+
+## Try it Yourself
+
+Coba jalankan contoh di bawah lalu ubah nilainya untuk melihat apa yang berubah.
 
 <TryIt lang="ruby" runtime="piston" pistonName="ruby" code={`buah = ["apel", "mangga", "jeruk"]
 buah.push("anggur")
