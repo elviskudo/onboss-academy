@@ -1,13 +1,23 @@
 import type { APIContext } from 'astro';
+import { env } from 'cloudflare:workers';
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 const STATE_COOKIE = 'oba_oauth_state';
 
+function runtime(key: string): string | undefined {
+  const e = env as unknown as Record<string, string | undefined>;
+  return e[key] || undefined;
+}
+
 function config() {
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID;
-  const clientSecret = import.meta.env.GOOGLE_CLIENT_SECRET;
+  const clientId = import.meta.env.DEV
+    ? import.meta.env.GOOGLE_CLIENT_ID
+    : runtime('GOOGLE_CLIENT_ID');
+  const clientSecret = import.meta.env.DEV
+    ? import.meta.env.GOOGLE_CLIENT_SECRET
+    : runtime('GOOGLE_CLIENT_SECRET');
   if (!clientId || !clientSecret) {
     throw new Error('GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET belum diatur.');
   }
@@ -15,7 +25,9 @@ function config() {
 }
 
 function siteUrl(context: APIContext) {
-  const configured = import.meta.env.PUBLIC_SITE_URL;
+  const configured = import.meta.env.DEV
+    ? import.meta.env.PUBLIC_SITE_URL
+    : runtime('PUBLIC_SITE_URL');
   if (configured) return configured.replace(/\/$/, '');
   return new URL(context.request.url).origin;
 }
